@@ -50,7 +50,7 @@
 		<div class="messageblock">
 	
 		{section name=messageblockloop loop=$messageblock}
-			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $IS_ADMIN }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }{$messageblock[messageblockloop].EDIT} ]{ /if }</div>
+			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $messageblock[messageblockloop].EDIT }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }{$messageblock[messageblockloop].EDIT} ]{ /if }</div>
 			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].ID}">{$messageblock[messageblockloop].CONTENT}</div>
 		<br />
 		{/section}

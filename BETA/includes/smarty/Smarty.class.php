@@ -29,7 +29,7 @@
  * @version 2.6.6-dev-2
  */
 
-/* $Id: Smarty.class.php,v 1.503 2004/09/29 07:23:45 messju Exp $ */
+/* $Id: Smarty.class.php,v 1.504 2004/09/29 07:23:45 messju Exp $ */
 
 if (!defined('SMARTY_DIR')) {
     define('SMARTY_DIR', dirname(__FILE__) . DIRECTORY_SEPARATOR);
@@ -683,7 +683,7 @@ class Smarty
         if ($this->_compile_source($resource_name, $_source_content, $_compiled_content, $_cache_include)) {
             if ($this->_cache_include_info) {
                 require_once(SMARTY_CORE_DIR . 'core.write_compiled_include.php');
-                smarty_core_write_compiled_include(array_merge($this->_cache_include_info, array('compiled_content'=>$_compiled_content)),  $this);
+				smarty_core_write_compiled_include(array_merge($this->_cache_include_info, array('compiled_content'=>$_compiled_content, 'resource_name'=>$resource_name)),  $this);
             }
 
             $_params = array('compile_path'=>$compile_path, 'compiled_content' => $_compiled_content);
@@ -730,7 +730,9 @@ class Smarty
         $smarty_compiler->_config            = $this->_config;
         $smarty_compiler->request_use_auto_globals  = $this->request_use_auto_globals;
 
-        $smarty_compiler->_cache_serial = null;
+		if (isset($cache_include_path) && isset($this->_cache_serials[$cache_include_path])) {
+			$smarty_compiler->_cache_serial = $this->_cache_serials[$cache_include_path];
+		}
         $smarty_compiler->_cache_include = $cache_include_path;
 
 

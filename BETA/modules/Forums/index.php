@@ -136,7 +136,7 @@ $_CLASS['display']->display_head();
 
 page_header();
 
-$_CLASS['template']->display('modules/forums/index_body.html');
+$_CLASS['template']->display('modules/Forums/index_body.html');
 
 $_CLASS['display']->display_footer();
 

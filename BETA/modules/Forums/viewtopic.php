@@ -1551,7 +1551,6 @@ if ($view == 'print')
 $_CLASS['display']->display_head($_CLASS['user']->lang['VIEW_TOPIC'] .' &gt; ' . $topic_title);
 
 page_header();
-page_footer();
 
 make_jumpbox(getlink('Forums&amp;file=viewforum'), $forum_id);
 $_CLASS['template']->display('modules/Forums/viewtopic_body.html');

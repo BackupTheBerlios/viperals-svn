@@ -13,7 +13,7 @@
 
 if (!defined('VIPERAL')) {
     Header('Location: ../../');
-    die('Sorry you can\'t access this file directly');
+    die();
 }
 
 // Import GET/POST/Cookie variables for older modules

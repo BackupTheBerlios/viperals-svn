@@ -24,7 +24,7 @@ class display
 		global $_CLASS, $MAIN_CFG, $SID;
 		
 		$this->siteurl = getenv('HTTP_HOST').$MAIN_CFG['server']['path'];
-		$this->copyright = 'Interactive software released under <a href="http://www.viperal.com/index.php?name=GNUGPL" target="_new">GNU GPL 2</a>, <a href="'.getlink('Credits&amp;'.$SID).'">Code Credits</a>, <a href="'.getlink('Privacy_Policy&amp;'.$SID).'">Privacy Policy</a></div>';
+		$this->copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS</a> (c) 2004 Viperal';
 		
 		$this->themeprev = get_variable('prevtheme', 'POST', false);
 		$this->themeprev = ($this->themeprev) ? $this->themeprev : get_variable('prevtheme', 'GET', false);
@@ -138,8 +138,7 @@ class display
 			}
 		}
 
-		$this->header['js'] .= '<script type="text/javascript" src="/includes/javascript/overlib_mini.js"></script>';
-		$this->header['regular'] .= '<meta name="generator" content="CPG-Nuke - Copyright(c) '.date('Y').' by http://cpgnuke.com" />';
+		$this->header['regular'] .= '<meta name="generator" content="Viperal CMS ( www.viperal.com ) Copyright(c) '.date('Y').'" />';
 		
 		if (file_exists('favicon.ico')) {
 			$this->header['regular'] .= '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
@@ -226,11 +225,6 @@ class display
 		
 		script_close();
 
-		if (array_key_exists('1' , ob_list_handlers()) && ob_get_length())
-		{
-			//test this on server before enableing
-			//header('Content-Length: ' . ob_get_length());
-		}
 		die;	
 	}
 	
@@ -293,7 +287,7 @@ class display
 		}
 		
 		$displayed = true;
-		
+		$this->header['js'] .= '<script type="text/javascript" src="/includes/javascript/overlib_mini.js"></script>';
 		$this->header['body'] .= '<div id="overDiv" style="position:absolute; visibility:hidden; z-index:10;"></div>';
 	}
 }
@@ -310,18 +304,17 @@ if (isset($_COOKIE["hiddenblocks"])) {
 }*/
 
 function hideblock($id) {
-    static $hiddenblocks;
-    if (!isset($hiddenblocks)) {
-        $hiddenblocks = array();
+    static $hiddenblocks = array();
+    if (empty($hiddenblocks)) {
         if (isset($_COOKIE['hiddenblocks'])) {
             $tmphidden = explode(':', $_COOKIE['hiddenblocks']);
 			$tempcount = count($tmphidden);
-			for($i=0; $i<$tempcount; $i++) {
+			for($i=0; $i< $tempcount; $i++) {
                 $hiddenblocks[$tmphidden[$i]] = true;
             }
         }
     }
-    return (isset($hiddenblocks[$id]) ? $hiddenblocks[$id] : false);
+    return (empty($hiddenblocks[$id]) ? false : true);
 }
 
 function get_theme() {

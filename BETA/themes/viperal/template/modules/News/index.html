@@ -33,7 +33,7 @@
 		 { if $news[newsloop].POSTER_LINK }By: <a href="{ $news[newsloop].POSTER_LINK }">{$news[newsloop].POSTER} </a>{ else }By: {$news[newsloop].POSTER} { /if }</div></div>
 		<br /><br /><br />
 	{ /section }
-	{ if $NEWS_NUMBERING }<div class="numbering">[ { $NEWS_NUMBERING } ]</div><br />{ /if }
+	{ if $NEWS_PAGINATION }<div class="numbering">[ { if $NEWS_PREVIOUS_PAGE }<a href="{$NEWS_PREVIOUS_PAGE}">{$L_PREVIOUS}</a>&nbsp;|&nbsp;{ /if } {$NEWS_PAGINATION} { if $NEWS_NEXT_PAGE }&nbsp;|&nbsp;<a href="{$NEWS_NEXT_PAGE}">{$L_NEXT}</a>{ /if } ]</div><br />{ /if }
 	</div>
 <br />
 { /if }

@@ -712,83 +712,6 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 	}
 }
 
-
-// Pagination routine, generates page number sequence
-// tpl_prefix is for using different pagination blocks at one page
-function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = true, $tpl_prefix = '')
-{
-	global $_CLASS;
-
-	$seperator = $_CLASS['user']->img['pagination_sep'];
-
-	$total_pages = ceil($num_items/$per_page);
-
-	if ($total_pages == 1 || !$num_items)
-	{
-		return false;
-	}
-
-	$on_page = floor($start_item / $per_page) + 1;
-
-	$page_string = ($on_page == 1) ? '<strong>1</strong>' : '<a href="' . getlink($base_url, false) . '">1</a>';
-	
-	if ($total_pages > 5)
-	{
-		$start_cnt = min(max(1, $on_page - 4), $total_pages - 5);
-		$end_cnt = max(min($total_pages, $on_page + 4), 6);
-
-		$page_string .= ($start_cnt > 1) ? ' ... ' : $seperator;
-
-		for($i = $start_cnt + 1; $i < $end_cnt; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page), false) . '">' . $i . '</a>';
-			if ($i < $end_cnt - 1)
-			{
-				$page_string .= $seperator;
-			}
-		}
-
-		$page_string .= ($end_cnt < $total_pages) ? ' ... ' : $seperator;
-	}
-	else
-	{
-		$page_string .= $seperator;
-
-		for($i = 2; $i < $total_pages; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page), false) . '">' . $i . '</a>';
-			if ($i < $total_pages)
-			{
-				$page_string .= $seperator;
-			}
-		}
-	}
-
-	$page_string .= ($on_page == $total_pages) ? '<strong>' . $total_pages . '</strong>' : '<a href="' . getlink($base_url . '&amp;start=' . (($total_pages - 1) * $per_page), false) . '">' . $total_pages . '</a>';
-//	$page_string = $_CLASS['user']->lang['GOTO_PAGE'] . ' ' . $page_string;
-//	$page_string = '<a href="javascript:jumpto();">' . $_CLASS['user']->lang['GOTO_PAGE'] . '</a> ' . $page_string;
-
-	$_CLASS['template']->assign(array(
-		$tpl_prefix . 'BASE_URL'	=> $base_url,
-		$tpl_prefix . 'PER_PAGE'	=> $per_page,
-		
-		$tpl_prefix . 'PREVIOUS_PAGE'	=> ($on_page == 1) ? '' : $base_url . '&amp;start=' . (($on_page - 2) * $per_page),
-		$tpl_prefix . 'NEXT_PAGE'	=> ($on_page == $total_pages) ? '' : $base_url . '&amp;start=' . ($on_page * $per_page))
-	);
-	return $page_string;
-}
-
-function on_page($num_items, $per_page, $start)
-{
-	global $_CLASS;
-
-	$on_page = floor($start / $per_page) + 1;
-
-	$_CLASS['template']->assign('ON_PAGE', $on_page);
-
-	return sprintf($_CLASS['user']->lang['PAGE_OF'], $on_page, max(ceil($num_items / $per_page), 1));
-}
-
 // Obtain list of naughty words and build preg style replacement arrays for use by the
 // calling script, note that the vars are passed as references this just makes it easier
 // to return both sets of arrays
@@ -1536,7 +1459,7 @@ function page_header()
 		'S_DISPLAY_SEARCH'		=> (!empty($config['load_search'])) ? 1 : 0, 
 		'S_DISPLAY_PM'			=> (!empty($config['allow_privmsg'])) ? 1 : 0, 
 		'S_DISPLAY_MEMBERLIST'	=> (isset($_CLASS['auth'])) ? $_CLASS['auth']->acl_get('u_viewprofile') : 0, 
-		
+		'S_GLOBALSEARCH_ACTION'	=> getlink('Forums&amp;file=search'),
 		'L_JUMP_PAGE'			=> $_CLASS['user']->lang['JUMP_PAGE'],
 		'L_NEXT'				=> $_CLASS['user']->lang['NEXT'],
 		'L_PREVIOUS'			=> $_CLASS['user']->lang['PREVIOUS'],

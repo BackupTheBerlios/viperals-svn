@@ -49,7 +49,7 @@ function themehead() {
 	);
 	
 	if ($_CLASS['display']->homepage) {
-		$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : $_CLASS['user']->lang['HOME']));
+		$_CLASS['template']->assign('PAGE_TITLE', ((VIPERAL == 'Admin') ? $Module['custom_title'] : $_CLASS['user']->lang['HOME']));
 	} else {
 		$_CLASS['template']->assign('PAGE_TITLE', $_CLASS['user']->lang['HOME'].' &gt; '.$Module['custom_title']);
 	}

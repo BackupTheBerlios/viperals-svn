@@ -11,10 +11,11 @@
 //																//
 //**************************************************************//
 
-if (!CPG_NUKE) {
-    Header('Location: /');
+if (!defined('VIPERAL')) {
+    header('location: /');
     die();
 }
+
 global $_CLASS;
 
 $_CLASS['display']->display_footer();

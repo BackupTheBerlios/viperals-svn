@@ -43,7 +43,7 @@ function script_close()
 		$_CLASS['user']->set_data('debug', $phperror);
 	}
 	
-	if ($MAIN_CFG['global']['error'] == 3)
+	if (($MAIN_CFG['global']['error'] == 3) && !empty($_CLASS['user']))
 	{
 		$_CLASS['user']->set_data('querylist', $_CLASS['db']->querylist);
 		$_CLASS['user']->set_data('querydetails', $_CLASS['db']->querydetails);
@@ -60,10 +60,19 @@ function script_close()
 		}
 	//}
 	
-	$_CLASS['user']->save_session();
-	$_CLASS['cache']->save();
-	$_CLASS['db']->sql_close();
-
+	if (!empty($_CLASS['user']))
+	{
+		$_CLASS['user']->save_session();
+	}
+	if (!empty($_CLASS['cache']))
+	{
+		$_CLASS['cache']->save();
+	}
+	
+	if (!empty($_CLASS['db']))
+	{
+		$_CLASS['db']->sql_close();
+	}
 }
 
 function session_users()
@@ -185,22 +194,6 @@ function check_variable($variable, $default, $vartype)
 	}
 	
 	return $variable;
-}
-
-function put_string($str, $type='string', $nohtml=0)
-{
-    global $_CLASS;
-    
-    if ($type == 'integer') {
-		return (is_numeric($str)) ? $str : '0';
-    }
-    
-    if ($nohtml)
-    {
-		$str = strip_tags($str); 
-    }
-    
-    return $_CLASS['db']->sql_escape($str);
 }
 
 function strip_slashes($str)
@@ -337,14 +330,10 @@ function getlink($str=false, $UseLEO=true, $full=false, $showSID=true) {
     return $str;
 }
 
-function adminlink($str='') {
+function adminlink($str = false) {
 
     global $adminindex;
-    if ($str) 
-    {
-		return $adminindex; 
-    }
-
+    
     return $adminindex.'?op='.$str;
      
 }
@@ -369,5 +358,87 @@ function url_redirect($url='') {
 	header('Location: ' . $url);
 	
     exit;
+}
+
+function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = true, $tpl_prefix = '')
+{
+	//Code Copyright 2004 phpBB Group - http://www.phpbb.com/
+	global $_CLASS;
+
+	$seperator = $_CLASS['user']->img['pagination_sep'];
+
+	$total_pages = ceil($num_items/$per_page);
+
+	if ($total_pages == 1 || !$num_items)
+	{
+		return false;
+	}
+
+	$on_page = floor($start_item / $per_page) + 1;
+
+	$page_string = ($on_page == 1) ? '<strong>1</strong>' : '<a href="' . getlink($base_url, false) . '">1</a>';
+	
+	if ($total_pages > 5)
+	{
+		$start_cnt = min(max(1, $on_page - 4), $total_pages - 5);
+		$end_cnt = max(min($total_pages, $on_page + 4), 6);
+
+		$page_string .= ($start_cnt > 1) ? ' ... ' : $seperator;
+
+		for($i = $start_cnt + 1; $i < $end_cnt; $i++)
+		{
+			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page), false) . '">' . $i . '</a>';
+			if ($i < $end_cnt - 1)
+			{
+				$page_string .= $seperator;
+			}
+		}
+
+		$page_string .= ($end_cnt < $total_pages) ? ' ... ' : $seperator;
+	}
+	else
+	{
+		$page_string .= $seperator;
+
+		for($i = 2; $i < $total_pages; $i++)
+		{
+			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page), false) . '">' . $i . '</a>';
+			if ($i < $total_pages)
+			{
+				$page_string .= $seperator;
+			}
+		}
+	}
+
+	$page_string .= ($on_page == $total_pages) ? '<strong>' . $total_pages . '</strong>' : '<a href="' . getlink($base_url . '&amp;start=' . (($total_pages - 1) * $per_page), false) . '">' . $total_pages . '</a>';
+
+	$_CLASS['template']->assign(array(
+		'L_GOTO_PAGE'	=> $_CLASS['user']->lang['GOTO_PAGE'],
+		'L_PREVIOUS'	=>	$_CLASS['user']->lang['PREVIOUS'],
+		'L_NEXT'		=> $_CLASS['user']->lang['NEXT'],
+		'L_PREVIOUS'	=>	$_CLASS['user']->lang['PREVIOUS'],
+		$tpl_prefix . 'BASE_URL'	=> getlink($base_url),
+		$tpl_prefix . 'PER_PAGE'	=> $per_page,
+		
+		$tpl_prefix . 'PREVIOUS_PAGE'	=> ($on_page == 1) ? '' : getlink($base_url . '&amp;start=' . (($on_page - 2) * $per_page), false),
+		$tpl_prefix . 'NEXT_PAGE'	=> ($on_page == $total_pages) ? '' : getlink($base_url . '&amp;start=' . ($on_page * $per_page), false))
+	);
+	return $page_string;
+}
+
+function on_page($num_items, $per_page, $start)
+{
+	global $_CLASS;
+
+	$on_page = floor($start / $per_page) + 1;
+
+	$_CLASS['template']->assign('ON_PAGE', $on_page);
+
+	return sprintf($_CLASS['user']->lang['PAGE_OF'], $on_page, max(ceil($num_items / $per_page), 1));
+}
+
+function validate_email($email)
+{
+	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
 }
 ?>

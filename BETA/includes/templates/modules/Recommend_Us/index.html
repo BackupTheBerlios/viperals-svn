@@ -1,0 +1,28 @@
+{ if $ERROR }
+	{php} OpenTable(); {/php}
+		<div align="center"><font color="#990000">{ $ERROR }</font></div>
+	{php} CloseTable(); {/php}
+{ /if }
+
+{php} OpenTable(); {/php}
+
+<form method="post" action="{ $ACTION }" >
+    <table><tr><td style="padding: 10px;" valign="top"><b>{ $L_YOURNAME }:</b><br />
+    <input type="text" name="sender_name" value="{ $SENDER_NAME }" size="30" /><br />
+    <b>{ $L_YOUREMAIL }:</b><br />
+    <input type="text" name="sender_email" value="{ $SENDER_EMAIL }" size="30" /><br /><br />
+    <b>{ $L_FRIENDNAME }:</b><br />
+    <input type="text" name="receiver_name" value="{ $SENDER_NAME }" size="30" /><br />
+    <b>{ $L_FRIENDEMAIL }:</b><br />
+    <input type="text" name="receiver_email" value="{ $SENDER_EMAIL }" size="30" /><br />
+    <br /><br />
+    <input type="submit" name="recommend" value="{ $L_SUBMIT }" />
+    <input type="submit" name="preview" value="{ $L_PREVIEW }" /><br /></td>
+	
+	<td><strong>{ $L_MESSAGE }:</strong><br />
+    <textarea name="message" id="message" style="width:90%; height:100px" cols="63" rows="15">{ $MESSAGE }</textarea><br /><br />
+    <em><font color="#006699">(Your IP: { $IP } will be logged!)</font></em>
+    </td></table>
+</form>
+
+{php} CloseTable(); {/php}

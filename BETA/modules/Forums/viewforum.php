@@ -645,6 +645,7 @@ $_CLASS['template']->assign(array(
 	'L_POSTS'				=> $_CLASS['user']->lang['POSTS'],
 	'L_LAST_POST'			=> $_CLASS['user']->lang['LAST_POST'],
 	'L_FORUM'				=> $_CLASS['user']->lang['FORUM'],
+	'L_MARK_FORUMS_READ'	=>	$_CLASS['user']->lang['MARK_FORUMS_READ'],
 	'L_VIEWS'				=> $_CLASS['user']->lang['VIEWS'],
 	'L_REPLIES'				=> $_CLASS['user']->lang['REPLIES'],
 	'L_WHO_IS_ONLINE'		=> $_CLASS['user']->lang['WHO_IS_ONLINE'],

@@ -160,18 +160,19 @@ class blocks
 		
 		if (file_exists('blocks/'.$this->blocksrow['file'])) {
 		
-			/*
+			
 			$startqueries = $_CLASS['db']->sql_num_queries();
+			$startqueriestime = $_CLASS['db']->sql_time;
 			$starttime = explode(' ', microtime());
 			$starttime = $starttime[0] + $starttime[1];
-			*/
+			
 		
 			require('blocks/'.$this->blocksrow['file']);
 			
-			/*
+			
 			$endtime = explode(' ', microtime());
 			$endtime = $endtime[0] + $endtime[1];
-			*/
+			
 			
 			if (!$this->content && !$this->template)
 			{
@@ -194,12 +195,15 @@ class blocks
 			
 		}
 
-		/*
+		
 		$this->content .= '<div style="text-align: center;">';
-		$this->content .= '<br />block queries: '.($_CLASS['db']->sql_num_queries() - $startqueries);
+		if ($_CLASS['db']->sql_num_queries() - $startqueries)
+		{
+			$this->content .= '<br />block queries: '.($_CLASS['db']->sql_num_queries() - $startqueries).' in '.round($_CLASS['db']->sql_time - $startqueriestime, 4).' s';
+		}
 		$this->content .= '<br />Generation time: '.round($endtime - $starttime, 4).'s';
 		$this->content .= '</div>';
-		*/
+		
 
 		if ($this->blocksrow['position'] == BLOCK_LEFT || $this->blocksrow['position'] == BLOCK_RIGHT)
 		{

@@ -18,7 +18,7 @@ if (!defined('VIPERAL')) {
 
 set_magic_quotes_runtime(0);
 
-if (VIPERAL != 'XMLFEED')
+if (VIPERAL != 'MINILOAD')
 {
 	$phperror = '';
 	$MAIN_CFG['global']['error'] = 3;
@@ -99,7 +99,7 @@ optimize_table();
 optimize_cache();
 }*/
 
-// Remove me, please remove me
+// Remove me, please remove me, add a fintion check
 if (($_SERVER['REQUEST_METHOD'] == 'POST') && $file != 'posting' && $name != 'Forums' && $name != 'Control_Panel') {
 	
 	foreach ($_POST as $secvalue) {
@@ -116,6 +116,7 @@ if ($MAIN_CFG['global']['maintenance'] && !is_admin() && VIPERAL != 'Admin') {
 	die_error('<b>'.$MAIN_CFG['global']['maintenance_text'].'</b>', 'Maintenance');
 }
 
+//doesn't save on fatal errors, add code to continue code exicution so it can save,
 function error_handler($errno, $msg_text, $errfile, $errline)
 {
 	global $_CLASS, $phperror, $config, $show_prev_info, $MAIN_CFG;
@@ -184,8 +185,9 @@ function error_handler($errno, $msg_text, $errfile, $errline)
 					echo '<h2 align="center">Error</h2>';
 					echo '<br clear="all" /><table width="85%" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td><br clear="all" />' . $msg_text . '<hr />Please notify the board administrator or webmaster : <a href="mailto:' . $config['board_contact'] . '">' . $config['board_contact'] . '</a></td></tr></table><br clear="all" /></body></html>';
 					CloseTable();
+					script_close();
+
 				require('footer.php');
-				script_close();
 			}
 			
 			break;

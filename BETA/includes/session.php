@@ -383,7 +383,7 @@ class session
 	// Garbage collection
 	function gc(&$start_time)
 	{
-		global $_CLASS;
+		global $_CLASS, $MAIN_CFG;
 
 		switch (SQL_LAYER)
 		{
@@ -475,12 +475,7 @@ class session
 	
 	function get_data($name)
 	{
-		if (empty($this->data['sessions'][$name]))
-		{
-			return false;
-		}
-		
-		return $this->data['sessions'][$name];
+		return (empty($this->data['sessions'][$name])) ? false : $this->data['sessions'][$name];
 	}
 	
 	function kill_data($name)
@@ -689,6 +684,7 @@ class user extends session
 	{
 		global $phpEx;
 
+		//print_r(debug_backtrace());
 		if (is_array($langfile))
 		{
 			foreach ($langfile as $key => $lang_file)

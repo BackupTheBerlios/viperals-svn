@@ -18,8 +18,6 @@ if (!defined('VIPERAL')) {
 
 global $prefix, $_CLASS, $bgcolor1, $bgcolor2, $MAIN_CFG;
 
-//require_once('includes/nbbcode.php');
-
 $this->content = '<div style="width: 100%; height: '.$MAIN_CFG['Shoutblock']['height'].'px; overflow: auto;">
 ';
 
@@ -33,8 +31,6 @@ while ($row = $_CLASS['db']->sql_fetchrow($result)) {
 	$bgcolor = ($bgcolor == $bgcolor1) ? $bgcolor2 : $bgcolor1;
 	
 	$this->content .= '<div style="padding: 4px; background-color:' . $bgcolor . ';">';
-	
-	//$row['shout'] = set_smilies($row['shout']);
 	
 	if ($row['user_name'])
 	{

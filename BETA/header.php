@@ -11,8 +11,8 @@
 //																//
 //**************************************************************//
 
-if (!CPG_NUKE) {
-    Header('Location: /');
+if (!defined('VIPERAL')) {
+    header('location: /');
     die();
 }
 

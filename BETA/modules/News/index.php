@@ -41,28 +41,20 @@ Switch (get_variable('mode', 'GET', false))
 die;
 
 function news_main() {
-    global $db, $_CLASS, $prefix, $tipath, $SID, $MAIN_CFG, $currentlang, $user_news, $mainindex, $templates, $pagenum;
-  
-    require('header.php');
-	view_news();
-	require('footer.php');
-
-}
-
-function view_news() {
     global $_CLASS, $prefix, $MAIN_CFG, $templates;
     
+    $_CLASS['display']->display_head();
+
     $start = get_variable('start', 'GET', false, 'integer');
 	
-	$_CLASS['template']->caching = true;
+	/*$_CLASS['template']->caching = true;
 		
 	if (!$start && $_CLASS['template']->is_cached('modules/News/index.html')) {
 		
 		$_CLASS['template']->display('modules/News/index.html');
 		$_CLASS['template']->caching = false;
-		return;
-		
-	}
+		$_CLASS['display']->display_footer();
+	}*/
 	
 	if ($start) { $_CLASS['template']->caching = false; }
 	
@@ -97,58 +89,23 @@ function view_news() {
     }
     $_CLASS['db']->sql_freeresult($result);
 
-	// fix this up
-	$result = $_CLASS['db']->sql_query('SELECT COUNT(*) AS total FROM '.$prefix.'_news limit 1');
-	$num_items = ($row = $_CLASS['db']->sql_fetchrow($result)) ? $row['total'] : 0;
+	$result = $_CLASS['db']->sql_query('SELECT COUNT(*) AS total FROM '.$prefix.'_news');
+	$row = $_CLASS['db']->sql_fetchrow($result);
 	$_CLASS['db']->sql_freeresult($result);
-	//$base_url = 'News';
-	$base_url = '';
-	$per_page = 10;
-	$seperator = ' | ';
-	$total_pages = ceil($num_items/$per_page);
-	$on_page = floor($start / $per_page) + 1;
-	$page_string = ($on_page == 1) ? '<strong>1</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($on_page - 2) * $per_page), false, true) . '">' . $_CLASS['user']->lang['PREVIOUS'] . '</a>&nbsp;&nbsp;<a href="' . getlink($base_url, false, true) . '">1</a>';
 
-	if ($total_pages > 5)
-	{
-		$start_cnt = min(max(1, $on_page - 4), $total_pages - 5);
-		$end_cnt = max(min($total_pages, $on_page + 4), 6);
-		$page_string .= ($start_cnt > 1) ? ' ... ' : $seperator;
-		for($i = $start_cnt + 1; $i < $end_cnt; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page), false, true) . '">' . $i . '</a>';
-			if ($i < $end_cnt - 1)
-			{
-				$page_string .= $seperator;
-			}
-		}
-
-		$page_string .= ($end_cnt < $total_pages) ? ' ... ' : $seperator;
-	}
-	else
-	{
-		$page_string .= $seperator;
-		for($i = 2; $i < $total_pages; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page), false, true) . '">' . $i . '</a>';
-			if ($i < $total_pages)
-			{
-				$page_string .= $seperator;
-			}
-		}
-	}
-
-	$page_string .= ($on_page == $total_pages) ? '<strong>' . $total_pages . '</strong>' : '<a href="' . getlink($base_url . '&amp;start=' . (($total_pages - 1) * $per_page), false, true) . '">' . $total_pages . '</a>&nbsp;&nbsp;<a href="' . getlink($base_url . "&amp;start=" . ($on_page * $per_page), false, true) . '">' . $_CLASS['user']->lang['NEXT'] . '</a>';
+	$base_url = 'News';
+	$_CLASS['user']->img['pagination_sep'] = ', ';
 	
-	$_CLASS['template']->assign(array(
-		'NEWS_NUMBERING'   => $page_string
-		)
-	);
+	$pagination = generate_pagination($base_url, $row['total'], $limit, $start, $add_prevnext_text = true, 'NEWS_');
+	$_CLASS['template']->assign('NEWS_PAGINATION', $pagination);
 
-    if (THEMEPLATE) {
+    if (THEMEPLATE)
+    {
         $_CLASS['template']->display('modules/News/index.html');
-		$_CLASS['template']->caching = false;
+		//$_CLASS['template']->caching = false;
     } 
+    
+    $_CLASS['display']->display_footer();
 }
 
 function view_story($print = false) {

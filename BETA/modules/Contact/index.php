@@ -11,18 +11,16 @@
 //																//
 //**************************************************************//
 
-if (!defined('CPG_NUKE')) {
-    Header("Location: ../../");
+if (!defined('VIPERAL')) {
+    header('location: ../../');
     die();
 }
 
 $_CLASS['user']->add_lang();
 
-$Module['custom_title'] = $_CLASS['user']->lang['FEEDBACK_TITLE'];
+$_CLASS['display']->display_head($_CLASS['user']->lang['FEEDBACK_TITLE']);
 
-require('header.php');
-
-function feedback($sender_name, $sender_email, $message, $error)
+function feedback($sender_name, $sender_email, $message='', $error = false)
 {
 	global $_CLASS, $Module;
 	
@@ -34,7 +32,7 @@ function feedback($sender_name, $sender_email, $message, $error)
 			'L_PREVIEW' 			=> $_CLASS['user']->lang['PREVIEW'],
 			'L_SUBMIT' 				=> $_CLASS['user']->lang['SUBMIT'],
 			'IP'					=> $_CLASS['user']->ip,
-			'ERROR' 				=> ($error) ? $error : false,
+			'ERROR' 				=> $error,
 			'MESSAGE' 				=> $message,
 			'ACTION' 				=> getlink($Module['title']),
 			'SENDER_EMAIL' 			=> $sender_email,
@@ -45,9 +43,9 @@ function feedback($sender_name, $sender_email, $message, $error)
 	$_CLASS['template']->display('modules/Contact/index.html');
 }
 
-function Sendfeedback($sender_name, $sender_email, $message, $preview = false)
+function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
-global $_CLASS, $MAIN_CFG;
+	global $_CLASS, $MAIN_CFG;
 
         $mail_message = '<br />' .$message . '<br /><br />
         <div align="center">Message Sent from '. $MAIN_CFG['global']['nukeurl'] .'<br>
@@ -100,25 +98,25 @@ If (!empty($_POST['preview']) || !empty($_POST['contact'])) {
     $error = '';
 
 	foreach ($data as $field => $value) {
-		if (!$value) {
+		if (!$value)
+		{
 				$error .= $_CLASS['user']->lang['ERROR_'.$field].'<br />';
 				unset($field, $value, $lang);
-        }
-	}
-	
-	if ($data['EMAIL'] && !preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $data['EMAIL']))
-	{
-		$error .= 'Please enter a valid email address';
-	}
+				
+        } elseif ($field == 'EMAIL' && !validate_email($value)) {
+        
+			$error .= 'Please enter a valid email address<br />';
+		}
+	} 
 	
 	if (!empty($_POST['preview']) && $data['MESSAGE']) {
 	
-		Sendfeedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $preview = true);
+		send_feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $preview = true);
 		feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $error);
 	
 	} elseif (!empty($_POST['contact']) && !$error) {
 	
-		Sendfeedback($data['NAME'], $data['EMAIL'], $data['MESSAGE']);
+		send_feedback($data['NAME'], $data['EMAIL'], $data['MESSAGE']);
 	
 	} else {
 	
@@ -141,10 +139,10 @@ If (!empty($_POST['preview']) || !empty($_POST['contact'])) {
 		$recip = '';
 	}
 
-	feedback($sender_name, $sender_email, $message='' , $error= '');
+	feedback($sender_name, $sender_email);
   
 }
 
-require('footer.php');
+$_CLASS['display']->display_footer();
 
 ?>

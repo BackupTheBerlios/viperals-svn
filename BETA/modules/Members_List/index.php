@@ -123,7 +123,7 @@ switch ($mode)
 				$s_action = '';
 				break;
 
-			case 'msnm':
+			case 'msn':
 				$lang = 'MSNM';
 				$sql_field = 'user_msnm';
 				$s_select = 'S_SEND_MSNM';
@@ -138,7 +138,10 @@ switch ($mode)
 				break;
 
 			default:
-				$sql_field = '';
+				$lang = 'JABBER';
+				$sql_field = 'user_jabber';
+				$s_select = (@extension_loaded('xml')) ? 'S_SEND_JABBER' : 'S_NO_SEND_JABBER';
+				$s_action = getlink("Members_List&amp;mode=contact&amp;action=$action&amp;u=$user_id");
 				break;
 		}
 
@@ -194,7 +197,6 @@ switch ($mode)
 				break;
 		}
 
-		// Send vars to the template
 		$_CLASS['template']->assign(array(
 			'L_SEND_IM'				=> $_CLASS['user']->lang['SEND_IM'],
 			'L_IM_RECIPIENT'		=> $_CLASS['user']->lang['IM_RECIPIENT'],
@@ -454,7 +456,7 @@ switch ($mode)
 			
 			'U_ADD_FRIEND'		=> getlink('Control_Panel&amp;i=zebra&amp;add=' . urlencode($member['username'])),
 			'U_ACTIVE_FORUM'	=> getlink('Forums&amp;file=viewforum&amp;f='.$active_f_id),
-			'U_ACTIVE_TOPIC'	=> getlink('Forums&amp;file=viewforum&amp;t='.$active_t_id),
+			'U_ACTIVE_TOPIC'	=> getlink('Forums&amp;file=viewtopic&amp;t='.$active_t_id),
 			
 			'L_VIEWING_PROFILE' 	=> sprintf($_CLASS['user']->lang['VIEWING_PROFILE'], $member['username']),
 			'L_USER_PRESENCE' 		=> $_CLASS['user']->lang['USER_PRESENCE'],

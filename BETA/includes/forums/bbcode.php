@@ -165,13 +165,7 @@ class bbcode
 		if (empty($this->template_filename))
 		{
 			$style = 'primary';
-			if (!empty($_CLASS['user']->theme['secondary']))
-			{
-				// If the primary style has custom templates for BBCodes then we'll make sure
-				// the bbcode.html file is present, otherwise we'll use the secondary style
-			}
-
-			$this->template_bitfield = $_CLASS['user']->theme['bbcode_bitfield'];
+			$this->template_bitfield = $_CLASS['user']->img['bbcode_bitfield'];
 			$this->template_filename = file_exists('themes/' . $_CLASS['display']->theme . '/template/modules/Forums/bbcode.html') ? 'themes/' . $_CLASS['display']->theme . '/template/modules/Forums/bbcode.html' : 'includes/templates/modules/Forums/bbcode.html';
 		}
 

@@ -11,65 +11,48 @@
 //																//
 //**************************************************************//
 
-if (!defined('CPG_NUKE')) 
-{
-	header('location: ../../');
-	exit;
+if (!defined('VIPERAL')) {
+    header('location: ../../');
+    die();
 }
 
-require_once('header.php');
+$_CLASS['user']->add_lang();
 
-$module_name = basename(dirname(__FILE__));
+$_CLASS['display']->display_head($_CLASS['user']->lang['RECOMEND_US']);
 
-get_lang($module_name);
-
-
-function RecommendSite($error, $fname, $fmail, $yname, $ymail) {
-	global $_CLASS, $userinfo;
+function recommend($sender_name, $sender_email, $receiver_name='', $receiver_email='', $message='', $error = false) {
+	global $_CLASS, $Module;
   
-	if ($error != '') {
-		OpenTable();
+	$_CLASS['template']->assign(array( 
+		'L_YOURNAME' 			=> $_CLASS['user']->lang['YOURNAME'],
+		'L_YOUREMAIL'	 		=> $_CLASS['user']->lang['YOUREMAIL'],
+		'L_FRIENDNAME' 			=> $_CLASS['user']->lang['FRIENDNAME'],
+		'L_FRIENDEMAIL'	 		=> $_CLASS['user']->lang['FRIENDEMAIL'],
+		'L_MESSAGE' 			=> $_CLASS['user']->lang['MESSAGE'],
+		'L_PREVIEW' 			=> $_CLASS['user']->lang['PREVIEW'],
+		'L_SUBMIT' 				=> $_CLASS['user']->lang['SUBMIT'],
+		'IP'					=> $_CLASS['user']->ip,
+		'ERROR' 				=> $error,
+		'MESSAGE' 				=> $message,
+		'ACTION' 				=> getlink($Module['title']),
+		'SENDER_EMAIL' 			=> $sender_email,
+		'SENDER_NAME' 			=> $sender_name,
+		)
+	);
 		
-		echo '<div align="center"><font color="#990000">'.$error.'</font></div>';
-		
-		CloseTable();
-	} else {
-		if (is_user()) {
-			$yname = $_CLASS['user']->data['username'];
-			$ymail = $_CLASS['user']->data['user_email'];
-		}
-	}
-	
-	OpenTable();
-	
-	echo '<form method="post" action="'.getlink().'">
-		<div align="center" class="content"><strong>'._RECOMMENDINFO.'</strong>
-		<br /><br /><br />
-		<strong>'._FYOURNAME.'</strong><br />
-		<input type="text" name="yname" value="'.$yname.'" alt="Your Name" /><br /><br />
-		<strong>'._FYOUREMAIL.'</strong><br />
-		<input type="text" name="ymail" value="'.$ymail.'" alt="Your Email Address" /><br /><br /><br />
-		<strong>'._FFRIENDNAME.'</strong><br />
-		<input type="text" name="fname" value="'.$fname.'" alt="Your Friend\'s Name" /><br /><br />
-		<strong>'._FFRIENDEMAIL.'</strong><br />
-		<input type="text" name="fmail" value="'.$fmail.'" alt="Your Friend\'s Email Address" />
-		<br /><br />
-		<input type="submit" name="recommendSite" value="'._SEND.'" />
-		</div></form>';
-		
-	CloseTable();
+	$_CLASS['template']->display('modules/Recommend_Us/index.html');
 	
 }
 
 
-function SendSite($yname, $ymail, $fname, $fmail) {
+function send_recommend($yname, $ymail, $fname, $fmail) {
 	global $sitename, $slogan, $nukeurl, $module_name, $SID;
 	
-	$to_name = stripslashes(FixQuotes(check_html(removecrlf($fname))));
-	$to = stripslashes(FixQuotes(check_html(removecrlf($fmail))));
-	$from_name = stripslashes(FixQuotes(check_html(removecrlf($yname))));
-	$from = stripslashes(FixQuotes(check_html(removecrlf($ymail))));
-	
+	if (is_user()) {
+		$yname = $_CLASS['user']->data['username'];
+		$ymail = $_CLASS['user']->data['user_email'];
+	}
+		
 	$subject = ""._HAVELOOK." $sitename";
 	
 	$ip_addy = $_SERVER['REMOTE_ADDR'];
@@ -101,30 +84,50 @@ function SendSite($yname, $ymail, $fname, $fmail) {
    
 }
 
-if (isset($_POST['recommendSite']))
+if (isset($_POST['recommend']))
 {
-	unset($error);
-	
-	foreach ($_POST as $field => $value)
-	{
-		if ($value == '')
-		{
-			$fieldlang = "_$field";
-			$fieldlang = (defined($fieldlang)) ? constant($fieldlang) : $fieldlang;
-			$error .=  $fieldlang. "<br />";
+
+    $data['FNAME'] = get_variable('receiver_name', 'POST', '');
+    $data['FEMAIL'] = get_variable('receiver_email', 'POST', '');
+    $data['NAME'] = get_variable('sender_email', 'POST', '');
+    $data['EMAIL'] = get_variable('sender_name', 'POST', '');
+    $message = get_variable('message', 'POST', '');
+    $error = '';
+
+	foreach ($data as $field => $value) {
+		
+		if (!$value) {
+				$error .= $_CLASS['user']->lang['ERROR_'.$field].'<br />';
+				unset($field, $value, $lang);
+        }
+         elseif ($field == 'EMAIL' || $field == 'FEMAIL' && validate_email($value)) {
+			$error .= 'Please enter a valid email address<br />';
 		}
-		$field = $value;
 	}
 	
-	if (isset($error))
+	if ($data['EMAIL'] && !validate_email($data['EMAIL']))
 	{
-		RecommendSite($error, $fname, $fmail, $yname, $ymail);
+		$error .= 'Please enter a valid email address';
+	}
+	
+	if ($error)
+	{
+		recommend($data['NAME'], $data['EMAIL'], $data['FNAME'], $data['FEMAIL'], $message, $error);
 	} else {
-		SendSite($yname, $ymail, $fname, $fmail);
+	//	send_recommend($yname, $ymail, $fname, $fmail);
 	}
 
-} else {	
-	RecommendSite($error = '', $fname = '', $fmail = '', $yname = '', $ymail = '');
+} else {
+
+	if (is_user())
+	{
+		$sender_name = $_CLASS['user']->data['username'];
+		$sender_email = $_CLASS['user']->data['user_email'];
+	} else {
+		$sender_email = $sender_name = '';
+	}
+	
+	recommend($sender_name, $sender_email);
 }
 
 include('footer.php');

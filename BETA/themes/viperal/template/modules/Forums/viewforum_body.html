@@ -87,7 +87,7 @@
 
 
 	{ if $S_HAS_SUBFORUM }
-		{ include file='forums/viewforum_subforum.html }
+		{ include file='modules/Forums/viewforum_subforum.html }
 	{ /if }
 
 	{ if $S_IS_POSTABLE }
@@ -286,8 +286,8 @@
 
 	<table width="100%" cellspacing="0">
 		<tr>
-			<td>{ if $S_DISPLAY_SEARCHBOX }{ include file='forums/searchbox.html' }{ /if }</td>
-			<td align="right">{ include file='forums/jumpbox.html' }</td>
+			<td>{ if $S_DISPLAY_SEARCHBOX }{ include file='modules/Forums/searchbox.html' }{ /if }</td>
+			<td align="right">{ include file='modules/Forums/jumpbox.html' }</td>
 		</tr>
 	</table>
 
