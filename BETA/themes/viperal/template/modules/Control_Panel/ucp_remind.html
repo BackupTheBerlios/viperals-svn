@@ -1,18 +1,8 @@
-{if $T_STYLESHEET_LINK }
-	<link rel="stylesheet" href="{$T_STYLESHEET_LINK}" type="text/css" />
-{ else }
-	<style type="text/css">
-	<!--
-	{$T_THEME_DATA}
-	//-->
-	</style>
-{ /if }
-
 {php} OpenTable(); {/php}
 
-<form action="{$S_PROFILE_ACTION}" method="post"><table width="50%" cellspacing="2" cellpadding="2" border="0" align="center">
+<form action="{$S_PROFILE_ACTION}" method="post">
 
-<table class="tablebg" width="50%" cellspacing="1" cellpadding="4" border="0" align="center">
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr> 
 		<th colspan="2">{$L_SEND_PASSWORD}</th>
 	</tr>
@@ -30,6 +20,8 @@
 			<input type="submit" name="submit" value="{$L_SUBMIT}" class="btnmain" />&nbsp;&nbsp;<input type="reset" value="{$L_RESET}" name="reset" class="btnlite" />
 		</td>
 	</tr>
-</table></form>
+</table>
+
+</form>
 
 {php} CloseTable(); {/php}

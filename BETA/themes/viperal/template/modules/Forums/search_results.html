@@ -1,0 +1,119 @@
+{ include file='modules/Forums/overall_header.html' }
+
+<form method="post" action="{ $S_SEARCH_ACTION }">
+
+<table width="100%" cellspacing="1">
+	<tr>
+		<td colspan="2"><span class="titles">{ $SEARCH_MATCHES }</span><br /></td>
+	</tr>
+	<tr>
+		<td class="genmed">{ $L_SEARCHED_FOR }: <a href="{ $U_SEARCH_WORDS }"><b>{ $SEARCH_WORDS }</b></a>{ if $IGNORED_WORDS } { $L_IGNORED_TERMS}: <b>{ $IGNORED_WORDS}</b>{ /if }</td>
+		<td align="right"><span class="genmed">{ $L_SEARCH_IN_RESULTS }: </span><input type="text" name="search_keywords" value="" /> <input class="btnlite" type="submit" name="submit" value="{ $L_GO}" /></td>
+	</tr>
+</table>
+
+<br clear="all" />
+
+{ if $S_SHOW_TOPICS }
+
+	<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th width="4%" nowrap="nowrap">&nbsp;</th>
+		<th colspan="2" nowrap="nowrap">&nbsp;{ $L_TOPICS }&nbsp;</th>
+		<th nowrap="nowrap">&nbsp;{ $L_AUTHOR }&nbsp;</th>
+		<th nowrap="nowrap">&nbsp;{ $L_REPLIES }&nbsp;</th>
+		<th nowrap="nowrap">&nbsp;{ $L_VIEWS }&nbsp;</th>
+		<th nowrap="nowrap">&nbsp;{ $L_LAST_POST }&nbsp;</th>
+	</tr>
+	{section name=searchresultsloop loop=$searchresults}
+	
+	<tr valign="middle">
+		<td class="row1" width="25" align="center">{ $searchresults[searchresultsloop].TOPIC_FOLDER_IMG }</td>
+		<td class="row1" width="25" align="center">{ $searchresults[searchresultsloop].TOPIC_ICON_IMG }</td>
+		<td class="row1">
+			{ if $searchresults[searchresultsloop].S_TOPIC_UNAPPROVED }
+				<a href="{ $topicrow.U_MCP_QUEUE}">{ $UNAPPROVED_IMG }</a>&nbsp;
+			{ /if }
+			{ if $searchresults[searchresultsloop].S_TOPIC_REPORTED }
+				<a href="{ $topicrow.U_MCP_REPORT}">{ $REPORTED_IMG }</a>&nbsp;
+			{ /if }
+			<p class="topictitle"> { $topicrow.ATTACH_ICON_IMG } <a href="{ $searchresults[searchresultsloop].U_VIEW_TOPIC}">{ $searchresults[searchresultsloop].TOPIC_TITLE}</a></p>
+			{ if $searchresults[searchresultsloop].PAGINATION }
+				<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $searchresults[searchresultsloop].PAGINATION } ] </p>
+			{ /if }
+			<p class="gensmall">in <a href="{ $searchresults[searchresultsloop].U_VIEW_FORUM}">{ $searchresults[searchresultsloop].FORUM_TITLE}</a></p>
+		</td>
+		<td class="row2" width="100" align="center"><p class="topicauthor">{ $searchresults[searchresultsloop].TOPIC_AUTHOR}</p></td>
+		<td class="row1" width="50" align="center"><p class="topicdetails">{ $searchresults[searchresultsloop].REPLIES}</p></td>
+		<td class="row2" width="50" align="center"><p class="topicdetails">{ $searchresults[searchresultsloop].VIEWS}</p></td>
+		<td class="row1" width="120" align="center">
+			<p class="topicdetails">{ $searchresults[searchresultsloop].LAST_POST_TIME }</p>
+			<p class="topicdetails">{ if $searchresults[searchresultsloop].U_LAST_POST_AUTHOR }<a href="{ $searchresults[searchresultsloop].U_LAST_POST_AUTHOR}">{ $searchresults[searchresultsloop].LAST_POST_AUTHOR}</a>{ else }{ $searchresults[searchresultsloop].LAST_POST_AUTHOR}{ /if }
+				<a href="{ $searchresults[searchresultsloop].U_LAST_POST}">{ $searchresults[searchresultsloop].LAST_POST_IMG }</a>
+			</p>
+		</td>
+	</tr>
+	{ /section }
+	<tr>
+		<td class="cat" colspan="7" valign="middle" align="center"><span class="gensmall">{ $L_SORT_BY}:</span> { $S_SELECT_SORT_KEY} { $S_SELECT_SORT_DIR}&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_GO}" /></td>
+	</tr>
+	</table>
+
+{ else }
+
+	<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th width="150" nowrap="nowrap">{ $L_AUTHOR}</th>
+		<th width="100%" nowrap="nowrap">{ $L_MESSAGE}</th>
+	</tr>
+	{section name=searchresultsloop loop=$searchresults}
+	<tr class="row2">
+	{ if $searchresults[searchresultsloop].S_IGNORE_POST }
+		<td class="gensmall" colspan="2" height="25" align="center">{ $searchresults[searchresultsloop].L_IGNORE_POST}</td>
+	{ else }
+		<td colspan="2" height="25"><p class="topictitle"><a name="{ $searchresults[searchresultsloop].POST_ID}"></a>&nbsp;{ $L_FORUM}: <a href="{ $searchresults[searchresultsloop].U_VIEW_FORUM}">{ $searchresults[searchresultsloop].FORUM_TITLE}</a> &nbsp; { $L_TOPIC}: <a href="{ $searchresults[searchresultsloop].U_VIEW_TOPIC}">{ $searchresults[searchresultsloop].TOPIC_TITLE}</a></p></td>
+	</tr>
+	<tr class="row1">
+		<td width="150" align="center" valign="middle"><b class="postauthor">{ $searchresults[searchresultsloop].POSTER_NAME}</b></td>
+		<td height="25"><table width="100%" cellspacing="0" cellpadding="0" border="0">
+			<tr>
+				<td class="gensmall"><div style="float:left">&nbsp;<b>{ $L_POST_SUBJECT}:</b> <a href="{ $searchresults[searchresultsloop].U_VIEW_POST}">{ $searchresults[searchresultsloop].POST_SUBJECT}</a></div><div style="float:right"><a href="{ $searchresults[searchresultsloop].U_VIEW_POST}">{ $searchresults[searchresultsloop].MINI_POST_IMG}</a><b>{ $L_POSTED}:</b> { $searchresults[searchresultsloop].POST_DATE}&nbsp;</div></td>
+			</tr>
+		</table></td>
+	</tr>
+	<tr class="row1">
+		<td width="150" align="center" valign="top"><br /><span class="postdetails">{ $L_REPLIES}: <b>{ $searchresults[searchresultsloop].TOPIC_REPLIES}</b><br />{ $L_VIEWS}: <b>{ $searchresults[searchresultsloop].TOPIC_VIEWS}</b></span><br /><br /></td>
+		<td valign="top"><table width="100%" cellspacing="5">
+			<tr>
+				<td class="postbody">{ $searchresults[searchresultsloop].MESSAGE}</td>
+			</tr>
+		</table></td>
+	</tr>
+	{ /if }
+	<tr>
+		<td class="spacer" colspan="2"><img src="images/spacer.gif" height="1" alt="" /></td>
+	</tr>
+	{ /section }
+	<tr>
+		<td class="cat" colspan="2" align="center"><span class="gensmall">{ $L_SORT_BY}:</span> { $S_SELECT_SORT_KEY} { $S_SELECT_SORT_DIR}&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_GO}" /></td>
+	</tr>
+	</table>
+{ /if }
+
+</form>
+
+<div class="nav" style="float:left">{ $PAGE_NUMBER}&nbsp;[ { $TOTAL_MATCHES} ]</div><div class="nav" style="float:right">{ if $PAGINATION }<b><a href="javascript:jumpto();">{ $L_GOTO_PAGE}</a> { if $PREVIOUS_PAGE }<a href="{ $PREVIOUS_PAGE}">{ $L_PREVIOUS}</a>&nbsp;&nbsp;{ /if }{ $PAGINATION}{ if $NEXT_PAGE }&nbsp;&nbsp;<a href="{ $NEXT_PAGE}">{ $L_NEXT}</a>{ /if }</b>{ /if }</div>
+
+<br clear="all" /><br />
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<td class="row1"><div class="nav" style="float:left"><a href="{ $U_INDEX}">{ $L_INDEX}</a></div><div class="gensmall" style="float:right">{ $S_TIMEZONE}</div></td>
+	</tr>
+</table>
+
+<br clear="all" />
+
+<div style="float:right">{ include file='modules/Forums/jumpbox.html' }</div>
+
+{ include file='modules/Forums/overall_footer.html' }

@@ -11,11 +11,6 @@
 //																//
 //**************************************************************//
 
-if (extension_loaded('zlib'))
-{
-	ob_start('ob_gzhandler');
-}
-
 if (!defined('VIPERAL'))
 {
     if (isset($_GET['error']) && is_numeric($_GET['error']))
@@ -77,11 +72,11 @@ $db	=& $_CLASS['db'];
 
 if (is_admin() && $MAIN_CFG['global']['error'] && VIPERAL != 'MINILOAD')
 {
-	//$_CLASS['error']->report = $MAIN_CFG['global']['error'];
+	$_CLASS['error']->report = $MAIN_CFG['global']['error'];
 	
 } else {
 
-	//$MAIN_CFG['global']['error'] = 0;
+	$MAIN_CFG['global']['error'] = 0;
 }
 
 if ($MAIN_CFG['global']['maintenance'] && !is_admin() && VIPERAL != 'Admin')

@@ -1,7 +1,5 @@
 { include file='modules/Control_Panel/ucp_header.html' }
 
-{* $Id: ucp_main_drafts.html,v 1.5 2004/05/02 13:06:57 acydburn Exp $ *}
-
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
 		<th colspan="4">{$L_UCP}</th>
@@ -31,14 +29,15 @@
 
 		{ if $smarty.section.draftrowloop.index is even }<tr class="row1">{ else }<tr class="row2">{ /if }
 
-		<td class="postdetails" style="padding: 4px;">{$draftrow[draftrowloop].DATE}</td>
-		<td style="padding: 4px;"><b class="gen">{$draftrow[draftrowloop].DRAFT_SUBJECT}</b>
+		<td class="postdetails" style="padding: 4px;" nowrap="nowrap">{ $draftrow[draftrowloop].DATE }</td>
+		<td style="padding: 4px;" valign="top" width="100%">
+			<p class="topictitle">{ $draftrow[draftrowloop].DRAFT_SUBJECT }</p>
 			{ if $draftrow[draftrowloop].S_LINK_TOPIC }<br /><span class="gensmall">{$L_TOPIC}: <a href="{$draftrow[draftrowloop].U_VIEW}">{$draftrow[draftrowloop].TITLE}</a></span>
 			{ elseif $draftrow[draftrowloop].S_LINK_FORUM }<br /><span class="gensmall">{$L_FORUM}: <a href="{$draftrow[draftrowloop].U_VIEW}">{$draftrow[draftrowloop].TITLE}</a></span>
 			{ elseif $draftrow[draftrowloop].S_LINK_PM }<br /><span class="gensmall">{$L_PRIVATE_MESSAGE}</span>
 			{ else }<br /><span class="gensmall">{$L_NO_TOPIC_FORUM}</span>{ /if }
 		</td>
-		<td style="padding: 4px;" align="center"><span class="gen">{ if $draftrow[draftrowloop].U_INSERT }<a href="{$draftrow[draftrowloop].U_INSERT}">{$L_LOAD_DRAFT}</a><br />{ /if }<a href="{$draftrow[draftrowloop].U_VIEW_EDIT}">{$L_VIEW_EDIT}</a></td>
+		<td style="padding: 4px;" align="center" nowrap="nowrap"><span class="gen">{ if $draftrow[draftrowloop].U_INSERT }<a href="{ $draftrow[draftrowloop].U_INSERT }">{ $L_LOAD_DRAFT }</a><br />{ /if }<a href="{ $draftrow[draftrowloop].U_VIEW_EDIT }">{ $L_VIEW_EDIT }</a></td>
 		<td style="padding: 4px;" align="center"><input type="checkbox" name="d[{$draftrow[draftrowloop].DRAFT_ID}]" /></td>
 	</tr>
 	{ sectionelse }

@@ -99,6 +99,11 @@ class display
 		
 		$this->displayed['header'] = true;
 		
+		if (extension_loaded('zlib'))
+		{
+			ob_start('ob_gzhandler');
+		}
+
 		if ($title)
 		{
 			$Module['title'] = $title;
@@ -188,7 +193,7 @@ class display
 		
 		if (THEMEPLATE)
 		{
-			themehead();
+			Themeheader();
 		}
 		
 		if ($_CLASS['editor'])
@@ -297,19 +302,9 @@ class display
 	}
 }
 
-/*
-$hiddenblocks = array();
-if (isset($_COOKIE["hiddenblocks"])) {
-	$tmphidden = explode(":", $_COOKIE["hiddenblocks"]);
-	$tempcount = count($tmphidden);
-	for($i=0; $i<$tempcount; $i++) {
-		$hiddenblocks[$tmphidden[$i]] = true;
-	}
-	unset($tempcount);
-}*/
-
 function hideblock($id) 
 {
+    // based/idea from cpgnuke www.cpgnuke.com
     static $hiddenblocks = false;
     
     if (!$hiddenblocks) 
@@ -326,44 +321,6 @@ function hideblock($id)
         }
     }
     return (empty($hiddenblocks[$id]) ? false : true);
-}
-
-function yesno_option($name, $value=0)
-{
-    if (function_exists('theme_yesno_option')) {
-        return theme_yesno_option($name, $value);
-    } else {
-        $sel[intval($value)] = ' checked="checked"';
-        return '<input type="radio" name="'.$name.'" value="1"'.$sel[1].' />'._YES.' &nbsp; <input type="radio" name="'.$name.'" value="0" '.$sel[0].' />'._NO;
-    }
-}
-
-function select_option($name, $default, $options)
-{
-    if (function_exists('theme_select_option'))
-    {
-        return theme_select_option($name, $default, $options);
-    } else {
-        $select = '<select name="'.$name."\">\n";
-        foreach($options as $var) {
-            $select .= '<option'.(($var == $default)?' selected="selected"':'').">$var</option>\n";
-        }
-        return $select.'</select>';
-    }
-}
-
-function select_box($name, $default, $options)
-{
-    if (function_exists('theme_select_box')) {
-        return theme_select_box($name, $default, $options);
-    } else {
-        $select = '<select name="'.$name."\">\n";
-        foreach($options as $val => $title) {
-			$var = (isset($val)) ? $val : '';
-            $select .= "<option value=\"$val\"".(($var == $default)?' selected="selected"':'').">$title</option>\n";
-        }
-        return $select.'</select>';
-    }
 }
 
 ?>

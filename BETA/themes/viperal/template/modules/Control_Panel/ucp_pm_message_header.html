@@ -17,7 +17,7 @@ function marklist(form_name, status)
 	<tr>
 		<td class="gensmall" nowrap="nowrap" align="left">
 			{ if $S_UNREAD }<b>{$L_UNREAD_MESSAGES}</b>{ else }{$FOLDER_STATUS}{ /if }
-		<td class="gensmall" nowrap="nowrap" align="right">{ if $U_INBOX }<a href="{$U_INBOX}">{$L_PM_INBOX}</a>{ else }{$L_PM_INBOX}{ /if }&nbsp;|&nbsp;{ if $U_OUTBOX }<a href="{$U_OUTBOX}">{$L_PM_OUTBOX}</a>{ else }{$L_PM_OUTBOX}{ /if }&nbsp;|&nbsp;{ if $U_SENTBOX }<a href="{$U_SENTBOX}">{$L_PM_SENTBOX}</a>{ else }{$L_PM_SENTBOX}{ /if }&nbsp;|&nbsp;<a href="{$U_CREATE_FOLDER}">{$L_CREATE_FOLDER}</a></td>
+		<td class="gensmall" nowrap="nowrap" align="right">{ if !$S_IN_INBOX }<a href="{$U_INBOX}">{$L_PM_INBOX}</a>{ else }<b>{$L_PM_INBOX}</b>{ /if }&nbsp;|&nbsp;{ if !$S_IN_OUTBOX }<a href="{$U_OUTBOX}">{$L_PM_OUTBOX}</a>{ else }<b>{$L_PM_OUTBOX}</b>{ /if }&nbsp;|&nbsp;{ if !$S_IN_SENTBOX }<a href="{$U_SENTBOX}">{$L_PM_SENTBOX}</a>{ else }<b>{$L_PM_SENTBOX}</b>{ /if }&nbsp;|&nbsp;<a href="{$U_CREATE_FOLDER}">{$L_CREATE_FOLDER}</a></td>
 	</tr>
 </table>
 

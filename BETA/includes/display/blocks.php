@@ -210,9 +210,10 @@ class blocks
 
 		if ($this->blocksrow['position'] == BLOCK_LEFT || $this->blocksrow['position'] == BLOCK_RIGHT)
 		{
-			themesidebox($this->blocksrow['title'], $this->content, $this->blocksrow['id'], $this->template);
+			$this->blocksrow['content'] = $this->content;
+			side_block($this->blocksrow);
 		} else {
-			$this->center_block();
+			$this->block_center();
 		}
 		
 		$this->content = $this->template = $this->info = false;
@@ -267,7 +268,7 @@ class blocks
 		}
 	}
 	
-	function center_block()
+	function block_center()
 	{
 		if (THEMEPLATE)
 		{

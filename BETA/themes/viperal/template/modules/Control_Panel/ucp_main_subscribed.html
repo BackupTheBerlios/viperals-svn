@@ -36,7 +36,7 @@ function marklist(form_name, status)
 	{ /if }
 
 		<td style="padding: 4px;" width="20" align="center" valign="middle">{$forumrow[forumrowloop].FORUM_FOLDER_IMG}</td>
-		<td style="padding: 4px;" width="100%" class="topictitle"><a href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a></span></td>
+		<td style="padding: 4px;" width="100%"><p class="topictitle"><a href="{ $forumrow[forumrowloop].U_VIEWFORUM }">{ $forumrow[forumrowloop].FORUM_NAME }</a></p></td>
 		<td class="gensmall" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{ if $forumrow[forumrowloop].LAST_POST_TIME }{$forumrow[forumrowloop].LAST_POST_TIME}<br />
 		{ if $forumrow[forumrowloop].U_LAST_POST_AUTHOR }<a href="{$forumrow[forumrowloop].U_LAST_POST_AUTHOR}">{$forumrow[forumrowloop].LAST_POST_AUTHOR}</a>{ else }{$forumrow[forumrowloop].LAST_POST_AUTHOR}
 		{ /if } <a href="{$forumrow[forumrowloop].U_LAST_POST}">{$forumrow[forumrowloop].LAST_POST_IMG}</a>{ else }{$L_NO_POSTS}{ /if }</td>
@@ -51,7 +51,21 @@ function marklist(form_name, status)
 	<tr>
 		<th colspan="4">{$L_WATCHED_TOPICS}</th>
 	</tr>
-
+	
+	{ if $TOTAL_TOPICS }
+	<tr>
+		<td class="row3" colspan="4">
+			<table width="100%" cellspacing="1">
+			<tr>
+				<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{ $PAGE_NUMBER }<br /></td>
+				<td class="gensmall" nowrap="nowrap">&nbsp;[ { $TOTAL_TOPICS } ]&nbsp;</td>
+				<td class="gensmall" width="100%" align="right" nowrap="nowrap">{ if $PAGINATION }<b><a href="javascript:jumpto();">{ $L_GOTO_PAGE }</a> { if $PREVIOUS_PAGE }<a href="{ $PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;&nbsp;{ /if }{ $PAGINATION }{ if $NEXT_PAGE }&nbsp;&nbsp;<a href="{ $NEXT_PAGE }">{ $L_NEXT }</a>{ /if }</b>{ /if }</td>
+			</tr>
+			</table>
+		</td>
+	</tr>
+	{ /if }
+	
 	{section name=topicrowloop loop=$topicrow}
 
 	{ if $smarty.section.topicrowloop.index is even }
@@ -59,10 +73,18 @@ function marklist(form_name, status)
 	{ else }
 	<tr class="row2">
 	{ /if }
-
-		<td style="padding: 4px;" width="20" align="center" valign="middle">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
-		<td style="padding: 4px;" width="100%"><span class="topictitle">{$topicrow[topicrowloop].NEWEST_POST_IMG}{$topicrow[topicrowloop].ATTACH_ICON_IMG}{$topicrow[topicrowloop].TOPIC_TYPE}<a href="{$topicrow[topicrowloop].U_VIEW_TOPIC}">{$topicrow[topicrowloop].TOPIC_TITLE}</a></span><span class="gensmall"><br />{$topicrow[topicrowloop].GOTO_PAGE}</span></td>
-		<td class="postdetails" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{$topicrow[topicrowloop].LAST_POST_TIME}<br />{$topicrow[topicrowloop].LAST_POST_AUTHOR} {$topicrow[topicrowloop].LAST_POST_IMG}</td>
+		<td style="padding: 4px;" width="20" align="center" valign="middle">{ $topicrow[topicrowloop].TOPIC_FOLDER_IMG }</td>
+		<td style="padding: 4px;" width="100%" valign="top">
+			<p class="topictitle">{ $topicrow[topicrowloop].NEWEST_POST_IMG } { $topicrow[topicrowloop].ATTACH_ICON_IMG } <a href="{ $topicrow[topicrowloop].U_VIEW_TOPIC }">{ $topicrow[topicrowloop].TOPIC_TITLE }</a></p><br />
+			{ if $topicrow[topicrowloop].PAGINATION }
+				<p class="gensmall"> [ { $GOTO_PAGE_IMG } { $L_GOTO_PAGE }: { $topicrow[topicrowloop].PAGINATION } ] </p>
+			{ /if }
+		<td style="padding: 4px;" align="center" valign="top" nowrap="nowrap">
+			<p class="topicdetails">{ $topicrow[topicrowloop].LAST_POST_TIME}</p>
+			<p class="topicdetails">{ if $topicrow[topicrowloop].U_LAST_POST_AUTHOR }<a href="{ $topicrow[topicrowloop].U_LAST_POST_AUTHOR}">{ $topicrow[topicrowloop].LAST_POST_AUTHOR}</a>{ else }{ $topicrow[topicrowloop].LAST_POST_AUTHOR}{ /if }
+				<a href="{ $topicrow[topicrowloop].U_LAST_POST }">{ $topicrow[topicrowloop].LAST_POST_IMG }</a>
+			</p>
+		</td>
 		<td style="padding: 4px;"> <input type="checkbox" name="t[{$topicrow[topicrowloop].TOPIC_ID}]" /> </td>
 	</tr>
 	{ sectionelse }

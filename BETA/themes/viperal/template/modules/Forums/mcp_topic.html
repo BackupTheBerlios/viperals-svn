@@ -1,4 +1,4 @@
-{ include file='forums/mcp_header.html' }
+{ include file='modules/Forums/mcp_header.html' }
 
 <form name="mcp" method="post" action="{$S_MCP_ACTION}"><table class="tablebg" width="100%" cellspacing="1">
 	{ if $S_CAN_SPLIT }
@@ -102,7 +102,7 @@
 								{ /if }
 								{ if $postrow[postrowloop].S_POST_REPORTED }
 								<td width="5">{$REPORTED_IMG}</td>
-								<td class="gensmall" nowrap="nowrap">&nbsp;<b><a style="color:red" href="{$postrow[postrowloop].U_MCP_REPORT}">{$L_POST_REPORTED}</a></b>&nbsp;</td>
+								<td class="gensmall" nowrap="nowrap">&nbsp;<b><a style="color:red" href="{$postrow[postrowloop].U_POST_DETAILS}">{$L_POST_REPORTED}</a></b>&nbsp;</td>
 								{ /if }
 								<td width="100%">&nbsp;</td>
 								<td width="10" nowrap="nowrap">{$postrow[postrowloop].POST_ICON_IMG}</td>
@@ -135,4 +135,4 @@
 	</tr>
 </table>
 
-{ include file='forums/mcp_footer.html' }
+{ include file='modules/Forums/mcp_footer.html' }

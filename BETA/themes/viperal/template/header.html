@@ -45,7 +45,7 @@
 	
 	<div class="bodymain" style="margin-right: {$MARGINRIGHT}">
 
-	{ if $messageblock }
+	{ if isset($messageblock) }
 	
 		<div class="messageblock">
 	
@@ -59,7 +59,7 @@
 	<br />
 	{ /if }
 
-	{ if $centerblock }
+	{ if isset($centerblock) }
 	  {section name=blockcenterloop loop=$centerblock}
 	
 	<div class="centerblock">

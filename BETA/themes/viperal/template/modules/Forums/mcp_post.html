@@ -1,4 +1,4 @@
-{ include file='forums/mcp_header.html' }
+{ include file='modules/Forums/mcp_header.html' }
 
 <table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg"><form method="post" name="mcp" action="{$U_APPROVE_ACTION}">
 <tr>
@@ -43,7 +43,7 @@
 { if $S_MCP_QUEUE }
 	<br clear="all" />
 
-	{ if $S_TOPIC_REVIEW }{ include file='forums/posting_topic_review.html' }{ /if }
+	{ if $S_TOPIC_REVIEW }{ include file='modules/Forums/posting_topic_review.html' }{ /if }
 { else }
 	{ if $S_SHOW_USER_NOTES }
 		<br /><a name="usernotes"></a>
@@ -188,4 +188,4 @@
 
 { /if }
 
-{ include file='forums/mcp_footer.html' }
+{ include file='modules/Forums/mcp_footer.html' }

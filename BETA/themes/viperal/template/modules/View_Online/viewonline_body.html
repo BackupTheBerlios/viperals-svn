@@ -1,6 +1,4 @@
-{ include file='forums/simple_header.html' }
-
-	{* $Id: viewonline_body.html,v 1.8 2004/01/10 19:13:26 psotfx Exp $ *}
+{ include file='modules/Forums/simple_header.html' }
 
 	<table class="tablebg" width="100%" cellspacing="1">
 		<tr> 
@@ -24,7 +22,7 @@
 		</tr>
 		{ /if }
 		<tr> 
-			<td class="phpbbcat" colspan="3"><h4>{$TOTAL_GUEST_USERS_ONLINE}</h4></td>
+			<td class="cat" colspan="3"><h4>{$TOTAL_GUEST_USERS_ONLINE}</h4></td>
 		</tr>
 		{section name=guest_user_rowloop loop=$guest_user_row}
 		<tr>
@@ -37,4 +35,5 @@
 
 	<div class="gensmall" align="right">{$L_ONLINE_EXPLAIN}</div>
 <br all />
-{ include file='forums/simple_footer.html' }
+
+{ include file='modules/Forums/simple_footer.html' }

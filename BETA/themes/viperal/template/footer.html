@@ -1,4 +1,4 @@
-{ if $bottomblock }
+{ if isset($bottomblock) }
 	  {section name=bottomblockloop loop=$bottomblock}
 	<div class="centerblock">
 		<div class="title">{$bottomblock[bottomblockloop].TITLE}</div>

@@ -9,7 +9,6 @@
 		<tr>
 			<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{$PAGE_NUMBER}<br /></td>
 			<td class="gensmall" nowrap="nowrap">&nbsp;[ {$TOTAL} ]&nbsp;</td>
-			<td class="gensmall" width="100%" align="right" nowrap="nowrap"><b>{$PAGINATION}</b></td>
 			<td class="gensmall" width="100%" align="right" nowrap="nowrap">
 			{ if $PAGINATION }
 			<b><a href="javascript:jumpto();">{$L_GOTO_PAGE}</a> 
@@ -41,8 +40,8 @@
 
 	<br clear="all" />
 
-	<div style="float: right">{ include file='forums/jumpbox.html' }</div>
+	<div style="float: right">{ include file='modules/Forums/jumpbox.html' }</div>
 	
 	<br clear="all" />
 
-{ include file='forums/overall_footer.html' }
+{ include file='modules/Forums/overall_footer.html' }
