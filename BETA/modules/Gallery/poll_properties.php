@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: poll_properties.php,v 1.21 2004/09/21 05:15:44 cryptographite Exp $
+ * $Id: poll_properties.php,v 1.22 2004/10/03 20:34:40 jenst Exp $
  */
 ?>
 <?php
@@ -81,8 +81,8 @@ if (! empty($error)) {
 	echo "<\p>". gallery_error($error) . "</p>";
 }
 	echo makeFormIntro("poll_properties.php", 
-			array("name" => "theform", 
-				"method" => "POST")); ?>
+			array("name" => "theform", "method" => "POST"),
+			array("type" => "popup")); ?>
 <table border="0">
 <tr>
 	<td><?php echo _("Type of poll for this album") ?></td>
@@ -143,8 +143,8 @@ for ($i=0; $i<$gallery->album->getPollScale() ; $i++) {
 <input type="submit" value="<?php echo _("Close") ?>" onclick='parent.close()'>
 
 </form>
-<?php print gallery_validation_link("poll_properties.php"); ?>
 </div>
+<?php print gallery_validation_link("poll_properties.php"); ?>
 </body>
 </html>
 

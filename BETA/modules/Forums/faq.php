@@ -23,12 +23,12 @@
 // 
 // -------------------------------------------------------------
 
-if (!defined('CPG_NUKE')) {
+if (!defined('VIPERAL')) {
     header('location: ../../');
     die();
 }
-requireOnce('includes/forums/functions.'.$phpEx);
-loadclass('includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.'.$phpEx);
+loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
 $_CLASS['auth']->acl($_CLASS['user']->data);
 
@@ -60,10 +60,10 @@ switch ($mode)
 			require('footer.php');
 
 			return;
-		}
+		}*/
 		
 		$_CLASS['user']->add_lang('help_faq','Forums');
-		*/
+		
 
 		break;
 }
@@ -146,7 +146,6 @@ $_CLASS['template']->assign(array(
 $_CLASS['display']->display_head($l_title);
 
 page_header();
-page_footer();
 
 make_jumpbox(getlink('Forums&amp;file=viewforum'));
 

@@ -58,27 +58,28 @@ class messenger
 	// Sets an email address to send to
 	function to($address, $realname = '')
 	{
-		$pos = sizeof($this->addresses['to']);
+		$pos = isset($this->addresses['to']) ? sizeof($this->addresses['to']) : 0;
 		$this->addresses['to'][$pos]['email'] = trim($address);
 		$this->addresses['to'][$pos]['name'] = trim($realname);
 	}
 
 	function cc($address, $realname = '')
 	{
-		$pos = sizeof($this->addresses['cc']);
+		$pos = isset($this->addresses['cc']) ? sizeof($this->addresses['cc']) : 0;
 		$this->addresses['cc'][$pos]['email'] = trim($address);
 		$this->addresses['cc'][$pos]['name'] = trim($realname);
 	}
 
 	function bcc($address, $realname = '')
 	{
-		$pos = sizeof($this->addresses['bcc']);
+		$pos = isset($this->addresses['bcc']) ? sizeof($this->addresses['bcc']) : 0;
 		$this->addresses['bcc'][$pos]['email'] = trim($address);
+		$this->addresses['bcc'][$pos]['name'] = trim($realname);
 	}
 
 	function im($address, $realname = '')
 	{
-		$pos = sizeof($this->addresses['im']);
+		$pos = isset($this->addresses['im']) ? sizeof($this->addresses['im']) : 0;
 		$this->addresses['im'][$pos]['uid'] = trim($address);
 		$this->addresses['im'][$pos]['name'] = trim($realname);
 	}
@@ -128,10 +129,10 @@ class messenger
 
 		if (empty($this->tpl_msg[$template_lang . $template_file]))
 		{
-			$tpl_file = "language/$template_lang/email/$template_file.txt";
+			$tpl_file = "modules/Forums/language/$template_lang/email/$template_file.txt";
 			if (!file_exists($tpl_file))
 			{
-				$tpl_file = "language/$template_lang/email/$template_file.txt";
+				$tpl_file = "modules/Forums/language/en/email/$template_file.txt";
 
 				if (!file_exists($tpl_file))
 				{
@@ -141,7 +142,7 @@ class messenger
 
 			if (!($fd = @fopen($tpl_file, 'r')))
 			{
-				trigger_error("Failed opening template file [ $template_file ]", E_USER_ERROR);
+				trigger_error("Failed opening email template file [ $template_file ]", E_USER_ERROR);
 			}
 
 			$this->tpl_msg[$template_lang . $template_file] = fread($fd, filesize($tpl_file));
@@ -241,7 +242,7 @@ class messenger
 		// Session doesn't exist, create it
 		$_CLASS['user']->start();
 
-		requireOnce('includes/forums/functions_admin.'.$phpEx);
+		require_once('includes/forums/functions_admin.'.$phpEx);
 		add_log('critical', $type . '_ERROR', $msg);
 	}
 
@@ -368,7 +369,7 @@ class messenger
 
 		if (!$use_queue)
 		{
-			requireOnce('includes/forums/functions_jabber.'.$phpEx);
+			require_once('includes/forums/functions_jabber.'.$phpEx);
 			$this->jabber = new Jabber;
 
 			$this->jabber->server	= $config['jab_host'];
@@ -488,7 +489,7 @@ class queue
 						continue 2;
 					}
 
-					requireOnce('includes/forums/functions_jabber.'.$phpEx);
+					require_once('includes/forums/functions_jabber.'.$phpEx);
 					$this->jabber = new Jabber;
 
 					$this->jabber->server	= $config['jab_host'];

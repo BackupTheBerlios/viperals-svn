@@ -13,7 +13,7 @@
 
 // -------------------------------------------------------------
 //
-// $Id: index.php,v 1.144 2004/09/01 15:55:40 psotfx Exp $
+// $Id: index.php,v 1.146 2004/09/01 15:55:40 psotfx Exp $
 //
 // FILENAME  : index.php 
 // STARTED   : Sat Feb 13, 2001
@@ -27,15 +27,15 @@ if (!defined('VIPERAL')) {
     die();
 }
 
-requireOnce('includes/forums/functions.'.$phpEx);
-loadclass('includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.'.$phpEx);
+loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
 $_CLASS['auth']->acl($_CLASS['user']->data);
 
 $_CLASS['user']->add_img();
 
-require('includes/forums/functions_display.' . $phpEx);
-display_forums();
+require($site_file_root.'includes/forums/functions_display.' . $phpEx);
+display_forums('', $config['load_moderators']);
 
 // Set some stats, get posts count from forums data if we... hum... retrieve all forums data
 $total_posts = $config['num_posts'];

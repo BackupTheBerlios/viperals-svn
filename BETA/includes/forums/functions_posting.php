@@ -26,7 +26,7 @@
 // Fill smiley templates (or just the variables) with smileys, either in a window or inline
 function generate_smilies($mode, $forum_id)
 {
-	global $SID, $_CLASS, $db, $config, $MAIN_CFG;
+	global $SID, $_CLASS, $db, $config;
 	global $phpEx;
 
 	if ($mode == 'window')
@@ -47,9 +47,7 @@ function generate_smilies($mode, $forum_id)
 			$_CLASS['user']->setup('posting');
 		}
 
-		page_header($_CLASS['user']->lang['SMILIES']);
-		
-		$_CLASS['template']->display('forums/posting_smilies.html');
+		page_header($_CLASS['user']->lang['EMOTICONS']);
 		
 		//$template->set_filenames(array(
 		//	'body' => 'forums/posting_smilies.html')
@@ -82,7 +80,7 @@ function generate_smilies($mode, $forum_id)
 	{
 		$_CLASS['template']->assign_vars_array('emoticon', array(
 			'SMILEY_CODE' 	=> $row['code'],
-			'SMILEY_IMG' 	=> $MAIN_CFG['server']['path'].$config['smilies_path'] . '/' . $row['smile_url'],
+			'SMILEY_IMG' 	=> $config['smilies_path'] . '/' . $row['smile_url'],
 			'SMILEY_WIDTH' 	=> $row['smile_width'],
 			'SMILEY_HEIGHT' => $row['smile_height'],
 			'SMILEY_DESC' 	=> $row['emoticon'])
@@ -101,6 +99,7 @@ function generate_smilies($mode, $forum_id)
 	if ($mode == 'window')
 	{
 		page_footer();
+		$_CLASS['template']->display('forums/posting_smilies.html');
 	}
 }
 
@@ -527,31 +526,10 @@ function decode_message(&$message, $bbcode_uid = '')
 	return;
 }
 
-// Temp Function - strtolower - borrowed from php.net
-function phpbb_strtolower($string)
-{
-	$new_string = '';
-
-	for ($i = 0; $i < strlen($string); $i++) 
-	{
-		if (ord(substr($string, $i, 1)) > 0xa0) 
-		{
-			$new_string .= strtolower(substr($string, $i, 2));
-			$i++;
-		} 
-		else 
-		{
-			$new_string .= strtolower($string{$i});
-		}
-	}
-
-	return $new_string;
-}
-
 // Generate Topic Icons for display
 function posting_gen_topic_icons($mode, $icon_id)
 {
-	global $config, $_CLASS, $MAIN_CFG;
+	global $config, $_CLASS;
 
 	// Grab icons
 	$icons = array();
@@ -570,7 +548,7 @@ function posting_gen_topic_icons($mode, $icon_id)
 			{
 				$_CLASS['template']->assign_vars_array('topic_icon', array(
 					'ICON_ID'		=> $id,
-					'ICON_IMG'		=> $MAIN_CFG['server']['path'] . $config['icons_path'] . '/' . $data['img'],
+					'ICON_IMG'		=> $config['icons_path'] . '/' . $data['img'],
 					'ICON_WIDTH'	=> $data['width'],
 					'ICON_HEIGHT' 	=> $data['height'],
 	
@@ -689,7 +667,7 @@ function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 				$hidden .= '<input type="hidden" name="attachment_data[' . $count . '][' . $key . ']" value="' . $value . '" />';
 			}
 			
-			$download_link = (!$attach_row['attach_id']) ? $MAIN_CFG['server']['path'] . $config['upload_dir'] . '/' . $attach_row['physical_filename'] : getlink('Forums&amp;file=download&id=' . intval($attach_row['attach_id']));
+			$download_link = (!$attach_row['attach_id']) ? $config['upload_dir'] . '/' . $attach_row['physical_filename'] : getlink('Forums&amp;file=download&id=' . intval($attach_row['attach_id']));
 				
 			$_CLASS['template']->assign_vars_array('attach_row', array(
 				'FILENAME'			=> $attach_row['real_filename'],

@@ -318,13 +318,13 @@ class auth
 	// Authentication plug-ins is largely down to Sergey Kanareykin, our thanks to him.
 	function login($username, $password, $autologin = false, $viewonline = 1, $admin = 0)
 	{
-		global $config, $db, $_CLASS, $phpEx;
+		global $config, $_CLASS, $phpEx, $site_file_root;
 
 		$method = trim($config['auth_method']);
 
-		if (file_exists('includes/auth/auth_' . $method . '.' . $phpEx))
+		if (file_exists($site_file_root.'includes/auth/auth_' . $method . '.' . $phpEx))
 		{
-			include_once('includes/auth/auth_' . $method . '.' . $phpEx);
+			include_once($site_file_root.'includes/auth/auth_' . $method . '.' . $phpEx);
 
 			$method = 'login_' . $method;
 			if (function_exists($method))

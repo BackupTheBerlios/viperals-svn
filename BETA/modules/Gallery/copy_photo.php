@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: copy_photo.php,v 1.19 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: copy_photo.php,v 1.20 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -133,7 +133,10 @@ if ($gallery->session->albumName && isset($index)) {
 <?php echo _("Copy a range of photos to a new album:") ?><br>
 <i>(<?php echo _("To copy just one photo, make First and Last the same.") ?>)</i><br>
 <i>(<?php echo _("Nested albums in this range will be ignored.") ?>)</i>
-<?php echo makeFormIntro("copy_photo.php", array("name" => "copy_to_album_form")); ?>
+<?php echo makeFormIntro("copy_photo.php", 
+	array("name" => "copy_to_album_form"),
+	array("type" => "popup"));
+?>
 <input type=hidden name="index" value="<?php echo $index ?>">
 
 <?php
@@ -198,7 +201,7 @@ for ($i = 1; $i <= $numPhotos; $i++) {
 	echo gallery_error(_("no album / index specified"));
 }
 ?>
-<?php print gallery_validation_link("copy_photo.php", true, array('index' => $index)); ?>
 </div>
+<?php print gallery_validation_link("copy_photo.php", true, array('index' => $index)); ?>
 </body>
 </html>

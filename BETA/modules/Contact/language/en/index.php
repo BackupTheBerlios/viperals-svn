@@ -8,8 +8,8 @@ $this->lang += array(
 	'SENT_BY'			=>	'Sent by',
 	'SENDER_EMAIL'		=>	"Sender's email",
 	'WITH_IP'			=>	'With IP: ',
-	'FEEDBACK_SENT'		=>	'Thank you your message was successfully sent<br/>We appreciate you feedback',
-	'FEEDBACK_PROBLEM'	=>	'There was a problem sending this message<br /> Please try again later.',
+	'FEEDBACK_SENT'		=>	'<div align="center"><b>Thank you your message was successfully sent.<br/>We appreciate you feedback.</b></div>',
+	'FEEDBACK_PROBLEM'	=>	'<div align="center"><b>There was a problem sending this message.<br /> Please try again later.</b></div>',
 
 	'YOURNAME'			=>	'Your Name',
 	'YOUREMAIL'			=>	'Your Email',

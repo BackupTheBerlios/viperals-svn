@@ -17,12 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: modify_user.php,v 1.38 2004/09/21 05:15:44 cryptographite Exp $
+ * $Id: modify_user.php,v 1.39 2004/10/02 20:58:37 jenst Exp $
  */
 ?>
 <?php
 
 require_once(dirname(__FILE__) . '/init.php');
+
+list($save, $old_uname, $uname, $new_password1, $new_password2, $fullname ) = 
+	getRequestVar(array('save', 'old_uname', 'uname', 'new_password1', 'new_password2', 'fullname '));
+
+list($email, $defaultLanguage) = 
+	getRequestVar(array('email', 'defaultLanguage '));
 
 if (!$gallery->user->isAdmin()) {
 	echo _("You are not allowed to perform this action!");

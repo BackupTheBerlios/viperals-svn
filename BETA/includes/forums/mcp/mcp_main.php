@@ -27,7 +27,7 @@ class mcp_main extends module
 {
 	function mcp_main($id, $mode, $url)
 	{
-		global $phpEx, $_CLASS, $db;
+		global $phpEx, $_CLASS, $site_file_root, $db;
 		
 		$action = request_var('action', '');
 		$quickmod = request_var('quickmod', '');
@@ -135,7 +135,7 @@ class mcp_main extends module
 				break;
 
 			case 'front':
-				require('includes/forums/mcp/mcp_front.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_front.' . $phpEx);
 
 				mcp_front_view($id, $mode, $action, $url);
 
@@ -143,7 +143,7 @@ class mcp_main extends module
 				break;
 
 			case 'forum_view':
-				require('includes/forums/mcp/mcp_forum.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_forum.' . $phpEx);
 				
 				$_CLASS['user']->add_lang('viewforum');
 
@@ -165,7 +165,7 @@ class mcp_main extends module
 				break;
 
 			case 'topic_view':
-				require('includes/forums/mcp/mcp_topic.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_topic.' . $phpEx);
 				
 				mcp_topic_view($id, $mode, $action, $url);
 				
@@ -173,7 +173,7 @@ class mcp_main extends module
 				break;
 				
 			case 'post_details':
-				require('includes/forums/mcp/mcp_post.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_post.' . $phpEx);
 				
 				mcp_post_details($id, $mode, $action, $url);
 				
@@ -212,7 +212,7 @@ class mcp_main extends module
 // Lock/Unlock Topic/Post
 function lock_unlock($mode, $ids)
 {
-	global $db;
+	global $db, $_CLASS;
 
 	if ($mode == 'lock' || $mode == 'unlock')
 	{
@@ -277,7 +277,7 @@ function lock_unlock($mode, $ids)
 	}
 	else
 	{
-		meta_refresh(2, $redirect);
+		$_CLASS['display']->meta_refresh(2, $redirect);
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 	}
 }
@@ -285,7 +285,7 @@ function lock_unlock($mode, $ids)
 // Change Topic Type
 function change_topic_type($mode, $topic_ids)
 {
-	global $db;
+	global $db, $_CLASS;
 
 	if (!($forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', 'm_')))
 	{
@@ -381,7 +381,7 @@ function change_topic_type($mode, $topic_ids)
 	}
 	else
 	{
-		meta_refresh(2, $redirect);
+		$_CLASS['display']->meta_refresh(2, $redirect);
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 	}
 }
@@ -532,7 +532,7 @@ function mcp_move_topic($topic_ids)
 	}
 	else
 	{
-		meta_refresh(3, $redirect);
+		$_CLASS['display']->meta_refresh(3, $redirect);
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>'));
 	}
 }
@@ -590,7 +590,7 @@ function mcp_delete_topic($topic_ids)
 	}
 	else
 	{
-		meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		$_CLASS['display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
@@ -699,7 +699,7 @@ function mcp_delete_post($post_ids)
 	}
 	else
 	{
-		meta_refresh(3, $redirect);
+		$_CLASS['display']->meta_refresh(3, $redirect);
 		trigger_error($success_msg . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . implode('<br /><br />', $return_link));
 	}
 }
@@ -937,7 +937,7 @@ function mcp_fork_topic($topic_ids)
 	}
 	else
 	{
-		meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		$_CLASS['display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
 		$return_link = sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>');
 
 		if ($forum_id != $to_forum_id)

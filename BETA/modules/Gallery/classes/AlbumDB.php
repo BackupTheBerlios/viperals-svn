@@ -21,7 +21,8 @@
  */
 ?>
 <?php
-class AlbumDB {
+class AlbumDB
+{
 	var $albumList;
 	var $albumOrder;
 

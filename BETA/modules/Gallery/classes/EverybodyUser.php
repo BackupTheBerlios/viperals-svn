@@ -22,7 +22,8 @@
 ?>
 <?php
 class EverybodyUser extends Abstract_User {
-	function EverybodyUser() {
+	function EverybodyUser()
+	{
 		$this->username = "EVERYBODY" ;
 		$this->fullname = _("Anonymous User");
 		$this->setIsAdmin(false);
@@ -30,11 +31,13 @@ class EverybodyUser extends Abstract_User {
 		$this->uid = "everybody";
 	}
 
-	function isLoggedIn() {
+	function isLoggedIn()
+	{
 		return false;
 	}
 
-	function isPseudo() {
+	function isPseudo()
+	{
 		return true;
 	}
 }

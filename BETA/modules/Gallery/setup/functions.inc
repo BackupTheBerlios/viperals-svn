@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: functions.inc,v 1.200 2004/09/15 21:09:57 cryptographite Exp $
+ * $Id: functions.inc,v 1.202 2004/10/18 04:42:58 cryptographite Exp $
  */
 ?>
 <?php
@@ -133,7 +133,9 @@ function form_password($key, $arr) {
 
 	if (empty($arr['value'])) {
 	    $arr['value'] = array('', '', '', '');
-	}
+	} elseif (!is_array($arr['value'])) {
+	    $arr['value'] = array($arr['value'], $arr['value'], $arr['value'], $arr['value']);
+        }
 	return "<input type=\"password\" name=\"${key}[0]\" value=\"{$arr['value'][0]}\" $attrs> "
 		. '<br>'
 		. "<input type=\"password\" name=\"${key}[1]\" value=\"{$arr['value'][1]}\" $attrs> "
@@ -232,6 +234,9 @@ function form_print_services($key, $arr) {
 	    }
 	    $checked = $value['checked'] ? ' checked' : '';
 	    $buf .= "\n\t\t<tr><td valign=\"top\">\n\t\t\t<input name=\"${key}[$item][checked]\" value=\"checked\" type=\"checkbox\"$checked><a href=\"${data['url']}\">${data['name']}</a>";
+            if (!empty($data['desc'])) {
+		$buf .= ' - ' . $data['desc'];
+	    }
 	    $buf .= "\n\t\t</td></tr>";
 	}
 	$buf .="\n\t</table>\n\t";
@@ -1246,7 +1251,7 @@ function verify_password($passwords) {
 	if ($passwords[2] === $passwords[3]) {
 		$success[] = true;
 	} else {
-		$fail[] = _('Your admin passwords do not match!');
+		$fail[] = _('Your passwords do not match!');
 	}
 	return array($success, $fail);
 }

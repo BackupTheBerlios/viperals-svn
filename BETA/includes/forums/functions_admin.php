@@ -1590,7 +1590,7 @@ function split_sql_file($sql, $delimiter)
 // and group names must be carried through for the moderators table
 function cache_moderators()
 {
-	global $db, $cache;
+	global $db, $_CLASS;
 
 	// Clear table
 	$sql = (SQL_LAYER != 'sqlite') ? 'TRUNCATE ' . MODERATOR_TABLE : 'DELETE FROM ' . MODERATOR_TABLE;
@@ -1677,7 +1677,7 @@ function cache_moderators()
 		}
 	}
 
-	$cache->destroy(MODERATOR_TABLE);
+	$_CLASS['cache']->destroy(MODERATOR_TABLE);
 }
 
 // Logging functions
@@ -1849,8 +1849,8 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 
 		foreach ($log as $key => $row)
 		{
-			$log[$key]['viewtopic'] = (isset($is_auth[$row['topic_id']])) ? ((defined('IN_ADMIN')) ? '../' : '') . getlink("Forums&amp;file=viewtopic$SID&amp;f=" . $is_auth[$row['topic_id']] . '&amp;t=' . $row['topic_id']) : '';
-			$log[$key]['viewlogs'] = (isset($is_mod[$row['topic_id']])) ? ((defined('IN_ADMIN')) ? '../' : '') . getlink("Forums&amp;file=mcp$SID&amp;mode=topic_view&amp;action=viewlogs&amp;t=" . $row['topic_id']) : '';
+			$log[$key]['viewtopic'] = (isset($is_auth[$row['topic_id']])) ? ((defined('IN_ADMIN')) ? '../' : '') . getlink("Forums&amp;file=viewtopic&amp;f=" . $is_auth[$row['topic_id']] . '&amp;t=' . $row['topic_id']) : '';
+			$log[$key]['viewlogs'] = (isset($is_mod[$row['topic_id']])) ? ((defined('IN_ADMIN')) ? '../' : '') . getlink("Forums&amp;file=mcp&amp;mode=topic_view&amp;action=viewlogs&amp;t=" . $row['topic_id']) : '';
 		}
 	}
 
@@ -2042,7 +2042,7 @@ if (class_exists('auth'))
 		//);
 		function acl_add_option($options)
 		{
-			global $db, $cache;
+			global $db, $_CLASS;
 
 			if (!is_array($options))
 			{
@@ -2130,7 +2130,7 @@ if (class_exists('auth'))
 				$db->sql_query($sql);
 			}
 
-			$cache->destroy('acl_options');
+			$_CLASS['cache']->destroy('acl_options');
 		}
 	}
 }

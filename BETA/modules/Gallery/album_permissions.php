@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: album_permissions.php,v 1.51 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: album_permissions.php,v 1.53 2004/10/03 13:06:46 jenst Exp $
  */
 ?>
 <?php
@@ -123,7 +123,8 @@ if (isset($save) && $ownerUid) {
 	$changed++;
 }
 
-if ($changed) {
+if ($changed)
+{
 	$gallery->album->save(array(i18n("Permissions have been changed")));
 
 	if (getRequestVar('setNested')) {
@@ -146,7 +147,8 @@ $uViewFullImages = $gallery->album->getPermUids("canViewFullImages");
 $uAddComments = $gallery->album->getPermUids("canAddComments");
 $uViewComments = $gallery->album->getPermUids("canViewComments");
 
-foreach ($gallery->userDB->getUidList() as $uid) {
+foreach ($gallery->userDB->getUidList() as $uid)
+{
 	$tmpUser = $gallery->userDB->getUserByUid($uid);
 	$uname = $tmpUser->getUsername();
 	$uAll[$uid] = $uname;
@@ -189,7 +191,9 @@ correctPseudoUsers($uAdd, $ownerUid);
 <?php echo sprintf(_("Changing permissions for %s"), '<b>'.$gallery->album->fields["title"] . '</b>');
 
 echo makeFormIntro("album_permissions.php", 
-			array("name" => "albumperms_form")) ?>
+			array("name" => "albumperms_form"),
+			array("type" => "popup"));
+?>
 
 <?php if ($gallery->user->isAdmin) { ?>
 <?php echo _("Owner:") ?> <?php echo drawSelect("ownerUid", $uAll, $ownerUid, 1); ?>
@@ -349,10 +353,10 @@ echo makeFormIntro("album_permissions.php",
 <input type="submit" name="save" value="<?php echo _("Save") ?>">
 <input type="button" name="done" value="<?php echo _("Done") ?>" onclick='parent.close()'>
 <br>
-<label for="setNested">Apply permissions to all sub-albums</label><input type="checkbox" id="setNested" name="setNested"
-value="setNested" <?php if (getRequestVar('setNested')) echo 'CHECKED'; ?>>
+<label for="setNested">Apply permissions to all sub-albums</label>
+<input type="checkbox" id="setNested" name="setNested" value="setNested" <?php if (getRequestVar('setNested')) echo 'CHECKED'; ?>>
 </form>
-<?php print gallery_validation_link("album_permissions.php"); ?>
 </div>
+<?php print gallery_validation_link("album_permissions.php"); ?>
 </body>
 </html>

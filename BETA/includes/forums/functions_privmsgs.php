@@ -23,7 +23,7 @@
 // 
 // -------------------------------------------------------------
 
-// Define Rule processing scheme
+// Define Rule processing schema
 // NOTE: might change
 
 /*
@@ -32,7 +32,7 @@
 		2) Add a new check array to the global_privmsgs_rules variable and the condition array (if one is required)
 		3) Add a new language variable to ucp.php
 		
-		The user is then able to select the new rule. It will be checked agains and handled as specified.
+		The user is then able to select the new rule. It will be checked against and handled as specified.
 		To add new actions (yes, checks can be added here too) to the rule management, the core code has to be modified.
 */
 
@@ -82,8 +82,8 @@ $global_privmsgs_rules = array(
 		RULE_IS_FRIEND		=> array('check0' => 'friend', 'function' => '{CHECK0} == 1'),
 		RULE_IS_FOE			=> array('check0' => 'foe', 'function' => '{CHECK0} == 1'),
 		RULE_IS_USER		=> array('check0' => 'author_id', 'function' => '{CHECK0} == {USER_ID}'),
-		RULE_IS_GROUP		=> array('check0' => 'author_in_group', 'function' => '{CHECK0} == {GROUP_ID}')),
-		
+		RULE_IS_GROUP       => array('check0' => 'author_in_group', 'function' => 'in_array({GROUP_ID}, {CHECK0})')),
+
 	CHECK_MESSAGE	=> array(
 		RULE_IS_LIKE		=> array('check0' => 'message_text', 'function' => 'preg_match("/" . preg_quote({STRING}) . "/i", {CHECK0})'),
 		RULE_IS_NOT_LIKE	=> array('check0' => 'message_text', 'function' => '!(preg_match("/" . preg_quote({STRING}) . "/i", {CHECK0}))'),
@@ -578,17 +578,18 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 }
 
 // Move PM from one to another folder
-function move_pm($user_id, $message_limit)
+function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_folder_id)
 {
 	global $db, $_CLASS;
-	global $_POST, $phpEx, $SID;
-
-	$move_msg_ids	= (isset($_POST['marked_msg_id'])) ? array_map('intval', $_POST['marked_msg_id']) : array();
-	$dest_folder	= request_var('dest_folder', PRIVMSGS_NO_BOX);
-	$cur_folder_id	= request_var('cur_folder_id', PRIVMSGS_NO_BOX);
+	global $phpEx, $SID;
 
 	$num_moved		= 0;
-
+	
+	if (!is_array($move_msg_ids))
+	{
+		$move_msg_ids = array($move_msg_ids);
+	}
+	
 	if (sizeof($move_msg_ids) && !in_array($dest_folder, array(PRIVMSGS_NO_BOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX)) && 
 		!in_array($cur_folder_id, array(PRIVMSGS_NO_BOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX)) && $cur_folder_id != $dest_folder)
 	{
@@ -816,11 +817,24 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 	// then mark the message as deleted...
 	if ($folder_id == PRIVMSGS_OUTBOX)
 	{
-		// TODO: Recipients will see the message as deleted later
+		// Remove PM from Outbox
+		$sql = 'DELETE FROM ' . PRIVMSGS_TO_TABLE . "
+			WHERE user_id = $user_id AND folder_id = " . PRIVMSGS_OUTBOX . '
+				AND msg_id IN (' . implode(', ', array_keys($delete_rows)) . ')';
+		$db->sql_query($sql);
+
+		// Update PM Information for safety
+		$sql = 'UPDATE ' . PRIVMSGS_TABLE . " SET message_text = ''
+			WHERE msg_id IN (" . implode(', ', array_keys($delete_rows)) . ')';
+		$db->sql_query($sql);
+
+		// Set delete flag for those intended to receive the PM
+		// We do not remove the message actually, to retain some basic informations (sent time for example)
 		$sql = 'UPDATE ' . PRIVMSGS_TO_TABLE . '
-			SET deleted = 1, msg_id = 0 
+			SET deleted = 1
 			WHERE msg_id IN (' . implode(', ', array_keys($delete_rows)) . ')';
 		$db->sql_query($sql);
+
 		$num_deleted = $db->sql_affectedrows();
 	}
 	else
@@ -868,7 +882,7 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 	}
 	$db->sql_freeresult($result);
 
-	$delete_ids = implode(', ', $delete_rows);
+	$delete_ids = implode(', ', array_keys($delete_rows));
 
 	if ($delete_ids)
 	{
@@ -1387,7 +1401,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 		return;
 	}
 
-	requireOnce('includes/forums/functions_messenger.'.$phpEx);
+	require_once('includes/forums/functions_messenger.'.$phpEx);
 	$messenger = new messenger();
 
 	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
@@ -1422,6 +1436,5 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 
 	unset($messenger);
 }
-
 
 ?>

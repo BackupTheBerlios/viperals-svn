@@ -73,7 +73,8 @@ class Abstract_User {
 		return (!strcmp($this->password, $hash));
 	}
 
-	function getUid() {
+	function getUid()
+	{
 		return $this->uid;
 	}
 
@@ -81,14 +82,21 @@ class Abstract_User {
 		$this->username = $username;
 	}
 
-	function getUsername() {
-	       	return $this->username;
-       	}
+	function getUsername() 
+	{
+	     return $this->username;
+    }
 
-       	function printableName($format) {
-		$name=$format;
-		$name=str_replace('!!FULLNAME!!', $this->getFullName(), $name);
-		$name=str_replace('!!USERNAME!!', $this->getUsername(), $name);
+   function printableName($format, $link = false)
+   {
+		$name = $format;
+		
+		
+		$pmlink = (!$link || !$this->getUid() || $this->getUid() == 1) ? $this->getUsername() : '<a href="'.getlink('Members_List&amp;mode=viewprofile&amp;u=' . $this->getUid()).'">'.$this->getUsername().'</a>';
+		
+		$name=str_replace('!!FULLNAME!!', $pmlink, $name);
+		$name = str_replace('!!USERNAME!!', $this->getFullName(), $name);
+		
 		$name=str_replace('!!EMAIL!!',$this->getEmail(), $name);
 		$name=str_replace('!!MAILTO_FULLNAME!!', '<a href="mailto:'.
 				$this->getEmail().'">'.
@@ -108,55 +116,67 @@ class Abstract_User {
 		return $this->email;
 	}
 
-	function setFullName($fullname) {
+	function setFullName($fullname)
+	{
 		$this->fullname = $fullname;
 	}
 
-	function getFullName() {
-	       	if (get_magic_quotes_gpc()) {
-		       	return stripslashes($this->fullname);
-	       	} else {
-		       	return $this->fullname;
-	       	}
+	function getFullName()
+	{
+		if (get_magic_quotes_gpc())
+		{
+			return stripslashes($this->fullname);
+		} else {
+			return $this->fullname;
+		}
 	}
 
-	function isAdmin() {
+	function isAdmin()
+	{
 		return $this->isAdmin;
 	}
 
-	function isPseudo() {
+	function isPseudo()
+	{
 		return false;
 	}
 
-	function setIsAdmin($bool) {
+	function setIsAdmin($bool)
+	{
 		$this->isAdmin = $bool;
 	}
 
-	function canReadAlbum($album) {
-		if ($this->isAdmin()) {
+	function canReadAlbum($album)
+	{
+		if ($this->isAdmin())
+		{
 			return true;
 		}
 
-		if ($album->canRead($this->uid)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	function canWriteToAlbum($album) {
-		if ($this->isAdmin()) {
-			return true;
-		}
-
-		if ($album->canWrite($this->uid)) {
+		if ($album->canRead($this->uid))
+		{
 			return true;
 		}
 
 		return false;
 	}
 
-	function canAddToAlbum($album) {
+	function canWriteToAlbum($album)
+	{
+		if ($this->isAdmin()) {
+			return true;
+		}
+
+		if ($album->canWrite($this->uid))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	function canAddToAlbum($album)
+	{
 		if ($this->isAdmin()) {
 			return true;
 		}
@@ -178,7 +198,8 @@ class Abstract_User {
 		return false;
 	}		
 
-	function canDeleteFromAlbum($album) {
+	function canDeleteFromAlbum($album)
+	{
 		if ($this->isAdmin()) {
 			return true;
 		}
@@ -190,31 +211,36 @@ class Abstract_User {
 		return false;
 	}		
 
-	function canDeleteAlbum($album) {
+	function canDeleteAlbum($album)
+	{
 		if ($this->isAdmin()) {
 			return true;
 		}
 
-		if ($album->canDelete($this->uid)) {
+		if ($album->canDelete($this->uid))
+		{
 			return true;
 		}
 
 		return false;
 	}
 
-	function canCreateSubAlbum($album) {
+	function canCreateSubAlbum($album)
+	{
 		if ($this->isAdmin()) {
 			return true;
 		}
 
-		if ($album->canCreateSubAlbum($this->uid)) {
+		if ($album->canCreateSubAlbum($this->uid))
+		{
 			return true;
 		}
 
 		return false;
 	}
 	
-	function canCreateAlbums() {
+	function canCreateAlbums()
+	{
 		if ($this->isAdmin()) {
 			return true;
 		}
@@ -226,7 +252,8 @@ class Abstract_User {
 		return false;
 	}
 
-	function setCanCreateAlbums($bool) {
+	function setCanCreateAlbums($bool)
+	{
 		$this->canCreateAlbums = $bool;
 	}
 
@@ -254,35 +281,41 @@ class Abstract_User {
 		return false;
 	}
 
-        function canAddComments($album) {
-                if ($this->isAdmin()) {
-                        return true;
-                }
+        function canAddComments($album)
+        {
+			if ($this->isAdmin()) {
+				return true;
+			}
+			
+			if ($this->isOwnerOfAlbum($album))
+			{
+				return true;
+			}
+			
+			if ($album->canAddComments($this->uid)) {
+				return true;
+			}
 
-                if ($album->canAddComments($this->uid)) {
-                        return true;
-                }
-
-                return false;
+			return false;
         }
 
-        function canViewComments($album) {
-                if ($this->isAdmin()) {
-                        return true;
-                }
+        function canViewComments($album)
+        {
+			if ($this->isAdmin()) {
+					return true;
+			}
 
-		/* Note Jens Tkotz, 23.09.2004
-		** Allow album owner to see comments, as they are a kind of local admin
-		*/
-		if ($this->isOwnerOfAlbum($album)) {
-			return true;
-		}
+			if ($this->isOwnerOfAlbum($album))
+			{
+				return true;
+			}
+	
+			if ($album->canViewComments($this->uid))
+			{
+					return true;
+			}
 
-                if ($album->canViewComments($this->uid)) {
-                        return true;
-                }
-
-                return false;
+			return false;
         }
 	
 	function isOwnerOfAlbum($album) {

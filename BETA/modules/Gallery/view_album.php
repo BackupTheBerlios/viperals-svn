@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: view_album.php,v 1.270 2004/09/27 08:37:44 cryptographite Exp $
+ * $Id: view_album.php,v 1.272 2004/10/02 20:58:37 jenst Exp $
  */
 ?>
 <?php
@@ -134,6 +134,7 @@ if ($gallery->album->fields['returnto'] != 'no') {
 
 $breadcrumb["bordercolor"] = $bordercolor;
 
+global $GALLERY_EMBEDDED_INSIDE;
 if (!$GALLERY_EMBEDDED_INSIDE) {
 	doctype();
 ?>
@@ -457,16 +458,6 @@ if ( ($gallery->app->comments_enabled == 'yes' && $gallery->album->lastCommentDa
                         '[' . _("view&nbsp;comments") . "]</a>\n";
 }
 
-if (!$GALLERY_EMBEDDED_INSIDE && !$gallery->session->offline) {
-	if ($gallery->user->isLoggedIn()) {
-	        $userCommands .= "\t<a class=\"admin\" href=\"" .
-					doCommand("logout", array(), "view_album.php", array("page" => $page)) .
-				  "\">[" . _("logout") . "]</a>\n";
-	} else {
-		$userCommands .= "\t" . popup_link("[". _("login") ."]", "login.php", false, true, 500, 500, 'admin') . "\n";
-	} 
-}
-
 $adminbox["text"] = $adminText;
 $adminbox["commands"] =	"<span class =\"admin\">" .  $adminCommands . 
 			$userCommands .  "\t</span>\n";
@@ -748,7 +739,9 @@ if ($numPhotos) {
 				includeHtmlWrap('inline_albumthumb.frame');
 			} else {
 				$gallery->html_wrap['imageTag'] = $gallery->album->getThumbnailTag($i);
+				//$gallery->html_wrap['imageHref'] = makeAlbumUrl($gallery->session->albumName, $id)."\" target=\"_blank";
 				$gallery->html_wrap['imageHref'] = makeAlbumUrl($gallery->session->albumName, $id);
+
 				$frame= $gallery->html_wrap['frame'] = $gallery->album->fields['thumb_frame'];
 			       	/*begin backwards compatibility */
 				       	$gallery->html_wrap['thumbTag'] = $gallery->html_wrap['imageTag'];
@@ -1096,7 +1089,8 @@ if ($numPhotos) {
 </table>
 
 <?php if ($displayCommentLegend) { //display legend for comments ?>
-<span class="error">*</span><span class="fineprint"> <?php echo _("Comments available for this item.") ?></span>
+<span class="commentIndication">*</span>
+<span class="fineprint"> <?php echo _("Comments available for this item.") ?></span>
 <br>
 <?php }
 

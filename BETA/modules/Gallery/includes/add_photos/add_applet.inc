@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: add_applet.inc,v 1.6 2004/04/16 16:54:52 ckdake Exp $
+ * $Id: add_applet.inc,v 1.7 2004/10/15 13:38:41 paour Exp $
  */
 ?>
 
@@ -35,8 +35,7 @@
                         $gallery->app->photoAlbumURL . "/java/GalleryRemoteAppletMini.jar," .
                         $gallery->app->photoAlbumURL . "/java/GalleryRemoteHTTPClient.jar," .
                         $gallery->app->photoAlbumURL . "/java/applet_img.jar," .
-                        $gallery->app->photoAlbumURL . "/java/metadata-extractor-2.1.jar," .
-                        $gallery->app->photoAlbumURL . "/java/JSX1.0.7.4.jar",
+                        $gallery->app->photoAlbumURL . "/java/metadata-extractor-2.1.jar",
 		$gallery->album->fields["name"],
 		array(),
 		array("toSysOut" => "true"),

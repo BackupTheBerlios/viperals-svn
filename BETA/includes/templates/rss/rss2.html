@@ -7,15 +7,10 @@
 <channel>
 <title>{ $SITE_NAME }</title>
 <link>{ $SITE_URL }</link>
-<description>{ $items[itemsloop].DESCRIPTION }</description>
+{* <description>{ $DESCRIPTION }</description> *}
 <dc:language>en-us</dc:language>
 <dc:creator>Viperal CMS</dc:creator>
 <dc:date>{ $TIME }</dc:date>
-
-{* <admin:generatorAgent rdf:resource="http://www.movabletype.org/?v=2.661" />
-<sy:updatePeriod>hourly</sy:updatePeriod>
-<sy:updateFrequency>1</sy:updateFrequency>
-<sy:updateBase>2000-01-01T12:00+00:00</sy:updateBase> *}
 
 { section name=itemsloop loop=$items }
 <item>

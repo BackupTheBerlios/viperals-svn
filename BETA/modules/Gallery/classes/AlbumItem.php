@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: AlbumItem.php,v 1.91 2004/08/30 15:07:58 jenst Exp $
+ * $Id: AlbumItem.php,v 1.92 2004/10/07 20:24:09 donwillingham Exp $
  */
 ?>
 <?php
@@ -134,7 +134,8 @@ class AlbumItem {
 		return sizeof($this->comments);
 	}
 
-	function getComment($commentIndex) {
+	function getComment($commentIndex)
+	{
 		return $this->comments[$commentIndex-1];
 	}
 
@@ -174,7 +175,8 @@ class AlbumItem {
 		}
 
 		/* Convert all uids to the new style */
-		if ($this->version < 25) {
+		if ($this->version < 25)
+		{
 		    // Owner
 		    $this->owner = $gallery->userDB->convertUidToNewFormat($this->owner);
 
@@ -237,7 +239,8 @@ class AlbumItem {
 		return $changed;
 	}
 
-	function addComment($comment, $IPNumber, $name) {
+	function addComment($comment, $IPNumber, $name)
+	{
 		global $gallery;
 
 		if ($gallery->user) {
@@ -252,7 +255,8 @@ class AlbumItem {
 		return 0;
 	}
 
-	function deleteComment($comment_index) {
+	function deleteComment($comment_index)
+	{
 		array_splice($this->comments, $comment_index-1, 1);
 	}
 
@@ -476,13 +480,21 @@ class AlbumItem {
 		return 1;
 	}
 
-        function watermark($dir, $wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $preview=0, $previewSize=0) {
+        function watermark($dir, $wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $preview=0, $previewSize=0, $wmSelect=0) {
                 global $gallery;
                 $type = $this->image->type;
 		if (isMovie($type))
 		{
 			// currently there is no watermarking support for movies
 			return (0);
+		}
+		if ($wmSelect < 0)
+		{
+			$wmSelect = 0;
+		}
+		else if ($wmSelect > 2)
+		{
+			$wmSelect = 2;
 		}
                 $name = $this->image->name;
 		$oldpreviews = glob($dir . "/$name.preview*.$type");
@@ -511,12 +523,20 @@ class AlbumItem {
                                 $this->preview = $high;
 			}
 		} else {
-                	$retval = watermark_image("$dir/$name.$type", "$dir/$name.$type",
+			// $wmSelect of 0=both Sized and Full
+			if ($wmSelect != 1) { // 1=Only Sized Photos
+                		$retval = watermark_image("$dir/$name.$type", "$dir/$name.$type",
                                           $gallery->app->watermarkDir."/$wmName",
                                           $gallery->app->watermarkDir."/$wmAlphaName",
                                           $wmAlign, $wmAlignX, $wmAlignY);
-                	if ($retval) {
-
+			}
+                	if ($wmSelect != 2) { // 2=Only Full Photos
+                	    if (($wmSelect == 1) && !$this->isResized()) {
+				// If watermarking only resized images, and image is not resized
+				// Call resize as if the full image is resized
+				$pathToResized = $dir . "/" . $this->image->name . "." . $this->image->type;
+				$this->resize($dir, "", 0, $pathToResized);
+			    }
                 	    if ($this->isResized()) {
                         	$retval = watermark_image("$dir/$name.sized.$type", "$dir/$name.sized.$type",
                                                   $gallery->app->watermarkDir."/$wmName",

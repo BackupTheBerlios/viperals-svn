@@ -21,33 +21,22 @@
  */
 ?>
 <?php
-class Nuke5_AdminUser extends Abstract_User {
+class Nuke5_AdminUser extends Abstract_User 
+{
 	var $db;
 	var $prefix;
-
-	function Nuke5_AdminUser($admin) {
-		global $gallery;
-		$this->db = $gallery->database{"nuke"};
-		$this->prefix = $gallery->database{"prefix"};
-
-		if(!is_array($admin)) {
-			$admin = base64_decode($admin);
-			$admin = explode(":", $admin);
-			$aid = "$admin[0]";
-		} else {
-			$aid = "$admin[0]";
-		}
-
-		$results = $this->db->query("select name, email from " .
-				$this->prefix . "authors " .
-				"where aid='$aid'");
-		$row = $this->db->fetch_row($results);
-		$this->username = $aid;
-		$this->fullname = $row[0];
-		$this->email = $row[1];
+	
+	function Nuke5_AdminUser() 
+	{
+		global $_CLASS;
+		
+		$this->username = $_CLASS['user']->data['username'];
+		$this->fullname = $_CLASS['user']->data['username'];
+		$this->email = $_CLASS['user']->data['user_email'];
+		
 		$this->isAdmin = 1;
 		$this->canCreateAlbums = 1;
-		$this->uid = "admin_$aid";
+		$this->uid = 'admin_'.$_CLASS['user']->data['user_id'];
 	}
 }
 

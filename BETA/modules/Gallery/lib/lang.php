@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: lang.php,v 1.36 2004/09/14 23:53:33 jenst Exp $
+ * $Id: lang.php,v 1.41 2004/10/18 06:28:26 cryptographite Exp $
  */
 ?>
 <?php
@@ -90,39 +90,49 @@ function getEnvLang() {
 	global $board_config;				/* Needed for phpBB2 	*/
 	global $_CONF;					/* Needed for GeekLog	*/
 	global $mosConfig_locale;			/* Needed for Mambo	*/
+	global $currentlang;				/* Needed for CPGNuke	*/
+
+	$envLang = NULL;
 
 	switch ($GALLERY_EMBEDDED_INSIDE_TYPE) {
 		case 'postnuke':
 			if (isset($_SESSION['PNSVlang'])) {
-				return $_SESSION['PNSVlang'];
+				$envLang = $_SESSION['PNSVlang'];
 			}
 		break;
 
 		case 'phpnuke':
 		case 'nsnnuke':
 			if (isset($_COOKIE['lang'])) {
-				return $_COOKIE['lang'];
+				$envLang = $_COOKIE['lang'];
 			}
 
 		break;
 
 		case 'phpBB2':
 			if (isset($board_config['default_lang'])) {
-				return $board_config['default_lang'];
+				$envLang = $board_config['default_lang'];
 			}				
 		break;
 
 		case 'GeekLog':
 			/* Note: $_CONF is not a Superglobal ;) */
 			if (isset($_CONF['language'])) {
-				return $_CONF['language'];
+				$envLang = $_CONF['language'];
 			} else if (isset($_CONF['locale'])) {
-				return $_CONF['locale'];
+				$envLang = $_CONF['locale'];
 			}				
 		break;
+
 		case 'mambo':
 			if (isset($mosConfig_locale)){
-				return $mosConfig_locale;
+				$envLang = $mosConfig_locale;
+			}				
+		break;
+
+		case 'cpgnuke':
+			if (isset($currentlang)){
+				$envLang = $currentlang;
 			}				
 		break;
 
@@ -130,8 +140,9 @@ function getEnvLang() {
 			return NULL;
 		break;
 	}
-}
 
+	return $envLang;
+}
 
 /*
 ** In some Environments we dont want to allow the user
@@ -151,6 +162,7 @@ function forceStaticLang() {
 }	
 
 function initLanguage($sendHeader=true) {
+	static $languages_initialized = false;
 
 	global $gallery, $GALLERY_EMBEDDED_INSIDE, $GALLERY_EMBEDDED_INSIDE_TYPE;
 
@@ -165,29 +177,28 @@ function initLanguage($sendHeader=true) {
 	// before we do any tests or settings test if we are in mode 0
 	// If so, we skip language settings at all
 
-	if (isset($gallery->app->ML_mode)) {
-		// Mode 0 means no Multilanguage at all.
-		if($gallery->app->ML_mode == 0) {
-			// Maybe PHP has no (n)gettext, then we have to substitute _() and ngettext
-			if (! gettext_installed()) {
-				function _($string) {
-					return $string ;
-				}
+	// Mode 0 means no Multilanguage at all.
+	if (empty($gallery->app->ML_mode) && !$languages_initialized) {
+		// Maybe PHP has no (n)gettext, then we have to substitute _() and ngettext
+		if (!gettext_installed()) {
+			function _($string) {
+				return $string ;
 			}
-			if (! ngettext_installed()) {
-				function ngettext($singular, $quasi_plural,$num=0) {
-                        		if ($num == 1) {
-                                		return $singular;
-		                        } else {
-        		                        return $quasi_plural;
-                		        }
-				}
-			}
-
-			/* Skip rest*/
-			return;
 		}
+		if (!ngettext_installed()) {
+			function ngettext($singular, $quasi_plural,$num=0) {
+                       		if ($num == 1) {
+                               		return $singular;
+	                        } else {
+       		                        return $quasi_plural;
+               		        }
+			}
+		}
+
+		/* Skip rest*/
+		return;
 	}
+
 
 	/* 
 	** Does the user wants a new lanuage ?
@@ -255,7 +266,7 @@ function initLanguage($sendHeader=true) {
 				$gallery->browser_language=getBrowserLanguage();
 
 				if (!empty($gallery->user) && $gallery->user->getDefaultLanguage() != "") {
-						$gallery->language = $gallery->user->getDefaultLanguage();
+					$gallery->language = $gallery->user->getDefaultLanguage();
 				} elseif (isset($gallery->browser_language)) {
 					$gallery->language=$gallery->browser_language;
 				}
@@ -348,14 +359,16 @@ function initLanguage($sendHeader=true) {
 		$bindtextdomain=bindtextdomain($gallery->language. "-gallery_". where_i_am(), dirname(dirname(__FILE__)) . '/locale');
 		textdomain($gallery->language. "-gallery_". where_i_am());
 
-	}  else {
+	} elseif (!$languages_initialized) {
 		emulate_gettext();
 	}
 
 	// We test this separate because ngettext() is only available in PHP >=4.2.0 but _() in all PHP4
-	if (! ngettext_installed()) {
+	if (!ngettext_installed() && !$languages_initialized) {
 		emulate_ngettext();
 	}
+
+	$languages_initialized = true;
 }
 
 
@@ -600,6 +613,10 @@ function gallery_htmlentities($string) {
 function unhtmlentities ($string) {
 	global $gallery;
 
+	if (empty($string)) {
+		return "";
+	}
+
 	if (function_exists('html_entity_decode')) {
 		$nls=getNLS();
 		if (isset ($nls['charset'][$gallery->language])) {
@@ -651,7 +668,5 @@ function translateableFields() {
 		'AltText'	=> _("Alt Text / onMouseOver")
 	);
 }
-
-
 
 ?>

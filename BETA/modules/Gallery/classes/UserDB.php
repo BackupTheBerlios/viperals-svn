@@ -65,6 +65,7 @@ class Abstract_UserDB {
 	function getUserByUid($uid) {
 		print "Error: getUserByUid() should be overridden by a subclass!";
 	}
+	
 	function versionOutOfDate() {
 		return false;
 	}

@@ -11,11 +11,13 @@
 //																//
 //**************************************************************//
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: /');
     die();
 }
 
 global $_CLASS;
 $_CLASS['display']->display_head();
+
 ?>

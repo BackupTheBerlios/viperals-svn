@@ -29,7 +29,7 @@
 
 function mcp_topic_view($id, $mode, $action, $url)
 {
-	global $phpEx,$config;
+	global $phpEx, $config, $site_file_root;
 	global $_CLASS, $db;
 
 	$_CLASS['template']->assign(array(
@@ -147,7 +147,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 
 	if ($bbcode_bitfield)
 	{
-		requireOnce('includes/forums/bbcode.' . $phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.' . $phpEx);
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
 
@@ -208,7 +208,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 
 	if ($_CLASS['auth']->acl_get('m_split', $topic_info['forum_id']))
 	{
-		requireOnce('includes/forums/functions_posting.' . $phpEx);
+		require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
 		$s_topic_icons = posting_gen_topic_icons('', $icon_id);
 
 		// Has the user selected a topic for merge?
@@ -434,7 +434,7 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 	}
 	else
 	{
-		meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
+		$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }
@@ -527,7 +527,7 @@ function merge_posts($topic_id, $to_topic_id)
 	}
 	else
 	{
-		meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
+		$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: edit_watermark.php,v 1.13 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: edit_watermark.php,v 1.14 2004/10/07 20:24:06 donwillingham Exp $
  */
 ?>
 <?php
@@ -31,6 +31,7 @@ if (!$gallery->user->canChangeTextOfAlbum($gallery->album)) {
 
 list($index, $save, $preview, $previewFull) = getRequestVar(array('index', 'save', 'preview', 'previewFull'));
 list($wmName, $wmAlign, $wmAlignX, $wmAlignY) = getRequestVar(array('wmName', 'wmAlign', 'wmAlignX', 'wmAlignY'));
+list($wmSelect) = getRequestVar(array('wmSelect'));
 
 $err = "";	
 if (isset($save) || isset($preview)) {
@@ -44,7 +45,9 @@ if (isset($save) || isset($preview)) {
 	                	set_time_limit($gallery->app->timeLimit);
 	        	        $gallery->album->watermarkPhoto($index, $wmName, "", $wmAlign,
 	                                               isset($wmAlignX) ? $wmAlignX : 0, 
-	                                               isset($wmAlignY) ? $wmAlignY : 0);
+	                                               isset($wmAlignY) ? $wmAlignY : 0,
+	                                               0, 0, // Not a preview
+	                                               isset($wmSelect) ? $wmSelect : 0);
 	            		$gallery->album->save();
 	               		dismissAndReload();
 	                	return;

@@ -22,9 +22,9 @@ echo $this->location
 		{
 			editor.registerPlugin(CharacterMap);
 			editor.registerPlugin(SearchAndReplace);
+			loop= loop + 1;
 		}
 		editor.registerPlugin(ContextMenu);
-		loop= loop + 1;
 		editor.generate();
 	}
 };

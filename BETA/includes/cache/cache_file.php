@@ -26,11 +26,12 @@ class cache
 	var $thefile = false;
 	var $data = false;
 	var $sql_rowset = array();
-	var $cache_dir = 'cache/';
 	
 	function cache()
 	{
-		global $_CLASS, $MAIN_CFG, $config;
+		global $_CLASS, $MAIN_CFG, $config, $site_file_root;
+		
+		$this->cache_dir = $site_file_root.'cache/';
 		
 		if ($config = $this->get('config'))
 		{
@@ -87,10 +88,6 @@ class cache
 		if ((time() - $config['cache_gc']) > $config['cache_last_gc'])
 		{
 			$this->tidy();
-			
-			global $phpEx;
-			
-			require('includes/forums/functions.'.$phpEx);
 			set_config('cache_last_gc', time(), TRUE);
 		}
 		
@@ -289,7 +286,7 @@ class cache
 			}
 			elseif (is_bool($v))
 			{
-				$lines[] = "'$k'=>" . (($v) ? 'TRUE' : 'FALSE');
+				$lines[] = "'$k'=>" . (($v) ? 'true' : 'false');
 			}
 			else
 			{

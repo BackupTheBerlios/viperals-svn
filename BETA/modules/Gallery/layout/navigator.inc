@@ -1,4 +1,4 @@
-<?php /* $Id: navigator.inc,v 1.32 2004/08/03 03:46:39 cryptographite Exp $ */ ?>
+<?php /* $Id: navigator.inc,v 1.34 2004/10/18 00:14:41 cryptographite Exp $ */ ?>
 <?php
 global $navigator;
 if(!includeTemplate('navigator.tpl')) {
@@ -27,7 +27,7 @@ if(!includeTemplate('navigator.tpl')) {
 		$url .= "?";
 	}
 	else {
-		$url .= "&";
+		$url .= "&amp;";
 	}
 
 	$fpAltText= _("First Page");
@@ -80,22 +80,22 @@ if(!includeTemplate('navigator.tpl')) {
 		for ($i = $begin; $i <= $end; $i++) {
 			if ($i == $current) {
 				$number = "<b>$i</b>";
-				$leftdot = '<img valign="absmiddle" src="'. $ndlUrl .'" alt="leftdot">';
+				$leftdot = '<img src="'. $ndlUrl .'" alt="leftdot">';
 			} else {
 				$number = '<a class="nav" href="'. $url. $navigator['pageVar'] .'='. $i .'">'. $i .'</a>';
 				if ( $i-1 == $current) {
-					$leftdot = '<img valign="absmiddle" src="'. $ndrUrl .'" alt="leftdot">';
+					$leftdot = '<img src="'. $ndrUrl .'" alt="leftdot">';
 				} else {
-					$leftdot = '<img valign="absmiddle" src="'. $ndUrl .'"  alt="leftdot">';
+					$leftdot = '<img src="'. $ndUrl .'"  alt="leftdot">';
 				}
 			}
 			$mpContent .= "&nbsp;$leftdot&nbsp;$number";
 		}
 
 		if ($end == $current) {
-			$rightdot = '<img valign="absmiddle" src="'. $ndrUrl .'"  alt="rightdot">';
+			$rightdot = '<img src="'. $ndrUrl .'"  alt="rightdot">';
 		} else {
-			$rightdot = '<img valign="absmiddle" src="'. $ndUrl .'"  alt="rightdot">';
+			$rightdot = '<img src="'. $ndUrl .'"  alt="rightdot">';
 		}
 
 		$mpContent .="&nbsp;$rightdot&nbsp;";

@@ -19,40 +19,53 @@
  *
  * $Id: UserDB.php,v 1.11 2004/02/03 05:03:02 beckettmw Exp $
  */
-?>
-<?php
-class Nuke5_UserDB extends Abstract_UserDB {
-	var $db;
-	var $fields;
-	
-	function Nuke5_UserDB() {
+
+class Nuke5_UserDB extends Abstract_UserDB
+{
+
+	function Nuke5_UserDB()
+	{
 		global $gallery;
-		$this->db = $gallery->database{"nuke"};
-		$this->prefix = $gallery->database{"user_prefix"};		
 		$this->nobody = new NobodyUser();
 		$this->everybody = new EverybodyUser();
 		$this->loggedIn = new LoggedInUser();
-		$this->fields = $gallery->database{'fields'};
 	}
 
-	function getUidList() {
-		$uidList = array();
-		$db = $this->db;
+	function getUidList()
+	{
+		global $_CLASS, $gallery_uidList;
+		//static $gallery_uidList = array(); // May get killed on each class call
 
-		$results = $db->query('select ' . $this->fields{'uid'} .
-				      ' from ' . $this->prefix . 'users');
-		while ($row = $db->fetch_row($results)) {
-			array_push($uidList, $row[0]);
+		if (is_array($gallery_uidList))
+		{
+			return $gallery_uidList;
+		} else {
+			$gallery_uidList = array();
 		}
-		array_push($uidList, $this->nobody->getUid());
-		array_push($uidList, $this->everybody->getUid());
-		array_push($uidList, $this->loggedIn->getUid());
+		
+		$sql= 'select user_id from ' . USERS_TABLE . ' where user_id <> 1';
+				      
+		$result = $_CLASS['db']->sql_query($sql);
+		
+		while ($row = $_CLASS['db']->sql_fetchrow($result))
+		{
+			array_push($gallery_uidList, $row['user_id']);
+		}
+		
+		$_CLASS['db']->sql_freeresult($result);
+		
+		// wonder what this does //
+		array_push($gallery_uidList, $this->nobody->getUid());
+		array_push($gallery_uidList, $this->everybody->getUid());
+		array_push($gallery_uidList, $this->loggedIn->getUid());
 
-		sort($uidList);
-		return $uidList;
+		sort($gallery_uidList);
+		
+		return $gallery_uidList;
 	}
 
-	function getUserByUsername($username, $level=0) {
+	function getUserByUsername($username, $level=0)
+	{
 		if (!strcmp($username, $this->nobody->getUsername())) {
 			return $this->nobody;
 		} else if (!strcmp($username, $this->everybody->getUsername())) {
@@ -66,9 +79,9 @@ class Nuke5_UserDB extends Abstract_UserDB {
 		return $user;
 	}
 
-	function getUserByUid($uid) {
+	function getUserByUid($uid)
+	{
 		global $gallery;
-		$userDir = $gallery->app->userDir;
 
 		if (!$uid || !strcmp($uid, $this->nobody->getUid())) {
 			return $this->nobody;

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: resize_photo.php,v 1.53 2004/09/21 05:15:45 cryptographite Exp $
+ * $Id: resize_photo.php,v 1.55 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
 
 require_once(dirname(__FILE__) . '/init.php');
 
-list($index, $manual, $resize, $resize_file_size) = getRequestVar(array('index', 'manual', 'resize', 'resize_file_size'));
+list($index, $manual, $resize, $resize_file_size, $remove_resized) = getRequestVar(array('index', 'manual', 'resize', 'resize_file_size', 'remove_resized'));
 
 // Hack check
 if (!$gallery->user->canWriteToAlbum($gallery->album)) {
@@ -45,11 +45,20 @@ doctype();
 <?php
 $all = !strcmp($index, "all");
 if ($gallery->session->albumName && isset($index)) {
-	if (isset($manual) && $manual >0) {
-		$resize=$manual;
+	if (isset($manual) && $manual >0)
+	{
+		$resize = $manual;
 	}
-	if (! empty($resize)) {
-		if (!strcmp($index, "all")) {
+	
+	if (!empty($remove_resized))
+	{
+		$resize = 'orig';
+	}
+	
+	if (!empty($resize))
+	{
+		if (!strcmp($index, "all"))
+		{
 			$np = $gallery->album->numPhotos(1);
 			echo("<br> ". sprintf(_("Resizing %d photos..."),$np));
 			my_flush();
@@ -70,12 +79,16 @@ if ($gallery->session->albumName && isset($index)) {
 
 		dismissAndReload();
 		return;
+		
 	} else {
 ?>
 <p><?php echo _("This will resize your intermediate photos so that the longest side of the photo is equal to the target size below and the filesize will be close to the chosen size."); ?>
 </p>
 
-<?php echo makeFormIntro("resize_photo.php"); ?>
+<?php echo makeFormIntro("resize_photo.php", 
+			array("name" => "resize_photo"),
+			array("type" => "popup"));
+?>
 
 <h3><?php echo $all ? _("What is the target size for all the intermediate photos in this album?") : _("What is the target size for the intermediate version of this photo?");?></h3>
 <?php
@@ -115,7 +128,7 @@ if ($gallery->session->albumName && isset($index)) {
 
 <p>
 	<input type="hidden" name="index" value="<?php echo $index ?>">
-	<input type="submit" name="resize" value="<?php echo _("Get rid of resized") ?>">
+	<input type="submit" name="remove_resized" value="<?php echo _("Get rid of resized") ?>">
 	<?php echo _("(Use only the original picture)"); ?>
 
 </p>
@@ -132,8 +145,7 @@ if ($gallery->session->albumName && isset($index)) {
 	echo gallery_error(_("no album / index specified"));
 }
 ?>
-
-<?php print gallery_validation_link("resize_photo.php", true, array('index' => $index)); ?>
 </div>
+<?php print gallery_validation_link("resize_photo.php", true, array('index' => $index)); ?>
 </body>
 </html>

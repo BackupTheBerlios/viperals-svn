@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: Image.php,v 1.59 2004/09/07 21:41:04 cryptographite Exp $
+ * $Id: Image.php,v 1.60 2004/09/07 21:41:04 cryptographite Exp $
  */
 ?>
 <?php
@@ -98,11 +98,13 @@ class Image {
 		return $changed;
 	}
 
-	function resize($dir, $target, $filesize, $pathToResized) {
+	function resize($dir, $target, $filesize, $pathToResized)
+	{
 		global $gallery;
 
 		/* getting rid of the resized image */
-		if ( strcmp(gallery_htmlentities($target), _("Get rid of resized")) == 0  || (stristr($target, "orig")) ) {
+		if (stristr($target, "orig"))
+		{
 			list($w, $h) = getDimensions("$dir/$this->name.$this->type");
 			$this->width = $w;
 			$this->height = $h;

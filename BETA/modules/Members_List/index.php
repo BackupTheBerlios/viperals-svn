@@ -30,8 +30,8 @@ if (!defined('VIPERAL')) {
     header('location: ../../');
     die();
 }
-requireOnce('includes/forums/functions.'.$phpEx);
-loadclass('includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.'.$phpEx);
+loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
 $_CLASS['user']->add_lang();
 $_CLASS['user']->add_img(0, 'Forums');
@@ -168,7 +168,7 @@ switch ($mode)
 				if ($submit && @extension_loaded('xml'))
 				{
 					// Add class loader
-					require_once('includes/forums/functions_messenger.'.$phpEx);
+					require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
 
 					$subject = sprintf($_CLASS['user']->lang['IM_JABBER_SUBJECT'], $_CLASS['user']->data['username'], $config['server_name']);
 					$message = $_POST['message'];
@@ -380,7 +380,7 @@ switch ($mode)
 		if ($member['user_sig_bbcode_bitfield'] && $member['user_sig'])
 		{
 			// Add class loader
-			require_once('includes/forums/bbcode.'.$phpEx);
+			require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
 			$bbcode = new bbcode();
 			$bbcode->bbcode_second_pass($member['user_sig'], $member['user_sig_bbcode_uid'], $member['user_sig_bbcode_bitfield']);
 		}
@@ -413,7 +413,7 @@ switch ($mode)
 		$profile_fields = array();
 		if ($config['load_cpf_viewprofile'])
 		{
-			requireOnce('includes/forums/functions_profile_fields.' . $phpEx);
+			require_once($site_file_root.'includes/forums/functions_profile_fields.' . $phpEx);
 			$cp = new custom_profile();
 			$profile_fields = $cp->generate_profile_fields_template('grab', $user_id);
 
@@ -611,7 +611,7 @@ switch ($mode)
 				$result = $_CLASS['db']->sql_query($sql);
 
 				// Add class loader
-				requireOnce('includes/forums/functions_messenger.'.$phpEx);
+				require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
 
 				$email_tpl	= (!$topic_id) ? 'profile_send_email' : 'email_notify';
 				$email_lang = (!$topic_id) ? $row['user_lang'] : $email_lang;
@@ -654,7 +654,7 @@ switch ($mode)
 				$messenger->send($row['user_notify_type']);
 				$messenger->queue->save();
 
-				meta_refresh(3, getlink());
+				$_CLASS['display']->meta_refresh(3, getlink());
 				$message = (!$topic_id) ? sprintf($_CLASS['user']->lang['RETURN_INDEX'],  '<a href="' . getlink() . '">', '</a>') : sprintf($_CLASS['user']->lang['RETURN_TOPIC'],  '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id']) . '">', '</a>');
 				trigger_error($_CLASS['user']->lang['EMAIL_SENT'] . '<br /><br />' . $message);
 			}

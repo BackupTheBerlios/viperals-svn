@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: Album.php,v 1.220 2004/09/22 22:49:46 jenst Exp $
+ * $Id: Album.php,v 1.223 2004/10/07 20:24:08 donwillingham Exp $
  */
 ?>
 <?php
@@ -209,7 +209,8 @@ class Album {
 	** If you set $addChild true, then the child album itself is added as last Element.
 	** Based on code by: Dariush Molavi
 	*/
-	function getParentAlbums($addChild=false) {
+	function getParentAlbums($addChild=false)
+	{
 		global $gallery;
 
 		$parentAlbum = $this;
@@ -222,11 +223,9 @@ class Album {
 
 		while (($parentAlbum = $parentAlbum->getParentAlbum(FALSE)) && 
 				$depth < $gallery->app->maximumAlbumDepth) {
-			$parentNameArray[$parentAlbum->fields['name']] = $parentAlbum->fields['title'];
+			$parentNameArray = array($parentAlbum->fields['name'] => $parentAlbum->fields['title']) + $parentNameArray;
 			$depth++;
 		}
-
-		$parentNameArray = array_reverse($parentNameArray);
 
 		return $parentNameArray;
 	}
@@ -979,7 +978,7 @@ class Album {
 		}
 	}
 
-	function addPhoto($file, $tag, $originalFilename, $caption, $pathToThumb="", $extraFields=array(), $owner="", $votes=NULL, $wmName="", $wmAlign=0, $wmAlignX=0, $wmAlignY=0) {
+	function addPhoto($file, $tag, $originalFilename, $caption, $pathToThumb="", $extraFields=array(), $owner="", $votes=NULL, $wmName="", $wmAlign=0, $wmAlignX=0, $wmAlignY=0, $wmSelect=0) {
 	       	global $gallery;
 
 		$this->updateSerial = 1;
@@ -1124,7 +1123,7 @@ class Album {
 		if (isImage($tag) && strlen($wmName)) {
 			processingMsg("- ". _("Watermarking Image"));
 			$photo->watermark($this->getAlbumDir(),
-				$wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, 0, 0); 
+				$wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, 0, 0, $wmSelect); 
 		}
 
 		$this->fields['guid'] = genGUID();
@@ -1530,12 +1529,14 @@ class Album {
 		$photo->setItemCaptureDate($itemCaptureDate);
 	}
 	
-	function numComments($index) {
+	function numComments($index)
+	{
 		$photo = $this->getPhoto($index);
 		return $photo->numComments();
 	}
 
-	function getComment($photoIndex, $commentIndex) {
+	function getComment($photoIndex, $commentIndex)
+	{
 		$photo = $this->getPhoto($photoIndex);
 		return $photo->getComment($commentIndex);
 	}
@@ -1571,11 +1572,11 @@ class Album {
 		}
 	}
 
-        function watermarkPhoto($index, $wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $preview=0, $previewSize=0) {
+        function watermarkPhoto($index, $wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $preview=0, $previewSize=0, $wmSelect=0) {
                 $this->updateSerial = 1;
                 $photo = &$this->getPhoto($index);
                 $retval = $photo->watermark($this->getAlbumDir(),
-                                            $wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $preview,$previewSize);
+                                            $wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $preview,$previewSize, $wmSelect);
                 if (!$retval) {
                         return $retval;
                 }
@@ -1583,7 +1584,7 @@ class Album {
 		$this->save(array(), $resetModDate);
         }
 
-	function watermarkAlbum($wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $recursive=0) {
+	function watermarkAlbum($wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY, $recursive=0, $wmSelect=0) {
 		$this->updateSerial = 1;
 	       	$count = $this->numPhotos(1);
 		for ($index = 1; $index <= $count; $index++) {
@@ -1594,13 +1595,15 @@ class Album {
 					$subAlbum = new Album();
 					$subAlbum->load($subAlbumName);
 					$subAlbum->watermarkAlbum($wmName, $wmAlphaName,
-						$wmAlign, $wmAlignX, $wmAlignY, $recursive);
+						$wmAlign, $wmAlignX, $wmAlignY, $recursive, $wmSelect);
 				}
 			} else if ($photo->isMovie()) {
 				// Watermarking of movies not supported
 			} else {
 				$photo->watermark($this->getAlbumDir(),
-						$wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY);
+						$wmName, $wmAlphaName, $wmAlign, $wmAlignX, $wmAlignY,
+						0, 0, // Not a preview
+					 	$wmSelect);
 			}
 		} // next $index
 	} // end of function
@@ -1620,6 +1623,38 @@ class Album {
 			}
 		}
 	}
+
+	function makeThumbnailRecursive($index)
+		{
+		for ($i=1; $i <= $this->numPhotos(1); $i++)
+			{
+			if ($this->isAlbum($i))
+				{
+				$nestedAlbum = new Album();
+				$index="all";
+				$nestedAlbum->load($this->getAlbumName($i));
+				
+				$np = $nestedAlbum->numPhotos(1);
+				echo "<br>". sprintf(_("Entering album %s, processing %d photos"), $this->getAlbumName($i), $np);
+				$nestedAlbum->makeThumbnailRecursive($index);
+				$nestedAlbum->save();
+					
+				$album = $this->getNestedAlbum($i);
+				$l = $album->getHighlight();
+				if (isset($l))
+					{
+					$album->setHighlight($l);
+					$album->save();
+					}
+				}
+			else
+				{
+				echo("<br> ". sprintf(_("Processing image %d..."), $i));
+				my_flush();
+				$this->makeThumbnail($i);
+				}
+			}
+		}
 
 	function movePhoto($index, $newIndex) {
 		/* Pull photo out */

@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: extra_fields.php,v 1.27 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: extra_fields.php,v 1.28 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -83,9 +83,9 @@ doctype();
 <div class="popuphead"><?php echo _("Configure Custom Fields") ?></div>
 <div class="popup" align="center">
 <p>
-<?php echo makeFormIntro("extra_fields.php", array(
-				"name" => "theform", 
-				"method" => "POST")); 
+<?php echo makeFormIntro("extra_fields.php", 
+		array("name" => "theform", "method" => "POST"),
+		array("type" => "popup")); 
 
 	$num_user_fields=sizeof($gallery->album->getExtraFields()) - num_special_fields($gallery->album->getExtraFields());
 ?>
@@ -177,7 +177,8 @@ function num_special_fields($extra_fields) {
 	<input type="button" name="close" value="<?php echo _("Close") ?>" onclick='parent.close()'>
 </p>
 </form>
-<?php print gallery_validation_link("extra_fields.php"); ?>
 </div>
+<?php print gallery_validation_link("extra_fields.php"); ?>
+
 </body>
 </html>

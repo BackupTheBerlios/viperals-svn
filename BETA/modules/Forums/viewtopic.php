@@ -13,7 +13,7 @@
 
 // -------------------------------------------------------------
 //
-// $Id: viewtopic.php,v 1.349 2004/09/16 18:33:17 acydburn Exp $
+// $Id: viewtopic.php,v 1.350 2004/09/16 18:33:17 acydburn Exp $
 //
 // FILENAME  : viewtopic.php 
 // STARTED   : Sat Feb 13, 2001
@@ -22,16 +22,16 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+// Add a check for post encodeing so that only the post that are encoded in that format is shown.
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: ../../');
     die();
 }
 
-global $MAIN_CFG;
-
-requireOnce('includes/forums/functions.'.$phpEx);
-loadclass('includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.'.$phpEx);
+loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
 $_CLASS['auth']->acl($_CLASS['user']->data);
 
@@ -43,8 +43,8 @@ $voted_id	= request_var('vote_id', 0);;
 
 $start		= request_var('start', 0);
 $view		= request_var('view', '');
-$rate		= request_var('rate', '');
-$sort_days	= request_var('st', 0);
+$rate		= get_variable('rate', 'GET', false);
+$sort_days	= request_var('st', ((!empty($_CLASS['user']->data['user_show_days'])) ? $_CLASS['user']->data['user_show_days'] : 0));
 $sort_key	= request_var('sk', 't');
 $sort_dir	= request_var('sd', 'a');
 $update		= request_var('update', false);
@@ -57,6 +57,127 @@ if (!$topic_id && !$post_id)
 	trigger_error('NO_TOPIC');
 }
 
+// add to database
+$config['karma_time'] = 2592000; //2592000
+
+if ($rate)
+{
+	if (!$post_id)
+	{
+		trigger_error('Sorry the request post was not found');
+	}
+	$karma_time = ($config['karma_time']) ? time() - $config['karma_time'] : 0;
+	
+	$sql = 'SELECT forum_id, poster_id , post_time, post_approved, post_edit_time
+		FROM ' . POSTS_TABLE . ' WHERE post_approved=1 AND post_id = '.$post_id;
+		
+	$result = $_CLASS['db']->sql_query($sql);
+
+	$row = $_CLASS['db']->sql_fetchrow($result);
+	$_CLASS['db']->sql_freeresult($result);
+	
+	if (!$row)
+	{
+		trigger_error('Sorry the request post was not found');
+	}
+	
+	if (!$_CLASS['auth']->acl_get('f_rate', $row['forum_id']) || !$row['post_approved'] || $row['poster_id'] == $_CLASS['user']->data['user_id'] || $row['poster_id'] == ANONYMOUS || !$config['enable_karma'])
+	{
+		trigger_error('Sorry you can not rate this posts');
+	}
+	
+	$time = ($row['post_edit_time']) ? $row['post_edit_time'] : $row['post_time'];
+
+	if ($karma_time && $time < $karma_time)
+	{
+		trigger_error('Sorry you can\'t rate posts over '.round($config['karma_time'] / 86400).' days form original post or last edit');
+	}
+	
+	// Grab existing rating for this post, if it exists
+	$sql = 'SELECT * FROM ' . RATINGS_TABLE . ' 
+		WHERE rater_id = ' . $_CLASS['user']->data['user_id'] . "
+			AND post_id = $post_id";
+
+	$result = $_CLASS['db']->sql_query($sql);
+	$updated = ($updated = $_CLASS['db']->sql_fetchrow($result)) ? true : false;
+	$_CLASS['db']->sql_freeresult($result);
+
+	switch ($rate)
+	{
+		case 'good':
+			$rate = 1;
+			break;
+		case 'bad':
+			$rate = -1;
+			break;
+	}
+	
+	// Insert rating if appropriate
+	$sql = (!$updated) ? 'INSERT INTO ' . RATINGS_TABLE . ' (user_id, post_id, rating, rater_id, rating_time) VALUES (' . $row['poster_id'] . ", $post_id, $rate, ".$_CLASS['user']->data['user_id'].",  $time  )" : 'UPDATE ' . RATINGS_TABLE . " SET rating = $rate, rating_time = " . $time . " WHERE post_id = $post_id AND user_id = " . $row['poster_id'];
+	$_CLASS['db']->sql_query($sql);
+	
+	// delete old ratings
+	if ($karma_time)
+	{
+		$sql = 'DELETE FROM ' . RATINGS_TABLE . ' 
+				WHERE rating_time < '.$karma_time;
+				
+		$_CLASS['db']->sql_query($sql);
+	}
+	
+	// Rating sum and count since first post
+	$sql = 'SELECT post_id, rating FROM ' . RATINGS_TABLE.' WHERE user_id = '.$row['poster_id'];
+	$result = $_CLASS['db']->sql_query($sql);
+	
+	While ($sum = $_CLASS['db']->sql_fetchrow($result))
+	{
+		if (empty($sumtmp[$sum['post_id']]))
+		{
+			$sumtmp[$sum['post_id']] = $sum['rating'];
+			$totaltmp[$sum['post_id']] = 1;
+
+		} else {
+			$sumtmp[$sum['post_id']] = $sumtmp[$sum['post_id']] + $sum['rating'];
+			$totaltmp[$sum['post_id']] ++;
+		}
+	}
+	
+	$_CLASS['db']->sql_freeresult($result);
+	
+	$sum = 0;
+	
+	foreach($sumtmp as $key => $value)
+	{
+		$sum = $sum + ($value / $totaltmp[$key]);
+	}
+	
+	$sql = 'SELECT COUNT(*) as posts
+	FROM ' . POSTS_TABLE . ' WHERE post_approved=1
+	AND poster_id = '.$row['poster_id'].(($karma_time) ? ' AND post_time > '.$karma_time : '');
+
+	$result = $_CLASS['db']->sql_query($sql);
+	$posts = $_CLASS['db']->sql_fetchrow($result);
+	$_CLASS['db']->sql_freeresult($result);
+
+	$karma = round($sum / $posts['posts'] * 5);
+	
+	$sql = 'UPDATE ' . USERS_TABLE . "
+		SET user_karma = $karma 
+		WHERE user_id = ".$row['poster_id'];
+
+	$_CLASS['db']->sql_query($sql);
+	
+	$_CLASS['user']->add_lang('viewtopic');
+	
+	$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id");
+	
+	$message = ($updated) ? $_CLASS['user']->lang['RATING_UPDATED'] : $_CLASS['user']->lang['RATING_ADDED'];
+	$message = $message . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_POST'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id\">", '</a>');
+	
+	trigger_error($message);
+	
+}
+
 $_CLASS['template']->assign(array(
 	'S_FORUM_RULES' 			=> false,
 	'S_HIDDEN_FIELDS' 			=> false,
@@ -65,6 +186,7 @@ $_CLASS['template']->assign(array(
 
 // Find topic id if user requested a newer or older topic
 $unread_post_id = '';
+
 if ($view && !$post_id)
 {
 	if ($view == 'unread')
@@ -114,7 +236,7 @@ if ($view && !$post_id)
 			{
 				// Setup user environment so we can process lang string
 				$_CLASS['user']->add_lang('viewtopic');
-				meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
+				$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
 				$message = $_CLASS['user']->lang['NO_UNREAD_POSTS'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"),'">', '</a>');
 				trigger_error($message);
 			}
@@ -263,7 +385,7 @@ if (($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) && $topic_time_
 }
 
 $_CLASS['user']->add_lang('viewtopic');
-$_CLASS['user']->add_img(0, 'Forums');
+$_CLASS['user']->add_img();
 
 if (!$topic_approved && !$_CLASS['auth']->acl_get('m_approve', $forum_id))
 {
@@ -301,114 +423,8 @@ if (isset($_GET['e']))
 	else if ($jump_to > 0)
 	{
 		// We direct the already logged in user to the correct post...
-		redirect(getlink($redirect_url . ((!$post_id) ? "&p=$jump_to" : "&p=$post_id") . "#$jump_to"));
+		redirect(getlink($redirect_url . ((!$post_id) ? "&p=$jump_to" : "&p=$post_id")). "#$jump_to");
 	}
-}
-// Not final in the slightest! Far too simplistic
-// needs alot of work look into other karma systems
-// feather intergration should be simple
-// get better rating type
-if ($rate)
-{
-	// Check for rating count for previous X time
-
-	// Grab existing rating for this post, if it exists
-	$sql = 'SELECT * 
-		FROM ' . RATINGS_TABLE . ' 
-		WHERE user_id = ' . $_CLASS['user']->data['user_id'] . "
-			AND post_id = $post_id";
-	$result = $_CLASS['db']->sql_query($sql);
-
-	switch ($rate)
-	{
-		case 'good':
-			$rate = 1;
-			break;
-		case 'bad':
-			$rate = -1;
-			break;
-	}
-
-	$updated = ($row = $_CLASS['db']->sql_fetchrow($result)) ? true : false;
-	$_CLASS['db']->sql_freeresult($result);
-
-	// Insert rating if appropriate
-	$sql = (!$updated) ? 'INSERT INTO ' . RATINGS_TABLE . ' (user_id, post_id, rating, rating_time) VALUES (' . $_CLASS['user']->data['user_id'] . ", $post_id, $rate, " . time() . ')' : 'UPDATE ' . RATINGS_TABLE . " SET rating = $rate, rating_time = " . time() . " WHERE post_id = $post_id AND user_id = " . $_CLASS['user']->data['user_id'];
-	$_CLASS['db']->sql_query($sql);
-
-	// Rating sum and count past thirty days
-	$sql = 'SELECT p.poster_id, SUM(r.rating) AS rated, COUNT(r.rating) as total_ratings
-		FROM ' . RATINGS_TABLE . ' r, ' . POSTS_TABLE . ' p, ' . POSTS_TABLE . " p2  
-		WHERE p2.post_id = $post_id
-			AND p.poster_id = p2.poster_id  
-			AND p.post_time > " . (time() - (30 * 86400)) . ' 
-			AND r.post_id = p.post_id 
-			AND r.user_id <> p2.poster_id 
-		GROUP BY p.poster_id';
-	$result = $_CLASS['db']->sql_query($sql);
-
-	$row = $_CLASS['db']->sql_fetchrow($result);
-	$_CLASS['db']->sql_freeresult($result);
-
-	// Rating sum and count since first post
-	$sql = 'SELECT p.poster_id, SUM(r.rating) AS rated, COUNT(r.rating) as total_ratings
-		FROM ' . RATINGS_TABLE . ' r, ' . POSTS_TABLE . ' p, ' . POSTS_TABLE . " p2  
-		WHERE p2.post_id = $post_id 
-			AND p.poster_id = p2.poster_id 
-			AND p.post_time < " . (time() - (30 * 86400)) . ' 
-			AND r.post_id = p.post_id 
-			AND r.user_id <> p2.poster_id 
-		GROUP BY p.poster_id';
-	$result = $_CLASS['db']->sql_query($sql);
-
-	$row = $_CLASS['db']->sql_fetchrow($result);
-	$_CLASS['db']->sql_freeresult($result);
-
-	$total_ratings = $row['total_ratings'];
-	$historic_rating = ($row['rated'] / $row['total_ratings']) * 0.30;
-
-	$total_ratings += $row['total_ratings'];
-	$thirty_day_rating = ($row['rated'] / $row['total_ratings']) * 0.50;
-
-	if ($total_ratings > $config['min_ratings'])
-	{
-		// Post count and reg date for this user
-		$sql = 'SELECT user_id, user_regdate, user_posts 
-			FROM ' . USERS_TABLE . ' 
-			WHERE user_id = ' . $row['poster_id'];
-		$result = $_CLASS['db']->sql_query($sql);
-
-		$row = $_CLASS['db']->sql_fetchrow($result);
-		$_CLASS['db']->sql_freeresult($result);
-
-		$post_count_rating = ($row['user_posts'] / $config['num_posts']) * 0.1;
-		$day_rating = (($row['user_regdate'] > $config['board_startdate']) ? $config['board_startdate'] / $row['user_regdate'] : 1) * 0.1;
-		$poster_id = $row['user_id'];
-
-		// Number of rated posts by this user
-//		$sql = 'SELECT COUNT(DISTINCT(p.post_id)) AS rated_posts
-//			FROM ' . RATINGS_TABLE . ' r , ' . POSTS_TABLE . " p 
-//			WHERE p.poster_id = $poster_id  
-//				AND r.post_id = p.post_id
-//				AND r.user_id <> $poster_id";
-//		$result = $_CLASS['db']->sql_query($sql);
-
-//		$row = $_CLASS['db']->sql_fetchrow($result);
-//		$_CLASS['db']->sql_freeresult($result);
-
-		$karma = ($historic_rating + $thirty_day_rating + $day_rating + $post_count_rating) * 5;
-		$karma = ($karma < 0) ? floor($karma) : (($karma > 0) ? ceil($karma) : 0);
-
-		$sql = 'UPDATE ' . USERS_TABLE . "
-			SET user_karma = $karma 
-			WHERE user_id = $poster_id";
-		$_CLASS['db']->sql_query($sql);
-	}
-
-	meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;p=$post_id#$post_id"));
-	$message = ($updated) ? $_CLASS['user']->lang['RATING_UPDATED'] : $_CLASS['user']->lang['RATING_ADDED'];
-	$message = $message . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_POST'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;p=$post_id#$post_id").'">', '</a>');
-	trigger_error($message);
 }
 
 // What is start equal to?
@@ -512,7 +528,7 @@ if ($config['allow_bookmarks'] && $_CLASS['user']->data['user_id'] != ANONYMOUS 
 			$where_sql";
 	$_CLASS['db']->sql_query($sql);
 
-	meta_refresh(3, getlink($viewtopic_url, false));
+	$_CLASS['display']->meta_refresh(3, getlink($viewtopic_url, false));
 	$message = (($bookmarked) ? $_CLASS['user']->lang['BOOKMARK_REMOVED'] : $_CLASS['user']->lang['BOOKMARK_ADDED']) . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="' . getlink($viewtopic_url, false) . '">', '</a>');
 	trigger_error($message);
 }
@@ -613,11 +629,11 @@ $_CLASS['template']->assign(array(
 	'S_MOD_ACTION' 			=> getlink("Forums&amp;file=mcp&amp;t=$topic_id&amp;f=$forum_id&amp;quickmod=1", false, false), 
 
 	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
-	'S_SEARCHBOX_ACTION'	=> getlink('Forums&amp;file=search&amp;f='.$forum_id), 
+	'S_SEARCHBOX_ACTION'	=> getlink('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
 	'U_TOPIC'				=> (!$view == 'print') ? getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id") : getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id", true, true),
 	'U_FORUM'				=> $server_path,
-	'U_VIEW_UNREAD_POST'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread"),
+	'U_VIEW_UNREAD_POST'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread").'#unread',
 	'U_VIEW_TOPIC' 			=> getlink($viewtopic_url, false),
 	'U_VIEW_FORUM' 			=> getlink('Forums&amp;file=viewforum&amp;f='.$forum_id),
 	'U_VIEW_OLDER_TOPIC'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=previous"),
@@ -691,7 +707,7 @@ if (!empty($poll_start))
 	{
 		if (!sizeof($voted_id) || sizeof($voted_id) > $poll_max_options)
 		{
-			meta_refresh(5, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
+			$_CLASS['display']->meta_refresh(5, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
 
 			$message = (!sizeof($voted_id)) ? 'NO_VOTE_OPTION' : 'TOO_MANY_VOTE_OPTIONS';
 			$message = $_CLASS['user']->lang[$message] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
@@ -751,7 +767,7 @@ if (!empty($poll_start))
 			WHERE topic_id = $topic_id";
 		$_CLASS['db']->sql_query($sql);
 
-		meta_refresh(5, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
+		$_CLASS['display']->meta_refresh(5, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
 
 		$message = $_CLASS['user']->lang['VOTE_SUBMITTED'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
 		trigger_error($message);
@@ -765,7 +781,7 @@ if (!empty($poll_start))
 
 	if ($poll_info[0]['bbcode_bitfield'])
 	{
-		requireOnce('includes/forums/bbcode.'.$phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
 		$poll_bbcode = new bbcode();
 		
 		$size = sizeof($poll_info);
@@ -846,7 +862,6 @@ else
 // Container for user details, only process once
 $post_list = $user_cache = $id_cache = $attachments = $attach_list = $rowset = $update_count = $post_edit_list = array();
 $has_attachments = $display_notice = false;
-$force_encoding = '';
 $bbcode_bitfield = $i = $i_total = 0;
 
 // Go ahead and pull all data for this topic
@@ -885,12 +900,12 @@ while ($row = $_CLASS['db']->sql_fetchrow($result))
 	$poster_id = $row['poster_id'];
 	$poster	= ($poster_id == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['user']->lang['GUEST']) : $row['username'];
 
-	if (!$view || $view != 'show' || $post_id != $row['post_id'])
+	if ($view != 'show' || $post_id != $row['post_id'])
 	{
-		if ($row['user_karma'] < $_CLASS['user']->data['user_min_karma'])
+		if (!$row['friend'] && $row['user_karma'] < $_CLASS['user']->data['user_min_karma'])
 		{
 			$rowset[$row['post_id']] = array(
-				'below_karma'	=> TRUE,
+				'below_karma'	=> true,
 				'post_id'		=> $row['post_id'], 
 				'poster'		=> $poster,
 				'user_karma'	=> $row['user_karma']
@@ -910,6 +925,37 @@ while ($row = $_CLASS['db']->sql_fetchrow($result))
 		}
 	}
 
+	if ($row['post_encoding'] != $_CLASS['user']->lang['ENCODING'])
+	{
+		if ($view != 'encoding' && $post_id != $row['post_id'])
+		{
+			$rowset[$row['post_id']] = array(
+				'do_post_encoding'	=> true,
+				'post_encoding'		=> $row['post_encoding'],
+				'post_id'	=> $row['post_id'], 
+				'poster'	=> $poster,
+			);
+			continue;
+		}
+	}
+	
+	/*elseif ($row['post_encoding'] != $_CLASS['user']->lang['ENCODING'])
+	{
+		if ($view == 'encoding' && $post_id == $row['post_id'])
+		{
+			$force_encoding = $row['post_encoding'];
+		}
+		else
+		{
+			$_CLASS['template']->assign_vars_array('postrow', array(
+				'S_IGNORE_POST'	=> true, 
+				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
+			);
+
+			continue;
+		}
+	}*/
+	
 	// Does post have an attachment? If so, add it to the list
 	if ($row['post_attachment'] && $config['allow_attachments'])
 	{
@@ -1099,7 +1145,7 @@ $_CLASS['db']->sql_freeresult($result);
 // Load custom profile fields
 if ($config['load_cpf_viewtopic'])
 {
-	requireOnce('includes/forums/functions_profile_fields.' . $phpEx);
+	require_once($site_file_root.'includes/forums/functions_profile_fields.' . $phpEx);
 	$cp = new custom_profile();
 	// Grab all profile fields from users in id cache for later use - similar to the poster cache
 	$profile_fields_cache = $cp->generate_profile_fields_template('grab', $id_cache);
@@ -1128,7 +1174,7 @@ if (sizeof($attach_list))
 {
 	if ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id))
 	{
-		include('includes/forums/functions_display.' . $phpEx);
+		include($site_file_root.'includes/forums/functions_display.' . $phpEx);
 
 		$sql = 'SELECT * 
 			FROM ' . ATTACHMENTS_TABLE . '
@@ -1198,7 +1244,7 @@ if (sizeof($attach_list))
 // Instantiate BBCode if need be
 if ($bbcode_bitfield)
 {
-	require_once('includes/forums/bbcode.'.$phpEx);
+	require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
 	$bbcode = new bbcode($bbcode_bitfield);
 }
 
@@ -1215,34 +1261,33 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 {
 	$row =& $rowset[$post_list[$i]];
 	$poster_id = $row['user_id'];
+	$force_encoding = '';
 
 	// Three situations can prevent a post being display:
 	// i)   The posters karma is below the minimum of the user ... not in 2.2.x
 	// ii)  The poster is on the users ignore list
 	// iii) The post was made in a codepage different from the users
-	if (isset($row['below_karma']))
+	if (!empty($row['below_karma']))
 	{
 		$_CLASS['template']->assign_vars_array('postrow', array(
 			'S_IGNORE_POST' => true, 
-			'S_ROW_COUNT'	=> $i,
-
-			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BELOW_KARMA'], $row['poster'], $row['user_karma'], '<a href="'.getlink("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
+			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BELOW_KARMA'], $row['poster'], $row['user_karma'], '<a href="'.getlink("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id']. '">', '</a>'))
 		);
 
 		continue;
 	}
-	elseif (isset($row['foe']) && $row['foe'])
+	elseif (!empty($row['foe']))
 	{
 		$_CLASS['template']->assign_vars_array('postrow', array(
 			'S_IGNORE_POST' => true, 
-			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['poster'], '<a href="'.getlink("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
+			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['poster'], '<a href="'.getlink("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id'] . '">', '</a>'))
 		);
 
 		continue;
 	}
-	else if ($row['post_encoding'] != $_CLASS['user']->lang['ENCODING'])
+	elseif ($row['post_encoding'] != $_CLASS['user']->lang['ENCODING'])
 	{
-		if ($view == 'encoding' && $post_id == $row['post_id'])
+		if (empty($row['do_post_encoding']))
 		{
 			$force_encoding = $row['post_encoding'];
 		}
@@ -1250,7 +1295,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		{
 			$_CLASS['template']->assign_vars_array('postrow', array(
 				'S_IGNORE_POST'	=> true, 
-				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding#' . $row['post_id']) . '">', '</a>'))
+				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
 			);
 
 			continue;
@@ -1374,7 +1419,14 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	{
 		$cp_row = (isset($profile_fields_cache[$poster_id])) ? $cp->generate_profile_fields_template('show', false, $profile_fields_cache[$poster_id]) : array();
 	}
-
+	
+	$can_rate = false;
+	
+	if ($config['enable_karma'] && (!$config['karma_time'] || (($row['post_edit_time']) ? $row['post_edit_time'] : $row['post_time']) > (time() - $config['karma_time'])))
+	{
+		$can_rate = ($_CLASS['auth']->acl_get('f_rate', $forum_id) && $row['post_approved'] && $poster_id != $_CLASS['user']->data['user_id'] && $poster_id != ANONYMOUS) ? true : false;
+	}
+	
 	$postrow = array(
 		'POSTER_NAME' 	=> $row['poster'],
 		'POSTER_RANK' 	=> $user_cache[$poster_id]['rank_title'],
@@ -1422,21 +1474,20 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'U_MCP_REPORT'		=> ($_CLASS['auth']->acl_gets('m_', 'a_', 'f_report', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
 		'U_MCP_APPROVE'		=> ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
 		'U_MCP_DETAILS'		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
-		'U_MINI_POST'		=> getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '#' . $row['post_id']),
+		'U_MINI_POST'		=> getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id']) . '#' . $row['post_id'],
 		'U_NEXT_POST_ID'	=> ($i < $i_total && isset($rowset[$i + 1])) ? $rowset[$i + 1]['post_id'] : '', 
 		'U_PREV_POST_ID'	=> $prev_post_id, 
 		'POST_ID'           => $row['post_id'],
-		//'S_CAN_RATE'		=> ($_CLASS['auth']->acl_get('f_rate', $forum_id) && $row['post_approved'] && !$row['post_reported'] && $poster_id != $_CLASS['user']->data['user_id'] && $poster_id != ANONYMOUS && $config['enable_karma']) ? true : false, 
-		'S_CAN_RATE'		=> true, 
+		'S_CAN_RATE'		=> $can_rate, 
 
 		'S_HAS_ATTACHMENTS' => (!empty($attachments[$row['post_id']])) ? TRUE : FALSE,
 		'S_POST_UNAPPROVED'	=> ($row['post_approved']) ? FALSE : TRUE,
 		'S_POST_REPORTED'	=> ($row['post_reported'] && $_CLASS['auth']->acl_get('m_', $forum_id)) ? TRUE : FALSE,
 		'S_DISPLAY_NOTICE'	=> ($display_notice && $row['post_attachment']) ? true : false, 
 		'S_FRIEND'			=> ($row['friend']) ? true : false,
-		'S_UNREAD'          => ($_CLASS['user']->data['user_id'] != ANONYMOUS && $row['post_time'] > $_CLASS['user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? true : false,
+		'S_UNREAD_POST'		=> ($_CLASS['user']->data['user_id'] != ANONYMOUS && $row['post_time'] > $_CLASS['user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? true : false,
 		'S_FIRST_UNREAD'	=> ($unread_post_id == $row['post_id']) ? true : false,
-		'S_CUSTOM_FIELDS'       => (sizeof($cp_row)) ? true : false
+		'S_CUSTOM_FIELDS'	=> (sizeof($cp_row)) ? true : false
 	);
 
 	if (sizeof($cp_row))
@@ -1524,7 +1575,8 @@ $_CLASS['template']->assign(array(
 	'L_QUICK_MOD'			=> $_CLASS['user']->lang['QUICK_MOD'],
 	'L_JUMP_TO'				=> $_CLASS['user']->lang['JUMP_TO'],
 	'L_SORT_BY'				=> $_CLASS['user']->lang['SORT_BY'],
-	
+	'L_FORUM_RULES'			=> $_CLASS['user']->lang['FORUM_RULES'],
+
 	'L_TOTAL_VOTES'			=> $_CLASS['user']->lang['TOTAL_VOTES'],
 	'L_POLL_VOTED_OPTION'	=> $_CLASS['user']->lang['POLL_VOTED_OPTION'],
 	'L_ATTACHMENTS'			=> $_CLASS['user']->lang['ATTACHMENTS'],

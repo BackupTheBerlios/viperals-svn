@@ -12,7 +12,9 @@
 //**************************************************************//
 
 define('VIPERAL', 'MINILOAD');
-require('core.php');
+$site_file_root = 'C:/Program Files/Apache Group/Apache2/cms/';
+
+require($site_file_root.'core.php');
 
 /*if (!is_admin())
 {
@@ -21,8 +23,8 @@ require('core.php');
 
 error_reporting(0);
 
-$debug	= new debug();
-$debug->display();
+$_CLASS['debug'] = new debug();
+$_CLASS['debug']->display();
 	
 class debug
 {
@@ -61,6 +63,7 @@ class debug
 		);
 	
 		$_CLASS['template']->display('debug.html');
+		script_close(false);
 	}
 	
 	function display_notice()
@@ -69,15 +72,17 @@ class debug
 		
 		$this->debug_data = $_CLASS['user']->get_data('debug');
 
-		if (!empty($this->debug_data['E_NOTICE'])) {
+		if (!empty($this->debug_data['E_NOTICE']))
+		{
 
 			$size = count($this->debug_data['E_NOTICE']);
+			
 			for ($i=0; $i< $size; $i++)
 			{
 				$_CLASS['template']->assign_vars_array('error_notice', array(
-					'errfile'	=> $this->debug_data['E_NOTICE'][$i]['errfile'],
-					'errline'	=> $this->debug_data['E_NOTICE'][$i]['errline'], 
-					'msg_text' => $this->debug_data['E_NOTICE'][$i]['msg_text']	)
+					'errfile'	=> $this->debug_data['E_NOTICE'][$i]['file'],
+					'errline'	=> $this->debug_data['E_NOTICE'][$i]['line'], 
+					'msg_text' => $this->debug_data['E_NOTICE'][$i]['error']	)
 				);
 			}
 		}
@@ -89,16 +94,17 @@ class debug
 		
 		$this->debug_data = $_CLASS['user']->get_data('debug');
 
-		if (isset($this->debug_data['E_WARNING'])) {
+		if (!empty($this->debug_data['E_WARNING']))
+		{
 		
-			$size = count($phperror['E_WARNING']);
+			$size = count($this->debug_data['E_WARNING']);
 		
 			for ($i=0; $i<$size; $i++)
 			{
 				$_CLASS['template']->assign_vars_array('error_warnings', array(
-					'errfile'	=> $this->debug_data['E_WARNING'][$i]['errfile'],
-					'errline'	=> $this->debug_data['E_WARNING'][$i]['errline'], 
-					'msg_text' => $this->debug_data['E_WARNING'][$i]['msg_text'])
+					'errfile'	=> $this->debug_data['E_WARNING'][$i]['file'],
+					'errline'	=> $this->debug_data['E_WARNING'][$i]['line'], 
+					'msg_text' => $this->debug_data['E_WARNING'][$i]['error'])
 				);
 			}
 		}

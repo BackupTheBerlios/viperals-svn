@@ -2,31 +2,15 @@ php_flag register_globals 0
 php_flag register_argc_argv 0
 php_flag magic_quotes_gpc 0
 
-<limit GET PUT POST>
+<LimitExcept GET PUT POST>
 order allow,deny
 allow from all
-</limit>
-
-# deny most common except .php
-<filesmatch "\.(inc|tpl|h|ihtml|sql|ini|conf|class|bin|spd|theme|module|exe)$">
-deny from all
-</filesmatch>
-
-#Disable .htaccess viewing from browser
-<files ~ "^\.ht">
-    Order allow,deny
-    Deny from all
-    Satisfy All
-</files>
-
-<files ~ "\config.php$">
-deny from all
-</files>
+</LimitExcept>
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
-#RewriteCond %{HTTP_HOST} !^www.viperal.com$ [NC]
-#RewriteRule ^(.*)$ http://www.viperal.com/$1 [R,L]
+#RewriteCond %{HTTP_HOST} !^www.wowbeyond.com$ [NC]
+#RewriteRule ^(.*)$ http://www.wowbeyond.com/$1 [R,L]
 
 RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7&$8&$9 [L]
 RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7&$8 [L]
@@ -41,8 +25,7 @@ RewriteRule ^index\.html$  index.php [L]
 RewriteRule ^(.*)\.html$ index.php?name=$1 [L]
 </IfModule>
 
-# You can change to yoursite.com
-ErrorDocument 403 /error.php?403
-ErrorDocument 404 /error.php?404
+ErrorDocument 403 /core.php?error=403
+ErrorDocument 404 /core.php?error=404
 
 Options -Indexes

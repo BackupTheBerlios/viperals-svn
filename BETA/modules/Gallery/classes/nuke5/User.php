@@ -21,41 +21,81 @@
  */
 ?>
 <?php
-class Nuke5_User extends Abstract_User {
-	var $db;
-	var $prefix;
-	var $fields;
-	
-	function Nuke5_User() {
-		global $gallery;
-		$this->db = $gallery->database{"nuke"};
-		$this->prefix = $gallery->database{"user_prefix"};
-		$this->fields = $gallery->database{'fields'};
-	}
-
-	function loadByUid($uid) {
-		$results = $this->db->query('select ' . $this->fields{'uname'} .
-		   ', ' . $this->fields{'name'} . ', ' . $this->fields{'email'} .
-		   ' from ' . $this->prefix . 'users '. 'where ' .
-		   $this->fields{'uid'} . "='$uid'");
-		$row = $this->db->fetch_row($results);
-		$this->username = $row[0];
-		$this->fullname = $row[1];
-		$this->email = $row[2];
+class Nuke5_User extends Abstract_User
+{
+	function loadByUid($uid)
+	{
+		global $_CLASS, $gallery_save;
+		
+		if ($uid == $_CLASS['user']->data['user_id'])
+		{
+			$this->uid = $_CLASS['user']->data['user_id'];
+			$this->fullname = $_CLASS['user']->data['username'];
+			$this->email = $_CLASS['user']->data['user_email'];
+			$this->isAdmin = 0;
+			$this->canCreateAlbums = 0;
+			$this->username = $_CLASS['user']->data['username'];
+			
+			return;
+		}
+		
+		$query = false;
+		
+		if (empty($gallery_save['user_id'][$uid]))
+		{
+			$sql = 'select username, user_id, user_email from ' . USERS_TABLE . " where user_id ='$uid'";
+				
+			$result = $_CLASS['db']->sql_query($sql);
+			$row = $_CLASS['db']->sql_fetchrow($result);
+			$_CLASS['db']->sql_freeresult($result);
+			$query = true;
+			
+			//Man wonder if i can get a better way to do this
+			$gallery_save['user_id'][$uid] = array('username' => $row['username'], 'user_email' => $row['user_email']);
+			$gallery_save['username'][$row['username']] = array('user_id' => $row['user_id'], 'user_email' => $row['user_email']);
+		}
+		
+		$this->fullname = $this->username = ($query) ? $row['username'] : $gallery_save['user_id'][$uid]['username'];
+		$this->email = ($query) ? $row['user_email'] : $gallery_save['user_id'][$uid]['user_email'];
 		$this->isAdmin = 0;
 		$this->canCreateAlbums = 0;
 		$this->uid = $uid;
 	}
 
-	function loadByUserName($uname) {
-		$results = $this->db->query('select ' . $this->fields{'uid'} .
-		   ', ' . $this->fields{'name'} . ', ' . $this->fields{'email'} .
-		   ' from ' . $this->prefix . 'users ' . 'where ' .
-		   $this->fields{'uname'} . "='$uname'");
-		$row = $this->db->fetch_row($results);
-		$this->uid = $row[0];
-		$this->fullname = $row[1];
-		$this->email = $row[2];
+	function loadByUserName($uname) 
+	{
+		global $_CLASS, $gallery_save;
+
+		if ($uname == $_CLASS['user']->data['username'])
+		{
+			$this->uid = $_CLASS['user']->data['user_id'];
+			$this->fullname = $_CLASS['user']->data['username'];
+			$this->email = $_CLASS['user']->data['user_email'];
+			$this->isAdmin = 0;
+			$this->canCreateAlbums = 0;
+			$this->username = $uname;
+			return;
+		}
+		
+		$query = false;
+		
+		if (empty($gallery_save['username'][$uname]))
+		{
+			$sql = 'select username, user_id, user_email from ' . USERS_TABLE . " where username ='$uname'";
+				
+			$result = $_CLASS['db']->sql_query($sql);
+			$row = $_CLASS['db']->sql_fetchrow($result);
+			$_CLASS['db']->sql_freeresult($result);
+			$query = true;
+			
+			//Man wonder if i can get a better way to do this
+			$gallery_save['user_id'][$row['user_id']] = array('username' => $row['username'], 'user_email' => $row['user_email']);
+			$gallery_save['username'][$uname] = array('user_id' => $row['user_id'], 'user_email' => $row['user_email']);
+		}
+		
+		$this->uid = ($query) ? $row['user_id'] : $gallery_save['username'][$uname]['user_id'];
+		$this->fullname = $uname;
+		$this->email = ($query) ? $row['user_email'] : $gallery_save['username'][$uname]['user_email'];
 		$this->isAdmin = 0;
 		$this->canCreateAlbums = 0;
 		$this->username = $uname;

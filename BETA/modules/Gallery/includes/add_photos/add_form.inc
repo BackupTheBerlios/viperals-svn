@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: add_form.inc,v 1.19 2004/09/17 02:09:29 cryptographite Exp $
+ * $Id: add_form.inc,v 1.20 2004/10/02 15:59:04 jenst Exp $
  */
 ?>
 <?php
@@ -37,13 +37,13 @@ if (!isset($metaboxes)) {
 	echo _("Supported file types") ?>: <?php echo join(", ", acceptableFormatList());
 	echo '</p>';
 
-	if ($gallery->app->feature["zip"]) {
+	if ($gallery->app->feature["zip"] || $gallery->app->rar) {
 		echo '<p><b>'. _("Tip:") . '</b> ';
-		echo _("Upload a ZIP file full of photos and movies!");
+		echo _("Upload a compressed file (zip, rar, ace ...) full of photos and movies!");
 		echo "</p>\n\t";
 	}
 
-echo makeFormIntro("add_photos.php", array("name" => "count_form", "method" => "POST"), array('type' => 'popup')); ?>
+	echo makeFormIntro("add_photos.php", array("name" => "count_form", "method" => "POST"), array('type' => 'popup')); ?>
 	<input type="hidden" name="mode" value="<?php echo $mode ?>"/>
 
 	<table>

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: edit_field.php,v 1.42 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: edit_field.php,v 1.43 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -55,9 +55,9 @@ if (isset($save)) {
 <?php 
 	echo sprintf(_("Edit the %s and click %s when you're done"), _($field), '<b>' . _("Save") . '</b>');
 
-	echo makeFormIntro("edit_field.php", array(
-		"name" => "theform",
-		"method" => "POST")); 
+	echo makeFormIntro("edit_field.php", 
+		array("name" => "theform", "method" => "POST"),
+		array("type" => "popup")); 
 ?>
 	<input type="hidden" name="field" value="<?php echo $field ?>">
 	<textarea name="data" rows="8" cols="50"><?php echo $gallery->album->fields[$field] ?></textarea>

@@ -107,46 +107,6 @@ include(dirname(__FILE__) . "/includes/slideshow/$mode.inc");
 
 slideshow_initialize();
 
-if (!$GALLERY_EMBEDDED_INSIDE) {
-doctype();
-?>
-<html>
-<head>
-  <title><?php echo $title; ?></title>
-<?php 
-	common_header();
-
-// the link colors have to be done here to override the style sheet
-if ($albumName) {
-	echo "\n". '<style type="text/css">';
-	if ($gallery->album->fields["linkcolor"]) {
-?>
-    A:link, A:visited, A:active
-      { color: <?php echo $gallery->album->fields[linkcolor] ?>; }
-    A:hover
-      { color: #ff6600; }
-<?php
-       	}
-       	if ($gallery->album->fields["bgcolor"]) {
-	       	echo "BODY { background-color:".$gallery->album->fields[bgcolor]."; }";
-       	}
-       	if (isset($gallery->album->fields["background"]) && $gallery->album->fields["background"]) {
-	       	echo "BODY { background-image:url(".$gallery->album->fields['background']."); } ";
-       	}
-       	if ($gallery->album->fields["textcolor"]) {
-	       	echo "BODY, TD {color:".$gallery->album->fields[textcolor]."; }";
-	       	echo ".head {color:".$gallery->album->fields[textcolor]."; }";
-	       	echo ".headbox {background-color:".$gallery->album->fields[bgcolor]."; }";
-       	}
-	echo "\n</style>\n";
-}
-?>
-</head>
-
-<body dir="<?php echo $gallery->direction ?>">
-
-<?php }
-
 includeHtmlWrap("slideshow.header"); ?>
 
 <script language="JavaScript" SRC="<?php echo $gallery->app->photoAlbumURL ?>/js/client_sniff.js"></script>
@@ -261,8 +221,3 @@ slideshow_image();
 <?php
 includeLayout('ml_pulldown.inc');
 includeHtmlWrap("slideshow.footer"); ?>
-
-<?php if (!$GALLERY_EMBEDDED_INSIDE) { ?>
-</body>
-</html>
-<?php } ?>

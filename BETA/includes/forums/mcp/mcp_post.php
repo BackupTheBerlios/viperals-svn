@@ -25,7 +25,7 @@
 
 function mcp_post_details($id, $mode, $action, $url)
 {
-	global $phpEx, $phpbb_root_path, $config;
+	global $phpEx, $config;
 	global $_CLASS, $db;
 	
 	$_CLASS['user']->add_lang('posting');
@@ -43,6 +43,7 @@ function mcp_post_details($id, $mode, $action, $url)
 		'L_APPROVE'				=> $_CLASS['user']->lang['APPROVE'],
 		'L_DISAPPROVE'			=> $_CLASS['user']->lang['DISAPPROVE'],
 		'L_REPORTS'				=> $_CLASS['user']->lang['REPORTS'],
+		'L_ADD_FEEDBACK'		=> $_CLASS['user']->lang['ADD_FEEDBACK'],
 		'L_FEEDBACK'			=> $_CLASS['user']->lang['FEEDBACK'],
 		'L_DELETE_MARKED'		=> $_CLASS['user']->lang['DELETE_MARKED'],
 		'L_DELETE_ALL'			=> $_CLASS['user']->lang['DELETE_ALL'],
@@ -191,7 +192,7 @@ function mcp_post_details($id, $mode, $action, $url)
 
 				$msg = ($deletemark) ? 'MARKED_DELETED' : 'ALL_DELETED';
 				$redirect = getlink("$url&amp;i=$id&amp;mode=post_details", false, false);
-				meta_refresh(2, $redirect);
+				$_CLASS['display']->meta_refresh(2, $redirect);
 				trigger_error($_CLASS['user']->lang[$msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 			}
 
@@ -201,7 +202,7 @@ function mcp_post_details($id, $mode, $action, $url)
 				add_log('user', $post_info['user_id'], 'LOG_USER_GENERAL', $usernote);
 
 				$redirect = getlink("$url&amp;i=$id&amp;mode=post_details", false, false);
-				meta_refresh(2, $redirect);
+				$_CLASS['display']->meta_refresh(2, $redirect);
 				trigger_error($_CLASS['user']->lang['USER_FEEDBACK_ADDED'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 			}
 			break;
@@ -217,7 +218,8 @@ function mcp_post_details($id, $mode, $action, $url)
 	$message = $post_info['post_text'];
 	if ($post_info['bbcode_bitfield'])
 	{
-		requireOnce('includes/forums/bbcode.'.$phpEx);
+		global $site_file_root;
+		require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
 		$bbcode = new bbcode($post_info['bbcode_bitfield']);
 		$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 	}

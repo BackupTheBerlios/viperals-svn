@@ -37,7 +37,7 @@ class session
 	{
 		global $SID, $_CLASS, $MAIN_CFG, $name;
 		
-		$this->start_time = time();
+		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 		$this->browser = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'];
 		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
@@ -119,7 +119,7 @@ class session
 				if ($u_ip == $s_ip && $s_browser == $u_browser)
 				{
 					// Set session update a minute or so after last update or if page changes
-					if (($this->start_time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
+					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
 					{
 						$this->session_save = true;
 					}
@@ -188,9 +188,9 @@ class session
 
 		// Garbage collection ... remove old sessions updating user information
 		// if necessary. It means (potentially) 11 queries but only infrequently
-		if ($this->start_time > $config['session_last_gc'] + $config['session_gc'])
+		if ($this->time > $config['session_last_gc'] + $config['session_gc'])
 		{
-			$this->gc($this->start_time);
+			$this->gc($this->time);
 		}
 
 		// Grab user data ... join on session if it exists for session time
@@ -223,7 +223,7 @@ class session
 			// Limit sessions in 1 minute period
 			$sql = 'SELECT COUNT(*) AS sessions
 				FROM ' . SESSIONS_TABLE . '
-				WHERE session_time >= ' . ($this->start_time - 60);
+				WHERE session_time >= ' . ($this->time - 60);
 			$result = $_CLASS['db']->sql_query($sql);
 
 			$row = $_CLASS['db']->sql_fetchrow($result);
@@ -291,23 +291,27 @@ class session
 		// Create or update the session
 		$_CLASS['db']->sql_return_on_error(true);
 
-		$sql_ary = array(
-			'session_user_id'		=> (int) $user_id,
-			'session_start'			=> (int) $this->start_time,
-			'session_last_visit'	=> (int) $this->data['session_last_visit'],
-			'session_time'			=> (int) $this->start_time,
-			'session_browser'		=> (string) $this->browser,
-			'session_page'			=> (string) $this->page,
-			'session_url'			=> (string) $this->url,
-			'session_ip'			=> (string) $this->ip,
-			'session_admin'			=> (int) $this->data['session_admin'],
-			'session_viewonline'	=> (int) $viewonline,
-		);
-
+		if ($this->session_id)
+		{
+			$sql_ary = array(
+				'session_user_id'		=> (int) $user_id,
+				'session_start'			=> (int) $this->time,
+				'session_last_visit'	=> (int) $this->data['session_last_visit'],
+				'session_time'			=> (int) $this->time,
+				'session_browser'		=> (string) $this->browser,
+				'session_page'			=> (string) $this->page,
+				'session_url'			=> (string) $this->url,
+				'session_ip'			=> (string) $this->ip,
+				'session_admin'			=> (int) $this->data['session_admin'],
+				'session_viewonline'	=> (int) $viewonline,
+			);
+		
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['db']->sql_build_array('UPDATE', $sql_ary) . "
 			WHERE session_id = '" . $_CLASS['db']->sql_escape($this->session_id) . "'";
+			
+		}
 		
-		if ($this->session_id == '' || !$_CLASS['db']->sql_query($sql) || !$_CLASS['db']->sql_affectedrows())
+		if (!$this->session_id || !$_CLASS['db']->sql_query($sql) || !$_CLASS['db']->sql_affectedrows())
 		{
 			$_CLASS['db']->sql_return_on_error(false);
 			$this->session_id = md5(uniqid($this->ip));
@@ -330,7 +334,7 @@ class session
 				$sessiondata['userid'] = $user_id;
 				$sessiondata['autologinid'] = ($autologin && $user_id != ANONYMOUS) ? $autologin : '';
 
-				$this->set_cookie('data', serialize($sessiondata), $this->start_time + 31536000);
+				$this->set_cookie('data', serialize($sessiondata), $this->time + 31536000);
 				$this->set_cookie('sid', $this->session_id, 0);
 			}
 
@@ -354,8 +358,8 @@ class session
 	{
 		global $SID, $_CLASS;
 
-		$this->set_cookie('data', '', $this->start_time - 31536000);
-		$this->set_cookie('sid', '', $this->start_time - 31536000);
+		$this->set_cookie('data', '', $this->time - 31536000);
+		$this->set_cookie('sid', '', $this->time - 31536000);
 		$SID = '&amp;sid=';
 
 		// Delete existing session, update last visit info first!
@@ -381,7 +385,7 @@ class session
 	}
 
 	// Garbage collection
-	function gc(&$start_time)
+	function gc(&$time)
 	{
 		global $_CLASS, $MAIN_CFG;
 
@@ -391,7 +395,7 @@ class session
 				// Firstly, delete guest sessions
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 					WHERE session_user_id = ' . ANONYMOUS . '
-						AND session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']);
+						AND session_time < ' . ($time - $MAIN_CFG['user']['session_length']);
 				$_CLASS['db']->sql_query($sql);
 
 				// Keep only the most recent session for each user
@@ -411,16 +415,16 @@ class session
 				// Update last visit time
 				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
 					SET u.user_lastvisit = s.session_time, u.user_lastpage = s.session_page
-					WHERE s.session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']) . '
+					WHERE s.session_time < ' . ($time - $MAIN_CFG['user']['session_length']) . '
 						AND u.user_id = s.session_user_id';
 				$_CLASS['db']->sql_query($sql);
 
 				// Delete everything else now
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']);
+					WHERE session_time < ' . ($time - $MAIN_CFG['user']['session_length']);
 				$_CLASS['db']->sql_query($sql);
 
-				set_config('session_last_gc', $start_time);
+				set_config('session_last_gc', $time);
 				break;
 
 			default:
@@ -428,7 +432,7 @@ class session
 				// Get expired sessions, only most recent for each user
 				$sql = 'SELECT session_user_id, session_page, MAX(session_time) AS recent_time
 					FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']) . '
+					WHERE session_time < ' . ($time - $MAIN_CFG['user']['session_length']) . '
 					GROUP BY session_user_id, session_page';
 				$result = $_CLASS['db']->sql_query_limit($sql, 5);
 
@@ -457,7 +461,7 @@ class session
 					// Delete expired sessions
 					$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
 						WHERE session_user_id IN ($del_user_id)
-							AND session_time < " . ($start_time - $MAIN_CFG['user']['session_length']);
+							AND session_time < " . ($time - $MAIN_CFG['user']['session_length']);
 					$_CLASS['db']->sql_query($sql);
 				}
 
@@ -465,7 +469,7 @@ class session
 				{
 					// Less than 5 sessions, update gc timer ... else we want gc
 					// called again to delete other sessions
-					set_config('session_last_gc', $start_time);
+					set_config('session_last_gc', $time);
 				}
 				break;
 		}
@@ -516,7 +520,7 @@ class session
 		}
 		
 		$sql = 'UPDATE ' . SESSIONS_TABLE . '
-			SET session_time = '.$this->start_time.", session_url = '" . $_CLASS['db']->sql_escape($this->url) . "', session_page = '" . $_CLASS['db']->sql_escape($this->page) . "'
+			SET session_time = '.$this->time.", session_url = '" . $_CLASS['db']->sql_escape($this->url) . "', session_page = '" . $_CLASS['db']->sql_escape($this->page) . "'
 			".$this->new_data." WHERE session_id = '" . $_CLASS['db']->sql_escape($this->session_id) . "'";
 		$_CLASS['db']->sql_query($sql);
 
@@ -554,18 +558,18 @@ class user extends session
 
 	function start()
 	{
-		global $_CLASS, $MAIN_CFG, $phpEx;
+		global $_CLASS, $MAIN_CFG, $phpEx, $site_file_root;
 
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
-			$this->lang_name = (file_exists('language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $MAIN_CFG['global']['default_lang'];
-			$this->lang_path = 'language/' . $this->lang_name . '/';
+			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $MAIN_CFG['global']['default_lang'];
+			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 
 			$this->date_format = $this->data['user_dateformat'];
 			$this->timezone = $this->data['user_timezone'] * 3600;
 			$this->dst = $this->data['user_dst'] * 3600;
 		
-			if (CPG_NUKE != 'Admin' && $MAIN_CFG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - ($MAIN_CFG['user']['chg_passforce'] * 86400))
+			if (VIPERAL != 'Admin' && $MAIN_CFG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - ($MAIN_CFG['user']['chg_passforce'] * 86400))
 			{
 				global $name;
 
@@ -578,7 +582,7 @@ class user extends session
 		else
 		{
 			$this->lang_name = $MAIN_CFG['global']['default_lang'];
-			$this->lang_path = 'language/' . $this->lang_name . '/';
+			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 			$this->date_format = $MAIN_CFG['global']['default_dateformat'];
 			$this->timezone = $MAIN_CFG['global']['default_timezone'] * 3600;
 			$this->dst = $MAIN_CFG['global']['default_dst'] * 3600;
@@ -593,7 +597,7 @@ class user extends session
 					if (file_exists('language/' . $accept_lang . "/common.$phpEx"))
 					{
 						$this->lang_name = $accept_lang;
-						$this->lang_path = 'language/' . $accept_lang . '/';
+						$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
 						break;
 					}
 					else
@@ -603,7 +607,7 @@ class user extends session
 						if (file_exists('language/' . $accept_lang . "/common.$phpEx"))
 						{
 							$this->lang_name = $accept_lang;
-							$this->lang_path = 'language/' . $accept_lang . '/';
+							$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
 							break;
 						}
 					}
@@ -624,7 +628,7 @@ class user extends session
 		
 			global $Module, $_CLASS;
 			
-			$module = ($module) ? $module : $Module['title'];
+			$module = ($module) ? $module : $Module['name'];
 			$lang = ($lang) ? $this->lang_name.'/' : '';
 			
 			if (file_exists('themes/'.$_CLASS['display']->theme.'/template/modules/'.$module."/images/$lang$img_file"))
@@ -673,17 +677,22 @@ class user extends session
 			$width = ($width) ? ' width="' . $width . '"' : '';
 			$height = ($height) ? ' height="' . $height . '"' : '';
 			
-			$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
-			$imgs[$img . $suffix] = '<img src=' . $imgsrc . $width . $height . ' alt="' . $alt . '" title="' . $alt . '" name="' . $img . '" />';
+			$imgs[$img . $suffix] = $imgsrc . $width . $height;
+			
 		}
-
-		return $imgs[$img . $suffix];
+		
+		$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
+		return '<img src=' . $imgs[$img . $suffix] . ' alt="' . $alt . '" title="' . $alt . '" name="' . $img . '" />';
 	}
 		
-	function add_lang($langfile = false, $module = false, $use_db = false, $phpbb = false)
+	function add_lang($langfile = false, $module = false, $langfolder = false, $use_db = false)
 	{
-		global $phpEx;
+		global $phpEx, $site_file_root;
 
+		if ($use_db)
+		{
+			// now what can we use this for. 
+		}
 		//print_r(debug_backtrace());
 		if (is_array($langfile))
 		{
@@ -699,16 +708,21 @@ class user extends session
 		
 		$langfile = ($langfile) ? "$langfile.$phpEx" : 'index.'.$phpEx;
 
+		if ($langfolder)
+		{
+			include($this->lang_path.(($module) ? $module.'/'  : '')."$langfile");
+			return;
+		}
+		
 		if (!$module)
 		{
 			global $Module;
-			include('modules/'.$Module['title']."/language/$this->lang_name/$langfile");
-		
-		} else {
-		
-			include("modules/$module/language/$this->lang_name/$langfile");
 			
-		}
+			include($site_file_root.'modules/'.$Module['name']."/language/$this->lang_name/$langfile");
+			return;
+		} 
+		
+		include($site_file_root."modules/$module/language/$this->lang_name/$langfile");		
 	}
 
 	function format_date($gmepoch, $format = false, $forcedate = false)
@@ -780,7 +794,7 @@ class user extends session
 		$_CLASS['db']->sql_freeresult($result);
 	}
 
-	// Start code for checking/setting option bit field for user table (if we go that way)
+	// Start code for checking/setting option bit field for user table
 	function optionget($key, $data = false)
 	{
 		if (!isset($this->keyvalues[$key]))

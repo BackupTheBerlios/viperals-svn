@@ -40,7 +40,7 @@ $this->lang += array(
 
 	'POST_FORUM_LOCKED'		=> 'Forum is locked',
 	'POST_NEW_TOPIC'		=> 'Post new topic',
-
+	
 	'TOPICS_MARKED'			=> 'The topics for this forum have now been marked read',
 
 	'VIEW_FORUM'			=> 'View Forum',

@@ -43,8 +43,8 @@ if (!function_exists('stripos'))
 		return false;
 	}
 }
-global $phpEx;
-requireOnce('includes/forums/bbcode.' . $phpEx);
+
+require_once($site_file_root.'includes/forums/bbcode.' . $phpEx);
 
 // BBCODE_FIRSTPASS
 //
@@ -115,7 +115,7 @@ class bbcode_firstpass extends bbcode
 			'url'		=>	array('bbcode_id' => 3, 'regexp' => array('#\[url=?(.*?)?\](.*?)\[/url\]#ise' => "\$this->validate_url('\$1', '\$2')")),
 			'img'		=>	array('bbcode_id' => 4, 'regexp' => array('#\[img\](https?://)([a-z0-9\-\.,\?!%\*_:;~\\&$@/=\+]+)\[/img\]#i' => '[img:' . $this->bbcode_uid . ']$1$2[/img:' . $this->bbcode_uid . ']')),
 			'size'		=>	array('bbcode_id' => 5, 'regexp' => array('#\[size=([\-\+]?[1-2]?[0-9])\](.*?)\[/size\]#is' => '[size=$1:' . $this->bbcode_uid . ']$2[/size:' . $this->bbcode_uid . ']')),
-			'color'		=>	array('bbcode_id' => 6, 'regexp' => array('!\[color=(#[0-9A-F]{6}|[a-z\-]+)\](.*?)\[/color\]!is' => '[color=$1:' . $this->bbcode_uid . ']$2[/color:' . $this->bbcode_uid . ']')),
+			'color'		=>	array('bbcode_id' => 6, 'regexp' => array('#\[color=(#[0-9A-F]{6}|[a-z\-]+)\](.*?)\[/color\]#is' => '[color=$1:' . $this->bbcode_uid . ']$2[/color:' . $this->bbcode_uid . ']')),
 			'u'			=>	array('bbcode_id' => 7, 'regexp' => array('#\[u\](.*?)\[/u\]#is' => '[u:' . $this->bbcode_uid . ']$1[/u:' . $this->bbcode_uid . ']')),
 			'list'		=>	array('bbcode_id' => 9, 'regexp' => array('#\[list(=[a-z|0-9|(?:disc|circle|square))]+)?\].*\[/list\]#ise' => "\$this->bbcode_list('\$0')")),
 			'email'		=>	array('bbcode_id' => 10, 'regexp' => array('#\[email=?(.*?)?\](.*?)\[/email\]#ise' => "\$this->validate_email('\$1', '\$2')")),
@@ -1088,7 +1088,7 @@ class parse_message extends bbcode_firstpass
 // Parses a given message and updates/maintains the fulltext tables
 class fulltext_search
 {
-	function split_words($mode, &$text, &$stopped_words)
+	function split_words($mode, $text)
 	{
 		global $_CLASS, $config;
 
@@ -1103,8 +1103,8 @@ class fulltext_search
 
 		if (!$drop_char_match)
 		{
-			$drop_char_match =   array('^', '$', '&', '(', ')', '<', '>', '`', '\'', '"', '|', ',', '@', '_', '?', '%', '~', '.', '[', ']', '{', '}', ':', '\\', '/', '=', '#', '\'', ';', '!', '*');
-			$drop_char_replace = array(' ', ' ', ' ', ' ', ' ', ' ', ' ', '',  '',   ' ', ' ', ' ', ' ', '',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '' ,  ' ', ' ', ' ', ' ',  ' ', ' ', ' ');
+			$drop_char_match =   array('-', '^', '$', ';', '#', '&', '(', ')', '<', '>', '`', '\'', '"', '|', ',', '@', '_', '?', '%', '~', '.', '[', ']', '{', '}', ':', '\\', '/', '=', '\'', '!', '*');
+			$drop_char_replace = array(' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '',  '',   ' ', ' ', ' ', ' ', '',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '' ,  ' ', ' ', ' ',  ' ', ' ');
 
 			if ($fp = @fopen($_CLASS['user']->lang_path . '/search_stopwords.txt', 'rb'))
 			{
@@ -1122,44 +1122,54 @@ class fulltext_search
 		}
 
 		$match = array();
+		// Comments for hardcoded bbcode elements (urls, smilies, html)
+		$match[] = '#<!\-\- .* \-\->(.*?)<!\-\- .* \-\->#is';
 		// New lines, carriage returns
 		$match[] = "#[\n\r]+#";
 		// NCRs like &nbsp; etc.
-		$match[] = '#&[\#a-z0-9]+?;#i';
-		// URL's
-		$match[] = '#\b[\w]+:\/\/[a-z0-9\.\-]+(\/[a-z0-9\?\.%_\-\+=&\/]+)?#';
+		$match[] = '#(&amp;|&)[\#a-z0-9]+?;#i';
+		// Do not index code
+		$match[] = '#\[code(=.*)?(\:?[0-9a-z]{5,})\].*?\[\/code(\:?[0-9a-z]{5,})\]#is';
 		// BBcode
-		$match[] = '#\[img:[a-z0-9]{10,}\].*?\[\/img:[a-z0-9]{10,}\]#';
-		$match[] = '#\[\/?url(=.*?)?\]#';
-		$match[] = '#\[\/?[a-z\*=\+\-]+(\:?[0-9a-z]+)?:[a-z0-9]{10,}(\:[a-z0-9]+)?=?.*?\]#';
-		// Sequences < min_search_chars & < max_search_chars
-		$match[] = '#\b([a-z0-9]{1,' . $config['min_search_chars'] . '}|[a-z0-9]{' . $config['max_search_chars'] . ',})\b#is';
+		$match[] = '#\[\/?[a-z\*\+\-]+(=.*)?(\:?[0-9a-z]{5,})\]#';
+		// Sequences > min_search_chars & < max_search_chars
+//		$match[] = '#\s([\b]{1,' . $config['min_search_chars'] . '}|[\b]{' . $config['max_search_chars'] . ',})\s#is';
+//		$match[] = '#\s((&\#[0-9]+;){1,' . $config['min_search_chars'] . '}|(&\#[0-9]+;){' . $config['max_search_chars'] . ',})\s#is';
+		// Filter out ; and # but not &#[0-9]+;
+//		$match[] = '#(&\#[0-9]+;)|;|\#|&#';
 
-		$text = str_replace($match, ' ', ' ' . strtolower($text) . ' ');
-		$text = str_replace(' and ', ' + ', $text);
-		$text = str_replace(' not ', ' - ', $text);
+		$text = preg_replace($match, ' ', ' ' . strtolower(trim($text)) . ' ');
+		$text = str_replace(array(' + ', ' - '), array(' and ', ' not '), $text);
 
 		// Filter out non-alphabetical chars
 		$text = str_replace($drop_char_match, $drop_char_replace, $text);
 
 		// Split words
-		$text = explode(' ', preg_replace('#\s+#', ' ', $text));
+		$text = explode(' ', preg_replace('#\s+#', ' ', trim($text)));
 
-		if ($stopwords)
+		if (sizeof($stopwords))
 		{
 			$stopped_words = array_intersect($text, $stopwords);
 			$text = array_diff($text, $stopwords);
 		}
 
-		if ($replace_synonym)
+		if (sizeof($replace_synonym))
 		{
 			$text = str_replace($replace_synonym, $match_synonym, $text);
 		}
 		
+		foreach ($text as $index => $word)
+		{
+			if (strlen($word) < $config['min_search_chars'] || strlen($word) > $config['max_search_chars'])
+			{
+				unset($text[$index]);
+			}
+		}
+
 		return $text;
 	}
 
-	function add($mode, $post_id, $message, $subject)
+	function add($mode, $post_id, &$message, &$subject)
 	{
 		global $config, $db;
 
@@ -1171,10 +1181,8 @@ class fulltext_search
 		}
 
 		// Split old and new post/subject to obtain array of 'words'
-		$stopped_words = array();
-		$split_text = $this->split_words('post', $message, $stopped_words);
-		$split_title = ($subject) ? $this->split_words('post', $subject, $stopped_words) : array();
-		unset($stopped_words);
+		$split_text = $this->split_words('post', $message);
+		$split_title = ($subject) ? $this->split_words('post', $subject) : array();
 
 		$words = array();
 		if ($mode == 'edit')
@@ -1231,7 +1239,7 @@ class fulltext_search
 
 			$new_words = array_diff($unique_add_words, array_keys($word_ids));
 			unset($unique_add_words);
-
+			
 			if (sizeof($new_words))
 			{
 				switch (SQL_LAYER)
@@ -1363,7 +1371,7 @@ class fulltext_search
 		$sql = 'SELECT w.word_id
 			FROM ' . SEARCH_WORD_TABLE . ' w
 			LEFT JOIN ' . SEARCH_MATCH_TABLE . ' m ON w.word_id = m.word_id
-				AND m.word_id IS NULL
+				WHERE w.word_common = 0 AND m.word_id IS NULL
 			GROUP BY m.word_id';
 		$result = $db->sql_query($sql);
 

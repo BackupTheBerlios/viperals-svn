@@ -35,9 +35,9 @@ HTMLArea.viperalreplaceAll = function(config) {
 			editor.registerPlugin(SmilesPlus);
 			editor.registerPlugin(ListType);
 			//editor.registerPlugin(DynamicCSS);
+			loop= loop + 1;
 		}
 		editor.registerPlugin(ContextMenu);
-		loop= loop + 1;
 		editor.generate();
 	}
 };

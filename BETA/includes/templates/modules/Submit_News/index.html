@@ -13,9 +13,8 @@
 			<br /><br />
 	</div>
     <div style="position: relative; height:7em;">
-		<div style="float: left; top: -2.5em;">{$L_YOURNAME}<br /><input type="text" name="name" value="{ $NAME }" size="30" maxlength="50"/><br />
+		<div style="float: left; top: -2.5em;">{$L_YOURNAME}<br /><input type="text" name="username" value="{ $NAME }" size="30" maxlength="50"/><br />
 		{$L_YOUREMAIL}<br /><input type="text" name="email" value="{ $EMAIL }" size="30" maxlength="50"/>
-		<br /><em>(Your IP: { $IP } will be logged!)</em>
     	</div>
 		<div style="width: 60%; float: right; top: -2.5em;">
 			<br />{ $L_SUBMIT_MESSAGE }
@@ -27,6 +26,7 @@
 			<br /><br />{ $L_SUBMIT_MESSAGE }
 	</div>
     { /if }<br />
+
 	<hr width="50%"/><br /><br />
 	<b>{ $L_STORY_TITLE }:</b><br /> <input type="text" name="title" value="{ $TITLE }" size="30" maxlength="50"/><br /><br />
 	<b>{ $L_STORY_INTRO }:</b><br /><em> { $L_STORY_INTRO_HELP }</em><br />
@@ -39,8 +39,11 @@
 	<b>{ $L_STORY_NOTES }:</b><br /><em> { $L_STORY_NOTES_HELP }</em><br />
 	<textarea name="notes" id="notes" style="width:90%; height:200px" cols="63" rows="15">{ $NOTES }</textarea><br /><br />
 
-    <input type="submit" name="contact" value="{ $L_SUBMIT }" />
-    <input type="submit" name="preview" value="{ $L_PREVIEW }" />
+    <input type="submit" name="submit" value="{ $L_SUBMIT }" />
+    <input type="submit" name="preview" value="{ $L_PREVIEW } Main" />
+    <input type="submit" name="previewfull" value="{ $L_PREVIEW } Full Story" />
+    <br /><b>( Please note your ip will be logged )</b>
+
 </form>
 
 {php} CloseTable(); {/php}

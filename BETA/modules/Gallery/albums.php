@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: albums.php,v 1.170 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: albums.php,v 1.171 2004/10/02 20:58:37 jenst Exp $
  */
 ?>
 <?php
@@ -29,6 +29,7 @@ if (empty($gallery->session->username)) {
 	if (!getRequestVar('gallery_nocache') && fs_file_exists($cache_file)) {
 	$cache_now = time();
 	$cache_stat = @stat("cache.html");
+	//$cache_stat = filemtime("cache.html");
 	if ($cache_now - $cache_stat[9] < (20 * 60)) {
 	    if ($fp = fopen("cache.html", "rb")) {
 		while (!feof($fp)) {
@@ -44,7 +45,7 @@ if (empty($gallery->session->username)) {
     }
 }
 
-$gallery->session->offlineAlbums["albums.php"]=true;
+$gallery->session->offlineAlbums["albums.php"] = true;
 
 /* Read the album list */
 $albumDB = new AlbumDB(FALSE);
@@ -90,42 +91,14 @@ else {
 	$left="right";
 	$right="left";
 }
-if (!$GALLERY_EMBEDDED_INSIDE) {
-	doctype();
-?>
-<html>
-<head>
-  <title><?php echo $gallery->app->galleryTitle ?></title>
-  <?php
-	common_header() ;
 
-	/* prefetching/navigation */
-  if ($navigator['page'] > 1) { ?>
-  <link rel="top" href="<?php echo makeGalleryUrl('albums.php', array('set_albumListPage' => 1)) ?>">
-  <link rel="first" href="<?php echo makeGalleryUrl('albums.php', array('set_albumListPage' => 1)) ?>">
-  <link rel="prev" href="<?php echo makeGalleryUrl('albums.php', array('set_albumListPage' => $navigator['page']-1)) ?>">
-<?php }
-  if ($navigator['page'] < $maxPages) { ?>
-  <link rel="next" href="<?php echo makeGalleryUrl('albums.php', array('set_albumListPage' => $navigator['page']+1)) ?>">
-  <link rel="last" href="<?php echo makeGalleryUrl('albums.php', array('set_albumListPage' => $maxPages)) ?>">
-<?php }
-	if ($gallery->app->rssEnabled == "yes") {
-?>
-  <link rel="alternate" title="<?php echo sprintf(_("%s RSS"), $gallery->app->galleryTitle) ?>" href="<?php echo $gallery->app->photoAlbumURL . "/rss.php" ?>" type="application/rss+xml">
-<?php } ?>
-</head>
-<body dir="<?php echo $gallery->direction ?>">
-<?php }
-	includeHtmlWrap("gallery.header");
-	if (!$gallery->session->offline && 
-		( (!strcmp($gallery->app->showSearchEngine, "yes") && $numPhotos != 0 ) || $GALLERY_EMBEDDED_INSIDE =='phpBB2')) {
+includeHtmlWrap("gallery.header");
+if (!$gallery->session->offline && 
+	( (!strcmp($gallery->app->showSearchEngine, "yes") && $numPhotos != 0 ))) {
 ?>
 <table width="100%" border="0" cellspacing="0" style="margin-bottom:2px">
 <tr>
 <?php
-	if ($GALLERY_EMBEDDED_INSIDE =='phpBB2') {
-		echo '<td class="nav"><a href="index.php">'. sprintf($lang['Forum_Index'], $board_config['sitename']) . '</a></td>';
-}
 	if ($numPhotos != 0) {
 		echo '<td valign="middle" align="right">';
 		echo makeFormIntro('search.php', array(
@@ -178,7 +151,8 @@ if ($gallery->app->gallery_slideshow_type != "off" && $numPhotos != 0) {
 	       	'">['._("slideshow") . ']</a> ';
 }
 
-if ($gallery->user->isAdmin()) {
+if ($gallery->user->isAdmin())
+{
 	$doc = galleryDocs('admin');
 	if ($doc) {
 		$adminCommands .= "$doc ";
@@ -188,11 +162,13 @@ if ($gallery->user->isAdmin()) {
 	$adminCommands .= '<a class="admin" style="white-space:nowrap;" href="' . makeGalleryUrl('tools/despam-comments.php') . '">[' . _("find comment spam") .']</a> ';
 }
 
-if ($gallery->user->canCreateAlbums() && !$gallery->session->offline) { 
+if ($gallery->user->canCreateAlbums() && !$gallery->session->offline)
+{ 
 	$adminCommands .= '<a class="admin" style="white-space:nowrap;" href="' . doCommand("new-album", array(), "view_album.php") . '">[' . _("new album") . ']</a> ';
 }
 
-if ($gallery->user->isAdmin()) {
+if ($gallery->user->isAdmin())
+{
 	if ($gallery->userDB->canModifyUser() ||
 	    $gallery->userDB->canCreateUser() ||
 	    $gallery->userDB->canDeleteUser()) {
@@ -202,25 +178,15 @@ if ($gallery->user->isAdmin()) {
 	}
 }
 
-if ($gallery->user->isLoggedIn() && !$gallery->session->offline) {
-	if ($gallery->userDB->canModifyUser()) {
+if ($gallery->user->isLoggedIn() && !$gallery->session->offline)
+{
+	if ($gallery->userDB->canModifyUser())
+	{
 		$adminCommands .= popup_link("[". _("preferences") ."]", 
 			"user_preferences.php", false, true, 500, 500, 'admin')
 			. ' ';
 	}
 	
-	if (!$GALLERY_EMBEDDED_INSIDE) {
-		$adminCommands .= '<a class="admin" style="white-space:nowrap;" href="' . doCommand("logout", array(), "albums.php"). '">[' . _("logout") .']</a>';
-	}
-} else {
-	if (!$GALLERY_EMBEDDED_INSIDE) {
-	        $adminCommands .= popup_link("[" . _("login") . "]", "login.php", false, true, 500, 500, 'admin');
-		
-            if (!strcmp($gallery->app->selfReg, 'yes')) {
-                $adminCommands .= ' ';
-                $adminCommands .= popup_link('[' . _("register") . ']', 'register.php', false, true, 500, 500, 'admin');
-            }
-	}
 }
 
 $adminCommands .= "</span>";
@@ -241,22 +207,25 @@ includeLayout('ml_pulldown.inc');
 echo "<!-- End top nav -->";
 
 /* Display warnings about broken albums */
-if ( (sizeof($albumDB->brokenAlbums) || sizeof($albumDB->outOfDateAlbums)) && $gallery->user->isAdmin()) {
+if ( (sizeof($albumDB->brokenAlbums) || sizeof($albumDB->outOfDateAlbums)) && $gallery->user->isAdmin())
+{
 
 	echo "\n<center><div style=\"width:60%; border-style:outset; border-width:5px; border-color:red; padding: 5px\">";
 	echo "\n<p class=\"head\"><u>". _("Attention Gallery Administrator!") ."</u></p>";
 
-	if (sizeof($albumDB->brokenAlbums)) {
+	if (sizeof($albumDB->brokenAlbums))
+	{
 		echo sprintf(_("%s has detected the following %d invalid album(s) in your albums directory<br>(%s):"),
 		    Gallery(), sizeof($albumDB->brokenAlbums), $gallery->app->albumDir);
 		echo "\n<p>";
 		foreach ($albumDB->brokenAlbums as $tmpAlbumName) {
 			echo "<br>$tmpAlbumName\n";
 		}
-	echo "\n</p>". _("Please move it/them out of the albums directory.") ;
+		echo "\n</p>". _("Please move it/them out of the albums directory.") ;
 	}
 
-	if(sizeof($albumDB->outOfDateAlbums)) {
+	if(sizeof($albumDB->outOfDateAlbums))
+	{
 		echo sprintf(_("%s has detected that %d of your albums are out of date."),
 			Gallery(), sizeof($albumDB->outOfDateAlbums));
 
@@ -434,7 +403,7 @@ if($gallery->app->comments_enabled == 'yes') {
 <?php 
 if ($displayCommentLegend) { 
 	//display legend for comments
-	echo '<p><span class="error">*</span>';
+	echo '<p><span class="commentIndication">*</span>';
 	echo '<span class="fineprint">'. _("Comments available for this item.") .'</span></p>';
 } 
 ?>
@@ -450,9 +419,3 @@ includeLayout('navtableend.inc');
 
 includeHtmlWrap("gallery.footer");
 ?>
-<!-- gallery.footer end -->
-
-<?php if (!$GALLERY_EMBEDDED_INSIDE) { ?>
-</body>
-</html>
-<?php } ?>

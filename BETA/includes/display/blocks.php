@@ -19,10 +19,10 @@ User blocks this will be a reqular block.
 class blocks
 {
 	var $blocks_array = array();
-	var $blocks_loaded = false;
-	var $info = false;
-	var $content = false;
-	var $template = false;
+	var $blocks_loaded;
+	var $info;
+	var $content;
+	var $template;
 	
 	function check_side($side)
 	{
@@ -107,17 +107,22 @@ class blocks
 		
 		if (!empty($this->blocks_array[$position]))
 		{
-			foreach($this->blocks_array[$position] AS $this->blocksrow) {
-			
-				if ($this->blocksrow['expires'] && !$expire_updated && (time() >= $this->blocksrow['expires']))
+			foreach($this->blocks_array[$position] AS $this->blocksrow)
+			{
+				if ($this->blocksrow['expires'] && !$expire_updated && ($_CLASS['user']->time >= $this->blocksrow['expires']))
 				{
-					$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE." SET active='0' WHERE expires >=".time());
-					$expire_updated = true;
+					$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires <> 0 AND expires <='.$_CLASS['user']->time);
 					$_CLASS['cache']->destroy('blocks');
-	
+					$expire_updated = true;
+
 					continue;
 				}
-	
+				
+				if ($this->blocksrow['time'] && ($this->blocksrow['time'] > $_CLASS['user']->time))
+				{
+					continue;
+				}
+				
 				$this->display_blocks();
 	
 			}
@@ -154,12 +159,10 @@ class blocks
 	
 	function block_file()
 	{
-		global $_CLASS;
+		global $_CLASS, $site_file_root;
 		
-		if (!$this->blocksrow['file']) { return; };
-		
-		if (file_exists('blocks/'.$this->blocksrow['file'])) {
-		
+		if (file_exists($site_file_root.'blocks/'.$this->blocksrow['file']))
+		{
 			
 			$startqueries = $_CLASS['db']->sql_num_queries();
 			$startqueriestime = $_CLASS['db']->sql_time;
@@ -167,7 +170,7 @@ class blocks
 			$starttime = $starttime[0] + $starttime[1];
 			
 		
-			require('blocks/'.$this->blocksrow['file']);
+			include($site_file_root.'blocks/'.$this->blocksrow['file']);
 			
 			
 			$endtime = explode(' ', microtime());
@@ -257,13 +260,15 @@ class blocks
 			{
 				echo '<br /><br /><div align="right">[ '.$expires.$edit.' ]</font></div>';
 			}
-			
+		
 			CloseTable();
+			
+			echo '<br />';
 		}
 	}
 	
-	function center_block() {
-	
+	function center_block()
+	{
 		if (THEMEPLATE)
 		{
 			global $_CLASS;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: delete_photo.php,v 1.66 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: delete_photo.php,v 1.67 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -89,8 +89,9 @@ if ($gallery->album && isset($id)) {
 <div class="popuphead"><?php echo _("Delete Album") ?></div>
 <div class="popup" align="center">
 <?php 
-        echo makeFormIntro("delete_photo.php", array('name' => 'deletephoto_form',
-              'onsubmit' => "deletephoto_form.confirm.disabled = true;"));
+        echo makeFormIntro("delete_photo.php", 
+		array('name' => 'deletephoto_form','onsubmit' => "deletephoto_form.confirm.disabled = true;"),
+		array('type' => 'popup'));
 	echo _("Do you really want to delete this album?") 
 ?>
 
@@ -118,8 +119,9 @@ if ($gallery->album && isset($id)) {
 <div class="popup" align="center">
 <?php 
 	echo _("Do you really want to delete this photo?") ;
-        echo makeFormIntro("delete_photo.php", array('name' => 'deletephoto_form',
-              'onsubmit' => "deletephoto_form.confirm.disabled = true;"));
+        echo makeFormIntro("delete_photo.php", 
+		array('name' => 'deletephoto_form', 'onsubmit' => "deletephoto_form.confirm.disabled = true;"),
+		array('type' => 'popup'));
 ?>
 
 <p><?php echo $gallery->album->getThumbnailTag($index) ?></p>
@@ -143,7 +145,7 @@ if ($gallery->album && isset($id)) {
 	echo gallery_error(_("no album / index specified"));
 }
 ?>
-<?php print gallery_validation_link("delete_photo.php", false, array('id' => $id, 'index' => $index)); ?>
 </div>
+<?php print gallery_validation_link("delete_photo.php", false, array('id' => $id, 'index' => $index)); ?>
 </body>
 </html>

@@ -1,6 +1,48 @@
+2004-10-03  Jens A. Tkotz <jens@peino.de>  1.4.5-cvs-b218
+
+	* Change: Put popup related functions into lib/popup.php
+
+	* Change: Put URL related functions into lib/url.php
+
+2004-10-03  Jens A. Tkotz <jens@peino.de>  1.4.5-cvs-b217
+
+	* Fix: Missed a forgotton Popup.
+
+2004-10-03  Jens A. Tkotz <jens@peino.de>  1.4.5-cvs-b216
+
+	* Fix: Reloaded Popups e.g. in Mambo were embedded.
+	  (Caught by Kai Tomalik)
+
+2004-10-03  Jens A. Tkotz <jens@peino.de>  1.4.5-cvs-b215
+
+	* Change: Tweaked the multiple comment deletion with using array_reverse()
+
+2004-10-02  Jens A. Tkotz <jens@peino.de>  1.4.5-cvs-b214
+
+	* Fix: Added doctype to view_comments and make it valid HTML 4.01
+
+	* New: Added possibility to delete muliple comments.
+
+	* Fix: De-globalize modify_user.php
+
+2004-10-02  Jens A. Tkotz <jens@peino.de>  1.4.5-cvs-b213
+
+	* New: Added rar support. This means Gallery can now handle following archive formats:
+		'zip', 'rar', 'cab', 'arj', 'lzh', 'tar', 'gz', 'bz2', 'ace', 'uue', 'jar', 'z'
+
+	* New: Added archive handling functions.
+
+	* Change: Added some Comments in save_photos and adjust to rar support.
+
+	* Change: Replaced some
+			$url = eregi_replace("^[[:space:]]+", "", $url);
+		with	$url = ltrim($url)
+
+	* Change: removed some unused vars.
+
 2004-10-01  Beckett Madden-Woods  <beckett@beckettmw.com> 1.4.5-cvs-b212
 
-	* index.php: Added "rss.php" to $safe_to_include
+	* Change: index.php: Added "rss.php" to $safe_to_include
 
 2004-09-27  Jay Rossiter <cryptographite@users.sf.net>  1.4.5-cvs-b211
 

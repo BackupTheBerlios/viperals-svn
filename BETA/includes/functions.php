@@ -10,7 +10,25 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-function set_config($config_name, $config_value, $is_dynamic = FALSE)
+
+// :-S why did phpbb2.1.2 use session_admin, i had it first good damit. lol
+// fix this it should check to see if the admin class is loaded and check the users permission.
+// loaded with sessions.
+
+function is_admin()
+{
+    global $_CLASS;
+    return ($_CLASS['user']->data['session_admin']) ? true : false;
+}
+
+// I like this so it stays
+function is_user()
+{
+    global $_CLASS;
+    return ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? true : false;
+}
+
+function set_config($config_name, $config_value, $is_dynamic = false)
 {
 	global $_CLASS, $config;
 
@@ -21,8 +39,10 @@ function set_config($config_name, $config_value, $is_dynamic = FALSE)
 
 	if (!$_CLASS['db']->sql_affectedrows() && !isset($config[$config_name]))
 	{
-		$sql = 'INSERT INTO ' . CONFIG_TABLE . " (config_name, config_value)
-			VALUES ('" . $_CLASS['db']->sql_escape($config_name) . "', '" . $_CLASS['db']->sql_escape($config_value) . "')";
+		$sql = 'INSERT INTO ' . CONFIG_TABLE . ' ' . $_CLASS['db']->sql_build_array('INSERT', array(
+			'config_name'	=> $config_name,
+			'config_value'	=> $config_value,
+			'is_dynamic'	=> ($is_dynamic) ? 1 : 0));
 		$_CLASS['db']->sql_query($sql);
 	}
 
@@ -34,43 +54,49 @@ function set_config($config_name, $config_value, $is_dynamic = FALSE)
 	}
 }
 
-function script_close()
+function script_close($save = true)
 {
-	global $phperror, $MAIN_CFG, $_CLASS;
+	global $MAIN_CFG, $site_file_root, $_CLASS;
 
-	if ($phperror)
+	if (!empty($_CLASS['user']))
 	{
-		$_CLASS['user']->set_data('debug', $phperror);
-	}
-	
-	if (($MAIN_CFG['global']['error'] == 3) && !empty($_CLASS['user']))
-	{
-		$_CLASS['user']->set_data('querylist', $_CLASS['db']->querylist);
-		$_CLASS['user']->set_data('querydetails', $_CLASS['db']->querydetails);
-	}
-	
-	//Handle email/cron queue. // phpbb 2.1.2 only.
-	//if (time() - $config['queue_interval'] >= $config['last_queue_run'] && !defined('IN_ADMIN'))
-	//{
-		if (file_exists('cache/queue.php'))
+
+		//Handle email/cron queue. // phpbb 2.1.2 only.
+		//if (time() - $config['queue_interval'] >= $config['last_queue_run'] && !defined('IN_ADMIN'))
+		if (file_exists($site_file_root.'cache/queue.php'))
 		{
-			requireOnce('includes/forums/functions_messenger.'.$phpEx);
+			require_once($site_file_root.'includes/forums/functions_messenger.php');
 			$queue = new queue();
 			$queue->process();
 		}
-	//}
+		
+		if ($save)
+		{
+			if ($MAIN_CFG['global']['error'])
+			{
+				if (!empty($_CLASS['db']->querylist))
+				{
+					$_CLASS['user']->set_data('querylist', $_CLASS['db']->querylist);
+					$_CLASS['user']->set_data('querydetails', $_CLASS['db']->querydetails);
+				}
+				
+				if (isset($_CLASS['error']) && (!empty($_CLASS['db']->querylist) || !empty($_CLASS['error']->error_array)))
+				{
+					$_CLASS['user']->set_data('debug', $_CLASS['error']->error_array);
+				}
+			
+			}
+						
+			$_CLASS['user']->save_session();
+		}
+		
+		$_CLASS['cache']->save();
+		$_CLASS['db']->sql_close();
 	
-	if (!empty($_CLASS['user']))
-	{
-		$_CLASS['user']->save_session();
 	}
-	if (!empty($_CLASS['cache']))
+	elseif (!empty($_CLASS['cache']))
 	{
 		$_CLASS['cache']->save();
-	}
-	
-	if (!empty($_CLASS['db']))
-	{
 		$_CLASS['db']->sql_close();
 	}
 }
@@ -94,8 +120,18 @@ function session_users()
 			ORDER BY u.username ASC, s.session_ip ASC';
 	$result = $_CLASS['db']->sql_query($sql);
 	
+	$update = false;
+	
 	while($row = $_CLASS['db']->sql_fetchrow($result))
 	{
+		// update current user info with current page and url as it is done at the end of script.
+		if (!$update && (($row['user_id'] != ANONYMOUS && $row['user_id'] == $_CLASS['user']->data['user_id']) || ($row['user_id'] == ANONYMOUS && $row['session_ip'] == $_CLASS['user']->ip)))
+		{
+			$row['session_url'] = $_CLASS['user']->url;
+			$row['session_page'] = $_CLASS['user']->page;
+			$update = true;
+		}
+		
 		$loaded[] = $row;
 	}
 	
@@ -103,58 +139,60 @@ function session_users()
 	return $loaded;
 }
 
-function requireOnce($file) {
-	static $loaded = array();
-
-	if (!isset($loaded[$file])) {
-		require_once($file);
-		$loaded[$file] = 1;
-	}
-}
-
-function loadclass($file, $name) {
+function loadclass($file, $name)
+{
 	global $_CLASS;
 
-	if (!isset($_CLASS[$name])) {
+	if (!isset($_CLASS[$name]))
+	{
 		require($file);
 		$_CLASS[$name] =& new $name;
 	}
 }
-   
-function optimize_table($table = false) {
-	global $_CLASS;
 
-	If ($table) {
+function optimize_table($table = false)
+{
+	global $_CLASS, $MAIN_CFG, $prefix;
+	// this needs alot of testing lol. works for me for now.
+	if ($table)
+	{
 		$_CLASS['db']->sql_query('OPTIMIZE TABLE '. $_CLASS['db']->sql_escape($table));
+		return;
 	}
 
 	$result = $_CLASS['db']->sql_query('SHOW TABLES');
 	
 	while ($row = $_CLASS['db']->sql_fetchrow($result))
 	{
+		$key = array_keys($row);
+
+		if ($table)
+		{
+			$table .= ', ' . $row[$key[0]];
+		} else {
+			$table = $row[$key[0]];
+		}
+	}
 	
-			if ($table) {
-				$table .= ', ' . $row['0'];
-			} else {
-				$table = $row['0'];
-			}
-	   
-	}	
-		
-	$time = time() + $MAIN_CFG['server']['optimizerate'];
-	$_CLASS['db']->sql_query('UPDATE '.$prefix."_config_custom SET cfg_value='".$time."' WHERE cfg_field='nextoptimize' AND cfg_name='server'");
-	$_CLASS['db']->sql_query('OPTIMIZE TABLE '. put_string($table, $type='string', $nohtml=1));
-			
+	if ($table)
+	{
+		$_CLASS['db']->sql_query('OPTIMIZE TABLE '. $_CLASS['db']->sql_escape($table));
+		$time = time() + $MAIN_CFG['server']['optimize_rate'];
+	}
+
+	$_CLASS['db']->sql_query('UPDATE '.$prefix.'_config_custom SET cfg_value='.$time." WHERE cfg_field='optimize_last' AND cfg_name='server'");
+	$_CLASS['cache']->destroy('main_cfg');
 }
+
 
 function get_variable($var_name, $type, $default='', $vartype='string')
 {
 	switch ($type)
 	{
 		Case 'GET':
-			if  (!empty($_GET[$var_name]) && !is_array($_GET[$var_name])) {
-				$variable = check_variable($_GET[$var_name], $default, $vartype);
-				return $variable;
+			if  (!empty($_GET[$var_name]) && !is_array($_GET[$var_name]))
+			{
+				return check_variable($_GET[$var_name], $default, $vartype);
 			} else {
 				return $default;
 			}
@@ -162,14 +200,24 @@ function get_variable($var_name, $type, $default='', $vartype='string')
 			break;
 			
 		Case 'POST':
-			if (!empty($_POST[$var_name]) && !is_array($_POST[$var_name])) {
-				$variable = check_variable($_POST[$var_name], $default, $vartype);
-				return $variable;
+			if (!empty($_POST[$var_name]) && !is_array($_POST[$var_name]))
+			{
+				return check_variable($_POST[$var_name], $default, $vartype);
 			} else {
 				return $default;
 			}
 			
 			break;
+		
+		Case 'REQUEST':
+			if (!empty($_REQUEST[$var_name]) && !is_array($_REQUEST[$var_name]))
+			{
+				return check_variable($_REQUEST[$var_name], $default, $vartype);
+			} else {
+				return $default;
+			}
+			
+			break;	
 			
 		default:
 			return $default;
@@ -186,6 +234,7 @@ function check_variable($variable, $default, $vartype)
 		break;
 		
 		default:
+			// some from phpbb2.1.2 lets make our own,
 			$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
 			$variable = preg_replace("#\n{3,}#", "\n\n", $variable);
 			$variable = strip_slashes($variable);
@@ -201,6 +250,7 @@ function strip_slashes($str)
 	return (STRIP) ? stripslashes($str) : $str ;
 }
 
+
 function tool_tip_text($message)
 {
 	htmlentities($message);
@@ -209,13 +259,17 @@ function tool_tip_text($message)
 	return $message;
 }
 
-// fix me, add perg replace,
-function trim_text($text, $replacement = ' ') {
-	return str_replace("\r\n", $replacement, trim($text));
+// fix me, add preg replace,
+function trim_text($text, $replacement = ' ')
+{
+	$text = str_replace("\r\n", $replacement, $text);
+	$text = str_replace("\n", $replacement, $text);
+	return trim($text);
 }
 
-// Pick a template/theme combo,
-function theme_select($default = '', $all = false)
+// Windows doesm't require the sorting
+// so add a check for windows and skip alot of unneed work
+function theme_select($default = '')
 {
 	static $theme;
 	
@@ -259,25 +313,23 @@ function theme_select($default = '', $all = false)
 	
 	return $theme;
 }
+
 /***********************************************************************************
-
- string getlink($str="", $UseLEO=true, $full=false)
-
- Add to the string the correct information to create a link
- and converts the link to LEO if GoogleTap is active
- example: getlink('Your_Account&amp;file=register') returns: "index.php?name=Your_Account&amp;file=register"
- index.php depends on what you've setup in config.php
 
 	Under the GNU General Public License version 2
 	Copyright (c) 2004 by CPG-Nuke Dev Team 	http://www.cpgnuke.com
 
 ************************************************************************************/
-function getlink($str=false, $UseLEO=true, $full=false, $showSID=true) {
+function getlink($str = false, $UseLEO = true, $full = false, $showSID = true)
+ {
     global $Module, $mainindex, $MAIN_CFG, $_CLASS, $SID;
     
     $tempSID = ($showSID) ? $SID : '';
     
-    if ((!$str || $str{0} == '&') && !$_CLASS['display']->homepage) $str = $Module['title'].$str;
+    if (!$str || $str{0} == '&')
+    {
+		$str = $Module['title'].$str;
+    }
     
     if ($MAIN_CFG['global']['link_optimization'] && $str && $UseLEO) {
         
@@ -310,13 +362,8 @@ function getlink($str=false, $UseLEO=true, $full=false, $showSID=true) {
         {
 			$str = $MAIN_CFG['server']['path'].$mainindex; 
         } else {
-			if (!$_CLASS['display']->homepage)
-			{
-				$str = '?name='.$str;
-			} else {
-				$str = (substr($str, 0, 5) == '&amp;') ? '?' . substr($str, 5) : '?' .$str;
-			}
-			
+        
+			$str = '?name='.$str;
 			$str = $MAIN_CFG['server']['path'].$mainindex.$str.$tempSID;
 		
 		}
@@ -330,15 +377,14 @@ function getlink($str=false, $UseLEO=true, $full=false, $showSID=true) {
     return $str;
 }
 
-function adminlink($str = false) {
-
+function adminlink($link)
+{
     global $adminindex;
-    
-    return $adminindex.'?op='.$str;
-     
+    return $adminindex.'?system='.$link;
 }
 
-function url_redirect($url='') {
+function url_redirect($url = false)
+{
     global $db, $cache, $mainindex;
 
 	script_close();
@@ -347,7 +393,7 @@ function url_redirect($url='') {
 	$url = str_replace('&amp;', '&', $url);
 	
 	// Redirect via an HTML form for PITA webservers
-	if (@preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
+	if (preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
 	{
 		header('Refresh: 0; URL=' . $url);
 		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($user->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
@@ -437,7 +483,7 @@ function on_page($num_items, $per_page, $start)
 	return sprintf($_CLASS['user']->lang['PAGE_OF'], $on_page, max(ceil($num_items / $per_page), 1));
 }
 
-function validate_email($email)
+function check_email($email)
 {
 	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
 }

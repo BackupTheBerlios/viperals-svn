@@ -11,12 +11,6 @@
 //
 // -------------------------------------------------------------
 
-// DO NOT CHANGE
-if (empty($lang) || !is_array($lang))
-{
-	$lang = array();
-}
-
 // DEVELOPERS PLEASE NOTE
 //
 // Placeholders can now contain order information, e.g. instead of
@@ -27,7 +21,7 @@ if (empty($lang) || !is_array($lang))
 // equally where a string contains only two placeholders which are used to wrap text
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
-$lang += array(
+$this->lang += array(
 	'LOGIN_ADMIN'			=> 'To administer the board you must be an authenticated user.',
 	'LOGIN_ADMIN_CONFIRM'	=> 'To administer the board you must re-authenticate yourself.',
 	'LOGIN_ADMIN_SUCCESS'	=> 'You have successfully authenticated and will now be redirected to the Administration Control Panel',
@@ -268,7 +262,7 @@ $lang += array(
 );
 
 // Index page
-$lang += array(
+$this->lang += array(
 	'WELCOME_PHPBB'	=> 'Welcome to phpBB',
 	'ADMIN_INTRO'	=> 'Thank you for choosing phpBB as your forum solution. This screen will give you a quick overview of all the various statistics of your board. The links on the left hand side of this screen allow you to control every aspect of your forum experience. Each page will have instructions on how to use the tools.',
 
@@ -308,7 +302,7 @@ $lang += array(
 );
 
 // Restore/Backup
-$lang += array(
+$this->lang += array(
 	'Database_Utilities' => 'Database Utilities',
 
 	'Backup'			=> 'Backup',
@@ -346,7 +340,7 @@ $lang += array(
 );
 
 // Permissions
-$lang += array(
+$this->lang += array(
 	'ACL_EXPLAIN'			=> 'Permissions are based on a simple YES / NO system. Setting an option to NO for a user or usergroup overrides any other value assigned to it. If you do not wish to assign a value for an option for this user or group select UNSET. If values are assigned for this option elsewhere they will be used in preference, else NO is assumed.',
 	'PERMISSIONS_EXPLAIN'	=> 'Here you can alter which users and groups can access which forums. To assign moderators or define administrators please use the appropriate page (see left hand side menu).',
 	'MODERATORS'			=> 'Moderators',
@@ -526,7 +520,7 @@ $lang += array(
 );
 
 // User pruning
-$lang += array(
+$this->lang += array(
 	'PRUNE_USERS_EXPLAIN'	=> 'Here you can delete (or deactivate) users from you board. This can be done in a variety of ways; by post count, last activity, etc. Each of these criteria can be combined, i.e. you can prune users last active before 2002-01-01 with fewer than 10 posts. Alternatively you can enter a list of users directly into the text box, any criteria entered will be ignored. Take care with this facility! Once a user is deleted there is no way back.',
 	'SELECT_USERS_EXPLAIN'	=> 'Enter specific usernames here, they will be used in preference to the criteria above.',
 
@@ -544,7 +538,7 @@ $lang += array(
 );
 
 // Banning
-$lang += array(
+$this->lang += array(
 	'BAN_EXPLAIN'				=> 'Here you can control the banning of users by name, IP or email address. These methods prevent a user reaching any part of the board. You can give a short (255 character) reason for the ban if you wish. This will be displayed in the admin log. The length of a ban can also be specified. If you want the ban to end on a specific date rather than after a set time period select <u>Until</u> for the ban length and enter a date in yyyy-mm-dd format.',
 	'BAN_EXCLUDE'				=> 'Exclude from banning',
 
@@ -580,7 +574,7 @@ $lang += array(
 );
 
 // Jabber settings
-$lang += array(
+$this->lang += array(
 	'IM_EXPLAIN'	=> 'Here you can enable and control the use Jabber for instant messaging and board notices. Jabber is an opensource protocol and therefore available for use by anyone. Some Jabber servers include gateways or transports which allow you to contact users on other networks. Not all servers offer all transports and changes in protocols can prevent transports from operating. Note that it may take several seconds to update Jabber account details, do not stop the script till completed!',
 
 	'JAB_ENABLE'			=> 'Enable Jabber',
@@ -607,7 +601,7 @@ $lang += array(
 );
 
 // Message Settings
-$lang += array(
+$this->lang += array(
 	'MESSAGE_SETTINGS_EXPLAIN'	=> 'Here you can set all default settings for private messaging',
 
 	'BOXES_MAX'					=> 'Max private message folders',
@@ -637,7 +631,7 @@ $lang += array(
 );
 
 // Cookie settings
-$lang += array(
+$this->lang += array(
 	'COOKIE_SETTINGS_EXPLAIN'	=> 'These details define the data used to send cookies to your users browsers. In most cases the default values for the cookie settings should be sufficient. If you do need to change any do so with care, incorrect settings can prevent users logging in.',
 
 	'COOKIE_DOMAIN'			=> 'Cookie domain',
@@ -648,7 +642,7 @@ $lang += array(
 );
 
 // Avatar settings
-$lang += array(
+$this->lang += array(
 	'AVATAR_SETTINGS_EXPLAIN'	=> 'Avatars are generally small, unique images a user can associate with themselves. Depending on the style they are usually displayed below the username when viewing topics. Here you can determine how users can define their avatars. Please note that in order to upload avatars you need to have created the directory you name below and ensure it can be written to by the web server. Please also note that filesize limits are only imposed on uploaded avatars, they do not apply to remotely linked images.',
 	'ALLOW_LOCAL'				=> 'Enable gallery avatars',
 	'ALLOW_REMOTE'				=> 'Enable remote avatars',
@@ -667,7 +661,7 @@ $lang += array(
 );
 
 // Server settings
-$lang += array(
+$this->lang += array(
 	'SERVER_SETTINGS_EXPLAIN'	=> 'Here you define server and domain dependant settings. Please ensure the data you enter is accurate, errors will result in emails containing incorrect information. When entering the domain name remember it does include http:// or other protocol term. Only alter the port number if you know your server uses a different value, port 80 is correct in most cases.',
 	'SERVER_NAME'				=> 'Domain Name',
 	'SERVER_NAME_EXPLAIN'		=> 'The domain name this board runs from',
@@ -694,7 +688,7 @@ $lang += array(
 );
 
 // Load settings
-$lang += array(
+$this->lang += array(
 	'LOAD_SETTINGS_EXPLAIN'		=> 'Here you can enable and disable certain board functions to reduce the amount of processing required. On most servers there is no need to disable any functions. However on certain systems or in shared hosting environments it may be beneficial to disable capabilities you do not really need. You can also specify limits for system load and active sessions beyond which the board will go offline.',
 	'LIMIT_LOAD'				=> 'Limit system load',
 	'LIMIT_LOAD_EXPLAIN'		=> 'If the 1 minute system load exceeds this value the board will go offline, 1.0 equals ~100% utilisation of one processor. This only functions on UNIX based servers.',
@@ -726,7 +720,7 @@ $lang += array(
 );
 
 // Email settings
-$lang += array(
+$this->lang += array(
 	'EMAIL_SETTINGS_EXPLAIN'	=> 'This information is used when the board sends emails to your users. Please ensure the email address you specify is valid, any bounced or undeliverable messages will likely be sent to that address. If your host does not provide a native (PHP based) email service you can instead send messages directly using SMTP. This requires the address of an appropriate server (ask your provider if necessary), do not specify any old name here! If the server requires authentication (and only if it does) enter the necessary username and password. Please note only basic authentication is offered, different authentication implementations are not currently supported.',
 	'ENABLE_EMAIL'				=> 'Enable board-wide emails',
 	'ENABLE_EMAIL_EXPLAIN'		=> 'If this is set to disabled no emails will be sent by the board at all.',
@@ -761,7 +755,7 @@ $lang += array(
 );
 
 // Board settings
-$lang += array(
+$this->lang += array(
 	'BOARD_SETTINGS_EXPLAIN'	=> 'Here you can determine the basic operation of your board, from the site name through user registration to private messaging.',
 	'SITE_NAME'					=> 'Site name',
 	'SITE_DESC'					=> 'Site description',
@@ -833,7 +827,7 @@ $lang += array(
 );
 
 // Auth settings
-$lang += array(
+$this->lang += array(
 	'AUTH_SETTINGS_EXPLAIN'	=> 'phpBB2 supports authentication plug-ins, or modules. These allow you determine how users are authenticated when they log into the board. By default three plug-ins are provided; DB, LDAP and Apache. Not all methods require additional information so only fill out fields if they are relevant to the selected method.',
 	'AUTH_METHOD'			=> 'Select an authentication method',
 	'LDAP_SERVER'			=> 'LDAP server name',
@@ -845,7 +839,7 @@ $lang += array(
 );
 
 // Board defaults
-$lang += array(
+$this->lang += array(
 	'BOARD_DEFAULTS_EXPLAIN'	=> 'These settings allow you to define a number of default or global settings used by the board. For example, to disable the use of HTML across the entire board alter the relevant setting below. This data is also used for new user registrations and (where relevant) guest users. Please note that registered users can override some of these options with their own settings.',
 	'DEFAULT_STYLE'				=> 'Default Style',
 	'OVERRIDE_STYLE'			=> 'Override user style',
@@ -878,7 +872,7 @@ $lang += array(
 );
 
 // Karma settings
-$lang += array(
+$this->lang += array(
 	'KARMA_SETTINGS'		=> 'Karma Settings',
 	'KARMA_SETTINGS_EXPLAIN'=> 'Here you can enable and disable the user Karma rating system. You can also modify the weighting factors used to derive each users karma.',
 	'ENABLE_KARMA'			=> 'Enable Karma',
@@ -893,17 +887,17 @@ $lang += array(
 );
 
 // Avatars
-$lang += array(
+$this->lang += array(
 	'AVATARS_GALLERY'	=> 'Avatar Gallery',
 );
 
 // PHP info
-$lang += array(
+$this->lang += array(
 	'PHP_INFO_EXPLAIN'	=> 'This page lists information on the version of PHP installed on this server. It includes details of loaded modules, available variables and default settings. This information may be useful when diagnosing problems. Please be aware that some hosting companies will limit what information is displayed here for security reasons. You are advised to not give out any details on this page except when asked by support or other Team Member on the support forums.',
 );
 
 // Forum admin
-$lang += array(
+$this->lang += array(
 	'FORUM_ADMIN'			=> 'Forum Administration',
 	'FORUM_ADMIN_EXPLAIN'	=> 'In phpBB 2.2 there are no categories, everything is forum based. Each forum can have an unlimited number of sub-forums and you can determine whether each may be posted to or not (i.e. whether it acts like an old category). Here you can add, edit, delete, lock, unlock individual forums as well as set certain additional controls. If your posts and topics have got out of sync you can also resynchronise a forum.',
 	'FORUM_EDIT_EXPLAIN'	=> 'The form below will allow you to customise this forum. Please note that moderation and post count controls are set via forum permissions for each user or usergroup.',
@@ -1002,7 +996,7 @@ $lang += array(
 );
 
 // Smiley and topic icons
-$lang += array(
+$this->lang += array(
 	'ICONS_EXPLAIN'	=> 'From this page you can add, remove and edit the icons users may add to their topics or posts. These icons are generally displayed next to topic titles on the forum listing, or the post subjects in topic listings. You can also install and create new packages of icons.',
 	'SMILE_EXPLAIN' => 'Smilies or emoticons are typically small, sometimes animated images used to convey an emotion or feeling. From this page you can add, remove and edit the emoticons users can use in their posts and private messages. You can also install and create new packages of smilies.',
 	'IMPORT_SMILE'	=> 'Install smilies pak',
@@ -1065,7 +1059,7 @@ $lang += array(
 );
 
 // Custom bbcodes
-$lang += array(
+$this->lang += array(
 	'BBCODES'						=>	'BBCodes',
 	'BBCODES_EXPLAIN'			=>	'BBCode is a special implementation of HTML offering greater control over what and how something is displayed. Additionnally, you can save users from typing sometimes very long HTML code by providing them a single BBCode as replacement. From this page you can add, remove and edit custom BBCodes',
 
@@ -1104,7 +1098,7 @@ $lang += array(
 );
 
 // User admin
-$lang += array(
+$this->lang += array(
 	'USER_ADMIN'			=> 'User Administration',
 	'USER_ADMIN_EXPLAIN'	=> 'Here you can change your users information and certain specific options. To modify the users permissions please use the user and group permissions system.',
 	'SELECT_USER'			=> 'Select User',
@@ -1160,7 +1154,7 @@ $lang += array(
 );
 
 // Group admin
-$lang += array(
+$this->lang += array(
 	'GROUP_MANAGE_EXPLAIN' => 'From this panel you can administer all your usergroups, you can; delete, create and edit existing groups. You may choose moderators, toggle open/closed group status and set the group name and description.',
 
 	'USER_DEF_GROUPS'			=> 'User defined groups',
@@ -1236,7 +1230,7 @@ $lang += array(
 );
 
 // Forum Pruning
-$lang += array(
+$this->lang += array(
 	'FORUM_PRUNE_EXPLAIN' => 'This will delete any topic which has not been posted to within the number of days you select. If you do not enter a number then all topics will be deleted. It will not remove topics in which polls are still running nor will it remove announcements. You will need to remove these topics manually.',
 	'PRUNE_NOT_POSTED'	=> 'Days since last posted',
 	'PRUNE_NOT_VIEWED'	=> 'Days since last viewed',
@@ -1247,7 +1241,7 @@ $lang += array(
 );
 
 // Word censors
-$lang += array(
+$this->lang += array(
 	'WORDS_TITLE' => 'Word Censoring',
 	'WORDS_EXPLAIN' => 'From this control panel you can add, edit, and remove words that will be automatically censored on your forums. In addition people will not be allowed to register with usernames containing these words. Wildcards (*) are accepted in the word field, eg. *test* will match detestable, test* would match testing, *test would match detest.',
 	'WORD' => 'Word',
@@ -1263,7 +1257,7 @@ $lang += array(
 );
 
 // Mass email
-$lang += array(
+$this->lang += array(
 	'MASS_EMAIL_EXPLAIN'	=> 'Here you can email a message to either all of your users, or all users of a specific group.  To do this, an email will be sent out to the administrative email address supplied, with a blind carbon copy sent to all recipients. If you are emailing a large group of people please be patient after submitting and do not stop the page halfway through. It is normal for a mass emailing to take a long time, you will be notified when the script has completed',
 	'COMPOSE'				=> 'Compose',
 	'SEND_TO_GROUP'			=> 'Send to group',
@@ -1285,7 +1279,7 @@ $lang += array(
 );
 
 // Ranks
-$lang += array(
+$this->lang += array(
 	'RANKS_EXPLAIN' => 'Using this form you can add, edit, view and delete ranks. You can also create custom ranks which can be applied to a user via the user management facility',
 	'ADD_RANK' => 'Add new rank',
 	'RANK_TITLE' => 'Rank Title',
@@ -1302,7 +1296,7 @@ $lang += array(
 );
 
 // Disallowed names
-$lang += array(
+$this->lang += array(
 	'Disallow_control' => 'Username Disallow Control',
 	'Disallow_explain' => 'Here you can control usernames which will not be allowed to be used.  Disallowed usernames are allowed to contain a wildcard character of *.  Please note that you will not be allowed to specify any username that has already been registered, you must first delete that name then disallow it',
 	'Delete_disallow' => 'Delete',
@@ -1318,7 +1312,7 @@ $lang += array(
 );
 
 // Styling
-$lang += array(
+$this->lang += array(
 	'STYLES'			=> 'Styles',
 	'STYLES_EXPLAIN'	=> 'Here you can manage the available styles on your board. A style consists off a template, theme and imageset. You may alter existing styles, delete, deactivate, reactivate, create or import new ones. You can also see what a style will look like using the preview function. The current default style is noted by the presence of an asterix, * Also listed is the total user count for each style, note that overriding user styles will not be reflected here.',
 	'STYLE_NAME'			=> 'Style name',
@@ -1736,7 +1730,7 @@ $lang += array(
 );
 
 // Search indexing
-$lang += array(
+$this->lang += array(
 	'SEARCH_INDEX_EXPLAIN' => 'phpBB2 uses a fulltext search system. This breaks down each post into seperate words and then, if the word does not already exist it stores those words in a table. In turn the post is linked to each word it contains in this table. This allows quick searching of large databases and helps reduce load on the server compared to most other methods.</p><p>However, if the tables get out of sync for some reason or you change the minimum, maximum or disallowed list of words the tables need updating. This facility allows you to do just that.</p><p>Please be aware this procedure can take a long time, particularly on large databases. During this period your forum will be automatically shut down to prevent people posting. You can cancel the procedure at any time. Please remember this is an intensive operation and should only be carried out when absolutely necessarily. Do not run this script too often!</p>',
 	'SEARCH_INDEX_CANCEL'		=> 'Re-indexing of search system has been cancelled. Please note this will result in searches returning incomplete results. You can re-index the posts again at any stage.',
 	'SEARCH_INDEXING_COMPLETE'	=> 'Re-indexing of search system has been completed. You can re-index the posts again at any stage.',
@@ -1745,7 +1739,7 @@ $lang += array(
 );
 
 // Admin logs
-$lang += array(
+$this->lang += array(
 	'ADMIN_LOGS_EXPLAIN'	=> 'This lists all the actions carried out by board administrators. You can sort by username, date, IP or action. If you have appropriate permissions you can also clear individual operations or the log as a whole.',
 	'MOD_LOGS_EXPLAIN'		=> 'This lists the actions carried out by board moderators, select a forum from the drop down list. You can sort by username, date, IP or action. If you have appropriate permissions you can also clear individual operations or the log as a whole.',
 	'CRITICAL_LOGS_EXPLAIN'	=> 'This lists the actions carried out by the board itself. These log provides you with information you are able to use for solving specific problems, for example non-delivery of emails. You can sort by username, date, IP or action. If you have appropriate permissions you can also clear individual operations or the log as a whole.',
@@ -1759,7 +1753,7 @@ $lang += array(
 );
 
 // Attachments
-$lang += array(
+$this->lang += array(
 	'ATTACHMENT_SETTINGS'			=> 'Attachment Settings',
 	'ATTACHMENT_SETTINGS_EXPLAIN'	=> 'Here you can configure the Main Settings for Attachments and the associated Special Categories.',
 
@@ -1875,7 +1869,7 @@ $lang += array(
 );
 
 // Installation
-$lang += array(
+$this->lang += array(
 	'WELCOME_INSTALL'	=> 'Welcome to phpBB 2 Installation',
 
 	'INSTALL_REQUIRED'		=> 'Required',
@@ -1988,7 +1982,7 @@ $lang += array(
 );
 
 // Bots
-$lang += array(
+$this->lang += array(
 	'BOTS_EXPLAIN'	=> 'Bots or crawlers are automated agents most commonly used by search engines to update their databases. Since they rarely make proper use of sessions they can distort visitor counts, increase load and sometimes fail to index sites correctly. Here you can define a special type of user to overcome these problems.',
 
 	'BOT_NAME'			=> 'Bot name',
@@ -2023,7 +2017,7 @@ $lang += array(
 );
 
 // Custom profile fields
-$lang += array(
+$this->lang += array(
 	'FIELD_INT'		=> 'Numbers',
 	'FIELD_STRING'	=> 'Single Textfield',
 	'FIELD_TEXT'	=> 'Textarea',

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: session.php,v 1.42 2004/09/27 09:36:58 cryptographite Exp $
+ * $Id: session.php,v 1.44 2004/09/27 09:36:58 cryptographite Exp $
  */
 ?>
 <?php
@@ -32,7 +32,6 @@ class GallerySession {}
  * Turn on cookie support, if possible.  Don't complain on errors, in case
  * safe mode has disabled this call.
  */
-@ini_set('session.use_cookies', 1);
 
 if (session_id()) {
 	/* 
@@ -57,16 +56,25 @@ if (session_id()) {
  * create the appropriate container for it.
  */
 
-if (empty($gallery->app->sessionVar)) {
+if (empty($gallery->app->sessionVar))
+{
 	$gSessionVar = "gallery_session_".md5(getcwd()); 
 } else {
 	$gSessionVar = $gallery->app->sessionVar . "_" . md5($gallery->app->userDir);
 }
 
-if (isset($_SESSION[$gSessionVar])) {
+if (isset($_SESSION[$gSessionVar]))
+{
 	/* Get a simple reference to the session container (for convenience) */
 	$gallery->session =& $_SESSION[$gSessionVar];
+	
+	if (!empty($gallery->session->remoteHost) && $gallery->session->remoteHost != $_SERVER['REMOTE_ADDR'])
+	{
+		exit("Attempted security breach");
+	}
+	
 } else {
+
 	/* Create a new session container */
 	if (!empty($useStdClass)) {
 		$_SESSION[$gSessionVar] = new stdClass();
@@ -80,6 +88,8 @@ if (isset($_SESSION[$gSessionVar])) {
 	/* Tag this session with the gallery version */
 	$gallery->session->version = $gallery->version;
 	$gallery->session->sessionStart = time();
+	$gallery->session->remoteHost = $_SERVER['REMOTE_ADDR'];
+	
 }
 
 update_session_var("albumName");
@@ -89,6 +99,7 @@ update_session_var("fullOnly");
 update_session_var("username", 1);
 update_session_var("offline");
 update_session_var("offlineAlbums");
+
 if (!isset($gallery->session->offlineAlbums) || $gallery->session->offlineAlbums == null)
 {
       $gallery->session->offlineAlbums=array();
@@ -98,17 +109,20 @@ if (!isset($gallery->session->offlineAlbums) || $gallery->session->offlineAlbums
  * Process changes to session variables via parameters submitted in a 
  * POST or GET.
  */
-function update_session_var($name, $protected=0) {
+function update_session_var($name, $protected=0)
+{
 	global $gallery;
 
 	// If this is a protected session variable, don't allow it
 	// to be changed by data from POST or GET requests.
-	if ($protected) {
+	if ($protected)
+	{
 		return;
 	}
 
 	$setname = "set_$name";
-	if (!emptyFormVar($setname)) {
+	if (!emptyFormVar($setname))
+	{
 		$gallery->session->{$name} = formVar($setname);
 	} 
 }

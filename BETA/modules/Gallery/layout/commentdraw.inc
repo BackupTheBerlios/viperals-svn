@@ -4,27 +4,28 @@
 	global $commentdraw, $i, $index, $id;
 
 // If the border color is not passed in, we do a black/white combo
-if ($commentdraw["bordercolor"]) {
-        $borderIn = $commentdraw["bordercolor"];
+if ($commentdraw["bordercolor"])
+{
+	$borderIn = $commentdraw["bordercolor"];
 } else {
-        $borderIn = "#FFFFFF";
+	$borderIn = "#FFFFFF";
 }
 
 $pixelImage = "<img src=\"" . getImagePath('pixel_trans.gif') . "\" width=\"1\" height=\"1\" alt=\"\">";
 
 ?>
 <!-- Begin Comment -->
-<table width="50%" align="center" border="0" class="commentbox" cellpadding="0" cellspacing="0">
+<table class="tablebg" cellpadding="4" cellspacing="1" width="100%">
+<tbody>
 <tr>
-	<td class="commentboxhead"><?php echo _("From:") ?></td> 
-	<td class="commentboxhead"><b><?php echo wordwrap($commentdraw["name"], 50, " ", 1) ?></b>
+	<td class="row1"><?php echo _("Poster:") ?>
+	<b><?php echo $commentdraw["name"] ?></b>
 <?php
 if ($gallery->user->isAdmin()) {
 	echo "@ &nbsp;";
 	echo $commentdraw["IPNumber"];
 }
-?>	</td>
-	<td class="commentboxhead">(<?php echo $commentdraw["datePosted"] ?>)</td>
+?>	<br/><?php echo _("Date:") .' ' .$commentdraw["datePosted"]; ?></td>
 </tr>
 <tr>
 	<td colspan="3"><?php echo wordwrap($commentdraw["comment"], 100, " ", 1) ?></td>
@@ -40,6 +41,7 @@ if ($gallery->user->canWriteToAlbum($gallery->album)) {
 	echo "\n</tr>";
 }
 ?>
+</tbody>
 </table>
 <br>
 <!-- End Comment -->

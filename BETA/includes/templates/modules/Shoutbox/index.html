@@ -1,26 +1,48 @@
-{* { if $ERROR }
-	{php} OpenTable(); {/php}
-		<div align="center"><font color="#990000">{ $ERROR }</font></div>
-	{php} CloseTable(); {/php}
-{ /if } *}
-
 {php} OpenTable(); {/php}
 
-<div style="padding: 5px;">
-	{section name=shoutloop loop=$shout}
-
+<table class="tablebg" width="100%" cellspacing="1px">
+	<tbody>
+		<tr>
+			<th width="20%">{$L_POSTER}</th>
+			<th width="80%">{$L_MESSAGE}</th>
+		</tr>
+		{section name=shoutloop loop=$shout}
 		
-	<div style="padding: 5px; background-color: { $shout[shoutloop].BGCOLOR };">
-	
-			{ if $shout[shoutloop].USER_LINK } 
-			
-				<a href="{ $USER_LINK } "><b> { $shout[shoutloop].USER_NAME }: </b></a>
-			{ else }
-				<b> { $shout[shoutloop].USER_NAME } : </b>
-			{ /if }
+		{ if $smarty.section.shoutloop.rownum is even }
+		<tr class="row2">
+		{ else }
+		<tr class="row1">
+		{ /if }
+			<td style="padding: 5px;" align="center" valign="top">
+				{ if $shout[shoutloop].USER_LINK } 
+					<a href="{ $shout[shoutloop].USER_LINK } "><b> { $shout[shoutloop].USER_NAME } </b></a><br /><br />
+					{ $shout[shoutloop].KARMA_IMG }
+				{ else }
+					<b> { $shout[shoutloop].USER_NAME } </b>
+				{ /if }
+				
+			</td>
+			<td style="padding: 5px;">
+				<span class="gensmall">{ $shout[shoutloop].TIME }</span><br />
+				{ $shout[shoutloop].SHOUT }
+			</td>
+		</tr>
+		{ sectionelse }
+			<tr class="row2">
+				<td colspan="2">
+					{ $ERROR }
+				</td>
+			</tr>
+		{ /section }
 		
-		{ $shout[shoutloop].SHOUT }<br />{ $shout[shoutloop].TIME }</div>
-	{ /section }
-</div>
+		{ if $SHOUT_PAGINATION }
+		<tr class="row2">
+			<td style="padding: 5px;" valign="middle" colspan="2">
+				<div style="padding-right: 5px; text-align: right;" class="numbering">[ { if $SHOUT_PREVIOUS_PAGE }<a href="{$SHOUT_PREVIOUS_PAGE}">{$L_PREVIOUS}</a>&nbsp;|&nbsp;{ /if } {$SHOUT_PAGINATION} { if $SHOUT_NEXT_PAGE }&nbsp;|&nbsp;<a href="{$SHOUT_NEXT_PAGE}">{$L_NEXT}</a>{ /if } ]</div>
+			</td>
+		</tr>
+		{ /if }
+	</tbody>
+</table>
 
 {php} CloseTable(); {/php}

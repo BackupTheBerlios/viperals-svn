@@ -1,15 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
 
 $this->lang += array(
 	'STORY_INTRO'		=>	'Story Into',
@@ -20,20 +9,23 @@ $this->lang += array(
 	'STORY_STORY_HELP'  =>	'This is this is the main story, not that the homepage article is not included<br/> If it is part of the article add it again here, note you can leave this blank and if you like.',
 	'STORY_TITLE'		=>	'Article Title',
 	'MSG_USER'			=>	'Welcome User<br/> Please full out the require info',
-	'MSG_ANON'			=>	'Welcome you are currently not loggin in<br/>it is recommended you log-in or create a new account<br/><br/>Please your name and a Valid email address',
+	'MSG_ANON'			=>	'Welcome you are currently not logged in<br/>it is recommended you log-in or create a new account<br/><br/>Please note your your name and a valid email address is required for all no members',
 	'SENT_BY'			=>	'Sent by',
 	'SENDER_EMAIL'		=>	"Sender's email",
 	'WITH_IP'			=>	'With IP: ',
-	'SUBMIT_INTRO'		=>	'Please take note that we do not publish all articles that we receive<br />Our staff will review your article and may edit it\'s content based on grammar and spelling mistakes',
+	'SUBMIT_INTRO'		=>	'Please file out and submit the form below concerning you article<br />Please preview the article before submitting',
+	'SUBMIT_NEWS'		=>	'Submit news',
 	'FEEDBACK_PROBLEM'	=>	'There was a problem sending this message<br /> Please try again later.',
 
 	'YOURNAME'			=>	'Your Name',
 	'YOUREMAIL'			=>	'Your Email',
 	
-	'ERROR_MESSAGE'		=>	'Please enter a valid message',
+	'ERROR_INTRO'		=>	'A intro message is required',
+	'ERROR_TITLE'		=>	'Please enter a title for your story',
 	'ERROR_NAME'		=>	'Please enter a valid name',
 	'ERROR_EMAIL'		=>	'Please enter a valid email',
-	
+	'BAD_EMAIL'			=>  'Please enter a valid email address',
+
 );
 
 ?>

@@ -17,15 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: rename_album.php,v 1.57 2004/09/21 05:15:44 cryptographite Exp $
+ * $Id: rename_album.php,v 1.59 2004/10/18 07:00:15 cryptographite Exp $
  */
 ?>
 <?php
 
 require_once(dirname(__FILE__) . '/init.php');
 
+list($oldName, $newName, $useLoad) = getRequestVar(array('oldName', 'newName', 'useLoad'));
+
 // Hack check
-if (!isset($gallery->album) || !$gallery->user->canWriteToAlbum($gallery->album)) {
+if (!isset($gallery->album) || !$gallery->user->canWriteToAlbum($gallery->album))
+{
 	echo _("You are not allowed to perform this action!");
 	exit;
 }
@@ -48,8 +51,6 @@ if (!isset($useLoad)) {
 
 /* Read the album list */
 $albumDB = new AlbumDB(FALSE);
-
-list($oldName, $newName) = getRequestVar(array('oldName', 'newName'));
 
 if (!empty($newName)) {
 	$dismiss = 0;
@@ -119,7 +120,10 @@ if (!empty($newName)) {
 <p><?php echo _("Those characters will be ignored in your new album name.") ?></p>
 
 <br>
-<?php echo makeFormIntro("rename_album.php", array("name" => "theform")); ?>
+<?php echo makeFormIntro("rename_album.php", 
+	array("name" => "theform"),
+	array("type" => "popup"));
+?>
 <input type="text" name="newName" value="<?php echo $newName?>">
 <input type="hidden" name="oldName" value="<?php echo $gallery->session->albumName?>">
 <input type="hidden" name="useLoad" value="<?php echo $useLoad?>">    
@@ -134,8 +138,8 @@ if (!empty($newName)) {
 document.theform.newName.focus();
 //-->
 </script>
+</div>
 
 <?php print gallery_validation_link("rename_album.php",true); ?>
-</div>
 </body>
 </html>

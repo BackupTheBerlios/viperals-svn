@@ -17,12 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: confirm.inc,v 1.93 2004/09/08 02:14:52 cryptographite Exp $
+ * $Id: confirm.inc,v 1.96 2004/10/18 05:51:10 cryptographite Exp $
  */
 ?>
 
 <input type="hidden" name="back_page" value="defaults">
 <input type="hidden" name="next_page" value="write">
+<input type="hidden" name="this_page" value="confirm">
 
 <div class="header"><?php echo sprintf (_("Gallery Configuration Wizard: Step %d"),4); ?></div>
 
@@ -275,8 +276,10 @@ foreach ($constants as $key => $val) {
 		}
 
 		if (!isset($constants[$key]["dont-write"])) {
-			if (is_array($real)) {
+			if (is_array($real) && (empty($constants[$key]['type']) || $constants[$key]['type'] != 'password')) {
 				$line = array_constant($key, $real);
+			} elseif (is_array($real) && $constants[$key]['type'] == 'password') {
+				$line = one_constant($key, $real[2]);
 			} else {
 				$line = one_constant($key, $real);
 			}
@@ -451,7 +454,7 @@ if (!$error) {
 <?php if (!$error) {
 		echo '<input type="submit" name="go_next" disabled="disabled" value="' . _("Save Config") .' -&gt;">';
 	} else {
-		echo '<input type="button" name="refresh" disabled="disabled" value="' . _("Refresh") . '" onclick="location.reload()">';
+		echo '<input type="submit" name="refresh" disabled="disabled" value="' . _("Refresh") . '">';
 		echo '<br><div class="error" id="top">';
 		echo pluralize_n2(ngettext("One error.", "%d errors.", $error), $error, _("No errors."));
                 echo ' ';

@@ -11,7 +11,8 @@
 //																//
 //**************************************************************//
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: ../../');
     die();
 }
@@ -20,7 +21,8 @@ $_CLASS['user']->add_lang();
 
 $_CLASS['display']->display_head($_CLASS['user']->lang['RECOMEND_US']);
 
-function recommend($sender_name, $sender_email, $receiver_name='', $receiver_email='', $message='', $error = false) {
+function recommend($sender_name, $sender_email, $receiver_name='', $receiver_email='', $message='', $error = false)
+{
 	global $_CLASS, $Module;
   
 	$_CLASS['template']->assign(array( 
@@ -34,7 +36,9 @@ function recommend($sender_name, $sender_email, $receiver_name='', $receiver_ema
 		'IP'					=> $_CLASS['user']->ip,
 		'ERROR' 				=> $error,
 		'MESSAGE' 				=> $message,
-		'ACTION' 				=> getlink($Module['title']),
+		'ACTION' 				=> getlink($Module['name']),
+		'RECEIVER_EMAIL' 		=> $receiver_email,
+		'RECEIVER_NAME' 		=> $receiver_name,
 		'SENDER_EMAIL' 			=> $sender_email,
 		'SENDER_NAME' 			=> $sender_name,
 		)
@@ -42,81 +46,91 @@ function recommend($sender_name, $sender_email, $receiver_name='', $receiver_ema
 		
 	$_CLASS['template']->display('modules/Recommend_Us/index.html');
 	
+	$_CLASS['display']->display_footer();
+
 }
 
-
-function send_recommend($yname, $ymail, $fname, $fmail) {
-	global $sitename, $slogan, $nukeurl, $module_name, $SID;
+function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_email, $message, $preview)
+{
+	global $_CLASS, $MAIN_CFG;
 	
-	if (is_user()) {
-		$yname = $_CLASS['user']->data['username'];
-		$ymail = $_CLASS['user']->data['user_email'];
+	$mail_message = '<center>Hi '.$receiver_name.' <br /><br /> '.$sender_name.' has recommended you look at this site.'
+				.'<br /><br /><a href="'.$MAIN_CFG['global']['siteurl'].'">'.$MAIN_CFG['global']['sitename'].' - '.$MAIN_CFG['global']['siteurl'].'</a>';
+	
+	if ($message)
+	{
+		$message .= '<br /><br /><b>There following message was attached by sender</b><br />'.$message;
 	}
-		
-	$subject = ""._HAVELOOK." $sitename";
 	
-	$ip_addy = $_SERVER['REMOTE_ADDR'];
+	$mail_message .= '<br /><br /><br /><center>Message Sent from IP '. $_CLASS['user']->ip . '<br />Please report spammer at '. $MAIN_CFG['global']['siteurl'] .'</center>';
+
+
+	if ($preview)
+	{
+		$_CLASS['template']->assign('PREVIEW', $mail_message);
+		return;
+	}
 	
-	$message = "\n"
-			  .""._HELLO." $fname,\n\n"
-			  .""._YOURFRIEND." $yname "._OURSITE."\n\n"
-			  ."<strong>"._WHOWEARE."</strong>\n\n"
-			  ."$sitename\n"
-			  ."$slogan\n"
-			  .""._VISITUS." <a href=\"$nukeurl\" target=\"ResourceWindow\">$nukeurl</a>\n"
-			  .""._POSTEDBY." $ip_addy | <a href=\"http://ws.arin.net/cgi-bin/whois.pl?queryinput=$ip_addy\" target=\"ResourceWindow\">"._WHOIS."</a>\n";
+	$subject = $_CLASS['user']->lang['RECOMMENDATION'] . $sender_name;
 
 	OpenTable();
 
-	if (send_mail($mailer_message, $message, $html=0, $subject, $to, $to_name, $from, $from_name))
+	if (send_mail($mailer_message, $mail_message, true, $subject, $receiver_email, $receiver_name, $sender_email, $sender_name))
 	{
-	
-	echo '<div align="center" class="content">
-		'._FREFERENCE . $fname .'...
-		<br /><br />' . _THANKSREC .'
-		</div>';
+		trigger_error($_CLASS['user']->lang['MESSAGE_SENT']);
 		
 	} else {
 	
-	echo '<div align="center" class="content">There was an error Sending</div>';
+		$message = $_CLASS['user']->lang['MESSAGE_PROBLEM'];
+			
+		if (is_admin())
+		{
+			$message .= '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
+		}
+				
+		trigger_error($message);
 	}
+	
 	CloseTable();
-   
+	
+	$_CLASS['display']->display_footer();
+  
 }
 
-if (isset($_POST['recommend']))
+if (isset($_POST['recommend']) || isset($_POST['preview']))
 {
 
     $data['FNAME'] = get_variable('receiver_name', 'POST', '');
     $data['FEMAIL'] = get_variable('receiver_email', 'POST', '');
-    $data['NAME'] = get_variable('sender_email', 'POST', '');
-    $data['EMAIL'] = get_variable('sender_name', 'POST', '');
+    $data['NAME'] = get_variable('sender_name', 'POST', '');
+    $data['EMAIL'] = get_variable('sender_email', 'POST', '');
     $message = get_variable('message', 'POST', '');
     $error = '';
 
-	foreach ($data as $field => $value) {
+	foreach ($data as $field => $value)
+	{
 		
-		if (!$value) {
+		if (!$value)
+		{
 				$error .= $_CLASS['user']->lang['ERROR_'.$field].'<br />';
 				unset($field, $value, $lang);
-        }
-         elseif ($field == 'EMAIL' || $field == 'FEMAIL' && validate_email($value)) {
-			$error .= 'Please enter a valid email address<br />';
+        
+        } elseif (($field == 'EMAIL' || $field == 'FEMAIL') && !check_email($value)) {
+        
+			$error .= $_CLASS['user']->lang['BAD_EMAIL'].'<br />';
 		}
 	}
 	
-	if ($data['EMAIL'] && !validate_email($data['EMAIL']))
+	if (isset($_POST['preview']) || !$error)
 	{
-		$error .= 'Please enter a valid email address';
+		send_recommend($data['NAME'], $data['EMAIL'], $data['FNAME'], $data['FEMAIL'], $message, isset($_POST['preview']));
 	}
 	
-	if ($error)
+	if (isset($_POST['preview']) || $error)
 	{
 		recommend($data['NAME'], $data['EMAIL'], $data['FNAME'], $data['FEMAIL'], $message, $error);
-	} else {
-	//	send_recommend($yname, $ymail, $fname, $fmail);
 	}
-
+	
 } else {
 
 	if (is_user())
@@ -129,7 +143,5 @@ if (isset($_POST['recommend']))
 	
 	recommend($sender_name, $sender_email);
 }
-
-include('footer.php');
 
 ?>

@@ -11,7 +11,8 @@
 //																//
 //**************************************************************//
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: /');
     die();
 }
@@ -20,7 +21,8 @@ global $_CLASS;
 
 $_CLASS['display']->display_footer();
 
-function footmsg() {
+function footmsg()
+{
 	global $CLASS;
 	$C_LASS['display']->footer();
 }

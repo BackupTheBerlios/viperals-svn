@@ -17,11 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: nl_NL-nls.php,v 1.7 2004/09/01 22:11:13 jenst Exp $
+ * $Id: nl_NL-nls.php,v 1.8 2004/10/08 17:22:54 jenst Exp $
  *
  * Version: 1.4.5-cvs
  */
-/**
+ 
+/*
  * NLS (National Language System) array.
  *
  * The basic idea and values was taken from then Horde Framework (http://horde.org)
@@ -32,27 +33,33 @@
  */
 
 
-/**
- ** Native languagename
- **/
+/*
+** Native languagename
+*/
 	$nls['language']['nl_NL'] = 		'Nederlands';
 
-/**
- ** Alias for languages with different browser and gettext codes
- **/
+/*
+** Alias for languages with different browser and gettext codes
+**/
 
 	$nls['alias']['nl'] = 			'nl_NL';
 
-/**
- ** Alias for languages which we substitte or send by NUKE
- **/
+/*
+** Alias for languages which we substitte or send by NUKE
+*/
 	$nls['alias']['dutch'] = 		'nl_NL' ;
+	$nls['alias']['nld'] =                  'nl_NL' ;
 	$nls['alias']['nl_BE'] = 		'nl_NL' ;
 	$nls['alias']['nl_NL.ISO8859-1'] =	'nl_NL' ;
 	
-/**
- ** phpNuke
- **/
+/*
+** phpNuke
+*/
 	$nls['phpnuke']['nl_NL'] = 		'dutch';
 
+/*
+** postNuke
+*/
+
+	$nls['postnuke']['nl_NL'] =             'nld';
 ?>

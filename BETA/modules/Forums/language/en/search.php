@@ -11,12 +11,6 @@
 // 
 // -------------------------------------------------------------
 
-// DO NOT CHANGE
-if (empty($lang) || !is_array($lang))
-{
-	$lang = array();
-}
-
 // DEVELOPERS PLEASE NOTE 
 //
 // Placeholders can now contain order information, e.g. instead of
@@ -27,7 +21,7 @@ if (empty($lang) || !is_array($lang))
 // equally where a string contains only two placeholders which are used to wrap text
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
-$lang += array(
+$this->lang += array(
 	'ALL_AVAILABLE'			=> 'All available',
 	'ALL_RESULTS'			=> 'All results',
 

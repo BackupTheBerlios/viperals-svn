@@ -5,13 +5,13 @@
 <title>Debug Menu</title>
 <link rel="stylesheet" href="themes/viperal/style/style.css" type="text/css">
 </head>
-<body bgcolor="white">
+<body>
 <table class="tablebg" style="width:100%" cellpadding="4" cellspacing="1">
 	<tbody>
 		<tr>
-			<th width="25%">{ if $A_OPTION eq 'site' }{ $L_NOTICES }{ else }<a href="/debug.php?mode=notice"><b>{ $L_NOTICES }</b></a>{ /if }</th>
-			<th width="25%">{ if $A_OPTION eq 'wysiwyg' }{ $L_WARNINGS }{ else }<a href="/debug.php?mode=warning"><b>{ $L_WARNINGS }</b></a>{ /if }</th>
-			<th width="25%">{ if $A_OPTION eq 'users' }{ $L_QUERIES }{ else }<a href="/debug.php?mode=queries"><b>{ $L_QUERIES }</b></a>{ /if }</th>
+			<th width="25%">{ if $MODE eq 'site' }{ $L_NOTICES }{ else }<a href="/debug.php?mode=notice"><b>{ $L_NOTICES }</b></a>{ /if }</th>
+			<th width="25%">{ if $MODE eq 'wysiwyg' }{ $L_WARNINGS }{ else }<a href="/debug.php?mode=warning"><b>{ $L_WARNINGS }</b></a>{ /if }</th>
+			<th width="25%">{ if $MODE eq 'users' }{ $L_QUERIES }{ else }<a href="/debug.php?mode=queries"><b>{ $L_QUERIES }</b></a>{ /if }</th>
 		</tr>
 	<tbody>
 </table>
@@ -22,41 +22,40 @@
 <td align="center">
 
 { if $MODE eq 'warning' }
-	{ if $error_warnings }
-
-  <div>Thsi page has the following PHP Warning Errors</div>
-  <hr width="50%">
-  <p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.
-  </p>
-
- <table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
+	{ if !isset($error_warnings) }
+		<div class="error_header">Wow We this page has no Notice  errors</div>
+	{ else }
+			  <div>This page has the following PHP Notice Errors</div>
+		  <hr width="50%">
+		  <p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.
+		    </p>
+	<table class="tablebg" align="center" cellpadding="7" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
 	<tbody>
 		<tr>
-			<th width="25%">{ if $A_OPTION eq 'site' }{ $L_NOTICES }{ else }<a href="/debug.php?mode=notice"><b>{ $L_NOTICES }</b></a>{ /if }</th>
-			<th width="25%">{ if $A_OPTION eq 'wysiwyg' }{ $L_WARNINGS }{ else }<a href="/debug.php?mode=warning"><b>{ $L_WARNINGS }</b></a>{ /if }</th>
-			<th width="25%">{ if $A_OPTION eq 'users' }{ $L_USERS_OPTIONS }{ else }<a href="{ $A_L_USERS }"><b>{ $L_USERS_OPTIONS }</b></a>{ /if }</th>
-			<th width="25%">{ if $A_OPTION eq 'system' }{ $L_SYSTEM }{ else }<a href="{ $A_L_SYSTEM }"><b>{ $L_SYSTEM }</b></a>{ /if }</th>
+			<th><b>File</b></th>
+			<th><b>Line</b></th>
+			<th><b>Error</b></th>
 		</tr>
+		{section name=error_warningsloop loop=$error_warnings}
 		<tr>
-			<td>
-			
-	{section name=error_warningsloop loop=$error_warnings}
-	File : {$error_warnings[error_warningsloop].errfile} line <b>{$error_warnings[error_warningsloop].errline}</b> : <b>{$error_warnings[error_warningsloop].msg_text}<br />
-	{ /section }
-	{ else }
-	<div class="error_header">Wow We this page has Warning Errors</div>
-			
+			<td style="border: 1px solid #ccc;">
+				
+		{$error_warnings[error_warningsloop].errfile}
+			</td>
+			<td style="border: 1px solid #ccc;">
+			{$error_warnings[error_warningsloop].errline}
+			</td>
+			<td style="border: 1px solid #ccc; width:100%;">
+			<b>{$error_warnings[error_warningsloop].msg_text}</b>
 			</td>
 		</tr>
+		{ /section }
 	</tbody>
 </table>
-	
-	{/if}
-
-</p>
+		{ /if }
 
 { elseif $MODE eq 'notice'}
-	{ if !$error_notice }
+	{ if !isset($error_notice) }
 		<div class="error_header">Wow We this page has Notice errors</div>
 	{ else }
 			  <div>This page has the following PHP Notice Errors</div>
@@ -87,13 +86,11 @@
 	</tbody>
 </table>
 		{ /if }
-</p>
-
 { elseif $MODE eq 'queries'}
 
-		<div>This page has the following PHP Notice Errors</div>
+		<div>This page contains the Query information<br/>This page is accurate to the page you browsing.</div>
 		<hr width="50%">
-		<p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.</p>
+		<p class="discription"></p>
 
 		{section name=queryloop loop=$query}
 		<table class="tablebg" align="center" cellpadding="10" cellspacing="2" style="border: 1px solid #ccc; width:100%;">

@@ -46,18 +46,21 @@ require(dirname(__FILE__) . "/init.php");
 
 define('CACHE_FILE', $gallery->app->albumDir . "/block-random.dat");
 define('CACHE_EXPIRED', $gallery->app->blockRandomCache);
-
+echo '<base target="_top">';
 // Check the cache file to see if it's up to date
 $rebuild = 1;
-if (fs_file_exists(CACHE_FILE)) {
+if (fs_file_exists(CACHE_FILE))
+{
 	$stat = fs_stat(CACHE_FILE);
 	$mtime = $stat[9];
-	if ((time() - $mtime) < CACHE_EXPIRED) {
+	if ((time() - $mtime) < CACHE_EXPIRED)
+	{
 		$rebuild = 0;
 	}
 }
 
-if ($rebuild) {
+if ($rebuild)
+{
 	scanAlbums();
 	saveCache();
 } else {
@@ -70,11 +73,13 @@ do {
 	$i++;
 } while (empty($success) && $i < $gallery->app->blockRandomAttempts);
 
-if (empty($success)) {
+if (empty($success))
+{
 	echo '<center>No photo chosen.</center>';
 }
 
-function doPhoto() {
+function doPhoto()
+{
 	$album = chooseAlbum();
 
 	if (!empty($album)) {
@@ -84,11 +89,11 @@ function doPhoto() {
 	if (!empty($index)) {
 		$id = $album->getPhotoId($index);
 		echo ""
-			. '<center><a href="' . makeAlbumUrl($album->fields['name'], $id) . '">'
+			. '<a href="' . makeAlbumUrl($album->fields['name'], $id) . '">'
 			. $album->getThumbnailTag($index)
-			. '</a></center>';
+			. '</a>';
 
-		$caption = $album->getCaption($index);
+		/*$caption = $album->getCaption($index);
 		if ($caption) {
 			echo '<br><center>' . $caption . '</center>';
 		}
@@ -96,7 +101,7 @@ function doPhoto() {
 		echo '<br><center>From: '
 			. '<a href="' .makeAlbumUrl($album->fields['name']) .'">'
 			. $album->fields['title']
-			. '</a></center>';
+			. '</a></center>';*/
 		return 1;
 	} else {
 		return 0;
@@ -109,19 +114,22 @@ function doPhoto() {
  * --------------------------------------------------
  */
 
-function saveCache() {
+function saveCache()
+{
 	global $cache;
 	safe_serialize($cache, CACHE_FILE);
 }
 
-function readCache() {
+function readCache()
+{
 	global $cache;
 
 	$sCache = getFile(CACHE_FILE);
 	$cache = unserialize($sCache);
 }
 
-function choosePhoto($album) {
+function choosePhoto($album)
+{
 	global $cache;
 
 	$count = $cache[$album->fields["name"]];
@@ -151,7 +159,8 @@ function choosePhoto($album) {
 	return $choose;
 }
 
-function chooseAlbum() {
+function chooseAlbum()
+{
 	global $cache;
 
 	/*
@@ -165,7 +174,8 @@ function chooseAlbum() {
 		}
 
 		$total += $count;
-		if ($total != 0 && ($total == 1 || mt_rand(1, $total) <= $count)) {
+		if ($total != 0 && ($total == 1 || mt_rand(1, $total) <= $count))
+		{
 			$choose = $name;
 		}
 	}
@@ -179,7 +189,8 @@ function chooseAlbum() {
 	}
 }
 
-function scanAlbums() {
+function scanAlbums()
+{
 	global $cache;
 	global $gallery;
 
@@ -187,7 +198,8 @@ function scanAlbums() {
 	$everybody = $gallery->userDB->getEverybody();
 	$albumDB = new AlbumDB();
 	foreach ($albumDB->albumList as $tmpAlbum) {
-		if ($tmpAlbum->canReadRecurse($everybody->getUid()) && !$tmpAlbum->isHiddenRecurse()) {
+		if ($tmpAlbum->canReadRecurse($everybody->getUid()) && !$tmpAlbum->isHiddenRecurse())
+		{
 			$seeHidden = $everybody->canWriteToAlbum($tmpAlbum);
 			$numPhotos = $tmpAlbum->numPhotos($seeHidden);
 			$name = $tmpAlbum->fields["name"];

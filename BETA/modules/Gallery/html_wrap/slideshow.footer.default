@@ -17,15 +17,6 @@ includeTemplate('slideshow.footer.tpl');
             <span class="fineprint">
 	    <?php print poweredBy() ?>
             </span>
-<?php 
-global $GALLERY_EMBEDDED_INSIDE;
-       	if (! isset($GALLERY_EMBEDDED_INSIDE)) {
-		if (!empty($gallery->album)) {
-			print gallery_validation_link("slideshow.php", true, array("set_albumName" => $gallery->album->fields['name']));
-		} else {
-			print gallery_validation_link("slideshow.php", true);
-		}
-       	} ?>
           </td>
 <?php if (!isset($gallery->app->rssEnabled) || $gallery->app->rssEnabled == "yes") { ?>
           <td style="text-align:right"><a href="<?php echo $gallery->app->photoAlbumURL . "/rss.php"; ?>" style="background-color:#f60; border:2px outset #ffc8a4; color:white; text-decoration:none; font:bold 10px sans-serif; padding:0px 3px 0px 5px; letter-spacing:1;">RSS</a></td> 

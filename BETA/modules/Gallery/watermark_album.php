@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: watermark_album.php,v 1.17 2004/09/21 05:15:46 cryptographite Exp $
+ * $Id: watermark_album.php,v 1.18 2004/10/07 20:24:07 donwillingham Exp $
  */
 ?>
 <?php
 
 require_once(dirname(__FILE__) . '/init.php');
 
-list($index, $save, $preview, $wmAlign, $wmName) = getRequestVar(array('index', 'save', 'preview', 'wmAlign', 'wmName'));
+list($index, $save, $preview, $wmAlign, $wmName, $wmSelect) = getRequestVar(array('index', 'save', 'preview', 'wmAlign', 'wmName', 'wmSelect'));
 list($wmAlignX, $wmAlignY, $recursive, $previewFull) = getRequestVar(array('wmAlignX', 'wmAlignY', 'recursive', 'previewFull'));
 
 // Hack check
@@ -38,7 +38,7 @@ if (empty($index)) {
 }
 $highlightIndex = $gallery->album->getHighlight();
 
-$err = "";	
+$err = "";
 if (isset($save) || isset($preview)) {
 	if (isset($wmAlign) && ($wmAlign > 0) && ($wmAlign < 12)) {
 		if (isset($wmName) && !empty($wmName)) {
@@ -57,7 +57,7 @@ if (isset($save) || isset($preview)) {
         	        	my_flush();
                			set_time_limit($gallery->app->timeLimit);
 	                	$gallery->album->watermarkAlbum($wmName, "",
-					$wmAlign, $wmAlignX, $wmAlignY, $recursive);
+					$wmAlign, $wmAlignX, $wmAlignY, $recursive, $wmSelect);
         	        	$gallery->album->save();
 ?>
 </div>

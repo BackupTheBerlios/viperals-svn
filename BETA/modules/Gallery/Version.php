@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: Version.php,v 1.1186 2004/10/01 23:31:44 beckettmw Exp $
+ * $Id: Version.php,v 1.1192 2004/10/03 21:03:34 jenst Exp $
  */
 ?>
 <?php
@@ -27,18 +27,19 @@
  * don't implicitly create a new stdClass() when you use a variable
  * like a class.
  */
-if (!isset($gallery)) {
+if (!isset($gallery))
+{
 	$gallery = new stdClass();
 }
 
-$gallery->version = '1.4.5-cvs-b212';
+$gallery->version = '1.4.5-cvs-b240';
 $gallery->config_version = 83;
 $gallery->album_version = 32;
 $gallery->user_version = 5;
 $gallery->url = "http://gallery.sourceforge.net";
 
 /* do not edit the date!! modified by CVS */
-$gallery->last_change=strtotime(substr('$Date: 2004/10/01 23:31:44 $', 7, -1));
+$gallery->last_change=strtotime(substr('$Date: 2004/10/03 21:03:34 $', 7, -1));
 /*
  * PostNuke version info
  */

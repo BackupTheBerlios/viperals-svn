@@ -11,12 +11,6 @@
 // 
 // -------------------------------------------------------------
 
-// DO NOT CHANGE
-if (empty($lang) || !is_array($lang))
-{
-	$lang = array();
-}
-
 // DEVELOPERS PLEASE NOTE 
 //
 // Placeholders can now contain order information, e.g. instead of
@@ -27,7 +21,7 @@ if (empty($lang) || !is_array($lang))
 // equally where a string contains only two placeholders which are used to wrap text
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
-$lang += array(
+$this->lang += array(
 	'ACTION'				=> 'Action',
 	'ADD_FEEDBACK'			=> 'Add feedback', 
 	'ADD_FEEDBACK_EXPLAIN'	=> 'If you would like to add a report on this please fill out the following form. Only use plain text, HTML, BBCode, etc. are not permitted.', 
@@ -178,6 +172,7 @@ $lang += array(
 	'READ_USERNOTES'		=> 'User notes',
 	'READ_WARNINGS'			=> 'User warnings',
 	'REPORTER'				=> 'Reporter',
+	'REPORTS'				=> 'Reports',
 	'REPORT_TIME'			=> 'Report time',
 	'REPORTS_TOTAL'			=> 'In total there are <b>%d</b> reports to review',
 	'REPORTS_ZERO_TOTAL'	=> 'There are no reports to review',

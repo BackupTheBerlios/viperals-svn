@@ -11,7 +11,8 @@
 //																//
 //**************************************************************//
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: ../../');
     die();
 }	
@@ -43,8 +44,6 @@ die;
 function news_main() {
     global $_CLASS, $prefix, $MAIN_CFG, $templates;
     
-    $_CLASS['display']->display_head();
-
     $start = get_variable('start', 'GET', false, 'integer');
 	
 	/*$_CLASS['template']->caching = true;
@@ -59,14 +58,15 @@ function news_main() {
 	if ($start) { $_CLASS['template']->caching = false; }
 	
 	$limit = ($_CLASS['user']->data['storynum']) ? $_CLASS['user']->data['storynum'] : $MAIN_CFG['global']['storyhome'];
-    $sql = 'SELECT s.*, c.title AS cat_title FROM '.$prefix.'_news AS s LEFT JOIN '.$prefix.'_news_cat AS c ON (c.id=s.cat_id) ORDER BY id DESC';
+    $sql = 'SELECT * FROM '.$prefix.'_news WHERE status=1 ORDER BY time DESC';
     $result = $_CLASS['db']->sql_query_limit($sql, $limit, $start);
     
     while ($row = $_CLASS['db']->sql_fetchrow($result))
     {
-       	if (THEMEPLATE) {
+       	if (THEMEPLATE)
+       	{
           
-			$id = $row['id']+1000;
+			$id = $row['id'] + 1000;
 			
             $_CLASS['template']->assign_vars_array('news', array(
                //'IMG_TOPIC'   => (file_exists("themes/$ThemeSel/images/topics/$topicinfo[topicimage]") ? "themes/$ThemeSel/images/topics/$topicinfo[topicimage]" : "$tipath$topicinfo[topicimage]"),
@@ -78,10 +78,10 @@ function news_main() {
                 'PRINT_LINK' 	=> getlink('News&amp;mode=print&amp;id='.$row['id']),
                 'TIME'			=> $_CLASS['user']->format_date($row['time']),
                 'TITLE'			=> $row['title'],
-                'ID'       => $id,
-                'IMAGE'     => 'themes/viperal/images/'.(hideblock($id) ? 'plus.gif' : 'minus.gif'),
-                'COLLAPSE'  => hideblock($id) ? 'style="display: none"' : '',
-                'TOPIC'  => getlink('News&amp;new_topic='.$row['topic'])
+                'ID'      		=> $id,
+                'IMAGE'    		=> 'themes/viperal/images/'.(hideblock($id) ? 'plus.gif' : 'minus.gif'),
+                'COLLAPSE'  	=> hideblock($id) ? 'style="display: none"' : '',
+                'TOPIC'  		=> getlink('News&amp;new_topic='.$row['topic'])
                 )
             );
        
@@ -94,10 +94,12 @@ function news_main() {
 	$_CLASS['db']->sql_freeresult($result);
 
 	$base_url = 'News';
-	$_CLASS['user']->img['pagination_sep'] = ', ';
+	$_CLASS['user']->img['pagination_sep'] = ' | ';
 	
-	$pagination = generate_pagination($base_url, $row['total'], $limit, $start, $add_prevnext_text = true, 'NEWS_');
+	$pagination = generate_pagination($base_url, $row['total'], $limit, $start, true, 'NEWS_');
 	$_CLASS['template']->assign('NEWS_PAGINATION', $pagination);
+
+    $_CLASS['display']->display_head();
 
     if (THEMEPLATE)
     {
@@ -108,7 +110,8 @@ function news_main() {
     $_CLASS['display']->display_footer();
 }
 
-function view_story($print = false) {
+function view_story($print = false)
+{
     global $_CLASS, $prefix, $MAIN_CFG;
     
     $id = get_variable('id', 'GET', false, 'integer');
@@ -121,7 +124,7 @@ function view_story($print = false) {
     $start	= get_variable('start', 'GET', false, 'integer');
 
 	$limit = ($_CLASS['user']->data['storynum']) ? $_CLASS['user']->data['storynum'] : $MAIN_CFG['global']['storyhome'];
-    $sql = 'SELECT s.*, c.title AS cat_title FROM '.$prefix.'_news AS s LEFT JOIN '.$prefix."_news_cat AS c ON (c.id=s.cat_id) WHERE s.id='$id'";
+    $sql = 'SELECT * FROM '.$prefix."_news WHERE status=1 AND id='$id'";
     $result = $_CLASS['db']->sql_query($sql);
     
     if (!$row = $_CLASS['db']->sql_fetchrow($result))
@@ -131,7 +134,7 @@ function view_story($print = false) {
     
    	if (!$print)
    	{
-		require('header.php');
+		$_CLASS['display']->display_head('Nghdfghgd');
 	}
 	
 	if (THEMEPLATE) {
@@ -148,8 +151,7 @@ function view_story($print = false) {
 			'NEWS_TIME'			=> $_CLASS['user']->format_date($row['time']),
 			'NEWS_TITLE'		=> $row['title'],
 			'NEWS_ID'       	=> $id,
-			'NEWS_IMAGE'     	=> 'themes/viperal/images/'.(hideblock($id) ? 'plus.gif' : 'minus.gif'),
-			'NEWS_COLLAPSE' 	=> hideblock($id) ? 'style="display: none"' : '',
+			'NEWS_COLLAPSE' 	=> hideblock($id) ? '' : '',
 			'NEWS_TOPIC' 		=> getlink('News&amp;new_topic='.$row['topic'])
 			)
 		);
@@ -165,11 +167,12 @@ function view_story($print = false) {
 		
 	} else {
 	
-		if (THEMEPLATE) {
+		if (THEMEPLATE)
+		{
 			$_CLASS['template']->display('modules/News/view.html');
 		}
     }
-    require('footer.php');
+    $_CLASS['display']->display_footer();
 }
 
 

@@ -13,7 +13,7 @@
 
 // -------------------------------------------------------------
 //
-// $Id: viewforum.php,v 1.252 2004/09/16 18:33:16 acydburn Exp $
+// $Id: viewforum.php,v 1.254 2004/10/13 19:30:02 acydburn Exp $
 //
 // FILENAME  : viewforum.php 
 // STARTED   : Sat Feb 13, 2001
@@ -22,13 +22,15 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: ../../');
     die();
 }
 
-requireOnce('includes/forums/functions.'.$phpEx);
-loadclass('includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.'.$phpEx);
+loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require($site_file_root.'includes/forums/functions_display.' . $phpEx);
 
 $_CLASS['auth']->acl($_CLASS['user']->data);
 
@@ -37,9 +39,9 @@ $forum_id	= request_var('f', 0);
 $mark_read	= request_var('mark', '');
 $start		= request_var('start', 0);
 
-$sort_days = (isset($_REQUEST['st'])) ? max(intval($_REQUEST['st']), 0) : ((!empty($_CLASS['user']->data['user_show_days'])) ? $_CLASS['user']->data['user_show_days'] : 0);
-$sort_key = (!empty($_REQUEST['sk'])) ? htmlspecialchars($_REQUEST['sk']) : ((!empty($_CLASS['user']->data['user_sortby_type'])) ? $_CLASS['user']->data['user_sortby_type'] : 't');
-$sort_dir = (!empty($_REQUEST['sd'])) ? htmlspecialchars($_REQUEST['sd']) : ((!empty($_CLASS['user']->data['user_sortby_dir'])) ? $_CLASS['user']->data['user_sortby_dir'] : 'd');
+$sort_days	= request_var('st', ((!empty($_CLASS['user']->data['user_show_days'])) ? $_CLASS['user']->data['user_show_days'] : 0));
+$sort_key	= request_var('sk', ((!empty($_CLASS['user']->data['user_sortby_type'])) ? $_CLASS['user']->data['user_sortby_type'] : 't'));
+$sort_dir	= request_var('sd', ((!empty($_CLASS['user']->data['user_sortby_dir'])) ? $_CLASS['user']->data['user_sortby_dir'] : 'd'));
 
 // Check if the user has actually sent a forum ID with his/her request
 // If not give them a nice error page.
@@ -89,7 +91,7 @@ else
 				if (!isset($tracking_topics[$forum_id]) && $_CLASS['user']->data['user_id'] != ANONYMOUS)
 				{
 					markread('mark', $forum_id);
-					///redirect("viewforum.$phpEx$SID&amp;f=$forum_id");
+					redirect(getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
 				}
 			}
 
@@ -168,12 +170,11 @@ $active_forum_ary = $moderators = array();
 
 if ($forum_data['left_id'] != $forum_data['right_id'] - 1)
 {
-	require('includes/forums/functions_display.' . $phpEx);
 	$active_forum_ary = display_forums($forum_data);
 }
 else
 {
-	$_CLASS['template']->assign('S_HAS_SUBFORUM', FALSE);
+	$_CLASS['template']->assign('S_HAS_SUBFORUM', false);
 }
 get_moderators($moderators, $forum_id);
 
@@ -188,7 +189,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			markread('mark', $forum_id);
 		}
 
-		meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		$_CLASS['display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
 
 		$message = $_CLASS['user']->lang['TOPICS_MARKED'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="' . getlink('Forums&amp;file=viewforum&amp;f='.$forum_id) . '">', '</a> ');
 		trigger_error($message);
@@ -203,7 +204,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Do the forum Prune thang - cron type job ...
 	if ($forum_data['prune_next'] < time() && $forum_data['enable_prune'])
 	{
-		require_once('includes/forums/functions_admin.'.$phpEx);
+		require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
 
 		if ($forum_data['prune_days'])
 		{
@@ -307,7 +308,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 		'S_WATCH_FORUM_TITLE'	=> $s_watching_forum['title'],
 		'S_FORUM_ACTION' 		=> getlink("Forums&amp;file=viewforum&amp;f=$forum_id&amp;start=$start"),
 		'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
-		'S_SEARCHBOX_ACTION'	=> getlink('Forums&amp;file=search&amp;f[]='.$forum_id), 
+		'S_SEARCHBOX_ACTION'	=> getlink('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
  		'U_MCP' 			=> ($_CLASS['auth']->acl_gets('m_', $forum_id)) ? getlink("Forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
 		'U_POST_NEW_TOPIC'	=> getlink('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id), 
@@ -423,151 +424,43 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			else
 			{
 				$topic_id36 = base_convert($topic_id, 10, 36);
-				$forum_id36 = ($row['topic_type'] == POST_GLOBAL) ? 0 : $row['forum_id'];
+				$forum_id36 = ($row['topic_type'] == POST_GLOBAL) ? 0 : $forum_id;
 				$mark_time_topic = (isset($tracking_topics[$forum_id36][$topic_id36])) ? base_convert($tracking_topics[$forum_id36][$topic_id36], 36, 10) + $config['board_startdate'] : 0;
 			}
+			
+			// This will allow the style designer to output a different header
+			// or even seperate the list of announcements from sticky and normal
+			// topics
+			$s_type_switch_test = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
 
 			// Replies
 			$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
 
-			// Topic type/folder
-			$topic_type = '';
 			if ($row['topic_status'] == ITEM_MOVED)
 			{
-				$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_MOVED'];
 				$topic_id = $row['topic_moved_id'];
-
-				$folder_img = 'folder_moved';
-				$folder_alt = 'Topic_Moved';
-				$newest_post_img = '';
 			}
-			else
-			{
-				switch ($row['topic_type'])
-				{
-					case POST_GLOBAL:
-					case POST_ANNOUNCE:
-						$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
-						$folder = 'folder_announce';
-						$folder_new = 'folder_announce_new';
-						break;
-
-					case POST_STICKY:
-						$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_STICKY'];
-						$folder = 'folder_sticky';
-						$folder_new = 'folder_sticky_new';
-						break;
-
-					default:
-						if ($replies >= $config['hot_threshold'])
-						{
-							$folder = 'folder_hot';
-							$folder_new = 'folder_hot_new';
-						}
-						else
-						{
-							$folder = 'folder';
-							$folder_new = 'folder_new';
-						}
-						break;
-				}
-
-				if ($row['topic_status'] == ITEM_LOCKED)
-				{
-					$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_LOCKED'];
-					$folder = 'folder_locked';
-					$folder_new = 'folder_locked_new';
-				}
-
-				if ($_CLASS['user']->data['user_id'] != ANONYMOUS)
-				{
-					$unread_topic = $new_votes = true;
-					
-					if ($mark_time_topic >= $row['topic_last_post_time'] || $mark_time_forum >= $row['topic_last_post_time'] || ($row['topic_last_post_time'] == $row['poll_last_vote'] && $replies))
-					{
-						$unread_topic = false;
-					}
-/*
-					if ($row['poll_start'] && ($mark_time_topic >= $row['poll_last_vote'] || $mark_time_forum >= $row['poll_last_vote']))
-					{
-						$new_votes = false;
-					}*/
-				}
-				else
-				{
-					$unread_topic = $new_votes = false;
-				}
  
-//				$folder_new .= ($new_votes) ? '_vote' : '';
-
-				$newest_post_img = ($unread_topic) ? '<a href="' . getlink("viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread") . "\">" . $_CLASS['user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
-				$folder_img = ($unread_topic) ? $folder_new : $folder;
-				$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
-
-				// Posted image?
-				if (!empty($row['mark_type']))
-				{
-					$folder_img .= '_posted';
-				}
-			}
-
-			if (!$row['poll_start'])
-			{
-				$topic_type .= $_CLASS['user']->lang['VIEW_TOPIC_POLL'];
-			}
-
-			// Goto message generation
-			// Note: Template this a little bit more to allow style authors seperating goto_page, next, prev and pagination block?
-			if (($replies + 1) > $config['posts_per_page'])
-			{
-				$total_pages = ceil(($replies + 1) / $config['posts_per_page']);
-				$pagination = '';
-
-				$times = 1;
-				for($j = 0; $j < $replies + 1; $j += $config['posts_per_page'])
-				{
-					$pagination .= '<a href="'. getlink('Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . "&amp;t=$topic_id&amp;start=$j")."\">$times</a>";
-					if ($times == 1 && $total_pages > 4)
-					{
-						$pagination .= ' ... ';
-						$times = $total_pages - 3;
-						$j += ($total_pages - 4) * $config['posts_per_page'];
-					}
-					else if ($times < $total_pages)
-					{
-						$pagination .= $_CLASS['user']->img['pagination_sep'];
-					}
-					$times++;
-				}
-			}
-			else
-			{
-				$pagination = '';
-			}
+			// Get folder img, topic status/type related informations
+			$folder_img = $folder_alt = $topic_type = '';
+			$unread_topic = topic_status($row, $replies, $mark_time_topic, $mark_time_forum, $folder_img, $folder_alt, $topic_type);
+			
+			$newest_post_img = ($unread_topic) ? '<a href="' . getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 			// Generate all the URIs ...
 			$view_topic_url = 'Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . "&amp;t=$topic_id";
-
-			$topic_author = ($row['topic_poster'] != ANONYMOUS) ? '<a href="' .getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['topic_poster']) . '">' : '';
-			$topic_author .= ($row['topic_poster'] != ANONYMOUS) ? $row['topic_first_poster_name'] : (($row['topic_first_poster_name'] != '') ? $row['topic_first_poster_name'] : $_CLASS['user']->lang['GUEST']);
-			$topic_author .= ($row['topic_poster'] != ANONYMOUS) ? '</a>' : '';
-
-			// This will allow the style designer to output a different header 
-			// or even seperate the list of announcements from sticky and normal
-			// topics
-			$s_type_switch_test = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
 
 			// Send vars to template
 			$_CLASS['template']->assign_vars_array('topicrow', array(
 				'FORUM_ID' 			=> $forum_id,
 				'TOPIC_ID' 			=> $topic_id,
-				'TOPIC_AUTHOR' 		=> $topic_author,
+				'TOPIC_AUTHOR' 		=> topic_topic_author($row),
 				'FIRST_POST_TIME' 	=> $_CLASS['user']->format_date($row['topic_time']),
 				'LAST_POST_TIME'	=> $_CLASS['user']->format_date($row['topic_last_post_time']),
 				'LAST_VIEW_TIME'	=> $_CLASS['user']->format_date($row['topic_last_view_time']),
 				'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['user']->lang['GUEST'],
-				'PAGINATION'		=> $pagination,
-				'REPLIES' 			=> ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'],
+				'PAGINATION'		=> topic_generate_pagination($replies, 'Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . "&amp;t=$topic_id"),
+				'REPLIES' 			=> $replies,
 				'VIEWS' 			=> $row['topic_views'],
 				'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
 				'TOPIC_TYPE' 		=> $topic_type,
@@ -578,22 +471,28 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				'TOPIC_ICON_IMG'	=> (!empty($icons[$row['icon_id']])) ? '<img src="' . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] . '" width="' . $icons[$row['icon_id']]['width'] . '" height="' . $icons[$row['icon_id']]['height'] . '" alt="" title="" />' : '',
 				'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['user']->img('icon_attach', sprintf($_CLASS['user']->lang['TOTAL_ATTACHMENTS'], $row['topic_attachment'])) : '',
 
-				'S_TOPIC_TYPE_SWITCH'	=> ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test, 
 				'S_TOPIC_TYPE'			=> $row['topic_type'], 
 				'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false, 
+				'S_UNREAD_TOPIC'		=> $unread_topic,
 
-				'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? TRUE : FALSE,
-				'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? TRUE : FALSE,
+				'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
+				'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
 
-				'U_LAST_POST'       => getlink($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),	
+				'U_LAST_POST'       => getlink($view_topic_url . $SID . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false, false, false),	
 				'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 				'U_VIEW_TOPIC'		=> getlink($view_topic_url),
-				'U_MCP_REPORT'		=> getlink("Forums&amp;file=mcp&amp;sid={$_CLASS['user']->session_id}&amp;mode=reports&amp;t=$topic_id"),
-				'U_MCP_QUEUE'		=> getlink("Forums&amp;file=mcp&amp;sid={$_CLASS['user']->session_id}&amp;i=queue&amp;mode=approve_details&amp;t=$topic_id"))
+				'U_MCP_REPORT'		=> getlink("Forums&amp;file=mcp&amp;mode=reports&amp;t=$topic_id"),
+				'U_MCP_QUEUE'       => getlink('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
+				'S_TOPIC_TYPE_SWITCH'   => ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test)
 			);
 
 			$s_type_switch = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
-
+		
+			if ($mark_time_topic < $row['topic_last_post_time'] && $mark_time_forum < $row['topic_last_post_time'])
+			{
+				$mark_forum_read = false;
+			}
+/*
 			if ($config['load_db_lastread'])
 			{
 				if ((isset($row['mark_time']) && $row['topic_last_post_time'] > $row['mark_time']) || (empty($row['mark_time']) && $row['topic_last_post_time'] > $forum_data['mark_time']))
@@ -625,6 +524,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			}
 
 			unset($rowset[$topic_id]);
+*/
 		}
 	}
 
@@ -632,7 +532,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// on all topics (as we do in 2.0.x). It looks for unread or new topics, if it doesn't find
 	// any it updates the forum last read cookie. This requires that the user visit the forum
 	// after reading a topic
-	if ($forum_data['forum_type'] == FORUM_POST && $_CLASS['user']->data['user_id'] != ANONYMOUS && count($topic_list) && $mark_forum_read)
+	if ($forum_data['forum_type'] == FORUM_POST && is_user() && count($topic_list) && $mark_forum_read)
 	{
 		markread('mark', $forum_id);
 	}
@@ -667,6 +567,7 @@ $_CLASS['template']->assign(array(
 	'L_JUMP_TO'				=> $_CLASS['user']->lang['JUMP_TO'],
 	'L_MCP'					=> $_CLASS['user']->lang['MCP'],
 	'L_MARK_TOPICS_READ'	=> $_CLASS['user']->lang['MARK_TOPICS_READ'],
+	'L_FORUM_RULES'			=> $_CLASS['user']->lang['FORUM_RULES'],
 	'L_SORT_BY'				=> $_CLASS['user']->lang['SORT_BY'])
 	
 );

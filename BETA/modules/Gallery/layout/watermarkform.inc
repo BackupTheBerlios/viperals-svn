@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: watermarkform.inc,v 1.14 2004/09/24 02:52:07 alindeman Exp $
+ * $Id: watermarkform.inc,v 1.15 2004/10/07 20:24:09 donwillingham Exp $
  */
 ?>
 <?php
@@ -45,6 +45,9 @@
   }
   if (!isset($previewFull)) {
     $previewFull=0;
+  }
+  if (!isset($wmSelect)) {
+    $wmSelect = $gallery->app->watermarkSizes;
   }
 ?>
 <p>
@@ -152,3 +155,9 @@ if ($wmDir = opendir($gallery->app->watermarkDir)) {
   if (isset($recursive)) echo " checked";
   print ">" . _("Watermark subalbums") . "</input><br><br>";
 } ?>
+<?php echo _("Apply watermark to") ?> <select name="wmSelect">
+  <option value="0"<?php if ($wmSelect <  1) echo " selected"; ?>><?php echo _("All photos");?></option>
+  <option value="1"<?php if ($wmSelect == 1) echo " selected"; ?>><?php echo _("Only sized photos");?></option>
+  <option value="2"<?php if ($wmSelect >  1) echo " selected"; ?>><?php echo _("Only full photos");?></option>
+</select>
+<br>

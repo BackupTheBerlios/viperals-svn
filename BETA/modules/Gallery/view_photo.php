@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: view_photo.php,v 1.211 2004/09/27 21:18:51 cryptographite Exp $
+ * $Id: view_photo.php,v 1.214 2004/10/07 21:00:45 cryptographite Exp $
  */
 ?>
 <?php
@@ -152,7 +152,8 @@ $navigator["url"] = ".";
 $navigator["bordercolor"] = $bordercolor;
 
 #-- breadcrumb text ---
-$upArrowURL = '<img src="' . getImagePath('nav_home.gif') . '" width="13" height="11" alt="' . _("navigate UP") .'" title="' . _("navigate UP") .'" border="0">';
+$upArrowURL = '<img src="' . getImagePath('nav_home.gif') . '" width="13" height="11" '.
+		'alt="' . _("navigate UP") .'" title="' . _("navigate UP") .'" border="0">';
 
 if ($gallery->album->fields['returnto'] != 'no') {
 	$breadcrumb["text"][]= _("Gallery") .": <a class=\"bread\" href=\"" . makeGalleryUrl("albums.php") . "\">" .
@@ -451,8 +452,7 @@ if (!$gallery->album->isMovie($id)) {
 			break;
 
 		case 'mpush':
-			window.open('http://mpush.msolutions.cc/req.php?account=hentai&image=<?php echo $rawImage ?>&caption=<?php
-echo urlencode($gallery->album->getCaption($index)) ?>','_MPUSH','width=640,height=420,titlebar=1,resizable=1,scrollbars=1');
+			window.open('http://mpush.msolutions.cc/req.php?account=<?php echo $gallery->app->mPUSHAccount ?>&image=<?php echo $rawImage ?>&caption=<?php echo urlencode($gallery->album->getCaption($index)) ?>','_MPUSH','width=640,height=420,titlebar=1,resizable=1,scrollbars=1');
 			break;
 		}
 	}
@@ -517,7 +517,8 @@ if (!$gallery->album->isMovie($id)) {
 		else if ($full) { 
 			$href= makeAlbumUrl($gallery->session->albumName, $id);
 	 	} else if ($gallery->user->canViewFullImages($gallery->album)) {
-			$href= makeAlbumUrl($gallery->session->albumName, $id, array("full" => 1));
+			list($width, $height) = $photo->getDimensions(true);
+			$href= $photoURL . "\" onclick=\"window.open('$photoURL', '$id', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=$width,height=$height,left=0,top=0');return false;\" target=\"_blank";
 		}
 	}
 } else {
@@ -564,7 +565,8 @@ includeHtmlWrap("inline_photo.frame");
 ** Block for Voting
 */
 
-if ( canVote()) {
+if ( canVote())
+{
 	echo "\n<!-- Voting pulldown -->\n";
 	echo makeFormIntro("view_photo.php", array("name" => "vote_form",
                                        "method" => "POST"));
@@ -599,7 +601,8 @@ if (isset($error_text)) {
 	echo gallery_error($error_text) ."<br><br>";
 }
 
-if ($gallery->user->canViewComments($gallery->album) && $gallery->app->comments_enabled == 'yes') {
+if ($gallery->user->canViewComments($gallery->album) && $gallery->app->comments_enabled == 'yes')
+{
 	echo viewComments($index, $gallery->user->canAddComments($gallery->album), $page_url);
 }
 
@@ -708,7 +711,3 @@ if (isset($printEZPrintsForm)) { ?>
 </form>
 <?php }
 	includeHtmlWrap("photo.footer");
-	if (!$GALLERY_EMBEDDED_INSIDE) { ?>
-</body>
-</html>
-<?php } ?>

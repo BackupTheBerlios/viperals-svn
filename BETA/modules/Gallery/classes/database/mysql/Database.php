@@ -19,23 +19,35 @@
  *
  * $Id: Database.php,v 1.9 2004/02/03 05:03:01 beckettmw Exp $
  */
+ 
+ 
+ //Viperal make this a simeple link to current $_CLASS['db'] = ''  (leave as is since gallery 2 . is somewhere soon )
+ 
 ?>
 <?php
-class MySQL_Database extends Abstract_Database {
+class MySQL_Database extends Abstract_Database
+{
 	var $link;
 
-	function MySQL_Database($host, $uname, $pass, $dbname) {
-		$this->link = mysql_connect($host, $uname, $pass);
-		mysql_select_db($dbname, $this->link);
+	function MySQL_Database()
+	{
+		//$this->link = mysql_connect($host, $uname, $pass);
+		//mysql_select_db($dbname, $this->link);
 	}
 
-	function query($sql) {
-		return mysql_query($sql, $this->link);
+	function query($sql)
+	{
+		global $_CLASS;
+		return $_CLASS['db']->sql_query($sql);
+		// mysql_query($sql, $this->link);
 	}
 
-	function fetch_row($results) {
-		$row = mysql_fetch_row($results);
-		return $row;
+	function fetch_row($results)
+	{
+		global $_CLASS;
+		//$row = mysql_fetch_row($results);
+		//return $row;
+		return $_CLASS['db']->sql_fetchrow($results);
 	}
 }
 ?>

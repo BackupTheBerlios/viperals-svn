@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: photo_owner.php,v 1.23 2004/09/21 05:15:44 cryptographite Exp $
+ * $Id: photo_owner.php,v 1.24 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -89,7 +89,9 @@ asort($uAll);
 
 <p>
 <?php 
-	echo makeFormIntro("photo_owner.php", array("name" => "photoowner_form"));
+	echo makeFormIntro("photo_owner.php", 
+		array("name" => "photoowner_form"),
+		array("type" => "popup"));
 	if ($gallery->user->isAdmin) {
 		echo _("Owner") .": ";
 		echo drawSelect("owner", $uAll, $owner, 1);
@@ -102,9 +104,7 @@ asort($uAll);
 	<input type="button" name="done" value="<?php echo _("Done") ?>" onclick='parent.close()'>
 </p>
 </form>
-</center>
-
-<?php print gallery_validation_link("photo_owner.php", true, array('id' => $id)); ?>
 </div>
+<?php print gallery_validation_link("photo_owner.php", true, array('id' => $id)); ?>
 </body>
 </html>

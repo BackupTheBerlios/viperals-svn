@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: edit_appearance.php,v 1.92 2004/09/21 05:15:43 cryptographite Exp $
+ * $Id: edit_appearance.php,v 1.93 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -94,8 +94,9 @@ doctype();
 <div class="popuphead"><?php echo _("Album Properties") ?></div>
 <div class="popup" align="center">
 <?php echo makeFormIntro("edit_appearance.php", 
-			array("name" => "theform", 
-				"method" => "POST")); ?>
+		array("name" => "theform", "method" => "POST"),
+		array("type" => "popup"));
+?>
 <input type="hidden" name="save" value="1">
 <table>
 <tr>
@@ -355,8 +356,8 @@ if ($gallery->app->use_exif) {
 document.theform.title.focus();
 //-->
 </script>
-
-<?php print gallery_validation_link("edit_appearance.php"); ?>
 </div>
+<?php print gallery_validation_link("edit_appearance.php"); ?>
+
 </body>
 </html>

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: find_orphans.php,v 1.18 2004/09/22 23:47:02 cryptographite Exp $
+ * $Id: find_orphans.php,v 1.19 2004/10/17 22:40:53 cryptographite Exp $
  */
 ?>
 <?php
@@ -113,7 +113,7 @@ function findOrphanedImages() {
 		// Get the album name, build the album path, open the directory
 		$albumName = $album->fields['name'];
 		$albumDir = $gallery->app->albumDir . "/" . $albumName;
-		$dirhandle = opendir($albumDir);
+		$dirhandle = fs_opendir($albumDir);
 
 		// Storage array
 		$albumFiles = array();

@@ -11,138 +11,135 @@
 //																//
 //**************************************************************//
 
-/*********************************************
-
-  Copyright (c) 2002 by Quiecom
-  http://www.Quiecom.com
-  Javascript from www.Boxhead.net
-
-  CPG-Nuke port by: DJ Maze
-
-  Under the GNU General Public License version 2
-
-*************************************************************/
-
-if (!'CPG_NUKE')
-{ 
-	header('Location: /');
-	exit;
+if (!defined('VIPERAL'))
+{
+    header('location: ../../');
+    die();
 }
 
-global $db, $user, $prefix, $Submit, $MAIN_CFG;
-
-//require_once('includes/nbbcode.php');
-
-Function add_shout()
+function add_shout()
 {
 	if (empty($_POST['submit']))
 	{
-		return;
+		return show_shouts();
 	}
 	
-	global $db, $_CLASS, $prefix, $Submit, $MAIN_CFG;
-	
-	$userid = (is_user()) ? $_CLASS['user']->data['user_id'] : '';
-	$username = (is_user()) ? $_CLASS['user']->data['username'] : get_username();
-	
-    if(!$shout = strip_tags(get_variable('shout', 'POST', '')))
-    {
-		shouterror('notext'); 
-    }
-    
-    $num = strlen($shout);
-
-    if($num < 2)
-    {
-		shouterror('toshort'); 
-    }
-    
-    if($num > $MAIN_CFG['Shoutblock']['maxlength'])
-    { 
-		shouterror('tolong');
-    }
-   
-    //no more XSS....more or less...needs work..//
-    if (eregi("javascript:(.*)", $shout)) 
-    {
-		shouterror('javascript');
-    }
-    
-	$shout = put_string(htmlentities($shout, ENT_QUOTES));
-	$username = put_string(htmlentities($username, ENT_QUOTES));
-   
-    // check if same message is posted last 10 minutes
-    $result = $db->sql_query('SELECT shout FROM '.$prefix."_shoutblock WHERE shout='".$shout."' AND time >= '".time()."' LIMIT 1");
-   
-    if ($db->sql_numrows($result) > 0) {
-		$db->sql_freeresult($result);
-        shouterror('sameposting');
-    }
-    
-    $db->sql_freeresult($result);
-
-
-    //do ipblock test then error if on list
-    /*if ($MAIN_CFG['Shoutblock']['ipblock']) {
-        $result = $db->sql_query("select name from ".$prefix."_shoutblock_ipblock WHERE name = '$_SERVER[REMOTE_ADDR]' LIMIT 0,1");
-        if ($db->sql_numrows($result) > 0) {
-            $error ="bannedip";
-         }
-         $db->sql_freeresult($result);
-     }
-
-    //do name test then error if on list
-    if($MAIN_CFG['Shoutblock']['nameblock']) {
-        $result = $db->sql_query("select name from ".$prefix."_shoutblock_nameblock WHERE name = '$username' LIMIT 0,1");
-        while ($badname = $db->sql_fetchrow($result)) {
-            if($username == $badname[0]) $error = "bannedusername";
-        }
-        $db->sql_freeresult($result);
-
-    }*/
-
-
-	$sql = 'INSERT INTO '.$prefix.'_shoutblock ' . $db->sql_build_array('INSERT', array(
-		'user_name'	=> $username,
-		'user_id'	=> $userid ,
-		'shout'	=> $shout,
-		'time'	=> time()));
+	global $_CLASS, $prefix, $MAIN_CFG;
 		
-	$db->sql_query($sql);
+	$_CLASS['user']->add_lang();
+	$MAIN_CFG['Shoutblock']['lastpost_check'] = 300;
+
+	$user_id = (is_user()) ? $_CLASS['user']->data['user_id'] : '';
+	$user_name = (is_user()) ? $_CLASS['user']->data['username'] : get_username();
 	
-	url_redirect($_POST['redirect']);
+    if(!$shout = get_variable('shout', 'POST', false))
+    {
+		trigger_error($_CLASS['user']->lang['NO_MESSAGE']); 
+    }
+    
+    $length = strlen($shout);
+    
+    if($length < 2)
+    {
+		trigger_error($_CLASS['user']->lang['SHORT_MESSAGE']); 
+    }
+    
+    if($length > $MAIN_CFG['Shoutblock']['maxlength']) // this shouldn't happen but still check
+    { 
+		trigger_error($_CLASS['user']->lang['LONG_MESSAGE']);
+    }
+   
+	$shout 		= htmlentities($shout, ENT_QUOTES, 'UTF-8');
+	$user_name 	= htmlentities($user_name, ENT_QUOTES, 'UTF-8');
+   
+    $result = $_CLASS['db']->sql_query('SELECT COUNT(*) as count FROM '.$prefix."_shoutblock WHERE shout='".$_CLASS['db']->sql_escape($shout)."' AND time >= '".(time() - $MAIN_CFG['Shoutblock']['lastpost_check'])."' LIMIT 1");
+	$count = $_CLASS['db']->sql_fetchrow($result);
+    $_CLASS['db']->sql_freeresult($result);
+
+    if ($count['count'] > 0) // add a count check here so it admin ajustable
+    {
+        trigger_error(sprintf($_CLASS['user']->lang['SAME_MESSAGE'], $MAIN_CFG['Shoutblock']['lastpost_check'] / 60));
+    }
+    
+    $_CLASS['db']->sql_freeresult($result);
+
+	$sql = 'INSERT INTO '.$prefix.'_shoutblock ' . $_CLASS['db']->sql_build_array('INSERT', array(
+		'user_name'	=> $user_name,
+		'user_id'	=> $user_id ,
+		'shout'		=> $shout,
+		'time'		=> time(),
+		'ip'		=> $_CLASS['user']->ip));
+		
+	$_CLASS['db']->sql_query($sql);
+	
+	url_redirect($_CLASS['user']->data['session_url']);
 	exit;
 }
 
     
-function nav_shouts(){
-    global $prefix, $_CLASS, $offset, $config, $bgcolor1, $bgcolor2, $MAIN_CFG;
-	//$_CLASS['user']->setup('viewtopic');
+function show_shouts($all = false)
+{
+    global $prefix, $_CLASS, $config, $MAIN_CFG;
 	
-	$per_page = 10;
-	$start = get_variable('start', 'GET', '', 'integer');
-	
-	$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_karma, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_regdate, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, s.*
-	FROM '.$prefix.'_shoutblock s 
-	LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id)
-	order by time DESC LIMIT '.(($start) ? $start.',':'')." $per_page";
-	$result = $_CLASS['db']->sql_query($sql);
+	$_CLASS['user']->add_lang();
+	$_CLASS['user']->add_img(false, 'Forums');
 
-	//$result = $_CLASS['db']->sql_query('select * from '.$prefix.'_shoutblock order by time DESC LIMIT '.(($start) ? $start.',':'')." $per_page");
+	$MAIN_CFG['Shoutblock']['simplemode'] = true;
 	
-	$bgcolor = '';
-	while ($row = $_CLASS['db']->sql_fetchrow($result)) {
+	$start = ($all) ? '' : get_variable('start', 'GET', '', 'integer');
+	
+	$limit = ($all) ? '' : $MAIN_CFG['Shoutblock']['number'];
+	
+	if ($MAIN_CFG['Shoutblock']['simplemode'])
+	{
+		$sql = 'SELECT s.*, u.user_karma FROM '.$prefix.'_shoutblock s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
+
+	} else {
+
+		$sql = 'SELECT u.user_colour, u.user_karma,u.user_regdate, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, s.*
+			FROM '.$prefix.'_shoutblock s 
+			LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id)
+			order by time DESC';
+	}
+	
+	$result = $_CLASS['db']->sql_query_limit($sql, $limit, $start);
+	
+	$error = (!$row = $_CLASS['db']->sql_fetchrow($result)) ? $_CLASS['user']->lang['NO_POSTS'] : false;
+
+	$_CLASS['template']->assign(array(
+		'L_POSTER'			=> $_CLASS['user']->lang['POSTER'],
+		'L_POSTED'			=> $_CLASS['user']->lang['POSTED'],
+		'L_MESSAGE'			=> $_CLASS['user']->lang['MESSAGE'],
+		'ERROR'				=> $error, 
+		)
+	);
+	
+	if ($error)
+	{
+		$_CLASS['display']->display_head();
+		 
+		if ($MAIN_CFG['Shoutblock']['simplemode'])
+		{
+			$_CLASS['template']->display('modules/Shoutbox/index.html');	
+		}
+		
+		$_CLASS['display']->display_footer();
+	}
+	
+	do {
 	
 		if ($row['user_name'])
 		{
-			$username = $row['user_name'];
-			$userlink = ($row['user_id'] && is_user()) ? getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : false;
+			$user_name = $row['user_name'];
+			$userlink = ($row['user_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : false;
+		
 		} else {
-			$username = $_CLASS['user']->lang['ANONYMOUS'];
+		
+			$user_name = $_CLASS['user']->lang['ANONYMOUS'];
 			$userlink = false;
 		}
-		
-		if ($row['user_avatar'] && $_CLASS['user']->optionget('viewavatars'))
+
+		if (!$MAIN_CFG['Shoutblock']['simplemode'] && $row['user_avatar'] && $_CLASS['user']->optionget('viewavatars'))
 		{
 			$avatar_img = '';
 			switch ($row['user_avatar_type'])
@@ -159,183 +156,94 @@ function nav_shouts(){
 		} else {
 			$avatar = false;
 		}
-	
-		$bgcolor = ($bgcolor == $bgcolor1) ? $bgcolor2 : $bgcolor1;
+
+		if ($row['user_id'])
+		{
+			$row['shout'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['shout']);
+		}
 		
 		$_CLASS['template']->assign_vars_array('shout', array(
-			'USER_NAME'		=> $username,
+			'USER_NAME'		=> $user_name,
 			'USER_LINK'		=> $userlink,
-			'SHOUT'			=> $row['shout'],
+			'SHOUT'			=> trim_text($row['shout'], '<br />'),
 			'TIME'			=> ($MAIN_CFG['Shoutblock']['time']) ? $_CLASS['user']->format_date($row['time']) : '',
-			'BGCOLOR'		=> $bgcolor,
 			'KARMA_IMG'		=> ($row['user_id'] && $config['enable_karma']) ? $_CLASS['user']->img('karma_center', $_CLASS['user']->lang['KARMA'][$row['user_karma']], false, (int) $row['user_karma']) : '',
 			'POSTER_AVATAR' => $avatar,
-
-			//'ONLINE_IMG'		=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($row['online']) ? $_CLASS['user']->img('btn_online', 'ONLINE') : $_CLASS['user']->img('btn_offline', 'OFFLINE')), 
-			'ONLINE_IMG'		=> ($row['user_id']) ? $_CLASS['user']->img('btn_online', 'ONLINE') : '', 
-	
-			'U_PROFILE' 		=> ($row['user_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,
-			//'U_PM' 				=> getlink('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$row['user_id']),
-			'U_WWW' 			=> $row['user_website'],
-			'U_MSN' 			=> ($row['user_msnm']) ? getlink('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$row['user_id']) : false,
-			'U_YIM' 			=> ($row['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . $row['user_yim'] . '&.src=pg' : false,
-			'U_JABBER'			=> ($row['user_jabber']) ? getlink('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$row['user_id']) : false,
+			//'ONLINE_IMG'	=> ($row['user_id']) ? $_CLASS['user']->img('btn_online', 'ONLINE') : '', 
+			'U_PROFILE' 	=> ($row['user_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,
 		));
+		
 	}
-	
-	$_CLASS['template']->assign(array(
-		//'EDIT_IMG' 		=> $_CLASS['user']->img('btn_edit', 'EDIT_POST'),
-		//'DELETE_IMG' 		=> $_CLASS['user']->img('btn_delete', 'DELETE_POST'),
-		'L_POSTED'			=> $_CLASS['user']->lang['POSTED'],
-		'L_MESSAGE'			=> $_CLASS['user']->lang['MESSAGE'],
-		'PROFILE_IMG'		=> $_CLASS['user']->img('btn_profile', 'READ_PROFILE'), 
-		'WWW_IMG' 			=> $_CLASS['user']->img('btn_www', 'VISIT_WEBSITE'),
-		'ICQ_IMG' 			=> $_CLASS['user']->img('btn_icq', 'ICQ'),
-		'MSN_IMG' 			=> $_CLASS['user']->img('btn_msnm', 'MSNM'),
-		'YIM_IMG' 			=> $_CLASS['user']->img('btn_yim', 'YIM'),
-		'JABBER_IMG'		=> $_CLASS['user']->img('btn_jabber', 'JABBER'),
-		)
-	);
-	$_CLASS['template']->display('modules/Shoutbox/index.html');	
+	while ($row = $_CLASS['db']->sql_fetchrow($result));
+
 
 	$result = $_CLASS['db']->sql_query('SELECT COUNT(*) AS total from '.$prefix.'_shoutblock');
-	$num_items = ($row = $_CLASS['db']->sql_fetchrow($result)) ? $row['total'] : 0;
+	$row = $_CLASS['db']->sql_fetchrow($result);
 	$_CLASS['db']->sql_freeresult($result);	
-	$base_url = 'Shoutblock';
-	$seperator = ' | ';
 
-	$total_pages = ceil($num_items/$per_page);
-
-	$on_page = floor($start / $per_page) + 1;
-
-	$page_string = ($on_page == 1) ? '<strong>1</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($on_page - 2) * $per_page)) . '">' . $_CLASS['user']->lang['PREVIOUS'] . '</a>&nbsp;&nbsp;<a href="' . getlink($base_url) . '">1</a>';
-
-	if ($total_pages > 5)
+	$_CLASS['user']->img['pagination_sep'] = ' | ';
+	
+	$pagination = generate_pagination('Shoutblock', $row['total'], $limit, $start, true, 'SHOUT_');
+	$_CLASS['template']->assign('SHOUT_PAGINATION', $pagination);
+	
+	
+	$_CLASS['display']->display_head();
+	 
+	if ($MAIN_CFG['Shoutblock']['simplemode'])
 	{
-		$start_cnt = min(max(1, $on_page - 4), $total_pages - 5);
-		$end_cnt = max(min($total_pages, $on_page + 4), 6);
-
-		$page_string .= ($start_cnt > 1) ? ' ... ' : $seperator;
-
-		for($i = $start_cnt + 1; $i < $end_cnt; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page)) . '">' . $i . '</a>';
-			if ($i < $end_cnt - 1)
-			{
-				$page_string .= $seperator;
-			}
-		}
-
-		$page_string .= ($end_cnt < $total_pages) ? ' ... ' : $seperator;
+		$_CLASS['template']->display('modules/Shoutbox/index.html');	
 	}
-	else
-	{
-		$page_string .= $seperator;
-
-		for($i = 2; $i < $total_pages; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . getlink($base_url . "&amp;start=" . (($i - 1) * $per_page)) . '">' . $i . '</a>';
-			if ($i < $total_pages)
-			{
-				$page_string .= $seperator;
-			}
-		}
-	}
-
-	$page_string .= ($on_page == $total_pages) ? '<strong>' . $total_pages . '</strong>' : '<a href="' . getlink($base_url . '&amp;start=' . (($total_pages - 1) * $per_page)) . '">' . $total_pages . '</a>&nbsp;&nbsp;<a href="' . getlink($base_url . "&amp;start=" . ($on_page * $per_page)) . '">' . $_CLASS['user']->lang['NEXT'] . '</a>';
-	echo '<div align="center">'.$page_string.'</div>';
-
+	
+	$_CLASS['display']->display_footer();
 }
 
 function get_username()
 {
 
-	global $MAIN_CFG;
+	global $MAIN_CFG, $_CLASS;
+	
+	$user_name = get_variable('user_name', 'POST', '');
 
-	if (($MAIN_CFG['Shoutblock']['allow_anonymous'] != '2') || (empty($_POST['name'])))
+	if (!$user_name)
 	{
-		return false;
+		if ($MAIN_CFG['Shoutblock']['allow_anonymous'] == '2')
+		{
+			return false;
+			
+		} else {
+		
+			trigger_error($_CLASS['user']->lang['NO_NAME']);
+		}
 	}
 	
-	$username = get_variable('name', 'POST', '');
-
-	$leight = strlen($username);
+	$length = strlen($user_name);
 	
-	if ($leight < 2)
+	if ($length < 2)
 	{
-		shouterror('uid to short');
+		trigger_error($_CLASS['user']->lang['SHORT_NAME']);
 	}
 	
-	if ($leight > 10)
+	if ($length > 10) // this should happen but still check
 	{
-		shouterror('uid to long');
+		trigger_error($_CLASS['user']->lang['LONG_NAME']);
 	}
 	
-	if (eregi("javascript:(.*)", $username))
-	{
-		shouterror('uid javascript');
-	}
-	
-	return $username;
+	return $user_name;
 
 }
 
-function all_shouts(){
-    global $prefix, $user, $db, $MAIN_CFG ;
-	$result = $_CLASS['db']->sql_query('select * from '.$prefix.'_shoutblock order by time DESC LIMIT '. $MAIN_CFG['Shoutblock']['number']);
-    $post = 0;
-    $loop = 0;
-    echo '<table width="90%" border="0" align="center">';
-    while ($row = $db->sql_fetchrow($result)){
-    
-       	$bgcolor = ($bgcolor == $bgcolor1) ? $bgcolor2 : $bgcolor1;
-
-
-        echo '<tr><td bgcolor="' . $bgcolor .'">';
-        $row['comment'] = set_smilies($row['comment']);
-        if ($username == "Anonymous") {
-            echo '<b>' .$row['name'] .':</b> ' . $row['comment'] .'<br />';
-        } else {
-            echo '<a href="'.getlink('Your_Account&amp;op=userinfo&amp;username='. $row['name']).'"><b>' . $row['name'] . ':</b></a> ' . $row['comment'] . '<br />';
-        }
-       // $row['time'] -= date('Z');
-        $row['time'] += (3600*intval($user->data['user_timezone']));
-        if($MAIN_CFG['Shoutblock']['date']) { echo strftime('%d-%b-%Y ', $row['time']); } // date
-        if($MAIN_CFG['Shoutblock']['time']) { echo strftime('%H:%M:%S', $row['time']); } // time
-        echo "</td></tr>";
-    }
-    echo '</table>';
-    $db->sql_freeresult($result);
-    if(!$offset){ $number = 50; }
-    else { $number = $loop + $offset; }
-}
-
-function  shouterror($error)
-{
-
-	OpenTable();
-	echo '<div align="center">Sorry '. $error .'<br/><br/>[ <a href="javascript:history.go(-1)">Go Back</a> ]</div>';
-	CloseTable();
-	require('footer.php');
-}
-
-require('header.php');
-	
-switch (get_variable('option', 'GET', 'view'))
+switch (get_variable('mode', 'GET', ''))
 {
 	case 'shout':
 		add_shout();
 		break;
+		
 	case 'all':
-		all_shouts();
-		break;
-	case 'view':
-		nav_shouts();
-		break;
+		show_shouts(true);
+	
 	default:
-		nav_shouts();
+		show_shouts();
+		break;
 }
-
-require('footer.php');
 
 ?>

@@ -108,7 +108,7 @@ function get_userdata($user)
 // Create forum rules for given forum 
 function generate_forum_rules(&$forum_data)
 {
-	global $phpEx, $_CLASS;
+	global $phpEx, $_CLASS, $site_file_root;
 	if (!$forum_data['forum_rules'] && !$forum_data['forum_rules_link'])
 	{
 		return;
@@ -116,7 +116,7 @@ function generate_forum_rules(&$forum_data)
 
 	if ($forum_data['forum_rules'])
 	{
-		requireOnce('includes/forums/bbcode.' . $phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.' . $phpEx);
 		$bbcode = new bbcode($forum_data['forum_rules_bbcode_bitfield']);
 		
 		$bbcode->bbcode_second_pass($forum_data['forum_rules'], $forum_data['forum_rules_bbcode_uid']);
@@ -898,7 +898,7 @@ function redirect($url)
 // Build Confirm box
 function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_body.html')
 {
-	global $_CLASS, $_POST, $SID, $_CLASS;
+	global $_CLASS, $SID;
 
 	if (isset($_POST['cancel']))
 	{
@@ -943,9 +943,8 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 	// If activation key already exist, we better do not re-use the key (something very strange is going on...)
 	if (request_var('confirm_key', ''))
 	{
-		$_CLASS['user']->url = preg_replace('#^(.*?)[&|\?]act_key=[A-Z0-9]{10}(.*?)#', '\1\2', str_replace('&amp;', '&', $_CLASS['user']->url));
-		// Need to adjust...
-		trigger_error('Hacking attempt');
+		// This should not occur, therefore we cancel the operation to safe the user
+		return false;
 	}
 
 	$_CLASS['template']->assign(array(
@@ -1459,7 +1458,6 @@ function page_header()
 		'S_DISPLAY_SEARCH'		=> (!empty($config['load_search'])) ? 1 : 0, 
 		'S_DISPLAY_PM'			=> (!empty($config['allow_privmsg'])) ? 1 : 0, 
 		'S_DISPLAY_MEMBERLIST'	=> (isset($_CLASS['auth'])) ? $_CLASS['auth']->acl_get('u_viewprofile') : 0, 
-		'S_GLOBALSEARCH_ACTION'	=> getlink('Forums&amp;file=search'),
 		'L_JUMP_PAGE'			=> $_CLASS['user']->lang['JUMP_PAGE'],
 		'L_NEXT'				=> $_CLASS['user']->lang['NEXT'],
 		'L_PREVIOUS'			=> $_CLASS['user']->lang['PREVIOUS'],

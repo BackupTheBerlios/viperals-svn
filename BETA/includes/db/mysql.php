@@ -50,8 +50,9 @@ class sql_db
 				return $this->db_connect_id;
 			}
 		}
-
-		return $this->sql_error('');
+		
+		trigger_error('<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: 001</center>', E_USER_ERROR);
+		die;
 	}
 
 	function sql_close()
@@ -256,7 +257,7 @@ class sql_db
 
 	function sql_fetchrow($query_id = 0)
 	{
-		global $_CLASS;
+		global $_CLASS, $Module;
 
 		if (!$query_id)
 		{
@@ -267,15 +268,19 @@ class sql_db
 		{
 			return $_CLASS['cache']->sql_fetchrow($query_id);
 		}
-        
-        /*phpnuke compatiblity, seriously i don't like it.
-        if($query_id) {
-            $this->row[$query_id] = @mysql_fetch_array($query_id);
-            return (isset($this->row[$query_id])) ? $this->row[$query_id] : false;
+		
+        if ($Module['compatiblity'])
+        {
+			//phpnuke compatiblity, seriously i don't like it.
+			if($query_id)
+			{
+				$this->row[$query_id] = @mysql_fetch_array($query_id);
+				return (isset($this->row[$query_id])) ? $this->row[$query_id] : false;
+			}
+			else {
+				return false;
+			}
         }
-        else {
-            return false;
-        }*/
 		
 		return ($query_id) ? @mysql_fetch_assoc($query_id) : false;
 	}
@@ -305,6 +310,7 @@ class sql_db
 		{
 			$query_id = $this->query_result;
 		}
+		
 		if ($query_id)
 		{
 			if ($rownum > -1)
@@ -381,10 +387,14 @@ class sql_db
 	{
 		if (!$this->return_on_error)
 		{
+			//Clean this up man
 			$this_page = (!empty($_SERVER['PHP_SELF'])) ? $_SERVER['PHP_SELF'] : $_ENV['PHP_SELF'];
 			$this_page .= '&' . ((!empty($_SERVER['QUERY_STRING'])) ? $_SERVER['QUERY_STRING'] : $_ENV['QUERY_STRING']);
+			
+			$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);// Dam Windows
+			$this->caller_info[0]['file'] = htmlentities(ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']), ENT_QUOTES);
 
-			$message = '<u>SQL ERROR</u> [ ' . SQL_LAYER . ' ]<br /><br />' . @mysql_error() . '<br /><br /><u>CALLING PAGE</u><br /><br />'  . htmlspecialchars($this_page) . (($sql != '') ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
+			$message = '<u>SQL ERROR</u> [ ' . SQL_LAYER . ' ]<br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$this->caller_info[0]['file'].'<br /><br />Line:<br /><br />'.$this->caller_info[0]['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'  . htmlspecialchars($this_page) . (($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
 
 			if ($this->transaction)
 			{
@@ -416,7 +426,7 @@ class sql_db
 		switch ($mode)
 		{
 			case 'start':
-				if ($MAIN_CFG['global']['error'] == 3)
+				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
 				{
 					$query_hold = $query;
 					
@@ -449,7 +459,7 @@ class sql_db
 
 			case 'fromcache':
 			
-				if ($MAIN_CFG['global']['error'] != 3)
+				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
 				{
 					return;
 				}
@@ -475,14 +485,19 @@ class sql_db
 
 			case 'stop':
 			
+				global $site_file_root;
+
 				$endtime = explode(' ', microtime());
 				$endtime = $endtime[0] + $endtime[1];
 				$this->sql_time += $endtime - $starttime;
 				
-				$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);// Dam Windows
-				$this->caller_info[0]['file'] = htmlentities(ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']), ENT_QUOTES);
+				// Dam Windows
+				$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);
+				// remove the root directorys
+				$this->caller_info[0]['file'] = ereg_replace($site_file_root, '', ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']));
+				$this->caller_info[0]['file'] = htmlentities($this->caller_info[0]['file'], ENT_QUOTES);
 	
-				if ($MAIN_CFG['global']['error'] == 3)
+				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
 				{
 					if ($this->query_result)
 					{

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: move_album.php,v 1.53 2004/09/21 05:15:44 cryptographite Exp $
+ * $Id: move_album.php,v 1.54 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
@@ -93,7 +93,9 @@ if ($gallery->session->albumName && isset($index)) {
 echo '<p>' .  $gallery->album->getHighlightTag() . '</p>';
 
 if (!empty($reorder)) { // Reorder, intra-album move
-	echo makeFormIntro("move_album.php", array("name" => "theform")); 
+	echo makeFormIntro("move_album.php", 
+		array("name" => "theform"),
+		array("type" => "popup")); 
 ?>
 <input type="hidden" name="index" value="<?php echo $index ?>">
 <select name="newIndex">
@@ -118,7 +120,10 @@ if (empty($reorder)) { // Reorder, trans-album move
 	echo _("Nest within another Album:") 
 ?>
 
-<?php echo makeFormIntro("move_album.php", array("name" => "move_to_album_form")); ?>
+<?php echo makeFormIntro("move_album.php", 
+	array("name" => "move_to_album_form"),
+	array("type" => "popup"));
+?>
 <input type="hidden" name="index" value="<?php echo $index ?>">
 <select name="newAlbum">
 <?php
@@ -144,9 +149,8 @@ printAlbumOptionList(0,1)
 document.theform.newIndex.focus();
 //-->
 </script>
-
+</div>
 
 <?php print gallery_validation_link("move_album.php", true, array('index' => $index)); ?>
-</div>
 </body>
 </html>

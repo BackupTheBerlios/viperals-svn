@@ -130,7 +130,10 @@ class Smarty
 
     function Smarty()
     {
-      $this->assign('SCRIPT_NAME', isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME']
+		global $site_file_root;
+		$this->compile_dir = $this->cache_dir =  $site_file_root . 'cache';
+		
+		$this->assign('SCRIPT_NAME', isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME']
                     : @$GLOBALS['HTTP_SERVER_VARS']['SCRIPT_NAME']);
     }
 
@@ -364,15 +367,15 @@ class Smarty
 
         if (!isset($compile_id)) {  $compile_id = $this->compile_id; }
 
-       	global $_CLASS;
+       	global $_CLASS, $site_file_root;
        	
-       	if (file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$tpl_file))
+       	if (!empty($_CLASS['display']) && file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$tpl_file))
 		{ 
 			$this->template_dir = 'themes/' . $_CLASS['display']->theme . '/template';
-			$this->cache_dir = $this->compile_dir = 'cache/'.$_CLASS['display']->theme;
+			$this->cache_dir = $this->compile_dir = $site_file_root.'cache/'.$_CLASS['display']->theme;
 		} else {
-        	$this->template_dir = 'includes/templates';
-        	$this->cache_dir = $this->compile_dir = 'cache';
+        	$this->template_dir = $site_file_root.'includes/templates';
+        	$this->cache_dir = $this->compile_dir = $site_file_root.'cache';
         }
         
         $_params = array(
@@ -428,14 +431,14 @@ class Smarty
     }
     function display($resource_name, $cache_id = null, $compile_id = null)
     {
-		global $_CLASS;
-       	if (file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$resource_name))
+		global $_CLASS, $site_file_root;
+       	if (!empty($_CLASS['display']) && file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$resource_name))
 		{ 
 			$this->template_dir = 'themes/' . $_CLASS['display']->theme . '/template';
-			$this->cache_dir = $this->compile_dir = 'cache/'.$_CLASS['display']->theme;
+			$this->cache_dir = $this->compile_dir = $site_file_root.'cache/'.$_CLASS['display']->theme;
 		} else {
-        	$this->template_dir = 'includes/templates';
-        	$this->cache_dir = $this->compile_dir = 'cache';
+        	$this->template_dir = $site_file_root.'includes/templates';
+        	$this->cache_dir = $this->compile_dir = $site_file_root.'cache';
         }
         $this->fetch($resource_name, $cache_id, $compile_id, true);
 

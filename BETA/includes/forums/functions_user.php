@@ -762,14 +762,14 @@ function validate_match($string, $optional = false, $match)
 // Used for registering, changing names, and posting anonymously with a username
 function validate_username($username)
 {
-	global $config, $db, $_CLASS;
+	global $MAIN_CFG, $db, $_CLASS;
 
 	if (strtolower($_CLASS['user']->data['username']) == strtolower($username))
 	{
 		return false;
 	}
 
-	if (!preg_match('#^' . str_replace('\\\\', '\\', $config['allow_name_chars']) . '$#i', $username))
+	if (!preg_match('#^' . str_replace('\\\\', '\\', $MAIN_CFG['user']['allow_name_chars']) . '$#i', $username))
 	{
 		return 'INVALID_CHARS';
 	}
@@ -833,7 +833,7 @@ function validate_username($username)
 // Check to see if email address is banned or already present in the DB
 function validate_email($email)
 {
-	global $config, $db, $_CLASS;
+	global $MAIN_CFG, $db, $_CLASS;
 
 	if (strtolower($_CLASS['user']->data['user_email']) == strtolower($email))
 	{
@@ -858,7 +858,7 @@ function validate_email($email)
 	}
 	$db->sql_freeresult($result);
 
-	if (!$config['allow_emailreuse'])
+	if (!$MAIN_CFG['user']['allow_emailreuse'])
 	{
 		$sql = 'SELECT user_email_hash
 			FROM ' . USERS_TABLE . "

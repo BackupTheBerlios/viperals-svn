@@ -13,13 +13,8 @@
 
 //To do Add kCEditor to the class and more :-)
 
-
-if (!defined('CPG_NUKE')) {
-    Header('Location: ../../');
-    die();
-}
-
-class editor {
+class editor
+{
 	var $editorids = '';
 	var $location = '<script type="text/javascript" src="includes/htmlarea/htmlarea.js"></script>';
 		

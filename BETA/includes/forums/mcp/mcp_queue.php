@@ -28,7 +28,7 @@ class mcp_queue extends module
 
 	function mcp_queue($id, $mode, $url)
 	{
-		global $db, $_CLASS;
+		global $db, $_CLASS, $site_file_root;
 		global $config, $phpEx;
 
 		$_CLASS['template']->assign(array(
@@ -58,8 +58,8 @@ class mcp_queue extends module
 		{
 			case 'approve':
 			case 'disapprove':
-				requireOnce('includes/forums/functions_messenger.'.$phpEx);
-				requireOnce('includes/forums/functions_posting.' . $phpEx);
+				require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+				require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
 
 				$post_id_list = get_array('post_id_list', 0);
 
@@ -82,7 +82,7 @@ class mcp_queue extends module
 			case 'approve_details':
 				
 				$_CLASS['user']->add_lang('posting');
-				requireOnce('includes/forums/functions_posting.' . $phpEx);
+				require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
 
 				$post_id = request_var('p', 0);
 				$topic_id = request_var('t', 0);
@@ -117,7 +117,7 @@ class mcp_queue extends module
 				$message = $post_info['post_text'];
 				if ($post_info['bbcode_bitfield'])
 				{
-					requireOnce('includes/forums/bbcode.'.$phpEx);
+					require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
 					$bbcode = new bbcode($post_info['bbcode_bitfield']);
 					$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 				}
@@ -549,7 +549,7 @@ function approve_post($post_id_list)
 	}
 	else
 	{
-		meta_refresh(3, $redirect);
+		$_CLASS['display']->meta_refresh(3, $redirect);
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
@@ -764,7 +764,7 @@ function disapprove_post($post_id_list)
 	}
 	else
 	{
-		meta_refresh(3, getlink("Forums&amp;file=viewforum&amp;f=$forum_id"));
+		$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewforum&amp;f=$forum_id"));
 		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }

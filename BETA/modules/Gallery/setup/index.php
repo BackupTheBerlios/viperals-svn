@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: index.php,v 1.68 2004/09/21 05:15:46 cryptographite Exp $
+ * $Id: index.php,v 1.70 2004/10/18 04:42:58 cryptographite Exp $
  */
 ?>
 <?php 
@@ -32,8 +32,8 @@
 	require (dirname(__FILE__) . '/config_data.inc');
 	require (GALLERY_BASE . '/js/sectionTabs.js.php');
 
-	list($preserve, $go_next, $go_back, $next_page, $back_page, $this_page, $go_defaults) =
-	  getRequestVar(array('preserve', 'go_next', 'go_back', 'next_page', 'back_page', 'this_page', 'go_defaults'));
+	list($preserve, $go_next, $go_back, $next_page, $back_page, $this_page, $go_defaults, $refresh) =
+	  getRequestVar(array('preserve', 'go_next', 'go_back', 'next_page', 'back_page', 'this_page', 'go_defaults', 'refresh'));
 
 ?>
 <?php doctype(); ?>
@@ -91,11 +91,12 @@
 configLogin(basename(__FILE__));
 
 
-if (isset ($go_defaults)) {
+if (isset($go_defaults) || isset($refresh)) {
 	$setup_page = $this_page;
-} else if (isset ($go_next)) {
+	echo "<!-- setup_page = $this_page -->";
+} else if (isset($go_next)) {
 	$setup_page = $next_page;
-} else if (isset ($go_back)) {
+} else if (isset($go_back)) {
 	$setup_page = $back_page;
 }	
 
@@ -125,6 +126,11 @@ if (isset($editPassword) && (!empty($editPassword[0]) || !empty($editPassword[1]
 	$editPassword[2] = $editPassword[0];
 	$editPassword[3] = $editPassword[1];
 	$_REQUEST['editPassword'] = $editPassword;
+}
+if (isset($smtpPassword) && (!empty($smtpPassword[0]) || !empty($smtpPassword[1]))) {
+        $smtpPassword[2] = $smtpPassword[0];
+        $smtpPassword[3] = $smtpPassword[1];
+        $_REQUEST['smtpPassword'] = $smtpPassword;
 }
 
 ?>

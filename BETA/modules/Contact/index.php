@@ -11,7 +11,8 @@
 //																//
 //**************************************************************//
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     header('location: ../../');
     die();
 }
@@ -34,7 +35,7 @@ function feedback($sender_name, $sender_email, $message='', $error = false)
 			'IP'					=> $_CLASS['user']->ip,
 			'ERROR' 				=> $error,
 			'MESSAGE' 				=> $message,
-			'ACTION' 				=> getlink($Module['title']),
+			'ACTION' 				=> getlink($Module['name']),
 			'SENDER_EMAIL' 			=> $sender_email,
 			'SENDER_NAME' 			=> $sender_name,
 			)
@@ -48,36 +49,38 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 	global $_CLASS, $MAIN_CFG;
 
         $mail_message = '<br />' .$message . '<br /><br />
-        <div align="center">Message Sent from '. $MAIN_CFG['global']['nukeurl'] .'<br>
+        <center>Message Sent from '. $MAIN_CFG['global']['siteurl'] .'<br>
         '. $_CLASS['user']->lang['SENT_BY'] . ': ' . $sender_name . '<br />
         '. $_CLASS['user']->lang['SENDER_EMAIL'] . ': '. $sender_email . '<br />
-        '.	$_CLASS['user']->lang['WITH_IP'] . $_CLASS['user']->ip . '<br /></div>';
+        '.	$_CLASS['user']->lang['WITH_IP'] . $_CLASS['user']->ip . '<br /></center>';
         
         if (!$preview)
         {
 			if (is_admin() && $send_to ) {
 				$to = $send_to;
 			} else {
-				$to = $MAIN_CFG['global']['adminmail'];        
+				$to = $MAIN_CFG['global']['admin_mail'];        
 			}
-
+		
 			$subject = $MAIN_CFG['global']['sitename'] . $_CLASS['user']->lang['FEEDBACK'];
           
-			OpenTable();
-			
 			if (send_mail($mailer_message, $mail_message, true, $subject, $to,  $to_name='', $sender_email, $sender_name))
 			{
 				
-				echo '<div align="center"><b>'.$_CLASS['user']->lang['FEEDBACK_SENT'].'</b></div>';
+				trigger_error($_CLASS['user']->lang['FEEDBACK_SENT']);
 				
 			} else {
+			
+				$mail_message = $_CLASS['user']->lang['FEEDBACK_PROBLEM'];
 				
-				echo '<div align="center"><b>'.$_CLASS['user']->lang['FEEDBACK_PROBLEM'].'</b></div>';
+				if (is_admin())
+				{
+					$mail_message .=  '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
+				}
+			
+				trigger_error($mail_message);
 			}
 			
-			echo '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
-			
-			CloseTable();
 
 		} else {
 		
@@ -103,9 +106,9 @@ If (!empty($_POST['preview']) || !empty($_POST['contact'])) {
 				$error .= $_CLASS['user']->lang['ERROR_'.$field].'<br />';
 				unset($field, $value, $lang);
 				
-        } elseif ($field == 'EMAIL' && !validate_email($value)) {
+        } elseif ($field == 'EMAIL' && !check_email($value)) {
         
-			$error .= 'Please enter a valid email address<br />';
+			$error .= $_CLASS['user']->lang['BAD_EMAIL'].'<br />';
 		}
 	} 
 	
@@ -126,18 +129,8 @@ If (!empty($_POST['preview']) || !empty($_POST['contact'])) {
 		
 } else {
 
-	if (is_admin()) {
-	
-		$sender_email = $MAIN_CFG['global']['adminmail'];
-		$sender_name = $MAIN_CFG['global']['sitename'];
-		$recip = '<label for="send_to"><b>'._SEND_TO.'</b></label><br /><input type="text" name="send_to" size="30" /><br />';
-	
-	} else {
-	
-		$sender_name = ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? $_CLASS['user']->data['username'] : '';
-		$sender_email = ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? $_CLASS['user']->data['user_email'] : '';
-		$recip = '';
-	}
+	$sender_name = ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? $_CLASS['user']->data['username'] : '';
+	$sender_email = ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? $_CLASS['user']->data['user_email'] : '';
 
 	feedback($sender_name, $sender_email);
   
