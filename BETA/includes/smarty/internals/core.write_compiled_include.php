@@ -13,7 +13,7 @@
  * @return boolean
  */
 
-function smarty_core_write_compiled_include($params, &$this)
+function smarty_core_write_compiled_include($params, &$smarty)
 {
     $_tag_start = 'if \(\$this->caching\) \{ echo \'\{nocache\:('.$params['cache_serial'].')#(\d+)\}\';\}';
     $_tag_end   = 'if \(\$this->caching\) \{ echo \'\{/nocache\:(\\2)#(\\3)\}\';\}';
@@ -29,7 +29,7 @@ function smarty_core_write_compiled_include($params, &$this)
 
     $_compile_path = $params['include_file_path'];
 
-    $this->_cache_serials[$_compile_path] = $params['cache_serial'];
+    $smarty->_cache_serials[$_compile_path] = $params['cache_serial'];
     $_include_compiled .= "\$this->_cache_serials['".$_compile_path."'] = '".$params['cache_serial']."';\n\n?>";
 
     $_include_compiled .= $params['plugins_code'];
@@ -70,7 +70,7 @@ $source
                      'contents' => $_include_compiled, 'create_dirs' => true);
 
     require_once(SMARTY_CORE_DIR . 'core.write_file.php');
-    smarty_core_write_file($_params, $this);
+    smarty_core_write_file($_params, $smarty);
     return true;
 }
 

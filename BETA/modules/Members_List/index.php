@@ -1,4 +1,16 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
+
 // -------------------------------------------------------------
 //
 // $Id: memberlist.php,v 1.91 2004/09/01 15:47:43 psotfx Exp $
@@ -231,6 +243,7 @@ switch ($mode)
 			$_CLASS['db']->sql_freeresult($result);
 			trigger_error($_CLASS['user']->lang['NO_USER']);
 		}
+		
 		$_CLASS['db']->sql_freeresult($result);
 
 		$sql = 'SELECT g.group_id, g.group_name, g.group_type
@@ -241,13 +254,14 @@ switch ($mode)
 		$result = $_CLASS['db']->sql_query($sql);
 
 		$group_options = '';
+		
 		while ($row = $_CLASS['db']->sql_fetchrow($result))
 		{
 			$group_options .= '<option value="' . $row['group_id'] . '"'.(($member['group_id'] == $row['group_id'])? ' selected="selected"' : '').'>' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
 		$_CLASS['db']->sql_freeresult($result);
 		
-		$page_title = sprintf($_CLASS['user']->lang['VIEWING_PROFILE'], $row['username']);
+		$page_title = sprintf($_CLASS['user']->lang['VIEWING_PROFILE'], $member['username']);
 		$template_html = 'memberlist_view.html';
 		
 		$sql = 'SELECT MAX(session_time) AS session_time
@@ -681,7 +695,9 @@ switch ($mode)
 		break;
 
 	case 'group':
-		$_CLASS['user']->add_lang('groups');
+	
+		$_CLASS['user']->add_lang('groups', 'Forums');
+		
 	default:
 		// The basic memberlist
 		$page_title = $_CLASS['user']->lang['MEMBERLIST'];
@@ -1044,10 +1060,9 @@ switch ($mode)
 // Output the page
 if (!$form) {
 
-	require('header.php');
+	$_CLASS['display']->display_head($page_title);
 	
 	page_header();
-	page_footer();
 	
 	OpenTable();
 	
@@ -1055,12 +1070,11 @@ if (!$form) {
 	$_CLASS['template']->display('modules/Members_List/'.$template_html);
 
 	CloseTable();
-	require('footer.php');
+	$_CLASS['display']->display_footer();
 
 } else {
 
 	page_header();
-	page_footer();
 	
 	$_CLASS['template']->assign('DISPLAY_STYLESHEET_LINK', true);
 	$_CLASS['template']->display('modules/Members_List/'.$template_html);

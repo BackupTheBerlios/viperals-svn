@@ -1,19 +1,20 @@
 <?php
-/*********************************************
-  CPG-NUKE: Advanced Content Management System
-  ********************************************
-  Under the GNU General Public License version 2
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
-  Last modification notes:
-
-    $Id: index.php,v 1.28 2004/05/22 22:03:38 djmaze Exp $
-
-*************************************************************/
-if (!CPG_NUKE) {
-    Header('Location: ../../');
+if (!defined('VIPERAL')) {
+    header('location: ../../');
     die();
-}
-		
+}	
 
 Switch (get_variable('mode', 'GET', false))
 {

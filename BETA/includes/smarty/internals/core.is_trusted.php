@@ -15,13 +15,13 @@
 
  // $resource_type, $resource_name
 
-function smarty_core_is_trusted($params, &$this)
+function smarty_core_is_trusted($params, &$smarty)
 {
     $_smarty_trusted = false;
     if ($params['resource_type'] == 'file') {
-        if (!empty($this->trusted_dir)) {
+        if (!empty($smarty->trusted_dir)) {
             $_rp = realpath($params['resource_name']);
-            foreach ((array)$this->trusted_dir as $curr_dir) {
+            foreach ((array)$smarty->trusted_dir as $curr_dir) {
                 if (!empty($curr_dir) && is_readable ($curr_dir)) {
                     $_cd = realpath($curr_dir);
                     if (strncmp($_rp, $_cd, strlen($_cd)) == 0
@@ -35,8 +35,8 @@ function smarty_core_is_trusted($params, &$this)
 
     } else {
         // resource is not on local file system
-        $_smarty_trusted = call_user_func_array($this->_plugins['resource'][$params['resource_type']][0][3],
-                                                array($params['resource_name'], $this));
+        $_smarty_trusted = call_user_func_array($smarty->_plugins['resource'][$params['resource_type']][0][3],
+                                                array($params['resource_name'], $smarty));
     }
 
     return $_smarty_trusted;
