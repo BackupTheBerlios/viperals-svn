@@ -1,4 +1,23 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
+
+// -------------------------------------------------------------
+//
+// COPYRIGHT : © 2001, 2004 phpBB Group
+// WWW       : http://www.phpbb.com/
+//
+// -------------------------------------------------------------
+
 // Will be keeping my eye of 'other products' to ensure these things don't
 // mysteriously appear elsewhere, think up your own solutions!
 class auth

@@ -1,4 +1,16 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
+
 // -------------------------------------------------------------
 //
 // $Id: message_parser.php,v 1.75 2004/09/05 15:45:44 acydburn Exp $

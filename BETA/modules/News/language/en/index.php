@@ -1,12 +1,17 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
-// DO NOT CHANGE
-if (empty($lang) || !is_array($lang))
-{
-	$lang = array();
-}
-
-$lang += array(
+$this->lang .= array(
 	'READ_MORE'				=> 'Readmore',
 );
 

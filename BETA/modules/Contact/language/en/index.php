@@ -1,6 +1,6 @@
 <?php
 
-$this->lang += array(
+$this->lang .= array(
 	'FEEDBACK_TITLE'	=>	'Feedback Form',
 	'FEEDBACK_NOTE'		=>	'All comments and suggestions about this web site are very welcome <br /> and are a valuable source of information for us. Thanks!',
 	'MESSAGE_PREVIEW'	=>	'Message Preview',
