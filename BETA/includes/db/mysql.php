@@ -1,18 +1,27 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
+
 // -------------------------------------------------------------
 //
-// $Id: mysql.php,v 1.21 2004/05/30 19:24:50 acydburn Exp $
-//
-// FILENAME  : mysql.php 
-// STARTED   : Sat Feb 13, 2001
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : © 2001, 2004 phpBB Group
 // WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
-// 
+//
 // -------------------------------------------------------------
 
-if (!defined('SQL_LAYER'))
-{
+if (!CPG_NUKE) {
+    Header('Location: ../../');
+    die();
+}
 
 define('SQL_LAYER', 'mysql');
 
@@ -24,6 +33,7 @@ class sql_db
 	var $transaction = false;
 	var $sql_time = 0;
 	var $num_queries = 0;
+	var $details = array();
 	var $open_queries = array();
 
 	function sql_connect($sqlserver, $sqluser, $sqlpassword, $database, $port = false, $persistency = false)
@@ -47,9 +57,6 @@ class sql_db
 		return $this->sql_error('');
 	}
 
-	//
-	// Other base methods
-	//
 	function sql_close()
 	{
 		if (!$this->db_connect_id)
@@ -109,12 +116,11 @@ class sql_db
 	{
 		if ($query != '')
 		{
-			global $cache;
+			global $_CLASS;
 
-			// DEBUG
 			$this->sql_report('start', $query);
 
-			$this->query_result = ($cache_ttl && method_exists($cache, 'sql_load')) ? $cache->sql_load($query) : false;
+			$this->query_result = ($cache_ttl && !empty($_CLASS['cache'])) ? $_CLASS['cache']->sql_load($query) : false;
 
 			if (!$this->query_result)
 			{
@@ -125,12 +131,11 @@ class sql_db
 					$this->sql_error($query);
 				}
 
-				// DEBUG
 				$this->sql_report('stop', $query);
 
-				if ($cache_ttl && method_exists($cache, 'sql_save'))
+				if ($cache_ttl && method_exists($_CLASS['cache'], 'sql_save'))
 				{
-					$cache->sql_save($query, $this->query_result, $cache_ttl);
+					$_CLASS['cache']->sql_save($query, $this->query_result, $cache_ttl);
 					// mysql_free_result happened within sql_save()
 				}
 				elseif (preg_match('/^SELECT/', $query))
@@ -140,7 +145,6 @@ class sql_db
 			}
 			else
 			{
-				// DEBUG
 				$this->sql_report('fromcache', $query);
 			}
 		}
@@ -251,24 +255,25 @@ class sql_db
 
 	function sql_fetchrow($query_id = 0)
 	{
-		global $cache;
+		global $_CLASS;
 
 		if (!$query_id)
 		{
 			$query_id = $this->query_result;
 		}
 
-		if (method_exists($cache, 'sql_fetchrow') && $cache->sql_exists($query_id))
+		if (!empty($_CLASS['cache']) && $_CLASS['cache']->sql_exists($query_id))
 		{
-			return $cache->sql_fetchrow($query_id);
+			return $_CLASS['cache']->sql_fetchrow($query_id);
 		}
-        if($query_id) {
+        
+        /*if($query_id) {
             $this->row[$query_id] = @mysql_fetch_array($query_id);
             return (isset($this->row[$query_id])) ? $this->row[$query_id] : false;
         }
         else {
             return false;
-        }
+        }*/
 		
 		return ($query_id) ? @mysql_fetch_assoc($query_id) : false;
 	}
@@ -395,13 +400,10 @@ class sql_db
 		return $result;
 	}
 
-	// DEBUG
 	function sql_report($mode, $query = '')
 	{
-		global $db, $cache, $starttime, $phpbb_root_path;
-		static $curtime, $query_hold, $html_hold;
-		static $sql_report = '';
-		static $cache_num_queries = 0;
+		global $db, $_CLASS, $phpbb_root_path;
+		static $starttime, $query_hold, $affected = false;
 
 		
 		if (!$query && !empty($query_hold))
@@ -411,145 +413,90 @@ class sql_db
 
 		switch ($mode)
 		{
-			case 'display':
-				if (empty($_GET['explain']))
-				{
-					return;
-				}
-				
-				$mtime = explode(' ', microtime());
-				$totaltime = $mtime[0] + $mtime[1] - $starttime;
-
-				echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8869-1"><meta http-equiv="Content-Style-Type" content="text/css"><link rel="stylesheet" href="' . $phpbb_root_path . 'adm/subSilver.css" type="text/css"><style type="text/css">' . "\n";
-				echo 'th { background-image: url(\'' . $phpbb_root_path . 'adm/images/cellpic3.gif\') }' . "\n";
-				echo 'td.cat	{ background-image: url(\'' . $phpbb_root_path . 'adm/images/cellpic1.gif\') }' . "\n";
-				echo '</style><title>' . $msg_title . '</title></head><body>';
-				echo '<table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td><a href="' . htmlspecialchars(preg_replace('/&explain=([^&]*)/', '', $_SERVER['REQUEST_URI'])) . '"><img src="' . $phpbb_root_path . 'adm/images/header_left.jpg" width="200" height="60" alt="phpBB Logo" title="phpBB Logo" border="0"/></a></td><td width="100%" background="' . $phpbb_root_path . 'adm/images/header_bg.jpg" height="60" align="right" nowrap="nowrap"><span class="maintitle">SQL Report</span> &nbsp; &nbsp; &nbsp;</td></tr></table><br clear="all"/><table width="95%" cellspacing="1" cellpadding="4" border="0" align="center"><tr><td height="40" align="center" valign="middle"><b>Page generated in ' . round($totaltime, 4) . " seconds with {$this->num_queries} queries" . (($cache_num_queries) ? " + $cache_num_queries " . (($cache_num_queries == 1) ? 'query' : 'queries') . ' returning data from cache' : '') . '</b></td></tr><tr><td align="center" nowrap="nowrap">Time spent on MySQL queries: <b>' . round($this->sql_time, 5) . 's</b> | Time spent on PHP: <b>' . round($totaltime - $this->sql_time, 5) . 's</b></td></tr></table><table width="95%" cellspacing="1" cellpadding="4" border="0" align="center"><tr><td>';
-				echo $sql_report;
-				echo '</td></tr></table><br /></body></html>';
-
-				break;
-
 			case 'start':
-				if (!empty($_GET['explain']))
+				if (empty($MAIN_CFG['global']['error']) || ($MAIN_CFG['global']['error'] == 3))
 				{
 					$query_hold = $query;
-					$html_hold = '';
-	
-					$explain_query = $query;
+					
 					if (preg_match('/UPDATE ([a-z0-9_]+).*?WHERE(.*)/s', $query, $m))
 					{
 						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $query, $m))
-					{
+					} elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $query, $m))	{
 						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
+					} else {
+						$explain_query = $query;
 					}
 	
 					if (preg_match('/^SELECT/', $explain_query))
 					{
-						$html_table = FALSE;
-	
 						if ($result = mysql_query("EXPLAIN $explain_query", $this->db_connect_id))
 						{
 							while ($row = mysql_fetch_assoc($result))
 							{
-								if (!$html_table && count($row))
-								{
-									$html_table = TRUE;
-									$html_hold .= '<table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center"><tr>';
-									
-									foreach (array_keys($row) as $val)
-									{
-										$html_hold .= '<th nowrap="nowrap">' . (($val) ? ucwords(str_replace('_', ' ', $val)) : '&nbsp;') . '</th>';
-									}
-									$html_hold .= '</tr>';
-								}
-								$html_hold .= '<tr>';
-	
-								$class = 'row1';
-								foreach (array_values($row) as $val)
-								{
-									$class = ($class == 'row1') ? 'row2' : 'row1';
-									$html_hold .= '<td class="' . $class . '">' . (($val) ? $val : '&nbsp;') . '</td>';
-								}
-								$html_hold .= '</tr>';
+								$this->details[$this->num_queries][] = $row;
 							}
-						}
-	
-						if ($html_table)
-						{
-							$html_hold .= '</table>';
 						}
 					}
 				}
-				$curtime = explode(' ', microtime());
-				$curtime = $curtime[0] + $curtime[1];
+
+				$starttime = explode(' ', microtime());
+				$starttime = $starttime[0] + $starttime[1];
 				break;
 
 			case 'fromcache':
-				if (empty($_GET['explain']))
+			
+				if (!empty($MAIN_CFG['global']['error']) || ($MAIN_CFG['global']['error'] != 3))
 				{
 					return;
 				}
 				
 				$endtime = explode(' ', microtime());
 				$endtime = $endtime[0] + $endtime[1];
-
+				
 				$result = mysql_query($query, $this->db_connect_id);
+				
 				while ($void = mysql_fetch_assoc($result))
 				{
 					// Take the time spent on parsing rows into account
 				}
+				
 				$splittime = explode(' ', microtime());
 				$splittime = $splittime[0] + $splittime[1];
 
-				$time_cache = $endtime - $curtime;
-				$time_db = $splittime - $endtime;
-				$color = ($time_db > $time_cache) ? 'green' : 'red';
-
-				$sql_report .= '<hr width="100%"/><br /><table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0"><tr><th>Query results obtained from the cache</th></tr><tr><td class="row1"><textarea style="font-family:\'Courier New\',monospace;width:100%" rows="5">' . preg_replace('/\t(AND|OR)(\W)/', "\$1\$2", htmlspecialchars(preg_replace('/[\s]*[\n\r\t]+[\n\r\s\t]*/', "\n", $query))) . '</textarea></td></tr></table><p align="center">';
-
-				$sql_report .= 'Before: ' . sprintf('%.5f', $curtime - $starttime) . 's | After: ' . sprintf('%.5f', $endtime - $starttime) . 's | Elapsed [cache]: <b style="color: ' . $color . '">' . sprintf('%.5f', ($time_cache)) . 's</b> | Elapsed [db]: <b>' . sprintf('%.5f', $time_db) . 's</b></p>';
-
-				// Pad the start time to not interfere with page timing
-				$starttime += $time_db;
+				$this->details[$this->num_queries] = array('query'	=> $query, 'cache' => ($endtime - $starttime), 'time' => ($splittime - $endtime));
 
 				mysql_free_result($result);
-				$cache_num_queries++;
+
 				break;
 
 			case 'stop':
+			
 				$endtime = explode(' ', microtime());
 				$endtime = $endtime[0] + $endtime[1];
+				$this->sql_time += $endtime - $starttime;
 				
-				if (!empty($_GET['explain']))
+				if (empty($MAIN_CFG['global']['error']) || ($MAIN_CFG['global']['error'] == 3))
 				{
-					$sql_report .= '<hr width="100%"/><br /><table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0"><tr><th>Query #' . $this->num_queries . '</th></tr><tr><td class="row1"><textarea style="font-family:\'Courier New\',monospace;width:100%" rows="5">' . preg_replace('/\t(AND|OR)(\W)/', "\$1\$2", htmlspecialchars(preg_replace('/[\s]*[\n\r\t]+[\n\r\s\t]*/', "\n", $query))) . '</textarea></td></tr></table> ' . $html_hold . '<p align="center">';
-	
 					if ($this->query_result)
 					{
 						if (preg_match('/^(UPDATE|DELETE|REPLACE)/', $query))
 						{
-							$sql_report .= "Affected rows: <b>" . $this->sql_affectedrows($this->query_result) . '</b> | ';
+							$affected = $this->sql_affectedrows($this->query_result);
 						}
-						$sql_report .= 'Before: ' . sprintf('%.5f', $curtime - $starttime) . 's | After: ' . sprintf('%.5f', $endtime - $starttime) . 's | Elapsed: <b>' . sprintf('%.5f', $endtime - $curtime) . 's</b>';
+						
+						$this->details[$this->num_queries] = array('query'	=> $query, 'affected' => $affected, 'time' => ($endtime - $starttime));
+						$affected = false;
 					}
 					else
 					{
 						$error = $this->sql_error();
-						$sql_report .= '<b style="color: red">FAILED</b> - MySQL Error ' . $error['code'] . ': ' . htmlspecialchars($error['message']);
+						$this->details[$this->num_queries] = array('error'=> $error['code'], 'errorcode' => $error['message']);
 					}
-	
-					$sql_report .= '</p>';
 				}
-				
-				$this->sql_time += $endtime - $curtime;
+	
 				break;
 		}
 	}
-} // class sql_db
-
-} // if ... define
+}
 
 ?>
