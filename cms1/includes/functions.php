@@ -14,7 +14,6 @@
 // :-S why did phpbb2.1.2 use session_admin, i had it first good damit. lol
 // fix this it should check to see if the admin class is loaded and check the users permission.
 // loaded with sessions.
-
 function is_admin()
 {
     global $_CLASS;
@@ -87,7 +86,7 @@ function script_close($save = true)
 			
 			}
 						
-			$_CLASS['user']->save_session();
+			$_CLASS['user']->save();
 		}
 		
 		$_CLASS['cache']->save();
@@ -139,14 +138,19 @@ function session_users()
 	return $loaded;
 }
 
-function loadclass($file, $name)
+function loadclass($file, $name, $class = false)
 {
 	global $_CLASS;
-
-	if (!isset($_CLASS[$name]))
+	
+	$class = ($class) ? $class : $name;
+	
+	if (empty($_CLASS[$name]) || !is_object($_CLASS[$name]))
 	{
-		require($file);
-		$_CLASS[$name] =& new $name;
+		if ($file)
+		{
+			require_once($file);
+		}
+		$_CLASS[$name] =& new $class;
 	}
 }
 
@@ -314,6 +318,25 @@ function theme_select($default = '')
 	return $theme;
 }
 
+function generate_link($link = false, $full = false, $opt=false)
+{
+	global $SID;
+	
+	if (!$link)
+	{
+		return $_SERVER['PHP_SELF'].(($SID) ? '?'.$SID : '');
+	}
+
+	$link = $_SERVER['PHP_SELF'].'?mod='.$link.$SID;
+		
+    if ($full)
+    {
+	
+    }
+    
+    return $link;
+}
+
 /***********************************************************************************
 
 	Under the GNU General Public License version 2
@@ -324,15 +347,15 @@ function getlink($str = false, $UseLEO = true, $full = false, $showSID = true)
  {
     global $Module, $mainindex, $MAIN_CFG, $_CLASS, $SID;
     
-    $tempSID = ($showSID) ? $SID : '';
+    /*$tempSID = ($showSID) ? $SID : '';
     
     if (!$str || $str{0} == '&')
     {
 		$str = $Module['title'].$str;
     }
     
-    if ($MAIN_CFG['global']['link_optimization'] && $str && $UseLEO) {
-        
+    if ($MAIN_CFG['global']['link_optimization'] && $str && $UseLEO)
+    {
         $tempSID = ereg_replace('&amp;', '/', $tempSID);
 
         if (ereg('file=', $str)) {
@@ -372,9 +395,12 @@ function getlink($str = false, $UseLEO = true, $full = false, $showSID = true)
     if ($full)
     {
 		$str = 'http://'.getenv('HTTP_HOST').$str;
+    }*/
+    if (!$str || $str{0} == '&')
+    {
+		$str = $Module['title'].$str;
     }
-    
-    return $str;
+    return generate_link($str, $full);
 }
 
 function adminlink($link)

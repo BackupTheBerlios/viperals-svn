@@ -87,16 +87,51 @@ class cache
 
 		if ((time() - $config['cache_gc']) > $config['cache_last_gc'])
 		{
-			$this->tidy();
+			$this->clean();
 			set_config('cache_last_gc', time(), TRUE);
 		}
 		
 	}
 
-	function load($var_name)
+	function save() 
 	{
+		if (!is_array($this->is_modified))
+		{
+			return;
+		}
+
 		global $phpEx;
 		
+		foreach ($this->is_modified as $file => $expire)
+		{
+		
+			$filedata = '<?php $this->vars[\''.$file.'\']=' . $this->format_array($this->vars[$file]) . ";\n\$this->var_expires['$file']=" . $expire . ' ?>';
+	
+			if ($fp = fopen($this->cache_dir . "data_$file.$phpEx", 'wb'))
+			{
+				flock($fp, LOCK_EX);
+				fwrite($fp, $filedata);
+				flock($fp, LOCK_UN);
+				fclose($fp);
+			}	
+		}
+		
+		unset($this->vars);
+		unset($this->var_expires);
+		unset($this->sql_rowset);
+		$this->is_modified = false;
+	}
+	
+	function get($var_name)
+	{
+		
+		if (!empty($this->vars[$var_name]))
+		{
+			return $this->vars[$var_name];
+		}
+		
+		global $phpEx;
+
 		if (file_exists($this->cache_dir . "data_$var_name.$phpEx"))
 		{
 			require($this->cache_dir . "data_$var_name.$phpEx");
@@ -114,87 +149,23 @@ class cache
 			
 			return $this->vars[$var_name];
 		}
-		else
-		{
-			return false;
-		}
-	}
-
-	function save() 
-	{
-		if (!is_array($this->is_modified))
-		{
-			return;
-		}
-
-		global $phpEx;
-		
-		foreach ($this->is_modified as $file => $expire)
-		{
-		
-			$filedata = '<?php $this->vars[\''.$file.'\']=' . $this->format_array($this->vars[$file]) . ";\n\$this->var_expires['$file']=" . $expire . ' ?>';
 	
-			if ($fp = @fopen($this->cache_dir . "data_$file.$phpEx", 'wb'))
-			{
-				@flock($fp, LOCK_EX);
-				fwrite($fp, $filedata);
-				@flock($fp, LOCK_UN);
-				fclose($fp);
-			}	
-		}
-		
-		unset($this->vars);
-		unset($this->var_expires);
-		unset($this->sql_rowset);
-		$this->is_modified = false;
-	}
-	
-	function get($var_name)
-	{
-		
-		if (empty($this->vars[$var_name]))
-		{
-			return $this->load($var_name);
-		}
-		
-		return $this->vars[$var_name];
+		return false;
 	}
 	
 	function exists($var_name)
 	{
 		global $phpEx;
-		if (file_exists($this->cache_dir . "data_$var_name.$phpEx"))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return (file_exists($this->cache_dir . "data_$var_name.$phpEx")) ? true : false;
 	}
 	
 	function put($var_name, $var, $ttl = 31536000)
 	{
-		if ($var_name{0} == '_')
-		{
-			global $phpEx;
-
-			if ($fp = @fopen($this->cache_dir . 'data' . $var_name . ".$phpEx", 'wb'))
-			{
-				@flock($fp, LOCK_EX);
-				fwrite($fp, "<?php\n\$expired = (time() > " . (time() + $ttl) . ") ? TRUE : FALSE;\nif (\$expired) { return; }\n\n\$data = unserialize('" . str_replace("'", "\\'", str_replace('\\', '\\\\', serialize($var))) . "');\n?>");
-				@flock($fp, LOCK_UN);
-				fclose($fp);
-			}
-		}
-		else
-		{
-			$this->vars[$var_name] = $var;
-			$this->is_modified[$var_name] = time() + $ttl;
-		}
+		$this->vars[$var_name] = $var;
+		$this->is_modified[$var_name] = time() + $ttl;
 	}
 	
-	function tidy()
+	function clean()
 	{
 		global $phpEx;
 
@@ -249,22 +220,18 @@ class cache
 
 				$fp = fopen($this->cache_dir . $entry, 'rb');
 				$file = fread($fp, filesize($this->cache_dir . $entry));
-				@fclose($fp);
+				fclose($fp);
 
 				if (preg_match('#/\*.*?\W' . $regex . '\W.*?\*/#s', $file, $m))
 				{
 					unlink($this->cache_dir . $entry);
 				}
 			}
-			@closedir($dir);
+			closedir($dir);
 		}
-		elseif ($var_name{0} == '_')
+		elseif (file_exists($this->cache_dir . "data_$var_name.$phpEx"))
 		{
-			@unlink($this->cache_dir . 'data' . $var_name . ".$phpEx");
-		}
-		elseif (isset($this->vars[$var_name]))
-		{
-			@unlink($this->cache_dir . 'data_' . $var_name . ".$phpEx");
+			unlink($this->cache_dir . 'data_' . $var_name . ".$phpEx");
 			unset($this->vars[$var_name]);
 			unset($this->var_expires[$var_name]);
 		}
@@ -309,7 +276,7 @@ class cache
 			return false;
 		}
 
-		@include($this->cache_dir . 'sql_' . md5($query) . ".$phpEx");
+		include($this->cache_dir . 'sql_' . md5($query) . ".$phpEx");
 
 		if (!isset($expired))
 		{
@@ -333,7 +300,7 @@ class cache
 
 		if ($fp = @fopen($this->cache_dir . 'sql_' . md5($query) . '.' . $phpEx, 'wb'))
 		{
-			@flock($fp, LOCK_EX);
+			flock($fp, LOCK_EX);
 
 			$lines = array();
 			$query_id = 'Cache id #' . count($this->sql_rowset);
@@ -348,7 +315,7 @@ class cache
 			$db->sql_freeresult($query_result);
 
 			fwrite($fp, "<?php\n\n/*\n$query\n*/\n\n\$expired = (time() > " . (time() + $ttl) . ") ? TRUE : FALSE;\nif (\$expired) { return; }\n\n\$this->sql_rowset[\$query_id] = array(" . implode(',', $lines) . ') ?>');
-			@flock($fp, LOCK_UN);
+			flock($fp, LOCK_UN);
 			fclose($fp);
 
 			$query_result = $query_id;

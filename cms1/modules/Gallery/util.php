@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: util.php,v 1.468 2004/10/07 20:24:06 donwillingham Exp $
+ * $Id: util.php,v 1.469 2004/10/07 20:24:06 donwillingham Exp $
  */
 ?>
 <?php
@@ -2060,7 +2060,10 @@ function processNewImage($file, $ext, $name, $caption, $setCaption="", $extra_fi
 		/* Get rid of extra underscores */
 		$mangledFilename = ereg_replace("_+", "_", $mangledFilename);
 		$mangledFilename = ereg_replace("(^_|_$)", "", $mangledFilename);
-	
+		if (empty($mangledFilename))
+		{
+			$mangledFilename = $gallery->album->newPhotoName();
+		}
 		/* 
 		need to prevent users from using original filenames that are purely numeric.
 		Purely numeric filenames mess up the rewriterules that we use for mod_rewrite

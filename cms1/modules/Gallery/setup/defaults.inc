@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: defaults.inc,v 1.30 2004/06/29 19:21:02 cryptographite Exp $
+ * $Id: defaults.inc,v 1.31 2004/10/22 08:15:54 cryptographite Exp $
  */
 ?>
 <input type="hidden" name="this_page" value="defaults">
@@ -100,8 +100,8 @@ foreach ($defaults as $key => $val) {
 	    $val["value"] = trim($val["value"], " ,");
 	}
 
-	if (!isset($go_defaults) && isset($$key)) {
-		$val["value"] = $$key;
+	if (!isset($go_defaults) && isset($gallery->session->configForm->$key)) {
+		$val["value"] = $gallery->session->configForm->$key;
 		
 		if (get_magic_quotes_gpc()) {
 			$val["value"] = array_stripslashes($val["value"]);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: AlbumItem.php,v 1.92 2004/10/07 20:24:09 donwillingham Exp $
+ * $Id: AlbumItem.php,v 1.93 2004/10/07 20:24:09 donwillingham Exp $
  */
 ?>
 <?php
@@ -136,7 +136,11 @@ class AlbumItem {
 
 	function getComment($commentIndex)
 	{
-		return $this->comments[$commentIndex-1];
+		if (!empty($this->comments)) {
+			return $this->comments[$commentIndex-1];
+		} else {
+			return null;
+		}
 	}
 
 	function integrityCheck($dir) {

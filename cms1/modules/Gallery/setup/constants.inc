@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: constants.inc,v 1.42 2004/09/21 05:15:46 cryptographite Exp $
+ * $Id: constants.inc,v 1.43 2004/10/22 08:15:54 cryptographite Exp $
  */
 ?>
 
@@ -86,7 +86,7 @@ foreach ($constants as $key => $val) {
 				isset($gallery->app->$key)) {
 			$val["value"] = $gallery->app->$key;
 		}
-		else if (is_array($val["value"])) {
+		elseif (is_array($val["value"])) {
 			$key=$key."[]";
 			$val["value"]=$val["value"][0];
 		}
@@ -112,8 +112,8 @@ foreach ($constants as $key => $val) {
 
 		if (!isset($go_defaults)) {
 			if (ereg("^(..*)\[.*\]$", $key, $matches)) {
-				if (isset ($$key)) {
-					$val['value'] = $$key;
+				if (isset ($gallery->session->configForm->$key)) {
+					$val['value'] = $gallery->session->configForm->$key;
 				}
 
 				unset($preserve[$key]);
@@ -121,8 +121,8 @@ foreach ($constants as $key => $val) {
 				unset($onThisPage[$key]);
 				$onThisPage[$matches[1]] = 1;
 			}
-			else if( isset($$key)) {
-				$val["value"] = $$key;
+			else if(isset($gallery->session->configForm->$key)) {
+				$val["value"] = $gallery->session->configForm->$key;
 	
 			}
 			if (get_magic_quotes_gpc()) {

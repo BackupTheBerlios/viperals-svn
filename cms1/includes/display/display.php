@@ -10,7 +10,9 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-
+//Add module authization check
+//Add check for modules, default module should be overriten by othere moduels.
+ 
 class display
 {
 
@@ -19,12 +21,14 @@ class display
 	var $message = '';
 	var $theme = false;
 	var $homepage = false;
+	var $modules = array();
 	
 	function display()
 	{
-		global $_CLASS, $MAIN_CFG, $SID;
+		global $_CLASS, $site_file_root, $MAIN_CFG, $SID;
 		
-		$this->siteurl = getenv('HTTP_HOST').$MAIN_CFG['server']['path'];
+		//make sure to add a test for https, bla bla bla
+		$this->siteurl = 'http://'.getenv('HTTP_HOST').$MAIN_CFG['server']['path'];
 		$this->copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
 		
 		$this->themeprev = get_variable('prevtheme', 'POST', false);
@@ -45,7 +49,8 @@ class display
 		}
 		else
 		{
-           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme'] : $MAIN_CFG['global']['default_theme'];     
+           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme']
+						: $MAIN_CFG['global']['default_theme'];     
 	
 			if ($this->check_theme($this->theme))
 			{
@@ -63,29 +68,44 @@ class display
     	
 		if (THEMEPLATE)
 		{
-			require('themes/'.$this->theme.'/index.php');
+			require($site_file_root.'themes/'.$this->theme.'/index.php');
 		} else {
-			require('themes/'.$this->theme.'/theme.php');
+			require($site_file_root.'themes/'.$this->theme.'/theme.php');
 		}
 	}
 	
 	function check_theme($theme)
 	{
-		if (is_dir('themes/'.$theme))
+		global $site_file_root;
+		
+		if (is_dir($site_file_root.'themes/'.$theme))
 		{
 			
-			if (file_exists('themes/'.$theme.'/index.php'))
+			if (file_exists($site_file_root.'themes/'.$theme.'/index.php'))
 			{
 				$this->temp = true;
 				return '1';
 			}
-			elseif (file_exists('themes/'.$theme.'/theme.php'))
+			elseif (file_exists($site_file_root.'themes/'.$theme.'/theme.php'))
 			{
 				$this->temp = false;
 				return '2';
 			}
 		}
 		return false;
+	}
+	
+	function add_module($module)
+	{
+		//Add authization check here
+		
+		//first module control the sides.
+		if (!empty($this->modules))
+		{
+			$module['sides'] = $this->modules[0]['sides'];
+		}
+		
+		$this->modules[] = $module;
 	}
 	
 	function display_head($title = false)
@@ -109,16 +129,13 @@ class display
 			$Module['title'] = $title;
 		}
 		
-		//ini_set('default_mimetype', 'text/html');
-		//ini_set('default_charset', $_CLASS['user']->lang['ENCODING']);
-		
 		header('Content-Type: text/html; charset='.$_CLASS['user']->lang['ENCODING']);
 		header('Content-language: ' . $_CLASS['user']->lang['LANG']);
 		
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
 		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
-		//header('Cache-Control: private, no-cache="set-cookie", pre-check=0, post-check=0, max-age=0');
-		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
+		header('Cache-Control: private, no-cache="set-cookie", pre-check=0, post-check=0, max-age=0');
+		//header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
 		header('Expires: 0');
 		header('Pragma: no-cache');
 		
@@ -126,7 +143,9 @@ class display
 		{
 			if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] < $_CLASS['user']->data['session_last_visit'])
 			{
-				$this->header['js'] .= '<script type="text/javascript">window.open(\''. ereg_replace('&amp;', '&', getlink('Control_Panel&i=pm&mode=popup', false, true))."', '_phpbbprivmsg', 'HEIGHT=225,resizable=yes,WIDTH=400');</script>";
+				$this->header['js'] .= '<script type="text/javascript">window.open(\''
+				. getlink('Control_Panel&i=pm&mode=popup', false, true)."', '_phpbbprivmsg','
+				.'HEIGHT=225,resizable=yes,WIDTH=400');</script>";
 
 				if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] > $_CLASS['user']->data['session_last_visit'])
 				{
@@ -145,7 +164,7 @@ class display
 			$this->header['regular'] .= '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
 		}
 		
-		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="http://'.$this->siteurl.'backend.php?feed=rdf" />';
+		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.$this->siteurl.'backend.php?feed=rdf" />';
 		
 		if ($MAIN_CFG['global']['block_frames'])
 		{
@@ -196,7 +215,7 @@ class display
 			Themeheader();
 		}
 		
-		if ($_CLASS['editor'])
+		if (!empty($_CLASS['editor']) && is_object($_CLASS['editor']))
 		{
 			$_CLASS['editor']->display();
 		}
@@ -205,10 +224,23 @@ class display
 	function display_footer($save = true)
 	{
 		global $_CLASS, $phpEx, $Module, $MAIN_CFG;
+		static $nextmodule = 1; // Maybe make this accessable $this->nextmodule
 		
 		if ($this->displayed['footer'])
 		{
 			return;
+		}
+		
+		if (!empty($this->modules))
+		{
+			//do extraction here
+			global $Module, $site_file_root;
+			
+			$Module = $this->modules[$nextmodule];
+			unset($this->modules[$nextmodule]);
+			$nextmodule ++;
+			
+			require($site_file_root.'modules/'.$Module['name'].'/index.php');
 		}
 		
 		$this->displayed['footer'] = true;
@@ -237,8 +269,8 @@ class display
 		die;	
 	}
 	
-	function footer_debug() {
-	
+	function footer_debug()
+	{
 		global $MAIN_CFG, $SID, $mainindex, $SID, $_CLASS, $starttime;
 	
 		$mtime = explode(' ', microtime());

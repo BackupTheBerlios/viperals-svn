@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: Album.php,v 1.223 2004/10/07 20:24:08 donwillingham Exp $
+ * $Id: Album.php,v 1.225 2004/10/07 20:24:08 donwillingham Exp $
  */
 ?>
 <?php
@@ -545,9 +545,7 @@ class Album {
 		$timeB = $objB->getUploadDate();
 		if ($timeA == $timeB) {
 			return 0;
-		}
-		
-		if ($timeA < $timeB) {
+		} elseif ($timeA < $timeB) {
 			return -1;
 		} else {
 			return 1;
@@ -563,9 +561,7 @@ class Album {
 	
 		if ($timeA == $timeB) {
 			return 0;
-		}
-		
-		if ($timeA < $timeB) {
+		} elseif ($timeA < $timeB) {
 			return -1; 
 		} else {
 			return 1;
@@ -598,9 +594,7 @@ class Album {
 		$bClick = $objB->getItemClicks();
 		if ($aClick == $bClick) {
 			return 0;
-		}
-		
-		if ($aClick < $bClick) {
+		 } elseif ($aClick < $bClick) {
 			return -1; 
 		} else {
 			return 1;
@@ -638,8 +632,9 @@ class Album {
 		$objB = (object)$b;
 		$numCommentsA = $objA->numComments();
 		$numCommentsB = $objB->numComments();
-		if ($numCommentsA == $numCommentsB) return 0;
-		if ($numCommentsA < $numCommentsB) {
+		if ($numCommentsA == $numCommentsB) {
+			return 0;
+		} elseif ($numCommentsA < $numCommentsB) {
 			return -1; 
 		} else {
 			return 1;
@@ -932,9 +927,12 @@ class Album {
 		$safe_to_scrub = 0;
 		$dir = $this->getAlbumDir();
 
-		/* Delete all pictures */
-		while ($this->numPhotos(1)) {
-			$this->deletePhoto(0);
+		/* Delete all pictures in reverse order to prevent automatic
+			re-highlighting of the album after every delete.
+			Using this method, re-highlighting will occur, at most, one time.
+		*/
+		for ($numPhotos = $this->numPhotos(1); $numPhotos > 0; $numPhotos--) {
+			$this->deletePhoto($numPhotos);
 		}
 
 		/* Delete data file */

@@ -13,23 +13,7 @@
 
 if (!defined('VIPERAL'))
 {
-    if (isset($_GET['error']) && is_numeric($_GET['error']))
-    {
-		error_reporting(0);
-		
-		require('language/error.php');
-		require('includes/smarty/Smarty.class.php');
-		
-		$_CLASS['template'] =& new Smarty();
-		
-		$_CLASS['template']->assign('MESSAGE_TEXT',  (empty($error[$_GET['error']]) ? $error['404'] : $error[$_GET['error']]));
-				
-		$_CLASS['template']->display('error.html');
-		
-	} else {
-	
-		header('location: /');
-    }
+	header('location: /');
     die;
 }
 
@@ -54,14 +38,19 @@ require($site_file_root.'includes/db/'.$sitedb['dbtype'].'.'.$phpEx);
 require($site_file_root.'includes/session.'.$phpEx);
 
 $_CLASS['error'] =& new core_error_handler;
-$_CLASS['error']->start(3);
+$_CLASS['error']->start();
 
-$name = get_variable('name', 'REQUEST', false);
+$mod = get_variable('mod', 'REQUEST', false);
 $file = get_variable('file', 'REQUEST', 'index');
 
 $_CLASS['template'] =& new Smarty();
 $_CLASS['db'] =& new sql_db();
 $_CLASS['db']->sql_connect($sitedb['dbhost'], $sitedb['dbuname'], $sitedb['dbpass'], $sitedb['dbname'], $sitedb['dbport'], false);
+
+if (VIPERAL == 'MINILOAD')
+{
+	return;
+}
 
 $_CLASS['user']	=& new user();
 $_CLASS['cache'] =& new cache();
@@ -70,42 +59,29 @@ $_CLASS['user']->startup();
 $_CLASS['user']->start();
 $db	=& $_CLASS['db'];
 
-if (is_admin() && $MAIN_CFG['global']['error'] && VIPERAL != 'MINILOAD')
+if (is_admin() && $MAIN_CFG['global']['error'])
 {
 	$_CLASS['error']->report = $MAIN_CFG['global']['error'];
 	
 } else {
 
-	$MAIN_CFG['global']['error'] = 0;
+	$MAIN_CFG['global']['error'] = ERROR_NONE;
 }
 
 if ($MAIN_CFG['global']['maintenance'] && !is_admin() && VIPERAL != 'Admin')
 {
-	// Lets not give the maintance text with minload ( for ex. feed.php )
-	if (VIPERAL != 'MINILOAD')
-	{
-		die;
-	}
-	
 	trigger_error($MAIN_CFG['global']['maintenance_text'], E_USER_ERROR);
 }
 
-if (VIPERAL == 'MINILOAD')
-{
-	return;
-}
 
 // && $name != 'Gallery' quick fix for the gallery, it needed for the javascripts...
-// add language codes, move to maybe sessions.  Add a kill post code and allow script to continue.
-// Or remove totally.
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['user']->new_session && $name != 'Gallery')
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['user']->new_session && $mod != 'Gallery')
 {
-	$user = (is_user()) ? $_CLASS['user']->data['user_id'] : '';
-	$error = '<div align="center"><b>There was suspectious POST on this site<br/>These are the information collected<br />'
-		.'<ul><br><li>IP address - '.$_CLASS['user']->ip.'.</li><br><li>User id - '.$user.'</li><br><li>Page - http://'.$_CLASS['display']->siteurl.$_SERVER['REQUEST_URI'].'</li><br><li>Referrer - '.$_SERVER['HTTP_REFERER'].'</li></ul>'
-		.'<br/><br/>The following data was sent - Please review<br/>'.$_CLASS['cache']->format_array($_POST).'</div>';
+	$error = '<div align="center"><b>Someone with IP '.$_CLASS['user']->ip.'<br />'
+			.'tried to send information thru POST <br />from another location or site with the following url: '.$_SERVER['HTTP_REFERER'].'<br />'
+			.'to the following page: http://'.getenv('HTTP_HOST').$_SERVER['REQUEST_URI'].'<br /><br /></div>';
 	
-	$subject = 'Suspectious POST sent to site '.$MAIN_CFG['global']['sitename'];
+	$subject = 'Off site POST at '.$MAIN_CFG['global']['sitename'];
 
 	if (!send_mail($mailer_message, $error, 1, $subject) && is_admin())
 	{
@@ -115,19 +91,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['user']->new_session && $nam
 	trigger_error('<div align="center"><b>Man i need to fix this up lol<br /> Posting from another server not allowed dud!</b></div>', E_USER_ERROR);
 }
 
-require($site_file_root.'includes/display/display.php');
-require($site_file_root.'includes/display/blocks.php');
-require($site_file_root.'includes/display/banners.php');
+require_once($site_file_root.'includes/display/banners.php');
+require_once($site_file_root.'includes/display/blocks.php');
+require_once($site_file_root.'includes/display/display.php');
 
-$_CLASS['editor'] = false;
-$_CLASS['blocks'] =& new blocks();
-$_CLASS['display'] =& new display();
+loadclass(false, 'display');
+loadclass(false, 'blocks');
 
 If ($MAIN_CFG['server']['optimize_rate'] && ($MAIN_CFG['server']['optimize_last'] + $MAIN_CFG['server']['optimize_rate']) < time())
 {
 	optimize_table();
 	//optimize_cache();
 }
+
 
 // This seriously has to go, what you can make yout own or something.
 // lol talking to myself again 0_0 ...

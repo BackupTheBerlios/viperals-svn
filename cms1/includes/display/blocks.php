@@ -13,7 +13,7 @@
 
 /* to do
 RSS system
-User blocks this will be a reqular block.
+Add final compatibly stuff
 */
 
 class blocks
@@ -44,8 +44,9 @@ class blocks
 		
 		global $Module;
 
-		if (($Module['sides'] == BLOCK_ALL) || ($side == BLOCK_LEFT && $Module['sides'] == BLOCK_LEFT) || ($side == BLOCK_RIGHT && $Module['sides'] == BLOCK_RIGHT))
-		{
+		if (($Module['sides'] == BLOCK_ALL) || ($side == BLOCK_LEFT && $Module['sides'] == BLOCK_LEFT)
+			|| ($side == BLOCK_RIGHT && $Module['sides'] == BLOCK_RIGHT))
+			{
 			if (!$this->blocks_loaded)
 			{
 				$this->load_blocks();
@@ -107,18 +108,21 @@ class blocks
 		
 		if (!empty($this->blocks_array[$position]))
 		{
-			foreach($this->blocks_array[$position] AS $this->blocksrow)
+			foreach($this->blocks_array[$position] AS $this->block)
 			{
-				if ($this->blocksrow['expires'] && !$expire_updated && ($_CLASS['user']->time >= $this->blocksrow['expires']))
+				if ($this->block['expires'] && !$expire_updated && 
+					($_CLASS['user']->time >= $this->block['expires']))
 				{
-					$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires <> 0 AND expires <='.$_CLASS['user']->time);
+					$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires <> 0 AND expires <='
+											.$_CLASS['user']->time);
+											
 					$_CLASS['cache']->destroy('blocks');
 					$expire_updated = true;
 
 					continue;
 				}
 				
-				if ($this->blocksrow['time'] && ($this->blocksrow['time'] > $_CLASS['user']->time))
+				if ($this->block['time'] && ($this->block['time'] > $_CLASS['user']->time))
 				{
 					continue;
 				}
@@ -133,7 +137,7 @@ class blocks
 
 	function display_blocks()
 	{
-		Switch ($this->blocksrow['type'])
+		Switch ($this->block['type'])
 		{
 	   
 			case BLOCKTYPE_FILE:
@@ -152,6 +156,11 @@ class blocks
 					
 			case BLOCKTYPE_HTML:
 				$this->block_html();
+				break;
+				
+			case BLOCKTYPE_FEED();
+				$this->block_feed();
+				break;
 		}
 		
 		return;
@@ -161,21 +170,22 @@ class blocks
 	{
 		global $_CLASS, $site_file_root;
 		
-		if (file_exists($site_file_root.'blocks/'.$this->blocksrow['file']))
+		if (file_exists($site_file_root.'blocks/'.$this->block['file']))
 		{
 			
+			/*
 			$startqueries = $_CLASS['db']->sql_num_queries();
 			$startqueriestime = $_CLASS['db']->sql_time;
 			$starttime = explode(' ', microtime());
 			$starttime = $starttime[0] + $starttime[1];
-			
+			*/
 		
-			include($site_file_root.'blocks/'.$this->blocksrow['file']);
+			include($site_file_root.'blocks/'.$this->block['file']);
 			
-			
+			/*
 			$endtime = explode(' ', microtime());
 			$endtime = $endtime[0] + $endtime[1];
-			
+			*/
 			
 			if (!$this->content && !$this->template)
 			{
@@ -198,20 +208,20 @@ class blocks
 			
 		}
 
-		
+		/*
 		$this->content .= '<div style="text-align: center;">';
 		if ($_CLASS['db']->sql_num_queries() - $startqueries)
 		{
-			$this->content .= '<br />block queries: '.($_CLASS['db']->sql_num_queries() - $startqueries).' in '.round($_CLASS['db']->sql_time - $startqueriestime, 4).' s';
+			$this->content .= '<br />block queries: '.($_CLASS['db']->sql_num_queries() - $startqueries)
+							.' in '.round($_CLASS['db']->sql_time - $startqueriestime, 4).' s';
 		}
 		$this->content .= '<br />Generation time: '.round($endtime - $starttime, 4).'s';
 		$this->content .= '</div>';
-		
+		*/
 
-		if ($this->blocksrow['position'] == BLOCK_LEFT || $this->blocksrow['position'] == BLOCK_RIGHT)
+		if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
 		{
-			$this->blocksrow['content'] = $this->content;
-			side_block($this->blocksrow);
+			$this->block_side();
 		} else {
 			$this->block_center();
 		}
@@ -223,15 +233,17 @@ class blocks
 	{
 		global $_CLASS;
 		
-		if (($this->blocksrow['type'] == BLOCKTYPE_MESSAGE_TOP) && (!$_CLASS['display']->homepage))
+		if (($this->block['type'] == BLOCKTYPE_MESSAGE_TOP) && (!$_CLASS['display']->homepage))
 		{
 			return;
 		}
 		
 		if (is_admin())
 		{
-			$expires = ($this->blocksrow['expires']) ? $_CLASS['user']->lang['EXPIRES'].' '.$_CLASS['user']->format_date($this->blocksrow['expires']) : false;
-			$edit = '<a href="'.adminlink('message&amp;mode=edit&amp;id='.$this->blocksrow['id']).'">'.$_CLASS['user']->lang['EDIT'].'</a>';
+			$expires = ($this->block['expires']) ? $_CLASS['user']->lang['EXPIRES'].' '
+					.$_CLASS['user']->format_date($this->block['expires']) : false;
+			$edit = '<a href="'.adminlink('message&amp;mode=edit&amp;id='.$this->block['id']).'">'
+					.$_CLASS['user']->lang['EDIT'].'</a>';
 		} else {
 			$edit = $expires = false;
 		}
@@ -239,12 +251,12 @@ class blocks
 		if (THEMEPLATE)
 		{
 			$_CLASS['template']->assign_vars_array('messageblock', array(
-				'TITLE'		=> $this->blocksrow['title'],
-				'CONTENT'	=> $this->blocksrow['content'],
+				'TITLE'		=> $this->block['title'],
+				'CONTENT'	=> $this->block['content'],
 				'EXPIRES'	=> $expires,
 				'EDIT'		=> $edit,
-				'HIDE'		=> hideblock($this->blocksrow['id']) ? 'style="display: none"' : '',
-				'ID'		=> $this->blocksrow['id'],
+				'HIDE'		=> hideblock($this->block['id']) ? 'style="display: none"' : '',
+				'ID'		=> $this->block['id'],
 				)
 			);
 		
@@ -255,7 +267,8 @@ class blocks
             $expires = ($expires) ? $expires.' | ' : '';
             
 			OpenTable();
-			echo '<div style="text-align: center; color: '.$textcolor2.'"><b>'.$this->blocksrow['title'].'</b></div><br />'.$this->blocksrow['content'];
+			echo '<div style="text-align: center; color: '.$textcolor2.'"><b>'
+					.$this->block['title'].'</b></div><br />'.$this->block['content'];
 			
 			if (is_admin())
 			{
@@ -268,16 +281,44 @@ class blocks
 		}
 	}
 	
+	function block_side()
+	{
+		global $_CLASS;
+		
+		$this->block['position'] = ($this->block['position'] == BLOCK_RIGHT) ? 'right' : 'left';
+		
+		$_CLASS['template']->assign_vars_array($this->block['position'].'block', array(
+			'TITLE'		=> $this->block['title'],
+			'CONTENT'	=> $this->content,
+			'ID'		=> $this->block['id'],
+			'COLLAPSE'	=> hideblock($this->block['id']) ? 'style="display: none"' : '',
+			'TEMPLATE'	=> $this->template,
+			)
+		);
+	}
+	
+	function block_html()
+	{
+		$this->content = $this->block['content'];
+		
+		if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
+		{
+			$this->block_side();
+		} else {
+			$this->block_center();
+		}
+	}
+	
 	function block_center()
 	{
 		if (THEMEPLATE)
 		{
 			global $_CLASS;
 			
-			$this->blocksrow['position'] = ($this->blocksrow['position'] == BLOCK_TOP) ? 'center' : 'bottom';
+			$this->block['position'] = ($this->block['position'] == BLOCK_TOP) ? 'center' : 'bottom';
 			
-			$_CLASS['template']->assign_vars_array($this->blocksrow['position'].'block', array(
-				'TITLE'   => $this->blocksrow['title'],
+			$_CLASS['template']->assign_vars_array($this->block['position'].'block', array(
+				'TITLE'   => $this->block['title'],
 				'CONTENT' => $this->content,
 				'TEMPLATE' => $this->template
 				)
@@ -286,13 +327,12 @@ class blocks
 		} else {
 		
 			OpenTable();
-			echo '<div align="center"><b>'.$this->blocksrow['title'].'</b></div><br />'.$this->content;
+			echo '<div align="center"><b>'.$this->block['title'].'</b></div><br />'.$this->content;
 			CloseTable();
 			echo '<br />';
 		
 		}
 	}
-	
 }
 
 ?>

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: delete_album.php,v 1.46 2004/10/03 12:41:03 jenst Exp $
+ * $Id: delete_album.php,v 1.47 2004/10/03 12:41:03 jenst Exp $
  */
 ?>
 <?php
 
 require_once(dirname(__FILE__) . '/init.php');
 
-list($action, $guid) = getRequestVar(array('action', 'guid'));
+list($formaction, $guid) = getRequestVar(array('formaction', 'guid'));
 
 // Hack check
 if (!$gallery->user->canDeleteAlbum($gallery->album)) {
@@ -35,7 +35,7 @@ if (!$gallery->user->canDeleteAlbum($gallery->album)) {
 doctype();
 echo "\n<html>";
 
-if (!empty($action) && $action == 'delete') {
+if (!empty($formaction) && $formaction == 'delete') {
 	if ($guid == $gallery->album->fields['guid']) {
 		$gallery->album->delete();
 	}
@@ -61,8 +61,8 @@ if ($gallery->album) {
  	array("type" => "popup"));
 ?>
 <input type="hidden" name="guid" value="<?php echo $gallery->album->fields['guid']; ?>">
-<input type="hidden" name="action" value="">
-<input type="submit" name="deleteButton" value="<?php echo _("Delete") ?>" onclick="deletealbum_form.action.value='delete'">
+<input type="hidden" name="formaction" value="">
+<input type="submit" name="deleteButton" value="<?php echo _("Delete") ?>" onclick="deletealbum_form.formaction.value='delete'">
 <input type="button" name="cancel" value="<?php echo _("Cancel") ?>" onclick='parent.close()'>
 </form>
 <p>

@@ -19,8 +19,6 @@ require($site_file_root.'core.php');
 
 header('Content-Type: text/xml');
 
-global $_CLASS;
-
 $result = $_CLASS['db']->sql_query('SELECT id, title, time, intro, poster_name FROM '.$prefix.'_news ORDER BY id DESC LIMIT 10');
 
 $_CLASS['template']->assign(array(
@@ -31,10 +29,10 @@ $_CLASS['template']->assign(array(
 		'TIME'		=> gmdate('M d Y H:i:s', time()) .' GMT'
 	));
 		
-while ($row = $db->sql_fetchrow($result)) {
+while ($row = $_CLASS['db']->sql_fetchrow($result))
+{
 
-		$_CLASS['template']->assign_vars_array('items', array(
-		
+	$_CLASS['template']->assign_vars_array('items', array(
 		'TITLE' 		=> htmlentities($row['title'], ENT_QUOTES),
 		'LINK' 			=> getlink('News&amp;mode=view&amp;id='.$row['id'], true, true, false),
 		'DESCRIPTION' 	=> htmlentities(strip_tags($row['intro']), ENT_QUOTES),
@@ -42,6 +40,7 @@ while ($row = $db->sql_fetchrow($result)) {
 		'AUTHOR'		=> $row['poster_name']
 	));
 }
+
 $_CLASS['db']->sql_freeresult($result);
 
 $feed = get_variable('feed', 'GET', false);

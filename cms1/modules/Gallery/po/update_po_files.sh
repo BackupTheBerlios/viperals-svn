@@ -1,5 +1,5 @@
 #!/bin/bash
-# $Id: update_po_files.sh,v 1.14 2004/09/22 00:43:45 jenst Exp $
+# $Id: update_po_files.sh,v 1.15 2004/10/19 22:07:35 jenst Exp $
 
 esc=`echo -en "\033"`
 tab="${esc}[5G"
@@ -55,7 +55,7 @@ for all_po in $pofiles ; do
 	echo "$tab Module = $module"
 
 	echo "$tab Updating ..."
-	msgmerge -U $all_po gallery-$module.pot --no-wrap || exit
+	msgmerge -v -U $all_po gallery-$module.pot --no-wrap || exit
 done
 
 find ../locale/ -iname "*~" -exec rm {} \;

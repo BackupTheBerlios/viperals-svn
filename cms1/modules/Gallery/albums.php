@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: albums.php,v 1.171 2004/10/02 20:58:37 jenst Exp $
+ * $Id: albums.php,v 1.172 2004/10/02 20:58:37 jenst Exp $
  */
 ?>
 <?php
@@ -103,7 +103,8 @@ if (!$gallery->session->offline &&
 		echo '<td valign="middle" align="right">';
 		echo makeFormIntro('search.php', array(
 							'name'		=> 'search_form',
-							'method'	=> 'post'));
+							'method'	=> 'post',
+							'style'		=> 'margin-bottom: 0px;'));
 		echo '<span class="search">'. _("Search") .': </span>';
 		echo '<input style="font-size:10px;" type="text" name="searchstring" value="" size="25">';
 		echo '</form></td>';

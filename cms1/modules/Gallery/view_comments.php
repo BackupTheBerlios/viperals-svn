@@ -20,7 +20,7 @@
  * This page Created by Joseph D. Scheve ( chevy@tnatech.com ) for the
  * very pimp application that is Gallery.
  *
- * $Id: view_comments.php,v 1.40 2004/10/02 22:10:03 jenst Exp $
+ * $Id: view_comments.php,v 1.41 2004/10/22 09:24:25 jenst Exp $
  */
 ?>
 <?php
@@ -104,23 +104,28 @@ if ($gallery->album->fields["textcolor"]) {
 <body dir="<?php echo $gallery->direction ?>">
 <?php } 
 
-// User wants to delete comments
+/* User wants to delete comments */
 list($index, $comment_index) = getRequestVar(array('index', 'comment_index'));
 if (!empty($comment_index)) {
-	// First we reverse the index array, as we want to delete backwards
+	$saveMsg = "";
+	/* First we reverse the index array, as we want to delete backwards */
 	foreach(array_reverse($comment_index, true) as $com_index => $trash) {
-		if (isDebugging()) {
-			echo "\n<br>". sprintf(_("Deleting comment %d of picture with index: %d"), $com_index, $index);
-		}
-		$gallery->album->deleteComment($index, $com_index);
 		$comment=$gallery->album->getComment($index, $com_index);
-		$gallery->album->save(array(i18n("Comment \"%s\" by %s deleted from %s"),
+		/* maybe user reloaded page, this prevents an errormessage */
+		if (!isset($comment)) {
+			continue;
+		}
+		if (isDebugging()) {
+			echo "\n<br>". sprintf(_("Deleting comment %d from item with index: %d"), $com_index, $index);
+		}
+		$saveMsg = array(i18n("Comment \"%s\" by %s deleted from %s"),
 			$comment->getCommentText(),
 			$comment->getName(),
-			makeAlbumURL($gallery->album->fields["name"],
-			$gallery->album->getPhotoId($index))));
+			makeAlbumURL($gallery->album->fields["name"], $gallery->album->getPhotoId($index))
+			);
+		$gallery->album->deleteComment($index, $com_index);
+		$gallery->album->save($saveMsg);
 	}
-	$gallery->album->save();
 }
 
 includeHtmlWrap("album.header");

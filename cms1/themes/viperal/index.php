@@ -10,40 +10,69 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-// make this into a subclass of display, it has to be part of that class
-// maybe side_block should be part of blocks and removed and added to blocks class.
-// Remove all viables.
-// Opentable / CloseTable is fine just add it to the display, and assing it there to a temeplate.
+
+if (!defined('VIPERAL'))
+{
+    // must be done, extends class will case a error if theme_blocks is not defined
+    Header('Location: /');
+    die();
+}
 
 global $bgcolor1, $bgcolor2;
 // should i keep this or not :-S
 $bgcolor1 = '#FFFFFF';
 $bgcolor2 = '#C7D0D7';
 
+// Just a test or an example
+// Remove once documented
+class theme_blocks extends blocks
+{
+	function block_side()
+	{
+		global $_CLASS;
+		
+		$this->block['position'] = ($this->block['position'] == BLOCK_RIGHT) ? 'right' : 'left';
+		
+		$_CLASS['template']->assign_vars_array($this->block['position'].'block', array(
+			'TITLE'		=> $this->block['title'],
+			'CONTENT'	=> $this->content,
+			'ID'		=> $this->block['id'],
+			'COLLAPSE'	=> hideblock($this->block['id']) ? 'style="display: none"' : '',
+			'TEMPLATE'	=> $this->template,
+			)
+		);
+	}
+}
+
+loadclass(false, 'blocks', 'theme_blocks');
+
 function OpenTable()
 {
     echo '<div class="OpenTable"><div class="outer"><div class="inner">';
 }
 
-function OpenTable2() {
+function OpenTable2()
+{
     echo '<div class="outer"><div class="inner">';
 }
 
-function CloseTable() {
+function CloseTable()
+{
     echo '</div></div></div>';
 }
 
-function CloseTable2() {
+function CloseTable2()
+{
     echo '</div></div>';
 }
 
 
 function Themeheader()
 {
-	global $sitename, $mainindex, $MAIN_CFG, $Module, $SID, $_CLASS;
+	global $MAIN_CFG, $Module, $_CLASS;
 
 	$_CLASS['template']->assign(array(
-		'THEME_MAININDEX'	=> $mainindex.'?'.$SID,
+		'THEME_MAININDEX'	=> generate_link(),
 		'THEME_SITENAME'	=> $MAIN_CFG['global']['sitename'],
 		'MARGINRIGHT'		=> ($_CLASS['blocks']->check_side(BLOCK_RIGHT)) ? '180px' : '0px',
 		'MARGINLEFT' 		=> ($_CLASS['blocks']->check_side(BLOCK_LEFT)) ? '180px' : '0px'
@@ -52,7 +81,7 @@ function Themeheader()
 	
 	if ($_CLASS['display']->homepage)
 	{
-		$_CLASS['template']->assign('PAGE_TITLE', ((VIPERAL == 'Admin') ? $Module['title'] : $_CLASS['user']->lang['HOME']));
+		$_CLASS['template']->assign('PAGE_TITLE', $_CLASS['user']->lang['HOME']);
 	} else {
 		$_CLASS['template']->assign('PAGE_TITLE', $_CLASS['user']->lang['HOME'].' &gt; '.$Module['title']);
 	}
@@ -64,29 +93,13 @@ function Themeheader()
 
 function themefooter()
 {
-	global $_CLASS, $MAIN_CFG;
+	global $_CLASS;
 	
 	$_CLASS['blocks']->display(BLOCK_RIGHT);
 	
 	$_CLASS['template']->assign('THEME_FOOTER', $_CLASS['display']->footmsg());
 	
 	$_CLASS['template']->display('footer.html');
-}
-
-function side_block($data)
-{
-	global $_CLASS;
-	
-	$data['position'] = ($data['position'] == BLOCK_RIGHT) ? 'right' : 'left';
-	
-	$_CLASS['template']->assign_vars_array($data['position'].'block', array(
-		'TITLE'		=> $data['title'],
-		'CONTENT'	=> $data['content'],
-		'ID'		=> $data['id'],
-		'COLLAPSE'	=> hideblock($data['id']) ? 'style="display: none"' : '',
-		'TEMPLATE'	=> $data['template'],
-		)
-	);
 }
 
 ?>

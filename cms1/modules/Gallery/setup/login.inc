@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * $Id: login.inc,v 1.14 2004/09/07 23:53:41 cryptographite Exp $
+ * $Id: login.inc,v 1.16 2004/10/22 08:47:49 cryptographite Exp $
  */
 ?>
 <?php
@@ -81,6 +81,7 @@ elseif (!isset($tmpUser) || !$tmpUser->isAdmin()) {  // Not logged in
 <div align="center">
 <div class="header"><?php echo sprintf (_("%s configuration"), gallery()) ?></div>
 <div class="desc"><?php echo _("You must log in as an administrator to edit this server's configuration.") ?></div>
+<div class="desc"><?php echo sprintf(_("If you have forgotten the password to your admin account, you can reset it by creating a blank file named '%s' in your %s directory and then refreshing and following the instructions on this page."), 'resetadmin', GALLERY_SETUPDIR) ?></div>
 <p>
 <?php if(isset($error)) {
 	echo gallery_error($error) ."</p>\n<p>";

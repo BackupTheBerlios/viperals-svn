@@ -10,36 +10,37 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-// Add defines for the error report back type ..
-// Add another type to save reports to a file ..
+// Add saving reports to a log file and its define ..
+// Fix up error level defines
 
 class core_error_handler
 {
 	var $title;
 	var $active;
 	var $previous_level;
+	var $previous_logger;
 	var $error_array = array();
 	var $error;
 	var $report;
+	var $logging;
 	
-	function start($report = 0)
+	function start($report = ERROR_NONE, $logfile = false)
 	{
 		if ($this->active)
 		{
 			return;
 		}
 		
-		if (!defined('E_STRICT'))
-		{
-			// will not work with php4 but have to stop the the undefined :-
-			define('E_STRICT', 2048);
-		}
-
 		$this->active = true;
 		$this->report = $report;
-		$this->previous_level = ini_get('error_reporting');
+		$this->previous_level = ini_set('error_reporting', 0);
+		$this->logging = ($logfile && is_writable($logfile)) ? true : false;
 		
-		error_reporting(0);
+		if ($this->logging)
+		{
+			$this->previous_logger = ini_set('error_log', $logfile);
+		}
+		
 		set_error_handler(array(&$this, 'handler'));
 	}
 	
@@ -51,6 +52,12 @@ class core_error_handler
 		}
 		
 		$this->active = false;
+		
+		// logging could of been changed by user
+		if ($this->logging || $this->previous_logger)
+		{
+			ini_set('error_log', $this->previous_logger);
+		}
 		
 		error_reporting(($level) ? $level : $this->previous_level);
 		restore_error_handler();
@@ -70,7 +77,6 @@ class core_error_handler
 		{
 			case E_NOTICE:
 			case E_WARNING:
-			case E_STRICT: // !! wonder what there recommendations are like
 			
 				if (!$this->report)
 				{
@@ -85,25 +91,32 @@ class core_error_handler
 				{
 					if (empty($_CLASS['user']))
 					{
-						if ($this->report == 4)
+						if ($this->report == ERROR_ONPAGE)
 						{
-						
-							echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
+							echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'
+								.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
 						
 						} else {
 						
-							echo 'There is a error on this page that isn\'t detectable with the error reoprter<br/>Please set error level to 4 in core.php to see the error';
+							echo 'There is a error on this page that isn\'t detectable with the error'
+								.' reoprter<br/>Please set error level to 4 in core.php to see the error';
 						}
 						
-						script_close();
 					}
+					
+					if ($this->logging)
+					{
+						//error_log();
+					}
+					
+					script_close();
+					die;
 				}
 				
 			break;
 	
 			case E_USER_ERROR:
 			
-
 				if (!empty($_CLASS['display']) && $_CLASS['display']->displayed['header'])
 				{
 					OpenTable();
@@ -127,7 +140,7 @@ class core_error_handler
 			case E_USER_NOTICE:
 
 				global $msg_title, $show_prev_info;
-				// remove msg_title
+				// remove msg_title fix those in Forums
 				
 				$msg_title = (!isset($msg_title)) ? $_CLASS['user']->lang['INFORMATION'] : ((!empty($_CLASS['user']->lang[$msg_title])) ? $_CLASS['user']->lang[$msg_title] : $msg_title);
 				$this->title = ($this->title) ? $this->title : $msg_title;
@@ -162,7 +175,7 @@ class core_error_handler
 
    function format_error($type)
    {
-		if ($this->report == 1)
+		if ($this->report == ERROR_ONPAGE)
 		{
 			// fix this up
 			echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
@@ -170,7 +183,12 @@ class core_error_handler
 		} else {
 		
 			$this->error_array[$type][] = $this->error;
+			
+		}
 		
+		if ($this->logging)
+		{
+			//error_log();
 		}
    }
 }

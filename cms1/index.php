@@ -14,18 +14,19 @@ define('VIPERAL', 'CMS');
 
 //$site_file_root = getenv('DOCUMENT_ROOT').'/';
 $site_file_root = 'C:/Program Files/Apache Group/Apache2/cms/';
+
 require($site_file_root.'core.php');
 
-if (!$name)
+if (!$mod)
 {
 	$_CLASS['display']->homepage = true;
 	
 } else {
 
-	$path = "modules/$name/".(($file) ? $file : 'index').'.php';
+	$path = "modules/$mod/".(($file) ? $file : 'index').'.php';
 }
 
-switch ($name)
+switch ($mod)
 {
 	case 'redirect':
 		// Fix banners, make into a dam class.
@@ -41,15 +42,23 @@ switch ($name)
 
 if ($_CLASS['display']->homepage)
 {
-	// Perparing for multihomepage modules
-	// Extract all homepage modules, make into an array, send to $_CLASS['display']
-	$result = $_CLASS['db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage = 1');
-	$Module = $_CLASS['db']->sql_fetchrow($result);
+	$result = $_CLASS['db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage <> 0 ORDER BY homepage ASC');
+	
+	While ($row = $_CLASS['db']->sql_fetchrow($result))
+	{
+		//send array to display class to be checked
+		//yes it will allow for module per group, bla bla bla
+		$_CLASS['display']->add_module($row);
+	}
+	
+	$Module = $_CLASS['display']->modules[0];
+	unset($_CLASS['display']->modules[0]);
+
 	$path = 'modules/'.$Module['name'].'/index.php';
 
 } else {
 
-	$result = $_CLASS['db']->sql_query_limit('SELECT * FROM '.$prefix."_modules WHERE name='".$_CLASS['db']->sql_escape($name)."'", 1);
+	$result = $_CLASS['db']->sql_query_limit('SELECT * FROM '.$prefix."_modules WHERE name='".$_CLASS['db']->sql_escape($mod)."'", 1);
 	$Module = $_CLASS['db']->sql_fetchrow($result);
 
 }

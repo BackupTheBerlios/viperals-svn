@@ -35,7 +35,7 @@ class session
 	// Called at each page start ... checks for, updates and/or creates a session
 	function startup()
 	{
-		global $SID, $_CLASS, $MAIN_CFG, $name;
+		global $SID, $_CLASS, $MAIN_CFG, $mod;
 		
 		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
@@ -45,14 +45,14 @@ class session
 		//Don't want the SID in the in the URL all block or module will need to replace it with the current SID
 		//Make this one replace on next look
 		$this->url = eregi_replace('sid=[a-z0-9]+','', $this->url);
-		$this->url = htmlentities(html_entity_decode(eregi_replace('sid=','', $this->url)));
-		$this->page = ($name) ? htmlentities(html_entity_decode($name)) : '';
+		$this->url = htmlentities(eregi_replace('sid=','', $this->url));
+		$this->page = $mod;
 
 		if (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) || isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data']))
 		{
 			$sessiondata = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) : array();
 			$this->session_id = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid'])) ? trim_text($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) : false;
-			$SID = (defined('NEED_SID')) ? '&amp;sid=' . $this->session_id : '&amp;sid=';
+			$SID = (defined('NEED_SID')) ? '&amp;sid=' . $this->session_id : '';
 		}
 		else
 		{
@@ -167,6 +167,8 @@ class session
 			
 			if ($row['bot_ip'] && (!$row['bot_agent'] || $bot))
 			{
+				$bot = false;
+				
 				foreach (explode(',', $row['bot_ip']) as $bot_ip)
 				{
 					if (($bot_ip == $this->ip) || (strpos($this->ip, $bot_ip) === 0))
@@ -505,7 +507,7 @@ class session
 		$this->new_data = true;
 	}
 	
-	function save_session()
+	function save()
 	{
 		global $_CLASS;
 		
@@ -575,7 +577,7 @@ class user extends session
 
 				if ($name != 'Control_Panel')
 				{
-					url_redirect(getlink('Control_Panel&i=profile&mode=reg_details'));
+					url_redirect(generate_link('Control_Panel&i=profile&mode=reg_details'));
 				}
 			}
 		}

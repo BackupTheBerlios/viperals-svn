@@ -1,5 +1,5 @@
 <?php
-// $Id: inline_imagewrap.inc,v 1.32 2004/07/23 02:48:25 beckettmw Exp $
+// $Id: inline_imagewrap.inc,v 1.34 2004/10/23 02:35:04 cryptographite Exp $
 
 //-- shorten the variables for convinience ---
 $borderWidth = $gallery->html_wrap['borderWidth'];
@@ -76,7 +76,7 @@ default: // use frames directory
   $hRR = $imageHeight - $heightRRT - $heightRRB;
   ?>
 
-  <table width="1" border="0" cellspacing="0" cellpadding="0">
+  <table width="1" border="0" cellspacing="0" cellpadding="0" dir="ltr">
   <tr>
 	<!-- TL -->
 	<td width="<?php echo $widthTL ?>" height="<?php echo $heightTL ?>"><img src="<?php echo "$base/$imageTL" ?>" border="0" width="<?php echo $widthTL ?>" height="<?php echo $heightTL ?>" alt=""></td>
@@ -98,7 +98,7 @@ default: // use frames directory
 	<td><img src="<?php echo "$base/$imageTR" ?>" border="0" width="<?php echo $widthTR ?>" height="<?php echo $heightTR ?>" alt=""></td>
   </tr>
   <tr>
-	<td height="100%"><table border="0" cellspacing="0" cellpadding="0" style="height:<?php echo $hLL ?>px">
+	<td height="100%"><table border="0" cellspacing="0" cellpadding="0">
 	    <?php if ($heightLLT > 0) { ?>
 	    <!-- LLT -->
 	    <tr>
@@ -107,7 +107,7 @@ default: // use frames directory
 	    <?php } ?>
 	    <tr>
 		<!-- LL -->
-		<td width="<?php echo $widthLL ?>" style="background-image:url(<?php echo "$base/$imageLL" ?>)"><img src="<?php echo $pixelImage ?>" border="0" width="1" height="<?php echo $hLL ?>" alt=""></td>
+		<td width="<?php echo $widthLL ?>" style="background-image:url(<?php echo "$base/$imageLL" ?>)"><img src="<?php echo $pixelImage ?>" border="0" width="1" height="<?php echo $hLL ?>" alt="" name="frameLL"></td>
 	    </tr>
 	    <?php if ($heightLLB > 0) { ?>
 	    <!-- LLB -->
@@ -121,7 +121,7 @@ default: // use frames directory
 		<td align="center"><?php echo $href_tag ?></td>
 	     </tr>
 	    </table></td>
-	<td height="100%"><table border="0" cellspacing="0" cellpadding="0" style="height:<?php echo $hRR ?>px">
+	<td height="100%"><table border="0" cellspacing="0" cellpadding="0">
 	    <?php if ($heightRRT > 0) { ?>
 	    <!-- RRT -->
 	    <tr>
@@ -130,7 +130,7 @@ default: // use frames directory
 	    <?php } ?>
 	    <tr>
 		<!-- RR -->
-		<td width="<?php echo $widthRR ?>" style="background-image:url(<?php echo "$base/$imageRR" ?>)"><img src="<?php echo $pixelImage ?>" border="0" width="1" height="<?php echo $hRR ?>" alt=""></td>
+		<td width="<?php echo $widthRR ?>" style="background-image:url(<?php echo "$base/$imageRR" ?>)"><img src="<?php echo $pixelImage ?>" border="0" width="1" height="<?php echo $hRR ?>" alt="" name="frameRR"></td>
 	    </tr>
 	    <?php if ($heightRRB > 0) { ?>
 	    <tr>

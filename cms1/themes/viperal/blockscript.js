@@ -42,18 +42,15 @@ if (blocks != null) {
     hiddenblocks[hiddenblock] = hiddenblock;
   }
 }
-
+hiddenblocks[88]= "88";
 function blockswitch2(bid, min, max) {
   var bpe  = document.getElementById('pe'+bid);
-  var bph  = document.getElementById('ph'+bid);
   var bico = document.getElementById('pic'+bid);
   if (bpe.style.display=="none") {
-    if (bph) { bph.style.display="none"; }
     bpe.style.display="";
     hiddenblocks[bid] = null;
 
   } else {
-    if (bph) { bph.style.display=""; }
     bpe.style.display="none";
     hiddenblocks[bid] = bid;
   }

@@ -1,5 +1,5 @@
 <?php
-// $Id: breadcrumb.inc,v 1.25 2004/09/13 04:53:39 cryptographite Exp $
+// $Id: breadcrumb.inc,v 1.26 2004/10/19 22:07:30 jenst Exp $
 ?>
 <?php
 global $breadcrumb, $navigator, $gallery;
@@ -13,19 +13,21 @@ if(!includeTemplate('breadcrumb.tpl')) {
 	} else {
 		$borderIn = "#FFFFFF";
 	}
-	$pixelImage = '<img src="' . getImagePath('pixel_trans.gif') .'" width="1" height="1" alt="transpixel">';
-	
-	if (!isset($navigator)) {
-		$navigator["fullWidth"] = 100;
-		$navigator["widthUnits"] = "%";
-	}
 	
 	if (!isset($navigator) && !isset($adminbox) && !isset($adminText)) {
 		$style="border-color: $borderIn; border-width:1px; border-style: solid;";
 	} else {
 		$style='';
 	}
+
+	if (!isset($navigator)) {
+		$navigator["fullWidth"] = 100;
+		$navigator["widthUnits"] = "%";
+	}
+
+	$pixelImage = '<img src="' . getImagePath('pixel_trans.gif') .'" width="1" height="1" alt="transpixel">';
 	?>
+
 <table style="<?php echo $style; ?>" width="<?php echo $navigator["fullWidth"] . $navigator["widthUnits"] ?>" border="0" cellspacing="0" cellpadding="0" class="modnavboxmid">
 <tr> 
 	<?php

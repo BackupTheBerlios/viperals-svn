@@ -35,6 +35,11 @@ define('USER_INACTIVE', 1);
 define('USER_IGNORE', 2);
 define('USER_FOUNDER', 3);
 
+//Error reporting tyoe
+define('ERROR_NONE', 0);
+define('ERROR_ONPAGE', 1);
+define('ERROR_DEBUGGER', 2);
+
 // Side defines
 define('BLOCK_NONE', 0);
 define('BLOCK_ALL', 1);
@@ -45,12 +50,11 @@ define('BLOCK_BOTTOM', 5);
 define('BLOCK_MESSAGE', 6);
 
 define('BLOCKTYPE_FILE',0);
-define('BLOCKTYPE_RSS',1);
+define('BLOCKTYPE_FEED',1);
 define('BLOCKTYPE_HTML',2);
 define('BLOCKTYPE_SYSTEM',3);
 define('BLOCKTYPE_MESSAGE_TOP', 4);
 define('BLOCKTYPE_MESSAGE_BOTTTOM', 5);
-
 
 // Blocks
 define('RIGHT', 0);
@@ -145,6 +149,7 @@ define('FIELD_DATE', 6);
 
 define('AUTH_ADMIN_TABLE', $prefix.'_admins');
 define('BLOCKS_TABLE', $prefix.'_blocks');
+define('MODULE_TABLE', $prefix.'_blocks');
 
 // Table names
 define('ACL_GROUPS_TABLE', $prefix.'_bb2auth_groups');
