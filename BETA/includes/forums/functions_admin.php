@@ -1,7 +1,7 @@
 <?php
 // -------------------------------------------------------------
 //
-// $Id: functions_admin.php,v 1.85 2004/09/16 18:33:18 acydburn Exp $
+// $Id: functions_admin.php,v 1.86 2004/09/16 18:33:18 acydburn Exp $
 //
 // FILENAME  : functions_admin.php
 // STARTED   : Sat Feb 13, 2001
@@ -1482,7 +1482,7 @@ function remove_comments(&$output)
 // remove_remarks will strip the sql comment lines out of an uploaded sql file
 function remove_remarks(&$sql)
 {
-	preg_replace('/(\n){2,}/', "\n", preg_replace('/^#.*/m', "\n", $sql));
+	$sql = preg_replace('/(\n){2,}/', "\n", preg_replace('/^#.*/m', "\n", $sql));
 }
 
 // split_sql_file will split an uploaded sql file into single sql statements.

@@ -15,6 +15,7 @@ if (!CPG_NUKE) {
     Header('Location: /');
     die();
 }
+
 global $_CLASS;
 $_CLASS['display']->display_head();
 ?>

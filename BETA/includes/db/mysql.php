@@ -33,7 +33,8 @@ class sql_db
 	var $transaction = false;
 	var $sql_time = 0;
 	var $num_queries = 0;
-	var $details = array();
+	var	$querylist = array();
+	var $querydetails = array();
 	var $open_queries = array();
 
 	function sql_connect($sqlserver, $sqluser, $sqlpassword, $database, $port = false, $persistency = false)
@@ -118,14 +119,13 @@ class sql_db
 		{
 			global $_CLASS;
 
-			$this->sql_report('start', $query);
-
 			$this->query_result = ($cache_ttl && !empty($_CLASS['cache'])) ? $_CLASS['cache']->sql_load($query) : false;
 
 			if (!$this->query_result)
 			{
 				$this->num_queries++;
-
+				$this->sql_report('start', $query);
+				
 				if (($this->query_result = @mysql_query($query, $this->db_connect_id)) === false)
 				{
 					$this->sql_error($query);
@@ -145,6 +145,7 @@ class sql_db
 			}
 			else
 			{
+				$this->sql_report('start', $query);
 				$this->sql_report('fromcache', $query);
 			}
 		}
@@ -433,9 +434,11 @@ class sql_db
 						{
 							while ($row = mysql_fetch_assoc($result))
 							{
-								$this->details[$this->num_queries][] = $row;
+								$this->querydetails[$this->num_queries][] = $row;
 							}
 						}
+					} else {
+						$this->querydetails[$this->num_queries][] = '';
 					}
 				}
 
@@ -463,7 +466,7 @@ class sql_db
 				$splittime = explode(' ', microtime());
 				$splittime = $splittime[0] + $splittime[1];
 
-				$this->details[$this->num_queries] = array('query'	=> $query, 'cache' => ($endtime - $starttime), 'time' => ($splittime - $endtime));
+				$this->querydetails[$this->num_queries] = array('query'	=> $query, 'cache' => ($endtime - $starttime), 'time' => ($splittime - $endtime));
 
 				mysql_free_result($result);
 
@@ -484,13 +487,13 @@ class sql_db
 							$affected = $this->sql_affectedrows($this->query_result);
 						}
 						
-						$this->details[$this->num_queries] = array('query'	=> $query, 'affected' => $affected, 'time' => ($endtime - $starttime));
+						$this->querylist[$this->num_queries] = array('query' => $query, 'affected' => $affected, 'time' => ($endtime - $starttime));
 						$affected = false;
 					}
 					else
 					{
 						$error = $this->sql_error();
-						$this->details[$this->num_queries] = array('error'=> $error['code'], 'errorcode' => $error['message']);
+						$this->querylist[$this->num_queries] = array('query' => $query, 'error'=> $error['code'], 'errorcode' => $error['message']);
 					}
 				}
 	

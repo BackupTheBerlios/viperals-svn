@@ -10,6 +10,7 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+
 if (!defined('CPG_NUKE')) {
     Header("Location: ../../");
     die();
