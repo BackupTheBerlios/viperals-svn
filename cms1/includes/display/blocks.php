@@ -33,20 +33,10 @@ class blocks
 			return $side_check[$side];
 		}
 
-		if (VIPERAL == 'Admin')
-		{
-			if ($side != BLOCK_LEFT)
-			{
-				return $side_check[$side] = false;
-			}
-			return $side_check[$side] = true;
-		}
-		
 		global $Module;
 
-		if (($Module['sides'] == BLOCK_ALL) || ($side == BLOCK_LEFT && $Module['sides'] == BLOCK_LEFT)
-			|| ($side == BLOCK_RIGHT && $Module['sides'] == BLOCK_RIGHT))
-			{
+		if ($Module['sides'] == BLOCK_ALL || ($side == BLOCK_LEFT && $Module['sides'] == BLOCK_LEFT) || ($side == BLOCK_RIGHT && $Module['sides'] == BLOCK_RIGHT))
+		{
 			if (!$this->blocks_loaded)
 			{
 				$this->load_blocks();
@@ -72,9 +62,10 @@ class blocks
 
 		if (!($this->blocks_array = $_CLASS['cache']->get('blocks')))
 		{
-			$result = $_CLASS['db']->sql_query('SELECT * FROM '.BLOCKS_TABLE." WHERE active='1' ORDER BY weight ASC");
+			$result = $_CLASS['db']->sql_query('SELECT * FROM '.BLOCKS_TABLE.' WHERE active > 0 ORDER BY weight ASC');
 
-			while($row = $_CLASS['db']->sql_fetchrow($result)) {
+			while($row = $_CLASS['db']->sql_fetchrow($result))
+			{
 				$this->blocks_array[$row['position']][] = $row;
 			}
 			
@@ -106,33 +97,35 @@ class blocks
 			$this->load_blocks();
 		}
 		
-		if (!empty($this->blocks_array[$position]))
+		if (empty($this->blocks_array[$position]))
 		{
-			foreach($this->blocks_array[$position] AS $this->block)
-			{
-				if ($this->block['expires'] && !$expire_updated && 
-					($_CLASS['user']->time >= $this->block['expires']))
-				{
-					$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires <> 0 AND expires <='
-											.$_CLASS['user']->time);
-											
-					$_CLASS['cache']->destroy('blocks');
-					$expire_updated = true;
-
-					continue;
-				}
-				
-				if ($this->block['time'] && ($this->block['time'] > $_CLASS['user']->time))
-				{
-					continue;
-				}
-				
-				$this->display_blocks();
-	
-			}
+				return false;
 		}
+		
+		foreach($this->blocks_array[$position] AS $this->block)
+		{
+			//auth check and language check here.
+			
+			if ($this->block['expires'] && !$expire_updated && ($_CLASS['user']->time >= $this->block['expires']))
+			{
+				$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires > 0 AND expires <='.$_CLASS['user']->time);
+										
+				$_CLASS['cache']->destroy('blocks');
+				$expire_updated = true;
 
-		return false;
+				continue;
+			}
+			
+			if ($this->block['time'] && ($this->block['time'] > $_CLASS['user']->time))
+			{
+				continue;
+			}
+			
+			$this->display_blocks();
+
+		}
+		
+		unset($this->blocks_array[$position]);
 	}
 
 	function display_blocks()
@@ -146,11 +139,8 @@ class blocks
 				$this->block_file();
 				break;
 				
-			case BLOCKTYPE_MESSAGE_TOP:
-				$this->block_message();
-				break;
-			
 			case BLOCKTYPE_MESSAGE_BOTTTOM:
+			case BLOCKTYPE_MESSAGE_TOP:
 				$this->block_message();
 				break;
 					
@@ -189,7 +179,7 @@ class blocks
 			
 			if (!$this->content && !$this->template)
 			{
-				if (is_admin())
+				if (is_admin() && $_CLASS['user']->admin_auth('blocks'))
 				{
 					$this->content = ($this->info) ? $this->info : $_CLASS['user']->lang['BLOCK_ERROR2'];
 				} else {
@@ -199,7 +189,7 @@ class blocks
 
 		} else {
 		
-			if (is_admin())
+			if (is_admin() && $_CLASS['user']->admin_auth('blocks'))
 			{
 				$this->content = $_CLASS['user']->lang['BLOCK_ERROR1'];
 			} else {
@@ -233,52 +223,30 @@ class blocks
 	{
 		global $_CLASS;
 		
-		if (($this->block['type'] == BLOCKTYPE_MESSAGE_TOP) && (!$_CLASS['display']->homepage))
+		if (($this->block['active'] == '1') && (!$_CLASS['display']->homepage))
 		{
 			return;
 		}
 		
-		if (is_admin())
+		if (is_admin() && $_CLASS['user']->admin_auth('message'))
 		{
-			$expires = ($this->block['expires']) ? $_CLASS['user']->lang['EXPIRES'].' '
-					.$_CLASS['user']->format_date($this->block['expires']) : false;
-			$edit = '<a href="'.adminlink('message&amp;mode=edit&amp;id='.$this->block['id']).'">'
-					.$_CLASS['user']->lang['EDIT'].'</a>';
+			$expires = ($this->block['expires']) ? $_CLASS['user']->lang['EXPIRES'].' '.$_CLASS['user']->format_date($this->block['expires']) : false;
+			$edit = '<a href="'.adminlink('message&amp;mode=edit&amp;id='.$this->block['id']).'">'.$_CLASS['user']->lang['EDIT'].'</a>';
+		
 		} else {
+		
 			$edit = $expires = false;
 		}
 		
-		if (THEMEPLATE)
-		{
-			$_CLASS['template']->assign_vars_array('messageblock', array(
+		$_CLASS['template']->assign_vars_array('messageblock', array(
 				'TITLE'		=> $this->block['title'],
 				'CONTENT'	=> $this->block['content'],
 				'EXPIRES'	=> $expires,
 				'EDIT'		=> $edit,
 				'HIDE'		=> hideblock($this->block['id']) ? 'style="display: none"' : '',
 				'ID'		=> $this->block['id'],
-				)
-			);
-		
-		} else {
-		
-            global $textcolor2;
-            
-            $expires = ($expires) ? $expires.' | ' : '';
-            
-			OpenTable();
-			echo '<div style="text-align: center; color: '.$textcolor2.'"><b>'
-					.$this->block['title'].'</b></div><br />'.$this->block['content'];
-			
-			if (is_admin())
-			{
-				echo '<br /><br /><div align="right">[ '.$expires.$edit.' ]</font></div>';
-			}
-		
-			CloseTable();
-			
-			echo '<br />';
-		}
+			)
+		);
 	}
 	
 	function block_side()
@@ -311,27 +279,16 @@ class blocks
 	
 	function block_center()
 	{
-		if (THEMEPLATE)
-		{
-			global $_CLASS;
-			
-			$this->block['position'] = ($this->block['position'] == BLOCK_TOP) ? 'center' : 'bottom';
-			
-			$_CLASS['template']->assign_vars_array($this->block['position'].'block', array(
-				'TITLE'   => $this->block['title'],
-				'CONTENT' => $this->content,
-				'TEMPLATE' => $this->template
-				)
-			);
-			
-		} else {
+		global $_CLASS;
 		
-			OpenTable();
-			echo '<div align="center"><b>'.$this->block['title'].'</b></div><br />'.$this->content;
-			CloseTable();
-			echo '<br />';
+		$this->block['position'] = ($this->block['position'] == BLOCK_TOP) ? 'center' : 'bottom';
 		
-		}
+		$_CLASS['template']->assign_vars_array($this->block['position'].'block', array(
+			'TITLE'   => $this->block['title'],
+			'CONTENT' => $this->content,
+			'TEMPLATE' => $this->template
+			)
+		);
 	}
 }
 

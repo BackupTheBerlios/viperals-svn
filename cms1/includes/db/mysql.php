@@ -33,25 +33,23 @@ class sql_db
 	var $open_queries = array();
 	var $caller_info = false;
 
-	function sql_connect($sqlserver, $sqluser, $sqlpassword, $database, $port = false, $persistency = false)
+	function sql_connect($server, $user, $password, $database, $port = false, $persistency = false)
 	{
-		$this->persistency = $persistency;
-		$this->user = $sqluser;
-		$this->password = $sqlpassword;
-		$this->server = $sqlserver . (($port) ? ':' . $port : '');
-		$this->dbname = $database;
+		$server = $server . (($port) ? ':' . $port : '');
 
-		$this->db_connect_id = ($this->persistency) ? @mysql_pconnect($this->server, $this->user, $this->password) : @mysql_connect($this->server, $this->user, $this->password);
+		$this->db_connect_id = ($persistency) ? mysql_pconnect($server, $user, $password) : mysql_connect($server, $user, $password);
 
-		if ($this->db_connect_id && $this->dbname != '')
+		if ($this->db_connect_id && $database)
 		{
-			if (@mysql_select_db($this->dbname))
+			if (mysql_select_db($database))
 			{
 				return $this->db_connect_id;
 			}
+			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
 		
-		trigger_error('<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: 001</center>', E_USER_ERROR);
+		$error = ($error) ? $error : '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
+		trigger_error($error, E_USER_ERROR);
 		die;
 	}
 
@@ -62,7 +60,7 @@ class sql_db
 			return false;
 		}
 
-		if (count($this->open_queries))
+		if (!empty($this->open_queries))
 		{
 			foreach ($this->open_queries as $query_id)
 			{
@@ -116,9 +114,9 @@ class sql_db
 		{
 			return false;
 		}
+		
 		global $_CLASS;
 			
-		// Preparing for feature db debugging...  wow we i'm a genius.
 		if (!$this->caller_info)
 		{
 			$this->caller_info = debug_backtrace();
@@ -235,19 +233,10 @@ class sql_db
 
 		return $query;
 	}
-
-	// Other query methods
-	//
-	// NOTE :: Want to remove _ALL_ reliance on sql_numrows from core code ...
-	//         don't want this here by a middle Milestone
+	
 	function sql_numrows($query_id = false)
 	{
-		if (!$query_id)
-		{
-			$query_id = $this->query_result;
-		}
-
-		return ($query_id) ? @mysql_num_rows($query_id) : false;
+		return ($query_id) ? @mysql_num_rows($query_id) : 0;
 	}
 
 	function sql_affectedrows()
@@ -261,7 +250,7 @@ class sql_db
 
 		if (!$query_id)
 		{
-			$query_id = $this->query_result;
+			return false;
 		}
 
 		if (!empty($_CLASS['cache']) && $_CLASS['cache']->sql_exists($query_id))
@@ -271,83 +260,71 @@ class sql_db
 		
         if ($Module['compatiblity'])
         {
-			//phpnuke compatiblity, seriously i don't like it.
-			if($query_id)
-			{
-				$this->row[$query_id] = @mysql_fetch_array($query_id);
-				return (isset($this->row[$query_id])) ? $this->row[$query_id] : false;
-			}
-			else {
-				return false;
-			}
+			//Have to get both associative and number indices
+			//Not as fast as only the associative indeces MYSQL_ASSOC
+			return mysql_fetch_array($query_id);
         }
 		
-		return ($query_id) ? @mysql_fetch_assoc($query_id) : false;
+		return mysql_fetch_assoc($query_id);
 	}
 
 	function sql_fetchrowset($query_id = 0)
 	{
 		if (!$query_id)
 		{
-			$query_id = $this->query_result;
+			return false;
 		}
-		if ($query_id)
+		
+		$this->rowset[$query_id] = false;
+		unset($this->row[$query_id]);
+		
+		while ($this->rowset[$query_id] = $this->sql_fetchrow($query_id))
 		{
-			$this->rowset[$query_id] = false;
-			unset($this->row[$query_id]);
-			while ($this->rowset[$query_id] = $this->sql_fetchrow($query_id))
-			{
-				$result[] = $this->rowset[$query_id];
-			}
-			return $result;
+			$result[] = $this->rowset[$query_id];
 		}
-		return false;
+		return $result;
 	}
 
 	function sql_fetchfield($field, $rownum = -1, $query_id = 0)
 	{
 		if (!$query_id)
 		{
-			$query_id = $this->query_result;
+			return false;
 		}
 		
-		if ($query_id)
+		if ($rownum > -1)
 		{
-			if ($rownum > -1)
+			$result = @mysql_result($query_id, $rownum, $field);
+		}
+		else
+		{
+			if (empty($this->row[$query_id]) && empty($this->rowset[$query_id]))
 			{
-				$result = @mysql_result($query_id, $rownum, $field);
+				if ($this->sql_fetchrow())
+				{
+					$result = $this->row[$query_id][$field];
+				}
 			}
 			else
 			{
-				if (empty($this->row[$query_id]) && empty($this->rowset[$query_id]))
+				if ($this->rowset[$query_id])
 				{
-					if ($this->sql_fetchrow())
-					{
-						$result = $this->row[$query_id][$field];
-					}
+					$result = $this->rowset[$query_id][$field];
 				}
-				else
+				elseif ($this->row[$query_id])
 				{
-					if ($this->rowset[$query_id])
-					{
-						$result = $this->rowset[$query_id][$field];
-					}
-					elseif ($this->row[$query_id])
-					{
-						$result = $this->row[$query_id][$field];
-					}
+					$result = $this->row[$query_id][$field];
 				}
 			}
-			return $result;
 		}
-		return false;
+		return $result;
 	}
 
 	function sql_rowseek($rownum, $query_id = 0)
 	{
 		if (!$query_id)
 		{
-			$query_id = $this->query_result;
+			return false;
 		}
 
 		return ($query_id) ? @mysql_data_seek($query_id, $rownum) : false;
@@ -362,20 +339,20 @@ class sql_db
 	{
 		if (!$query_id)
 		{
-			$query_id = $this->query_result;
+			return false;
 		}
-
-		if ($query_id)
+		
+		$key = array_search($query_id, $this->open_queries);
+		
+		if (!$key || $key == NULL)
 		{
-			// If it is not found within the open queries, we try to free a cached result. ;)
-			if (!(array_search($query_id, $this->open_queries) > 0))
-			{
-				return false;
-			}
-			unset($this->open_queries[array_search($query_id, $this->open_queries)]);
+			// Add a freeresults for cache
+			return false;
 		}
+		
+		unset($this->open_queries[$query_id]);
 
-		return ($query_id) ? @mysql_free_result($query_id) : false;
+		return mysql_free_result($query_id);
 	}
 
 	function sql_escape($msg)
@@ -495,7 +472,6 @@ class sql_db
 				$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);
 				// remove the root directorys
 				$this->caller_info[0]['file'] = ereg_replace($site_file_root, '', ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']));
-				$this->caller_info[0]['file'] = htmlentities($this->caller_info[0]['file'], ENT_QUOTES);
 	
 				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
 				{
