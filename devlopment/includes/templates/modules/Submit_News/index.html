@@ -1,0 +1,49 @@
+{ if $ERROR }
+	{php} OpenTable(); {/php}
+		<div align="center"><font color="#990000">{ $ERROR }</font></div>
+	{php} CloseTable(); {/php}
+{ /if }
+
+{php} OpenTable(); {/php}
+
+<form method="post" action="{ $ACTION }" >
+	{ if !$LOGIN }
+	    <div style="text-align: center;">
+			<b>{ $L_SUBMIT_INTRO }</b>
+			<br /><br />
+	</div>
+    <div style="position: relative; height:7em;">
+		<div style="float: left; top: -2.5em;">{$L_YOURNAME}<br /><input type="text" name="username" value="{ $NAME }" size="30" maxlength="50"/><br />
+		{$L_YOUREMAIL}<br /><input type="text" name="email" value="{ $EMAIL }" size="30" maxlength="50"/>
+    	</div>
+		<div style="width: 60%; float: right; top: -2.5em;">
+			<br />{ $L_SUBMIT_MESSAGE }
+		</div>
+    </div>
+    { else }
+    <div style="text-align: center;">
+			<b>{ $L_SUBMIT_INTRO }</b>
+			<br /><br />{ $L_SUBMIT_MESSAGE }
+	</div>
+    { /if }<br />
+
+	<hr width="50%"/><br /><br />
+	<b>{ $L_STORY_TITLE }:</b><br /> <input type="text" name="title" value="{ $TITLE }" size="30" maxlength="50"/><br /><br />
+	<b>{ $L_STORY_INTRO }:</b><br /><em> { $L_STORY_INTRO_HELP }</em><br />
+    <textarea name="intro" id="intro" style="width:90%; height:200px" cols="63" rows="15">{ $INTRO }</textarea><br /><br />
+		
+		<br /><br />
+	<b>{ $L_STORY_MESSAGE }:</b><br /><em> { $L_STORY_STORY_HELP }</em><br />
+	<textarea name="story" id="story" style="width:90%; height:400px" cols="63" rows="15">{ $STORY }</textarea><br /><br />
+		<br /><br />
+	<b>{ $L_STORY_NOTES }:</b><br /><em> { $L_STORY_NOTES_HELP }</em><br />
+	<textarea name="notes" id="notes" style="width:90%; height:200px" cols="63" rows="15">{ $NOTES }</textarea><br /><br />
+
+    <input type="submit" name="submit" value="{ $L_SUBMIT }" />
+    <input type="submit" name="preview" value="{ $L_PREVIEW } Main" />
+    <input type="submit" name="previewfull" value="{ $L_PREVIEW } Full Story" />
+    <br /><b>( Please note your ip will be logged )</b>
+
+</form>
+
+{php} CloseTable(); {/php}

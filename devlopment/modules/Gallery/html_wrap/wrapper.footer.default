@@ -1,0 +1,8 @@
+<?php
+
+CloseTable();
+global $_CLASS;
+
+$_CLASS['display']->display_footer();
+
+?>

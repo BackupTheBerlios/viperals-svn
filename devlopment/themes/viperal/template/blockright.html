@@ -1,0 +1,24 @@
+{ if isset($rightblock)}
+
+<div id="blocksright" >
+  {section name=blockrightloop loop=$rightblock}
+	<div class="blocks">
+
+		<div class="top" onclick="blockswitch2('{$rightblock[blockrightloop].ID}');" style="cursor:pointer">&nbsp;{$rightblock[blockrightloop].TITLE}&nbsp;</div>
+      
+
+		<div class="content" id="pe{$rightblock[blockrightloop].ID}" {$rightblock[blockrightloop].COLLAPSE}>
+		
+		{ if $rightblock[blockrightloop].TEMPLATE }
+		
+		{ /if }
+		{ if $rightblock[blockrightloop].CONTENT }
+			<br />{$rightblock[blockrightloop].CONTENT}
+		{ /if }
+		</div>
+	</div>
+	<br />
+  {/section}
+
+</div>
+{ /if }
