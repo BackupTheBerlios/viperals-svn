@@ -51,7 +51,7 @@ class session
 		if (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) || isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data']))
 		{
 			$sessiondata = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) : array();
-			$this->session_id = request_var($MAIN_CFG['server']['cookie_name'] . '_sid', false);
+			$this->session_id = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid'])) ? trim_text($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) : false;
 			$SID = (defined('NEED_SID')) ? '&amp;sid=' . $this->session_id : '&amp;sid=';
 		}
 		else
@@ -546,14 +546,13 @@ class session
 class user extends session
 {
 	var $lang = array();
-	var $theme = array();
+	var $img = array();
 	var $date_format;
 	var $timezone;
 	var $dst;
 
 	var $lang_name;
 	var $lang_path;
-	var $img_lang;
 
 	var $keyoptions = array('viewimg' => 0, 'viewflash' => 1, 'viewsmilies' => 2, 'viewsigs' => 3, 'viewavatars' => 4, 'viewcensors' => 5, 'attachsig' => 6, 'html' => 7, 'bbcode' => 8, 'smile' => 9, 'popuppm' => 10, 'report_pm_notify' => 11);
 	var $keyvalues = array();
@@ -620,60 +619,98 @@ class user extends session
 		require($this->lang_path . "common.$phpEx");
 	}
 
-	// phpbb2.2 Only, remove this soon
-	function setup($lang_set = false, $style = false)
-	{
-		global $_CLASS, $phpEx;
-						
-		if ($lang_set)
-		{
-			$this->add_lang($lang_set);
-			unset($lang_set);
-		}
-		
-		require('themes/'.$_CLASS['display']->theme.'/template/forums/imageset.php');
-
-		$this->img_lang = (file_exists('themes/'.$_CLASS['display']->theme.'/template/forums/imageset/' . $this->lang_name)) ? $this->lang_name : $MAIN_CFG['global']['default_lang'];
-
-		return;
-	}
-
-	function add_lang($lang = false, $use_db = false, $phpbb = false)
+	function add_img($img_file = false, $module = false, $lang = false)
 	{
 		global $phpEx;
 
-		if (is_array($lang))
-		{
-			foreach ($lang as $key => $lang_file)
-			{
-				// Please do not delete this line.
-				// We have to force the type here, else [array] language inclusion will not work
-				$key = (string) $key;
+		$img_file = ($img_file) ? "$img_file.$phpEx" : 'index.'.$phpEx;
 
-				if (is_array($lang_file))
-				{
-					$this->add_lang($lang_file);
-				} else {
-					include($this->lang_path . "$lang_file.$phpEx");
-				}
+		if (!$img_file || !ereg('/', $img_file)) {
+		
+			global $Module, $_CLASS;
+			
+			$module = ($module) ? $module : $Module['title'];
+			$lang = ($lang) ? $this->lang_name.'/' : '';
+			
+			if (file_exists('themes/'.$_CLASS['display']->theme.'/template/modules/'.$module."/images/$lang$img_file"))
+			{
+				include('themes/'.$_CLASS['display']->theme.'/template/modules/'.$module."/images/$lang$img_file");
+			} else {
+				include('modules/'.$module."/images/$lang.$img_file");
 			}
+			
+		} else {
+		
+			include($img_file.$phpEx);
+			
+		}
+	}
+	
+	function img($img, $alt = '', $width = false, $suffix = '')
+	{
+		static $imgs;
+		
+		if (empty($imgs[$img . $suffix]) || $width !== false)
+		{
+			if (!isset($this->img[$img]) || !$this->img[$img])
+			{
+				// Do not fill the image to let designers decide what to do if the image is empty
+				$imgs[$img . $suffix] = '';
+				return $imgs[$img . $suffix];
+			}
+			global $_CLASS;
+
+			if ($width === false)
+			{
+				list($imgsrc, $height, $width) = explode('*', $this->img[$img]);
+			}
+			else
+			{
+				list($imgsrc, $height) = explode('*', $this->img[$img]);
+			}
+
+			if ($suffix !== '')
+			{
+				$imgsrc = str_replace('{SUFFIX}', $suffix, $imgsrc);
+			}
+			
+			$imgsrc = '"' . str_replace('{LANG}', $this->lang_name, $imgsrc) . '"';
+			$width = ($width) ? ' width="' . $width . '"' : '';
+			$height = ($height) ? ' height="' . $height . '"' : '';
+			
+			$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
+			$imgs[$img . $suffix] = '<img src=' . $imgsrc . $width . $height . ' alt="' . $alt . '" title="' . $alt . '" name="' . $img . '" />';
+		}
+
+		return $imgs[$img . $suffix];
+	}
+		
+	function add_lang($langfile = false, $module = false, $use_db = false, $phpbb = false)
+	{
+		global $phpEx;
+
+		if (is_array($langfile))
+		{
+			foreach ($langfile as $key => $lang_file)
+			{
+				//$key = (string) $key;
+				$this->add_lang($lang_file);
+			}
+			
 			unset($lang);
 			return;
 		}
 		
-		if (!$lang)
+		$langfile = ($langfile) ? "$langfile.$phpEx" : 'index.'.$phpEx;
+
+		if (!$module)
 		{
 			global $Module;
-			require('modules/'.$Module['title']."/language/$this->lang_name/index.$phpEx");
+			include('modules/'.$Module['title']."/language/$this->lang_name/$langfile");
 		
-		} elseif (!ereg('/', $lang)) {
-		
-			global $Module;
-			require('modules/'.$Module['title']."/language/$this->lang_name/$lang.$phpEx");
-			
 		} else {
 		
-			require($this->lang_path . "$lang.$phpEx");
+			include("modules/$module/language/$this->lang_name/$langfile");
 			
 		}
 	}
@@ -704,6 +741,7 @@ class user extends session
 		}
 	}
 
+	//remove this
 	function get_iso_lang_id()
 	{
 		global $_CLASS;
@@ -744,44 +782,6 @@ class user extends session
 
 		$this->profile_fields = (!($row = $_CLASS['db']->sql_fetchrow($result))) ? array() : $row;
 		$_CLASS['db']->sql_freeresult($result);
-	}
-
-	function img($img, $alt = '', $width = false, $suffix = '')
-	{
-		static $imgs;
-		global $_CLASS;
-		if (empty($imgs[$img . $suffix]) || $width !== false)
-		{
-			if (!isset($this->theme[$img]) || !$this->theme[$img])
-			{
-				// Do not fill the image to let designers decide what to do if the image is empty
-				$imgs[$img . $suffix] = '';
-				return $imgs[$img . $suffix];
-			}
-
-			if ($width === false)
-			{
-				list($imgsrc, $height, $width) = explode('*', $this->theme[$img]);
-			}
-			else
-			{
-				list($imgsrc, $height) = explode('*', $this->theme[$img]);
-			}
-
-			if ($suffix !== '')
-			{
-				$imgsrc = str_replace('{SUFFIX}', $suffix, $imgsrc);
-			}
-
-			$imgsrc = '"themes/'.$_CLASS['display']->theme.'/template/forums/imageset/' . str_replace('{LANG}', $this->img_lang, $imgsrc) . '"';
-			$width = ($width) ? ' width="' . $width . '"' : '';
-			$height = ($height) ? ' height="' . $height . '"' : '';
-			$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
-
-			$imgs[$img . $suffix] = '<img src=' . $imgsrc . $width . $height . ' alt="' . $alt . '" title="' . $alt . '" name="' . $img . '" />';
-		}
-
-		return $imgs[$img . $suffix];
 	}
 
 	// Start code for checking/setting option bit field for user table (if we go that way)

@@ -13,14 +13,14 @@
  * @param boolean $create_dirs
  * @return boolean
  */
-function smarty_core_write_file($params, &$smarty)
+function smarty_core_write_file($params, &$this)
 {
     $_dirname = dirname($params['filename']);
 
     if ($params['create_dirs']) {
         $_params = array('dir' => $_dirname);
         require_once(SMARTY_CORE_DIR . 'core.create_dir_structure.php');
-        smarty_core_create_dir_structure($_params, $smarty);
+        smarty_core_create_dir_structure($_params, $this);
     }
 
     // write to tmp file, then rename it to avoid
@@ -30,7 +30,7 @@ function smarty_core_write_file($params, &$smarty)
     if (!($fd = @fopen($_tmp_file, 'wb'))) {
         $_tmp_file = $_dirname . DIRECTORY_SEPARATOR . uniqid('wrt');
         if (!($fd = @fopen($_tmp_file, 'wb'))) {
-            $smarty->trigger_error("problem writing temporary file '$_tmp_file'");
+            $this->trigger_error("problem writing temporary file '$_tmp_file'");
             return false;
         }
     }
@@ -44,7 +44,7 @@ function smarty_core_write_file($params, &$smarty)
         @unlink($params['filename']);
     }
     @rename($_tmp_file, $params['filename']);
-    @chmod($params['filename'], $smarty->_file_perms);
+    @chmod($params['filename'], $this->_file_perms);
 
     return true;
 }

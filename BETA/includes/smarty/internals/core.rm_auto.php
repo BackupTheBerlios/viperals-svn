@@ -17,7 +17,7 @@
 
 // $auto_base, $auto_source = null, $auto_id = null, $exp_time = null
 
-function smarty_core_rm_auto($params, &$smarty)
+function smarty_core_rm_auto($params, &$this)
 {
     if (!@is_dir($params['auto_base']))
       return false;
@@ -29,26 +29,26 @@ function smarty_core_rm_auto($params, &$smarty)
             'exp_time' => $params['exp_time']
         );
         require_once(SMARTY_CORE_DIR . 'core.rmdir.php');
-        $_res = smarty_core_rmdir($_params, $smarty);
+        $_res = smarty_core_rmdir($_params, $this);
     } else {
-        $_tname = $smarty->_get_auto_filename($params['auto_base'], $params['auto_source'], $params['auto_id']);
+        $_tname = $this->_get_auto_filename($params['auto_base'], $params['auto_source'], $params['auto_id']);
 
         if(isset($params['auto_source'])) {
             if (isset($params['extensions'])) {
                 $_res = false;
                 foreach ((array)$params['extensions'] as $_extension)
-                    $_res |= $smarty->_unlink($_tname.$_extension, $params['exp_time']);
+                    $_res |= $this->_unlink($_tname.$_extension, $params['exp_time']);
             } else {
-                $_res = $smarty->_unlink($_tname, $params['exp_time']);
+                $_res = $this->_unlink($_tname, $params['exp_time']);
             }
-        } elseif ($smarty->use_sub_dirs) {
+        } elseif ($this->use_sub_dirs) {
             $_params = array(
                 'dirname' => $_tname,
                 'level' => 1,
                 'exp_time' => $params['exp_time']
             );
             require_once(SMARTY_CORE_DIR . 'core.rmdir.php');
-            $_res = smarty_core_rmdir($_params, $smarty);
+            $_res = smarty_core_rmdir($_params, $this);
         } else {
             // remove matching file names
             $_handle = opendir($params['auto_base']);
@@ -57,7 +57,7 @@ function smarty_core_rm_auto($params, &$smarty)
                 if($_filename == '.' || $_filename == '..') {
                     continue;
                 } elseif (substr($params['auto_base'] . DIRECTORY_SEPARATOR . $_filename, 0, strlen($_tname)) == $_tname) {
-                    $_res &= (bool)$smarty->_unlink($params['auto_base'] . DIRECTORY_SEPARATOR . $_filename, $params['exp_time']);
+                    $_res &= (bool)$this->_unlink($params['auto_base'] . DIRECTORY_SEPARATOR . $_filename, $params['exp_time']);
                 }
             }
         }

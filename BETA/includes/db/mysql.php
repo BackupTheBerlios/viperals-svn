@@ -31,6 +31,7 @@ class sql_db
 	var	$querylist = array();
 	var $querydetails = array();
 	var $open_queries = array();
+	var $caller_info = false;
 
 	function sql_connect($sqlserver, $sqluser, $sqlpassword, $database, $port = false, $persistency = false)
 	{
@@ -110,46 +111,47 @@ class sql_db
 	// Base query method
 	function sql_query($query = '', $cache_ttl = 0)
 	{
-		if ($query != '')
+		if (!$query)
 		{
-			global $_CLASS;
+			return false;
+		}
+		global $_CLASS;
 			
-			// Preparing for feature db debugging...  wow we i'm a genius.
-			$caller_info = debug_backtrace();
-			
-			$this->query_result = ($cache_ttl && !empty($_CLASS['cache'])) ? $_CLASS['cache']->sql_load($query) : false;
+		// Preparing for feature db debugging...  wow we i'm a genius.
+		if (!$this->caller_info)
+		{
+			$this->caller_info = debug_backtrace();
+		}
+		//print_r($caller_info);
 
-			if (!$this->query_result)
+		$this->query_result = ($cache_ttl && !empty($_CLASS['cache'])) ? $_CLASS['cache']->sql_load($query) : false;
+
+		if (!$this->query_result)
+		{
+			$this->num_queries++;
+			$this->sql_report('start', $query);
+			
+			if (($this->query_result = @mysql_query($query, $this->db_connect_id)) === false)
 			{
-				$this->num_queries++;
-				$this->sql_report('start', $query);
-				
-				if (($this->query_result = @mysql_query($query, $this->db_connect_id)) === false)
-				{
-					$this->sql_error($query);
-				}
-
-				$this->sql_report('stop', $query);
-
-				if ($cache_ttl && method_exists($_CLASS['cache'], 'sql_save'))
-				{
-					$_CLASS['cache']->sql_save($query, $this->query_result, $cache_ttl);
-					// mysql_free_result happened within sql_save()
-				}
-				elseif (preg_match('/^SELECT/', $query))
-				{
-					$this->open_queries[] = $this->query_result;
-				}
+				$this->sql_error($query);
 			}
-			else
+
+			$this->sql_report('stop', $query);
+
+			if ($cache_ttl && method_exists($_CLASS['cache'], 'sql_save'))
 			{
-				$this->sql_report('start', $query);
-				$this->sql_report('fromcache', $query);
+				$_CLASS['cache']->sql_save($query, $this->query_result, $cache_ttl);
+				// mysql_free_result happened within sql_save()
+			}
+			elseif (preg_match('/^SELECT/', $query))
+			{
+				$this->open_queries[] = $this->query_result;
 			}
 		}
 		else
 		{
-			return false;
+			$this->sql_report('start', $query);
+			$this->sql_report('fromcache', $query);
 		}
 
 		return ($this->query_result) ? $this->query_result : false;
@@ -157,24 +159,24 @@ class sql_db
 
 	function sql_query_limit($query, $total, $offset = 0, $cache_ttl = 0) 
 	{ 
-		if ($query != '') 
-		{
-			$this->query_result = false; 
-
-			// if $total is set to 0 we do not want to limit the number of rows
-			if ($total == 0)
-			{
-				$total = -1;
-			}
-
-			$query .= "\n LIMIT " . ((!empty($offset)) ? $offset . ', ' . $total : $total);
-
-			return $this->sql_query($query, $cache_ttl); 
-		} 
-		else 
+		if (!$query) 
 		{ 
 			return false; 
-		} 
+		}
+		
+		$this->query_result = false; 
+		$this->caller_info = debug_backtrace();
+		
+		// if $total is set to 0 we do not want to limit the number of rows
+		if ($total == 0)
+		{
+			$total = -1;
+		}
+
+		$query .= "\n LIMIT " . ((!empty($offset)) ? $offset . ', ' . $total : $total);
+
+		return $this->sql_query($query, $cache_ttl); 
+
 	}
 
 	// Idea for this from Ikonboard
@@ -266,7 +268,8 @@ class sql_db
 			return $_CLASS['cache']->sql_fetchrow($query_id);
 		}
         
-        /*if($query_id) {
+        /*phpnuke compatiblity, seriously i don't like it.
+        if($query_id) {
             $this->row[$query_id] = @mysql_fetch_array($query_id);
             return (isset($this->row[$query_id])) ? $this->row[$query_id] : false;
         }
@@ -476,6 +479,9 @@ class sql_db
 				$endtime = $endtime[0] + $endtime[1];
 				$this->sql_time += $endtime - $starttime;
 				
+				$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);// Dam Windows
+				$this->caller_info[0]['file'] = htmlentities(ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']), ENT_QUOTES);
+	
 				if ($MAIN_CFG['global']['error'] == 3)
 				{
 					if ($this->query_result)
@@ -487,15 +493,16 @@ class sql_db
 							$affected = $this->sql_affectedrows($this->query_result);
 						}
 						
-						$this->querylist[$this->num_queries] = array('query' => $query, 'affected' => $affected, 'time' => ($endtime - $starttime));
+						$this->querylist[$this->num_queries] = array('query' => $query, 'file' => $this->caller_info[0]['file'], 'line'=> $this->caller_info[0]['line'], 'affected' => $affected, 'time' => ($endtime - $starttime));
 					}
 					else
 					{
 						$error = $this->sql_error();
-						$this->querylist[$this->num_queries] = array('query' => $query, 'error'=> $error['code'], 'errorcode' => $error['message']);
+						$this->querylist[$this->num_queries] = array('query' => $query, 'file' => $this->caller_info[0]['file'], 'line'=> $this->caller_info[0]['line'], 'error'=> $error['code'], 'errorcode' => $error['message']);
 					}
 				}
-	
+				
+				$this->caller_info = false;
 				break;
 		}
 	}

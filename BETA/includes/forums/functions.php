@@ -1,16 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
-
 // -------------------------------------------------------------
 //
 // $Id: functions.php,v 1.295 2004/09/17 09:11:32 acydburn Exp $
@@ -22,6 +10,57 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+
+function set_var($result, $var, $type)
+{
+	settype($var, $type);
+	$result = $var;
+
+	if ($type == 'string')
+	{
+		$result = trim(htmlspecialchars(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $result)));
+		$result = preg_replace("#\n{3,}#", "\n\n", $result);
+		$result = (STRIP) ? stripslashes($result) : $result;
+	}
+	return $result;
+}
+
+function request_var($var_name, $default)
+{
+	if (!isset($_REQUEST[$var_name]))
+	{
+		return $default;
+	}
+	else
+	{
+		$var = $_REQUEST[$var_name];
+		$type = gettype($default);
+
+		if (is_array($var))
+		{
+			foreach ($var as $k => $v)
+			{
+				if (is_array($v))
+				{
+					foreach ($v as $_k => $_v)
+					{
+						set_var($var[$k][$_k], $_v, $type);
+					}
+				}
+				else
+				{
+					set_var($var[$k], $v, $type);
+				}
+			}
+		}
+		else
+		{
+			set_var($var, $var, $type);
+		}
+
+		return $var;
+	}
+}
 
 // Generates an alphanumeric random string of given length
 function gen_rand_string($num_chars)
@@ -358,6 +397,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 }
 
 // Pick a language, any language ...
+// this need replacing big time
 function language_select($default = '')
 {
 	global $_CLASS;
@@ -378,49 +418,6 @@ function language_select($default = '')
 	return $lang_options;
 }
 
-// Pick a template/theme combo,
-function theme_select($default = '', $all = false)
-{
-	static $theme;
-	
-	if ($theme)
-	{
-		return $theme;
-	}
-	
-	$themetmp = array();
-	
-	$theme = '';
-	$handle = opendir('themes');
-	while ($file = readdir($handle)) {
-		if (!ereg('[.]',$file)) {
-			if (file_exists("themes/$file/index.php")) {
-				$themetmp[] = array('file' => $file, 'template'=> true);
-			} elseif (file_exists("themes/$file/theme.php")) {
-				$themetmp[] = array('file' => $file, 'template'=> false);
-			} 
-		} 
-	}
-	
-	closedir($handle);
-	
-	$count = count($themetmp);
-	
-	for ($i=0; $i < $count; $i++) {
-		
-		$themetmp[$i]['name'] = ($themetmp[$i]['template']) ? $themetmp[$i]['file'].' *' : $themetmp[$i]['file'];
-		if ($themetmp[$i]['file'] == $default)
-		{
-			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['name'].'</option>';
-		} else {
-			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['name'].'</option>';
-		}
-	}
-	
-	unset($themetmp);
-	
-	return $theme;
-}
 // Pick a timezone
 function tz_select($default = '')
 {
@@ -546,7 +543,7 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 // Marks a topic or form as read
 function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 {
-	global $config, $_CLASS;
+	global $config, $_CLASS, $MAIN_CFG;
 	
 	if ($_CLASS['user']->data['user_id'] == ANONYMOUS)
 	{
@@ -627,7 +624,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			}
 			else
 			{
-				$tracking = (isset($_COOKIE[$config['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$config['cookie_name'] . '_track'])) : array();
+				$tracking = (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track'])) : array();
 
 				foreach ($forum_id as $f_id)
 				{
@@ -670,13 +667,13 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			if (!$config['load_db_lastread'])
 			{
 				$tracking = array();
-				if (isset($_COOKIE[$config['cookie_name'] . '_track']))
+				if (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track']))
 				{
-					$tracking = unserialize(stripslashes($_COOKIE[$config['cookie_name'] . '_track']));
+					$tracking = unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track']));
 
 					// If the cookie grows larger than 2000 characters we will remove
 					// the smallest value
-					if (strlen($_COOKIE[$config['cookie_name'] . '_track']) > 2000)
+					if (strlen($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track']) > 2000)
 					{
 						foreach ($tracking as $f => $t_ary)
 						{
@@ -710,7 +707,7 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 {
 	global $_CLASS;
 
-	$seperator = $_CLASS['user']->theme['pagination_sep'];
+	$seperator = $_CLASS['user']->img['pagination_sep'];
 
 	$total_pages = ceil($num_items/$per_page);
 
@@ -792,11 +789,7 @@ function obtain_word_list(&$censors)
 		return;
 	}
 
-	if ($_CLASS['cache']->exists('word_censors'))
-	{
-		$censors = $_CLASS['cache']->get('word_censors');
-	}
-	else
+	if (!($censors = $_CLASS['cache']->get('word_censors')))
 	{
 		$sql = 'SELECT word, replacement
 			FROM  ' . WORDS_TABLE;
@@ -805,11 +798,11 @@ function obtain_word_list(&$censors)
 		$censors = array();
 		while ($row = $_CLASS['db']->sql_fetchrow($result))
 		{
+			echo 'test';
 			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
 			$censors['replace'][] = $row['replacement'];
 		}
 		$_CLASS['db']->sql_freeresult($result);
-
 		$_CLASS['cache']->put('word_censors', $censors);
 	}
 
@@ -821,11 +814,7 @@ function obtain_icons(&$icons)
 {
 	global $_CLASS;
 
-	if ($_CLASS['cache']->exists('icons'))
-	{
-		$icons = $_CLASS['cache']->get('icons');
-	}
-	else
+	if (!($icons = $_CLASS['cache']->get('icons')))
 	{
 		// Topic icons
 		$sql = 'SELECT *
@@ -1038,21 +1027,19 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 		WHERE user_id = " . $_CLASS['user']->data['user_id'];
 	$_CLASS['db']->sql_query($sql);
 	
-	require('header.php');
+	$_CLASS['display']->display_head($_CLASS['user']->lang[$title]);
 	
-	page_header($_CLASS['user']->lang[$title]);
-	$_CLASS['template']->display('forums/'.$html_body);
+	page_header();
+	$_CLASS['template']->display('modules/Forums/'.$html_body);
 
-	page_footer();
-	
-	require('footer.php');
+	$_CLASS['display']->display_footer();
 	
 }
 
 // Generate login box or verify password
 function login_box($redirect = '', $l_explain = '', $l_success = '', $admin = false, $s_display = true)
 {
-	global $SID, $_CLASS, $pagetitle, $mainindex;
+	global $SID, $_CLASS, $mainindex;
 
 	$err = '';
 	
@@ -1113,17 +1100,15 @@ function login_box($redirect = '', $l_explain = '', $l_success = '', $admin = fa
 		)
 	);
 	
-	$pagetitle = $_CLASS['user']->lang['LOGIN'];
-	require('header.php');
+	$_CLASS['display']->display_head($_CLASS['user']->lang['LOGIN']);
 	
 	page_header();
-	page_footer();
 	
 	make_jumpbox(getlink("Forums&amp;file=viewforum"));
 	
-	$_CLASS['template']->display('forums/login_body.html');
+	$_CLASS['template']->display('modules/Forums/login_body.html');
 	
-	require('footer.php');
+	$_CLASS['display']->display_footer();
 }
 
 // Generate forum login box
@@ -1180,14 +1165,14 @@ function login_forum_box(&$forum_data)
 
 		$_CLASS['template']->assign('LOGIN_ERROR', $_CLASS['user']->lang['WRONG_PASSWORD']);
 	}
-	require('header.php');
+	
+	$_CLASS['display']->display_head();
 
 	page_header();
 	
-	$_CLASS['template']->display('forums/login_forum.html');
+	$_CLASS['template']->display('modules/Forums/login_forum.html');
 
-	page_footer();
-	require('footer.php');
+	$_CLASS['display']->display_footer();
 
 }
 
@@ -1248,15 +1233,15 @@ function censor_text($text)
 // Smilie processing
 function smilie_text($text, $force_option = false)
 {
-	global $config, $user;
+	global $config, $_CLASS;
 
-	return ($force_option || !$config['allow_smilies'] || !$user->optionget('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILE_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILE_PATH}', '<img src="' . $config['smilies_path'], $text);
+	return ($force_option || !$config['allow_smilies'] || !$_CLASS['user']->optionget('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILE_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILE_PATH}', '<img src="' . $config['smilies_path'], $text);
 }
 
 // Inline Attachment processing
 function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_id = 0, $preview = false)
 {
-	global $config, $user;
+	global $config, $_CLASS;
 
 	$attachments = display_attachments($forum_id, NULL, $attachments, $update_count, $preview, true);
 	$tpl_size = sizeof($attachments);
@@ -1272,7 +1257,7 @@ function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_
 		$index = ($config['display_order']) ? ($tpl_size-($matches[1][$num] + 1)) : $matches[1][$num];
 
 		$replace['from'][] = $matches[0][$num];
-		$replace['to'][] = (isset($attachments[$index])) ? $attachments[$index] : sprintf($user->lang['MISSING_INLINE_ATTACHMENT'], $matches[2][array_search($index, $matches[1])]);
+		$replace['to'][] = (isset($attachments[$index])) ? $attachments[$index] : sprintf($_CLASS['user']->lang['MISSING_INLINE_ATTACHMENT'], $matches[2][array_search($index, $matches[1])]);
 
 		$unset_tpl[] = $index;
 	}
@@ -1319,7 +1304,7 @@ function extension_allowed($forum_id, $extension, &$extensions)
 	return false;
 }
 
-function page_header($page_title = '')
+function page_header()
 {
 	global $config, $SID, $_CLASS, $MAIN_CFG;
 
@@ -1355,15 +1340,8 @@ function page_header($page_title = '')
 			$reading_sql = "AND s.session_url LIKE '%f=$f%'";
 		}
 
-		$sql = 'SELECT u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour, s.session_ip, s.session_viewonline
-			FROM ' . USERS_TABLE . ' u, ' . SESSIONS_TABLE . ' s
-			WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) . "
-				$reading_sql
-				AND u.user_id = s.session_user_id
-			ORDER BY u.username ASC, s.session_ip ASC";
-		$result = $_CLASS['db']->sql_query($sql, false);
-
-		while ($row = $_CLASS['db']->sql_fetchrow($result))
+		$session_users = session_users();
+		foreach ($session_users as $row)
 		{
 			// User is logged in and therefor not a guest
 			if ($row['user_id'] != ANONYMOUS)
@@ -1407,6 +1385,7 @@ function page_header($page_title = '')
 
 			$prev_session_ip = $row['session_ip'];
 		}
+		unset($session_users);
 
 		if (!$online_userlist)
 		{
@@ -1470,7 +1449,6 @@ function page_header($page_title = '')
 	}
 
 	$l_privmsgs_text = $l_privmsgs_text_unread = '';
-	$s_privmsg_new = false;
 
 	// Obtain number of new private messages if user is logged in
 	if ($_CLASS['user']->data['user_id'] != ANONYMOUS)
@@ -1479,25 +1457,10 @@ function page_header($page_title = '')
 		{
 			$l_message_new = ($_CLASS['user']->data['user_new_privmsg'] == 1) ? $_CLASS['user']->lang['NEW_PM'] : $_CLASS['user']->lang['NEW_PMS'];
 			$l_privmsgs_text = sprintf($l_message_new, $_CLASS['user']->data['user_new_privmsg']);
-
-			if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] > $_CLASS['user']->data['session_last_visit'])
-			{
-				$sql = 'UPDATE ' . USERS_TABLE . '
-					SET user_last_privmsg = ' . $_CLASS['user']->data['session_last_visit'] . '
-					WHERE user_id = ' . $_CLASS['user']->data['user_id'];
-				$_CLASS['db']->sql_query($sql);
-
-				$s_privmsg_new = true;
-			}
-			else
-			{
-				$s_privmsg_new = false;
-			}
 		}
 		else
 		{
 			$l_privmsgs_text = $_CLASS['user']->lang['NO_NEW_PM'];
-			$s_privmsg_new = false;
 		}
 
 		$l_privmsgs_text_unread = '';
@@ -1510,7 +1473,7 @@ function page_header($page_title = '')
 	}
 
 	// Which timezone?
-	$tz = ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? strval(doubleval($_CLASS['user']->data['user_timezone'])) : strval(doubleval($config['board_timezone']));
+	$tz = ($_CLASS['user']->data['user_id'] != ANONYMOUS) ? strval(doubleval($_CLASS['user']->data['user_timezone'])) : strval(doubleval($MAIN_CFG['global']['default_timezone']));
 
 	// The following assigns all _common_ variables that may be used at any point
 	// in a template.
@@ -1556,7 +1519,7 @@ function page_header($page_title = '')
 		'S_CONTENT_ENCODING' 	=> $_CLASS['user']->lang['ENCODING'],
 		'S_CONTENT_DIR_LEFT' 	=> $_CLASS['user']->lang['LEFT'],
 		'S_CONTENT_DIR_RIGHT' 	=> $_CLASS['user']->lang['RIGHT'],
-		'S_TIMEZONE' 			=> ($_CLASS['user']->data['user_dst'] || ($_CLASS['user']->data['user_id'] == ANONYMOUS && $config['board_dst'])) ? sprintf($_CLASS['user']->lang['ALL_TIMES'], $_CLASS['user']->lang['tz'][$tz], $_CLASS['user']->lang['tz']['dst']) : sprintf($_CLASS['user']->lang['ALL_TIMES'], $_CLASS['user']->lang['tz'][$tz], ''), 
+		'S_TIMEZONE' 			=> ($_CLASS['user']->data['user_dst'] || ($_CLASS['user']->data['user_id'] == ANONYMOUS && $MAIN_CFG['global']['default_dst'])) ? sprintf($_CLASS['user']->lang['ALL_TIMES'], $_CLASS['user']->lang['tz'][$tz], $_CLASS['user']->lang['tz']['dst']) : sprintf($_CLASS['user']->lang['ALL_TIMES'], $_CLASS['user']->lang['tz'][$tz], ''), 
 		'S_DISPLAY_ONLINE_LIST'	=> (!empty($config['load_online'])) ? 1 : 0, 
 		'S_DISPLAY_SEARCH'		=> (!empty($config['load_search'])) ? 1 : 0, 
 		'S_DISPLAY_PM'			=> (!empty($config['allow_privmsg'])) ? 1 : 0, 
@@ -1573,24 +1536,12 @@ function page_header($page_title = '')
 		'L_SEARCH_NEW'			=> $_CLASS['user']->lang['SEARCH_NEW'],
 		'L_SEARCH_SELF'			=> $_CLASS['user']->lang['SEARCH_SELF'],
 		'L_SEARCH_UNANSWERED'	=> $_CLASS['user']->lang['SEARCH_UNANSWERED'],
-	
-		'T_THEME_PATH'			=> is_dir('themes/'.$_CLASS['display']->theme.'/template/forums/theme/images') ? 'themes/'.$_CLASS['display']->theme.'/template/forums/theme' : 'includes/templates/forums/theme/', 
-		)
-	);
-	return;
-}
-
-/// To be removed //
-function page_footer()
-{
-	global $config, $_CLASS;
-
-	$_CLASS['template']->assign(array(
 		'PHPBB_VERSION'	=> $config['version'],
 		'DEBUG_OUTPUT'	=> '', 
 		'TRANSLATION_INFO' => 'Ported by <a href="http://www.viperal.com/" target="_Viperal">Viperal</a>'
 		)
 	);
+	return;
 }
 
 ?>

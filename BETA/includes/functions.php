@@ -10,6 +10,29 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+function set_config($config_name, $config_value, $is_dynamic = FALSE)
+{
+	global $_CLASS, $config;
+
+	$sql = 'UPDATE ' . CONFIG_TABLE . "
+		SET config_value = '" . $_CLASS['db']->sql_escape($config_value) . "'
+		WHERE config_name = '" . $_CLASS['db']->sql_escape($config_name) . "'";
+	$_CLASS['db']->sql_query($sql);
+
+	if (!$_CLASS['db']->sql_affectedrows() && !isset($config[$config_name]))
+	{
+		$sql = 'INSERT INTO ' . CONFIG_TABLE . " (config_name, config_value)
+			VALUES ('" . $_CLASS['db']->sql_escape($config_name) . "', '" . $_CLASS['db']->sql_escape($config_value) . "')";
+		$_CLASS['db']->sql_query($sql);
+	}
+
+	$config[$config_name] = $config_value;
+
+	if (!$is_dynamic)
+	{
+		$_CLASS['cache']->destroy('config');
+	}
+}
 
 function script_close()
 {
@@ -50,16 +73,15 @@ function session_users()
 	
 	if ($loaded) 
 	{
-		return;
+		return $loaded;
 	}
 	
 	$loaded = array();
 	
-	$sql = 'SELECT u.username, u.user_id, u.user_allow_viewonline, u.user_type, u.username,
-				s.session_ip, s.session_viewonline, u.user_colour, s.session_page, s.session_url
+	$sql = 'SELECT u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour, s.session_ip, s.session_viewonline, s.session_url, s.session_page
 			FROM '.USERS_TABLE.' u, ' . SESSIONS_TABLE . ' s
-		WHERE u.user_id = s.session_user_id
-			AND s.session_time >= ' . (time() - ($config['load_online_time'] * 60)) . ' 
+			WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
+			AND u.user_id = s.session_user_id
 			ORDER BY u.username ASC, s.session_ip ASC';
 	$result = $_CLASS['db']->sql_query($sql);
 	
@@ -186,6 +208,64 @@ function strip_slashes($str)
 	return (STRIP) ? stripslashes($str) : $str ;
 }
 
+function tool_tip_text($message)
+{
+	htmlentities($message);
+	$message = trim_text($message, '<br />');
+	$message = ereg_replace("'","\'", $message);
+	return $message;
+}
+
+// fix me, add perg replace,
+function trim_text($text, $replacement = ' ') {
+	return str_replace("\r\n", $replacement, trim($text));
+}
+
+// Pick a template/theme combo,
+function theme_select($default = '', $all = false)
+{
+	static $theme;
+	
+	if ($theme)
+	{
+		return $theme;
+	}
+	
+	global $_CLASS;
+	
+	$themetmp = array();
+	
+	$theme = '';
+	$handle = opendir('themes');
+	while ($file = readdir($handle)) {
+		if (!ereg('[.]',$file)) {
+			if (file_exists("themes/$file/index.php")) {
+				$themetmp[] = array('file' => $file, 'template'=> true);
+			} elseif (file_exists("themes/$file/theme.php")) {
+				$themetmp[] = array('file' => $file, 'template'=> false);
+			} 
+		} 
+	}
+	
+	closedir($handle);
+	
+	$count = count($themetmp);
+	
+	for ($i=0; $i < $count; $i++) {
+		
+		$themetmp[$i]['name'] = ($themetmp[$i]['template']) ? $themetmp[$i]['file'].' *' : $themetmp[$i]['file'];
+		if ($themetmp[$i]['file'] == $_CLASS['display']->theme)
+		{
+			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['name'].'</option>';
+		} else {
+			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['name'].'</option>';
+		}
+	}
+	
+	unset($themetmp);
+	
+	return $theme;
+}
 /***********************************************************************************
 
  string getlink($str="", $UseLEO=true, $full=false)

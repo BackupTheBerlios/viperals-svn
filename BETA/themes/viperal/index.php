@@ -1,8 +1,4 @@
 <?php
-if (!defined('CPG_NUKE')) {
-    Header('Location: ../../');
-    die();
-}
 
 global $bgcolor1, $bgcolor2, $bgcolor3, $bgcolor4;
 
@@ -31,7 +27,7 @@ function CloseTable2() {
 
 
 function themehead() {
-	global $sitename, $mainindex, $MAIN_CFG, $themeblockside, $SID, $_CLASS;
+	global $sitename, $mainindex, $MAIN_CFG, $Module, $themeblockside, $SID, $_CLASS;
 
 	$_CLASS['template']->assign(array(
 		'THEME_MAININDEX'	=> $mainindex.'?'.$SID,
@@ -44,7 +40,7 @@ function themehead() {
 	if ($_CLASS['display']->homepage) {
 		$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : $_CLASS['user']->lang['HOME']));
 	} else {
-		$_CLASS['template']->assign('PAGE_TITLE', $_CLASS['user']->lang['HOME'].' > '.$Module['custom_title']);
+		$_CLASS['template']->assign('PAGE_TITLE', $_CLASS['user']->lang['HOME'].' &gt; '.$Module['custom_title']);
 	}
 	
 	$themeblockside = 'left';
@@ -64,23 +60,15 @@ function themefooter() {
 	$_CLASS['template']->display('footer.html');
 }
 
-/***********************************************************************************
-
- Output the specific block to left or right
-	$title  : the title of the block
-	$content: all formatted content for the block
-	$bid    : the database record ID of the block
-
-************************************************************************************/
-function themesidebox($title, $content=false, $bid, $template=false) {
+function themesidebox($title, $content = false, $id, $template = false) {
 	
 	global $_CLASS, $themeblockside;
 	
 	$_CLASS['template']->assign_vars_array($themeblockside.'block', array(
 		'TITLE'		=> $title,
 		'CONTENT'	=> $content,
-		'BID'		=> $bid,
-		'COLLAPSE'	=> hideblock($bid) ? 'style="display: none"' : '',
+		'ID'		=> $id,
+		'COLLAPSE'	=> hideblock($id) ? 'style="display: none"' : '',
 		'TEMPLATE'	=> $template,
 		'IMAGE'   	=> false
 		)

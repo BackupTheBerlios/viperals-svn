@@ -1,15 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
 
 /**
  * Project:     Smarty: the PHP compiling template engine
@@ -60,7 +49,9 @@ class Smarty_Compiler extends Smarty {
     var $_si_qstr_regexp        =   null;
     var $_qstr_regexp           =   null;
     var $_func_regexp           =   null;
+    var $_reg_obj_regexp        =   null;
     var $_var_bracket_regexp    =   null;
+    var $_num_const_regexp      =   null;
     var $_dvar_guts_regexp      =   null;
     var $_dvar_regexp           =   null;
     var $_cvar_regexp           =   null;

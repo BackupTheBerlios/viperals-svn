@@ -44,14 +44,19 @@ class display
 		}
 		else
 		{
-           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme'] : $MAIN_CFG['global']['Default_Theme'];     
+           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme'] : $MAIN_CFG['global']['default_theme'];     
 	
 			if ($this->check_theme($this->theme))
 			{
 				define('THEMEPLATE', $this->temp);
+				
+			} elseif ($this->check_theme($MAIN_CFG['global']['default_theme'])) {
+				
+				$this->theme = $MAIN_CFG['global']['default_theme'];
+				define('THEMEPLATE', $this->temp);
+				
 			} else {
-				define('THEMEPLATE', true);
-				$this->theme = 'viperal';
+				// error here the site has no theme
 			}
 		}
     	
@@ -90,7 +95,7 @@ class display
 		return false;
 	}
 	
-	function display_head() {
+	function display_head($title = false) {
 		global $_CLASS, $MAIN_CFG, $Module;
 		
 		if ($this->displayed['header'])
@@ -99,6 +104,11 @@ class display
 		}
 		
 		$this->displayed['header'] = true;
+
+		if ($title)
+		{
+			$Module['custom_title'] = $title;
+		}
 		
 		//ini_set('default_mimetype', 'text/html');
 		//ini_set('default_charset', $_CLASS['user']->lang['ENCODING']);
@@ -118,12 +128,16 @@ class display
 			{
 				$this->header['js'] .= '<script type="text/javascript">window.open(\''. ereg_replace('&amp;', '&', getlink('Control_Panel&i=pm&mode=popup', false, true))."', '_phpbbprivmsg', 'HEIGHT=225,resizable=yes,WIDTH=400');</script>";
 
-				$sql = 'UPDATE ' . USERS_TABLE . ' SET user_last_privmsg = ' . $_CLASS['user']->data['user_last_privmsg'] . ' WHERE user_id = ' . $_CLASS['user']->data['user_id'];
-				$_CLASS['db']->sql_query($sql);
+				if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] > $_CLASS['user']->data['session_last_visit'])
+				{
+					$sql = 'UPDATE ' . USERS_TABLE . '
+						SET user_last_privmsg = ' . time() . '
+						WHERE user_id = ' . $_CLASS['user']->data['user_id'];
+					$_CLASS['db']->sql_query($sql);
+				}
 			}
 		}
 
-		//require('includes/core/meta.php');
 		$this->header['js'] .= '<script type="text/javascript" src="/includes/javascript/overlib_mini.js"></script>';
 		$this->header['regular'] .= '<meta name="generator" content="CPG-Nuke - Copyright(c) '.date('Y').' by http://cpgnuke.com" />';
 		
@@ -169,8 +183,6 @@ class display
 			}
 		}
 		
-		if (!defined('ADMIN_PAGES')) { require('includes/counter.php'); }
-
 		$_CLASS['blocks']->display(BLOCK_MESSAGE);
 		
 		if ($this->homepage)
@@ -217,7 +229,7 @@ class display
 		if (array_key_exists('1' , ob_list_handlers()) && ob_get_length())
 		{
 			//test this on server before enableing
-			header('Content-Length: ' . ob_get_length());
+			//header('Content-Length: ' . ob_get_length());
 		}
 		die;	
 	}

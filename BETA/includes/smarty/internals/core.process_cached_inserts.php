@@ -11,26 +11,26 @@
  * @param string $results
  * @return string
  */
-function smarty_core_process_cached_inserts($params, &$smarty)
+function smarty_core_process_cached_inserts($params, &$this)
 {
-    preg_match_all('!'.$smarty->_smarty_md5.'{insert_cache (.*)}'.$smarty->_smarty_md5.'!Uis',
+    preg_match_all('!'.$this->_smarty_md5.'{insert_cache (.*)}'.$this->_smarty_md5.'!Uis',
                    $params['results'], $match);
     list($cached_inserts, $insert_args) = $match;
 
     for ($i = 0, $for_max = count($cached_inserts); $i < $for_max; $i++) {
-        if ($smarty->debugging) {
+        if ($this->debugging) {
             $_params = array();
             require_once(SMARTY_CORE_DIR . 'core.get_microtime.php');
-            $debug_start_time = smarty_core_get_microtime($_params, $smarty);
+            $debug_start_time = smarty_core_get_microtime($_params, $this);
         }
 
         $args = unserialize($insert_args[$i]);
         $name = $args['name'];
 
         if (isset($args['script'])) {
-            $_params = array('resource_name' => $smarty->_dequote($args['script']));
+            $_params = array('resource_name' => $this->_dequote($args['script']));
             require_once(SMARTY_CORE_DIR . 'core.get_php_resource.php');
-            if(!smarty_core_get_php_resource($_params, $smarty)) {
+            if(!smarty_core_get_php_resource($_params, $this)) {
                 return false;
             }
             $resource_type = $_params['resource_type'];
@@ -38,28 +38,28 @@ function smarty_core_process_cached_inserts($params, &$smarty)
 
 
             if ($resource_type == 'file') {
-                $smarty->_include($php_resource, true);
+                $this->_include($php_resource, true);
             } else {
-                $smarty->_eval($php_resource);
+                $this->_eval($php_resource);
             }
         }
 
-        $function_name = $smarty->_plugins['insert'][$name][0];
+        $function_name = $this->_plugins['insert'][$name][0];
         if (empty($args['assign'])) {
-            $replace = $function_name($args, $smarty);
+            $replace = $function_name($args, $this);
         } else {
-            $smarty->assign($args['assign'], $function_name($args, $smarty));
+            $this->assign($args['assign'], $function_name($args, $this));
             $replace = '';
         }
 
         $params['results'] = str_replace($cached_inserts[$i], $replace, $params['results']);
-        if ($smarty->debugging) {
+        if ($this->debugging) {
             $_params = array();
             require_once(SMARTY_CORE_DIR . 'core.get_microtime.php');
-            $smarty->_smarty_debug_info[] = array('type'      => 'insert',
+            $this->_smarty_debug_info[] = array('type'      => 'insert',
                                                 'filename'  => 'insert_'.$name,
-                                                'depth'     => $smarty->_inclusion_depth,
-                                                'exec_time' => smarty_core_get_microtime($_params, $smarty) - $debug_start_time);
+                                                'depth'     => $this->_inclusion_depth,
+                                                'exec_time' => smarty_core_get_microtime($_params, $this) - $debug_start_time);
         }
     }
 

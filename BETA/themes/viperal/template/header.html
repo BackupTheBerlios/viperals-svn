@@ -1,13 +1,10 @@
 { include file='head.html' }
 <link rel="stylesheet" href="/themes/viperal/style/style.css" type="text/css" />
-<link rel="alternate stylesheet" type="text/css" media="screen" title="Blue style" href="/themes/viperal/style2/style.css" />
 
 {$HEADER_REGULAR}
 {$HEADER_JS}
 <script type="text/javascript" src="/themes/viperal/blockscript.js"></script>
-{*<script type="text/javascript" src="/includes/javascript/JSCookMenu.js"></script> 
-<link rel="stylesheet" href="/includes/javascript/ThemeOffice/theme.css" type="text/css" />
-<script type="text/javascript" src="/includes/javascript/ThemeOffice/theme.js"></script>*}
+
 <!--[if IE]>{ literal }
 <style>
 	.menu {
@@ -37,8 +34,7 @@
 <div class="menu"><div id="myMenuID" ></div></div>
 
 <div id="header">
-	<div class="logo"><a href="{$U_MAININDEX}"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{$S_SITENAME}" /></a>
-	</div>
+	<a href="{$THEME_MAININDEX}"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{$THEME_SITENAME}" /></a>
 </div>
 { include file='blockleft.html' }
 
@@ -54,8 +50,8 @@
 		<div class="messageblock">
 	
 		{section name=messageblockloop loop=$messageblock}
-			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].BID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $IS_ADMIN }[ {$messageblock[messageblockloop].REMAIN} | {$messageblock[messageblockloop].EDITLINK} ]{ /if }</div>
-			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].BID}">{$messageblock[messageblockloop].CONTENT}</div>
+			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $IS_ADMIN }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }{$messageblock[messageblockloop].EDIT} ]{ /if }</div>
+			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].ID}">{$messageblock[messageblockloop].CONTENT}</div>
 		<br />
 		{/section}
 	

@@ -1,16 +1,14 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*********************************************
+  CPG-NUKE: Advanced Content Management System
+  ********************************************
+  Under the GNU General Public License version 2
 
+  Last modification notes:
+
+    $Id: index.php,v 1.28 2004/05/22 22:03:38 djmaze Exp $
+
+*************************************************************/
 if (!CPG_NUKE) {
     Header('Location: ../../');
     die();
@@ -54,7 +52,19 @@ function view_news() {
     global $_CLASS, $prefix, $MAIN_CFG, $templates;
     
     $start = get_variable('start', 'GET', false, 'integer');
-
+	
+	$_CLASS['template']->caching = true;
+		
+	if (!$start && $_CLASS['template']->is_cached('modules/News/index.html')) {
+		
+		$_CLASS['template']->display('modules/News/index.html');
+		$_CLASS['template']->caching = false;
+		return;
+		
+	}
+	
+	if ($start) { $_CLASS['template']->caching = false; }
+	
 	$limit = ($_CLASS['user']->data['storynum']) ? $_CLASS['user']->data['storynum'] : $MAIN_CFG['global']['storyhome'];
     $sql = 'SELECT s.*, c.title AS cat_title FROM '.$prefix.'_news AS s LEFT JOIN '.$prefix.'_news_cat AS c ON (c.id=s.cat_id) ORDER BY id DESC';
     $result = $_CLASS['db']->sql_query_limit($sql, $limit, $start);
@@ -136,7 +146,8 @@ function view_news() {
 
     if (THEMEPLATE) {
         $_CLASS['template']->display('modules/News/index.html');
-    }
+		$_CLASS['template']->caching = false;
+    } 
 }
 
 function view_story($print = false) {

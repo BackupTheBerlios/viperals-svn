@@ -15,9 +15,9 @@
 
 //  $resource_type, $resource_name
 
-function smarty_core_is_secure($params, &$smarty)
+function smarty_core_is_secure($params, &$this)
 {
-    if (!$smarty->security || $smarty->security_settings['INCLUDE_ANY']) {
+    if (!$this->security || $this->security_settings['INCLUDE_ANY']) {
         return true;
     }
 
@@ -32,8 +32,8 @@ function smarty_core_is_secure($params, &$smarty)
                 }
             }
         }
-        if (!empty($smarty->secure_dir)) {
-            foreach ((array)$smarty->secure_dir as $curr_dir) {
+        if (!empty($this->secure_dir)) {
+            foreach ((array)$this->secure_dir as $curr_dir) {
                 if ( ($_cd = realpath($curr_dir)) !== false &&
                      strncmp($_rp, $_cd, strlen($_cd)) == 0 &&
                      $_rp{strlen($_cd)} == DIRECTORY_SEPARATOR ) {
@@ -44,8 +44,8 @@ function smarty_core_is_secure($params, &$smarty)
     } else {
         // resource is not on local file system
         return call_user_func_array(
-            $smarty->_plugins['resource'][$params['resource_type']][0][2],
-            array($params['resource_name'], &$smarty));
+            $this->_plugins['resource'][$params['resource_type']][0][2],
+            array($params['resource_name'], &$this));
     }
 
     return false;

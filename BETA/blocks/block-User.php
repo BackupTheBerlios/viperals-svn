@@ -64,19 +64,15 @@ if (is_user()) {
 }
 
 $who_where['guest'] = $who_where['user'] = $who_where['staff'] = false;
-$online['guest'] = $online['user'] = $online['hidden'] = $online['total'] = 0;
+$online['guest'] = $online['user'] = $online['hidden'] = $online['total'] = $prev_id = 0;
+$prev_ip =  array();
 
-$guests_online = 0;
-$logged_hidden_online = 0;
-
-$prev_ip = $prev_id = array();
 $session_users = session_users();
 
 foreach ($session_users as $row)
 {
-	if($row['user_id'] != ANONYMOUS && !in_array($row['user_id'], $prev_id))
+	if ($row['user_id'] != $prev_id)
   	{
-
 		if (!is_admin() && (!$row['user_allow_viewonline'] || !$row['session_viewonline']))
 		{
 			$online['hidden']++;
@@ -90,7 +86,7 @@ foreach ($session_users as $row)
 			$row['username'] = '<b style="color:#' . $row['user_colour'] . '">' . $row['username'] . '</b>';
 		}
 		
-		$prev_id[] = $row['user_id'];
+		$prev_id = $row['user_id'];
 	
 	} elseif (!in_array($row['session_ip'], $prev_ip)) {
 	
@@ -139,6 +135,7 @@ foreach ($session_users as $row)
 	}
 
 }
+unset($session_users);
 
 //$total_topics = $config['num_topics'];
 

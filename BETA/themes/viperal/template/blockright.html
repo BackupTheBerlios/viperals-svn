@@ -3,15 +3,11 @@
 <div id="blocksright" >
   {section name=blockrightloop loop=$rightblock}
 	<div class="blocks">
-	
-	{*{ if $rightblock[blockrightloop].IMAGE }
-		<div class="top"><img alt="[x]" title="Show/hide content" id="pic{$rightblock[blockrightloop].BID}" src="{$rightblock[blockrightloop].IMAGE}" onclick="blockswitch('{$rightblock[blockrightloop].BID}');" style="cursor:pointer" /></div>
-	{ /if } *}
 
-		<div class="top" onclick="blockswitch2('{$rightblock[blockrightloop].BID}');" style="cursor:pointer">&nbsp;{$rightblock[blockrightloop].TITLE}&nbsp;</div>
+		<div class="top" onclick="blockswitch2('{$rightblock[blockrightloop].ID}');" style="cursor:pointer">&nbsp;{$rightblock[blockrightloop].TITLE}&nbsp;</div>
       
 
-		<div class="content" id="pe{$rightblock[blockrightloop].BID}" {$rightblock[blockrightloop].COLLAPSE}>
+		<div class="content" id="pe{$rightblock[blockrightloop].ID}" {$rightblock[blockrightloop].COLLAPSE}>
 		
 		{ if $rightblock[blockrightloop].TEMPLATE }
 		

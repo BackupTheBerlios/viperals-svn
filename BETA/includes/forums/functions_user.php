@@ -1,16 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
-
 // -------------------------------------------------------------
 //
 // $Id: functions_user.php,v 1.37 2004/05/02 13:05:38 acydburn Exp $

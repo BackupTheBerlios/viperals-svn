@@ -14,18 +14,18 @@
  * @return string
  */
 
-function smarty_core_process_compiled_include($params, &$smarty)
+function smarty_core_process_compiled_include($params, &$this)
 {
-    $_cache_including = $smarty->_cache_including;
-    $smarty->_cache_including = true;
+    $_cache_including = $this->_cache_including;
+    $this->_cache_including = true;
 
     $_return = $params['results'];
-    foreach ($smarty->_cache_serials as $_include_file_path=>$_cache_serial) {
+    foreach ($this->_cache_serials as $_include_file_path=>$_cache_serial) {
         $_return = preg_replace_callback('!(\{nocache\:('.$_cache_serial.')#(\d+)\})!s',
-                                         array(&$smarty, '_process_compiled_include_callback'),
+                                         array(&$this, '_process_compiled_include_callback'),
                                          $_return);
     }
-    $smarty->_cache_including = $_cache_including;
+    $this->_cache_including = $_cache_including;
     return $_return;
 }
 

@@ -17,7 +17,7 @@
 
 //  $dirname, $level = 1, $exp_time = null
 
-function smarty_core_rmdir($params, &$smarty)
+function smarty_core_rmdir($params, &$this)
 {
    if(!isset($params['level'])) { $params['level'] = 1; }
    if(!isset($params['exp_time'])) { $params['exp_time'] = null; }
@@ -33,10 +33,10 @@ function smarty_core_rmdir($params, &$smarty)
                         'exp_time' => $params['exp_time']
                     );
                     require_once(SMARTY_CORE_DIR . 'core.rmdir.php');
-                    smarty_core_rmdir($_params, $smarty);
+                    smarty_core_rmdir($_params, $this);
                 }
                 else {
-                    $smarty->_unlink($params['dirname'] . DIRECTORY_SEPARATOR . $_entry, $params['exp_time']);
+                    $this->_unlink($params['dirname'] . DIRECTORY_SEPARATOR . $_entry, $params['exp_time']);
                 }
             }
         }

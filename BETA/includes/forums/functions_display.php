@@ -1,16 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
-
 // -------------------------------------------------------------
 //
 // $Id: functions_display.php,v 1.59 2004/09/17 09:11:47 acydburn Exp $
@@ -25,7 +13,7 @@
 
 function display_forums($root_data = '', $display_moderators = TRUE)
 {
-	global $config, $db, $_CLASS, $phpEx, $forum_moderators;
+	global $config, $db, $_CLASS, $MAIN_CFG, $phpEx, $forum_moderators;
 
 	// Get posted/get info
 	$mark_read = request_var('mark', '');
@@ -64,7 +52,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		$sql_from = FORUMS_TABLE . ' f ';
 		$lastread_select = $sql_lastread = '';
 
-		$tracking_topics = (isset($_COOKIE[$config['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$config['cookie_name'] . '_track'])) : array();
+		$tracking_topics = (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track'])) : array();
 	}
 
 	$sql = "SELECT f.* $lastread_select 

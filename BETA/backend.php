@@ -11,10 +11,10 @@
 //																//
 //**************************************************************//
 
-define('CPG_NUKE', 'XMLFEED');
+define('VIPERAL', 'MINILOAD');
 error_reporting(0);
 
-require('mainfile.php');
+require('core.php');
 
 header('Content-Type: text/xml');
 
@@ -27,16 +27,17 @@ $_CLASS['template']->assign(array(
 		'SITE_URL' 	=> $MAIN_CFG['global']['nukeurl'],
 		'SLOGAN' 	=> $MAIN_CFG['global']['slogan'],
 		'LANG'		=> $MAIN_CFG['global']['backend_language'],
-		'TIME'		=> time()
+		'TIME'		=> gmdate('M d Y H:i:s', time()) .' GMT'
 	));
 		
 while ($row = $db->sql_fetchrow($result)) {
+
 		$_CLASS['template']->assign_vars_array('items', array(
 		
 		'TITLE' 		=> htmlentities($row['title'], ENT_QUOTES),
 		'LINK' 			=> getlink('News&amp;mode=view&amp;id='.$row['id'], true, true, false),
 		'DESCRIPTION' 	=> htmlentities(strip_tags($row['intro']), ENT_QUOTES),
-		'TIME'			=> $row['time'],
+		'TIME'			=> gmdate('M d Y H:i:s', $row['time']) .' GMT',
 		'AUTHOR'		=> $row['poster_name']
 	));
 }
@@ -62,6 +63,7 @@ Switch ($feed)
 	$_CLASS['template']->display('rss/rss91.html');
 }
 
-require('footer.php');
+script_close();
+die;
 
 ?>

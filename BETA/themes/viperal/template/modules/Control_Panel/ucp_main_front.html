@@ -29,7 +29,7 @@
 		<td class="row1" width="120" align="center" nowrap="nowrap">
 			<p class="topicdetails">{$topicrow[topicrowloop].LAST_POST_TIME}</p>
 			<p class="topicdetails">
-			{ if $forumrow[topicrowloop].U_LAST_POSTER }
+			{ if isset($forumrow[topicrowloop].U_LAST_POST_AUTHOR) }
 				<a href="{$forumrow[topicrowloop].U_LAST_POST_AUTHOR}">{$topicrow[topicrowloop].LAST_POST_AUTHOR}</a>
 			{ else }
 				{$topicrow[topicrowloop].LAST_POST_AUTHOR}

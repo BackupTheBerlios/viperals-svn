@@ -1,16 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
-
 // -------------------------------------------------------------
 //
 // $Id: bbcode.php,v 1.79 2004/09/16 18:33:18 acydburn Exp $
@@ -172,7 +160,7 @@ class bbcode
 			}
 
 			$this->template_bitfield = $_CLASS['user']->theme['bbcode_bitfield'];
-			$this->template_filename = file_exists('themes/' . $_CLASS['display']->theme . '/template/forums/bbcode.html') ? 'themes/' . $_CLASS['display']->theme . '/template/forums/bbcode.html' : 'includes/templates/forums/bbcode.html';
+			$this->template_filename = file_exists('themes/' . $_CLASS['display']->theme . '/template/modules/Forums/bbcode.html') ? 'themes/' . $_CLASS['display']->theme . '/template/modules/Forums/bbcode.html' : 'includes/templates/modules/Forums/bbcode.html';
 		}
 
 		$sql = '';

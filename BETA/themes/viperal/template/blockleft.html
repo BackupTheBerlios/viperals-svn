@@ -1,12 +1,12 @@
-{ if $leftblock }
+{ if isset($leftblock) }
 
 <div id="blocksleft">
   {section name=blockleftloop loop=$leftblock}
 	<div class="blocks">
        
-        <div class="top" onclick="blockswitch2('{$leftblock[blockleftloop].BID}');" style="cursor:pointer">&nbsp;{$leftblock[blockleftloop].TITLE}&nbsp;</div>
+        <div class="top" onclick="blockswitch2('{$leftblock[blockleftloop].ID}');" style="cursor:pointer">&nbsp;{$leftblock[blockleftloop].TITLE}&nbsp;</div>
                     
-		<div class="content" id="pe{$leftblock[blockleftloop].BID}" {$leftblock[blockleftloop].COLLAPSE}>
+		<div class="content" id="pe{$leftblock[blockleftloop].ID}" {$leftblock[blockleftloop].COLLAPSE}>
 
         {$leftblock[blockleftloop].CONTENT}
         

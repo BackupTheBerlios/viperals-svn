@@ -67,7 +67,7 @@ class cache
 			unset($cached_config);
 		}
 		
-		if (!($MAIN_CFG = $this->get('MAIN_CFG')))
+		if (!($MAIN_CFG = $this->get('main_cfg')))
 		{
 			$MAIN_CFG = array();
 		
@@ -81,7 +81,7 @@ class cache
 			}
 			$_CLASS['db']->sql_freeresult($result);
 		
-			$this->put('MAIN_CFG', $MAIN_CFG);
+			$this->put('main_cfg', $MAIN_CFG);
 		}
 
 		if ((time() - $config['cache_gc']) > $config['cache_last_gc'])
@@ -104,10 +104,15 @@ class cache
 		{
 			require($this->cache_dir . "data_$var_name.$phpEx");
 			
-			if (time() > $this->var_expires[$var_name] || empty($this->vars[$var_name]))
+			if (time() > $this->var_expires[$var_name])
 			{
 				unset($this->var_expires[$var_name], $this->vars[$var_name]);
 				return false;
+			}
+			
+			if (empty($this->vars[$var_name]))
+			{
+				$this->vars[$var_name] = '';
 			}
 			
 			return $this->vars[$var_name];
@@ -160,6 +165,7 @@ class cache
 	
 	function exists($var_name)
 	{
+		global $phpEx;
 		if (file_exists($this->cache_dir . "data_$var_name.$phpEx"))
 		{
 			return true;

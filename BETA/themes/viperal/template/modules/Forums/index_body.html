@@ -1,0 +1,169 @@
+{ include file='modules/Forums/overall_header.html' }
+
+	{* $Id: index_body.html,v 1.10 2004/05/31 18:00:10 acydburn Exp $ *}
+
+	<table class="tablebg" cellspacing="1" width="100%">
+		<tr>
+			<td class="cat" colspan="5" align="right"><a class="nav" href="{$U_MARK_FORUMS}">{$L_MARK_FORUMS_READ}</a>&nbsp;</td>
+		</tr>
+		<tr>
+			<th colspan="2">&nbsp;{$L_FORUM}&nbsp;</th>
+			<th width="50">&nbsp;{$L_TOPICS}&nbsp;</th>
+			<th width="50">&nbsp;{$L_POSTS}&nbsp;</th>
+			<th>&nbsp;{$L_LAST_POST}&nbsp;</th>
+		</tr>
+		
+		{section name=forumrowloop loop=$forumrow}
+		{ if $forumrow[forumrowloop].S_IS_CAT }
+		<tr>
+			<td class="cat" colspan="2"><h4><a href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a></h4></td>
+			<td class="catdiv" colspan="3">&nbsp;</td>
+		</tr>
+		{ elseif $forumrow[forumrowloop].S_IS_LINK }
+		<tr>
+			<td class="row1" width="50" align="center">{$forumrow[forumrowloop].FORUM_FOLDER_IMG}</td>
+			{ if $forumrow[forumrowloop].CLICKS }
+			<td class="row1">
+			{ else }
+			<td class="row1" colspan="4">
+			{ /if }
+				<a class="forumlink" href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a>
+				<p class="forumdesc">{$forumrow[forumrowloop].FORUM_DESC}</p></td>
+			{ if $forumrow[forumrowloop].CLICKS }
+			<td class="row2" colspan="3" align="center"><span class="gensmall">{$L_REDIRECTS}: {$forumrow[forumrowloop].CLICKS}</span></td>
+			{ /if }
+		</tr>
+		{ else }
+		<tr>
+			<td class="row1" width="50" align="center">{$forumrow[forumrowloop].FORUM_FOLDER_IMG}</td>
+			<td class="row1" width="100%">
+				<a class="forumlink" href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a>
+				<p class="forumdesc">{$forumrow[forumrowloop].FORUM_DESC}</p>
+				{ if $forumrow[forumrowloop].MODERATORS }
+					<p class="forumdesc"><strong>{$forumrow[forumrowloop].L_MODERATOR_STR}:</strong> {$forumrow[forumrowloop].MODERATORS}</p>
+				{ /if }
+				{ if $forumrow[forumrowloop].SUBFORUMS }
+					<p class="forumdesc"><strong>{$forumrow[forumrowloop].L_SUBFORUM_STR}</strong> {$forumrow[forumrowloop].SUBFORUMS}</p>
+				{ /if }
+			</td>
+			<td class="row2" align="center"><p class="gensmall">{$forumrow[forumrowloop].TOPICS}</p></td>
+			<td class="row2" align="center"><p class="gensmall">{$forumrow[forumrowloop].POSTS}</p></td>
+			<td class="row2" align="center" nowrap="nowrap">
+				{ if $forumrow[forumrowloop].LAST_POST_TIME }
+					<p class="gensmall">{$forumrow[forumrowloop].LAST_POST_TIME}</p>
+					<p class="gensmall">
+					{ if $forumrow[forumrowloop].U_LAST_POSTER }
+						<a href="{$forumrow[forumrowloop].U_LAST_POSTER}">{$forumrow[forumrowloop].LAST_POSTER}</a>
+					{ else }
+						{$forumrow[forumrowloop].LAST_POSTER}
+					{ /if }
+					<a href="{$forumrow[forumrowloop].U_LAST_POST}">{$forumrow[forumrowloop].LAST_POST_IMG}</a>
+					</p>
+				{ else }
+					<p class="gensmall">{$L_NO_POSTS}</p>
+				{ /if }
+			</td>
+		</tr>
+		{ /if }
+	   { sectionelse }
+
+		<tr>
+			<td class="row1" colspan="5" align="center"><p class="gensmall">{$L_NO_FORUMS}</p></td>
+		</tr>
+		{ /section }
+	</table>
+	<a class="gensmall" href="{$U_DELETE_COOKIES}">{$L_DELETE_COOKIES}</a><br />
+
+	<br clear="all" />
+
+	<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+		<tr>
+			<td class="row1">
+				<p class="breadcrumbs"><a href="{$U_INDEX}">{$L_INDEX}</a></p>
+				<p class="datetime">{$S_TIMEZONE}</p>
+			</td>
+		</tr>
+	</table>
+
+	{ if $S_DISPLAY_ONLINE_LIST }
+	<br clear="all" />
+
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="cat" colspan="2"><h4><a href="{$U_VIEWONLINE}">{$L_WHO_IS_ONLINE}</a></h4></td>
+		</tr>
+		<tr>
+			{ if $LEGEND }
+			<td class="row1" rowspan="2" align="center" valign="middle"><img src="{$T_THEME_PATH}/images/whosonline.gif" alt="{$L_WHO_IS_ONLINE}" /></td>
+			{ else }
+			<td class="row1" align="center" valign="middle"><img src="{$T_THEME_PATH}/images/whosonline.gif" alt="{$L_WHO_IS_ONLINE}" /></td>
+			{ /if }
+			<td class="row1" width="100%"><span class="gensmall">{$TOTAL_USERS_ONLINE}<br />{$RECORD_USERS}<br /><br />{$LOGGED_IN_USER_LIST}<br /><br />{$L_ONLINE_EXPLAIN}</span></td>
+		</tr>
+		{ if $LEGEND }
+		<tr>
+			<td class="row1"><b class="gensmall">{$L_LEGEND} :: {$LEGEND}</b></td>
+		</tr>
+		{ /if }
+	</table>
+	{ /if }
+
+	{ if $S_DISPLAY_BIRTHDAY_LIST }
+	<br clear="all" />
+
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="cat" colspan="2"><h4>{$L_BIRTHDAYS}</h4></td>
+		</tr>
+		<tr>
+			<td class="row1" align="center" valign="middle"><img src="{$T_THEME_PATH}/images/whosonline.gif" alt="{$L_WHO_IS_ONLINE}" /></td>
+			<td class="row1" width="100%"><p class="gensmall">{ if $BIRTHDAY_LIST }{$L_CONGRATULATIONS}: <b>{$BIRTHDAY_LIST}</b>{ else }{$L_NO_BIRTHDAYS}{ /if }</p></td>
+		</tr>
+	</table>
+	{ /if }
+
+	<br clear="all" />
+
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="cat" colspan="2"><h4>{$L_STATISTICS}</h4></td>
+		</tr>
+		<tr>
+			<td class="row1"><img src="{$T_THEME_PATH}/images/whosonline.gif" alt="{$L_WHO_IS_ONLINE}" /></td>
+			<td class="row1" width="100%" valign="middle"><p class="gensmall">{$TOTAL_POSTS} | {$TOTAL_TOPICS} | {$TOTAL_USERS} | {$NEWEST_USER}</p></td>
+		</tr>
+	</table>
+
+	{ if !$S_USER_LOGGED_IN }
+	<br clear="all" />
+
+	<form method="post" action="{$S_LOGIN_ACTION}"><table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="cat"><h4><a href="{$U_LOGIN_LOGOUT}">{$L_LOGIN_LOGOUT}</a></h4></td>
+		</tr>
+		<tr>
+			<td class="row1" align="center">
+			<span class="gensmall">{$L_USERNAME}:</span> <input class="post" type="text" name="username" size="10" />&nbsp;
+			 <span class="gensmall">{$L_PASSWORD}:</span>
+			 <input class="post" type="password" name="password" size="10" />&nbsp; <span class="gensmall">{$L_LOG_ME_IN}</span> <input class="text" type="checkbox" name="autologin" />&nbsp;
+			 <input type="submit" class="btnmain" name="login" value="{$L_LOGIN}" /></td>
+		</tr>
+	</table></form>
+	{ /if }
+
+	<br clear="all" />
+
+	<table align="center">
+		<tr>
+			<td width="20" align="center">{$FORUM_NEW_IMG}</td>
+			<td><span class="gensmall">{$L_NEW_POSTS}</span></td>
+			<td>&nbsp;&nbsp;</td>
+			<td width="20" align="center">{$FORUM_IMG}</td>
+			<td><span class="gensmall">{$L_NO_NEW_POSTS}</span></td>
+			<td>&nbsp;&nbsp;</td>
+			<td width="20" align="center">{$FORUM_LOCKED_IMG}</td>
+			<td><span class="gensmall">{$L_FORUM_LOCKED}</span></td>
+		</tr>
+	</table>
+
+{ include file='modules/Forums/overall_footer.html' }

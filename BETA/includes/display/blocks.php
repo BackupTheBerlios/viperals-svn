@@ -12,96 +12,122 @@
 //**************************************************************//
 
 /* to do
-Complete Message and blocks
 RSS system
-User blocks
+User blocks this will be a reqular block.
 */
 
 class blocks
 {
-	var $blocks = array();
-	var $content = '';
-	var $template = '';
+	var $blocks_array = array();
+	var $blocks_loaded = false;
+	var $info = false;
+	var $content = false;
+	var $template = false;
+	
+	function check_side($side)
+	{
+		static $side_check = array();
 
-	function check_side($side) {
-		global $Module;
-		
-		if (CPG_NUKE == 'Admin')
+		if (!empty($side_check[$side]))
+		{
+			return $side_check[$side];
+		}
+
+		if (VIPERAL == 'Admin')
 		{
 			if ($side != BLOCK_LEFT)
 			{
-				return false;
+				return $side_check[$side] = false;
 			}
-			return true;
+			return $side_check[$side] = true;
 		}
 		
-		if (($Module['sides'] == BLOCK_ALL) || ($Module['sides'] == BLOCK_LEFT && $side == BLOCK_LEFT) || ($Module['sides'] == BLOCK_RIGHT && $side == BLOCK_RIGHT))
-		{
-			return true;
-		}
-				
-		return false;
+		global $Module;
 
+		if (($Module['sides'] == BLOCK_ALL) || ($side == BLOCK_LEFT && $Module['sides'] == BLOCK_LEFT) || ($side == BLOCK_RIGHT && $Module['sides'] == BLOCK_RIGHT))
+		{
+			if (!$this->blocks_loaded)
+			{
+				$this->load_blocks();
+			}
+			
+			if (!empty($this->blocks_array[$side]))
+			{
+				return $side_check[$side] = true;
+			}
+		}
+		
+		return $side_check[$side] = false;	
 	}
 	
-	function display($position) {
+	function load_blocks()
+	{
+		if ($this->blocks_loaded)
+		{
+			return;
+		}
+		
+		global $_CLASS;
+
+		if (!($this->blocks_array = $_CLASS['cache']->get('blocks')))
+		{
+			$result = $_CLASS['db']->sql_query('SELECT * FROM '.BLOCKS_TABLE." WHERE active='1' ORDER BY weight ASC");
+
+			while($row = $_CLASS['db']->sql_fetchrow($result)) {
+				$this->blocks_array[$row['position']][] = $row;
+			}
+			
+			$_CLASS['cache']->put('blocks', $this->blocks_array);
+			$_CLASS['db']->sql_freeresult($result);
+		}
+		
+		$this->blocks_loaded = true;
+	}
+	
+	function display($position)
+	{
 		static $expire_updated = false;
 		
-		if (CPG_NUKE == 'Admin' && $position != BLOCK_LEFT)
+		if (($position == BLOCK_LEFT || $position == BLOCK_RIGHT) && !$this->check_side($position))
 		{
 			return false;
 		}
 		
-		global $_CLASS, $userinfo;
-		
-		if (!count($this->blocks))
+		if (VIPERAL == 'Admin' && $position != BLOCK_LEFT)
 		{
-			if (!($this->blocks = $_CLASS['cache']->get('blocks')))
-			{
-				$result = $_CLASS['db']->sql_query('SELECT * FROM '.BLOCKS_TABLE." WHERE active='1' ORDER BY weight ASC");
-
-				while($row = $_CLASS['db']->sql_fetchrow($result)) {
-					$this->blocks[$row['position']][] = $row;
-				}
-				
-				$_CLASS['cache']->put('blocks', $this->blocks);
-				$_CLASS['db']->sql_freeresult($result);
-			}
+			return false;
 		}
 		
-		if (!empty($this->blocks[$position]))
+		global $_CLASS;
 		
-		foreach($this->blocks[$position] AS $this->blocksrow) {
+		if (!$this->blocks_loaded)
+		{
+			$this->load_blocks();
+		}
 		
-			if ($this->blocksrow['expires'] && (time() >= $this->blocksrow['expires']))
-			{
-				if ( !$expire_updated )
+		if (!empty($this->blocks_array[$position]))
+		{
+			foreach($this->blocks_array[$position] AS $this->blocksrow) {
+			
+				if ($this->blocksrow['expires'] && !$expire_updated && (time() >= $this->blocksrow['expires']))
 				{
 					$_CLASS['db']->sql_query('UPDATE '.BLOCKS_TABLE." SET active='0' WHERE expires >=".time());
 					$expire_updated = true;
+					$_CLASS['cache']->destroy('blocks');
+	
+					continue;
 				}
-				
-				continue;
-			 }
-         
-			// Ow way ow way do i still have this :-(
-			// Must do new system !
-			if (($this->blocksrow['view'] == 0) ||
-				($this->blocksrow['view'] == 1 AND is_user() || is_admin()) ||
-				($this->blocksrow['view'] == 2 AND is_admin()) ||
-				($this->blocksrow['view'] == 3 AND !is_user() || is_admin()) ||
-				($this->blocksrow['view'] > 3 AND $userinfo['_mem_of_groups'][($row['view']-3)] || is_admin($admin))) {
-				
+	
 				$this->display_blocks();
+	
 			}
 		}
-		
-		unset($this->blocksrow);
+
 		return false;
 	}
 
-	function display_blocks() {
-
+	function display_blocks()
+	{
 		Switch ($this->blocksrow['type'])
 		{
 	   
@@ -124,74 +150,70 @@ class blocks
 		}
 		
 		return;
-	
 	}
 	
-	function block_file() {
-	
-		// Almost Completed 
-		// remove old defines add new language set.
+	function block_file()
+	{
 		global $_CLASS;
-		if (($this->blocksrow['position'] == BLOCK_LEFT || $this->blocksrow['position'] == BLOCK_RIGHT) && !$this->check_side($this->blocksrow['position']))
-		{
-			return;
-		}
 		
-		/*$startqueries = $_CLASS['db']->sql_num_queries();
-		$starttime = explode(' ', microtime());
-		$starttime = $starttime[0] + $starttime[1];*/
-
 		if (!$this->blocksrow['file']) { return; };
 		
 		if (file_exists('blocks/'.$this->blocksrow['file'])) {
 		
+			/*
+			$startqueries = $_CLASS['db']->sql_num_queries();
+			$starttime = explode(' ', microtime());
+			$starttime = $starttime[0] + $starttime[1];
+			*/
+		
 			require('blocks/'.$this->blocksrow['file']);
 			
+			/*
+			$endtime = explode(' ', microtime());
+			$endtime = $endtime[0] + $endtime[1];
+			*/
+			
+			if (!$this->content && !$this->template)
+			{
+				if (is_admin())
+				{
+					$this->content = ($this->info) ? $this->info : $_CLASS['user']->lang['BLOCK_ERROR2'];
+				} else {
+					return;
+				}
+			}
+
 		} else {
 		
-			if (is_admin()) {
-				$this->content = _BLOCKPROBLEM;
+			if (is_admin())
+			{
+				$this->content = $_CLASS['user']->lang['BLOCK_ERROR1'];
 			} else {
 				return;
 			}
 			
 		}
-		
-		if (!$this->content && !$this->template) {
-			if (is_admin()) {
-				$this->content = _BLOCKPROBLEM2;
-			} else {
-				return;
-			}
-		}
-		
-		$endtime = explode(' ', microtime());
-		$endtime = $endtime[0] + $endtime[1];
-		
-		/*$this->content .= '<div style="text-align: center;">';
+
+		/*
+		$this->content .= '<div style="text-align: center;">';
 		$this->content .= '<br />block queries: '.($_CLASS['db']->sql_num_queries() - $startqueries);
 		$this->content .= '<br />Generation time: '.round($endtime - $starttime, 4).'s';
-		$this->content .= '</div>';*/
+		$this->content .= '</div>';
+		*/
 
 		if ($this->blocksrow['position'] == BLOCK_LEFT || $this->blocksrow['position'] == BLOCK_RIGHT)
 		{
-
-			themesidebox($this->blocksrow['title'], $this->content, $this->blocksrow['bid'], $this->template);
-
+			themesidebox($this->blocksrow['title'], $this->content, $this->blocksrow['id'], $this->template);
 		} else {
-		
-			$this->themecenterbox();
-		
+			$this->center_block();
 		}
 		
-		$this->content = $this->template = false;
+		$this->content = $this->template = $this->info = false;
 	}
 			
-	function block_message() {
-		global $textcolor2, $_CLASS, $user;
-		
-		// Almost Completed
-		// remove old defines add new language set.
+	function block_message()
+	{
+		global $_CLASS;
 		
 		if (($this->blocksrow['type'] == BLOCKTYPE_MESSAGE_TOP) && (!$_CLASS['display']->homepage))
 		{
@@ -200,106 +222,64 @@ class blocks
 		
 		if (is_admin())
 		{
-			$remain = ($this->blocksrow['expires']) ? _EXPIREIN.' '.$user->format_date($this->blocksrow['expires']).' '._HOURS : _UNLIMITED;
-			$edit = '<a href="'.$remain.'">'._EDIT.'</a>';
+			$expires = ($this->blocksrow['expires']) ? $_CLASS['user']->lang['EXPIRES'].' '.$_CLASS['user']->format_date($this->blocksrow['expires']) : false;
+			$edit = '<a href="'.adminlink('message&amp;mode=edit&amp;id='.$this->blocksrow['id']).'">'.$_CLASS['user']->lang['EDIT'].'</a>';
 		} else {
-			$edit = $remain = false;
+			$edit = $expires = false;
 		}
 		
-		if (THEMEPLATE) {
-			global $_CLASS;
+		if (THEMEPLATE)
+		{
 			$_CLASS['template']->assign_vars_array('messageblock', array(
 				'TITLE'		=> $this->blocksrow['title'],
 				'CONTENT'	=> $this->blocksrow['content'],
-				'REMAIN'	=> $remain,
+				'EXPIRES'	=> $expires,
 				'EDIT'		=> $edit,
-				'HIDE'		=> hideblock($this->blocksrow['bid']) ? 'style="display: none"' : '',
-				'EDITLINK'	=> adminlink('editmsg&amp;mid='.$this->blocksrow['bid']),
-				'BID'		=> $this->blocksrow['bid'],
+				'HIDE'		=> hideblock($this->blocksrow['id']) ? 'style="display: none"' : '',
+				'ID'		=> $this->blocksrow['id'],
 				)
 			);
-			
+		
 		} else {
-                
+		
+            global $textcolor2;
+            
+            $expires = ($expires) ? $expires.' | ' : '';
+            
 			OpenTable();
-				echo '<div align="center"><font class="option" color="'.$textcolor2.'"><b>'.$this->blocksrow['title'].'</b></font></div><br /><font class="content">'.$this->blocksrow['content'].'</font>';
-				if (is_admin()) {
-					echo '<br /><br /><div align="center"><font class="content">[ '.$output.' - '.$remain.' - <a href="'.adminlink('editmsg&amp;mid='.$mid).'">'._EDIT.'</a> ]</font></div>';
-				}
+			echo '<div style="text-align: center; color: '.$textcolor2.'"><b>'.$this->blocksrow['title'].'</b></div><br />'.$this->blocksrow['content'];
+			
+			if (is_admin())
+			{
+				echo '<br /><br /><div align="right">[ '.$expires.$edit.' ]</font></div>';
+			}
+			
 			CloseTable();
 		}
 	}
 	
-	/*function headlines($bid, $position=0, $row='') {
-		global $prefix, $db;
-		$bid = intval($bid);
-		if (!is_array($row)) {
-			$result = $db->sql_query('SELECT title, content, url, refresh, time FROM '.$prefix."_blocks WHERE bid='$bid'");
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
-		}
-		$title = $row['title'];
-		$content = $row['content'];
-		$url = $row['url'];
-		$refresh = $row['refresh'];
-		$otime = $row['time'];
-		$past = time()-$refresh;
-		if ($otime < $past) {
-			$content = '';
-			if ($items = get_rss($url)) {
-				$content = '';
-				for ($i=0;$i<count($items);$i++) {
-					$link = $items[$i]['link'];
-					$title2 = $items[$i]['title'];
-					$content .= "<img src=\"images/arrow.gif\" border=\"0\" alt=\"\" title=\"\" width=\"9\" height=\"9\"><a href=\"$link\" target=\"new\">$title2</a><br />\n";
-				}
-			}
-			$btime = time();
-			$db->sql_query('UPDATE '.$prefix.'_blocks SET content=\''.addslashes($content)."', time='$btime' WHERE bid='$bid'");
-		}
-		$siteurl = ereg_replace('http://','',$url);
-		$siteurl = explode('/',$siteurl);
-		if ($content != '') {
-			$content .= "<br /><a href=\"http://$siteurl[0]\" target=\"blank\"><b>"._HREADMORE.'</b></a>';
-		} else {
-			$content = _RSSPROBLEM;
-		}
-		$content = '<font class="content">'.$content.'</font>';
-		if ($position == 'c' || $position == 'd') {
-			themecenterbox($title, $content, $position);
-		} else {
-			themesidebox($title, $content, $bid);
-		}
-	}
+	function center_block() {
 	
-	
-	// !!! this is old
-	function userblock($bid) {
-		global $user;
-		if(is_user() && $user->data['ublockon']) {
-			$title = $user->data['username'];
-			themesidebox($this->blocksrow['title'], $user->data['block'], $this->blocksrow['bid'], $this->template);
-			//themesidebox($title, $user->data['block'], $bid);
-		}
-	}*/
-	
-	function themecenterbox() {
-	
-		if (THEMEPLATE) {
+		if (THEMEPLATE)
+		{
 			global $_CLASS;
 			
 			$this->blocksrow['position'] = ($this->blocksrow['position'] == BLOCK_TOP) ? 'center' : 'bottom';
+			
 			$_CLASS['template']->assign_vars_array($this->blocksrow['position'].'block', array(
 				'TITLE'   => $this->blocksrow['title'],
 				'CONTENT' => $this->content,
 				'TEMPLATE' => $this->template
 				)
 			);
+			
 		} else {
+		
 			OpenTable();
-			echo '<div align="center" class="option"><b>'.$this->blocksrow['title'].'</b></div><br />'.$this->content;
+			echo '<div align="center"><b>'.$this->blocksrow['title'].'</b></div><br />'.$this->content;
 			CloseTable();
 			echo '<br />';
+		
 		}
 	}
 	

@@ -1,4 +1,16 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
+
 if (!defined('VIPERAL')) {
     header('location: /');
     die;
@@ -27,20 +39,15 @@ define('STRIP', (get_magic_quotes_gpc()) ? true : false);
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
 
-$base_memory_usage = 0;
-
-if (function_exists('memory_get_usage'))
-{
-	$base_memory_usage = memory_get_usage();
-}
+$base_memory_usage = (function_exists('memory_get_usage')) ? memory_get_usage() : 0;
 
 require('config.php');
+require('tables.php');
 require('includes/smarty/Smarty.class.php');
 require('includes/functions.php');
 require('includes/cache/cache_' . $acm_type . '.'.$phpEx);
 require('includes/db/connect.'.$phpEx);
 require('includes/session.'.$phpEx);
-require('common.php');
 
 $name = get_variable('name', 'GET', false);
 $file = get_variable('file', 'GET', 'index');

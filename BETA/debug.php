@@ -50,8 +50,6 @@ class debug
 				$this->display_notice();
 		}
 		
-		//print_r($this->debug_data);
-
 	    $_CLASS['template']->assign(array(
 			'MODE'				=>	$mode,
 			'L_NOTICES'			=>	'NOTICE ERRORS',
@@ -119,7 +117,7 @@ class debug
 		{
 			$value['query'] = preg_replace('/\t(AND|OR)(\W)/', "\$1\$2", htmlspecialchars(preg_replace('/[\s]*[\n\r\t]+[\n\r\s\t]*/', "\n", $value['query'])));
 			
-			$_CLASS['template']->assign_vars_array('query', array('row' => $key, 'query' => $value['query'], 'affected' => $value['affected'], 'time' => round($value['time'], 4)));
+			$_CLASS['template']->assign_vars_array('query', array('row' => $key, 'query' => $value['query'], 'file' => $value['file'], 'line' => $value['line'], 'affected' => $value['affected'], 'time' => round($value['time'], 4)));
 			
 			$first = false;
 			

@@ -1,16 +1,4 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
-
 /**
  * Project:     Smarty: the PHP compiling template engine
  * File:        Smarty.class.php
@@ -38,10 +26,10 @@
  * @author Monte Ohrt <monte@ispi.net>
  * @author Andrei Zmievski <andrei@php.net>
  * @package Smarty
- * @version 2.6.6-dev
+ * @version 2.6.6-dev-2
  */
 
-/* $Id: Smarty.class.php,v 1.500 2004/09/16 23:07:32 boots Exp $ */
+/* $Id: Smarty.class.php,v 1.503 2004/09/29 07:23:45 messju Exp $ */
 
 if (!defined('SMARTY_DIR')) {
     define('SMARTY_DIR', dirname(__FILE__) . DIRECTORY_SEPARATOR);
@@ -115,7 +103,7 @@ class Smarty
     var $_conf_obj				= null;
     var $_config				= array(array('vars'  => array(), 'files' => array()));
     var $_smarty_md5			= 'f8d698aea36fcbead2b9d5359ffca76f';
-    var $_version				= '2.6.6-dev';
+    var $_version				= '2.6.6-dev-2';
     var $_inclusion_depth		= 0;
     var $_compile_id			= null;
     var $_smarty_debug_id		= 'SMARTY_DEBUG';
@@ -372,12 +360,21 @@ class Smarty
     }
     function is_cached($tpl_file, $cache_id = null, $compile_id = null)
     {
-        if (!$this->caching)
-            return false;
+        if (!$this->caching)  {   return false; }
 
-        if (!isset($compile_id))
-            $compile_id = $this->compile_id;
+        if (!isset($compile_id)) {  $compile_id = $this->compile_id; }
 
+       	global $_CLASS;
+       	
+       	if (file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$tpl_file))
+		{ 
+			$this->template_dir = 'themes/' . $_CLASS['display']->theme . '/template';
+			$this->cache_dir = $this->compile_dir = 'cache/'.$_CLASS['display']->theme;
+		} else {
+        	$this->template_dir = 'includes/templates';
+        	$this->cache_dir = $this->compile_dir = 'cache';
+        }
+        
         $_params = array(
             'tpl_file' => $tpl_file,
             'cache_id' => $cache_id,
@@ -432,13 +429,13 @@ class Smarty
     function display($resource_name, $cache_id = null, $compile_id = null)
     {
 		global $_CLASS;
-		if (file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$resource_name))
+       	if (file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$resource_name))
 		{ 
 			$this->template_dir = 'themes/' . $_CLASS['display']->theme . '/template';
-			$this->compile_dir = 'cache/'.$_CLASS['display']->theme;
-        } else {
+			$this->cache_dir = $this->compile_dir = 'cache/'.$_CLASS['display']->theme;
+		} else {
         	$this->template_dir = 'includes/templates';
-        	$this->compile_dir = 'cache';
+        	$this->cache_dir = $this->compile_dir = 'cache';
         }
         $this->fetch($resource_name, $cache_id, $compile_id, true);
 
@@ -496,7 +493,7 @@ class Smarty
             require_once(SMARTY_CORE_DIR . 'core.read_cache_file.php');
             if (smarty_core_read_cache_file($_params, $this)) {
                 $_smarty_results = $_params['results'];
-                if (@count($this->_cache_info['insert_tags'])) {
+               if (!empty($this->_cache_info['insert_tags'])) {
                     $_params = array('plugins' => $this->_cache_info['insert_tags']);
                     require_once(SMARTY_CORE_DIR . 'core.load_plugins.php');
                     smarty_core_load_plugins($_params, $this);
@@ -504,7 +501,7 @@ class Smarty
                     require_once(SMARTY_CORE_DIR . 'core.process_cached_inserts.php');
                     $_smarty_results = smarty_core_process_cached_inserts($_params, $this);
                 }
-                if (@count($this->_cache_info['cache_serials'])) {
+                if (!empty($this->_cache_info['cache_serials'])) {
                     $_params = array('results' => $_smarty_results);
                     require_once(SMARTY_CORE_DIR . 'core.process_compiled_include.php');
                     $_smarty_results = smarty_core_process_compiled_include($_params, $this);
