@@ -1,0 +1,4 @@
+# deny most common
+<filesmatch "\.php$">
+deny from all
+</filesmatch>

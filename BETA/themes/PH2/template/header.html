@@ -1,0 +1,124 @@
+{ include file='head.html' }
+<script type="text/javascript" src="/themes/PH2/blockscript.js"></script>
+
+<link rel="stylesheet" href="themes/PH2/style/style.css" type="text/css" />
+{$HEADER_REGULAR}
+{$HEADER_JS}
+
+</head>
+<body>
+{$HEADER_BODY}
+
+<script language="JavaScript" type="text/javascript">
+<!--
+    imagepath = 'themes/PH2/images/';
+//-->
+</script>
+
+<a name="Top"></a>
+
+<table class="bodytable" cellspacing="0" cellpadding="0">
+	<tr>
+		<td valign="top">
+<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td class="headertop" width="100%"></td>
+		<td><a href="{$THEME_MAININDEX}"><img src="themes/PH2/images/header_home.gif" border="0" alt="Home" /></a></td>
+		<td><a href="{$THEME_PRIVATE_M}"><img src="themes/PH2/images/header_contact.gif" border="0" alt="Private Messages" /></a></td>
+		<td><a href="{$THEME_SEARCH}"><img src="themes/PH2/images/header_search.gif" border="0" alt="Search" /></a></td>
+	</tr>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td><img src="themes/PH2/images/header_01.jpg" alt="" /></td>
+		<td><img src="themes/PH2/images/header_02.jpg" alt="" /></td>
+		<td><img src="themes/PH2/images/header_03.jpg" alt="" /></td>
+		<td width="100%" class="spacertop"></td>
+	</tr>
+</table>
+
+<table border="0" width="100%" cellpadding="0" cellspacing="0">
+	<tr>
+		<td class="collapsebk" width="277px" nowrap="nowrap">{ $THEME_LEFT_IMAGE }</td>
+		<td><a href="{$THEME_MAININDEX}"><img src="themes/PH2/images/header_05.jpg" alt="" /></a></td>
+		<td><a href="{$THEME_GALLERY}"><img src="themes/PH2/images/header_06.jpg" alt="" /></a></td>
+		<td><a href="{$THEME_FORUMS}"><img src="themes/PH2/images/header_07.jpg" alt="" /></a></td>
+		<td><a href="{$THEME_DOWNLOADS}"><img src="themes/PH2/images/header_08.jpg" alt="" /></a></td>
+		<td><a href="{$THEME_MY_ACCOUNT}"><img src="themes/PH2/images/header_09.jpg"  alt="" /></a></td>
+		<td width="100%" class="spacerbottom">{ $THEME_RIGHT_IMAGE }</td>
+	</tr>
+</table>
+
+<table cellpadding="0" cellspacing="0">
+	<tr valign="top">
+		<td valign="top" class="blockleft" id="pe600" {$THEME_LEFT_VISIBLE} >
+
+{ if isset($leftblock) }
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td width="194"height="12">
+		</td>
+	</tr>
+</table>
+ {section name=leftblockloop loop=$leftblock}
+ 
+<table width="194" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td class="blockleft_header">&nbsp;&nbsp;&nbsp;<img alt="[x]" title="Show/hide content" id="pic{$leftblock[leftblockloop].BID}" src="{$leftblock[leftblockloop].IMAGE}" onclick="blockswitch('{$leftblock[leftblockloop].BID}');" style="cursor:pointer" />
+		<span class="block-title">&nbsp;<strong>{$leftblock[leftblockloop].TITLE}</strong></span></td>
+	</tr>
+	<tr>
+		<td><img src="themes/PH2/images/block_left_shaddow.jpg" height="2" alt="" /></td>
+	</tr>
+	<tr>
+		<td class="blockleft" id="pe{$leftblock[leftblockloop].BID}" {$leftblock[leftblockloop].VISIBLE}>
+    	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    		<tr>
+    			<td>
+    				<table align="center" width="165" border="0" cellpadding="0" cellspacing="0">
+    					<tr>
+    						<td><span class="content">{$leftblock[leftblockloop].CONTENT}</span></td>
+    					</tr>
+    				</table>
+						<br />
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+
+{/section}
+{ /if }
+
+<td style="background=color: #FCFCFC; padding: 5px; width: 100%;"><table width="100%"><tr><td>
+{ if $THEME_BANNER }
+{$THEME_BANNER}<br />
+{ /if }
+
+<table class="forumline" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tr><th class="thHead" colspan="2" height="25" nowrap="nowrap">{$PAGE_TITLE}</th></tr></table><br /> 
+
+{section name=messageblockloop loop=$messageblock}
+<table width="100%" class="opentable1" cellspacing="1" cellpadding="5">
+	<tr>
+		<td>
+  		<div class="option" align="center"><b>{$messageblock[messageblockloop].TITLE}</b></div><br />
+  		<div class="content">{$messageblock[messageblockloop].CONTENT}</div>
+		</td>
+	</tr>
+</table>
+<br />
+{/section}
+
+{section name=blockcenterloop loop=$centerblock}
+ <table class="opentable1" cellspacing="1" cellpadding="5">
+	<tr>
+		<td>
+			<div align="center" class="option"><b>{$centerblock[blockcenterloop].TITLE}</b></div><br />
+  		{$centerblock[blockcenterloop].CONTENT}</div>
+		</td>
+	</tr>
+</table>
+<br />  		
+{/section}

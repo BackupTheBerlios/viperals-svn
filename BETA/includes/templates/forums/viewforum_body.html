@@ -1,0 +1,286 @@
+{ include file='forums/overall_header.html }
+
+	{* $Id: viewforum_body.html,v 1.19 2004/06/06 21:44:49 acydburn Exp $ *}
+
+	{ if $S_FORUM_RULES }
+	<div class="forumrules">
+		{ if $U_FORUM_RULES }
+			<a href="{$U_FORUM_RULES}">{$L_FORUM_RULES}</a>
+		{ else }
+			<h3 style="color:red">{$L_FORUM_RULES}</h3><br />
+			{$FORUM_RULES}
+		{ /if }
+	</div>
+
+	<br clear="all" />
+	{ /if }
+
+	{ if $S_DISPLAY_ACTIVE }
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="cat" colspan="{ if $S_TOPIC_ICONS }7{ else }6{ /if }"><span class="nav">{$L_ACTIVE_TOPICS}</span></td>
+		</tr>
+
+		<tr>
+			{ if $S_TOPIC_ICONS }
+			<th colspan="3">&nbsp;{$L_TOPICS}&nbsp;</th>
+			{ else }
+			<th colspan="2">&nbsp;{$L_TOPICS}&nbsp;</th>
+			{ /if }
+			<th>&nbsp;{$L_AUTHOR}&nbsp;</th>
+			<th>&nbsp;{$L_REPLIES}&nbsp;</th>
+			<th>&nbsp;{$L_VIEWS}&nbsp;</th>
+			<th>&nbsp;{$L_LAST_POST}&nbsp;</th>
+		</tr>
+
+		{section name=topicrowloop loop=$topicrow}
+		<tr>
+			<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
+			{ if $S_TOPIC_ICONS }
+			<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_ICON_IMG}</td>
+			{ /if }
+			<td class="row1">
+				{ if $topicrow[topicrowloop].S_TOPIC_UNAPPROVED }
+					<a href="{$topicrow[topicrowloop].U_MCP_QUEUE}">{$UNAPPROVED_IMG}</a>&nbsp;
+				{ /if }
+				{ if $topicrow[topicrowloop].S_TOPIC_REPORTED }
+					<a href="{$topicrow[topicrowloop].U_MCP_REPORT}">{$REPORTED_IMG}</a>&nbsp;
+				{ /if }
+				<p class="topictitle">{$topicrow[topicrowloop].NEWEST_POST_IMG} {$topicrow[topicrowloop].ATTACH_ICON_IMG} <a href="{$topicrow[topicrowloop].U_VIEW_TOPIC}">{$topicrow[topicrowloop].TOPIC_TITLE}</a></p><p class="gensmall">{$topicrow[topicrowloop].GOTO_PAGE}</p></td>
+			<td class="row2" width="100" align="center"><p class="topicauthor">{$topicrow[topicrowloop].TOPIC_AUTHOR}</p></td>
+			<td class="row1" width="50" align="center"><p class="topicdetails">{$topicrow[topicrowloop].REPLIES}</p></td>
+			<td class="row2" width="50" align="center"><p class="topicdetails">{$topicrow[topicrowloop].VIEWS}</p></td>
+			<td class="row1" width="120" align="center">
+				<p class="topicdetails">{$topicrow[topicrowloop].LAST_POST_TIME}</p>
+				<p class="topicdetails">
+				{ if $topicrow[topicrowloop].U_LAST_POST_AUTHOR }
+				<a href="{$topicrow[topicrowloop].U_LAST_POST_AUTHOR}">{$topicrow[topicrowloop].LAST_POST_AUTHOR}</a>
+				{ else }
+				{$topicrow[topicrowloop].LAST_POST_AUTHOR}
+				{ /if }
+				<a href="{$topicrow[topicrowloop].U_LAST_POST}">{$topicrow[topicrowloop].LAST_POST_IMG}</a>
+				</p>
+			</td>
+		</tr>
+		{ sectionelse }
+
+		<tr>
+			{ if $S_TOPIC_ICONS }
+			<td class="row1" colspan="7" height="30" align="center" valign="middle"><span class="gen">{$L_NO_TOPICS}</span></td>
+			{ else }
+			<td class="row1" colspan="6" height="30" align="center" valign="middle"><span class="gen">{$L_NO_TOPICS}</span></td>
+			{ /if }
+		</tr>
+		{ /section }
+
+		<tr align="center">
+			<td class="cat" colspan="{ if $S_TOPIC_ICONS }8{ else }7{ /if }">&nbsp;</td>
+		</tr>
+	</table>
+
+	<br clear="all" />
+	{ /if }
+
+
+	{ if $S_HAS_SUBFORUM }
+		{ include file='forums/viewforum_subforum.html }
+	{ /if }
+
+	{ if $S_IS_POSTABLE }
+	<div id="pageheader">
+		<h2><a class="titles" href="{$U_VIEW_FORUM}">{$FORUM_NAME}</a></h2>
+
+		{ if $MODERATORS }
+			<p class="moderators">{$L_MODERATORS}: {$MODERATORS}</p>
+		{ /if }
+		{ if $U_MCP }
+			<p class="linkmcp">[ <a href="{$U_MCP}">{$L_MCP}</a> ]</p>
+		{ /if }
+	</div>
+
+	<br clear="all" /><br />
+	{ /if }
+
+	<div id="pagecontent">
+
+		{ if $S_IS_POSTABLE || $TOTAL_TOPICS }
+		<table width="100%" cellspacing="1">
+			<tr>
+				{ if $S_IS_POSTABLE }
+				<td align="left" valign="middle"><a href="{$U_POST_NEW_TOPIC}">{$POST_IMG}</a></td>
+				{ /if }
+				{ if $TOTAL_TOPICS }
+				<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{$PAGE_NUMBER}<br /></td>
+				<td class="gensmall" nowrap="nowrap">&nbsp;[ {$TOTAL_TOPICS} ]&nbsp;</td>
+				<td class="gensmall" width="100%" align="right" nowrap="nowrap"><b>{$PAGINATION}</b></td>
+				{ /if }
+			</tr>
+		</table>
+		{ /if }
+
+		{ if $S_IS_POSTABLE }
+		<table class="tablebg" width="100%" cellspacing="1">
+			<tr>
+				<td class="cat" colspan="{ if $S_TOPIC_ICONS }7{ else }6{ /if }"><table width="100%" cellspacing="0">
+					<tr class="nav">
+						<td valign="middle">&nbsp;{ if $S_WATCH_FORUM_LINK }<a href="{$S_WATCH_FORUM_LINK}">{$S_WATCH_FORUM_TITLE}</a>{ /if }</td>
+						<td align="right" valign="middle"><a href="{$U_MARK_TOPICS}">{$L_MARK_TOPICS_READ}</a>&nbsp;</td>
+					</tr>
+				</table></td>
+			</tr>
+
+			<tr>
+				{ if $S_TOPIC_ICONS }
+				<th colspan="3">&nbsp;{$L_TOPICS}&nbsp;</th>
+				{ else }
+				<th colspan="2">&nbsp;{$L_TOPICS}&nbsp;</th>
+				{ /if }
+				<th>&nbsp;{$L_AUTHOR}&nbsp;</th>
+				<th>&nbsp;{$L_REPLIES}&nbsp;</th>
+				<th>&nbsp;{$L_VIEWS}&nbsp;</th>
+				<th>&nbsp;{$L_LAST_POST}&nbsp;</th>
+			</tr>
+
+			{section name=topicrowloop loop=$topicrow}
+
+			{ if $topicrow[topicrowloop].S_TOPIC_TYPE_SWITCH eq 1 }
+			<tr>
+				<td class="row3" colspan="{ if $S_TOPIC_ICONS }7{ else }6{ /if }"><b class="gensmall">{$L_ANNOUNCEMENTS}</b></td>
+			</tr>
+			{ elseif $topicrow[topicrowloop].S_TOPIC_TYPE_SWITCH eq 0 }
+			<tr>
+				<td class="row3" colspan="{ if $S_TOPIC_ICONS }7{ else }6{ /if }"><b class="gensmall">{$L_TOPICS}</b></td>
+			</tr>
+			{ /if }
+
+			<tr>
+				<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
+				{ if $S_TOPIC_ICONS }
+				<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_ICON_IMG}</td>
+				{ /if }
+				<td class="row1">
+					{ if $topicrow[topicrowloop].S_TOPIC_UNAPPROVED }
+						<a href="{$topicrow[topicrowloop].U_MCP_QUEUE}">{$UNAPPROVED_IMG}</a>&nbsp;
+					{ /if }
+					{ if $topicrow[topicrowloop].S_TOPIC_REPORTED }
+						<a href="{$topicrow[topicrowloop].U_MCP_REPORT}">{$REPORTED_IMG}</a>&nbsp;
+					{ /if }
+					<p class="topictitle">{$topicrow[topicrowloop].NEWEST_POST_IMG} {$topicrow[topicrowloop].ATTACH_ICON_IMG} <a href="{$topicrow[topicrowloop].U_VIEW_TOPIC}">{$topicrow[topicrowloop].TOPIC_TITLE}</a></p><p class="gensmall">{$topicrow[topicrowloop].GOTO_PAGE}</p></td>
+				<td class="row2" width="100" align="center"><p class="topicauthor">{$topicrow[topicrowloop].TOPIC_AUTHOR}</p></td>
+				<td class="row1" width="50" align="center"><p class="topicdetails">{$topicrow[topicrowloop].REPLIES}</p></td>
+				<td class="row2" width="50" align="center"><p class="topicdetails">{$topicrow[topicrowloop].VIEWS}</p></td>
+				<td class="row1" width="120" align="center">
+					<p class="topicdetails">{$topicrow[topicrowloop].LAST_POST_TIME}</p>
+					<p class="topicdetails">{ if $topicrow[topicrowloop].U_LAST_POST_AUTHOR }<a href="{$topicrow[topicrowloop].U_LAST_POST_AUTHOR}">{$topicrow[topicrowloop].LAST_POST_AUTHOR}</a>{ else }{$topicrow[topicrowloop].LAST_POST_AUTHOR}{ /if }
+					<a href="{$topicrow[topicrowloop].U_LAST_POST}">{$topicrow[topicrowloop].LAST_POST_IMG}</a>
+					</p>
+				</td>
+			</tr>
+			{ sectionelse }
+
+			<tr>
+				{ if $S_TOPIC_ICONS }
+				<td class="row1" colspan="7" height="30" align="center" valign="middle"><span class="gen">{$L_NO_TOPICS}</span></td>
+				{ else }
+				<td class="row1" colspan="6" height="30" align="center" valign="middle"><span class="gen">{$L_NO_TOPICS}</span></td>
+				{ /if }
+			</tr>
+			{ /section }
+
+			<tr align="center">
+				{ if $S_TOPIC_ICONS }
+					<td class="cat" colspan="8">
+				{ else }
+					<td class="cat" colspan="7" >
+				{ /if }
+				<form method="post" action="{$S_TOPIC_ACTION}"><span class="gensmall">{$L_DISPLAY_TOPICS}:</span>&nbsp;{$S_SELECT_SORT_DAYS}&nbsp;<span class="gensmall">{$L_SORT_BY}</span> {$S_SELECT_SORT_KEY} {$S_SELECT_SORT_DIR}&nbsp;<input class="btnlite" type="submit" name="sort" value="{$L_GO}" /></form></td></tr>
+		</table>
+
+		<table width="100%" cellspacing="1">
+			<tr>
+				<td align="left" valign="middle"><a href="{$U_POST_NEW_TOPIC}">{$POST_IMG}</a></td>
+				<td class="nav" nowrap="nowrap">&nbsp;{$PAGE_NUMBER}</td>
+				<td class="gensmall" nowrap="nowrap">&nbsp;[ {$TOTAL_TOPICS} ]</td>
+				<td class="nav" width="100%" align="right" nowrap="nowrap">{$PAGINATION}</td>
+			</tr>
+		</table>
+
+		<br clear="all" />
+		{ /if }
+
+	</div>
+
+	<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+		<tr>
+			<td class="row1">
+				<p class="breadcrumbs"><a href="{$U_INDEX}">{$L_INDEX}</a>{section name=navlinksloop loop=$navlinks} &#187; <a href="{$navlinks[navlinksloop].U_VIEW_FORUM}">{$navlinks[navlinksloop].FORUM_NAME}</a>{/section}</p>
+				<p class="datetime">{$S_TIMEZONE}</p>
+			</td>
+		</tr>
+	</table>
+
+	{ if $S_DISPLAY_ONLINE_LIST }
+	<br clear="all" />
+
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="cat"><h4>{$L_WHO_IS_ONLINE}</h4></td>
+		</tr>
+		<tr>
+			<td class="row1"><p class="gensmall">{$LOGGED_IN_USER_LIST}</p></td>
+		</tr>
+	</table>
+	{ /if }
+
+	{ if $S_IS_POSTABLE }
+	<br clear="all" />
+
+	<table width="100%" cellspacing="0">
+		<tr>
+			<td align="left" valign="top"><table cellspacing="3" cellpadding="0" border="0">
+				<tr>
+					<td width="20" align="left">{$FOLDER_NEW_IMG}</td>
+					<td class="gensmall">{$L_NEW_POSTS}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td width="20" align="center">{$FOLDER_IMG}</td>
+					<td class="gensmall">{$L_NO_NEW_POSTS}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td width="20" align="center">{$FOLDER_ANNOUNCE_IMG}</td>
+					<td class="gensmall">{$L_ICON_ANNOUNCEMENT}</td>
+				</tr>
+				<tr>
+					<td width="20" align="center">{$FOLDER_HOT_NEW_IMG}</td>
+					<td class="gensmall">{$L_NEW_POSTS_HOT}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td width="20" align="center">{$FOLDER_HOT_IMG}</td>
+					<td class="gensmall">{$L_NO_NEW_POSTS_HOT}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td width="20" align="center">{$FOLDER_STICKY_IMG}</td>
+					<td class="gensmall">{$L_ICON_STICKY}</td>
+				</tr>
+				<tr>
+					<td class="gensmall">{$FOLDER_LOCKED_NEW_IMG}</td>
+					<td class="gensmall">{$L_NEW_POSTS_LOCKED}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td class="gensmall">{$FOLDER_LOCKED_IMG}</td>
+					<td class="gensmall">{$L_NO_NEW_POSTS_LOCKED}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td width="20" align="center">{$FOLDER_MOVED_IMG}</td>
+					<td class="gensmall">{$L_MOVED_TOPIC}</td>
+				</tr>
+			</table></td>
+			<td align="right"><span class="gensmall">{section name=rulesloop loop=$rules}{$rules[rulesloop].RULE}<br />{ /section }</span></td>
+		</tr>
+	</table>
+	{ /if }
+
+	<br clear="all" />
+
+	<table width="100%" cellspacing="0">
+		<tr>
+			<td>{ if $S_DISPLAY_SEARCHBOX }{ include file='forums/searchbox.html' }{ /if }</td>
+			<td align="right">{ include file='forums/jumpbox.html' }</td>
+		</tr>
+	</table>
+
+{ include file='forums/overall_footer.html' }

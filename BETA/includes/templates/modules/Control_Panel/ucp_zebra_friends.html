@@ -1,0 +1,30 @@
+{ include file='modules/Control_Panel/ucp_header.html' }
+
+{* $Id: ucp_zebra_friends.html,v 1.2 2004/01/05 12:38:44 psotfx Exp $ *}
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th colspan="2" valign="middle">{$L_TITLE}</th>
+	</tr>
+	<tr>
+		<td class="row3" colspan="2" align="center"><span class="gensmall">{$L_FRIENDS_EXPLAIN}</span></td>
+	</tr>
+	{ if $ERROR }
+	<tr>
+		<td class="row3" colspan="2" align="center"><span class="gensmall" style="color:red">{$ERROR}</span></td>
+	</tr>
+	{ /if }
+	<tr>
+		<td class="row1" width="40%"><b class="genmed">{$L_YOUR_FRIENDS}:</b><br /><span class="gensmall">{$L_YOUR_FRIENDS_EXPLAIN}</span></td>
+		<td class="row2" align="center">{ if $S_USERNAME_OPTIONS }<select name="usernames[]" multiple="multiple" size="5">{$S_USERNAME_OPTIONS}</select>{ else }<b class="genmed">{$L_NO_FRIENDS}</b>{ /if }</td>
+	</tr>
+	<tr>
+		<td class="row1"><b class="genmed">{$L_ADD_FRIENDS}:</b><br /><span class="gensmall">{$L_ADD_FRIENDS_EXPLAIN} [ <a href="{$U_SEARCH_USER}" onclick="window.open('{$U_SEARCH_USER}', '_phpbbsearch', 'HEIGHT=500,resizable=yes,scrollbars=yes,WIDTH=740');return false">{$L_FIND_USERNAME}</a> ]</span></td>
+		<td class="row2" align="center"><textarea name="add" rows="5" cols="30">{$USERNAMES}</textarea><br /></td>
+	</tr>
+	<tr>
+		<td class="phpbbcat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input class="btnmain" type="submit" name="submit" value="{$L_SUBMIT}" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="{$L_RESET}" name="reset" /></td>
+	</tr>
+</table>
+
+{ include file='modules/Control_Panel/ucp_footer.html' }

@@ -1,0 +1,15 @@
+{if $T_STYLESHEET_LINK }
+	<link rel="stylesheet" href="{$T_STYLESHEET_LINK}" type="text/css" />
+{ else }
+	<style type="text/css">
+	<!--
+	{$T_THEME_DATA}
+	//-->
+	</style>
+{ /if }
+
+{* $Id: ucp_header.html,v 1.9 2004/06/02 18:07:40 acydburn Exp $ *}
+
+{php} OpenTable(); {/php}
+
+{ if !$S_PRIVMSGS }<form name="ucp" method="post" action="{$S_UCP_ACTION}"{$S_FORM_ENCTYPE}>{ /if }

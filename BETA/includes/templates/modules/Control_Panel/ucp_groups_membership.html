@@ -1,0 +1,77 @@
+<!-- INCLUDE ucp_header.html -->
+
+<!-- $Id: ucp_prefs_personal.html,v 1.2 2004/01/05 12:38:44 psotfx Exp $ -->
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr> 
+		<th colspan="3">{L_USERGROUPS}</th>
+	</tr>
+	<tr>
+		<td class="row3" colspan="3"><span class="genmed">{L_GROUPS_EXPLAIN}</span></td>
+	</tr>
+
+	<tr> 
+		<td class="phpbbcat" colspan="2">{L_GROUP_LEADER}</td>
+	</tr>
+	<!-- BEGIN leader -->
+	<tr>
+		<td class="<!-- IF leader.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->"><b class="genmed"><a href="{leader.U_VIEW_GROUP}">{leader.GROUP_NAME}</a></b><!-- IF leader.GROUP_DESC --><p class="forumdesc">{leader.GROUP_DESC}</p><!-- ENDIF --></td>
+		<td class="<!-- IF leader.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->" align="center"><!-- IF leader.GROUP_TYPE --><input type="checkbox" name="leader[{leader.GROUP_ID}]" /><!-- ENDIF --></td>
+	</tr>
+	<!-- BEGINELSE -->
+	<tr>
+		<td class="row2" colspan="3" align="center"><b class="genmed">{L_NO_LEADERS}</b></td>
+	</tr>
+	<!-- END leader -->
+
+	<tr> 
+		<td class="phpbbcat" colspan="2">{L_GROUP_LEADER}</td>
+	</tr>
+	<!-- BEGIN member -->
+	<tr>
+		<td class="<!-- IF member.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->"><b class="genmed"><a href="{member.U_VIEW_GROUP}">{member.GROUP_NAME}</a></b><!-- IF leader.GROUP_DESC --><p class="forumdesc">{member.GROUP_DESC}</p><!-- ENDIF --></td>
+		<td class="<!-- IF member.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->" align="center"><!-- IF member.GROUP_TYPE --><input type="checkbox" name="member[{member.GROUP_ID}]" /><!-- ENDIF --></td>
+	</tr>
+	<!-- BEGINELSE -->
+	<tr>
+		<td class="row2" colspan="2" align="center"><b class="genmed">{L_NO_MEMBERS}</b></td>
+	</tr>
+	<!-- END member -->
+
+	<tr> 
+		<td class="phpbbcat" colspan="2">{L_GROUP_LEADER}</td>
+	</tr>
+	<!-- BEGIN pending -->
+	<tr>
+		<td class="<!-- IF pending.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->"><b class="genmed"><a href="{pending.U_VIEW_GROUP}">{pending.GROUP_NAME}</a></b><!-- IF pending.GROUP_DESC --><p class="forumdesc">{pending.GROUP_DESC}</p><!-- ENDIF --></td>
+		<td class="<!-- IF pending.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->" align="center"><!-- IF pending.GROUP_TYPE --><input type="checkbox" name="pending[{pending.GROUP_ID}]" /><!-- ENDIF --></td>
+	</tr>
+	<!-- BEGINELSE -->
+	<tr>
+		<td class="<!-- IF member.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->"><b class="genmed">Pending:</b></td>
+		<td class="row2" colspan="2" align="center"><b class="genmed">{L_NO_PENDING}</b></td>
+	</tr>
+	<!-- END pending -->
+
+	<tr>
+		<td class="phpbbcat" colspan="3" align="right"><input class="btnmain" type="submit" value="{L_SUBMIT}" />&nbsp;</td>
+	</tr>
+
+	<!-- BEGIN nonmember -->
+	<tr>
+		<td class="<!-- IF nonmember.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->"><b class="genmed"><a href="{nonmember.U_VIEW_GROUP}">{nonmember.GROUP_NAME}</a></b><!-- IF nonmember.GROUP_DESC --><p class="forumdesc">{nonmember.GROUP_DESC}</p><!-- ENDIF --></td>
+		<td class="<!-- IF nonmember.S_ROW_COUNT is odd -->row1<!-- ELSE -->row2<!-- ENDIF -->" align="center"><!-- IF nonmember.GROUP_TYPE --><input type="checkbox" name="nonmember[{nonmember.GROUP_ID}]" /><!-- ENDIF --></td>
+	</tr>
+	<!-- BEGINELSE -->
+	<tr>
+		<td class="row2" colspan="2" align="center"><b class="genmed">{L_NO_NONMEMBERS}</b></td>
+	</tr>
+	<!-- END nonmember -->
+
+	<tr>
+		<td class="phpbbcat" colspan="3" align="right"><input class="btnmain" type="submit" value="{L_SUBMIT}" />&nbsp;</td>
+	</tr>
+
+</table>
+
+<!-- INCLUDE ucp_footer.html -->

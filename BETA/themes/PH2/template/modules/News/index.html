@@ -1,0 +1,32 @@
+{ if isset($newscat) }
+<table class="newsindex"><tr><td>
+    <center><font class="title">{$newscat.S_SITENAME}</font><br /><br />
+    {$newscat.S_NOINFO}<br /><br />
+    [ <a href="{$newscat.U_NEWSINDEX}">{$newscat.S_GONEWS}</a> | <a href="{$newscat.U_TOPICS}">{$newscat.S_SELECT}</a> ]</center>
+</td></tr></table><br />
+
+<table class="newsindex"><tr><td>
+  <center><font class="title">{$newsindex.S_SITENAME}: {$newsindex.S_TOPIC_T}</font><br /><br />
+  <form action="{$newsindex.U_SEARCH}" method="post"><input type="hidden" name="topic" value="{$newsindex.I_TOPIC}" />
+    {$newsindex.S_SEARCHON}: <input type="name" name="query" size="30" />&nbsp;&nbsp;
+    <input type="submit" value="{$newsindex.SEARCH}" />
+  </form>
+  [ <a href="{$newsindex.U_HOME}">{$newsindex.S_GOHOME}</a> | <a href="{$newsindex.U_TOPICS}">{$newsindex.S_SELECT}</a> ]</center>
+</td></tr></table><br />
+{ /if }
+
+{section name=newsloop loop=$news}
+<div class="newssection">
+	<div class="title" valign="middle">&nbsp;{$news[newsloop].TITLE}</div>
+	<div class="content">{$news[newsloop].CONTENT}</div>
+	<div class="bottom">
+		<div style="float: right; Top: -2.5em;">Posted: {$news[newsloop].TIME}<br/>
+		{ if $news[newsloop].POSTER_LINK }
+		By: <a href="{ $news[newsloop].POSTER_LINK }">{$news[newsloop].POSTER} </a>
+		{ else }By: {$news[newsloop].POSTER} 
+		{ /if }<br />
+		</div>
+	</div>
+</div>
+<br />
+{ /section }

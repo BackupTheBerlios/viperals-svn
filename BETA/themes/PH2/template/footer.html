@@ -1,0 +1,59 @@
+{section name=bottomblockloop loop=$bottomblock}
+<table width="100%" align="center" class="opentable1" cellspacing="1" cellpadding="5">
+	<tr>
+		<td>
+			<div align="center" class="option"><b>{$bottomblock[bottomblockloop].TITLE}</b></div><br />
+  		{$bottomblock[bottomblockloop].CONTENT}</div>
+		</td>
+	</tr>
+</table>
+<br />  		
+{ /section }
+</td></tr></table></td>
+
+{ if isset($rightblock)}
+<td valign="top" width="194" class="blockright" id="pe601" {$THEME_RIGHT_VISIBLE}>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		<td width="194"height="12">
+		</td>
+	</tr>
+</table>
+{section name=blockrightloop loop=$rightblock}
+<table width="194" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td class="blockright_header">&nbsp;&nbsp;&nbsp;<img alt="[x]" title="Show/hide content" id="pic{$rightblock[blockrightloop].BID}" src="{$rightblock[blockrightloop].IMAGE}" onclick="blockswitch('{$rightblock[blockrightloop].BID}');" style="cursor:pointer" />
+		<span class="block-title">&nbsp;<strong>{$rightblock[blockrightloop].TITLE}</strong></span></td>
+	</tr>
+	<tr>
+  	<td><img src="themes/PH2/images/block_right_shaddow.jpg" height="2" alt="" /></td>
+  </tr>
+  <tr>
+		<td class="blockright" id="pe{$rightblock[blockrightloop].BID}" {$rightblock[blockrightloop].VISIBLE}>
+    	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+    		<tr>
+    			<td>
+    				<table align="center" width="165" border="0" cellpadding="0" cellspacing="0">
+    					<tr>
+    						<td><span class="content">{$rightblock[blockrightloop].CONTENT}</span></td>
+    					</tr>
+    				</table>
+						<br />
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+{ /section }
+{ /if }
+
+</td></table>
+<table align="center" width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td class="bottomline" align="right"><a href="http://www.pitcher.no" target="_blank"><img src="themes/PH2/images/add.jpg" border="0" alt="" /></a></td>
+	</tr>
+	<tr>
+		<td bgcolor="#F2F1ED" align="center">
+{$THEME_FOOTER}
+</td></tr></table>

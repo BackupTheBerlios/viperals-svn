@@ -1,0 +1,20 @@
+{ if $leftblock }
+
+<div id="blocksleft">
+  {section name=blockleftloop loop=$leftblock}
+	<div class="blocks">
+       
+        <div class="top" onclick="blockswitch2('{$leftblock[blockleftloop].BID}');" style="cursor:pointer">&nbsp;{$leftblock[blockleftloop].TITLE}&nbsp;</div>
+                    
+		<div class="content" id="pe{$leftblock[blockleftloop].BID}" {$leftblock[blockleftloop].COLLAPSE}>
+
+        {$leftblock[blockleftloop].CONTENT}
+        
+        </div>
+
+	</div>
+  <br />
+  {/section}
+
+</div>
+{ /if }

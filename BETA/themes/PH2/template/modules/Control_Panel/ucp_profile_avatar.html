@@ -1,0 +1,82 @@
+{ include file='modules/Control_Panel/ucp_header.html' }
+
+{* $Id: ucp_profile_avatar.html,v 1.2 2004/01/05 12:38:44 psotfx Exp $ *}
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th colspan="2" valign="middle">{$L_TITLE}</th>
+	</tr>
+	{ if $ERROR }
+	<tr>
+		<td class="row3" colspan="2" align="center"><span class="gensmall" style="color:red">{$ERROR}</span></td>
+	</tr>
+	{ /if }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_CURRENT_IMAGE}: </b><br /><span class="gensmall">{$L_AVATAR_EXPLAIN}</span></td>
+		<td class="row2" align="center"><br />{ if $AVATAR }{$AVATAR}{ else }<img src="{$T_THEME_PATH}/images/no_avatar.gif" alt="" />{ /if }<br /><br /><input type="checkbox" name="delete" />&nbsp;<span class="gensmall">{$L_DELETE_AVATAR}</span></td>
+	</tr>
+	{ if $S_UPLOAD_AVATAR_FILE }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_UPLOAD_AVATAR_FILE}: </b></td>
+		<td class="row2"><input type="hidden" name="MAX_FILE_SIZE" value="{$AVATAR_SIZE}" /><input class="post" type="file" name="uploadfile" /></td>
+	</tr>
+	{ /if }
+	{ if $S_UPLOAD_AVATAR_URL }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_UPLOAD_AVATAR_URL}: </b><br /><span class="gensmall">{$L_UPLOAD_AVATAR_URL_EXPLAIN}</span></td>
+		<td class="row2"><input class="post" type="text" name="uploadurl" size="40" value="{$AVATAR_URL}" /></td>
+	</tr>
+	{ /if }
+	{ if $S_LINK_AVATAR }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_LINK_REMOTE_AVATAR}: </b><br /><span class="gensmall">{$L_LINK_REMOTE_AVATAR_EXPLAIN}</span></td>
+		<td class="row2"><input class="post" type="text" name="remotelink" size="40" value="{$AVATAR_REMOTE}" /></td>
+	</tr>
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_LINK_REMOTE_SIZE}: </b><br /><span class="gensmall">{$L_LINK_REMOTE_SIZE_EXPLAIN}</span></td>
+		<td class="row2"><input class="post" type="text" name="width" size="3" value="{$WIDTH}" /> <span class="gen">px X </span> <input class="post" type="text" name="height" size="3" value="{$HEIGHT}" /> <span class="gen">px</span></td>
+	</tr>
+	{ /if }
+	{ if $S_GALLERY_AVATAR }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_AVATAR_GALLERY}: </b></td>
+		<td class="row2"><input class="btnlite" type="submit" name="displaygallery" value="{$L_DISPLAY_GALLERY}" /></td>
+	</tr>
+	{ /if }
+	{ if $S_DISPLAY_GALLERY }
+	<tr> 
+		<th colspan="2">{$L_AVATAR_GALLERY}</th>
+	</tr>
+	<tr> 
+		<td class="cat" colspan="2" align="center" valign="middle"><span class="genmed">{$L_AVATAR_CATEGORY}: </span><select name="category">{$S_CAT_OPTIONS}</select>&nbsp; <span class="genmed">{$L_AVATAR_PAGE}: </span><select name="page">{$S_PAGE_OPTIONS}</select>&nbsp;<input class="btnlite" type="submit" value="{$L_GO}" name="displaygallery" /></td>
+	</tr>
+	<tr> 
+		<td class="row1" colspan="2" align="center"><table cellspacing="1" cellpadding="4" border="0" width="100%">
+		
+			{section name=avatar_rowloop loop=$avatar_row}
+			<tr> 
+				{section name=avatar_columnloop loop=$avatar_column}
+					{ if $avatar_column[avatar_columnloop].ROW eq $smarty.section.avatar_rowloop.index }
+				<td class="row1" align="center"><img src="{$avatar_column[avatar_columnloop].AVATAR_IMAGE}" alt="{$avatar_column[avatar_columnloop].AVATAR_NAME}" title="{$avatar_column[avatar_columnloop].AVATAR_NAME}" /></td>
+					{ /if }
+				{ /section }
+			</tr>
+			<tr>
+				{section name=avatar_option_columnloop loop=$avatar_option_column}
+					{ if $avatar_option_column[avatar_option_columnloop].ROW eq $smarty.section.avatar_rowloop.index }
+
+				<td class="row2" align="center"><input type="radio" name="avatarselect" value="{$avatar_option_column[avatar_option_columnloop].S_OPTIONS_AVATAR}" /></td>
+					{ /if }
+				{ /section }
+			</tr>
+			{ /section }
+
+		</table></td>
+	</tr>
+	{ /if }
+	<tr>
+		<td class="cat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input class="btnmain" type="submit" name="submit" value="{$L_SUBMIT}" />&nbsp;&nbsp;{ if $S_DISPLAY_GALLERY }<input class="btnlite" type="submit" name="cancel" value="{$L_CANCEL}" />{ else }<input class="btnlite" type="reset" value="{$L_RESET}" name="reset" />{ /if }</td>
+	</tr>
+</table>
+
+{ include file='modules/Control_Panel/ucp_footer.html' }

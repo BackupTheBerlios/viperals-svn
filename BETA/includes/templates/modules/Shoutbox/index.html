@@ -1,0 +1,26 @@
+{* { if $ERROR }
+	{php} OpenTable(); {/php}
+		<div align="center"><font color="#990000">{ $ERROR }</font></div>
+	{php} CloseTable(); {/php}
+{ /if } *}
+
+{php} OpenTable(); {/php}
+
+<div style="padding: 5px;">
+	{section name=shoutloop loop=$shout}
+
+		
+	<div style="padding: 5px; background-color: { $shout[shoutloop].BGCOLOR };">
+	
+			{ if $shout[shoutloop].USER_LINK } 
+			
+				<a href="{ $USER_LINK } "><b> { $shout[shoutloop].USER_NAME }: </b></a>
+			{ else }
+				<b> { $shout[shoutloop].USER_NAME } : </b>
+			{ /if }
+		
+		{ $shout[shoutloop].SHOUT }<br />{ $shout[shoutloop].TIME }</div>
+	{ /section }
+</div>
+
+{php} CloseTable(); {/php}

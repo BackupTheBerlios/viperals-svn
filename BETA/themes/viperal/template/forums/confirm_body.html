@@ -1,0 +1,16 @@
+{php} OpenTable(); {/php}
+
+<div align="center"><b>{$MESSAGE_TITLE} </b></div>
+
+{php} CloseTable(); {/php}
+{php} OpenTable(); {/php}
+
+<form name="confirm" action="{$S_CONFIRM_ACTION}" method="post">
+	<table width="100%">
+		<tr>
+				<td align="center"><p class="gen">{$MESSAGE_TEXT}</p><br />{$S_HIDDEN_FIELDS}<input type="submit" name="confirm" value="{$YES_VALUE}" class="btnmain" />&nbsp;&nbsp;<input type="submit" name="cancel" value="{$L_NO}" class="btnlite" /></span></td>
+		</tr>
+	</table>
+</form>
+
+{php} CloseTable(); {/php}

@@ -1,0 +1,80 @@
+{ include file='head.html' }
+<link rel="stylesheet" href="/themes/viperal/style/style.css" type="text/css" />
+<link rel="alternate stylesheet" type="text/css" media="screen" title="Blue style" href="/themes/viperal/style2/style.css" />
+
+{$HEADER_REGULAR}
+{$HEADER_JS}
+<script type="text/javascript" src="/themes/viperal/blockscript.js"></script>
+{*<script type="text/javascript" src="/includes/javascript/JSCookMenu.js"></script> 
+<link rel="stylesheet" href="/includes/javascript/ThemeOffice/theme.css" type="text/css" />
+<script type="text/javascript" src="/includes/javascript/ThemeOffice/theme.js"></script>*}
+<!--[if IE]>{ literal }
+<style>
+	.menu {
+		position:absolute;
+	}
+	.bodymain {
+	height:1500px;
+	}
+	.ThemeOfficeSubMenu
+	{
+		position:	absolute;
+	}
+	.ThemeOfficeMainItem
+	{
+	background-color: transparent;
+	}
+</style>
+<![endif]-->
+
+{ /literal }
+</head>
+<body>
+{$HEADER_BODY}
+
+<a name="Top"></a>
+
+<div class="menu"><div id="myMenuID" ></div></div>
+
+<div id="header">
+	<div class="logo"><a href="{$U_MAININDEX}"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{$S_SITENAME}" /></a>
+	</div>
+</div>
+{ include file='blockleft.html' }
+
+<div class="mainbody" style="margin-left: {$MARGINLEFT}">
+	<div id="page">
+		You are here: {$PAGE_TITLE}
+	</div>
+	
+	<div class="bodymain" style="margin-right: {$MARGINRIGHT}">
+
+	{ if $messageblock }
+	
+		<div class="messageblock">
+	
+		{section name=messageblockloop loop=$messageblock}
+			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].BID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $IS_ADMIN }[ {$messageblock[messageblockloop].REMAIN} | {$messageblock[messageblockloop].EDITLINK} ]{ /if }</div>
+			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].BID}">{$messageblock[messageblockloop].CONTENT}</div>
+		<br />
+		{/section}
+	
+		</div>
+	<br />
+	{ /if }
+
+	{ if $centerblock }
+	  {section name=blockcenterloop loop=$centerblock}
+	
+	<div class="centerblock">
+		<div class="title">{$centerblock[blockcenterloop].TITLE}</div>
+			<div class="OpenTable"><div class="outer">
+				<div class="inner">
+					<div class="content">{$centerblock[blockcenterloop].CONTENT}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+		{/section}
+	<br />
+	{ /if }

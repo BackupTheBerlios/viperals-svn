@@ -1,0 +1,82 @@
+{ include file='modules/Members_List/memberlist_header.html' }
+
+	{* $Id: memberlist_body.html,v 1.5 2004/05/02 13:06:57 acydburn Exp $ *}
+
+	<div id="pagecontent">
+
+{ if $S_SEARCH_USER }{ include file='modules/Members_List/memberlist_search.html' }{ /if }
+
+{ if $S_SHOW_GROUP }{ include file='modules/Members_List/memberlist_group.html' }{ /if }
+
+		{ if $S_SEARCH_USER }
+			<form method="post" name="results" action="{$S_MODE_ACTION}" onsubmit="insert_marked(this.user);return false">
+		{ elseif $U_FIND_MEMBER }
+			<form method="post" action="{$S_MODE_ACTION}">
+
+			<table width="100%" cellspacing="1">
+				<tr>
+					<td class="gensmall" align="right"><a href="{$U_FIND_MEMBER}">{$L_FIND_USERNAME}</a></td>
+				</tr>
+			</table>
+		{ /if }
+		
+		<table class="tablebg" width="100%" cellspacing="1">
+			<tr>
+				<th nowrap="nowrap">#</th>
+				<th nowrap="nowrap" width="25%"><a class="th" href="{$U_SORT_USERNAME}">{$L_USERNAME}</a></th>
+				<th nowrap="nowrap" width="15%"><a class="th" href="{$U_SORT_JOINED}">{$L_JOINED}</a></th>
+				<th nowrap="nowrap" width="10%"><a class="th" href="{$U_SORT_POSTS}">{$L_POSTS}</a></th>
+				<th nowrap="nowrap" width="15%"><a class="th" href="{$U_SORT_RANK}">{$L_RANK}</a></th>
+				{ if $L_SEND_MESSAGE }<th nowrap="nowrap" width="11%">{$L_SEND_MESSAGE}</th>{ /if }
+				<th nowrap="nowrap" width="11%"><a class="th" href="{$U_SORT_EMAIL}">{$L_EMAIL}</a></th>
+				<th nowrap="nowrap" width="11%"><a class="th" href="{$U_SORT_WEBSITE}">{$L_WEBSITE}</a></th>
+				{ if $S_SEARCH_USER }<th width="2%" nowrap="nowrap">{$L_MARK}</th>{ /if }
+			</tr>
+
+			{section name=memberrowloop loop=$memberrow}
+
+			{ if $smarty.section.memberrowloop.rownum is even }
+			<tr class="row2">
+			{ else }
+			<tr class="row1">
+			{ /if }
+
+				<td class="gen" align="center">&nbsp;{ $memberrow[memberrowloop].ROW_NUMBER }&nbsp;</td>
+				<td class="gen" align="center"><strong><a{ if $memberrow[memberrowloop].USER_COLOR } style="color:#{$memberrow[memberrowloop].USER_COLOR}"{ /if } href="{$memberrow[memberrowloop].U_VIEWPROFILE}">{$memberrow[memberrowloop].USERNAME}</a></strong></td>
+				<td class="gensmall" align="center" nowrap="nowrap">&nbsp;{$memberrow[memberrowloop].JOINED}&nbsp;</td>
+				<td class="gen" align="center">{$memberrow[memberrowloop].POSTS}</td>
+				<td class="gen" align="center">{$memberrow[memberrowloop].RANK_IMG}</td>
+				{ if $memberrow[memberrowloop].U_PM }<td class="gen" align="center">&nbsp;<a href="{$memberrow[memberrowloop].U_PM}">{$PM_IMG}</a>&nbsp;</td>{ /if }
+				<td class="gen" align="center">&nbsp;{ if $memberrow[memberrowloop].U_EMAIL }<a href="{$memberrow[memberrowloop].U_EMAIL}">{$EMAIL_IMG}</a>{ /if }&nbsp;</td>
+				<td class="gen" align="center">&nbsp;{ if $memberrow[memberrowloop].U_WWW }<a href="{$memberrow[memberrowloop].U_WWW}" target="_blank">{$WWW_IMG}</a>{ /if }&nbsp;</td>
+				{ if $S_SEARCH_USER }<td align="center"><input type="checkbox" name="user" value="{$memberrow[memberrowloop].USERNAME}" /></td>{ /if }
+
+			</tr>
+			{ sectionelse }
+			
+			<tr>
+				<td class="row1" colspan="{ if $S_SEARCH_USER }9{ else }8{ /if }" height="28" align="center"><span class="gen">{$L_NO_MEMBERS}</span></td>
+			</tr>
+		
+			{ /section }
+
+			<tr>
+				<td class="cat" colspan="{ if $S_SEARCH_USER }9{ else }8{ /if }" align="center">
+				{ if $S_SEARCH_USER }<input class="btnlite" type="submit" value="{$L_SELECT_MARKED}" />
+				{ else }<span class="gensmall">{$L_SELECT_SORT_METHOD}:</span>&nbsp;<select name="sk">{$S_MODE_SELECT}</select>&nbsp; <span class="gensmall">{$L_ORDER}</span>&nbsp;<select name="sd">{$S_ORDER_SELECT}</select>&nbsp;
+				<input type="submit" name="submit" value="{$L_SUBMIT}" class="btnlite" />{ /if }</td>
+			</tr>
+		</table></form>
+
+	</div>
+
+	<table width="100%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td class="pagination">{$PAGE_NUMBER} [ {$TOTAL_USERS} ]</td>
+			<td align="right">{ if $S_SEARCH_USER }<b class="nav"><a href="javascript:marklist(true);">{$L_MARK_ALL}</a> :: <a  href="javascript:marklist(false);">{$L_UNMARK_ALL}</a></b><br />{ /if }<span class="pagination">{$PAGINATION}</span></td>
+		</tr>
+	</table>
+
+	<br clear="all" />
+
+{ include file='forums/overall_footer.html' }

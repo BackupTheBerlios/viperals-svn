@@ -1,0 +1,80 @@
+{*{ if $T_STYLESHEET_LINK }
+	<link rel="stylesheet" href="{$T_STYLESHEET_LINK}" type="text/css" />
+{ else }
+	<style type="text/css">
+	<!--
+	{$T_THEME_DATA}
+	//-->
+	</style>
+{ /if }
+*}
+<script language="Javascript" type="text/javascript">
+<!--
+
+{literal}
+function popup(url, width, height)
+{
+	window.open(url, '_popup', 'HEIGHT=' + height + ',resizable=yes,scrollbars=yes, WIDTH=' + width);
+	return false;
+}
+{/literal}
+{*
+function jumpto()
+{
+
+	var page = prompt('{$L_JUMP_PAGE}:', '{$ON_PAGE}');
+	var perpage = '{$PER_PAGE}';
+	var base_url = '{$BASE_URL}';
+{literal}
+	if (page !== null && !isNaN(page) && page > 0)
+	{
+		document.location.href = base_url.replace('&amp;', '&') + '&start=' + ((page - 1) * perpage);
+	}
+}{/literal}
+*}
+//-->
+</script>
+
+{php} OpenTable(); {/php}
+
+<a name="top"></a>
+
+<table width="100%" cellspacing="0">
+		<tr>
+			<td class="genmed"><a href="{$U_LOGIN_LOGOUT}"><img src="{$T_THEME_PATH}/images/icon_mini_login.gif" width="12" height="13" border="0" alt="{$L_LOGIN_LOGOUT}" /> {$L_LOGIN_LOGOUT}</a>&nbsp;
+			{ if $S_USER_LOGGED_IN }{ if $S_DISPLAY_PM } &nbsp;<a href="{$U_PRIVATEMSGS}"><img src="{$T_THEME_PATH}/images/icon_mini_message.gif" width="12" height="13" border="0" alt="{$PRIVATE_MESSAGE_INFO}" /> {$PRIVATE_MESSAGE_INFO}
+			{ if $PRIVATE_MESSAGE_INFO_UNREAD }, {$PRIVATE_MESSAGE_INFO_UNREAD}{ /if }</a>{ /if }
+			{ else } &nbsp;<a href="{$U_REGISTER}"><img src="{$T_THEME_PATH}/images/icon_mini_register.gif" width="12" height="13" border="0" alt="{$L_REGISTER}" /> {$L_REGISTER}</a>{ /if }</td>
+			<td class="genmed" align="right"><a href="{$U_FAQ}"><img src="{$T_THEME_PATH}/images/icon_mini_faq.gif" width="12" height="13" border="0" alt="{$L_FAQ}" /> {$L_FAQ}</a>
+			{ if $S_DISPLAY_SEARCH }&nbsp; &nbsp;<a href="{$U_SEARCH}"><img src="{$T_THEME_PATH}/images/icon_mini_search.gif" width="12" height="13" border="0" alt="{$L_SEARCH}" /> {$L_SEARCH}</a>{ /if }
+			{ if $S_DISPLAY_MEMBERLIST }&nbsp; &nbsp;<a href="{$U_MEMBERLIST}"><img src="{$T_THEME_PATH}/images/icon_mini_members.gif" width="12" height="13" border="0" alt="{$L_MEMBERLIST}" /> {$L_MEMBERLIST}</a>{ /if }
+			{ if $S_USER_LOGGED_IN }&nbsp; &nbsp;<a href="{$U_PROFILE}"><img src="{$T_THEME_PATH}/images/icon_mini_profile.gif" width="12" height="13" border="0" alt="{$L_PROFILE}" /> {$L_PROFILE}</a>{ /if }</td>
+		</tr>
+	</table>
+<br/>
+	<table width="100%" cellspacing="0">
+		<tr>
+			<td class="gensmall">{ if $S_USER_LOGGED_IN }{$LAST_VISIT_DATE}{ /if }</td>
+			<td class="gensmall" align="right">{$CURRENT_TIME}<br /></td>
+		</tr>
+	</table>
+
+	<p class="searchbar">
+		<a style="float: left;" href="{$U_SEARCH_UNANSWERED}">{$L_SEARCH_UNANSWERED}</a>
+		{ if $S_USER_LOGGED_IN }
+		<span style="float: right;"><a href="{$U_SEARCH_NEW}">{$L_SEARCH_NEW}</a> | <a href="{$U_SEARCH_SELF}">{$L_SEARCH_SELF}</a></span>
+		{ /if }
+	</p>
+
+	<br clear="all" />
+<br/>
+	<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+		<tr>
+			<td class="row1">
+				<p class="breadcrumbs"><a href="{$U_INDEX}">{$L_INDEX}</a>{section name=navlinksloop loop=$navlinks} &#187; <a href="{$navlinks[navlinksloop].U_VIEW_FORUM}">{$navlinks[navlinksloop].FORUM_NAME}</a>{/section}</p>
+				<p class="datetime">{$S_TIMEZONE}</p>
+			</td>
+		</tr>
+	</table>
+
+	<br clear="all" />

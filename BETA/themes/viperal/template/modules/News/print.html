@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Viperal: News</title>
+<link rel="stylesheet" href="/themes/viperal/style/style.css" type="text/css" />
+<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+<meta name="robots" content="noindex, nofollow">
+</head>
+
+<body>
+	<div class="newsblock">
+		<div class="title">{$NEWS_TITLE}</div>
+			<div class="content">
+			{ if $NEWS_FULL_STORY }	{ $NEWS_FULL_STORY } { else } { $NEWS_INTRO } { /if }
+			<br /><br />
+	
+			<hr />
+			
+			 <div style="text-align: left; margin-left: 60%">Posted: {$NEWS_TIME}<br/>
+			 { if $NEWS_POSTER_LINK }By: <a href="{ $NEWS_POSTER_LINK }">{$NEWS_POSTER} </a>{ else }By: {$NEWS_POSTER} { /if }</div></div>
+			<br />
+			<div style="text-align: center;">
+				<a href="#" onclick="javascript:window.print(); return false" title="Print">Print</a><br/>
+				<a href='javascript:window.close();'><span class="small">Close Window</a>
+			</div>
+
+			</a>
+		</div>
+	<br />

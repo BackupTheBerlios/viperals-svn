@@ -1,0 +1,64 @@
+{ if $T_STYLESHEET_LINK }
+	<link rel="stylesheet" href="{$T_STYLESHEET_LINK}" type="text/css" />
+{ else }
+	<style type="text/css">
+	<!--
+	{$T_THEME_DATA}
+	//-->
+	</style>
+{ /if }
+
+{ * $Id: login_body.html,v 1.5 2004/01/07 16:24:52 psotfx Exp $ *}
+{php} OpenTable(); {/php}
+
+<form action="{$S_LOGIN_ACTION}" method="post">
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr> 
+		<th colspan="2">{$L_LOGIN}</th>
+	</tr>
+	{ if $LOGIN_EXPLAIN }
+	<tr>
+		<td class="row3" colspan="2" align="center"><span class="gensmall">{$LOGIN_EXPLAIN}</td>
+	</tr>
+	{ /if }
+	<tr> 
+		<td class="row1" width="50%">
+			<p class="genmed">{$L_LOGIN_INFO}</p>
+
+			<p class="genmed" align="center"><a href="{$U_TERMS_USE}">{$L_TERMS_USE}</a> | <a href="{$U_PRIVACY}">{$L_PRIVACY}</a></p>
+		</td>
+		<td class="row2"><table cellspacing="1" cellpadding="4">
+
+			{ if $LOGIN_ERROR }
+			<tr>
+				<td class="gensmall" colspan="2" align="center"><span class="error">{$LOGIN_ERROR}</span></td>
+			</tr>
+			{ /if }
+
+			<tr> 
+				<td><b class="gensmall">{$L_USERNAME}:</b></td>
+				<td><input class="post" type="text" name="username" size="25" maxlength="40" value="{$USERNAME}" tabindex="1" /><br /><a class="gensmall" href="{$U_REGISTER}">{$L_REGISTER}</a></td>
+			</tr>
+			<tr> 
+				<td><b class="gensmall">{$L_PASSWORD}:</b></td>
+				<td><input class="post" type="password" name="password" size="25" maxlength="25" tabindex="2" /><br /><a class="gensmall" href="{$U_SEND_PASSWORD}">{$L_FORGOT_PASS}</a></td>
+			</tr>
+			{ if $S_DISPLAY_FULL_LOGIN }
+			<tr> 
+				<td>&nbsp;</td>
+				<td><input type="checkbox" name="autologin" tabindex="4" /> <span class="gensmall">{$L_LOG_ME_IN}</span></td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td><input type="checkbox" name="viewonline" tabindex="5" /> <span class="gensmall">{$L_HIDE_ME}</span></td>
+			</tr>
+			{ /if }
+		</table></td>
+	</tr>
+	<tr> 
+		<td class="cat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input type="submit" name="login" class="btnmain" value="{$L_LOGIN}" tabindex="3" /></td>
+	</tr>
+</table></form>
+
+{php} CloseTable(); {/php}

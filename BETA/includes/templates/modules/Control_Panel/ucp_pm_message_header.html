@@ -1,0 +1,46 @@
+{* $Id: ucp_pm_message_header.html,v 1.1 2004/06/02 18:07:40 acydburn Exp $ *}
+
+{literal}
+<script language="javascript" type="text/javascript">
+<!--
+function marklist(form_name, status)
+{
+	for (i = 0; i < document.forms[form_name].length; i++)
+	{
+		document.forms[form_name].elements[i].checked = status;
+	}
+}
+//-->
+</script>
+{/literal}
+<table width="100%" cellspacing="1">
+	<tr>
+		<td class="gensmall" nowrap="nowrap" align="left">
+			{ if $S_UNREAD }<b>{$L_UNREAD_MESSAGES}</b>{ else }{$FOLDER_STATUS}{ /if }
+		<td class="gensmall" nowrap="nowrap" align="right">{ if $U_INBOX }<a href="{$U_INBOX}">{$L_PM_INBOX}</a>{ else }{$L_PM_INBOX}{ /if }&nbsp;|&nbsp;{ if $U_OUTBOX }<a href="{$U_OUTBOX}">{$L_PM_OUTBOX}</a>{ else }{$L_PM_OUTBOX}{ /if }&nbsp;|&nbsp;{ if $U_SENTBOX }<a href="{$U_SENTBOX}">{$L_PM_SENTBOX}</a>{ else }{$L_PM_SENTBOX}{ /if }&nbsp;|&nbsp;<a href="{$U_CREATE_FOLDER}">{$L_CREATE_FOLDER}</a></td>
+	</tr>
+</table>
+
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+	<tr>
+		<td class="row1"><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td align="left">
+		{ if $TOTAL_MESSAGES }
+			<table width="100%" cellspacing="1">
+				<tr>
+					<td class="phpbbnav" valign="middle" nowrap="nowrap">&nbsp;{$PAGE_NUMBER}<br /></td>
+					<td class="gensmall" nowrap="nowrap">&nbsp;[ {$TOTAL_MESSAGES} ]&nbsp;</td>
+					<td class="gensmall" width="100%" align="right" nowrap="nowrap"><b>{$PAGINATION}</b></td>
+				</tr>
+			</table>
+		{ /if }
+		{ if $S_VIEW_MESSAGE }
+		<span class="gensmall">
+		{ if $S_DISPLAY_HISTORY }<a href="{$U_VIEW_PREVIOUS_HISTORY}">{$L_VIEW_PREVIOUS_HISTORY}</a> | <a href="{$U_VIEW_NEXT_HISTORY}">{$L_VIEW_NEXT_HISTORY}</a> | { /if }<a href="{$U_PREVIOUS_PM}">{$L_VIEW_PREVIOUS_PM}</a> | <a href="{$U_NEXT_PM}">{$L_VIEW_NEXT_PM}</a>&nbsp;
+		</span>
+		{ /if }
+		</td><td align="right" nowrap="nowrap"><form name="choosefolder" method="post" action="{$S_FOLDER_ACTION}" style="margin:0px">
+			<select name="f">{$S_FOLDER_OPTIONS}</select>&nbsp;<input class="btnlite" type="submit" name="folder" value="{$L_GO}" /></form>
+		</td></tr></table></td>
+	</tr>
+</table>
+

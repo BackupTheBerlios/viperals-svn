@@ -1,0 +1,45 @@
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th align="center"><b>{$L_TITLE}</b></th>
+			<th><b>{$L_POSITION}</b></th>
+			<th colspan="2"><b>{$L_WEIGHT}</b></th>
+			<th><b>{$L_TYPE}</b></td>
+			<th><b>{$L_ACTIVE}</b></th>
+			<th><b>{$L_VIEW}</b></th>
+			{ if isset($L_LfANGUAGE) }
+				<th align="center"><b>{$L_LANGUAGE}</b></th>
+			{ /if }
+			<th align="center"><b>{$L_LANGUAGE}</b></th>
+		</tr>
+    
+    {section name=admin_blocksloop loop=$admin_blocks}
+		<tr>
+			<td class="row1"><a href="{ $admin_blocks[admin_blocksloop].TITLE_LINK }" title="'._SHOW.'">{ $admin_blocks[admin_blocksloop].TITLE }</a></td>
+			<td class="row2" {$admin_blocks[admin_blocksloop].POSITION }</td>
+			<td class="row1"align="center" >{ $admin_blocks[admin_blocksloop].WEIGHTL }</td><td class="row1" align="center">{ $admin_blocks[admin_blocksloop].WEIGHTR }</td>
+			<td class="row2" align="center">{ $admin_blocks[admin_blocksloop].TYPE }</td>
+			<td class="row1" align="center"><a href="{ $admin_blocks[admin_blocksloop].ACTIVE_LINK }"><img src="images/{ $admin_blocks[admin_blocksloop].ACTIVE }" alt="{ $CHANGE }" title="{ $CHANGE }" border="0"></a></td>
+			<td class="row2" align="center">{ $admin_blocks[admin_blocksloop].WHO_VIEW }</td>
+			{ if isset($multilingual) }
+			   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+			{ /if }
+			
+			
+			<td class="row1" align="center">[
+			{ if $admin_blocks[admin_blocksloop].EDIT_LINK }
+			 <a href="{ $admin_blocks[admin_blocksloop].EDIT_LINK }">{ $L_EDIT }</a>
+			{ /if }
+			
+			
+			 { if $admin_blocks[admin_blocksloop].DELETE_LINK }
+				 | <a href="{ $admin_blocks[admin_blocksloop].DELETE_LINK }">{ $L_DELETE }</a>
+			{ /if }
+			]  </td>
+		  </tr>
+  { /section }
+  		  <tr><form action="{ $B_ACTION }" method="post">
+			<td class="cat" colspan="8"><input value="{ $L_BLOCK_REGULAR }" name="regular" type="submit" />&nbsp;&nbsp;<input value="{ $L_BLOCK_HTML }" name="submit" type="submit" />&nbsp;&nbsp;<input value="{ $L_BLOCK_RSS }" name="submit" type="submit" /></td>
+		  </tr></forum>
+  </tbody>
+</table>

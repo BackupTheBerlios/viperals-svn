@@ -1,0 +1,51 @@
+{ include file='modules/Control_Panel/ucp_header.html' }
+
+{* $Id: ucp_profile_reg_details.html,v 1.3 2004/02/05 14:43:54 psotfx Exp $ *}
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th colspan="2" valign="middle">{$L_TITLE}</th>
+	</tr>
+	{ if $S_FORCE_PASSWORD }
+		<td class="row3" colspan="2" align="center"><span class="gensmall">{$L_UCP_PROFILE_REG_WELCOME}</span></td>
+	</tr>
+	{ /if }
+	{ if $ERROR }
+	<tr>
+		<td class="row3" colspan="2" align="center"><span class="gensmall" style="color:red">{$ERROR}</span></td>
+	</tr>
+	{ /if }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_USERNAME}: </b><br /><span class="gensmall">{$L_USERNAME_EXPLAIN}</span></td>
+		<td class="row2">{ if $S_CHANGE_USERNAME }<input type="text" class="post" name="username" size="30" maxlength="30" value="{$USERNAME}" />{ else }<b class="gen">{$USERNAME}</b>{ /if }</td>
+	</tr>
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_EMAIL_ADDRESS}: </b></td>
+		<td class="row2">{ if $S_CHANGE_EMAIL }<input type="text" class="post" name="email" size="30" maxlength="60" value="{$EMAIL}" />{ else }<b class="gen">{$EMAIL}</b>{ /if }</td>
+	</tr>
+	{ if $S_CHANGE_EMAIL }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_CONFIRM_EMAIL}: </b><br /><span class="gensmall">{$L_CONFIRM_EMAIL_EXPLAIN}</span></td>
+		<td class="row2"><input type="text" class="post" name="confirm_email" size="30" maxlength="60" value="{$CONFIRM_EMAIL}" /></td>
+	</tr>
+	{ /if }
+	{ if $S_CHANGE_PASSWORD }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_CHANGE_PASSWORD}: </b><br /><span class="gensmall">{$L_CHANGE_PASSWORD_EXPLAIN}</span></td>
+		<td class="row2"><input type="password" class="post" name="new_password" size="30" maxlength="255" value="{$NEW_PASSWORD}" /></td>
+	</tr>
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_CONFIRM_PASSWORD}: </b><br /><span class="gensmall">{$L_CONFIRM_PASSWORD_EXPLAIN}</span></td>
+		<td class="row2"><input type="password" class="post" name="password_confirm" size="30" maxlength="255" value="{$PASSWORD_CONFIRM}" /></td>
+	</tr>
+	{ /if }
+	<tr> 
+		<td class="row1" width="35%"><b class="genmed">{$L_CURRENT_PASSWORD}: </b><br /><span class="gensmall">{$L_CURRENT_PASSWORD_EXPLAIN}</span></td>
+		<td class="row2"><input type="password" class="post" name="cur_password" size="30" maxlength="255" value="{$CUR_PASSWORD}" /></td>
+	</tr>
+	<tr>
+		<td class="cat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input class="btnmain" type="submit" name="submit" value="{$L_SUBMIT}" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="{$L_RESET}" name="reset" /></td>
+	</tr>
+</table>
+
+{ include file='modules/Control_Panel/ucp_footer.html' }

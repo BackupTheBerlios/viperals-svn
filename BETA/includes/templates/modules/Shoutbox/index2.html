@@ -1,0 +1,67 @@
+{php} OpenTable(); {/php}
+		<table class="tablebg" width="100%" cellspacing="1">
+
+{section name=shoutloop loop=$shout}
+
+{ if $smarty.section.shoutloop.index is even }
+<tr class="row1">
+{ else }
+<tr class="row2">
+{ /if }
+	<td valign="top" width="200px">
+		
+		<div align="center">
+		
+		<table cellspacing="4" align="center">
+			<tr>
+				<td><div align="center"><b class="postauthor">{$shout[shoutloop].USER_NAME}</b></div></td>
+			</tr>
+			{ if $shout[shoutloop].KARMA_IMG }
+			<tr>
+				<td><div align="center">{$shout[shoutloop].KARMA_IMG}</div></td>
+			</tr>
+			{ /if }
+			{ if $shout[shoutloop].ONLINE_IMG }
+			<tr>
+				<td><div align="center">{$shout[shoutloop].ONLINE_IMG}</div></td>
+			</tr>
+			{ /if }
+
+			{ if $shout[shoutloop].POSTER_AVATAR }
+			<tr>
+				<td>{$shout[shoutloop].POSTER_AVATAR}</td>
+			</tr>
+			{ /if }
+		</table>
+
+		</div>
+	</td>
+	<td valign="top">
+		<div class="postbody" style="min-height: 100px;">
+		{ if $shout[shoutloop].TIME }<b>{$L_POSTED}:</b> {$shout[shoutloop].TIME}<br /><br />{ /if }
+		<b>{$L_MESSAGE}:</b><br />{$shout[shoutloop].SHOUT}</div>
+	</td>
+</tr>
+
+{ if $smarty.section.shoutloop.index is even }
+<tr class="row1">
+{ else }
+<tr class="row2">
+{ /if }
+	<td nowrap="nowrap"></td>
+	<td><div class="gensmall" style="float:left">&nbsp;
+	{ if $shout[shoutloop].U_PROFILE }<a href="{$shout[shoutloop].U_PROFILE}">{$PROFILE_IMG}</a> { /if } 
+	{ if $shout[shoutloop].U_WWW }<a href="{$shout[shoutloop].U_WWW}">{$WWW_IMG}</a> { /if }
+	{ if $shout[shoutloop].U_MSN }<a href="{$shout[shoutloop].U_MSN}">{$MSN_IMG}</a> { /if }
+	{ if $shout[shoutloop].U_YIM }<a href="{$shout[shoutloop].U_YIM}">{$YIM_IMG}</a> { /if }
+	{ if $shout[shoutloop].U_JABBER }<a href="{$shout[shoutloop].U_JABBER}">{$JABBER_IMG}</a> { /if }
+	</div></td>
+</tr>
+
+<tr>
+	<td class="spacer" colspan="2" height="1"><img src="images/spacer.gif" alt="" width="1" height="1" /></td>
+</tr>
+
+{ /section }
+</table>
+{php} CloseTable(); {/php}

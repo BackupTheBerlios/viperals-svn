@@ -1,0 +1,25 @@
+{ include file='forums/simple_header.html' }
+{literal}
+<script language="javascript" type="text/javascript">
+<!--
+function jump_to_inbox()
+{
+{/literal}	opener.document.location.href = "{$U_RETURN_INBOX}";{literal}
+	window.close();
+}
+//-->
+</script>
+{/literal}
+<table width="100%" border="0" cellspacing="0" cellpadding="10">
+<tr>
+	<td>
+		<table width="100%" border="0" cellspacing="1" cellpadding="4">
+		<tr> 
+			<td valign="top" class="row1" align="center"><br /><span class="gen">{$MESSAGE}</span><br /><br /><span class="genmed"><a href="javascript:window.close();">{$L_CLOSE_WINDOW}</a></span><br /><br /></td>
+		</tr>
+		</table>
+	</td>
+</tr>
+</table>
+
+{ include file='forums/simple_footer.html' }

@@ -1,0 +1,16 @@
+ { include file='modules/Members_List/memberlist_header.html' }
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr> 
+		<th colspan="7">{$L_GROUP_INFORMATION}</th>
+	</tr>
+	<tr> 
+		<td class="row1" width="20%"><b class="genmed">{$L_GROUP_NAME}:</b></td>
+		<td class="row2"><b class="gen"{ if $GROUP_COLOR } style="color:#{$GROUP_COLOR}"{ /if }>{$GROUP_NAME}</b></td>
+		<td class="row1" width="33%" rowspan="2" align="center">{ if $AVATAR_IMG }{$AVATAR_IMG}<br />{ /if }{ if $RANK_IMG }{$RANK_IMG}{ /if }{ if $GROUP_RANK }<span class="gensmall">{$GROUP_RANK}</span><br /><br />{ /if }{ if $U_PM }<a href="{$U_PM}">{$PM_IMG}</a>{ /if }</td>
+	</tr>
+	<tr> 
+		<td class="row1" width="20%"><b class="genmed">{$L_GROUP_DESC}:</b></td>
+		<td class="row2"><span class="gen">{$GROUP_DESC}</span><p class="forumdesc">{$GROUP_TYPE}</p></td>
+	</tr>
+</table>

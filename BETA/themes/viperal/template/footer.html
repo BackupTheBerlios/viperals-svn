@@ -1,0 +1,20 @@
+{ if $bottomblock }
+	  {section name=bottomblockloop loop=$bottomblock}
+	<div class="centerblock">
+		<div class="title">{$bottomblock[bottomblockloop].TITLE}</div>
+			<div class="OpenTable"><div class="outer">
+				<div class="inner">
+					<div class="blockcontent">{$bottomblock[bottomblockloop].CONTENT}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+		{/section}
+{ /if }
+</div>
+</div>
+
+{ include file='blockright.html' }
+
+<div class="footer">
+<br /><div align="center" class="footmsg">{$THEME_FOOTER}</div>

@@ -1,0 +1,81 @@
+{ include file='modules/Control_Panel/ucp_header.html' }
+
+{* $Id: ucp_main_subscribed.html,v 1.3 2004/01/05 12:38:44 psotfx Exp $ *}
+{ literal }
+<script language="javascript" type="text/javascript">
+
+function marklist(form_name, status)
+{
+	for (i = 0; i < document.forms[form_name].length; i++)
+	{
+		document.forms[form_name].elements[i].checked = status;
+	}
+}
+
+//-->
+</script>
+{ /literal }
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th colspan="4">{$L_UCP}</th>
+	</tr>
+	<tr>
+		<td class="row1" colspan="4" align="center"><span class="genmed">{$L_UCP_WELCOME}</span></td>
+	</tr>
+	<tr>
+		<th colspan="4">{$L_WATCHED_FORUMS}</th>
+	</tr>
+
+	{section name=forumrowloop loop=$forumrow}
+
+	{ if $smarty.section.forumrowloop.index is even }
+	<tr class="row1">
+	{ else }
+	<tr class="row2">
+	{ /if }
+
+		<td style="padding: 4px;" width="20" align="center" valign="middle">{$forumrow[forumrowloop].FORUM_FOLDER_IMG}</td>
+		<td style="padding: 4px;" width="100%" class="topictitle"><a href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a></span></td>
+		<td class="gensmall" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{ if $forumrow[forumrowloop].LAST_POST_TIME }{$forumrow[forumrowloop].LAST_POST_TIME}<br />
+		{ if $forumrow[forumrowloop].U_LAST_POST_AUTHOR }<a href="{$forumrow[forumrowloop].U_LAST_POST_AUTHOR}">{$forumrow[forumrowloop].LAST_POST_AUTHOR}</a>{ else }{$forumrow[forumrowloop].LAST_POST_AUTHOR}
+		{ /if } <a href="{$forumrow[forumrowloop].U_LAST_POST}">{$forumrow[forumrowloop].LAST_POST_IMG}</a>{ else }{$L_NO_POSTS}{ /if }</td>
+		<td style="padding: 4px;"> <input type="checkbox" name="f[{$forumrow[forumrowloop].FORUM_ID}]" /> </td>
+	</tr>
+	{ sectionelse }
+	<tr class="row1">
+		<td colspan="4" align="center"><b class="genmed">{$L_NO_WATCHED_FORUMS}</b></td>
+	</tr>
+	{ /section }
+	
+	<tr>
+		<th colspan="4">{$L_WATCHED_TOPICS}</th>
+	</tr>
+
+	{section name=topicrowloop loop=$topicrow}
+
+	{ if $smarty.section.topicrowloop.index is even }
+	<tr class="row1">
+	{ else }
+	<tr class="row2">
+	{ /if }
+
+		<td style="padding: 4px;" width="20" align="center" valign="middle">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
+		<td style="padding: 4px;" width="100%"><span class="topictitle">{$topicrow[topicrowloop].NEWEST_POST_IMG}{$topicrow[topicrowloop].ATTACH_ICON_IMG}{$topicrow[topicrowloop].TOPIC_TYPE}<a href="{$topicrow[topicrowloop].U_VIEW_TOPIC}">{$topicrow[topicrowloop].TOPIC_TITLE}</a></span><span class="gensmall"><br />{$topicrow[topicrowloop].GOTO_PAGE}</span></td>
+		<td class="postdetails" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{$topicrow[topicrowloop].LAST_POST_TIME}<br />{$topicrow[topicrowloop].LAST_POST_AUTHOR} {$topicrow[topicrowloop].LAST_POST_IMG}</td>
+		<td style="padding: 4px;"> <input type="checkbox" name="t[{$topicrow[topicrowloop].TOPIC_ID}]" /> </td>
+	</tr>
+	{ sectionelse }
+	<tr class="row1">
+		<td colspan="4" align="center"><b class="genmed">{$L_NO_WATCHED_TOPICS}</b></td>
+	</tr>
+	{ /section }
+
+	<tr>
+		<td class="cat" colspan="4" align="right"><input class="btnlite" type="submit" name="unwatch" value="{$L_UNWATCH_MARKED}" />&nbsp;</td>
+	</tr>
+</table>
+
+<div class="gensmall" style="float: right; padding-top: 2px;"><b><a href="javascript:marklist('ucp', true);">{$L_MARK_ALL}</a> :: <a  href="javascript:marklist('ucp', false);">{$L_UNMARK_ALL}</a></b></div>
+
+{ include file='modules/Control_Panel/ucp_footer.html' }
