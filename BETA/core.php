@@ -101,14 +101,16 @@ if (VIPERAL == 'MINILOAD')
 }
 
 // && $name != 'Gallery' quick fix for the gallery, it needed for the javascripts...
-
+// add language codes, move to maybe sessions.  Add a kill post code and allow script to continue.
+// Or remove totally.
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['user']->new_session && $name != 'Gallery')
 {
-	$error = '<div align="center"><b>Someone with IP '.$_CLASS['user']->ip.'<br />'
-			.'tried to send information thru POST <br />from another location or site with the following url: '.$_SERVER['HTTP_REFERER'].'<br />'
-			.'to the following page: http://'.getenv('HTTP_HOST').$_SERVER['REQUEST_URI'].'<br /><br /></div>';
+	$user = (is_user()) ? $_CLASS['user']->data['user_id'] : '';
+	$error = '<div align="center"><b>There was suspectious POST on this site<br/>These are the information collected<br />'
+		.'<ul><br><li>IP address - '.$_CLASS['user']->ip.'.</li><br><li>User id - '.$user.'</li><br><li>Page - http://'.$_CLASS['display']->siteurl.$_SERVER['REQUEST_URI'].'</li><br><li>Referrer - '.$_SERVER['HTTP_REFERER'].'</li></ul>'
+		.'<br/><br/>The following data was sent - Please review<br/>'.$_CLASS['cache']->format_array($_POST).'</div>';
 	
-	$subject = 'Off site POST at '.$MAIN_CFG['global']['sitename'];
+	$subject = 'Suspectious POST sent to site '.$MAIN_CFG['global']['sitename'];
 
 	if (!send_mail($mailer_message, $error, 1, $subject) && is_admin())
 	{
