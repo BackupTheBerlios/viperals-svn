@@ -17,7 +17,7 @@ class display
 		global $_CLASS, $MAIN_CFG, $SID;
 		
 		$this->siteurl = getenv('HTTP_HOST').$MAIN_CFG['server']['path'];
-		$this->copyright = 'Interactive software released under <a href="http://www.cpgnuke.com/index.php?name=GNUGPL" target="_new">GNU GPL 2</a>, <a href="'.getlink('Credits&amp;'.$SID).'">Code Credits</a>, <a href="'.getlink('Privacy_Policy&amp;'.$SID).'">Privacy Policy</a></div>';
+		$this->copyright = 'Interactive software released under <a href="http://www.viperal.com/index.php?name=GNUGPL" target="_new">GNU GPL 2</a>, <a href="'.getlink('Credits&amp;'.$SID).'">Code Credits</a>, <a href="'.getlink('Privacy_Policy&amp;'.$SID).'">Privacy Policy</a></div>';
 		
 		$this->themeprev = get_variable('prevtheme', 'POST', false);
 		$this->themeprev = ($this->themeprev) ? $this->themeprev : get_variable('prevtheme', 'GET', false);
@@ -85,18 +85,23 @@ class display
 	
 	function display_head() {
 		global $_CLASS, $MAIN_CFG, $Module;
-		//global $modheade;
 		
 		if ($this->displayed['header'])
 		{
 			return;
 		}
-
+		
+		$this->displayed['header'] = true;
+		
+		//ini_set('default_mimetype', 'text/html');
+		//ini_set('default_charset', $_CLASS['user']->lang['ENCODING']);
+		
 		header('Content-Type: text/html; charset='.$_CLASS['user']->lang['ENCODING']);
 		header('Content-language: ' . $_CLASS['user']->lang['LANG']);
+		
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
 		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
-		header('Cache-Control: private, no-cache="set-cookie", pre-check=0, post-check=0');
+		header('Cache-Control: private, no-cache="set-cookie", pre-check=0, post-check=0, max-age=0');
 		header('Expires: 0');
 		header('Pragma: no-cache');
 		
@@ -111,26 +116,12 @@ class display
 			}
 		}
 
-		
-		$this->displayed['header'] = true;
-		$year = date('Y');
-
 		//require('includes/core/meta.php');
 		$this->header['js'] .= '<script type="text/javascript" src="/includes/javascript/overlib_mini.js"></script>';
+		$this->header['regular'] .= '<meta name="generator" content="CPG-Nuke - Copyright(c) '.date('Y').' by http://cpgnuke.com" />';
 		
-		$this->header['regular'] .= '<meta name="generator" content="CPG-Nuke - Copyright(c) '.$year.' by http://cpgnuke.com" />';
-		
-		// letts make a overDiv function for this remove it from being core core ;-0
-		$this->header['body'] .= '<div id="overDiv" style="position:absolute; visibility:hidden; z-index:10;"></div>';
-
-		if (file_exists('themes/'.$this->theme.'/images/favicon.ico')) {
-		
-			$this->header['regular'] .= '<link rel="shortcut icon" href="themes/'.$this->theme.'/images/favicon.ico" type="image/x-icon" />';
-		
-		} elseif (file_exists('favicon.ico')) {
-		
+		if (file_exists('favicon.ico')) {
 			$this->header['regular'] .= '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
-		
 		}
 		
 		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="http://'.$this->siteurl.'backend.php?feed=rdf" />';
@@ -139,11 +130,8 @@ class display
 			$this->header['js'] .= '<script type="text/javascript">if (self != top) top.location.replace(self.location)</script>';
 		}
 		
-		// Now what uses this !!
-		//$this->header['regular'] .= $modheader;
-
 		if ($MAIN_CFG['global']['maintenance']) {
-			$this->message = 'Note admin your in Maintenance mode<br />';
+			$this->message = 'Note your in Maintenance mode<br />';
 		}
 	
 		$_CLASS['template']->assign(array(
@@ -160,13 +148,6 @@ class display
 			)
 		);
 		
-		// Hell lets add this to the theme files so they can cutomize this.
-		if ($this->homepage) {
-			$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : _HOME));
-		} else {
-			$_CLASS['template']->assign('PAGE_TITLE', _HOME.' > '.$Module['custom_title']);
-		}
-		
 		if (THEMEPLATE) {
 		
 			themehead();
@@ -181,7 +162,7 @@ class display
 			}
 		}
 		
-		if (!defined('ADMIN_PAGES')) { require('includes/core/counter.php'); } // 2-3 queries
+		if (!defined('ADMIN_PAGES')) { require('includes/core/counter.php'); }
 
 		$_CLASS['blocks']->display(BLOCK_MESSAGE);
 		
@@ -200,8 +181,6 @@ class display
 			$_CLASS['editor']->display();
 		}
 
-		// Now what uses this !!
-		//unset($modheader);
 	}
 	
 	function display_footer() {
@@ -225,22 +204,14 @@ class display
 			echo '</body></html>';
 
 		}
-			
-		//Handle email/cron queue. // phpbb 2.1.2 only. add this to the forum section maybe !
-		//Yeppy i should make my own, like the way it works lol
-		//if (time() - $config['queue_interval'] >= $config['last_queue_run'] && !defined('IN_ADMIN'))
-		//{
-		// Arr crap pm and control panel uses this, :-S, add to script_close for now
-			if (file_exists('cache/queue.' . $phpEx))
-			{
-				//requireOnce('includes/forums/
-				requireOnce('includes/forums/functions_messenger.'.$phpEx);
-				$queue = new queue();
-				$queue->process();
-			}
-		//}
 		
 		script_close();
+
+		if (ob_get_length())
+		{
+			//test this on server before enableing
+			header('Content-Length: ' . ob_get_length());
+		}
 		die;	
 	}
 	
@@ -293,6 +264,20 @@ class display
 		global $_CLASS;
 		$this->header['meta'] = '<meta http-equiv="refresh" content="' . $time . ';url=' . $url . '">';
 	}
+	
+	function overLIB()
+	{
+		static $displayed = false;
+		
+		if ($displayed)
+		{
+			return;
+		}
+		
+		$displayed = true;
+		
+		$this->header['body'] .= '<div id="overDiv" style="position:absolute; visibility:hidden; z-index:10;"></div>';
+	}
 }
 
 /*
@@ -305,84 +290,6 @@ if (isset($_COOKIE["hiddenblocks"])) {
 	}
 	unset($tempcount);
 }*/
-
-// Meta refresh assignment
-
-
-function get_theme() {
-    global $_CLASS;
-    return $_CLASS['display']->theme;
-}
-
-function get_rss($url) {
-    $rdf = parse_url($url);
-    $result = false;
-    if ($fp = fsockopen($rdf['host'], 80, $errno, $errstr, 15)) {
-        if ($rdf['query'] != '') $rdf['query'] = '?' . $rdf['query'];
-        fputs($fp, 'GET ' . $rdf['path'] . $rdf['query'] . " HTTP/1.0\r\n");
-        fputs($fp, "User-Agent: CPG-Nuke RSS/XML Reader\r\n"); // AlexM
-        fputs($fp, 'HOST: ' . $rdf['host'] . "\r\n\r\n");
-        $string = '';
-        while(!feof($fp)) {
-            $pagetext = fgets($fp, 300);
-            $string .= chop($pagetext);
-        }
-        fputs($fp,"Connection: close\r\n\r\n");
-        fclose($fp);
-        $items = preg_replace('#\s#',' ',$items);
-        $items = preg_split('#(</item>)#', $string, -1, PREG_SPLIT_NO_EMPTY);
-        for ($i=0;$i<10;$i++) {
-            $link = preg_replace('#(.*)<link>(.*)</link>(.*)#','\\2',$items[$i]);
-            $title = preg_replace('#(.*)<title>(.*)</title>(.*)#','\\2',$items[$i]);
-            if ($items[$i] != '' && strcmp($link,$title)) {
-                $result[] = array('title'=>utf8_encode(strip_tags(urldecode($title))), 'link'=>strip_tags($link));
-            }
-        }
-    }
-    return $result;
-}
-
-function headlines($bid, $side=0, $row='') {
-    global $prefix, $db;
-    $bid = intval($bid);
-    if (!is_array($row)) {
-        $result = $db->sql_query('SELECT title, content, url, refresh, time FROM '.$prefix."_blocks WHERE bid='$bid'");
-        $row = $db->sql_fetchrow($result);
-        $db->sql_freeresult($result);
-    }
-    $title = $row['title'];
-    $content = $row['content'];
-    $url = $row['url'];
-    $refresh = $row['refresh'];
-    $otime = $row['time'];
-    $past = time()-$refresh;
-    if ($otime < $past) {
-        $content = '';
-        if ($items = get_rss($url)) {
-            $content = '';
-            for ($i=0;$i<count($items);$i++) {
-                $link = $items[$i]['link'];
-                $title2 = $items[$i]['title'];
-                $content .= "<img src=\"images/arrow.gif\" border=\"0\" alt=\"\" title=\"\" width=\"9\" height=\"9\"><a href=\"$link\" target=\"new\">$title2</a><br />\n";
-            }
-        }
-        $btime = time();
-        $db->sql_query('UPDATE '.$prefix.'_blocks SET content=\''.addslashes($content)."', time='$btime' WHERE bid='$bid'");
-    }
-    $siteurl = ereg_replace('http://','',$url);
-    $siteurl = explode('/',$siteurl);
-    if ($content != '') {
-        $content .= "<br /><a href=\"http://$siteurl[0]\" target=\"blank\"><b>"._HREADMORE.'</b></a>';
-    } else {
-        $content = _RSSPROBLEM;
-    }
-    $content = '<font class="content">'.$content.'</font>';
-    if ($side == 'c' || $side == 'd') {
-        themecenterbox($title, $content, $side);
-    } else {
-        themesidebox($title, $content, $bid);
-    }
-}
 
 function hideblock($id) {
     static $hiddenblocks;
@@ -399,16 +306,11 @@ function hideblock($id) {
     return (isset($hiddenblocks[$id]) ? $hiddenblocks[$id] : false);
 }
 
-function loginbox() {
-// removed useless
+function get_theme() {
+    global $_CLASS;
+    return $_CLASS['display']->theme;
 }
 
-/***********************************************************************************
- string yesno_option($name, $value=0)
- Creates 2 radio buttons with a Yes and No option
-    $name : name for the <input>
-    $value: current value, 1 = yes, 0 = no
-************************************************************************************/
 function yesno_option($name, $value=0) {
     if (function_exists('theme_yesno_option')) {
         return theme_yesno_option($name, $value);
@@ -418,13 +320,6 @@ function yesno_option($name, $value=0) {
     }
 }
 
-/***********************************************************************************
- string select_option($name, $value, $array)
- Creates a selection dropdown box of all given variables in the array
-    $name : name for the <select>
-    $value: current/default value
-    $array: array like array("value1","value2")
-************************************************************************************/
 function select_option($name, $default, $options) {
     if (function_exists('theme_select_option')) {
         return theme_select_option($name, $default, $options);
@@ -437,13 +332,6 @@ function select_option($name, $default, $options) {
     }
 }
 
-/***********************************************************************************
- string select_box($name, $value, $array)
- Creates a selection dropdown box of all given variables in the multi array
-    $name : name for the <select>
-    $value: current/default value
-    $array: array like array("value1 => title1","value2 => title2")
-************************************************************************************/
 function select_box($name, $default, $options) {
     if (function_exists('theme_select_box')) {
         return theme_select_box($name, $default, $options);

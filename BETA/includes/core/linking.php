@@ -1,4 +1,15 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 if (!defined('CPG_NUKE')) {
     Header("Location: ../../");
     die();
@@ -12,6 +23,9 @@ if (!defined('CPG_NUKE')) {
  and converts the link to LEO if GoogleTap is active
  example: getlink('Your_Account&amp;file=register') returns: "index.php?name=Your_Account&amp;file=register"
  index.php depends on what you've setup in config.php
+
+	Under the GNU General Public License version 2
+	Copyright (c) 2004 by CPG-Nuke Dev Team 	http://www.cpgnuke.com
 
 ************************************************************************************/
 function getlink($str=false, $UseLEO=true, $full=false, $showSID=true) {

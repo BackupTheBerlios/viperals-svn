@@ -11,12 +11,6 @@
 //																//
 //**************************************************************//
 
-/*
-this file is no longer being used please review the core/displayt/display.php for more info on the new stuff
-call footor with 
-$_CLASS['display']->foot();
-$C_LASS['display']->footmsg();
-*/
 if (!CPG_NUKE) {
     Header('Location: /');
     die();

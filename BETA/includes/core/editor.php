@@ -1,10 +1,17 @@
 <?php
-/*
-copyright 2004 viperal
-viperal.com
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
-To do Add kCEditor to the class and more :-)
-*/
+//To do Add kCEditor to the class and more :-)
 
 
 if (!defined('CPG_NUKE')) {

@@ -1,15 +1,12 @@
 <?php
 if (!CPG_NUKE) {
-    Header("Location: ../../");
+    Header('Location: ../../');
     die();
 }
 
-// Import GET/POST/Cookie variables into the global scope
-if (!ini_get("register_globals")) {
-	$r_globals = intval(ini_get('register_globals'));
-	if ($r_globals==0) {
-		import_request_variables('GPC');
-	}
+// Import GET/POST/Cookie variables for older modules
+if (!ini_get('register_globals')) {
+	import_request_variables('GPC');
 }
 
 ?>

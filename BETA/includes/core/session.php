@@ -1,13 +1,20 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
+
 // -------------------------------------------------------------
 //
-// $Id: session.php,v 1.125 2004/08/04 19:10:14 acydburn Exp $
-//
-// FILENAME  : session.php
-// STARTED   : Sat Dec 16, 2000
 // COPYRIGHT : © 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ]
 //
 // -------------------------------------------------------------
 

@@ -1,4 +1,11 @@
 <?php
+// Switch over to lorkan new ph2 theme
+
+if (!CPG_NUKE) {
+    Header('Location: ../../');
+    die();
+}
+
 global $bgcolor1, $bgcolor2, $bgcolor3, $bgcolor4;
 
 $lnkcolor = '#006699';
@@ -6,8 +13,6 @@ $bgcolor1 = '#F2F1ED';
 $bgcolor2 = '#F1BA67';
 $bgcolor3 = '#FBCF92';
 $bgcolor4 = '#F2F1ED';
-//$textcolor1 = '#000000';
-//$textcolor2 = '#006699';
 
 function OpenTable() {
 	echo '<table class="opentable1" cellspacing="1" cellpadding="5">'
@@ -60,6 +65,12 @@ function themehead() {
         )
     );
     
+    if ($_CLASS['display']->homepage) {
+		$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : _HOME));
+	} else {
+		$_CLASS['template']->assign('PAGE_TITLE', _HOME.' > '.$Module['custom_title']);
+	}
+	
     $themeblockside = 'left';
 	$_CLASS['blocks']->display(BLOCK_LEFT);
     $themeblockside = '';
@@ -77,16 +88,6 @@ function themefooter() {
 	$_CLASS['template']->display('footer.html');
 }
 
-/***********************************************************************************
-
- void themesidebox
-
- Output the specific block to left or right
-    $title  : the title of the block
-    $content: all formatted content for the block
-    $bid    : the database record ID of the block
-
-************************************************************************************/
 function themesidebox($title, $content=false, $bid, $template=false) {
     global $_CLASS, $themeblockside;
     
@@ -104,30 +105,13 @@ function themesidebox($title, $content=false, $bid, $template=false) {
 	}
 }
 
-/***********************************************************************************
 
- string theme_yesno_option
-
- Creates 2 radio buttons with a Yes and No option
-    $name : name for the <input>
-    $value: current value, 1 = yes, 0 = no
-
-************************************************************************************/
 function theme_yesno_option($name, $value=0) {
     $sel[intval($value)] = ' checked="checked"';
     $sel[($value==0)] = '';
     return '<input type="radio" name="'.$name.'" value="1"'.$sel[1].' />'._YES.' &nbsp; <input type="radio" name="'.$name.'" value="0" '.$sel[0].' />'._NO;
 }
-/***********************************************************************************
 
- string theme_select_option
-
- Creates a selection dropdown box of all given variables in the array
-    $name : name for the <select>
-    $value: current/default value
-    $array: array like array("value1","value2")
-
-************************************************************************************/
 function theme_select_option($name, $value, $array) {
     $sel[$value] = ' selected="selected"';
     $select = '<select name="'.$name."\">\n";
@@ -136,16 +120,7 @@ function theme_select_option($name, $value, $array) {
     }
     return $select.'</select>';
 }
-/***********************************************************************************
 
- string theme_select_box
-
- Creates a selection dropdown box of all given variables in the multi array
-    $name : name for the <select>
-    $value: current/default value
-    $array: array like array("value1 => title1","value2 => title2")
-
-************************************************************************************/
 function theme_select_box($name, $value, $array) {
     $sel[$value] = ' selected="selected"';
     $select = '<select name="'.$name."\">\n";

@@ -11,7 +11,7 @@
 //																//
 //**************************************************************//
 
-if (!'CPG_NUKE') {
+if (!CPG_NUKE) {
     Header('Location: ../../');
     die();
 }
@@ -58,7 +58,13 @@ function themehead() {
 		'MARGINLEFT' => ($_CLASS['blocks']->check_side(BLOCK_LEFT)) ? '180px' : '0px'
 		)
 	);
-	
+
+	if ($_CLASS['display']->homepage) {
+		$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : _HOME));
+	} else {
+		$_CLASS['template']->assign('PAGE_TITLE', _HOME.' > '.$Module['custom_title']);
+	}
+		
 	$themeblockside = 'left';
 	$_CLASS['blocks']->display(BLOCK_LEFT);
 	$themeblockside = '';
