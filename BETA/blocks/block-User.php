@@ -71,7 +71,7 @@ $session_users = session_users();
 
 foreach ($session_users as $row)
 {
-	if ($row['user_id'] != $prev_id)
+	if ($row['user_id'] != ANONYMOUS && $row['user_id'] != $prev_id)
   	{
 		if (!is_admin() && (!$row['user_allow_viewonline'] || !$row['session_viewonline']))
 		{
@@ -88,10 +88,9 @@ foreach ($session_users as $row)
 		
 		$prev_id = $row['user_id'];
 	
-	} elseif (!in_array($row['session_ip'], $prev_ip)) {
+	} elseif ($row['user_id'] == ANONYMOUS && !in_array($row['session_ip'], $prev_ip)) {
 	
 			$online['guest']++;
-			$prev_ip[] = $row['session_ip'];
 			
 	} else {
 	
@@ -99,6 +98,7 @@ foreach ($session_users as $row)
 		
 	}
 	
+	$prev_ip[] = $row['session_ip'];
 	$online['total']++;
 
 	switch ($row['session_page'])

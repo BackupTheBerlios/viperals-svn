@@ -28,7 +28,7 @@ loadclass('includes/forums/auth.'.$phpEx, 'auth');
 require('admin/modules/forums/links.php');
 
 
-$this->content .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">
+$this->content .= '<table class="tablebg" width="100%" cellpadding="0" cellspacing="0" border="0">
 	<tr>
 		<td width="100%"><table width="100%" cellpadding="4" cellspacing="1" border="0">
 			<tr>

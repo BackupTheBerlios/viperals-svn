@@ -41,10 +41,10 @@ do {
 	
 	$row['description'] = htmlentities(trim_text($row['description'], '<br />'), ENT_QUOTES);
 
-    $title2 = (strlen($row['title']) <  20) ? $row['title'] : substr($row['title'], 0, 20) . '...';
+    $title = (strlen($row['title']) <  20) ? $row['title'] : substr($row['title'], 0, 20) . '...';
     
-    $this->content .= '<td width="33%"><span style="font-size: 140%; FONT-WEIGHT: bold;" >'.$num.'</span>'
-               .'&nbsp;<a style="font-weight: bold;" href="'.getlink('Downloads&amp;d_op=viewdownloaddetails&amp;lid='.$row['lid']).'" onmouseover="return overlib(\''.$row['description'].'\', \'FGCOLOR\', \'#C7D0D7\');" onmouseout="return nd();">'.$title2.'&nbsp;<img src="images/download.gif" border="0" alt="" title="" width="10" height="10" /></a>'
+    $this->content .= '<td width="33%"><span style="font-size: 140%; font-weight: bold;" >'.$num.'</span>'
+               .'&nbsp;<a style="font-weight: bold;" href="'.getlink('Downloads&amp;d_op=viewdownloaddetails&amp;lid='.$row['lid']).'">'.$title.'&nbsp;<img src="images/download.gif" border="0" alt="" title="" width="10" height="10" /></a>'
                .'<br /></td>';
     
     $counter ++;

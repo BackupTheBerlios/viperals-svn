@@ -10,8 +10,10 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+// Well this needs some works
 
-if (!defined('VIPERAL')) {
+if (!defined('VIPERAL'))
+{
     Header('Location: /');
     die();
 }
@@ -34,14 +36,13 @@ define('USER_IGNORE', 2);
 define('USER_FOUNDER', 3);
 
 // Side defines
-define('BLOCK_LEFT', 0);
-define('BLOCK_TOP', 1);
-define('BLOCK_BOTTOM', 2);
+define('BLOCK_NONE', 0);
+define('BLOCK_ALL', 1);
+define('BLOCK_LEFT', 2);
 define('BLOCK_RIGHT', 3);
-define('BLOCK_MESSAGE', 4);
-
-define('BLOCK_ALL', 3);
-define('BLOCK_NONE', 5);
+define('BLOCK_TOP', 4);
+define('BLOCK_BOTTOM', 5);
+define('BLOCK_MESSAGE', 6);
 
 define('BLOCKTYPE_FILE',0);
 define('BLOCKTYPE_RSS',1);
