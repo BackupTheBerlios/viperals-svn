@@ -1,0 +1,76 @@
+{ include file='head.html' }
+<link rel="stylesheet" href="/themes/viperal/style/style.css" type="text/css" />
+
+{$HEADER_REGULAR}
+{$HEADER_JS}
+<script type="text/javascript" src="/themes/viperal/blockscript.js"></script>
+
+<!--[if IE]>{ literal }
+<style>
+	.menu {
+		position:absolute;
+	}
+	.bodymain {
+	height:1500px;
+	}
+	.ThemeOfficeSubMenu
+	{
+		position:	absolute;
+	}
+	.ThemeOfficeMainItem
+	{
+	background-color: transparent;
+	}
+</style>
+<![endif]-->
+
+{ /literal }
+</head>
+<body>
+{$HEADER_BODY}
+
+<a name="Top"></a>
+
+<div class="menu"><div id="myMenuID" ></div></div>
+
+<div id="header">
+	<a href="{$THEME_MAININDEX}"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{$THEME_SITENAME}" /></a>
+</div>
+{ include file='blockleft.html' }
+
+<div class="mainbody" style="margin-left: {$MARGINLEFT}">
+	<div id="page">
+		You are here: {$PAGE_TITLE}
+	</div>
+	
+	<div class="bodymain" style="margin-right: {$MARGINRIGHT}">
+
+	{ if isset($messageblock) }
+	
+		<div class="messageblock">
+	
+		{section name=messageblockloop loop=$messageblock}
+			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $messageblock[messageblockloop].EDIT }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }{$messageblock[messageblockloop].EDIT} ]{ /if }</div>
+			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].ID}">{$messageblock[messageblockloop].CONTENT}</div>
+		<br />
+		{/section}
+	
+		</div>
+	<br />
+	{ /if }
+
+	{ if isset($centerblock) }
+	  {section name=blockcenterloop loop=$centerblock}
+	
+	<div class="centerblock">
+		<div class="title">{$centerblock[blockcenterloop].TITLE}</div>
+			<div class="OpenTable"><div class="outer">
+				<div class="inner">
+					<div class="content">{$centerblock[blockcenterloop].CONTENT}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+		{/section}
+	<br />
+	{ /if }

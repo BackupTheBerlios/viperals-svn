@@ -1,0 +1,420 @@
+{ include file='modules/Forums/overall_header.html' }
+
+{* $Id: posting_body.html,v 1.20 2004/06/24 08:09:00 acydburn Exp $ *}
+
+<script language="javascript" type="text/javascript">
+<!--
+
+var form_name = 'post';
+var text_name = 'message';
+
+// Define the bbCode tags
+bbcode = new Array();
+bbtags = new Array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[quote]','[/quote]','[code]','[/code]','[list]','[/list]','[list=]','[/list]','[img]','[/img]','[url]','[/url]','[php]','[/php]');
+imageTag = false;
+
+// Helpline messages
+b_help = "{$L_BBCODE_B_HELP}";
+i_help = "{$L_BBCODE_I_HELP}";
+u_help = "{$L_BBCODE_U_HELP}";
+q_help = "{$L_BBCODE_Q_HELP}";
+c_help = "{$L_BBCODE_C_HELP}";
+l_help = "{$L_BBCODE_L_HELP}";
+o_help = "{$L_BBCODE_O_HELP}";
+p_help = "{$L_BBCODE_P_HELP}";
+w_help = "{$L_BBCODE_W_HELP}";
+a_help = "{$L_BBCODE_A_HELP}";
+s_help = "{$L_BBCODE_S_HELP}";
+f_help = "{$L_BBCODE_F_HELP}";
+e_help = "{$L_BBCODE_E_HELP}";
+z_help = "{$L_BBCODE_Z_HELP}";
+
+{literal}
+function checkForm()
+{
+	if (document.post.message.value.length < 2) {{/literal}
+		alert('{$L_EMPTY_MESSAGE}');{literal}
+		return false;
+	} else {
+//		document.post.post.disabled = true;
+		return true;
+	}
+}
+
+//-->
+</script>
+<script language="javascript" type="text/javascript" src="includes/javascript/bbcode.js"></script>
+{/literal}
+{ if $S_FORUM_RULES }
+<div class="forumrules">
+	{ if $U_FORUM_RULES }
+		<a href="{$U_FORUM_RULES}">{$L_FORUM_RULES}</a>
+	{ else }
+		<h3 style="color:red">{$L_FORUM_RULES}</h3><br />
+		{$FORUM_RULES}
+	{ /if }
+</div>
+
+<br clear="all" />
+{ /if }
+
+{ if !$S_PRIVMSGS }
+	<div id="pageheader">
+		<h2>{ if $TOPIC_TITLE }<a class="titles" href="{$U_VIEWTOPIC}">{$TOPIC_TITLE}</a>{ else }<a class="titles" href="{$U_VIEW_FORUM}" title="{$FORUM_DESC}">{$FORUM_NAME}</a>{ /if }</h2>
+
+		{ if $MODERATORS }
+			<p class="moderators">{$L_MODERATORS}: {$MODERATORS}</p>
+		{ /if }
+		{ if $U_MCP }
+			<p class="linkmcp">[ <a href="{$U_MCP}">{$L_MCP}</a> ]</p>
+		{ /if }
+	</div>
+
+	<br clear="all" /><br />
+{ /if }
+
+{ if !$S_SHOW_PM_BOX }
+	<form action="{$S_POST_ACTION}" method="post" name="post"{$S_FORM_ENCTYPE}>
+{ /if }
+
+{ if $S_DRAFT_LOADED }
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th align="center">{$L_INFORMATION}</th>
+		</tr>
+		<tr>
+			<td class="row1" align="center"><span class="gen">{$L_DRAFT_LOADED}</span></td>
+		</tr>
+	</table>
+
+	<br clear="all" />
+{ /if }
+
+{ if $S_SHOW_DRAFTS }
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th colspan="3" align="center">{$L_LOAD_DRAFT}</th>
+		</tr>
+		<tr>
+			<td class="row1" colspan="3" align="center"><span class="gen">{$L_LOAD_DRAFT_EXPLAIN}</span></td>
+		</tr>
+		<tr>
+			<th>{$L_SAVE_DATE}</th>
+			<th>{$L_DRAFT_TITLE}</th>
+			<th>{$L_OPTIONS}</th>
+		</tr>
+		{section name=draftrowloop loop=$draftrow}
+
+			{ if $smarty.section.draftrowloop.rownum is even }<tr class="row1">{ else }<tr class="row2">{ /if }
+
+			<td class="postdetails" style="padding: 4px;">{$draftrow[draftrowloop].DATE}</td>
+			<td style="padding: 4px;"><b class="gen">{$draftrow[draftrowloop].DRAFT_SUBJECT}</b>
+				{ if $draftrow[draftrowloop].S_LINK_TOPIC }<br /><span class="gensmall">{$L_TOPIC}: <a href="{$draftrow.U_VIEW}">{$draftrow[draftrowloop].TITLE}</a></span>
+				{ elseif $draftrow[draftrowloop].S_LINK_FORUM }<br /><span class="gensmall">{$L_FORUM}: <a href="{$draftrow.U_VIEW}">{$draftrow[draftrowloop].TITLE}</a></span>
+				{ elseif $draftrow[draftrowloop].S_LINK_PM }<br /><span class="gensmall">{$L_PRIVATE_MESSAGE}</span>
+				{ else }<br /><span class="gensmall">{$L_NO_TOPIC_FORUM}</span>{ /if }
+			</td>
+			<td style="padding: 4px;" align="center"><span class="gen"><a href="{$draftrow[draftrowloop].U_INSERT}">{$L_LOAD_DRAFT}</a></td>
+		</tr>
+		{ /section }
+	</table>
+
+	<br clear="all" />
+{ /if }
+
+
+{ if $S_POST_REVIEW }{ include file='modules/Forums/posting_review.html' }{ /if }
+{ if $S_DISPLAY_PREVIEW }{ include file='modules/Forums/posting_preview.html' }{ /if }
+
+
+{ if $S_UNGLOBALISE }
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th>{$L_MOVE}</th>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="2"><img src="images/spacer.gif" alt="" width="1" height="1" /></td>
+		</tr>
+		<tr> 
+			<td class="row2" align="center"><span class="gen">{$L_UNGLOBALISE_EXPLAIN}<br /><br />{$L_SELECT_DESTINATION_FORUM}&nbsp;&nbsp;</span><select name="to_forum_id">{$S_FORUM_SELECT}</select><br /><br /><input class="btnmain" type="submit" name="post" value="{$L_CONFIRM}" />&nbsp;&nbsp; <input class="btnlite" type="submit" name="cancel_unglobalise" value="{$L_CANCEL}" /></td>
+		</tr>
+	</table>
+
+	<br clear="all" />
+{ /if }
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th colspan="2"><b>{$L_POST_A}</b></th>
+	</tr>
+
+	{ if $ERROR }
+		<tr>
+			<td class="row2" colspan="2" align="center"><span class="genmed" style="color:red">{$ERROR}</span></td>
+		</tr>
+	{ /if }
+
+	{ if $S_DELETE_ALLOWED }
+		<tr>
+			<td class="row1"><b class="genmed">{$L_DELETE_POST}:</b></td>
+			<td class="row2"><input type="checkbox" name="delete" /> <span class="gensmall">[ {$L_DELETE_POST_WARN} ]</span></td>
+		</tr>
+	{ /if }
+
+	{ if $S_SHOW_TOPIC_ICONS }
+		<tr>
+			<td class="row1"><b class="genmed">{$L_ICON}:</b></td>
+			<td class="row2"><table width="100%" cellspacing="0" cellpadding="0" border="0">
+				<tr>
+					<td><input type="radio" name="icon" value="0"{$S_NO_ICON_CHECKED} /><span class="genmed">{$L_NONE}</span>
+					{section name=topic_iconloop loop=$topic_icon}<input type="radio" name="icon" value="{$topic_icon[topic_iconloop].ICON_ID}"{$topic_icon[topic_iconloop].S_ICON_CHECKED} /><img src="{$topic_icon[topic_iconloop].ICON_IMG}" width="{$topic_icon[topic_iconloop].ICON_WIDTH}" height="{$topic_icon[topic_iconloop].ICON_HEIGHT}" alt="" title="" hspace="2" vspace="2" /> { /section }</td>
+				</tr>
+			</table></td>
+		</tr>
+	{ /if }
+
+	{ if $S_DISPLAY_USERNAME }
+		<tr>
+			<td class="row1"><b class="genmed">{$L_USERNAME}:</b></td>
+			<td class="row2"><input class="post" type="text" tabindex="1" name="username" size="25" maxlength="25" value="{$USERNAME}" /></td>
+		</tr>
+	{ /if }
+
+	<tr>
+		<td class="row1" width="22%"><b class="genmed">{$L_SUBJECT}:</b></td>
+		<td class="row2" width="78%"><input class="post" style="width:450px" type="text" name="subject" size="45" maxlength="60" tabindex="2" value="{$SUBJECT}" /></td>
+	</tr>
+	<tr>
+		<td class="row1" valign="top"><b class="genmed">{$L_MESSAGE_BODY}:</b><br /><span class="gensmall">{$L_MESSAGE_BODY_EXPLAIN}</span><br /><br /><table width="80%" cellspacing="5" cellpadding="0" border="0" align="center">
+			<tr>
+				<td class="gensmall" align="center"><b>{$L_EMOTICONS}</b></td>
+			</tr>
+			<tr>
+				<td align="center">{section name=emoticonloop loop=$emoticon}<a href="javascript:emoticon('{$emoticon[emoticonloop].SMILEY_CODE}')"><img src="{$emoticon[emoticonloop].SMILEY_IMG}" width="{$emoticon[emoticonloop].SMILEY_WIDTH}" height="{$emoticon[emoticonloop].SMILEY_HEIGHT}" border="0" alt="{$emoticon[emoticonloop].SMILEY_DESC}" title="{$emoticon[emoticonloop].SMILEY_DESC}" onclick="emoticon('{$emoticon[emoticonloop].SMILEY_CODE}');return false" hspace="2" vspace="2" /></a> { /section }</td>
+			</tr>
+
+			{ if $S_SHOW_EMOTICON_LINK }
+				<tr>
+					<td align="center"><a class="nav" href="{$U_MORE_SMILIES}" onclick="window.open('{$U_MORE_SMILIES}', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{$L_MORE_EMOTICONS}</a></td>
+				</tr>
+			{ /if }
+
+		</table></td>
+		<td class="row2" valign="top"><table cellspacing="0" cellpadding="2" border="0">
+			<tr align="center" valign="middle">
+				<td><input type="button" class="btnbbcode" accesskey="b" name="addbbcode0" value=" B " style="font-weight:bold; width: 30px" onclick="bbstyle(0)" onmouseover="helpline('b')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="i" name="addbbcode2" value=" i " style="font-style:italic; width: 30px" onclick="bbstyle(2)" onmouseover="helpline('i')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="u" name="addbbcode4" value=" u " style="text-decoration: underline; width: 30px" onclick="bbstyle(4)" onmouseover="helpline('u')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="q" name="addbbcode6" value="Quote" style="width: 50px" onclick="bbstyle(6)" onmouseover="helpline('q')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="c" name="addbbcode8" value="Code" style="width: 40px" onclick="bbstyle(8)" onmouseover="helpline('c')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="z" name="addbbcode18" value="php" style="width: 40px" onclick="bbstyle(18)" onmouseover="helpline('z')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="l" name="addbbcode10" value="List" style="width: 40px" onclick="bbstyle(10)" onmouseover="helpline('l')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="o" name="addbbcode12" value="List=" style="width: 40px" onclick="bbstyle(12)" onmouseover="helpline('o')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="p" name="addbbcode14" value="Img" style="width: 40px"  onclick="bbstyle(14)" onmouseover="helpline('p')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="w" name="addbbcode16" value="URL" style="text-decoration: underline; width: 40px" onclick="bbstyle(16)" onmouseover="helpline('w')" /></td>
+			</tr>
+			<tr>
+				<td colspan="9"><table width="100%" cellspacing="0" cellpadding="0" border="0">
+					<tr>
+						<td><span class="genmed"> &nbsp;{$L_FONT_SIZE}:</span> <select name="addbbcode20" onchange="bbfontstyle('[size=' + this.form.addbbcode20.options[this.form.addbbcode20.selectedIndex].value + ']', '[/size]');this.form.addbbcode20.selectedIndex = 2;" onmouseover="helpline('f')">
+							<option value="7">{$L_FONT_TINY}</option>
+							<option value="9">{$L_FONT_SMALL}</option>
+							<option value="12" selected="selected">{$L_FONT_NORMAL}</option>
+							<option value="18">{$L_FONT_LARGE}</option>
+							<option  value="24">{$L_FONT_HUGE}</option>
+						</select></td>
+						<td class="gensmall" nowrap="nowrap" align="right"><a href="javascript:bbstyle(-1)" onmouseover="helpline('a')">{$L_CLOSE_TAGS}</a></td>
+					</tr>
+				</table></td>
+			</tr>
+			<tr>
+				<td colspan="9" width="450"><input type="text" name="helpbox" size="45" maxlength="100" class="helpline" value="{$L_STYLES_TIP}" /></td>
+				<td class="genmed" align="center">{$L_FONT_COLOR}</td>
+			</tr>
+			<tr>
+				<td colspan="9"><textarea name="message" id="message" rows="15" cols="76" tabindex="3" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{$MESSAGE}</textarea></td>
+					
+				<td width="100%" align="center" valign="top"><table cellspacing="0" cellpadding="0" border="0">
+					<tr>
+						<td bgcolor="black"><script language="javascript" type="text/javascript"><!--
+
+						colorPalette('v', 10, 7)
+
+						//--></script></td>
+					</tr>
+				</table></td>
+		 	</tr>
+		</table></td>
+	</tr>
+
+	{ if $S_INLINE_ATTACHMENT_OPTIONS }
+		<tr>
+			<td class="row1"><b class="genmed">{$L_ATTACHMENTS}:</b></td>
+			<td class="row2"><select name="attachments">{$S_INLINE_ATTACHMENT_OPTIONS}</select>&nbsp;<input type="button" class="btnbbcode" accesskey="a" value="{$L_PLACE_INLINE}" name="attachinline" onclick="attach_inline();" />
+			</td>
+		</tr>
+	{ /if }
+
+	<tr>
+		<td class="row1" valign="top"><b class="genmed">{$L_OPTIONS}:</b><br /><table cellspacing="2" cellpadding="0" border="0">
+			<tr>
+				<td class="gensmall">{$HTML_STATUS}</td>
+			</tr>
+			<tr>
+				<td class="gensmall">{$BBCODE_STATUS}</td>
+			</tr>
+			<tr>
+				<td class="gensmall">{$IMG_STATUS}</td>
+			</tr>
+			<tr>
+				<td class="gensmall">{$FLASH_STATUS}</td>
+			</tr>
+			<tr>
+				<td class="gensmall">{$SMILIES_STATUS}</td>
+			</tr>
+		</table></td>
+		<td class="row2"><table cellpadding="1">
+			{ if $S_HTML_ALLOWED }
+				<tr>
+					<td><input type="checkbox" name="disable_html"{$S_HTML_CHECKED} /></td>
+					<td class="gen">{$L_DISABLE_HTML}</td>
+				</tr>
+			{ /if }
+
+			{ if $S_BBCODE_ALLOWED }
+				<tr>
+					<td><input type="checkbox" name="disable_bbcode"{$S_BBCODE_CHECKED} /></td>
+					<td class="gen">{$L_DISABLE_BBCODE}</td>
+				</tr>
+			{ /if }
+
+			{ if $S_SMILIES_ALLOWED }
+				<tr>
+					<td><input type="checkbox" name="disable_smilies"{$S_SMILIES_CHECKED} /></td>
+					<td class="gen">{$L_DISABLE_SMILIES}</td>
+				</tr>
+			{ /if }
+
+			<tr>
+				<td><input type="checkbox" name="disable_magic_url"{$S_MAGIC_URL_CHECKED} /></td>
+				<td class="gen">{$L_DISABLE_MAGIC_URL}</td>
+			</tr>
+
+			{ if $S_SIG_ALLOWED }
+				<tr>
+					<td><input type="checkbox" name="attach_sig"{$S_SIGNATURE_CHECKED} /></td>
+					<td class="gen">{$L_ATTACH_SIG}</td>
+				</tr>
+			{ /if }
+
+			{ if $S_NOTIFY_ALLOWED }
+				<tr>
+					<td><input type="checkbox" name="notify"{$S_NOTIFY_CHECKED} /></td>
+					<td class="gen">{$L_NOTIFY_REPLY}</td>
+				</tr>
+			{ /if }
+
+			{ if !$S_PRIVMSGS }
+				{ if $S_LOCK_TOPIC_ALLOWED }
+					<tr>
+						<td><input type="checkbox" name="lock_topic"{$S_LOCK_TOPIC_CHECKED} /></td>
+						<td class="gen">{$L_LOCK_TOPIC}</td>
+					</tr>
+				{ /if }
+	
+				{ if $S_LOCK_POST_ALLOWED }
+					<tr>
+						<td><input type="checkbox" name="lock_post"{$S_LOCK_POST_CHECKED} /></td>
+						<td class="gen">{$L_LOCK_POST} [{$L_LOCK_POST_EXPLAIN}]</td>
+					</tr>
+				{ /if }
+
+				{ if $S_TYPE_TOGGLE }
+					<tr>
+						<td>&nbsp;</td>
+						<td class="gen">{ if $S_EDIT_POST }{$L_CHANGE_TOPIC_TO}{ else }{$L_POST_TOPIC_AS}{ /if }: 
+						{section name=topic_typeloop loop=$topic_type}<input type="radio" name="topic_type" value="{$topic_type[topic_typeloop].VALUE}"{$topic_type[topic_typeloop].S_CHECKED} />{$topic_type[topic_typeloop].L_TOPIC_TYPE}&nbsp;&nbsp;{ /section }</td>
+					</tr>
+				{ /if }
+			{ /if }
+		</table></td>
+	</tr>
+
+	{ if $S_TOPIC_TYPE_ANNOUNCE || $S_TOPIC_TYPE_STICKY }
+	<tr>
+		<td class="row1"><b class="genmed">{$L_STICK_TOPIC_FOR}:</b><br /><span class="gensmall">{$L_STICKY_ANNOUNCE_TIME_LIMIT}</span></td> 
+		<td class="row2"><input class="post" type="text" name="topic_time_limit" size="3" maxlength="3" value="{$TOPIC_TIME_LIMIT}" />&nbsp;<b class="gen">{$L_DAYS}</b> <span class="gensmall">{$L_STICK_TOPIC_FOR_EXPLAIN}</span></td>
+	</tr>
+	{ /if }
+
+	{ if $S_EDIT_REASON }
+		<tr>
+			<td class="row1" valign="top"><b class="genmed">{$L_EDIT_REASON}:</b></td>
+			<td class="row2"><input class="post" type="text" name="edit_reason" size="50" maxlength="100" value="{$EDIT_REASON}" /></td>
+		</tr>
+	{ /if }
+
+	{ if $S_SHOW_ATTACH_BOX or $S_SHOW_POLL_BOX }
+	<tr>
+		<td class="cat" colspan="2" align="center"><input class="btnlite" type="submit" tabindex="5" name="preview" value="{$L_PREVIEW}" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{$L_SUBMIT}" />{ if $S_SAVE_ALLOWED }&nbsp; <input class="btnlite" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" />{ /if }{ if $S_HAS_DRAFTS }&nbsp; <input class="btnlite" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" />{ /if }&nbsp; <input class="btnlite" type="submit" accesskey="c" tabindex="7" name="cancel" value="{$L_CANCEL}" /></td>
+	</tr>
+	{ /if }
+	
+	{ if $S_SHOW_ATTACH_BOX }{ include file='modules/Forums/posting_attach_body.html }{ /if }
+
+	{ if $S_SHOW_POLL_BOX }
+		{ include file='modules/Forums/posting_poll_body.html' }
+	{ elseif $S_POLL_DELETE }
+		<tr>
+			<td class="row1"><span class="genmed"><b>{$L_POLL_DELETE}:</b></span></td>
+			<td class="row2"><input type="checkbox" name="poll_delete" /></td>
+		</tr>
+	{ /if }
+
+	<tr>
+		<td class="cat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input class="btnlite" type="submit" tabindex="5" name="preview" value="{$L_PREVIEW}" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{$L_SUBMIT}" />{ if $S_SAVE_ALLOWED }&nbsp; <input class="btnlite" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" />{ /if }{ if $S_HAS_DRAFTS }&nbsp; <input class="btnlite" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" />{ /if }&nbsp; <input class="btnlite" type="submit" accesskey="c" tabindex="7" name="cancel" value="{$L_CANCEL}" /></td>
+	</tr>
+</table>
+
+<br clear="all" />
+
+{ if $S_DISPLAY_REVIEW }{ include file='modules/Forums/posting_topic_review.html' }{ /if }
+
+{ if $S_PRIVMSGS }
+	</form>
+
+	<br clear="all" />
+
+	{ include file='modules/Control_Panel/ucp_footer.html' }
+{ else }
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<td class="row1"><div class="nav" style="float:left"><a href="{$U_INDEX}">{$L_INDEX}</a>{section name=navlinksloop loop=$navlinks} &#187; <a href="{$navlinks[navlinksloop].U_VIEW_FORUM}">{$navlinks[navlinksloop].FORUM_NAME}</a>{/section}</div><div class="gensmall" style="float:right">{$S_TIMEZONE}</div></td>
+		</tr>
+	</table>
+
+	</form>
+
+	{ if $S_DISPLAY_ONLINE_LIST }
+		<br clear="all" />
+
+		<table class="tablebg" width="100%" cellspacing="1">
+			<tr>
+				<td class="cat"><span class="cattitle">{$L_WHO_IS_ONLINE}</span></td>
+			</tr>
+			<tr>
+				<td class="row1"><span class="gensmall">{$LOGGED_IN_USER_LIST}</span></td>
+			</tr>
+		</table>
+	{ /if }
+
+	<br clear="all" />
+
+	<table width="100%" cellspacing="1">
+		<tr>
+			<td align="right">{ include file='modules/Forums/jumpbox.html }</td>
+		</tr>
+	</table>
+
+	{ include file='modules/Forums/overall_footer.html' }
+{ /if }

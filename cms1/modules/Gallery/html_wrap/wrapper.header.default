@@ -1,0 +1,37 @@
+<?php
+// $Id: wrapper.header.default,v 1.21 2004/07/17 11:35:20 jenst Exp $
+// This header file detects whether Gallery is embedded in any 
+// known PHP applications and then decorates Gallery appropriately.
+
+if (!defined('VIPERAL'))
+{
+    header('location: ../../');
+    die();
+}	
+
+
+/*
+ * We can control whether we see the right side blocks
+ * by setting the value of the $index variable.  To
+ * see the blocks, set $index to 1.  To hide them set
+ * $index to 0.  We default to 0 to leave more room for
+ * the photos.  If you change this value, you should
+ * also change it in wrapper.footer
+ *
+ * Note that we save the current value of $index in
+ * $tmp_index and restore it when we're done.  If we
+ * don't do this, navigation won't work!
+ */
+
+global $_CLASS, $index;
+$tmp_index = $index;
+$index = 0;
+
+$_CLASS['display']->header['regular'] .= '<link rel="stylesheet" type="text/css" href="modules/Gallery/css/embedded_style.css.default">';
+
+$_CLASS['display']->display_head();
+
+OpenTable();
+
+$index = $tmp_index;
+?> 

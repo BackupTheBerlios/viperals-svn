@@ -1,0 +1,17 @@
+<div >
+  {section name=blockloop loop=$block}
+	<div class="blocks">
+	
+		<div class="top">&nbsp;{$block[blockloop].S_TITLE}&nbsp;</div>
+      
+
+		<div class="blockcontent" id="pe{$block[blockloop].S_BID}" {$block[blockloop].C_COLLAPSE}>
+		
+		<br />{$block[blockloop].S_CONTENT}
+		
+		</div>
+	</div>
+	<br />
+  {/section}
+	</div>
+</div>

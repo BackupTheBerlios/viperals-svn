@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rss PUBLIC "-//Netscape Communications//DTD RSS 0.91//EN"
+ "http://my.netscape.com/publish/formats/rss-0.91.dtd">
+<rss version="0.91">
+<channel>
+<title>{ $SITE_NAME }</title>
+<link>{ $SITE_URL }</link>
+<description>{ $SLOGAN }</description>
+<language>{ $LANG }</language>
+
+{ section name=itemsloop loop=$items }
+
+	<item>
+	<title>{ $items[itemsloop].TITLE }</title>
+	<link>{ $items[itemsloop].LINK }</link>
+	<description>{ $items[itemsloop].DESCRIPTION }</description>
+	</item>
+
+{/section}
+
+</channel>
+</rss>

@@ -1,0 +1,39 @@
+{ include file='modules/Forums/simple_header.html' }
+
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr> 
+			<th width="40%"><a class="th" href="{$U_SORT_USERNAME}">{$L_USERNAME}</a></th>
+			<th width="20%"><a class="th" href="{$U_SORT_UPDATED}">{$L_LAST_UPDATED}</a></th>
+			<th width="40%"><a class="th" href="{$U_SORT_LOCATION}">{$L_FORUM_LOCATION}</a></th>
+		</tr>
+		<tr> 
+			<td class="cat" colspan="3"><h4>{$TOTAL_REGISTERED_USERS_ONLINE}</h4></td>
+		</tr>
+		{section name=reg_user_rowloop loop=$reg_user_row}
+		<tr>
+			<td class="row1"><p class="gen">{ if $reg_user_row[reg_user_rowloop].U_USER_PROFILE }<a href="{$reg_user_row[reg_user_rowloop].U_USER_PROFILE}">{ /if }{$reg_user_row[reg_user_rowloop].USERNAME}{ if $reg_user_row[reg_user_rowloop].U_USER_PROFILE }</a>{ /if }</p>{ if $reg_user_row[reg_user_rowloop].USER_IP }<p class="gensmall">{$L_IP}: <a href="{$reg_user_row[reg_user_rowloop].U_USER_IP}">{$reg_user_row[reg_user_rowloop].USER_IP}</a> &#187; <a href="{$reg_user_row[reg_user_rowloop].U_WHOIS}" onclick="popup('{$reg_user_row[reg_user_rowloop].U_WHOIS}', 750, 500);return false">{$L_WHOIS}</a></p>{ /if }</td>
+			<td class="row2" align="center" nowrap="nowrap"><p class="genmed">&nbsp;{$reg_user_row[reg_user_rowloop].LASTUPDATE}</p></td>
+			<td class="row1"><p class="genmed"><a href="{$reg_user_row[reg_user_rowloop].U_FORUM_LOCATION}">{$reg_user_row[reg_user_rowloop].FORUM_LOCATION}</a></p></td>
+		</tr>
+		{ /section }
+		{ if $LEGEND }
+		<tr>
+			<td class="row1" colspan="3"><b class="gensmall">{$L_LEGEND} :: {$LEGEND}</b></td>
+		</tr>
+		{ /if }
+		<tr> 
+			<td class="cat" colspan="3"><h4>{$TOTAL_GUEST_USERS_ONLINE}</h4></td>
+		</tr>
+		{section name=guest_user_rowloop loop=$guest_user_row}
+		<tr>
+			<td class="row1"><p class="gen">{$guest_user_row[guest_user_rowloop].USERNAME}</p>{ if $guest_user_row[guest_user_rowloop].USER_IP }<p class="gensmall">{$L_IP}: <a href="{$guest_user_row[guest_user_rowloop].U_USER_IP}">{$guest_user_row[guest_user_rowloop].USER_IP}</a> &#187; <a href="{$guest_user_row[guest_user_rowloop].U_WHOIS}" onclick="popup('{$guest_user_row[guest_user_rowloop].U_WHOIS}', 750, 500);return false">{$L_WHOIS}</a></p>{ /if }</td>
+			<td class="row2" align="center" nowrap="nowrap"><p class="genmed">{$guest_user_row[guest_user_rowloop].LASTUPDATE}</p></td>
+			<td class="row1"><p class="genmed"><a href="{$guest_user_row[guest_user_rowloop].U_FORUM_LOCATION}">{$guest_user_row[guest_user_rowloop].FORUM_LOCATION}</a></p></td>
+		</tr>
+		{ /section }
+	</table>
+
+	<div class="gensmall" align="right">{$L_ONLINE_EXPLAIN}</div>
+<br all />
+
+{ include file='modules/Forums/simple_footer.html' }
