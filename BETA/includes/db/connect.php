@@ -11,9 +11,9 @@
 //																//
 //**************************************************************//
 
-if (!CPG_NUKE) {
+if (!defined('VIPERAL')) {
     Header('Location: ../../');
-    die();
+    die('Sorry you can\'t access this file directly');
 }
 
 global $sitedb, $_CLASS, $db;
@@ -23,7 +23,7 @@ $_CLASS['db'] =& new sql_db();
 $_CLASS['db']->sql_connect($sitedb['dbhost'], $sitedb['dbuname'], $sitedb['dbpass'], $sitedb['dbname'], $sitedb['dbport'], false);
 $db	=& $_CLASS['db'];
 
-if (CPG_NUKE != 'Admin')
+if (VIPERAL != 'Admin')
 {
 	unset($sitedb);
 }

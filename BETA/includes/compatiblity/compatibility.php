@@ -11,9 +11,9 @@
 //																//
 //**************************************************************//
 
-if (!CPG_NUKE) {
+if (!defined('VIPERAL')) {
     Header('Location: ../../');
-    die();
+    die('Sorry you can\'t access this file directly');
 }
 
 // Import GET/POST/Cookie variables for older modules

@@ -11,11 +11,6 @@
 //																//
 //**************************************************************//
 
-if (!defined('CPG_NUKE')) {
-    Header("Location: ../../../../");
-    die();
-}
-
 /**
  * Project:     Smarty: the PHP compiling template engine
  * File:        Smarty.class.php

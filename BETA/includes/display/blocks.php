@@ -10,6 +10,7 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+
 /* to do
 Complete Message and blocks
 RSS system
@@ -53,18 +54,17 @@ class blocks
 		
 		global $_CLASS, $userinfo;
 		
-
 		if (!count($this->blocks))
 		{
-			//cache this
-			if (!($this->blocks = $this->get('blocks'))
+			if (!($this->blocks = $_CLASS['cache']->get('blocks')))
 			{
 				$result = $_CLASS['db']->sql_query('SELECT * FROM '.BLOCKS_TABLE." WHERE active='1' ORDER BY weight ASC");
 
 				while($row = $_CLASS['db']->sql_fetchrow($result)) {
 					$this->blocks[$row['position']][] = $row;
 				}
-			
+				
+				$_CLASS['cache']->put('blocks', $this->blocks);
 				$_CLASS['db']->sql_freeresult($result);
 			}
 		}

@@ -1,4 +1,12 @@
-<?php echo $this->location ?>
+<?php
+if (!defined('VIPERAL')) {
+    header('location: /');
+    die();
+}
+
+echo $this->location
+
+?>
 <script type="text/javascript">
 	HTMLArea.loadPlugin("CharacterMap");
 	HTMLArea.loadPlugin("SearchAndReplace");

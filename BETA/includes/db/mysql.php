@@ -18,11 +18,6 @@
 //
 // -------------------------------------------------------------
 
-if (!CPG_NUKE) {
-    Header('Location: ../../');
-    die();
-}
-
 define('SQL_LAYER', 'mysql');
 
 class sql_db
@@ -406,8 +401,8 @@ class sql_db
 
 	function sql_report($mode, $query = '')
 	{
-		global $db, $_CLASS, $phpbb_root_path;
-		static $starttime, $query_hold, $affected = false;
+		global $db, $_CLASS, $MAIN_CFG;
+		static $starttime, $query_hold;
 
 		
 		if (!$query && !empty($query_hold))
@@ -418,7 +413,7 @@ class sql_db
 		switch ($mode)
 		{
 			case 'start':
-				if (empty($MAIN_CFG['global']['error']) || ($MAIN_CFG['global']['error'] == 3))
+				if ($MAIN_CFG['global']['error'] == 3)
 				{
 					$query_hold = $query;
 					
@@ -451,7 +446,7 @@ class sql_db
 
 			case 'fromcache':
 			
-				if (!empty($MAIN_CFG['global']['error']) || ($MAIN_CFG['global']['error'] != 3))
+				if ($MAIN_CFG['global']['error'] != 3)
 				{
 					return;
 				}
@@ -481,17 +476,18 @@ class sql_db
 				$endtime = $endtime[0] + $endtime[1];
 				$this->sql_time += $endtime - $starttime;
 				
-				if (empty($MAIN_CFG['global']['error']) || ($MAIN_CFG['global']['error'] == 3))
+				if ($MAIN_CFG['global']['error'] == 3)
 				{
 					if ($this->query_result)
 					{
+						$affected = false;
+
 						if (preg_match('/^(UPDATE|DELETE|REPLACE)/', $query))
 						{
 							$affected = $this->sql_affectedrows($this->query_result);
 						}
 						
 						$this->querylist[$this->num_queries] = array('query' => $query, 'affected' => $affected, 'time' => ($endtime - $starttime));
-						$affected = false;
 					}
 					else
 					{

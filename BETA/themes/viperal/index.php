@@ -1,22 +1,11 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
-
-if (!CPG_NUKE) {
+if (!defined('CPG_NUKE')) {
     Header('Location: ../../');
     die();
 }
 
 global $bgcolor1, $bgcolor2, $bgcolor3, $bgcolor4;
+
 $bgcolor1 = '#FFFFFF';
 $bgcolor2 = '#C7D0D7';
 $bgcolor3 = '#EFEFEF';
@@ -42,29 +31,22 @@ function CloseTable2() {
 
 
 function themehead() {
-	global $sitename, $mainindex, $adminindex, $themeblockside, $SID, $_CLASS;
+	global $sitename, $mainindex, $MAIN_CFG, $themeblockside, $SID, $_CLASS;
 
 	$_CLASS['template']->assign(array(
-		'IS_ADMIN'		=> is_admin(),
-		'IS_USER'    	=> is_user(),
-		'S_SITENAME'	=> $sitename,
-		'S_HOME'		=> _HOME,
-		'S_DOWNLOADS'	=> _DownloadsLANG,
-		'S_FORUMS'		=> _ForumsLANG,
-		'S_MY_ACCOUNT'	=> _Your_AccountLANG,
-		'U_MAININDEX'	=> $mainindex.'?'.$SID,
-		'U_ADMININDEX'	=> $adminindex,
-		'MARGINRIGHT'=> ($_CLASS['blocks']->check_side(BLOCK_RIGHT)) ? '180px' : '0px',
-		'MARGINLEFT' => ($_CLASS['blocks']->check_side(BLOCK_LEFT)) ? '180px' : '0px'
+		'THEME_MAININDEX'	=> $mainindex.'?'.$SID,
+		'THEME_SITENAME'	=> $MAIN_CFG['global']['sitename'],
+		'MARGINRIGHT'		=> ($_CLASS['blocks']->check_side(BLOCK_RIGHT)) ? '180px' : '0px',
+		'MARGINLEFT' 		=> ($_CLASS['blocks']->check_side(BLOCK_LEFT)) ? '180px' : '0px'
 		)
 	);
-
+	
 	if ($_CLASS['display']->homepage) {
-		$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : _HOME));
+		$_CLASS['template']->assign('PAGE_TITLE', ((CPG_NUKE == 'Admin') ? $Module['custom_title'] : $_CLASS['user']->lang['HOME']));
 	} else {
-		$_CLASS['template']->assign('PAGE_TITLE', _HOME.' > '.$Module['custom_title']);
+		$_CLASS['template']->assign('PAGE_TITLE', $_CLASS['user']->lang['HOME'].' > '.$Module['custom_title']);
 	}
-		
+	
 	$themeblockside = 'left';
 	$_CLASS['blocks']->display(BLOCK_LEFT);
 	$themeblockside = '';

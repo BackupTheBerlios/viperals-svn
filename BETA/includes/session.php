@@ -35,29 +35,29 @@ class session
 	// Called at each page start ... checks for, updates and/or creates a session
 	function startup()
 	{
-		global $SID, $_CLASS, $config, $name;
+		global $SID, $_CLASS, $MAIN_CFG, $name;
 		
 		$this->start_time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 		$this->browser = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'];
-		$this->page = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
+		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
 
 		//Don't want the SID in the in the URL all block or module will need to replace it with the current SID
 		//Make this one replace on next look
-		$this->url = eregi_replace('sid=[a-z0-9]+','', $this->page);
-		$this->url = eregi_replace('sid=','', $this->url);
-		$this->page = ($name) ? $name : '';
-		
-		if (isset($_COOKIE[$config['cookie_name'] . '_sid']) || isset($_COOKIE[$config['cookie_name'] . '_data']))
+		$this->url = eregi_replace('sid=[a-z0-9]+','', $this->url);
+		$this->url = htmlentities(html_entity_decode(eregi_replace('sid=','', $this->url)));
+		$this->page = ($name) ? htmlentities(html_entity_decode($name)) : '';
+
+		if (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) || isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data']))
 		{
-			$sessiondata = (!empty($_COOKIE[$config['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$config['cookie_name'] . '_data'])) : array();
-			$this->session_id = request_var($config['cookie_name'] . '_sid', '');
+			$sessiondata = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) : array();
+			$this->session_id = request_var($MAIN_CFG['server']['cookie_name'] . '_sid', false);
 			$SID = (defined('NEED_SID')) ? '&amp;sid=' . $this->session_id : '&amp;sid=';
 		}
 		else
 		{
 			$sessiondata = array();
-			$this->session_id = request_var('sid', '');
+			$this->session_id = get_variable('sid', 'GET', false);
 			$SID = '&amp;sid=' . $this->session_id;
 		}
 
@@ -86,7 +86,7 @@ class session
 			{
 				list($this->load) = explode(' ', $load[0]);
 
-				if ($config['limit_load'] && $this->load > doubleval($config['limit_load']))
+				if ($MAIN_CFG['server']['limit_load'] && $this->load > doubleval($MAIN_CFG['server']['limit_load']))
 				{
 					trigger_error('BOARD_UNAVAILABLE');
 				}
@@ -94,7 +94,7 @@ class session
 		}
 
 		// session_id exists so go ahead and attempt to grab all data in preparation
-		if (!empty($this->session_id) && (!defined('NEED_SID') || $this->session_id == $_GET['sid']))
+		if ($this->session_id && (!defined('NEED_SID')))
 		{
 			$sql = 'SELECT u.*, s.*, g.*
 				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . ' u, ' . GROUPS_TABLE . " g
@@ -110,11 +110,11 @@ class session
 			if (isset($this->data['user_id']))
 			{
 				// Validate IP length according to admin ... has no effect on IPv6
-				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $config['ip_check']));
-				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $config['ip_check']));
+				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $MAIN_CFG['user']['ip_check']));
+				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $MAIN_CFG['user']['ip_check']));
 
-				$s_browser = ($config['browser_check']) ? $this->data['session_browser'] : '';
-				$u_browser = ($config['browser_check']) ? $this->browser : '';
+				$s_browser = ($MAIN_CFG['user']['browser_check']) ? $this->data['session_browser'] : '';
+				$u_browser = ($MAIN_CFG['user']['browser_check']) ? $this->browser : '';
 
 				if ($u_ip == $s_ip && $s_browser == $u_browser)
 				{
@@ -278,7 +278,7 @@ class session
 				$till_date = (!empty($row['ban_end'])) ? $this->format_date($row['ban_end']) : '';
 				$message = (!empty($row['ban_end'])) ? 'BOARD_BAN_TIME' : 'BOARD_BAN_PERM';
 
-				$message = sprintf($this->lang[$message], $till_date, '<a href="mailto:' . $config['board_contact'] . '">', '</a>');
+				$message = sprintf($this->lang[$message], $till_date, '<a href="mailto:' . $MAIN_CFG['global']['admin_mail'] . '">', '</a>');
 				// More internal HTML ... :D
 				$message .= (!empty($row['ban_show_reason'])) ? '<br /><br />' . sprintf($this->lang['BOARD_BAN_REASON'], $row['ban_show_reason']) : '';
 				trigger_error($message);
@@ -343,7 +343,7 @@ class session
 		}
 		else
 		{
-			$SID = '&amp;sid=';
+			$SID = '';
 		}
 
 		return true;
@@ -352,7 +352,7 @@ class session
 	// Destroy a session
 	function destroy()
 	{
-		global $SID, $_CLASS, $config;
+		global $SID, $_CLASS;
 
 		$this->set_cookie('data', '', $this->start_time - 31536000);
 		$this->set_cookie('sid', '', $this->start_time - 31536000);
@@ -383,7 +383,7 @@ class session
 	// Garbage collection
 	function gc(&$start_time)
 	{
-		global $_CLASS, $config;
+		global $_CLASS;
 
 		switch (SQL_LAYER)
 		{
@@ -391,7 +391,7 @@ class session
 				// Firstly, delete guest sessions
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 					WHERE session_user_id = ' . ANONYMOUS . '
-						AND session_time < ' . ($start_time - $config['session_length']);
+						AND session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']);
 				$_CLASS['db']->sql_query($sql);
 
 				// Keep only the most recent session for each user
@@ -411,13 +411,13 @@ class session
 				// Update last visit time
 				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
 					SET u.user_lastvisit = s.session_time, u.user_lastpage = s.session_page
-					WHERE s.session_time < ' . ($start_time - $config['session_length']) . '
+					WHERE s.session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']) . '
 						AND u.user_id = s.session_user_id';
 				$_CLASS['db']->sql_query($sql);
 
 				// Delete everything else now
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($start_time - $config['session_length']);
+					WHERE session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']);
 				$_CLASS['db']->sql_query($sql);
 
 				set_config('session_last_gc', $start_time);
@@ -428,7 +428,7 @@ class session
 				// Get expired sessions, only most recent for each user
 				$sql = 'SELECT session_user_id, session_page, MAX(session_time) AS recent_time
 					FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($start_time - $config['session_length']) . '
+					WHERE session_time < ' . ($start_time - $MAIN_CFG['user']['session_length']) . '
 					GROUP BY session_user_id, session_page';
 				$result = $_CLASS['db']->sql_query_limit($sql, 5);
 
@@ -457,7 +457,7 @@ class session
 					// Delete expired sessions
 					$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
 						WHERE session_user_id IN ($del_user_id)
-							AND session_time < " . ($start_time - $config['session_length']);
+							AND session_time < " . ($start_time - $MAIN_CFG['user']['session_length']);
 					$_CLASS['db']->sql_query($sql);
 				}
 
@@ -531,12 +531,12 @@ class session
 	// Set a cookie
 	function set_cookie($name, $cookiedata, $cookietime)
 	{
-		global $config;
+		global $MAIN_CFG;
 		if ($this->server_local)
 		{
-			setcookie($config['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $config['cookie_path']);
+			setcookie($MAIN_CFG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $MAIN_CFG['server']['cookie_path']);
 		} else {
-			setcookie($config['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $config['cookie_path'], $config['cookie_domain'], $config['cookie_secure']);
+			setcookie($MAIN_CFG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $MAIN_CFG['server']['cookie_path'], $MAIN_CFG['server']['cookie_domain'], $MAIN_CFG['server']['cookie_secure']);
 		}
 	}
 }
@@ -560,11 +560,11 @@ class user extends session
 
 	function start()
 	{
-		global $_CLASS, $config, $auth, $MAIN_CFG, $phpEx;
+		global $_CLASS, $MAIN_CFG, $phpEx;
 
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
-			$this->lang_name = (file_exists('language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $config['default_lang'];
+			$this->lang_name = (file_exists('language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $MAIN_CFG['global']['default_lang'];
 			$this->lang_path = 'language/' . $this->lang_name . '/';
 
 			$this->date_format = $this->data['user_dateformat'];
@@ -583,11 +583,11 @@ class user extends session
 		}
 		else
 		{
-			$this->lang_name = $config['default_lang'];
+			$this->lang_name = $MAIN_CFG['global']['default_lang'];
 			$this->lang_path = 'language/' . $this->lang_name . '/';
-			$this->date_format = $config['default_dateformat'];
-			$this->timezone = $config['board_timezone'] * 3600;
-			$this->dst = $config['board_dst'] * 3600;
+			$this->date_format = $MAIN_CFG['global']['default_dateformat'];
+			$this->timezone = $MAIN_CFG['global']['default_timezone'] * 3600;
+			$this->dst = $MAIN_CFG['global']['default_dst'] * 3600;
 
 			if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
 			{
@@ -623,7 +623,7 @@ class user extends session
 	// phpbb2.2 Only, remove this soon
 	function setup($lang_set = false, $style = false)
 	{
-		global $_CLASS, $config, $auth, $phpEx;
+		global $_CLASS, $phpEx;
 						
 		if ($lang_set)
 		{
@@ -633,7 +633,7 @@ class user extends session
 		
 		require('themes/'.$_CLASS['display']->theme.'/template/forums/imageset.php');
 
-		$this->img_lang = (file_exists('themes/'.$_CLASS['display']->theme.'/template/forums/imageset/' . $this->lang_name)) ? $this->lang_name : $config['default_lang'];
+		$this->img_lang = (file_exists('themes/'.$_CLASS['display']->theme.'/template/forums/imageset/' . $this->lang_name)) ? $this->lang_name : $MAIN_CFG['global']['default_lang'];
 
 		return;
 	}
@@ -706,7 +706,7 @@ class user extends session
 
 	function get_iso_lang_id()
 	{
-		global $config, $_CLASS;
+		global $_CLASS;
 
 		if (isset($this->lang_id))
 		{
@@ -715,7 +715,7 @@ class user extends session
 
 		if (!$this->lang_name)
 		{
-			$this->lang_name = $config['default_lang'];
+			$this->lang_name = $MAIN_CFG['global']['default_lang'];
 		}
 
 		$sql = 'SELECT lang_id

@@ -1,0 +1,44 @@
+<limit GET PUT POST>
+order allow,deny
+allow from all
+</limit>
+
+# deny most common except .php
+<filesmatch "\.(inc|tpl|h|ihtml|sql|ini|conf|class|bin|spd|theme|module|exe)$">
+deny from all
+</filesmatch>
+
+#Disable .htaccess viewing from browser
+<files ~ "^\.ht">
+    Order allow,deny
+    Deny from all
+    Satisfy All
+</files>
+
+<files ~ "\config.php$">
+deny from all
+</files>
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+#RewriteCond %{HTTP_HOST} !^www.viperal.com$ [NC]
+#RewriteRule ^(.*)$ http://www.viperal.com/$1 [R,L]
+
+RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7&$8&$9 [L]
+RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7&$8 [L]
+RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7 [L]
+RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6 [L]
+RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5 [L]
+RewriteRule ^(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4 [L]
+RewriteRule ^(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3 [L]
+RewriteRule ^(.*)/(.*)\.html index.php?name=$1&file=$2 [L]
+
+RewriteRule ^index\.html$  index.php [L]
+RewriteRule ^(.*)\.html$ index.php?name=$1 [L]
+</IfModule>
+
+# You can change to yoursite.com
+ErrorDocument 403 /error.php?403
+ErrorDocument 404 /error.php?404
+
+Options -Indexes

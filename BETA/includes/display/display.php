@@ -11,11 +11,6 @@
 //																//
 //**************************************************************//
 
-if (!CPG_NUKE) {
-    Header('Location: ../../../');
-    die();
-}
-
 class display
 {
 
@@ -219,7 +214,7 @@ class display
 		
 		script_close();
 
-		if (ob_get_length())
+		if (array_key_exists('1' , ob_list_handlers()) && ob_get_length())
 		{
 			//test this on server before enableing
 			header('Content-Length: ' . ob_get_length());
@@ -229,12 +224,12 @@ class display
 	
 	function footer_debug() {
 	
-		global $MAIN_CFG, $_compression, $SID, $mainindex, $SID, $_CLASS, $starttime;
+		global $MAIN_CFG, $SID, $mainindex, $SID, $_CLASS, $starttime;
 	
 		$mtime = explode(' ', microtime());
 		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['db']->sql_time;
 	
-		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['db']->sql_time, 4).'s | ' . $_CLASS['db']->sql_num_queries() . ' Queries  ] <br /> [ GZIP : ' .  (($_compression) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['user']->load) ? $_CLASS['user']->load : 'N/A');
+		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['db']->sql_time, 4).'s | ' . $_CLASS['db']->sql_num_queries() . ' Queries  ] <br /> [ GZIP : ' .  ((array_key_exists('1' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['user']->load) ? $_CLASS['user']->load : 'N/A');
 		
 		if (function_exists('memory_get_usage'))
 		{

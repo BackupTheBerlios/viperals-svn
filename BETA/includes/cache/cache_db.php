@@ -10,10 +10,6 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ]
 //
 // -------------------------------------------------------------
-if (!CPG_NUKE) {
-    Header("Location: ../../");
-    die();
-}
 
 class cache
 {

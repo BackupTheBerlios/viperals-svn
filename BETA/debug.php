@@ -11,8 +11,8 @@
 //																//
 //**************************************************************//
 
-define('CPG_NUKE', 'XMLFEED');
-require('mainfile.php');
+define('VIPERAL', 'MINILOAD');
+require('core.php');
 
 /*if (!is_admin())
 {
