@@ -118,7 +118,10 @@ class sql_db
 		if ($query != '')
 		{
 			global $_CLASS;
-
+			
+			// Preparing for feature db debugging...  wow we i'm a genius.
+			$caller_info = debug_backtrace();
+			
 			$this->query_result = ($cache_ttl && !empty($_CLASS['cache'])) ? $_CLASS['cache']->sql_load($query) : false;
 
 			if (!$this->query_result)
