@@ -375,8 +375,12 @@ if ($search_keywords || $search_author || $search_id)
 		}
 	}
 
-
-	if (sizeof($split_words) && array_diff($split_words, $old_split_words))
+	if (isset($old_split_words) && sizeof($old_split_words))
+	{
+		$split_words = (sizeof($split_words)) ? array_diff($split_words, $old_split_words) : $old_split_words;
+	}
+	
+	if (sizeof($split_words))
 	{
 
 
@@ -683,14 +687,14 @@ if ($search_keywords || $search_author || $search_id)
 
 		'S_SELECT_SORT_DIR'		=> $s_sort_dir,
 		'S_SELECT_SORT_KEY'		=> $s_sort_key,
-		'S_SEARCH_ACTION'		=> getlink('Forums&amp;file=&amp;search_id='.$search_id),
+		'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=&amp;search_id='.$search_id),
 		'S_SHOW_TOPICS'			=> ($show_results == 'posts') ? false : true,
 
 		'REPORTED_IMG'			=> $_CLASS['user']->img('icon_reported', 'TOPIC_REPORTED'),
 		'UNAPPROVED_IMG'		=> $_CLASS['user']->img('icon_unapproved', 'TOPIC_UNAPPROVED'),
 		'GOTO_PAGE_IMG'			=> $_CLASS['user']->img('icon_post', 'GOTO_PAGE'),
 
-		'U_SEARCH_WORDS'	=> getlink("Forums&amp;file=&amp;show_results=$show_results&amp;search_keywords=" . urlencode($split_words)))
+		'U_SEARCH_WORDS'	=> generate_link("Forums&amp;file=&amp;show_results=$show_results&amp;search_keywords=" . urlencode($split_words)))
 	);
 
 	$u_hilit = urlencode($split_words);
@@ -774,10 +778,10 @@ if ($search_keywords || $search_author || $search_id)
 				'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
 				'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
 
-				'U_LAST_POST'		=> getlink($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false),
-				'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
-				'U_MCP_REPORT'		=> getlink('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
-				'U_MCP_QUEUE'		=> getlink('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id)
+				'U_LAST_POST'		=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false),
+				'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+				'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
+				'U_MCP_QUEUE'		=> generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id)
 			);
 		}
 		else
@@ -787,7 +791,7 @@ if ($search_keywords || $search_author || $search_id)
 				$_CLASS['template']->assign_vars_array('searchresults', array(
 					'S_IGNORE_POST' => true, 
 
-					'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['username'], '<a href="'.getlink("Forums&amp;file=search&amp;search_id=$search_id&amp;$u_sort_param&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
+					'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['username'], '<a href="'.generate_link("Forums&amp;file=search&amp;search_id=$search_id&amp;$u_sort_param&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
 				);
 
 				continue;
@@ -829,9 +833,9 @@ if ($search_keywords || $search_author || $search_id)
 			'FORUM_TITLE'		=> $row['forum_name'], 
 			'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
 
-			'U_VIEW_TOPIC'		=> getlink($view_topic_url),
-			'U_VIEW_FORUM'		=> getlink('Forums&amp;file=viewforum&amp;f='.$forum_id), 
-			'U_VIEW_POST'		=> (!empty($row['post_id'])) ? getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id'] . '&amp;p=' . $row['post_id'] . '&amp;hilit=' . $u_hilit . '#' . $row['post_id'], false) : '')
+			'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
+			'U_VIEW_FORUM'		=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id), 
+			'U_VIEW_POST'		=> (!empty($row['post_id'])) ? generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id'] . '&amp;p=' . $row['post_id'] . '&amp;hilit=' . $u_hilit . '#' . $row['post_id'], false, false) : '')
 		));
 	}
 	$db->sql_freeresult($result);
@@ -840,7 +844,7 @@ if ($search_keywords || $search_author || $search_id)
 	
 	page_header();
 	
-	make_jumpbox(getlink('Forums&amp;file=viewforum'));
+	make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 	
 	$_CLASS['template']->display('modules/Forums/search_results.html');
 	 
@@ -923,7 +927,7 @@ for($i = 100; $i <= 1000 ; $i += 100)
 }
 
 $_CLASS['template']->assign(array(
-	'S_SEARCH_ACTION'		=> getlink('Forums&amp;file=search&amp;mode=results'),
+	'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=search&amp;mode=results'),
 	'S_CHARACTER_OPTIONS'	=> $s_characters,
 	'S_FORUM_OPTIONS'		=> $s_forums,
 	'S_SELECT_SORT_DIR'		=> $s_sort_dir,
@@ -959,7 +963,7 @@ while ($row = $db->sql_fetchrow($result))
 		'KEYWORDS'	=> $split_words,
 		'TIME'		=> $_CLASS['user']->format_date($row['search_time']), 
 
-		'U_KEYWORDS'	=> getlink('Forums&amp;file=search&amp;search_keywords=' . urlencode($split_words)))
+		'U_KEYWORDS'	=> generate_link('Forums&amp;file=search&amp;search_keywords=' . urlencode($split_words)))
 	);
 
 	$i++;
@@ -971,7 +975,7 @@ $_CLASS['display']->display_head($_CLASS['user']->lang['SEARCH']);
 
 page_header();
 
-make_jumpbox(getlink('Forums&amp;file=viewforum'));
+make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 
 $_CLASS['template']->display('modules/Forums/search_body.html');
  

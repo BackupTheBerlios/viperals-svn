@@ -169,10 +169,10 @@ if ($rate)
 	
 	$_CLASS['user']->add_lang('viewtopic');
 	
-	$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id");
+	$_CLASS['display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id");
 	
 	$message = ($updated) ? $_CLASS['user']->lang['RATING_UPDATED'] : $_CLASS['user']->lang['RATING_ADDED'];
-	$message = $message . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_POST'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id\">", '</a>');
+	$message = $message . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_POST'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id\">", '</a>');
 	
 	trigger_error($message);
 	
@@ -236,8 +236,8 @@ if ($view && !$post_id)
 			{
 				// Setup user environment so we can process lang string
 				$_CLASS['user']->add_lang('viewtopic');
-				$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
-				$message = $_CLASS['user']->lang['NO_UNREAD_POSTS'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"),'">', '</a>');
+				$_CLASS['display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
+				$message = $_CLASS['user']->lang['NO_UNREAD_POSTS'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"),'">', '</a>');
 				trigger_error($message);
 			}
 			$_CLASS['db']->sql_freeresult($result);
@@ -328,7 +328,7 @@ if (!($topic_data = $_CLASS['db']->sql_fetchrow($result)))
 	// If post_id was submitted, we try at least to display the topic as a last resort...
 	if ($post_id && $forum_id && $topic_id)
 	{
-		redirect(getlink("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id"));
+		redirect(generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id"));
 	}
 	trigger_error('NO_TOPIC');
 }
@@ -418,12 +418,12 @@ if (isset($_GET['e']))
 	$redirect_url = "Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id";
 	if ($_CLASS['user']->data['user_id'] == ANONYMOUS)
 	{
-		login_box(getlink($redirect_url . "&p=$post_id&e=$jump_to"), $_CLASS['user']->lang['LOGIN_NOTIFY_TOPIC']);
+		login_box(generate_link($redirect_url . "&p=$post_id&e=$jump_to"), $_CLASS['user']->lang['LOGIN_NOTIFY_TOPIC']);
 	}
 	else if ($jump_to > 0)
 	{
 		// We direct the already logged in user to the correct post...
-		redirect(getlink($redirect_url . ((!$post_id) ? "&p=$jump_to" : "&p=$post_id")). "#$jump_to");
+		redirect(generate_link($redirect_url . ((!$post_id) ? "&p=$jump_to" : "&p=$post_id")). "#$jump_to");
 	}
 }
 
@@ -528,8 +528,8 @@ if ($config['allow_bookmarks'] && $_CLASS['user']->data['user_id'] != ANONYMOUS 
 			$where_sql";
 	$_CLASS['db']->sql_query($sql);
 
-	$_CLASS['display']->meta_refresh(3, getlink($viewtopic_url, false));
-	$message = (($bookmarked) ? $_CLASS['user']->lang['BOOKMARK_REMOVED'] : $_CLASS['user']->lang['BOOKMARK_ADDED']) . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="' . getlink($viewtopic_url, false) . '">', '</a>');
+	$_CLASS['display']->meta_refresh(3, generate_link($viewtopic_url, false));
+	$message = (($bookmarked) ? $_CLASS['user']->lang['BOOKMARK_REMOVED'] : $_CLASS['user']->lang['BOOKMARK_ADDED']) . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="' . generate_link($viewtopic_url, false) . '">', '</a>');
 	trigger_error($message);
 }
 
@@ -595,7 +595,7 @@ $_CLASS['template']->assign(array(
 	'PAGINATION' 	=> $pagination,
 	'PAGE_NUMBER' 	=> on_page($total_posts, $config['posts_per_page'], $start),
 	'TOTAL_POSTS'	=> ($total_posts == 1) ? $_CLASS['user']->lang['VIEW_TOPIC_POST'] : sprintf($_CLASS['user']->lang['VIEW_TOPIC_POSTS'], $total_posts), 
-	'U_MCP' 		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? getlink("Forums&amp;file=mcp&amp;mode=topic_view&amp;f=$forum_id&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
+	'U_MCP' 		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;mode=topic_view&amp;f=$forum_id&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
 
 	'MODERATORS'	=> (isset($forum_moderators[$forum_id]) && sizeof($forum_moderators[$forum_id])) ? implode(', ', $forum_moderators[$forum_id]) : '',
 
@@ -624,32 +624,32 @@ $_CLASS['template']->assign(array(
 	'S_SELECT_SORT_DIR' 	=> $s_sort_dir,
 	'S_SELECT_SORT_KEY' 	=> $s_sort_key,
 	'S_SELECT_SORT_DAYS' 	=> $s_limit_days,
-	'S_TOPIC_ACTION' 		=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;start=$start"),
+	'S_TOPIC_ACTION' 		=> generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;start=$start"),
 	'S_TOPIC_MOD' 			=> ($topic_mod != '') ? '<select name="mode">' . $topic_mod . '</select>' : '',
-	'S_MOD_ACTION' 			=> getlink("Forums&amp;file=mcp&amp;t=$topic_id&amp;f=$forum_id&amp;quickmod=1", false, false), 
+	'S_MOD_ACTION' 			=> generate_link("Forums&amp;file=mcp&amp;t=$topic_id&amp;f=$forum_id&amp;quickmod=1", false, false), 
 
 	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
-	'S_SEARCHBOX_ACTION'	=> getlink('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
+	'S_SEARCHBOX_ACTION'	=> generate_link('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
-	'U_TOPIC'				=> (!$view == 'print') ? getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id") : getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id", true, true),
+	'U_TOPIC'				=> (!$view == 'print') ? generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id") : generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id", true, true),
 	'U_FORUM'				=> $server_path,
-	'U_VIEW_UNREAD_POST'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread").'#unread',
-	'U_VIEW_TOPIC' 			=> getlink($viewtopic_url, false),
-	'U_VIEW_FORUM' 			=> getlink('Forums&amp;file=viewforum&amp;f='.$forum_id),
-	'U_VIEW_OLDER_TOPIC'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=previous"),
-	'U_VIEW_NEWER_TOPIC'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=next"),
-	'U_PRINT_TOPIC'			=> ($_CLASS['auth']->acl_get('f_print', $forum_id)) ? getlink($viewtopic_url . '&amp;view=print', false) : '',
-	'U_EMAIL_TOPIC'			=> ($_CLASS['auth']->acl_get('f_email', $forum_id) && $config['email_enable']) ? getlink('Members_List&amp;mode=email&amp;t='.$topic_id) : '', 
+	'U_VIEW_UNREAD_POST'	=> generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread").'#unread',
+	'U_VIEW_TOPIC' 			=> generate_link($viewtopic_url, false),
+	'U_VIEW_FORUM' 			=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id),
+	'U_VIEW_OLDER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=previous"),
+	'U_VIEW_NEWER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=next"),
+	'U_PRINT_TOPIC'			=> ($_CLASS['auth']->acl_get('f_print', $forum_id)) ? generate_link($viewtopic_url . '&amp;view=print', false) : '',
+	'U_EMAIL_TOPIC'			=> ($_CLASS['auth']->acl_get('f_email', $forum_id) && $config['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;t='.$topic_id) : '', 
 
 	'U_WATCH_TOPIC' 		=> $s_watching_topic['link'], 
 	'L_WATCH_TOPIC' 		=> $s_watching_topic['title'], 
 
-	'U_BOOKMARK_TOPIC'		=> ($_CLASS['user']->data['user_id'] != ANONYMOUS && $config['allow_bookmarks']) ? getlink($viewtopic_url . '&amp;bookmark=1', false) : '',
+	'U_BOOKMARK_TOPIC'		=> ($_CLASS['user']->data['user_id'] != ANONYMOUS && $config['allow_bookmarks']) ? generate_link($viewtopic_url . '&amp;bookmark=1', false) : '',
 	'L_BOOKMARK_TOPIC'		=> ($_CLASS['user']->data['user_id'] != ANONYMOUS && $config['allow_bookmarks'] && $bookmarked) ? $_CLASS['user']->lang['BOOKMARK_TOPIC_REMOVE'] : $_CLASS['user']->lang['BOOKMARK_TOPIC'],
 	
-	'U_POST_NEW_TOPIC' 		=> getlink('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
-	'U_POST_REPLY_TOPIC' 	=> getlink("Forums&amp;file=posting&amp;mode=reply&amp;f=$forum_id&amp;t=$topic_id"),
-	'U_BUMP_TOPIC'			=> (bump_topic_allowed($forum_id, $topic_bumped, $topic_last_post_time, $topic_poster, $topic_last_poster_id)) ? getlink("Forums&amp;file=posting&amp;mode=bump&amp;f=$forum_id&amp;t=$topic_id") : '')
+	'U_POST_NEW_TOPIC' 		=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
+	'U_POST_REPLY_TOPIC' 	=> generate_link("Forums&amp;file=posting&amp;mode=reply&amp;f=$forum_id&amp;t=$topic_id"),
+	'U_BUMP_TOPIC'			=> (bump_topic_allowed($forum_id, $topic_bumped, $topic_last_post_time, $topic_poster, $topic_last_poster_id)) ? generate_link("Forums&amp;file=posting&amp;mode=bump&amp;f=$forum_id&amp;t=$topic_id") : '')
 );
 
 // Does this topic contain a poll?
@@ -707,10 +707,10 @@ if (!empty($poll_start))
 	{
 		if (!sizeof($voted_id) || sizeof($voted_id) > $poll_max_options)
 		{
-			$_CLASS['display']->meta_refresh(5, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
+			$_CLASS['display']->meta_refresh(5, generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
 
 			$message = (!sizeof($voted_id)) ? 'NO_VOTE_OPTION' : 'TOO_MANY_VOTE_OPTIONS';
-			$message = $_CLASS['user']->lang[$message] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
+			$message = $_CLASS['user']->lang[$message] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
 			trigger_error($message);
 		}
 
@@ -767,9 +767,9 @@ if (!empty($poll_start))
 			WHERE topic_id = $topic_id";
 		$_CLASS['db']->sql_query($sql);
 
-		$_CLASS['display']->meta_refresh(5, getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
+		$_CLASS['display']->meta_refresh(5, generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
 
-		$message = $_CLASS['user']->lang['VOTE_SUBMITTED'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
+		$message = $_CLASS['user']->lang['VOTE_SUBMITTED'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
 		trigger_error($message);
 	}
 
@@ -827,9 +827,9 @@ if (!empty($poll_start))
 		'S_CAN_VOTE'		=> $s_can_vote, 
 		'S_DISPLAY_RESULTS'	=> $s_display_results,
 		'S_IS_MULTI_CHOICE'	=> ($poll_max_options > 1) ? true : false, 
-		'S_POLL_ACTION'		=> getlink($viewtopic_url, false),
+		'S_POLL_ACTION'		=> generate_link($viewtopic_url, false),
 
-		'U_VIEW_RESULTS'	=> getlink($viewtopic_url . '&amp;view=viewpoll', false))
+		'U_VIEW_RESULTS'	=> generate_link($viewtopic_url . '&amp;view=viewpoll', false))
 	);
 
 	unset($poll_info, $voted_id);
@@ -949,7 +949,7 @@ while ($row = $_CLASS['db']->sql_fetchrow($result))
 		{
 			$_CLASS['template']->assign_vars_array('postrow', array(
 				'S_IGNORE_POST'	=> true, 
-				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
+				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
 			);
 
 			continue;
@@ -1064,13 +1064,13 @@ while ($row = $_CLASS['db']->sql_fetchrow($result))
 				'avatar'		=> '',
 
 				'online'		=> false,
-				'profile'		=> getlink("Members_List&amp;mode=viewprofile&amp;u=$poster_id"),
+				'profile'		=> generate_link("Members_List&amp;mode=viewprofile&amp;u=$poster_id"),
 				'www'			=> $row['user_website'],
-				'aim'			=> ($row['user_aim']) ? getlink('Members_List&amp;mode=contact&amp;action=aim&amp;u='.$poster_id) : '',
-				'msn'			=> ($row['user_msnm']) ? getlink('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$poster_id) : '',
+				'aim'			=> ($row['user_aim']) ? generate_link('Members_List&amp;mode=contact&amp;action=aim&amp;u='.$poster_id) : '',
+				'msn'			=> ($row['user_msnm']) ? generate_link('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$poster_id) : '',
 				'yim'			=> ($row['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . $row['user_yim'] . '&.src=pg' : '',
-				'jabber'		=> ($row['user_jabber']) ? getlink('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$poster_id) : '',
-				'search'		=> ($_CLASS['auth']->acl_get('u_search')) ? getlink('Forums&amp;file=search&amp;search_author=' . urlencode($row['username']) .'&amp;showresults=posts') : '',
+				'jabber'		=> ($row['user_jabber']) ? generate_link('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$poster_id) : '',
+				'search'		=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($row['username']) .'&amp;showresults=posts') : '',
 				'username'		=> ($row['user_colour']) ? '<span style="color:#' . $row['user_colour'] . '">' . $poster . '</span>' : $poster
 			);
 
@@ -1119,7 +1119,7 @@ while ($row = $_CLASS['db']->sql_fetchrow($result))
 
 			if (!empty($row['user_allow_viewemail']) || $_CLASS['auth']->acl_get('a_email'))
 			{
-				$user_cache[$poster_id]['email'] = ($config['board_email_form'] && $config['email_enable']) ? getlink('Members_List&amp;mode=email&amp;u=' . $poster_id): 'mailto:' . $row['user_email'];
+				$user_cache[$poster_id]['email'] = ($config['board_email_form'] && $config['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;u=' . $poster_id): 'mailto:' . $row['user_email'];
 			}
 			else
 			{
@@ -1128,7 +1128,7 @@ while ($row = $_CLASS['db']->sql_fetchrow($result))
 
 			if (!empty($row['user_icq']))
 			{
-				$user_cache[$poster_id]['icq'] =  getlink('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$poster_id);
+				$user_cache[$poster_id]['icq'] =  generate_link('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$poster_id);
 				$user_cache[$poster_id]['icq_status_img'] = '<img src="http://web.icq.com/whitepages/online?icq=' . $row['user_icq'] . '&amp;img=5" width="18" height="18" border="0" />';
 			}
 			else
@@ -1271,7 +1271,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	{
 		$_CLASS['template']->assign_vars_array('postrow', array(
 			'S_IGNORE_POST' => true, 
-			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BELOW_KARMA'], $row['poster'], $row['user_karma'], '<a href="'.getlink("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id']. '">', '</a>'))
+			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BELOW_KARMA'], $row['poster'], $row['user_karma'], '<a href="'.generate_link("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id']. '">', '</a>'))
 		);
 
 		continue;
@@ -1280,7 +1280,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	{
 		$_CLASS['template']->assign_vars_array('postrow', array(
 			'S_IGNORE_POST' => true, 
-			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['poster'], '<a href="'.getlink("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id'] . '">', '</a>'))
+			'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['poster'], '<a href="'.generate_link("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id'] . '">', '</a>'))
 		);
 
 		continue;
@@ -1295,7 +1295,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		{
 			$_CLASS['template']->assign_vars_array('postrow', array(
 				'S_IGNORE_POST'	=> true, 
-				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
+				'L_IGNORE_POST'	=> sprintf($_CLASS['user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
 			);
 
 			continue;
@@ -1452,14 +1452,14 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 
 		'ONLINE_IMG'		=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($user_cache[$poster_id]['online']) ? $_CLASS['user']->img('btn_online', 'ONLINE') : $_CLASS['user']->img('btn_offline', 'OFFLINE')), 
 
-		'U_EDIT' 			=> (($_CLASS['user']->data['user_id'] == $poster_id && $_CLASS['auth']->acl_get('f_edit', $forum_id) && ($row['post_time'] > time() - $config['edit_time'] || !$config['edit_time'])) || $_CLASS['auth']->acl_get('m_edit', $forum_id)) ? getlink("Forums&amp;file=posting&amp;mode=edit&amp;f=$forum_id&amp;p=" . $row['post_id']) : '',
-		'U_QUOTE' 			=> ($_CLASS['auth']->acl_get('f_quote', $forum_id)) ? getlink("Forums&amp;file=posting&amp;mode=quote&amp;f=$forum_id&amp;p=" . $row['post_id']) : '', 
-		'U_INFO'            => ($_CLASS['auth']->acl_get('m_', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id'], false, false) : '',
-		'U_DELETE' 			=> (($_CLASS['user']->data['user_id'] == $poster_id && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $topic_data['topic_last_post_id'] == $row['post_id'] && ($row['post_time'] > time() - $config['edit_time'] || !$config['edit_time'])) || $_CLASS['auth']->acl_get('m_delete', $forum_id)) ? getlink("Forums&amp;file=posting&amp;mode=delete&amp;f=$forum_id&amp;p=" . $row['post_id']) : '',
+		'U_EDIT' 			=> (($_CLASS['user']->data['user_id'] == $poster_id && $_CLASS['auth']->acl_get('f_edit', $forum_id) && ($row['post_time'] > time() - $config['edit_time'] || !$config['edit_time'])) || $_CLASS['auth']->acl_get('m_edit', $forum_id)) ? generate_link("Forums&amp;file=posting&amp;mode=edit&amp;f=$forum_id&amp;p=" . $row['post_id']) : '',
+		'U_QUOTE' 			=> ($_CLASS['auth']->acl_get('f_quote', $forum_id)) ? generate_link("Forums&amp;file=posting&amp;mode=quote&amp;f=$forum_id&amp;p=" . $row['post_id']) : '', 
+		'U_INFO'            => ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id'], false, false) : '',
+		'U_DELETE' 			=> (($_CLASS['user']->data['user_id'] == $poster_id && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $topic_data['topic_last_post_id'] == $row['post_id'] && ($row['post_time'] > time() - $config['edit_time'] || !$config['edit_time'])) || $_CLASS['auth']->acl_get('m_delete', $forum_id)) ? generate_link("Forums&amp;file=posting&amp;mode=delete&amp;f=$forum_id&amp;p=" . $row['post_id']) : '',
 
 		'U_PROFILE' 		=> $user_cache[$poster_id]['profile'],
 		'U_SEARCH' 			=> $user_cache[$poster_id]['search'],
-		'U_PM' 				=> ($poster_id != ANONYMOUS) ? getlink('Control_Panel&amp;i=pm&amp;mode=compose&amp;action=quote&amp;q=1&amp;p=' . $row['post_id']) : '',
+		'U_PM' 				=> ($poster_id != ANONYMOUS) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;action=quote&amp;q=1&amp;p=' . $row['post_id']) : '',
 		'U_EMAIL' 			=> $user_cache[$poster_id]['email'],
 		'U_WWW' 			=> $user_cache[$poster_id]['www'],
 		'U_ICQ' 			=> $user_cache[$poster_id]['icq'],
@@ -1468,13 +1468,13 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'U_YIM' 			=> $user_cache[$poster_id]['yim'],
 		'U_JABBER'			=> $user_cache[$poster_id]['jabber'], 
 
-		'U_RATE_GOOD'		=> getlink('Forums&amp;file=viewtopic&amp;rate=good&amp;p=' . $row['post_id']), 
-		'U_RATE_BAD'		=> getlink('Forums&amp;file=viewtopic&amp;rate=bad&amp;p=' . $row['post_id']), 
-		'U_REPORT'			=> getlink('Forums&amp;file=report&amp;p=' . $row['post_id']),
-		'U_MCP_REPORT'		=> ($_CLASS['auth']->acl_gets('m_', 'a_', 'f_report', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
-		'U_MCP_APPROVE'		=> ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
-		'U_MCP_DETAILS'		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? getlink('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
-		'U_MINI_POST'		=> getlink('Forums&amp;file=viewtopic&amp;p=' . $row['post_id']) . '#' . $row['post_id'],
+		'U_RATE_GOOD'		=> generate_link('Forums&amp;file=viewtopic&amp;rate=good&amp;p=' . $row['post_id']), 
+		'U_RATE_BAD'		=> generate_link('Forums&amp;file=viewtopic&amp;rate=bad&amp;p=' . $row['post_id']), 
+		'U_REPORT'			=> generate_link('Forums&amp;file=report&amp;p=' . $row['post_id']),
+		'U_MCP_REPORT'		=> ($_CLASS['auth']->acl_gets('m_', 'a_', 'f_report', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
+		'U_MCP_APPROVE'		=> ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
+		'U_MCP_DETAILS'		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
+		'U_MINI_POST'		=> generate_link('Forums&amp;file=viewtopic&amp;p=' . $row['post_id']) . '#' . $row['post_id'],
 		'U_NEXT_POST_ID'	=> ($i < $i_total && isset($rowset[$i + 1])) ? $rowset[$i + 1]['post_id'] : '', 
 		'U_PREV_POST_ID'	=> $prev_post_id, 
 		'POST_ID'           => $row['post_id'],
@@ -1604,7 +1604,7 @@ $_CLASS['display']->display_head($_CLASS['user']->lang['VIEW_TOPIC'] .' &gt; ' .
 
 page_header();
 
-make_jumpbox(getlink('Forums&amp;file=viewforum'), $forum_id);
+make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
 $_CLASS['template']->display('modules/Forums/viewtopic_body.html');
 
 $_CLASS['display']->display_footer();

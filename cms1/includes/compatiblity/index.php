@@ -87,7 +87,6 @@ function get_lang($module)
 
 }
 
-// No one said it had to be pretty
 function check_html($str, $strip="")
 {
 	/* The core of this code has been lifted from phpslash */

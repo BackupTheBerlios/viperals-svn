@@ -10,8 +10,6 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-//Add module authization check
-//Add check for modules, default module should be overriten by othere moduels.
  
 class display
 {
@@ -31,17 +29,18 @@ class display
 		$this->siteurl = 'http://'.getenv('HTTP_HOST').$MAIN_CFG['server']['path'];
 		$this->copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
 		
-		$this->themeprev = get_variable('prevtheme', 'POST', false);
-		$this->themeprev = ($this->themeprev) ? $this->themeprev : get_variable('prevtheme', 'GET', false);
-		
+		$this->themeprev = get_variable('prevtheme', 'REQUEST', false);
 		$this->theme = $_CLASS['user']->get_data('theme');
 		
 		if ($this->themeprev && ($this->themeprev != $this->theme) && $this->check_theme($this->themeprev))
 		{
 			$this->theme = $this->themeprev;
 			define('THEMEPLATE', $this->temp);
-			$_CLASS['user']->set_data('theme', $this->theme);
 			
+			if (!get_variable('prevtemp', 'REQUEST', false))
+			{
+				$_CLASS['user']->set_data('theme', $this->theme);
+			}
 		}
 		elseif ($this->theme && $this->check_theme($this->theme))
 		{
@@ -49,8 +48,7 @@ class display
 		}
 		else
 		{
-           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme']
-						: $MAIN_CFG['global']['default_theme'];     
+           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme'] : $MAIN_CFG['global']['default_theme'];     
 	
 			if ($this->check_theme($this->theme))
 			{
@@ -62,7 +60,21 @@ class display
 				define('THEMEPLATE', $this->temp);
 				
 			} else {
-				// error here the site has no theme
+			
+				// We need a theme ..
+				$handle = opendir('themes');
+				
+				while ($list = readdir($handle))
+				{
+					if (!ereg('[.]', $list) && $this->check_theme($list))
+					{
+						$this->theme = $list;
+						define('THEMEPLATE', $this->temp);
+						break;
+					}
+				}
+				
+				closedir($handle);
 			}
 		}
     	
@@ -74,6 +86,7 @@ class display
 		}
 	}
 	
+	// maybe make this a function.
 	function check_theme($theme)
 	{
 		global $site_file_root;
@@ -97,7 +110,11 @@ class display
 	
 	function add_module($module)
 	{
-		//Add authization check here
+		//authization check here
+		if (!$_CLASS['user']->admin_auth('modules') && !$_CLASS['user']->auth($module['auth']))
+		{
+			return;
+		}
 		
 		//first module control the sides.
 		if (!empty($this->modules))
@@ -106,6 +123,11 @@ class display
 		}
 		
 		$this->modules[] = $module;
+	}
+	
+	function get_module()
+	{
+		return array_shift($this->modules);
 	}
 	
 	function display_head($title = false)
@@ -118,8 +140,8 @@ class display
 		}
 		
 		$this->displayed['header'] = true;
-		
-		if (extension_loaded('zlib'))
+
+		if (extension_loaded('zlib') && !ob_get_length())
 		{
 			ob_start('ob_gzhandler');
 		}
@@ -134,8 +156,7 @@ class display
 		
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
 		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
-		header('Cache-Control: private, no-cache="set-cookie", pre-check=0, post-check=0, max-age=0');
-		//header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
+		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
 		header('Expires: 0');
 		header('Pragma: no-cache');
 		
@@ -143,9 +164,7 @@ class display
 		{
 			if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] < $_CLASS['user']->data['session_last_visit'])
 			{
-				$this->header['js'] .= '<script type="text/javascript">window.open(\''
-				. getlink('Control_Panel&i=pm&mode=popup', false, true)."', '_phpbbprivmsg','
-				.'HEIGHT=225,resizable=yes,WIDTH=400');</script>";
+				$this->header['js'] .= '<script type="text/javascript">window.open(\''. getlink('Control_Panel&i=pm&mode=popup', false, true)."', '_phpbbprivmsg',HEIGHT=225,resizable=yes,WIDTH=400');</script>";
 
 				if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] > $_CLASS['user']->data['session_last_visit'])
 				{
@@ -223,23 +242,24 @@ class display
 	
 	function display_footer($save = true)
 	{
-		global $_CLASS, $phpEx, $Module, $MAIN_CFG;
-		static $nextmodule = 1; // Maybe make this accessable $this->nextmodule
+		global $_CLASS, $Module, $MAIN_CFG;
 		
 		if ($this->displayed['footer'])
 		{
 			return;
 		}
 		
-		if (!empty($this->modules))
+		// phpnuke compatiblity for like print view, popup, etc.
+		// All new modules should use script_close function.  It a must for the next major release..
+		if (!$this->displayed['header'])
 		{
-			//do extraction here
-			global $Module, $site_file_root;
-			
-			$Module = $this->modules[$nextmodule];
-			unset($this->modules[$nextmodule]);
-			$nextmodule ++;
-			
+			script_close($save);
+			die;
+		}
+		
+		if ($Module = $this->get_module())
+		{
+			global $site_file_root;
 			require($site_file_root.'modules/'.$Module['name'].'/index.php');
 		}
 		
@@ -283,6 +303,7 @@ class display
 			if ($memory_usage = memory_get_usage())
 			{
 				global $base_memory_usage;
+				
 				$memory_usage -= $base_memory_usage;
 				$memory_usage = ($memory_usage >= 1048576) ? round((round($memory_usage / 1048576 * 100) / 100), 2) . ' ' . $_CLASS['user']->lang['MB'] : (($memory_usage >= 1024) ? round((round($memory_usage / 1024 * 100) / 100), 2) . ' ' . $_CLASS['user']->lang['KB'] : $memory_usage . ' ' . $_CLASS['user']->lang['BYTES']);
 		
@@ -336,7 +357,7 @@ class display
 
 function hideblock($id) 
 {
-    // based/idea from cpgnuke www.cpgnuke.com
+    // based from cpgnuke www.cpgnuke.com
     static $hiddenblocks = false;
     
     if (!$hiddenblocks) 
@@ -352,7 +373,8 @@ function hideblock($id)
             }
         }
     }
-    return (empty($hiddenblocks[$id]) ? false : true);
+    
+    return (empty($hiddenblocks[$id])) ? false : true;
 }
 
 ?>

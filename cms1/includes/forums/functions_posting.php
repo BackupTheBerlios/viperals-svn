@@ -797,7 +797,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 // Topic Review
 function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id = 0, $show_quote_button = true)
 {
-	global $_CLASS, $db, $bbcode;
+	global $_CLASS, $db, $bbcode, $site_file_root;
 	global $config, $phpEx, $SID;
 
 	// Go ahead and pull all data for this topic
@@ -827,7 +827,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 	// Instantiate BBCode class
 	if (!isset($bbcode) && $bbcode_bitfield)
 	{
-		require_once('includes/forums/bbcode.'.$phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
 
@@ -882,7 +882,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 // User Notification
 function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id, $topic_id, $post_id)
 {
-	global $db, $config, $phpEx,$MAIN_CFG, $_CLASS;
+	global $db, $config, $phpEx, $MAIN_CFG, $_CLASS, $site_file_root;
 
 	$topic_notification = ($mode == 'reply' || $mode == 'quote');
 	$forum_notification = ($mode == 'post');
@@ -1006,7 +1006,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 	// Now, we are able to really send out notifications
 	if (sizeof($msg_users))
 	{
-		require_once('includes/forums/functions_messenger.'.$phpEx);
+		require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
 		$messenger = new messenger();
 
 		$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);

@@ -57,7 +57,7 @@ $result = $db->sql_query($sql);
 $legend = '';
 while ($row = $db->sql_fetchrow($result))
 {
-	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.getlink('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
+	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
 $db->sql_freeresult($result);
 
@@ -75,7 +75,7 @@ if ($config['load_birthdays'])
 	while ($row = $db->sql_fetchrow($result))
 	{
 		$user_colour = ($row['user_colour']) ? ' style="color:#' . $row['user_colour'] .'"' : '';
-		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
+		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
 		
 		if ($age = (int)substr($row['user_birthday'], -4))
 		{
@@ -116,7 +116,7 @@ $_CLASS['template']->assign(array(
 	'TOTAL_POSTS'	=> sprintf($_CLASS['user']->lang[$l_total_post_s], $total_posts),
 	'TOTAL_TOPICS'	=> sprintf($_CLASS['user']->lang[$l_total_topic_s], $total_topics),
 	'TOTAL_USERS'	=> sprintf($_CLASS['user']->lang[$l_total_user_s], $total_users),
-	'NEWEST_USER'	=> sprintf($_CLASS['user']->lang['NEWEST_USER'], '<a href="'. getlink('Members_List&amp;mode=viewprofile&amp;u='.$newest_uid) . '">', $newest_user, '</a>'), 
+	'NEWEST_USER'	=> sprintf($_CLASS['user']->lang['NEWEST_USER'], '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$newest_uid) . '">', $newest_user, '</a>'), 
 	'LEGEND'		=> $legend, 
 	'BIRTHDAY_LIST'	=> $birthday_list, 
 
@@ -124,10 +124,10 @@ $_CLASS['template']->assign(array(
 	'FORUM_NEW_IMG'		=>	$_CLASS['user']->img('forum_new', 'NEW_POSTS'),
 	'FORUM_LOCKED_IMG'	=>	$_CLASS['user']->img('forum_locked', 'NO_NEW_POSTS_LOCKED'),
 
-	'S_LOGIN_ACTION'			=> getlink('Control_Panel&amp;mode=login'), 
+	'S_LOGIN_ACTION'			=> generate_link('Control_Panel&amp;mode=login'), 
 	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']) ? true : false, 
 
-	'U_MARK_FORUMS' => getlink('Forums&amp;mark=forums')
+	'U_MARK_FORUMS' => generate_link('Forums&amp;mark=forums')
 	)
 );
 

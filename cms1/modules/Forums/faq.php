@@ -130,7 +130,7 @@ for ($i = 0, $size; $i < $size; $i++)
 			$_CLASS['template']->assign_vars_array('faq_row_link', array(
 				'FAQ_LINK' 			=> $help_block[$i][$j]['question'],
 				'FAQ_SECTION' 		=> $i,
-				'U_FAQ_LINK'		=> getlink('Forums&amp;file=faq'.$link.'#' . $help_block[$i][$j]['id']))
+				'U_FAQ_LINK'		=> generate_link('Forums&amp;file=faq'.$link.'#' . $help_block[$i][$j]['id']))
 			);
 		}
 	}
@@ -140,14 +140,14 @@ $_CLASS['template']->assign(array(
 	'L_BACK_TO_TOP'			=> $_CLASS['user']->lang['BACK_TO_TOP'],
 	'L_JUMP_TO'				=> $_CLASS['user']->lang['JUMP_TO'],
 	'L_GO'					=> $_CLASS['user']->lang['GO'],
-	'S_BACK_TO_TOP'			=> getlink('Forums&amp;file=faq'.$link.'#Top'))
+	'S_BACK_TO_TOP'			=> generate_link('Forums&amp;file=faq'.$link.'#Top'))
 );
 
 $_CLASS['display']->display_head($l_title);
 
 page_header();
 
-make_jumpbox(getlink('Forums&amp;file=viewforum'));
+make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 
 $_CLASS['template']->display('modules/Forums/faq_body.html');
 

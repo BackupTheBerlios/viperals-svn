@@ -13,7 +13,6 @@
 
 /* to do
 RSS system
-Add final compatibly stuff
 */
 
 class blocks
@@ -78,20 +77,11 @@ class blocks
 	
 	function display($position)
 	{
-		static $expire_updated = false;
-		
 		if (($position == BLOCK_LEFT || $position == BLOCK_RIGHT) && !$this->check_side($position))
 		{
 			return false;
 		}
-		
-		if (VIPERAL == 'Admin' && $position != BLOCK_LEFT)
-		{
-			return false;
-		}
-		
-		global $_CLASS;
-		
+				
 		if (!$this->blocks_loaded)
 		{
 			$this->load_blocks();
@@ -99,12 +89,19 @@ class blocks
 		
 		if (empty($this->blocks_array[$position]))
 		{
-				return false;
+			return false;
 		}
+		
+		static $expire_updated = false;
+		global $_CLASS;
 		
 		foreach($this->blocks_array[$position] AS $this->block)
 		{
 			//auth check and language check here.
+			if (!$_CLASS['user']->admin_auth('blocks') && !$_CLASS['user']->auth($this->block['auth']))
+			{
+				continue;
+			}
 			
 			if ($this->block['expires'] && !$expire_updated && ($_CLASS['user']->time >= $this->block['expires']))
 			{
@@ -132,7 +129,6 @@ class blocks
 	{
 		Switch ($this->block['type'])
 		{
-	   
 			case BLOCKTYPE_FILE:
 			case BLOCKTYPE_SYSTEM:
 				
@@ -179,7 +175,7 @@ class blocks
 			
 			if (!$this->content && !$this->template)
 			{
-				if (is_admin() && $_CLASS['user']->admin_auth('blocks'))
+				if ($_CLASS['user']->admin_auth('blocks'))
 				{
 					$this->content = ($this->info) ? $this->info : $_CLASS['user']->lang['BLOCK_ERROR2'];
 				} else {
@@ -189,7 +185,7 @@ class blocks
 
 		} else {
 		
-			if (is_admin() && $_CLASS['user']->admin_auth('blocks'))
+			if ($_CLASS['user']->admin_auth('blocks'))
 			{
 				$this->content = $_CLASS['user']->lang['BLOCK_ERROR1'];
 			} else {
@@ -228,7 +224,7 @@ class blocks
 			return;
 		}
 		
-		if (is_admin() && $_CLASS['user']->admin_auth('message'))
+		if ($_CLASS['user']->admin_auth('message'))
 		{
 			$expires = ($this->block['expires']) ? $_CLASS['user']->lang['EXPIRES'].' '.$_CLASS['user']->format_date($this->block['expires']) : false;
 			$edit = '<a href="'.adminlink('message&amp;mode=edit&amp;id='.$this->block['id']).'">'.$_CLASS['user']->lang['EDIT'].'</a>';

@@ -46,7 +46,7 @@ if (!$id)
 	trigger_error('INVALID_MODE');
 }
 
-$redirect_url = ($report_post) ? getlink("Forums&amp;file=viewtopic&p=$id#$id") : getlink('Control_Panel&i=pm&p='.$id);
+$redirect_url = ($report_post) ? generate_link("Forums&amp;file=viewtopic&p=$id#$id") : generate_link('Control_Panel&i=pm&p='.$id);
 // Has the report been cancelled?
 if (isset($_POST['cancel']))
 {
@@ -305,7 +305,7 @@ $u_report = ($report_post) ? "p=$id" : "pm=$id";
 
 $_CLASS['template']->assign(array(
 	'REPORT_TEXT'		=>	$report_text,
-	'S_REPORT_ACTION'	=>	getlink("Forums&amp;file=report&amp;$u_report" . (($report_id) ? "&amp;report_id=$report_id" : '')),
+	'S_REPORT_ACTION'	=>	generate_link("Forums&amp;file=report&amp;$u_report" . (($report_id) ? "&amp;report_id=$report_id" : '')),
 	'S_NOTIFY'			=> (!empty($user_notify)) ? true : false,
 	'S_CAN_NOTIFY'		=> ($_CLASS['user']->data['user_id'] == ANONYMOUS) ? false : true,
 	'S_REPORT_POST'		=> $report_post)

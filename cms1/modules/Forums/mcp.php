@@ -131,7 +131,7 @@ class module
 			$_CLASS['template']->assign_vars_array($module_type . '_section', array(
 				'L_TITLE'		=> (isset($_CLASS['user']->lang[$module_lang])) ? $_CLASS['user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
 				'S_SELECTED'	=> $selected, 
-				'U_TITLE'		=> getlink($module_url . '&amp;i=' . $row['module_id']))
+				'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $row['module_id']))
 			);
 
 			if ($selected)
@@ -191,7 +191,7 @@ class module
 							'L_TITLE'		=> (isset($_CLASS['user']->lang[$module_lang])) ? $_CLASS['user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
 							'S_SELECTED'	=> $selected,
 							'ADD_ITEM'		=> $this->add_menu_item($row['module_filename'], $submodule_title),
-							'U_TITLE'		=> getlink($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title . $suffix))
+							'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title . $suffix))
 						);
 
 						if ($selected)
@@ -387,7 +387,7 @@ if ($_CLASS['user']->data['user_id'] == ANONYMOUS)
 
 	if ($_CLASS['user']->data['user_id'] == ANONYMOUS)
 	{
-		redirect(getlink('Forums'));
+		redirect(generate_link('Forums'));
 	}
 }
 

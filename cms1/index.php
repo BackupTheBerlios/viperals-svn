@@ -42,18 +42,14 @@ switch ($mod)
 
 if ($_CLASS['display']->homepage)
 {
-	$result = $_CLASS['db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage <> 0 ORDER BY homepage ASC');
+	$result = $_CLASS['db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage > 0 ORDER BY homepage ASC');
 	
 	While ($row = $_CLASS['db']->sql_fetchrow($result))
 	{
-		//send array to display class to be checked
-		//yes it will allow for module per group, bla bla bla
 		$_CLASS['display']->add_module($row);
 	}
 	
-	$Module = $_CLASS['display']->modules[0];
-	unset($_CLASS['display']->modules[0]);
-
+	$Module = $_CLASS['display']->get_module();
 	$path = 'modules/'.$Module['name'].'/index.php';
 
 } else {
@@ -68,26 +64,34 @@ $path = $site_file_root.$path;
 
 if (!$Module || !file_exists($path))
 {
+	$Module['sides'] = BLOCK_ALL;
+
 	if ($_CLASS['display']->homepage) 
 	{
-		if (is_admin())
+		if ($_CLASS['user']->admin_auth('modules'))
 		{
-			trigger_error('_NO_HOMEPAGE_ADMIN', E_USER_ERROR);
+			// display message inline
+			trigger_error('_NO_HOMEPAGE_ADMIN');
 		} else {
-			trigger_error('_NO_HOMEPAGE', E_USER_ERROR);
+			// Maybe someone wants only messages or blocks !. 
+			$_CLASS['display']->display_head();
+			$_CLASS['display']->display_footer();
 		}
-		
 	} else {
-	
-		$Module['sides'] = 1;
 		trigger_error('_PAGE_NOT_FOUND');
 	}
 }
 
 if (!$Module['active'])
 {
-	$Module['sides'] = 1;
+	$Module['sides'] = BLOCK_ALL;
 	trigger_error('_MODULE_UNACTIVE');
+}
+
+//Need to add a way off getting a text auth message for ( only when there is one group auth or registered user )
+if (!$_CLASS['display']->homepage && !$_CLASS['user']->auth($Module['auth']))
+{
+	trigger_error('Not Auth!');
 }
 
 if ($Module['editor'] && $MAIN_CFG['global']['wysiwyg'] && $_CLASS['user']->data['wysiwyg'])

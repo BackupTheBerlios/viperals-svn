@@ -496,7 +496,7 @@ if ($submit || $preview || $refresh)
 {
 	$topic_cur_post_id	= request_var('topic_cur_post_id', 0);
 
-	$subject			= request_var('subject', '');
+	$subject = preg_replace('#&amp;(\#[0-9]+;)#', '&\1', request_var('subject', ''));
 
 	if (strcmp($subject, strtoupper($subject)) == 0 && $subject)
 	{
@@ -1155,7 +1155,8 @@ $_CLASS['template']->assign(array(
 	'L_JUMP_TO'					=> $_CLASS['user']->lang['JUMP_TO'],
 	'L_POSTED'					=> $_CLASS['user']->lang['POSTED'],
 	'L_POST_SUBJECT'			=> $_CLASS['user']->lang['POST_SUBJECT'],
-	
+	'L_STYLES_TIP'				=> $_CLASS['user']->lang['STYLES_TIP'],
+
 	'L_ADD_POLL'				=> $_CLASS['user']->lang['ADD_POLL'],
 	'L_ADD_POLL_EXPLAIN'		=> $_CLASS['user']->lang['ADD_POLL_EXPLAIN'],
 	'L_POLL_QUESTION'			=> $_CLASS['user']->lang['POLL_QUESTION'],
