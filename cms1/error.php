@@ -19,8 +19,8 @@ if (extension_loaded('zlib'))
 	ob_start('ob_gzhandler');
 }
 
-//$site_file_root = getenv('DOCUMENT_ROOT').'/';
-$site_file_root = 'C:/Program Files/Apache Group/Apache2/cms/';
+//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
+$site_file_root = 'C:/apachefriends/xampp/cms/';
 $lang = 'en';
 
 if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))

@@ -30,9 +30,9 @@ if (!defined('VIPERAL')) {
 require_once($site_file_root.'includes/forums/functions.'.$phpEx);
 loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
-$_CLASS['auth']->acl($_CLASS['user']->data);
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
-$_CLASS['user']->add_img();
+$_CLASS['core_user']->add_img();
 
 require($site_file_root.'includes/forums/functions_display.' . $phpEx);
 display_forums('', $config['load_moderators']);
@@ -57,7 +57,7 @@ $result = $db->sql_query($sql);
 $legend = '';
 while ($row = $db->sql_fetchrow($result))
 {
-	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
+	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
 $db->sql_freeresult($result);
 
@@ -69,7 +69,8 @@ if ($config['load_birthdays'])
 	$now = getdate();
 	$sql = 'SELECT user_id, username, user_colour, user_birthday 
 		FROM ' . USERS_TABLE . " 
-		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now['mday'], $now['mon']) . "%'";
+		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now['mday'], $now['mon']) . "%'
+			AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
 	$result = $db->sql_query($sql);
 
 	while ($row = $db->sql_fetchrow($result))
@@ -86,43 +87,43 @@ if ($config['load_birthdays'])
 }
 
 /// lets assign those language that are needed///
-$_CLASS['template']->assign(array(
-	'L_FORUM'			=> $_CLASS['user']->lang['FORUM'],
-	'L_TOPICS'			=> $_CLASS['user']->lang['TOPICS'],
-	'L_POSTS'			=> $_CLASS['user']->lang['POSTS'],
-	'L_LAST_POST'		=> $_CLASS['user']->lang['LAST_POST'],
-	'L_MARK_FORUMS_READ'=> $_CLASS['user']->lang['MARK_FORUMS_READ'],
-	'L_WHO_IS_ONLINE'	=> $_CLASS['user']->lang['WHO_IS_ONLINE'],
-	'L_BIRTHDAYS'		=> $_CLASS['user']->lang['BIRTHDAYS'],
-	'L_STATISTICS'		=> $_CLASS['user']->lang['STATISTICS'],
-	'L_USERNAME'		=> $_CLASS['user']->lang['USERNAME'],
-	'L_GO'				=> $_CLASS['user']->lang['GO'],
-	'L_PASSWORD'		=> $_CLASS['user']->lang['PASSWORD'],
-	'L_LOG_ME_IN'		=> $_CLASS['user']->lang['LOG_ME_IN'],
-	'L_NO_BIRTHDAYS'	=> $_CLASS['user']->lang['NO_BIRTHDAYS'],
-	'L_LEGEND'			=> $_CLASS['user']->lang['LEGEND'],
-	'L_LOGIN'			=> $_CLASS['user']->lang['LOGIN'],
-	'L_REDIRECTS'		=> $_CLASS['user']->lang['REDIRECTS'],
-	'L_NO_POSTS'		=> $_CLASS['user']->lang['NO_POSTS'],
-	'L_NO_FORUMS'		=> $_CLASS['user']->lang['NO_FORUMS'],
-	'L_DELETE_COOKIES'	=> $_CLASS['user']->lang['DELETE_COOKIES'],
-	'L_NEW_POSTS'		=> $_CLASS['user']->lang['NEW_POSTS'],
-	'L_NO_NEW_POSTS'	=> $_CLASS['user']->lang['NO_NEW_POSTS'],
-	'L_FORUM_LOCKED'	=> $_CLASS['user']->lang['FORUM_LOCKED'])
+$_CLASS['core_template']->assign(array(
+	'L_FORUM'			=> $_CLASS['core_user']->lang['FORUM'],
+	'L_TOPICS'			=> $_CLASS['core_user']->lang['TOPICS'],
+	'L_POSTS'			=> $_CLASS['core_user']->lang['POSTS'],
+	'L_LAST_POST'		=> $_CLASS['core_user']->lang['LAST_POST'],
+	'L_MARK_FORUMS_READ'=> $_CLASS['core_user']->lang['MARK_FORUMS_READ'],
+	'L_WHO_IS_ONLINE'	=> $_CLASS['core_user']->lang['WHO_IS_ONLINE'],
+	'L_BIRTHDAYS'		=> $_CLASS['core_user']->lang['BIRTHDAYS'],
+	'L_STATISTICS'		=> $_CLASS['core_user']->lang['STATISTICS'],
+	'L_USERNAME'		=> $_CLASS['core_user']->lang['USERNAME'],
+	'L_GO'				=> $_CLASS['core_user']->lang['GO'],
+	'L_PASSWORD'		=> $_CLASS['core_user']->lang['PASSWORD'],
+	'L_LOG_ME_IN'		=> $_CLASS['core_user']->lang['LOG_ME_IN'],
+	'L_NO_BIRTHDAYS'	=> $_CLASS['core_user']->lang['NO_BIRTHDAYS'],
+	'L_LEGEND'			=> $_CLASS['core_user']->lang['LEGEND'],
+	'L_LOGIN'			=> $_CLASS['core_user']->lang['LOGIN'],
+	'L_REDIRECTS'		=> $_CLASS['core_user']->lang['REDIRECTS'],
+	'L_NO_POSTS'		=> $_CLASS['core_user']->lang['NO_POSTS'],
+	'L_NO_FORUMS'		=> $_CLASS['core_user']->lang['NO_FORUMS'],
+	'L_DELETE_COOKIES'	=> $_CLASS['core_user']->lang['DELETE_COOKIES'],
+	'L_NEW_POSTS'		=> $_CLASS['core_user']->lang['NEW_POSTS'],
+	'L_NO_NEW_POSTS'	=> $_CLASS['core_user']->lang['NO_NEW_POSTS'],
+	'L_FORUM_LOCKED'	=> $_CLASS['core_user']->lang['FORUM_LOCKED'])
 );
 
 // Assign index specific vars
-$_CLASS['template']->assign(array(
-	'TOTAL_POSTS'	=> sprintf($_CLASS['user']->lang[$l_total_post_s], $total_posts),
-	'TOTAL_TOPICS'	=> sprintf($_CLASS['user']->lang[$l_total_topic_s], $total_topics),
-	'TOTAL_USERS'	=> sprintf($_CLASS['user']->lang[$l_total_user_s], $total_users),
-	'NEWEST_USER'	=> sprintf($_CLASS['user']->lang['NEWEST_USER'], '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$newest_uid) . '">', $newest_user, '</a>'), 
+$_CLASS['core_template']->assign(array(
+	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->lang[$l_total_post_s], $total_posts),
+	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->lang[$l_total_topic_s], $total_topics),
+	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->lang[$l_total_user_s], $total_users),
+	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->lang['NEWEST_USER'], '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$newest_uid) . '">', $newest_user, '</a>'), 
 	'LEGEND'		=> $legend, 
 	'BIRTHDAY_LIST'	=> $birthday_list, 
 
-	'FORUM_IMG'			=>	$_CLASS['user']->img('forum', 'NO_NEW_POSTS'),
-	'FORUM_NEW_IMG'		=>	$_CLASS['user']->img('forum_new', 'NEW_POSTS'),
-	'FORUM_LOCKED_IMG'	=>	$_CLASS['user']->img('forum_locked', 'NO_NEW_POSTS_LOCKED'),
+	'FORUM_IMG'			=>	$_CLASS['core_user']->img('forum', 'NO_NEW_POSTS'),
+	'FORUM_NEW_IMG'		=>	$_CLASS['core_user']->img('forum_new', 'NEW_POSTS'),
+	'FORUM_LOCKED_IMG'	=>	$_CLASS['core_user']->img('forum_locked', 'NO_NEW_POSTS_LOCKED'),
 
 	'S_LOGIN_ACTION'			=> generate_link('Control_Panel&amp;mode=login'), 
 	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']) ? true : false, 
@@ -132,12 +133,12 @@ $_CLASS['template']->assign(array(
 );
 
 // Output page
-$_CLASS['display']->display_head();
+$_CLASS['core_display']->display_head();
 
 page_header();
 
-$_CLASS['template']->display('modules/Forums/index_body.html');
+$_CLASS['core_template']->display('modules/Forums/index_body.html');
 
-$_CLASS['display']->display_footer();
+$_CLASS['core_display']->display_footer();
 
 ?>

@@ -18,6 +18,6 @@ if (!defined('VIPERAL'))
 }
 
 global $_CLASS;
-$_CLASS['display']->display_head();
+$_CLASS['core_display']->display_head();
 
 ?>

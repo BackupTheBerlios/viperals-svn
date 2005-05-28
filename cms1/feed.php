@@ -10,57 +10,61 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+// Add last-modified
 
 define('VIPERAL', 'MINILOAD');
 
-//$site_file_root = getenv('DOCUMENT_ROOT').'/';
-$site_file_root = 'C:/Program Files/Apache Group/Apache2/cms/';
+//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
+$site_file_root = 'C:/apachefriends/xampp/cms/';
+
 require($site_file_root.'core.php');
 
+//error_reporting(0);
 header('Content-Type: text/xml');
 
-$result = $_CLASS['db']->sql_query('SELECT id, title, time, intro, poster_name FROM '.$prefix.'_news ORDER BY id DESC LIMIT 10');
+$result = $_CLASS['core_db']->sql_query('SELECT id, title, time, intro, poster_name FROM '.$prefix.'_news ORDER BY id DESC LIMIT 10');
 
-$_CLASS['template']->assign(array(
-		'SITE_NAME' => $MAIN_CFG['global']['sitename'],
-		'SITE_URL' 	=> $MAIN_CFG['global']['siteurl'],
-		'SLOGAN' 	=> $MAIN_CFG['global']['slogan'],
-		'LANG'		=> $MAIN_CFG['global']['backend_language'],
+$_CLASS['core_template']->assign(array(
+		'SITE_NAME' => $_CORE_CONFIG['global']['site_name'],
+		'SITE_URL' 	=> $_CORE_CONFIG['global']['site_url'],
+		'SLOGAN' 	=> $_CORE_CONFIG['global']['slogan'],
+		'LANG'		=> 'en-us',
 		'TIME'		=> gmdate('M d Y H:i:s', time()) .' GMT'
 	));
 		
-while ($row = $_CLASS['db']->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 
-	$_CLASS['template']->assign_vars_array('items', array(
+	$_CLASS['core_template']->assign_vars_array('items', array(
 		'TITLE' 		=> htmlentities($row['title'], ENT_QUOTES),
 		'LINK' 			=> getlink('News&amp;mode=view&amp;id='.$row['id'], true, true, false),
-		'DESCRIPTION' 	=> htmlentities(strip_tags($row['intro']), ENT_QUOTES),
+//htmlentities causes problems with some chars.
+		'DESCRIPTION' 	=> htmlspecialchars(strip_tags($row['intro']), ENT_QUOTES),
 		'TIME'			=> gmdate('M d Y H:i:s', $row['time']) .' GMT',
 		'AUTHOR'		=> $row['poster_name']
 	));
 }
 
-$_CLASS['db']->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
 $feed = get_variable('feed', 'GET', false);
 
 Switch ($feed)
 {
 	case 'rdf':
-	$_CLASS['template']->display('rss/rdf.html');
+	$_CLASS['core_template']->display('rss/rdf.html');
 	break;
 	
 	case 'rss2':
-	$_CLASS['template']->display('rss/rss2.html');
+	$_CLASS['core_template']->display('rss/rss2.html');
 	break;
 	
 	case 'rss':
-	$_CLASS['template']->display('rss/rss91.html');
+	$_CLASS['core_template']->display('rss/rss91.html');
 	break;
 		
 	default:
-	$_CLASS['template']->display('rss/rss91.html');
+	$_CLASS['core_template']->display('rss/rss91.html');
 }
 
 script_close();

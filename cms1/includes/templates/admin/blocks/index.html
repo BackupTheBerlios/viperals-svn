@@ -1,0 +1,150 @@
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th align="center"><b>{$L_TITLE}</b></th>
+			<th><b>{$L_POSITION}</b></th>
+			<th colspan="2"><b>{$L_WEIGHT}</b></th>
+			<th><b>{$L_TYPE}</b></td>
+			<th><b>{$L_ACTIVE}</b></th>
+			<th><b>{$L_VIEW}</b></th>
+			{ if isset($L_LfANGUAGE) }
+				<th align="center"><b>{$L_LANGUAGE}</b></th>
+			{ /if }
+			<th align="center"><b>{$L_LANGUAGE}</b></th>
+		</tr>
+		
+		{ if isset($left_admin_blocks) }
+    	<tr>
+			<td class="row3" colspan="8"><b class="gensmall">Left Side Blocks</b></td>
+		</tr>
+	{section name=left_admin_blocksloop loop=$left_admin_blocks}
+		<tr>
+			<td class="row1"><a href="{ $left_admin_blocks[left_admin_blocksloop].TITLE_LINK }">{ $left_admin_blocks[left_admin_blocksloop].TITLE }</a></td>
+			<td class="row2" align="center">{ $left_admin_blocks[left_admin_blocksloop].POSITION }</td>
+			<td class="row1" align="center" >{ $left_admin_blocks[left_admin_blocksloop].WEIGHTL }</td><td class="row1" align="center">{ $left_admin_blocks[left_admin_blocksloop].WEIGHTR }</td>
+			<td class="row2" align="center">{ $left_admin_blocks[left_admin_blocksloop].TYPE }</td>
+			<td class="row1" align="center"><a href="{ $left_admin_blocks[left_admin_blocksloop].ACTIVE_LINK }"><img src="images/{ $left_admin_blocks[left_admin_blocksloop].ACTIVE }" alt="{ $CHANGE }" title="{ $CHANGE }" border="0"></a></td>
+			<td class="row2" align="center">{ $left_admin_blocks[left_admin_blocksloop].WHO_VIEW }</td>
+			{ if isset($multilingual) }
+			   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+			{ /if }
+			
+			
+			<td class="row1" align="center">[
+			{ if $left_admin_blocks[left_admin_blocksloop].EDIT_LINK }
+			 <a href="{ $left_admin_blocks[left_admin_blocksloop].EDIT_LINK }">{ $L_EDIT }</a>
+			{ /if }
+			
+			
+			 { if $left_admin_blocks[left_admin_blocksloop].DELETE_LINK }
+				 | <a href="{ $left_admin_blocks[left_admin_blocksloop].DELETE_LINK }">{ $L_DELETE }</a>
+			{ /if }
+			]  </td>
+		  </tr>
+	{ /section }
+	{ /if }
+	
+
+	
+		{ if isset($centertop_admin_blocks) }
+    	<tr>
+			<td class="row3" colspan="8"><b class="gensmall">Center Top Blocks</b></td>
+		</tr>
+	
+	{section name=centertop_admin_blocksloop loop=$centertop_admin_blocks}
+		<tr>
+			<td class="row1"><a href="{ $centertop_admin_blocks[centertop_admin_blocksloop].TITLE_LINK }" title="'._SHOW.'">{ $centertop_admin_blocks[centertop_admin_blocksloop].TITLE }</a></td>
+			<td class="row2" align="center">{ $centertop_admin_blocks[centertop_admin_blocksloop].POSITION }</td>
+			<td class="row1" align="center" >{ $centertop_admin_blocks[centertop_admin_blocksloop].WEIGHTL }</td><td class="row1" align="center">{ $centertop_admin_blocks[centertop_admin_blocksloop].WEIGHTR }</td>
+			<td class="row2" align="center">{ $centertop_admin_blocks[centertop_admin_blocksloop].TYPE }</td>
+			<td class="row1" align="center"><a href="{ $centertop_admin_blocks[centertop_admin_blocksloop].ACTIVE_LINK }"><img src="images/{ $centertop_admin_blocks[centertop_admin_blocksloop].ACTIVE }" alt="{ $CHANGE }" title="{ $CHANGE }" border="0"></a></td>
+			<td class="row2" align="center">{ $centertop_admin_blocks[centertop_admin_blocksloop].WHO_VIEW }</td>
+			{ if isset($multilingual) }
+			   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+			{ /if }
+			
+			
+			<td class="row1" align="center">[
+			{ if $centertop_admin_blocks[centertop_admin_blocksloop].EDIT_LINK }
+			 <a href="{ $centertop_admin_blocks[centertop_admin_blocksloop].EDIT_LINK }">{ $L_EDIT }</a>
+			{ /if }
+			
+			
+			 { if $centertop_admin_blocks[centertop_admin_blocksloop].DELETE_LINK }
+				 | <a href="{ $centertop_admin_blocks[centertop_admin_blocksloop].DELETE_LINK }">{ $L_DELETE }</a>
+			{ /if }
+			]  </td>
+		  </tr>
+	{ /section }
+	
+		{ /if }
+	
+		{ if isset($centerbottom_admin_blocks) }
+    	<tr>
+			<td class="row3" colspan="8"><b class="gensmall">Center Bottom Blocks</b></td>
+		</tr>
+	{section name=centerbottom_admin_blocksloop loop=$centerbottom_admin_blocks}
+		<tr>
+			<td class="row1"><a href="{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].TITLE_LINK }" title="'._SHOW.'">{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].TITLE }</a></td>
+			<td class="row2" align="center">{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].POSITION }</td>
+			<td class="row1" align="center" >{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].WEIGHTL }</td><td class="row1" align="center">{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].WEIGHTR }</td>
+			<td class="row2" align="center">{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].TYPE }</td>
+			<td class="row1" align="center"><a href="{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].ACTIVE_LINK }"><img src="images/{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].ACTIVE }" alt="{ $CHANGE }" title="{ $CHANGE }" border="0"></a></td>
+			<td class="row2" align="center">{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].WHO_VIEW }</td>
+			{ if isset($multilingual) }
+			   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+			{ /if }
+			
+			
+			<td class="row1" align="center">[
+			{ if $centerbottom_admin_blocks[centerbottom_admin_blocksloop].EDIT_LINK }
+			 <a href="{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].EDIT_LINK }">{ $L_EDIT }</a>
+			{ /if }
+			
+			
+			 { if $centerbottom_admin_blocks[centerbottom_admin_blocksloop].DELETE_LINK }
+				 | <a href="{ $centerbottom_admin_blocks[centerbottom_admin_blocksloop].DELETE_LINK }">{ $L_DELETE }</a>
+			{ /if }
+			]  </td>
+		  </tr>
+	{ /section }
+		{ /if }
+			{ if isset($right_admin_blocks) }
+    	<tr>
+			<td class="row3" colspan="8"><b class="gensmall">Right Side Blocks</b></td>
+		</tr>
+		{section name=right_admin_blocksloop loop=$right_admin_blocks}
+
+			<tr>
+				<td class="row1"><a href="{ $right_admin_blocks[right_admin_blocksloop].TITLE_LINK }" title="'._SHOW.'">{ $right_admin_blocks[right_admin_blocksloop].TITLE }</a></td>
+				<td class="row2" align="center">{ $right_admin_blocks[right_admin_blocksloop].POSITION }</td>
+				<td class="row1" align="center" >{ $right_admin_blocks[right_admin_blocksloop].WEIGHTL }</td><td class="row1" align="center">{ $right_admin_blocks[right_admin_blocksloop].WEIGHTR }</td>
+				<td class="row2" align="center">{ $right_admin_blocks[right_admin_blocksloop].TYPE }</td>
+				<td class="row1" align="center"><a href="{ $right_admin_blocks[right_admin_blocksloop].ACTIVE_LINK }"><img src="images/{ $right_admin_blocks[right_admin_blocksloop].ACTIVE }" alt="{ $CHANGE }" title="{ $CHANGE }" border="0"></a></td>
+				<td class="row2" align="center">{ $right_admin_blocks[right_admin_blocksloop].WHO_VIEW }</td>
+				{ if isset($multilingual) }
+				   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+				{ /if }
+				
+				
+				<td class="row1" align="center">[
+				{ if $right_admin_blocks[right_admin_blocksloop].EDIT_LINK }
+				 <a href="{ $right_admin_blocks[right_admin_blocksloop].EDIT_LINK }">{ $L_EDIT }</a>
+				{ /if }
+				
+				
+				 { if $right_admin_blocks[right_admin_blocksloop].DELETE_LINK }
+					 | <a href="{ $right_admin_blocks[right_admin_blocksloop].DELETE_LINK }">{ $L_DELETE }</a>
+				{ /if }
+				]  </td>
+			  </tr>
+		{ /section }
+	
+	{ /if }
+  		  <tr>
+			<td class="cat" colspan="8">
+				[ <a href="{ $N_BLOCK_FILE }">{ $L_BLOCK_REGULAR }</a> | <a href="{ $N_BLOCK_HTML }">{ $L_BLOCK_HTML }</a> | <a href="{ $N_BLOCK_FEED }">{ $L_BLOCK_FEED }</a> ]
+			</td>
+		  </tr>
+  </tbody>
+</table>

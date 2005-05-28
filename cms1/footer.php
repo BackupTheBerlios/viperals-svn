@@ -19,12 +19,12 @@ if (!defined('VIPERAL'))
 
 global $_CLASS;
 
-$_CLASS['display']->display_footer();
+$_CLASS['core_display']->display_footer();
 
 function footmsg()
 {
 	global $CLASS;
-	$C_LASS['display']->footer();
+	$_CLASS['core_display']->footer();
 }
 
 ?>

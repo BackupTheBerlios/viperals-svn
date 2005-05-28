@@ -15,7 +15,6 @@
 
 class core_error_handler
 {
-	var $title;
 	var $active;
 	var $previous_level;
 	var $previous_logger;
@@ -23,6 +22,7 @@ class core_error_handler
 	var $error;
 	var $report;
 	var $logging;
+	var $error_setting = array('type', 'title', 'redirect');
 	
 	function start($report = ERROR_NONE, $logfile = false)
 	{
@@ -66,13 +66,16 @@ class core_error_handler
 	function handler($errtype, $error, $errfile, $errline)
 	{
 
-		global $_CLASS, $site_file_root, $MAIN_CFG;
+		global $_CLASS, $site_file_root, $_CORE_CONFIG;
 		
-		//dam windows
-		$errfile = ereg_replace("[\]",'/', $errfile);
-		// Remove the root paths, site files, along with document root
-		$errfile = ereg_replace($site_file_root, '', ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $errfile));
-
+		if ($this->report != ERROR_NONE)
+		{
+			//damn windows
+			$errfile = str_replace('\\','/', $errfile);
+			// Remove the root paths, site files, along with document root
+			$errfile = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $errfile));
+		}
+				
 		switch ($errtype)
 		{
 			case E_NOTICE:
@@ -80,6 +83,13 @@ class core_error_handler
 			
 				if (!$this->report)
 				{
+					if ($errtype == E_WARNING)
+					{
+// should we exit on E_WARNING ?
+						//header("HTTP/1.0 500 INTERNAL SERVER ERROR");
+						//script_close();
+						//die('E_WARNING error'); // do something better than that.
+					}
 					return;
 				}
 				
@@ -89,7 +99,7 @@ class core_error_handler
 
 				if ($errtype == 'E_WARNING')
 				{
-					if (empty($_CLASS['user']))
+					if (empty($_CLASS['core_user']))
 					{
 						if ($this->report == ERROR_ONPAGE)
 						{
@@ -106,31 +116,48 @@ class core_error_handler
 					
 					if ($this->logging)
 					{
-						//error_log();
+						//$this->error_log();
 					}
 					
-					script_close();
-					die;
+					//header("HTTP/1.0 500 INTERNAL SERVER ERROR");
+					echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'
+								.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
+// should we exit on E_WARNING ?
+					//script_close();
+					//die;
 				}
+				
+				$this->error_setting = array('type', 'title', 'redirect');
 				
 			break;
 	
 			case E_USER_ERROR:
 			
-				if (!empty($_CLASS['display']) && $_CLASS['display']->displayed['header'])
+				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
+
+				if ($this->error_setting['header'])
+				{
+// Add to a lang file or soemthing then add here
+					header("HTTP/1.0 503 Service Unavailable");
+				}
+				else
+				{
+					header("HTTP/1.0 503 Service Unavailable");
+				}
+				
+				if (!empty($_CLASS['core_display']) && $_CLASS['core_display']->displayed['header'])
 				{
 					OpenTable();
 					echo '<h2 align="center">Error</h2>';
-					echo '<br clear="all" /><table width="85%" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td><br clear="all" />' . $error . '<hr />Please notify the board administrator or webmaster : <a href="mailto:' . $MAIN_CFG['global']['admin_mail'] . '">' . $MAIN_CFG['global']['admin_mail'] . '</a></td></tr></table><br clear="all" /></body></html>';
+					echo '<br clear="all" /><table width="85%" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td><br clear="all" />' . $error . '<hr />Please notify the board administrator or webmaster : <a href="mailto:' . $_CORE_CONFIG['global']['admin_mail'] . '">' . $_CORE_CONFIG['global']['admin_mail'] . '</a></td></tr></table><br clear="all" /></body></html>';
 					CloseTable();
 					
-					$_CLASS['display']->display_footer();
+					$_CLASS['core_display']->display_footer();
 				}
 				
-				$error = (!empty($_CLASS['user']->lang[$error])) ? $_CLASS['user']->lang[$error] : $error;
-				$_CLASS['template']->assign('MESSAGE_TEXT',  $error);
+				$_CLASS['core_template']->assign('MESSAGE_TEXT',  $error);
 						
-				$_CLASS['template']->display('error.html');
+				$_CLASS['core_template']->display('error.html');
 					
 				script_close(false);
 				die;
@@ -139,34 +166,34 @@ class core_error_handler
 	
 			case E_USER_NOTICE:
 
-				global $msg_title, $show_prev_info;
+				global $msg_title;
 				// remove msg_title fix those in Forums
 				
-				$msg_title = (!isset($msg_title)) ? $_CLASS['user']->lang['INFORMATION'] : ((!empty($_CLASS['user']->lang[$msg_title])) ? $_CLASS['user']->lang[$msg_title] : $msg_title);
-				$this->title = ($this->title) ? $this->title : $msg_title;
+				//$msg_title = (!isset($msg_title)) ? $_CLASS['core_user']->lang['INFORMATION'] : ((!empty($_CLASS['core_user']->lang[$msg_title])) ? $_CLASS['core_user']->lang[$msg_title] : $msg_title);
+				$this->error_setting['title'] = (!empty($_CLASS['core_user']->lang[$this->error_setting['title']])) ? $_CLASS['core_user']->lang[$this->error_setting['title']] : $this->error_setting['title'];
 				
-				$error = (!empty($_CLASS['user']->lang[$error])) ? $_CLASS['user']->lang[$error] : $error;
+				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
 				
-				$_CLASS['display']->display_head($msg_title);
-	
+				$_CLASS['core_display']->display_head($this->error_setting['title']);
+
 				if (defined('IN_ADMIN') && !empty($user->data['session_admin']))
 				{
 					// this is phpbb 2.1.2 remove it
-					$show_prev_info = (!isset($show_prev_info)) ? true : (bool) $show_prev_info;
-					adm_page_message($msg_title, $msg_text, false, $show_prev_info);
+					adm_page_message($msg_title, $msg_text, false);
 					adm_page_footer();
 				}
 				else
 				{
-	
-					$_CLASS['template']->assign(array(
-						'MESSAGE_TITLE'	=> $this->title,
+					$_CLASS['core_template']->assign(array(
+						'MESSAGE_TITLE'	=> $this->error_setting['title'],
 						'MESSAGE_TEXT'	=> $error)
 					);
 					
-					$_CLASS['template']->display('message.html');
+					$this->error_setting = array('type', 'title', 'redirect', 'header');
+					
+					$_CLASS['core_template']->display('message.html');
 	
-					$_CLASS['display']->display_footer(false);
+					$_CLASS['core_display']->display_footer(false);
 				}
 	
 			break;
@@ -177,18 +204,16 @@ class core_error_handler
    {
 		if ($this->report == ERROR_ONPAGE)
 		{
-			// fix this up
-			echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
-					
-		} else {
-		
+			echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';		
+		}
+		else
+		{
 			$this->error_array[$type][] = $this->error;
-			
 		}
 		
 		if ($this->logging)
 		{
-			//error_log();
+			//$this->error_log();
 		}
    }
 }

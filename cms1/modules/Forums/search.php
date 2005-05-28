@@ -20,10 +20,10 @@
 require_once($site_file_root.'includes/forums/functions.'.$phpEx);
 
 loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
-$_CLASS['auth']->acl($_CLASS['user']->data);
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
-$_CLASS['user']->add_lang('search');
-$_CLASS['user']->add_img();
+$_CLASS['core_user']->add_lang('search');
+$_CLASS['core_user']->add_img();
 
 // Is user able to search? Has search been disabled?
 if (!$_CLASS['auth']->acl_get('u_search') || !$config['load_search'])
@@ -52,68 +52,68 @@ $sort_days	= request_var('st', 0);
 $sort_key	= request_var('sk', 't');
 $sort_dir	= request_var('sd', 'd');
 
-$_CLASS['template']->assign(array(
-	'L_SEARCH_QUERY'				=> $_CLASS['user']->lang['SEARCH_QUERY'],
-	'L_SEARCH_KEYWORDS'				=> $_CLASS['user']->lang['SEARCH_KEYWORDS'],
-	'L_SEARCH_KEYWORDS_EXPLAIN'		=> $_CLASS['user']->lang['SEARCH_KEYWORDS_EXPLAIN'],
-	'L_SEARCH_ALL_TERMS'			=> $_CLASS['user']->lang['SEARCH_ALL_TERMS'],
-	'L_SEARCH_ANY_TERMS'			=> $_CLASS['user']->lang['SEARCH_ANY_TERMS'],
-	'L_SEARCH_AUTHOR'				=> $_CLASS['user']->lang['SEARCH_AUTHOR'],
-	'L_SEARCH_AUTHOR_EXPLAIN'		=> $_CLASS['user']->lang['SEARCH_AUTHOR_EXPLAIN'],
-	'L_SEARCH_FORUMS'				=> $_CLASS['user']->lang['SEARCH_FORUMS'],
-	'L_SEARCH_FORUMS_EXPLAIN'		=> $_CLASS['user']->lang['SEARCH_FORUMS_EXPLAIN'],
-	'L_SEARCH_OPTIONS'				=> $_CLASS['user']->lang['SEARCH_OPTIONS'],
-	'L_SEARCH_SUBFORUMS'			=> $_CLASS['user']->lang['SEARCH_SUBFORUMS'],
-	'L_SEARCH_WITHIN'				=> $_CLASS['user']->lang['SEARCH_WITHIN'],
-	'L_YES'							=> $_CLASS['user']->lang['YES'],
-	'L_NO'							=> $_CLASS['user']->lang['NO'],
-	'L_SEARCH_TITLE_MSG'			=> $_CLASS['user']->lang['SEARCH_TITLE_MSG'],
-	'L_SEARCH_MSG_ONLY'				=> $_CLASS['user']->lang['SEARCH_MSG_ONLY'],
-	'L_SEARCH_TITLE_ONLY'			=> $_CLASS['user']->lang['SEARCH_TITLE_ONLY'],
-	'L_RESULT_SORT'					=> $_CLASS['user']->lang['RESULT_SORT'],
-	'L_SORT_ASCENDING'				=> $_CLASS['user']->lang['SORT_ASCENDING'],
-	'L_SORT_DESCENDING'				=> $_CLASS['user']->lang['SORT_DESCENDING'],
-	'L_DISPLAY_RESULTS'				=> $_CLASS['user']->lang['DISPLAY_RESULTS'],
-	'L_POSTS'						=> $_CLASS['user']->lang['POSTS'],
-	'L_TOPICS'						=> $_CLASS['user']->lang['TOPICS'],
-	'L_RESULT_DAYS'					=> $_CLASS['user']->lang['RESULT_DAYS'],
-	'L_RETURN_FIRST'				=> $_CLASS['user']->lang['RETURN_FIRST'],
-	'L_POST_CHARACTERS'				=> $_CLASS['user']->lang['POST_CHARACTERS'],
-	'L_RESET'						=> $_CLASS['user']->lang['RESET'],
-	'L_NO_RECENT_SEARCHES'			=> $_CLASS['user']->lang['NO_RECENT_SEARCHES'],
+$_CLASS['core_template']->assign(array(
+	'L_SEARCH_QUERY'				=> $_CLASS['core_user']->lang['SEARCH_QUERY'],
+	'L_SEARCH_KEYWORDS'				=> $_CLASS['core_user']->lang['SEARCH_KEYWORDS'],
+	'L_SEARCH_KEYWORDS_EXPLAIN'		=> $_CLASS['core_user']->lang['SEARCH_KEYWORDS_EXPLAIN'],
+	'L_SEARCH_ALL_TERMS'			=> $_CLASS['core_user']->lang['SEARCH_ALL_TERMS'],
+	'L_SEARCH_ANY_TERMS'			=> $_CLASS['core_user']->lang['SEARCH_ANY_TERMS'],
+	'L_SEARCH_AUTHOR'				=> $_CLASS['core_user']->lang['SEARCH_AUTHOR'],
+	'L_SEARCH_AUTHOR_EXPLAIN'		=> $_CLASS['core_user']->lang['SEARCH_AUTHOR_EXPLAIN'],
+	'L_SEARCH_FORUMS'				=> $_CLASS['core_user']->lang['SEARCH_FORUMS'],
+	'L_SEARCH_FORUMS_EXPLAIN'		=> $_CLASS['core_user']->lang['SEARCH_FORUMS_EXPLAIN'],
+	'L_SEARCH_OPTIONS'				=> $_CLASS['core_user']->lang['SEARCH_OPTIONS'],
+	'L_SEARCH_SUBFORUMS'			=> $_CLASS['core_user']->lang['SEARCH_SUBFORUMS'],
+	'L_SEARCH_WITHIN'				=> $_CLASS['core_user']->lang['SEARCH_WITHIN'],
+	'L_YES'							=> $_CLASS['core_user']->lang['YES'],
+	'L_NO'							=> $_CLASS['core_user']->lang['NO'],
+	'L_SEARCH_TITLE_MSG'			=> $_CLASS['core_user']->lang['SEARCH_TITLE_MSG'],
+	'L_SEARCH_MSG_ONLY'				=> $_CLASS['core_user']->lang['SEARCH_MSG_ONLY'],
+	'L_SEARCH_TITLE_ONLY'			=> $_CLASS['core_user']->lang['SEARCH_TITLE_ONLY'],
+	'L_RESULT_SORT'					=> $_CLASS['core_user']->lang['RESULT_SORT'],
+	'L_SORT_ASCENDING'				=> $_CLASS['core_user']->lang['SORT_ASCENDING'],
+	'L_SORT_DESCENDING'				=> $_CLASS['core_user']->lang['SORT_DESCENDING'],
+	'L_DISPLAY_RESULTS'				=> $_CLASS['core_user']->lang['DISPLAY_RESULTS'],
+	'L_POSTS'						=> $_CLASS['core_user']->lang['POSTS'],
+	'L_TOPICS'						=> $_CLASS['core_user']->lang['TOPICS'],
+	'L_RESULT_DAYS'					=> $_CLASS['core_user']->lang['RESULT_DAYS'],
+	'L_RETURN_FIRST'				=> $_CLASS['core_user']->lang['RETURN_FIRST'],
+	'L_POST_CHARACTERS'				=> $_CLASS['core_user']->lang['POST_CHARACTERS'],
+	'L_RESET'						=> $_CLASS['core_user']->lang['RESET'],
+	'L_NO_RECENT_SEARCHES'			=> $_CLASS['core_user']->lang['NO_RECENT_SEARCHES'],
 		
-	'L_SEARCHED_FOR'				=> $_CLASS['user']->lang['SEARCHED_FOR'],
-	'L_IGNORED_TERMS'				=> $_CLASS['user']->lang['IGNORED_TERMS'],
-	'L_SEARCH_IN_RESULTS'			=> $_CLASS['user']->lang['SEARCH_IN_RESULTS'],
-	'L_SEARCH_TITLE_ONLY'			=> $_CLASS['user']->lang['SEARCH_TITLE_ONLY'],
-	'L_AUTHOR'						=> $_CLASS['user']->lang['AUTHOR'],
-	'L_GO'							=> $_CLASS['user']->lang['GO'],
-	'L_REPLIES'						=> $_CLASS['user']->lang['REPLIES'],
-	'L_VIEWS'						=> $_CLASS['user']->lang['VIEWS'],
-	'L_LAST_POST'					=> $_CLASS['user']->lang['LAST_POST'],
-	'L_SORT_BY'						=> $_CLASS['user']->lang['SORT_BY'],
+	'L_SEARCHED_FOR'				=> $_CLASS['core_user']->lang['SEARCHED_FOR'],
+	'L_IGNORED_TERMS'				=> $_CLASS['core_user']->lang['IGNORED_TERMS'],
+	'L_SEARCH_IN_RESULTS'			=> $_CLASS['core_user']->lang['SEARCH_IN_RESULTS'],
+	'L_SEARCH_TITLE_ONLY'			=> $_CLASS['core_user']->lang['SEARCH_TITLE_ONLY'],
+	'L_AUTHOR'						=> $_CLASS['core_user']->lang['AUTHOR'],
+	'L_GO'							=> $_CLASS['core_user']->lang['GO'],
+	'L_REPLIES'						=> $_CLASS['core_user']->lang['REPLIES'],
+	'L_VIEWS'						=> $_CLASS['core_user']->lang['VIEWS'],
+	'L_LAST_POST'					=> $_CLASS['core_user']->lang['LAST_POST'],
+	'L_SORT_BY'						=> $_CLASS['core_user']->lang['SORT_BY'],
 	
-	'L_MESSAGE'						=> $_CLASS['user']->lang['MESSAGE'],
-	'L_FORUM'						=> $_CLASS['user']->lang['FORUM'],
-	'L_TOPIC'						=> $_CLASS['user']->lang['TOPIC'],
-	'L_POST_SUBJECT'				=> $_CLASS['user']->lang['POST_SUBJECT'],
-	'L_POSTED'						=> $_CLASS['user']->lang['POSTED'],
-	'L_REPLIES'						=> $_CLASS['user']->lang['REPLIES'],
-	'L_VIEWS'						=> $_CLASS['user']->lang['VIEWS'],
-	'L_LAST_POST'					=> $_CLASS['user']->lang['LAST_POST'],
-	'L_SORT_BY'						=> $_CLASS['user']->lang['SORT_BY'],
+	'L_MESSAGE'						=> $_CLASS['core_user']->lang['MESSAGE'],
+	'L_FORUM'						=> $_CLASS['core_user']->lang['FORUM'],
+	'L_TOPIC'						=> $_CLASS['core_user']->lang['TOPIC'],
+	'L_POST_SUBJECT'				=> $_CLASS['core_user']->lang['POST_SUBJECT'],
+	'L_POSTED'						=> $_CLASS['core_user']->lang['POSTED'],
+	'L_REPLIES'						=> $_CLASS['core_user']->lang['REPLIES'],
+	'L_VIEWS'						=> $_CLASS['core_user']->lang['VIEWS'],
+	'L_LAST_POST'					=> $_CLASS['core_user']->lang['LAST_POST'],
+	'L_SORT_BY'						=> $_CLASS['core_user']->lang['SORT_BY'],
 	
-	'L_RESULT_DAYS'					=> $_CLASS['user']->lang['RESULT_DAYS'],
-	'L_RETURN_FIRST'				=> $_CLASS['user']->lang['RETURN_FIRST'],
-	'L_POST_CHARACTERS'				=> $_CLASS['user']->lang['POST_CHARACTERS'],
-	'L_RESET'						=> $_CLASS['user']->lang['RESET'],
-	'L_NO_RECENT_SEARCHES'			=> $_CLASS['user']->lang['NO_RECENT_SEARCHES'],
-	'L_RECENT_SEARCHES'				=> $_CLASS['user']->lang['RECENT_SEARCHES'])
+	'L_RESULT_DAYS'					=> $_CLASS['core_user']->lang['RESULT_DAYS'],
+	'L_RETURN_FIRST'				=> $_CLASS['core_user']->lang['RETURN_FIRST'],
+	'L_POST_CHARACTERS'				=> $_CLASS['core_user']->lang['POST_CHARACTERS'],
+	'L_RESET'						=> $_CLASS['core_user']->lang['RESET'],
+	'L_NO_RECENT_SEARCHES'			=> $_CLASS['core_user']->lang['NO_RECENT_SEARCHES'],
+	'L_RECENT_SEARCHES'				=> $_CLASS['core_user']->lang['RECENT_SEARCHES'])
 );
 
 // Define some vars
-$limit_days		= array(0 => $_CLASS['user']->lang['ALL_RESULTS'], 1 => $_CLASS['user']->lang['1_DAY'], 7 => $_CLASS['user']->lang['7_DAYS'], 14 => $_CLASS['user']->lang['2_WEEKS'], 30 => $_CLASS['user']->lang['1_MONTH'], 90 => $_CLASS['user']->lang['3_MONTHS'], 180 => $_CLASS['user']->lang['6_MONTHS'], 364 => $_CLASS['user']->lang['1_YEAR']);
-$sort_by_text	= array('a' => $_CLASS['user']->lang['SORT_AUTHOR'], 't' => $_CLASS['user']->lang['SORT_TIME'], 'f' => $_CLASS['user']->lang['SORT_FORUM'], 'i' => $_CLASS['user']->lang['SORT_TOPIC_TITLE'], 's' => $_CLASS['user']->lang['SORT_POST_SUBJECT']);
+$limit_days		= array(0 => $_CLASS['core_user']->lang['ALL_RESULTS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
+$sort_by_text	= array('a' => $_CLASS['core_user']->lang['SORT_AUTHOR'], 't' => $_CLASS['core_user']->lang['SORT_TIME'], 'f' => $_CLASS['core_user']->lang['SORT_FORUM'], 'i' => $_CLASS['core_user']->lang['SORT_TOPIC_TITLE'], 's' => $_CLASS['core_user']->lang['SORT_POST_SUBJECT']);
 
 $s_limit_days = $s_sort_key = $s_sort_dir = $u_sort_param = '';
 gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $u_sort_param);
@@ -125,7 +125,8 @@ $current_time	= time();
 if ($config['search_interval'])
 {
 	$sql = 'SELECT MAX(search_time) as last_time
-		FROM ' . SEARCH_TABLE;
+		FROM ' . SEARCH_TABLE."
+			WHERE session_id = '" . $db->sql_escape($user->data['session_id']) . '\'';
 	$result = $db->sql_query($sql);
 
 	if ($row = $db->sql_fetchrow($result))
@@ -146,7 +147,7 @@ if ($search_keywords || $search_author || $search_id)
 	$sql = 'SELECT f.forum_id, f.forum_name, f.parent_id, f.forum_type, f.right_id, f.forum_password, fa.user_id
 		FROM (' . FORUMS_TABLE . ' f 
 		LEFT JOIN ' . FORUMS_ACCESS_TABLE . " fa ON  (fa.forum_id = f.forum_id 
-			AND fa.session_id = '" . $db->sql_escape($_CLASS['user']->data['session_id']) . "')) 
+			AND fa.session_id = '" . $db->sql_escape($_CLASS['core_user']->data['session_id']) . "')) 
 		$sql_where
 		ORDER BY f.left_id";
 	$result = $db->sql_query($sql);
@@ -167,7 +168,7 @@ if ($search_keywords || $search_author || $search_id)
 			}
 		}
 
-		if ($_CLASS['auth']->acl_get('f_read', $row['forum_id']) && (!$row['forum_password'] || $row['user_id'] == $_CLASS['user']->data['user_id']))
+		if ($_CLASS['auth']->acl_get('f_read', $row['forum_id']) && (!$row['forum_password'] || $row['user_id'] == $_CLASS['core_user']->data['user_id']))
 		{
 			$sql_forums[] = $row['forum_id'];
 		}
@@ -185,7 +186,7 @@ if ($search_keywords || $search_author || $search_id)
 
 	if ($search_id == 'egosearch')
 	{
-		$search_author = $_CLASS['user']->data['username'];
+		$search_author = $_CLASS['core_user']->data['username'];
 	}
 
 
@@ -196,7 +197,8 @@ if ($search_keywords || $search_author || $search_id)
 		$sql_where = (strstr($search_author, '*') !== false) ? ' LIKE ' : ' = ';
 		$sql = 'SELECT user_id 
 			FROM ' . USERS_TABLE . "
-			WHERE username $sql_where '" . $db->sql_escape(preg_replace('#\*+#', '%', $search_author)) . "'";
+			WHERE username $sql_where '" . $db->sql_escape(preg_replace('#\*+#', '%', $search_author)) . "'
+				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
 		$result = $db->sql_query($sql);
 
 		if (!$row = $db->sql_fetchrow($result))
@@ -257,7 +259,7 @@ if ($search_keywords || $search_author || $search_id)
 				{
 					$sql = 'SELECT p.post_id 
 						FROM ' . POSTS_TABLE . ' p 
-						WHERE p.post_time > ' . $_CLASS['user']->data['user_lastvisit'] . "
+						WHERE p.post_time > ' . $_CLASS['core_user']->data['user_lastvisit'] . "
 							$sql_forums";
 					$field = 'post_id';
 				}
@@ -265,7 +267,7 @@ if ($search_keywords || $search_author || $search_id)
 				{
 					$sql = 'SELECT t.topic_id
 						FROM ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . ' p 
-						WHERE p.post_time > ' . $_CLASS['user']->data['user_lastvisit'] . " 
+						WHERE p.post_time > ' . $_CLASS['core_user']->data['user_lastvisit'] . " 
 							AND t.topic_id = p.topic_id 
 							$sql_forums 
 						GROUP by p.topic_id";
@@ -291,7 +293,7 @@ if ($search_keywords || $search_author || $search_id)
 				$sql = 'SELECT search_array
 					FROM ' . SEARCH_TABLE . "
 					WHERE search_id = $search_id
-						AND session_id = '" . $db->sql_escape($_CLASS['user']->data['session_id']) . "'";
+						AND session_id = '" . $db->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
 				$result = $db->sql_query($sql);
 
 				if ($row = $db->sql_fetchrow($result))
@@ -327,15 +329,15 @@ if ($search_keywords || $search_author || $search_id)
 		$drop_char_match =   array('-', '^', '$', ';', '#', '&', '(', ')', '<', '>', '`', '\'', '"', '|', ',', '@', '_', '?', '%', '~', '.', '[', ']', '{', '}', ':', '\\', '/', '=', '\'', '!', '*');
 		$drop_char_replace = array(' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '',  '',   ' ', ' ', ' ', ' ', '',  ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '' ,  ' ', ' ', ' ',  ' ', ' ');
 
-		if ($fp = @fopen($_CLASS['user']->lang_path . '/search_stopwords.txt', 'rb'))
+		if ($fp = @fopen($_CLASS['core_user']->lang_path . '/search_stopwords.txt', 'rb'))
 		{
-			$stopwords = explode("\n", str_replace("\r\n", "\n", fread($fp, filesize($_CLASS['user']->lang_path . '/search_stopwords.txt'))));
+			$stopwords = explode("\n", str_replace("\r\n", "\n", fread($fp, filesize($_CLASS['core_user']->lang_path . '/search_stopwords.txt'))));
 		}
 		fclose($fp);
 
-		if ($fp = @fopen($_CLASS['user']->lang_path . '/search_synonyms.txt', 'rb'))
+		if ($fp = @fopen($_CLASS['core_user']->lang_path . '/search_synonyms.txt', 'rb'))
 		{
-			preg_match_all('#^(.*?) (.*?)$#ms', fread($fp, filesize($_CLASS['user']->lang_path . '/search_synonyms.txt')), $match);
+			preg_match_all('#^(.*?) (.*?)$#ms', fread($fp, filesize($_CLASS['core_user']->lang_path . '/search_synonyms.txt')), $match);
 			$replace_synonym = &$match[1];
 			$match_synonym = &$match[2];
 		}
@@ -643,7 +645,7 @@ if ($search_keywords || $search_author || $search_id)
 
 		$sql_ary = array(
 			'search_id'		=> $search_id,
-			'session_id'	=> $_CLASS['user']->data['session_id'],
+			'session_id'	=> $_CLASS['core_user']->data['session_id'],
 			'search_time'	=> $current_time,
 			'search_array'	=> $data
 		);
@@ -670,14 +672,14 @@ if ($search_keywords || $search_author || $search_id)
 	obtain_icons($icons);
 
 	// Output header
-	$l_search_matches = ($total_match_count == 1) ? sprintf($_CLASS['user']->lang['FOUND_SEARCH_MATCH'], $total_match_count) : sprintf($_CLASS['user']->lang['FOUND_SEARCH_MATCHES'], $total_match_count);
+	$l_search_matches = ($total_match_count == 1) ? sprintf($_CLASS['core_user']->lang['FOUND_SEARCH_MATCH'], $total_match_count) : sprintf($_CLASS['core_user']->lang['FOUND_SEARCH_MATCHES'], $total_match_count);
 
 	$hilit = htmlspecialchars(implode('|', str_replace(array('+', '-', '|'), '', $split_words)));
 
 	$split_words = htmlspecialchars(implode(' ', $split_words));
 	$ignored_words = htmlspecialchars(implode(' ', $stopped_words));
 
-	$_CLASS['template']->assign(array(
+	$_CLASS['core_template']->assign(array(
 		'SEARCH_MATCHES'	=> $l_search_matches,
 		'SEARCH_WORDS'		=> $split_words, 
 		'IGNORED_WORDS'		=> ($ignored_words) ? $ignored_words : '', 
@@ -690,9 +692,9 @@ if ($search_keywords || $search_author || $search_id)
 		'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=&amp;search_id='.$search_id),
 		'S_SHOW_TOPICS'			=> ($show_results == 'posts') ? false : true,
 
-		'REPORTED_IMG'			=> $_CLASS['user']->img('icon_reported', 'TOPIC_REPORTED'),
-		'UNAPPROVED_IMG'		=> $_CLASS['user']->img('icon_unapproved', 'TOPIC_UNAPPROVED'),
-		'GOTO_PAGE_IMG'			=> $_CLASS['user']->img('icon_post', 'GOTO_PAGE'),
+		'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', 'TOPIC_REPORTED'),
+		'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', 'TOPIC_UNAPPROVED'),
+		'GOTO_PAGE_IMG'			=> $_CLASS['core_user']->img('icon_post', 'GOTO_PAGE'),
 
 		'U_SEARCH_WORDS'	=> generate_link("Forums&amp;file=&amp;show_results=$show_results&amp;search_keywords=" . urlencode($split_words)))
 	);
@@ -708,7 +710,7 @@ if ($search_keywords || $search_author || $search_id)
 		// Not joining this query to the one below at present ... may do in future
 		$sql = 'SELECT zebra_id, friend, foe
 			FROM ' . ZEBRA_TABLE . ' 
-			WHERE user_id = ' . $_CLASS['user']->data['user_id'];
+			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 		$result = $db->sql_query($sql);
 
 		$zebra = array();
@@ -758,20 +760,21 @@ if ($search_keywords || $search_author || $search_id)
 
 			$tpl_ary = array(
 				'TOPIC_AUTHOR' 		=> topic_topic_author($row),
-				'FIRST_POST_TIME' 	=> $_CLASS['user']->format_date($row['topic_time']),
-				'LAST_POST_TIME'	=> $_CLASS['user']->format_date($row['topic_last_post_time']),
-				'LAST_VIEW_TIME'	=> $_CLASS['user']->format_date($row['topic_last_view_time']),
-				'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['user']->lang['GUEST'],
+				'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
+				'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
+				'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
+				'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
 				'PAGINATION' 		=> topic_generate_pagination($replies, $view_topic_url),
 				'REPLIES' 			=> $replies,
 				'VIEWS' 			=> $row['topic_views'],
 				'TOPIC_TYPE' 		=> $topic_type,
 
-				'LAST_POST_IMG' 	=> $_CLASS['user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
-				'TOPIC_FOLDER_IMG' 	=> $_CLASS['user']->img($folder_img, $folder_alt),
-				'TOPIC_ICON_IMG'	=> (!empty($icons[$row['icon_id']])) ? '<img src="' . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] . '" width="' . $icons[$row['icon_id']]['width'] . '" height="' . $icons[$row['icon_id']]['height'] . '" alt="" title="" />' : '',
-				'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['user']->img('icon_attach', sprintf($_CLASS['user']->lang['TOTAL_ATTACHMENTS'], $row['topic_attachment'])) : '',
-
+				'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
+				'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
+				'TOPIC_ICON_IMG'		=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['img'] : '',
+				'TOPIC_ICON_IMG_WIDTH'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['width'] : '',
+				'TOPIC_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['height'] : '',
+				'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 				'S_TOPIC_TYPE'			=> $row['topic_type'],
 				'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false,
 
@@ -788,10 +791,10 @@ if ($search_keywords || $search_author || $search_id)
 		{
 			if ((isset($zebra['foe']) && in_array($row['poster_id'], $zebra['foe'])) && (!$view || $view != 'show' || $post_id != $row['post_id']))
 			{
-				$_CLASS['template']->assign_vars_array('searchresults', array(
+				$_CLASS['core_template']->assign_vars_array('searchresults', array(
 					'S_IGNORE_POST' => true, 
 
-					'L_IGNORE_POST' => sprintf($_CLASS['user']->lang['POST_BY_FOE'], $row['username'], '<a href="'.generate_link("Forums&amp;file=search&amp;search_id=$search_id&amp;$u_sort_param&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
+					'L_IGNORE_POST' => sprintf($_CLASS['core_user']->lang['POST_BY_FOE'], $row['username'], '<a href="'.generate_link("Forums&amp;file=search&amp;search_id=$search_id&amp;$u_sort_param&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
 				);
 
 				continue;
@@ -815,17 +818,17 @@ if ($search_keywords || $search_author || $search_id)
 			// via php.net's annotated manual
 			$row['post_text'] = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . $hilit . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $row['post_text'] . '<'), 1, -1));
 
-			$row['post_text'] = smilie_text($row['post_text']);
+			$row['post_text'] = smiley_text($row['post_text']);
 
 			$tpl_ary = array(
-				'POSTER_NAME'		=> ($row['poster_id'] == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['user']->lang['GUEST']) : $row['username'], 
+				'POSTER_NAME'		=> ($row['poster_id'] == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST']) : $row['username'], 
 				'POST_SUBJECT'		=> censor_text($row['post_subject']), 
-				'POST_DATE'			=> (!empty($row['post_time'])) ? $_CLASS['user']->format_date($row['post_time']) : '', 
+				'POST_DATE'			=> (!empty($row['post_time'])) ? $_CLASS['core_user']->format_date($row['post_time']) : '', 
 				'MESSAGE' 			=> (!empty($row['post_text'])) ? str_replace("\n", '<br />', $row['post_text']) : ''
 			);
 		}
 
-		$_CLASS['template']->assign_vars_array('searchresults', array_merge($tpl_ary, array(
+		$_CLASS['core_template']->assign_vars_array('searchresults', array_merge($tpl_ary, array(
 			'FORUM_ID' 			=> $forum_id,
 			'TOPIC_ID' 			=> $topic_id,
 			'POST_ID'			=> ($show_results == 'posts') ? $row['post_id'] : false, 
@@ -840,15 +843,15 @@ if ($search_keywords || $search_author || $search_id)
 	}
 	$db->sql_freeresult($result);
 
-	$_CLASS['display']->display_head($_CLASS['user']->lang['SEARCH']);
+	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SEARCH']);
 	
 	page_header();
 	
 	make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 	
-	$_CLASS['template']->display('modules/Forums/search_results.html');
+	$_CLASS['core_template']->display('modules/Forums/search_results.html');
 	 
-	$_CLASS['display']->display_footer();
+	$_CLASS['core_display']->display_footer();
 
 }
 
@@ -858,7 +861,7 @@ $s_forums = '';
 $sql = 'SELECT f.forum_id, f.forum_name, f.parent_id, f.forum_type, f.left_id, f.right_id, f.forum_password, fa.user_id
 	FROM (' . FORUMS_TABLE . ' f 
 	LEFT JOIN ' . FORUMS_ACCESS_TABLE . " fa ON  (fa.forum_id = f.forum_id 
-		AND fa.session_id = '" . $db->sql_escape($_CLASS['user']->data['session_id']) . "')) 
+		AND fa.session_id = '" . $db->sql_escape($_CLASS['core_user']->data['session_id']) . "')) 
 	ORDER BY f.left_id ASC";
 $result = $db->sql_query($sql);
 
@@ -915,7 +918,7 @@ $db->sql_freeresult($result);
 unset($pad_store);
 
 // Number of chars returned
-$s_characters = '<option value="-1">' . $_CLASS['user']->lang['ALL_AVAILABLE'] . '</option>';
+$s_characters = '<option value="-1">' . $_CLASS['core_user']->lang['ALL_AVAILABLE'] . '</option>';
 $s_characters .= '<option value="0">0</option>';
 $s_characters .= '<option value="25">25</option>';
 $s_characters .= '<option value="50">50</option>';
@@ -926,7 +929,7 @@ for($i = 100; $i <= 1000 ; $i += 100)
 	$s_characters .= '<option value="' . $i . '"' . $selected . '>' . $i . '</option>';
 }
 
-$_CLASS['template']->assign(array(
+$_CLASS['core_template']->assign(array(
 	'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=search&amp;mode=results'),
 	'S_CHARACTER_OPTIONS'	=> $s_characters,
 	'S_FORUM_OPTIONS'		=> $s_forums,
@@ -959,9 +962,9 @@ while ($row = $db->sql_fetchrow($result))
 	$stopped_words = htmlspecialchars(implode(' ', unserialize(array_shift($data))));
 	unset($data);
 
-	$_CLASS['template']->assign_vars_array('recentsearch', array(
+	$_CLASS['core_template']->assign_vars_array('recentsearch', array(
 		'KEYWORDS'	=> $split_words,
-		'TIME'		=> $_CLASS['user']->format_date($row['search_time']), 
+		'TIME'		=> $_CLASS['core_user']->format_date($row['search_time']), 
 
 		'U_KEYWORDS'	=> generate_link('Forums&amp;file=search&amp;search_keywords=' . urlencode($split_words)))
 	);
@@ -971,14 +974,14 @@ while ($row = $db->sql_fetchrow($result))
 $db->sql_freeresult($result);
 
 // Output the basic page
-$_CLASS['display']->display_head($_CLASS['user']->lang['SEARCH']);
+$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SEARCH']);
 
 page_header();
 
 make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 
-$_CLASS['template']->display('modules/Forums/search_body.html');
+$_CLASS['core_template']->display('modules/Forums/search_body.html');
  
-$_CLASS['display']->display_footer();
+$_CLASS['core_display']->display_footer();
 	
 ?>

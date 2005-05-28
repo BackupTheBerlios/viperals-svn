@@ -12,19 +12,27 @@
 //**************************************************************//
 
 define('VIPERAL', 'MINILOAD');
-$site_file_root = 'C:/Program Files/Apache Group/Apache2/cms/';
+
+//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
+$site_file_root = 'C:/apachefriends/xampp/cms/';
 
 require($site_file_root.'core.php');
 
-/*if (!is_admin())
+$_CLASS['core_user']	=& new user();
+
+$_CLASS['core_user']->startup();
+$_CLASS['core_user']->start();
+
+if (!$_CLASS['core_user']->is_admin)
 {
 	die('this is admin only :-) need better language :-(');
-}*/
+}
 
-error_reporting(0);
+$_CLASS['core_error_handler']->stop();
+error_reporting(E_ALL);
 
-$_CLASS['debug'] = new debug();
-$_CLASS['debug']->display();
+$_CLASS['core_debug'] = new debug();
+$_CLASS['core_debug']->display();
 	
 class debug
 {
@@ -52,7 +60,7 @@ class debug
 				$this->display_notice();
 		}
 		
-	    $_CLASS['template']->assign(array(
+	    $_CLASS['core_template']->assign(array(
 			'MODE'				=>	$mode,
 			'L_NOTICES'			=>	'NOTICE ERRORS',
 			'L_WARNINGS'		=>	'WARNING ERRORS',
@@ -62,7 +70,7 @@ class debug
 			)
 		);
 	
-		$_CLASS['template']->display('debug.html');
+		$_CLASS['core_template']->display('debug.html');
 		script_close(false);
 	}
 	
@@ -70,7 +78,7 @@ class debug
 	{
 		global $_CLASS;
 		
-		$this->debug_data = $_CLASS['user']->get_data('debug');
+		$this->debug_data = $_CLASS['core_user']->get_data('debug');
 
 		if (!empty($this->debug_data['E_NOTICE']))
 		{
@@ -79,12 +87,14 @@ class debug
 			
 			for ($i=0; $i< $size; $i++)
 			{
-				$_CLASS['template']->assign_vars_array('error_notice', array(
+				$_CLASS['core_template']->assign_vars_array('error_notice', array(
 					'errfile'	=> $this->debug_data['E_NOTICE'][$i]['file'],
 					'errline'	=> $this->debug_data['E_NOTICE'][$i]['line'], 
 					'msg_text' => $this->debug_data['E_NOTICE'][$i]['error']	)
 				);
 			}
+			
+			return;
 		}
 	}
 	
@@ -92,7 +102,7 @@ class debug
 	{
 		global $_CLASS;
 		
-		$this->debug_data = $_CLASS['user']->get_data('debug');
+		$this->debug_data = $_CLASS['core_user']->get_data('debug');
 
 		if (!empty($this->debug_data['E_WARNING']))
 		{
@@ -101,7 +111,7 @@ class debug
 		
 			for ($i=0; $i<$size; $i++)
 			{
-				$_CLASS['template']->assign_vars_array('error_warnings', array(
+				$_CLASS['core_template']->assign_vars_array('error_warnings', array(
 					'errfile'	=> $this->debug_data['E_WARNING'][$i]['file'],
 					'errline'	=> $this->debug_data['E_WARNING'][$i]['line'], 
 					'msg_text' => $this->debug_data['E_WARNING'][$i]['error'])
@@ -114,8 +124,8 @@ class debug
 	{
 		global $_CLASS;
 		
-		$this->querydetails = $_CLASS['user']->get_data('querydetails');
-		$this->querylist = $_CLASS['user']->get_data('querylist');
+		$this->querydetails = $_CLASS['core_user']->get_data('querydetails');
+		$this->querylist = $_CLASS['core_user']->get_data('querylist');
 
 		$tempid = false;
 
@@ -123,17 +133,22 @@ class debug
 		{
 			$value['query'] = preg_replace('/\t(AND|OR)(\W)/', "\$1\$2", htmlspecialchars(preg_replace('/[\s]*[\n\r\t]+[\n\r\s\t]*/', "\n", $value['query'])));
 			
-			$_CLASS['template']->assign_vars_array('query', array('row' => $key, 'query' => $value['query'], 'file' => $value['file'], 'line' => $value['line'], 'affected' => $value['affected'], 'time' => round($value['time'], 4)));
+			$_CLASS['core_template']->assign_vars_array('query', array('row' => $key, 'query' => $value['query'], 'file' => $value['file'], 'line' => $value['line'], 'affected' => $value['affected'], 'time' => round($value['time'], 4)));
 			
 			$first = false;
 			
 			foreach ($this->querydetails[$key] as $value2)
 			{
+				if (!is_array($value2))
+				{
+					continue;
+				}
+				
 				if ($tempid != $key)
 				{
 					foreach (array_keys($value2) as $key2)
 					{
-						$_CLASS['template']->assign_vars_array('header', array('row' => $key, 'value' => (($key2) ? ucwords(str_replace('_', ' ', $key2)) : '&nbsp;')));
+						$_CLASS['core_template']->assign_vars_array('header', array('row' => $key, 'value' => (($key2) ? ucwords(str_replace('_', ' ', $key2)) : '&nbsp;')));
 						
 					}
 					$tempid = $key;
@@ -148,11 +163,11 @@ class debug
 							$first = $key3;
 						}
 						
-						$_CLASS['template']->assign_vars_array('queries', array('row' => $key, 'value' => $value3, 'new' => false));
+						$_CLASS['core_template']->assign_vars_array('queries', array('row' => $key, 'value' => $value3, 'new' => false));
 
 					} else {
 					
-						$_CLASS['template']->assign_vars_array('queries', array('row' => $key, 'value' => $value3, 'new' => true));
+						$_CLASS['core_template']->assign_vars_array('queries', array('row' => $key, 'value' => $value3, 'new' => true));
 					}
 				}
 			}

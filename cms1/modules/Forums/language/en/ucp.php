@@ -1,23 +1,17 @@
 <?php
-// -------------------------------------------------------------
-//
-// $Id: ucp.php,v 1.12 2004/06/06 21:44:49 acydburn Exp $
-//
-// FILENAME  : ucp.php [ English ]
-// STARTED   : Sat Dec 16, 2000
-// COPYRIGHT : © 2001, 2003 phpBB Group
-// WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
-// 
-// -------------------------------------------------------------
+/** 
+*
+* ucp [English]
+*
+* @package phpBB3
+* @version $Id: ucp.php,v 1.28 2005/05/01 13:15:48 acydburn Exp $
+* @copyright (c) 2005 phpBB Group 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*
+*/
 
-// DO NOT CHANGE
-if (empty($lang) || !is_array($lang))
-{
-	$lang = array();
-}
 
-// DEVELOPERS PLEASE NOTE 
+// DEVELOPERS PLEASE NOTE
 //
 // Placeholders can now contain order information, e.g. instead of
 // 'Page %s of %s' you can (and should) write 'Page %1$s of %2$s', this allows
@@ -26,18 +20,19 @@ if (empty($lang) || !is_array($lang))
 // You do not need this where single placeholders are used, e.g. 'Message %d' is fine
 // equally where a string contains only two placeholders which are used to wrap text
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
-$lang += array(
+$this->lang += array(
 	'ACCOUNT_ACTIVE'			=> 'Your account has now been activated. Thank you for registering',
 	'ACCOUNT_ACTIVE_ADMIN'		=> 'The account has now been activated',
 	'ACCOUNT_ADDED'				=> 'Thank you for registering, your account has been created. You may now login with your username and password',
 	'ACCOUNT_COPPA'				=> 'Your account has been created but has to be approved, please check your email for details.',
 	'ACCOUNT_INACTIVE'			=> 'Your account has been created. However, this forum requires account activation, an activation key has been sent to the email address you provided. Please check your email for further information',
 	'ACCOUNT_INACTIVE_ADMIN'	=> 'Your account has been created. However, this forum requires account activation by the administrator. An email has been sent to them and you will be informed when your account has been activated',
+	'ACTIVATION_EMAIL_SENT'		=> 'The activation email has been sent to your email address',
 	'ADD'						=> 'Add',
 	'ADD_BCC'					=> 'Add [Bcc]',
 	'ADD_FOES'					=> 'Add new foes',
 	'ADD_FOES_EXPLAIN'			=> 'You may enter several usernames each on a different line',
-	'ADD_FOLDER'				=> 'Add Folder',
+	'ADD_FOLDER'				=> 'Add folder',
 	'ADD_FRIENDS'				=> 'Add new friends',
 	'ADD_FRIENDS_EXPLAIN'		=> 'You may enter several usernames each on a different line',
 	'ADD_NEW_RULE'				=> 'Add new Rule',
@@ -59,7 +54,7 @@ $lang += array(
 	'BIRTHDAY'					=> 'Birthday',
 	'BIRTHDAY_EXPLAIN'			=> 'Setting a year will list your age when it is your birthday.',
 	'BOARD_DATE_FORMAT'			=> 'My date format',
-	'BOARD_DATE_FORMAT_EXPLAIN'	=> 'The syntax used is identical to the PHP <a href=\"http://www.php.net/date\" target=\"_other\">date()</a> function',
+	'BOARD_DATE_FORMAT_EXPLAIN'	=> 'The syntax used is identical to the PHP <a href="http://www.php.net/date" target="_other">date()</a> function',
 	'BOARD_DST'					=> 'Daylight Saving Time is in effect',
 	'BOARD_LANGUAGE'			=> 'My language',
 	'BOARD_STYLE'				=> 'My board style',
@@ -68,6 +63,10 @@ $lang += array(
 	'BOOKMARKS_DISABLED'		=> 'Bookmarks are disabled on this board',
 	'BOOKMARKS_REMOVED'			=> 'Bookmarks removed successfully',
 
+	'CANNOT_EDIT_MESSAGE_TIME'	=> 'You can no longer edit or delete that message',
+	'CANNOT_MOVE_TO_SAME_FOLDER'=> 'Messages can not be moved to the folder you want to remove.',
+	'CANNOT_RENAME_FOLDER'		=> 'This folder can not be renamed.',
+	'CANNOT_REMOVE_FOLDER'		=> 'This folder can not be removed.',
 	'CHANGE_PASSWORD'			=> 'Change password',
 	'CHANGE_PASSWORD_EXPLAIN'	=> 'Must be between %1$d and %2$d characters.',
 	'CLICK_RETURN_FOLDER'		=> 'Click %1$sHere%2$s to return to your "%3$s" Folder',
@@ -95,7 +94,7 @@ $lang += array(
 	'DEFAULT_BBCODE'			=> 'Enable BBCode by default',
 	'DEFAULT_HTML'				=> 'Enable HTML by default',
 	'DEFAULT_NOTIFY'			=> 'Notify me upon replies by default',
-	'DEFAULT_SMILE'				=> 'Enable smilies by default',
+	'DEFAULT_SMILIES'			=> 'Enable smilies by default',
 	'DEFINED_RULES'				=> 'Defined Rules',
 	'DELETE_ALL'				=> 'Delete all',
 	'DELETE_ATTACHMENT'			=> 'Delete Attachment',
@@ -107,7 +106,9 @@ $lang += array(
 	'DELETE_MARKED_PM'			=> 'Delete Marked Messages',
 	'DELETE_MARKED_PM_CONFIRM'	=> 'Are you sure you want to delete all marked messages?',
 	'DELETE_OLDEST_MESSAGES'	=> 'Delete Oldest Messages',
-	'DELETE_PM'					=> 'Delete PM',
+	'DELETE_MESSAGE'			=> 'Delete Message',
+	'DELETE_MESSAGE_CONFIRM'	=> 'Are you sure you want to delete this private message?',
+	'DELETE_MESSAGES_IN_FOLDER'	=> 'Delete all messages within removed folder',
 	'DELETE_RULE'				=> 'Delete Rule',
 	'DELETE_RULE_CONFIRM'		=> 'Are you sure you want to delete this rule?',
 	'DISABLE_CENSORS'			=> 'Enable Word censoring',
@@ -117,9 +118,11 @@ $lang += array(
 	'DRAFTS_EXPLAIN'			=> 'Here you can view, edit and delete your saved drafts.',
 	'DRAFT_UPDATED'				=> 'Draft successfully updated.',
 
-	'EDIT_DRAFT_EXPLAIN'		=> 'Here you are able to edit your draft.',
+	'EDIT_DRAFT_EXPLAIN'		=> 'Here you are able to edit your draft. Drafts do not contain attachment and poll informations.',
+	'EMAIL_INVALID_EMAIL'		=> 'The email address you entered is invalid.',
 	'EMAIL_REMIND'				=> 'This must be the email address you supplied when registering.',
 	'EMAIL_PM'					=> 'Email PM',
+	'EMAIL_TAKEN_EMAIL'			=> 'The entered email address is already in use',
 	'EMPTY_DRAFT'				=> 'You must enter a message to submit your changes',
 	'EMPTY_DRAFT_TITLE'			=> 'You must enter a draft title',
 	'EXPORT_AS_XML'				=> 'Export as XML',
@@ -144,6 +147,8 @@ $lang += array(
 	'FOLDER_MESSAGE_STATUS'		=> '%1$d from %2$d messages stored',
 	'FOLDER_NAME_EXIST'			=> 'Folder <b>%s</b> already exist',
 	'FOLDER_OPTIONS'			=> 'Folder Options',
+	'FOLDER_RENAMED'			=> 'Folder successfully renamed',
+	'FOLDER_REMOVED'			=> 'Folder successfully removed',
 	'FOLDER_STATUS_MSG'			=> 'Folder is %1$d%% full (%2$d from %3$d messages stored)',
 	'FORWARD_PM'				=> 'Forward PM',
 	'FRIEND_MESSAGE'			=> 'Message from friend',
@@ -158,7 +163,7 @@ $lang += array(
 	'FWD_DATE'					=> 'Date: %s',
 	'FWD_FROM'					=> 'From: %s',
 	'FWD_TO'					=> 'To: %s',
-	
+
 	'HIDE_ONLINE'				=> 'Hide my online status',
 	'HOLD_NEW_MESSAGES'			=> 'Do not accept new messages (New messages will be held back until enough space is available)',
 
@@ -178,36 +183,57 @@ $lang += array(
 	'MARKED_MESSAGE'			=> 'Marked Message',
 	'MAX_FOLDER_REACHED'		=> 'Maximum number of allowed user defined folder reached',
 	'MESSAGE_COLOURS'			=> 'Message Colours',
+	'MESSAGE_DELETED'			=> 'Message successfully deleted',
 	'MESSAGE_HISTORY'			=> 'Message History',
+	'MESSAGE_REMOVED_FROM_OUTBOX'	=> 'This message has been removed by it\'s author before it was delivered',
 	'MESSAGE_REPORTED'			=> 'Click to view reports',
 	'MESSAGE_REPORTED_MESSAGE'	=> 'Reported Message',
 	'MESSAGE_STORED'			=> 'The message has been send successfully',
-	'MINIMUM_KARMA'				=> 'Minimum User Karma',
-	'MINIMUM_KARMA_EXPLAIN'		=> 'Posts by users with Karma less than this will be ignored.',
+	'MESSAGES_DELETED'			=> 'Messages successfully deleted',
+	'MOVE_DELETED_MESSAGES_TO'	=> 'Move messages from removed folder to',
 	'MOVE_DOWN'					=> 'Move down',
+	'MOVE_PM_ERROR'				=> 'An error occurred while moving the messages to the new folder, only %1d from %2d messages were moved.',
 	'MOVE_TO_FOLDER'			=> 'Move to Folder',
 	'MOVE_UP'					=> 'Move up',
 
 	'NEW_EMAIL_ERROR'			=> 'The email addresses you entered do not match.',
+	'NEW_FOLDER_NAME'			=> 'New folder name',
 	'NEW_PASSWORD'				=> 'Password',
 	'NEW_PASSWORD_ERROR'		=> 'The passwords you entered do not match.',
 	'NEW_PASSWORD_EXPLAIN'		=> 'Must be between %1$d and %2$d characters.',
-	'NO_BOOKMARKS'				=> 'No Bookmarks',
-	'NO_IMPORTANT_NEWS'			=> 'No Important News',
 	'NOTIFY_METHOD'				=> 'Notification method',
 	'NOTIFY_METHOD_BOTH'		=> 'Both',
 	'NOTIFY_METHOD_EMAIL'		=> 'Email only',
 	'NOTIFY_METHOD_EXPLAIN'		=> 'Method for sending messages sent via this board.',
 	'NOTIFY_METHOD_IM'			=> 'Jabber only',
 	'NOTIFY_ON_PM'				=> 'Email me on new private messages',
+	'NOT_ADDED_FOES'			=> 'Usernames not added to foes list because of administrator/moderator status.',
 	'NOT_AGREE'					=> 'I do not agree to these terms',
 	'NOT_ENOUGH_SPACE_FOLDER'	=> 'The Destination Folder "%s" seems to be full. The requested action has not been taken.',
 	'NOT_MOVED_MESSAGE'			=> 'You have 1 private message currently on hold because of full folder.',
 	'NOT_MOVED_MESSAGES'		=> 'You have %d private messages currently on hold because of full folder.',
+	'NO_ACTION_MODE'			=> 'No message action specified',
+	'NO_AUTHOR'					=> 'No author defined for this message',
+
+	'NO_AUTH_DELETE_MESSAGE'	=> 'You are not authorized to delete private messages.',
+	'NO_AUTH_EDIT_MESSAGE'		=> 'You are not authorized to edit private messages.',
+	'NO_AUTH_FORWARD_MESSAGE'	=> 'You are not authorized to forward private messages.',
+	'NO_AUTH_GROUP_MESSAGE'		=> 'You are not authorized to send private messages to groups.',
+	'NO_AUTH_READ_MESSAGE'		=> 'You are not authorized to read private messages.',
+	'NO_AUTH_READ_REMOVED_MESSAGE'	=> 'You are not able to read this message because it was removed by the author.',
+	'NO_AUTH_SEND_MESSAGE'		=> 'You are not authorized sending private messages.',
+	'NO_AUTH_SIGNATURE'			=> 'You are not authorized to define a signature',
+
+	'NO_BOOKMARKS'				=> 'You have no bookmarks',
+	'NO_BOOKMARKS_SELECTED'		=> 'You have selected no bookmarks',
+	'NO_EMAIL_USER'				=> 'The email/username information submitted could not be found',
 	'NO_FOES'					=> 'No foes currently defined',
 	'NO_FRIENDS'				=> 'No friends currently defined',
 	'NO_FRIENDS_OFFLINE'		=> 'No friends offline',
 	'NO_FRIENDS_ONLINE'			=> 'No friends online',
+	'NO_IMPORTANT_NEWS'			=> 'No important announcements present',
+	'NO_MESSAGE'				=> 'Private Message could not be found',
+	'NO_NEW_FOLDER_NAME'		=> 'You have to specify a new folder name',
 	'NO_NEWER_PM'				=> 'No newer messages',
 	'NO_OLDER_PM'				=> 'No older messages',
 	'NO_RECIPIENT'				=> 'No recipient defined',
@@ -247,10 +273,14 @@ $lang += array(
 	'REMOVE_SELECTED_BOOKMARKS_CONFIRM' => 'Are you sure you want to delete all selected bookmarks?',
 	'REMOVE_BOOKMARK_MARKED'	=> 'Remove marked bookmarks',
 	'REMOVE_FOLDER'				=> 'Remove folder',
+	'REMOVE_FOLDER_CONFIRM'		=> 'Are you sure you want to remove this folder?',
+	'RENAME'					=> 'Rename',
+	'RENAME_FOLDER'				=> 'Rename folder',
 	'REPLIED_MESSAGE'			=> 'Replied to Message',
 	'REPORT_PM'					=> 'Report PM',
 	'REPORT_PM_NOTIFY'			=> 'Send report notifications as PM',
 	'REPORT_PM_NOTIFY_EXPLAIN'	=> 'If enabled, notifications and status updates to new reports get send as PM instead of emailing them.',
+	'RETURN_FOLDER'				=> 'Click %1$sHere%2$s to return to folder',
 	'RETURN_UCP'				=> 'Click %sHere%s to return to the User Control Panel',
 	'RULE_ADDED'				=> 'Rule successfully added',
 	'RULE_ALREADY_DEFINED'		=> 'This rule was defined previously',
@@ -271,7 +301,8 @@ $lang += array(
 	'SORT_FILENAME'				=> 'Filename',
 	'SORT_POST_TIME'			=> 'Post Time',
 	'SORT_SIZE'					=> 'Filesize',
-	
+
+	'TERMS_OF_USE_CONTENT'		=> 'While the administrators and moderators of this forum will attempt to remove or edit any generally objectionable material as quickly as possible, it is impossible to review every message. Therefore you acknowledge that all posts made to these forums express the views and opinions of the author and not the administrators, moderators or webmaster (except for posts by these people) and hence will not be held liable.<br /><br />You agree not to post any abusive, obscene, vulgar, slanderous, hateful, threatening, sexually-orientated or any other material that may violate any applicable laws. Doing so may lead to you being immediately and permanently banned (and your service provider being informed). The IP address of all posts is recorded to aid in enforcing these conditions. You agree that the webmaster, administrator and moderators of this forum have the right to remove, edit, move or close any topic at any time should they see fit. As a user you agree to any information you	have entered above being stored in a database. While this information will not be disclosed to any third party without your consent the webmaster, administrator and moderators cannot be held responsible for any hacking attempt that may lead to the data being compromised.<br /><br />This forum system uses cookies to store information on your local computer. These cookies do not contain any of the information you have entered above, they serve only to improve your viewing pleasure. The email address is used only for confirming your registration details and password (and for sending new passwords should you forget your current one).<br /><br />By clicking Register below you agree to be bound by these conditions.',
 	'TIMEZONE'					=> 'Timezone',
 	'TO'						=> 'To',
 	'TOO_MANY_RECIPIENTS'		=> 'Too many recipients',
@@ -279,40 +310,45 @@ $lang += array(
 
 	'UCP'						=> 'User Control Panel',
 	'UCP_ADMIN_ACTIVATE'		=> 'Please note that you will need to enter a valid email address before your account is activated. The administrator will review your account and if approved you will an email at the address you specified.',
-	'UCP_AGREEMENT'				=> 'While the administrators and moderators of this forum will attempt to remove or edit any generally objectionable material as quickly as possible, it is impossible to review every message. Therefore you acknowledge that all posts made to these forums express the views and opinions of the author and not the administrators, moderators or webmaster (except for posts by these people) and hence will not be held liable.<br /><br />You agree not to post any abusive, obscene, vulgar, slanderous, hateful, threatening, sexually-orientated or any other material that may violate any applicable laws. Doing so may lead to you being immediately and permanently banned (and your service provider being informed). The IP address of all posts is recorded to aid in enforcing these conditions. You agree that the webmaster, administrator and moderators of this forum have the right to remove, edit, move or close any topic at any time should they see fit. As a user you agree to any information you	have entered above being stored in a database. While this information will not be disclosed to any third party without your consent the webmaster, administrator and moderators cannot be held responsible for any hacking attempt that may lead to the data being compromised.<br /><br />This forum system uses cookies to store information on your local computer. These cookies do not contain any of the information you have entered above, they serve only to improve your viewing pleasure. The email address is used only for confirming your registration details and password (and for sending new passwords should you forget your current one).<br /><br />By clicking Register below you agree to be bound by these conditions.',
 	'UCP_AIM'					=> 'AOL Instant Messenger',
 	'UCP_ATTACHMENTS'			=> 'Attachments',
 	'UCP_COPPA_BEFORE'			=> 'Before %s',
 	'UCP_COPPA_ON_AFTER'		=> 'On or After %s',
 	'UCP_EMAIL_ACTIVATE'		=> 'Please note that you will need to enter a valid email address before your account is activated. You will recieve an email at the address you provide that contains an account activation link.',
-	'UCP_FRIENDS'				=> 'Friends',
-	'UCP_FOES'					=> 'Foes',
-	'UCP_GROUPS'				=> 'groups',
 	'UCP_ICQ'					=> 'ICQ Number',
 	'UCP_JABBER'				=> 'Jabber Address',
+
 	'UCP_MAIN'					=> 'Overview',
 	'UCP_MAIN_BOOKMARKS'		=> 'Bookmarks',
 	'UCP_MAIN_DRAFTS'			=> 'Saved drafts',
 	'UCP_MAIN_FRONT'			=> 'Front page',
 	'UCP_MAIN_SUBSCRIBED'		=> 'Subscribed',
+
 	'UCP_MSNM'					=> 'MSN Messenger',
 	'UCP_NO_ATTACHMENTS'		=> 'You have posted no files',
+
 	'UCP_PREFS'					=> 'Preferences',
 	'UCP_PREFS_PERSONAL'		=> 'Personal Settings',
 	'UCP_PREFS_POST'			=> 'Posting Messages',
 	'UCP_PREFS_VIEW'			=> 'Viewing Posts',
+	
 	'UCP_PM'					=> 'Private Messages',
 	'UCP_PM_COMPOSE'			=> 'Compose Message',
 	'UCP_PM_DRAFTS'				=> 'PM Drafts',
 	'UCP_PM_OPTIONS'			=> 'Options',
+	'UCP_PM_POPUP'				=> 'Private Messages',
 	'UCP_PM_UNREAD'				=> 'Unread Messages',
 	'UCP_PM_VIEW_MESSAGES'		=> 'View Messages',
+
 	'UCP_PROFILE'				=> 'Profile',
 	'UCP_PROFILE_AVATAR'		=> 'Your avatar',
 	'UCP_PROFILE_PROFILE_INFO'	=> 'Your Profile',
 	'UCP_PROFILE_REG_DETAILS'	=> 'Registration details',
 	'UCP_PROFILE_SIGNATURE'		=> 'Your signature',
-	'UCP_PROFILE_REG_WELCOME'	=> 'Before you may continue browsing the board you are required to change your password.',
+
+	'UCP_REGISTER_DISABLE'		=> 'Creating a new account is currently not possible.',
+	'UCP_REMIND'				=> 'Send password',
+	'UCP_RESEND'				=> 'Send activation email',
 	'UCP_WATCHED'				=> 'Watched items',
 	'UCP_WELCOME'				=> 'Welcome to the User Control Panel. From here you can monitor, view and update your profile, preferences, subscribed forums and topics. You can also send messages to other users (if permitted). Please ensure you read any announcements before continuing.',
 	'UCP_YIM'					=> 'Yahoo Messenger',
@@ -329,6 +365,7 @@ $lang += array(
 	'USERNAME_ALPHA_SPACERS_EXPLAIN'=> 'Username must be between %1$d and %2$d chars long and use alphanumeric, space or -+_[] characters.',
 	'USERNAME_CHARS_ANY_EXPLAIN'=> 'Length must be between %1$d and %2$d characters.',
 	'USERNAME_TAKEN_USERNAME'	=> 'The username you entered is already in use, please select an alternative.',
+	'USER_NOT_FOUND'			=> 'The usernames you specified could not be found.',
 
 	'VIEW_AVATARS'				=> 'Display Avatars',
 	'VIEW_EDIT'					=> 'View/Edit',
@@ -347,6 +384,9 @@ $lang += array(
 	'VIEW_TOPICS_DAYS'			=> 'Display topics from previous days',
 	'VIEW_TOPICS_DIR'			=> 'Display topic order direction',
 	'VIEW_TOPICS_KEY'			=> 'Display topics ordering by',
+	'VIEW_POSTS_DAYS'			=> 'Display posts from previous days',
+	'VIEW_POSTS_DIR'			=> 'Display post order direction',
+	'VIEW_POSTS_KEY'			=> 'Display posts ordering by',
 
 	'WATCHED_FORUMS'			=> 'Watched Forums',
 	'WATCHED_TOPICS'			=> 'Watched Topics',
@@ -391,24 +431,25 @@ $lang += array(
 		'TO_ME'			=> 'Me'
 	),
 
-	'UCP_GROUPS_MEMBERSHIP'	=> 'Memberships', 
-	'UCP_GROUPS_MANAGE'		=> 'Manage groups', 
-	'GROUPS_EXPLAIN'		=> 'Usergroups enable board admins to better administer users. By default you will be placed in a specific group, this is your default group. This group defines how you may appear to other users, for example your username colouration, avatar, rank, etc. Depending on whether the administrator allows it you may be allowed to change your default group. You may also be placed in or allowed to join other groups. Some groups may give you extra rights to view content or increase your capabilities in other areas.', 
-	'GROUP_LEADER'		=> 'Leaderships', 
-	'GROUP_MEMBER'		=> 'Memberships', 
-	'GROUP_PENDING'		=> 'Pending memberships', 
-	'GROUP_NONMEMBER'	=> 'Non-memberships', 
-	'GROUP_DETAILS'		=> 'Group details', 
+
+	'UCP_GROUPS_MEMBERSHIP'	=> 'Memberships',
+	'UCP_GROUPS_MANAGE'		=> 'Manage groups',
+	'GROUPS_EXPLAIN'		=> 'Usergroups enable board admins to better administer users. By default you will be placed in a specific group, this is your default group. This group defines how you may appear to other users, for example your username colouration, avatar, rank, etc. Depending on whether the administrator allows it you may be allowed to change your default group. You may also be placed in or allowed to join other groups. Some groups may give you extra rights to view content or increase your capabilities in other areas.',
+	'GROUP_LEADER'		=> 'Leaderships',
+	'GROUP_MEMBER'		=> 'Memberships',
+	'GROUP_PENDING'		=> 'Pending memberships',
+	'GROUP_NONMEMBER'	=> 'Non-memberships',
+	'GROUP_DETAILS'		=> 'Group details',
 
 	'NO_LEADER'		=> 'No group leaderships',
-	'NO_MEMBER'		=> 'No group memberships', 
-	'NO_PENDING'	=> 'No pending memberships', 
-	'NO_NONMEMBER'	=> 'No non-member groups', 
+	'NO_MEMBER'		=> 'No group memberships',
+	'NO_PENDING'	=> 'No pending memberships',
+	'NO_NONMEMBER'	=> 'No non-member groups',
 
-	'QUIT_ALL'		=> 'Quit all', 
-	'QUIT_MARKED'	=> 'Quit marked', 
-	'JOIN_ALL'		=> 'Join all', 
-	'JOIN_MARKED'	=> 'Join marked', 
+	'QUIT_ALL'		=> 'Quit all',
+	'QUIT_MARKED'	=> 'Quit marked',
+	'JOIN_ALL'		=> 'Join all',
+	'JOIN_MARKED'	=> 'Join marked',
 );
 
 ?>

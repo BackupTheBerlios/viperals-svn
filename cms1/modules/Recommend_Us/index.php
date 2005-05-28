@@ -17,26 +17,26 @@ if (!defined('VIPERAL'))
     die();
 }
 
-$_CLASS['user']->add_lang();
+$_CLASS['core_user']->add_lang();
 
-$_CLASS['display']->display_head($_CLASS['user']->lang['RECOMEND_US']);
+$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['RECOMEND_US']);
 
 function recommend($sender_name, $sender_email, $receiver_name='', $receiver_email='', $message='', $error = false)
 {
-	global $_CLASS, $Module;
+	global $_CLASS, $_CORE_MODULE;
   
-	$_CLASS['template']->assign(array( 
-		'L_YOURNAME' 			=> $_CLASS['user']->lang['YOURNAME'],
-		'L_YOUREMAIL'	 		=> $_CLASS['user']->lang['YOUREMAIL'],
-		'L_FRIENDNAME' 			=> $_CLASS['user']->lang['FRIENDNAME'],
-		'L_FRIENDEMAIL'	 		=> $_CLASS['user']->lang['FRIENDEMAIL'],
-		'L_MESSAGE' 			=> $_CLASS['user']->lang['MESSAGE'],
-		'L_PREVIEW' 			=> $_CLASS['user']->lang['PREVIEW'],
-		'L_SUBMIT' 				=> $_CLASS['user']->lang['SUBMIT'],
-		'IP'					=> $_CLASS['user']->ip,
+	$_CLASS['core_template']->assign(array( 
+		'L_YOURNAME' 			=> $_CLASS['core_user']->lang['YOURNAME'],
+		'L_YOUREMAIL'	 		=> $_CLASS['core_user']->lang['YOUREMAIL'],
+		'L_FRIENDNAME' 			=> $_CLASS['core_user']->lang['FRIENDNAME'],
+		'L_FRIENDEMAIL'	 		=> $_CLASS['core_user']->lang['FRIENDEMAIL'],
+		'L_MESSAGE' 			=> $_CLASS['core_user']->lang['MESSAGE'],
+		'L_PREVIEW' 			=> $_CLASS['core_user']->lang['PREVIEW'],
+		'L_SUBMIT' 				=> $_CLASS['core_user']->lang['SUBMIT'],
+		'IP'					=> $_CLASS['core_user']->ip,
 		'ERROR' 				=> $error,
 		'MESSAGE' 				=> $message,
-		'ACTION' 				=> getlink($Module['name']),
+		'ACTION' 				=> getlink($_CORE_MODULE['name']),
 		'RECEIVER_EMAIL' 		=> $receiver_email,
 		'RECEIVER_NAME' 		=> $receiver_name,
 		'SENDER_EMAIL' 			=> $sender_email,
@@ -44,44 +44,44 @@ function recommend($sender_name, $sender_email, $receiver_name='', $receiver_ema
 		)
 	);
 		
-	$_CLASS['template']->display('modules/Recommend_Us/index.html');
+	$_CLASS['core_template']->display('modules/Recommend_Us/index.html');
 	
-	$_CLASS['display']->display_footer();
+	$_CLASS['core_display']->display_footer();
 
 }
 
 function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_email, $message, $preview)
 {
-	global $_CLASS, $MAIN_CFG;
+	global $_CLASS, $_CORE_CONFIG;
 	
 	$mail_message = '<center>Hi '.$receiver_name.' <br /><br /> '.$sender_name.' has recommended you look at this site.'
-				.'<br /><br /><a href="'.$MAIN_CFG['global']['siteurl'].'">'.$MAIN_CFG['global']['sitename'].' - '.$MAIN_CFG['global']['siteurl'].'</a>';
+				.'<br /><br /><a href="'.$_CORE_CONFIG['global']['siteurl'].'">'.$_CORE_CONFIG['global']['sitename'].' - '.$_CORE_CONFIG['global']['siteurl'].'</a>';
 	
 	if ($message)
 	{
 		$message .= '<br /><br /><b>There following message was attached by sender</b><br />'.$message;
 	}
 	
-	$mail_message .= '<br /><br /><br /><center>Message Sent from IP '. $_CLASS['user']->ip . '<br />Please report spammer at '. $MAIN_CFG['global']['siteurl'] .'</center>';
+	$mail_message .= '<br /><br /><br /><center>Message Sent from IP '. $_CLASS['core_user']->ip . '<br />Please report spammer at '. $_CORE_CONFIG['global']['siteurl'] .'</center>';
 
 
 	if ($preview)
 	{
-		$_CLASS['template']->assign('PREVIEW', $mail_message);
+		$_CLASS['core_template']->assign('PREVIEW', $mail_message);
 		return;
 	}
 	
-	$subject = $_CLASS['user']->lang['RECOMMENDATION'] . $sender_name;
+	$subject = $_CLASS['core_user']->lang['RECOMMENDATION'] . $sender_name;
 
 	OpenTable();
 
 	if (send_mail($mailer_message, $mail_message, true, $subject, $receiver_email, $receiver_name, $sender_email, $sender_name))
 	{
-		trigger_error($_CLASS['user']->lang['MESSAGE_SENT']);
+		trigger_error($_CLASS['core_user']->lang['MESSAGE_SENT']);
 		
 	} else {
 	
-		$message = $_CLASS['user']->lang['MESSAGE_PROBLEM'];
+		$message = $_CLASS['core_user']->lang['MESSAGE_PROBLEM'];
 			
 		if (is_admin())
 		{
@@ -93,7 +93,7 @@ function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_e
 	
 	CloseTable();
 	
-	$_CLASS['display']->display_footer();
+	$_CLASS['core_display']->display_footer();
   
 }
 
@@ -112,12 +112,12 @@ if (isset($_POST['recommend']) || isset($_POST['preview']))
 		
 		if (!$value)
 		{
-				$error .= $_CLASS['user']->lang['ERROR_'.$field].'<br />';
+				$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
 				unset($field, $value, $lang);
         
         } elseif (($field == 'EMAIL' || $field == 'FEMAIL') && !check_email($value)) {
         
-			$error .= $_CLASS['user']->lang['BAD_EMAIL'].'<br />';
+			$error .= $_CLASS['core_user']->lang['BAD_EMAIL'].'<br />';
 		}
 	}
 	
@@ -135,8 +135,8 @@ if (isset($_POST['recommend']) || isset($_POST['preview']))
 
 	if (is_user())
 	{
-		$sender_name = $_CLASS['user']->data['username'];
-		$sender_email = $_CLASS['user']->data['user_email'];
+		$sender_name = $_CLASS['core_user']->data['username'];
+		$sender_email = $_CLASS['core_user']->data['user_email'];
 	} else {
 		$sender_email = $sender_name = '';
 	}

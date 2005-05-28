@@ -31,15 +31,15 @@ class auth
 	{
 		global $_CLASS;
 
-		if (!($this->acl_options = $_CLASS['cache']->get('acl_options')))
+		if (!($this->acl_options = $_CLASS['core_cache']->get('acl_options')))
 		{
 			$sql = 'SELECT auth_option, is_global, is_local
 				FROM ' . ACL_OPTIONS_TABLE . '
 				ORDER BY auth_option_id';
-			$result = $_CLASS['db']->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
 			$global = $local = 0;
-			while ($row = $_CLASS['db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				if (!empty($row['is_global']))
 				{
@@ -50,13 +50,13 @@ class auth
 					$this->acl_options['local'][$row['auth_option']] = $local++;
 				}
 			}
-			$_CLASS['db']->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
-			$_CLASS['cache']->put('acl_options', $this->acl_options);
+			$_CLASS['core_cache']->put('acl_options', $this->acl_options);
 			$this->acl_clear_prefetch();
 			$this->acl_cache($userdata);
 		}
-		else if (!$userdata['user_permissions'])
+		else if (!trim($userdata['user_permissions']))
 		{
 			$this->acl_cache($userdata);
 		}
@@ -200,7 +200,7 @@ class auth
 			}
 		}
 
-		$hold_str = $userdata['user_permissions'];
+		$hold_str = '';
 		if (is_array($hold_ary))
 		{
 			ksort($hold_ary);
@@ -245,9 +245,9 @@ class auth
 			$userdata['user_permissions'] = rtrim($hold_str);
 
 			$sql = 'UPDATE ' . USERS_TABLE . "
-				SET user_permissions = '" . $_CLASS['db']->sql_escape($userdata['user_permissions']) . "'
+				SET user_permissions = '" . $_CLASS['core_db']->sql_escape($userdata['user_permissions']) . "'
 				WHERE user_id = " . $userdata['user_id'];
-			$_CLASS['db']->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 		unset($hold_ary);
 
@@ -260,7 +260,7 @@ class auth
 
 		$sql_user = ($user_id) ? ((!is_array($user_id)) ? "user_id = $user_id" : 'user_id IN (' . implode(', ', $user_id) . ')') : '';
 		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
-		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
+		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
 
 		$hold_ary = array();
 		$sql = 'SELECT ao.auth_option, a.user_id, a.forum_id, a.auth_setting
@@ -270,13 +270,13 @@ class auth
 				$sql_forum
 				$sql_opts
 			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['db']->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $_CLASS['db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
 		}
-		$_CLASS['db']->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$sql = 'SELECT ug.user_id, ao.auth_option, a.forum_id, a.auth_setting
 			FROM ' . USER_GROUP_TABLE . ' ug, ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_GROUPS_TABLE . ' a
@@ -286,16 +286,16 @@ class auth
 				$sql_forum
 				$sql_opts
 			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['db']->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $_CLASS['db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			if (!isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) || (isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) && $hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] != ACL_NO))
 			{
 				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
 			}
 		}
-		$_CLASS['db']->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		return $hold_ary;
 	}
@@ -310,40 +310,38 @@ class auth
 		$sql = 'UPDATE ' . USERS_TABLE . "
 			SET user_permissions = ''
 			$where_sql";
-		$_CLASS['db']->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		return;
 	}
-
-	// Authentication plug-ins is largely down to Sergey Kanareykin, our thanks to him.
-	function login($username, $password, $autologin = false, $viewonline = 1, $admin = 0)
+	
+	function acl_group_raw_data($group_id = false, $opts = false, $forum_id = false)
 	{
-		global $config, $_CLASS, $phpEx, $site_file_root;
+		global $db;
 
-		$method = trim($config['auth_method']);
+		$sql_group = ($group_id) ? ((!is_array($group_id)) ? "group_id = $group_id" : 'group_id IN (' . implode(', ', $group_id) . ')') : '';
+		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
+		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$db->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
 
-		if (file_exists($site_file_root.'includes/auth/auth_' . $method . '.' . $phpEx))
+		$hold_ary = array();
+
+		// Grab group settings ... ACL_NO overrides ACL_YES so act appropriatley
+		$sql = 'SELECT a.group_id, ao.auth_option, a.forum_id, a.auth_setting
+			FROM ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_GROUPS_TABLE . ' a
+			WHERE ao.auth_option_id = a.auth_option_id
+				' . (($sql_group) ? 'AND a.' . $sql_group : '') . "
+				$sql_forum
+				$sql_opts
+			ORDER BY a.forum_id, ao.auth_option";
+		$result = $db->sql_query($sql);
+
+		while ($row = $db->sql_fetchrow($result))
 		{
-			include_once($site_file_root.'includes/auth/auth_' . $method . '.' . $phpEx);
-
-			$method = 'login_' . $method;
-			if (function_exists($method))
-			{
-				$login = $method($username, $password);
-
-				// If login returned anything other than an array there was an error
-				if (!is_array($login))
-				{
-					return $login;
-				}
-
-				$autologin = (!empty($autologin)) ? md5($password) : '';
-
-				return $_CLASS['user']->create($login['user_id'], $autologin, true, $viewonline, $admin);
-			}
+			$hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
 		}
+		$db->sql_freeresult($result);
 
-		trigger_error('Authentication method not found', E_USER_ERROR);
+		return $hold_ary;
 	}
 }
 ?>

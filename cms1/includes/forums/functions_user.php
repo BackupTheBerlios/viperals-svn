@@ -109,7 +109,7 @@ function user_update_name($old_name, $new_name)
 
 function user_delete($mode, $user_id)
 {
-	global $config, $db, $user;
+	global $config, $db, $_CLASS;
 
 	$db->sql_transaction();
 
@@ -198,7 +198,8 @@ function user_delete($mode, $user_id)
 	if ($config['newest_user_id'] == $user_id)
 	{
 		$sql = 'SELECT user_id, username 
-			FROM ' . USERS_TABLE . ' 
+			FROM ' . USERS_TABLE . '
+			WHERE user_type IN (' . USER_NORMAL . ', ' . USER_FOUNDER . ')
 			ORDER BY user_id DESC
 			LIMIT 1';
 		$result = $db->sql_query($sql);
@@ -261,10 +262,21 @@ function user_active_flip($user_id, $user_type, $user_actkey = false, $username 
 			AND group_id = " . $group_id_ary[$group_name];
 	$db->sql_query($sql);
 
-	$sql_update = ($group_id == $group_id_ary[$group_name]) ? ", group_id = $new_group_id" : '';
-	$sql_update .= ($user_actkey) ? ", user_actkey = '$user_actkey'" : '';
-	$sql = 'UPDATE ' . USERS_TABLE . ' 
-		SET user_type = ' . (($user_type == USER_NORMAL) ? USER_INACTIVE : USER_NORMAL) . "$sql_update 
+	$sql_ary = array(
+		'user_type'		=> ($user_type == USER_NORMAL) ? USER_INACTIVE : USER_NORMAL
+	);
+
+	if ($group_id == $group_id_ary[$group_name])
+	{
+		$sql_ary['group_id'] = $new_group_id;
+	}
+
+	if ($user_actkey !== false)
+	{
+		$sql_ary['user_actkey'] = $user_actkey;
+	}
+
+	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
 		WHERE user_id = $user_id";
 	$db->sql_query($sql);
 
@@ -492,10 +504,11 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 			switch (SQL_LAYER)
 			{
 				case 'mysql':
-				case 'mysql4':
 					$sql .= (($sql != '') ? ', ' : '') . "($ban_entry, $current_time, $ban_end, $ban_exclude, '$ban_reason')";
 					break;
-
+					
+				case 'mysql4':
+				case 'mysqli':
 				case 'mssql':
 				case 'sqlite':
 					$sql .= (($sql != '') ? ' UNION ALL ' : '') . " SELECT $ban_entry, $current_time, $ban_end, $ban_exclude, '$ban_reason'";
@@ -762,14 +775,14 @@ function validate_match($string, $optional = false, $match)
 // Used for registering, changing names, and posting anonymously with a username
 function validate_username($username)
 {
-	global $MAIN_CFG, $db, $_CLASS;
+	global $_CORE_CONFIG, $db, $_CLASS;
 
-	if (strtolower($_CLASS['user']->data['username']) == strtolower($username))
+	if (strtolower($_CLASS['core_user']->data['username']) == strtolower($username))
 	{
 		return false;
 	}
 
-	if (!preg_match('#^' . str_replace('\\\\', '\\', $MAIN_CFG['user']['allow_name_chars']) . '$#i', $username))
+	if (!preg_match('#^' . str_replace('\\\\', '\\', $_CORE_CONFIG['user']['allow_name_chars']) . '$#i', $username))
 	{
 		return 'INVALID_CHARS';
 	}
@@ -833,9 +846,9 @@ function validate_username($username)
 // Check to see if email address is banned or already present in the DB
 function validate_email($email)
 {
-	global $MAIN_CFG, $db, $_CLASS;
+	global $_CORE_CONFIG, $db, $_CLASS;
 
-	if (strtolower($_CLASS['user']->data['user_email']) == strtolower($email))
+	if (strtolower($_CLASS['core_user']->data['user_email']) == strtolower($email))
 	{
 		return false;
 	}
@@ -858,7 +871,7 @@ function validate_email($email)
 	}
 	$db->sql_freeresult($result);
 
-	if (!$MAIN_CFG['user']['allow_emailreuse'])
+	if (!$_CORE_CONFIG['user']['allow_emailreuse'])
 	{
 		$sql = 'SELECT user_email_hash
 			FROM ' . USERS_TABLE . "
@@ -881,7 +894,7 @@ function validate_email($email)
 
 function avatar_delete($id)
 {
-	global $config, $MAIN_CFG;
+	global $config, $_CORE_CONFIG;
 
 	if (file_exists($config['avatar_path'] . '/' . $id))
 	{
@@ -895,168 +908,80 @@ function avatar_remote($data, &$error)
 {
 	global $config, $db, $_CLASS;
 
-	if (!preg_match('#^(http[s]*?)|(ftp)://#i', $data['remotelink']))
+	if (!preg_match('#^(http|https|ftp)://#i', $data['remotelink']))
 	{
 		$data['remotelink'] = 'http://' . $data['remotelink'];
 	}
 
-	if (!preg_match('#^(http[s]?)|(ftp)://(.*?\.)*?[a-z0-9\-]+?\.[a-z]{2,4}:?([0-9]*?).*?\.(gif|jpg|jpeg|png)$#i', $data['remotelink']))
+	if (!preg_match('#^(http|https|ftp)://(.*?\.)*?[a-z0-9\-]+?\.[a-z]{2,4}:?([0-9]*?).*?\.(gif|jpg|jpeg|png)$#i', $data['remotelink']))
 	{
-		$error[] = $_CLASS['user']->lang['AVATAR_URL_INVALID'];
+		$error[] = $_CLASS['core_user']->lang['AVATAR_URL_INVALID'];
 		return false;
 	}
 
-	if ((!($data['width'] || $data['height']) || $data['remotelink'] != $_CLASS['user']->data['user_avatar']) && ($config['avatar_max_width'] || $config['avatar_max_height']))
+	if ((!($data['width'] || $data['height']) || $data['remotelink'] != $_CLASS['core_user']->data['user_avatar']) && ($config['avatar_max_width'] || $config['avatar_max_height']))
 	{
 		list($width, $height) = @getimagesize($data['remotelink']);
 
 		if (!$width || !$height)
 		{
-			$error[] = $_CLASS['user']->lang['AVATAR_NO_SIZE'];
+			$error[] = $_CLASS['core_user']->lang['AVATAR_NO_SIZE'];
 			return false;
 		}
 		else if ($width > $config['avatar_max_width'] || $height > $config['avatar_max_height'])
 		{
-			$error[] = sprintf($_CLASS['user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_max_width'], $config['avatar_max_height']);
+			$error[] = sprintf($_CLASS['core_user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_max_width'], $config['avatar_max_height']);
 			return false;
 		}
 	}
 	else if ($data['width'] > $config['avatar_max_width'] || $data['height'] > $config['avatar_max_height'])
 	{
-		$error[] = sprintf($_CLASS['user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_max_width'], $config['avatar_max_height']);
+		$error[] = sprintf($_CLASS['core_user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_max_width'], $config['avatar_max_height']);
 		return false;
 	}
-	echo $data['remotelink'];
+
 	return array(AVATAR_REMOTE, $data['remotelink'], $width, $height);
 }
 
 function avatar_upload($data, &$error)
 {
-	global $config, $db, $_CLASS, $MAIN_CFG;
+	global $site_file_root, $config, $db, $_CLASS;
 
-	if (!empty($_FILES['uploadfile']['tmp_name']))
+	// Init upload class
+	include_once($site_file_root.'includes/forums/functions_upload.php');
+	
+	$upload = new fileupload('AVATAR_', array('jpg', 'jpeg', 'gif', 'png'), $config['avatar_filesize'], $config['avatar_min_width'], $config['avatar_min_height'], $config['avatar_max_width'], $config['avatar_max_height']);
+							
+	if (!empty($_FILES['uploadfile']['name']))
 	{
-		$filename = $_FILES['uploadfile']['tmp_name'];
-		$filesize = $_FILES['uploadfile']['size'];
-		$realname = $_FILES['uploadfile']['name'];
-
-		if (file_exists($filename) && preg_match('#^(.*?)\.(jpg|jpeg|gif|png)$#i', $realname, $match))
-		{
-			$realname = $match[1];
-			$filetype = $match[2];
-			$php_move = 'move_uploaded_file';
-		}
-		else
-		{
-			$error[] = $_CLASS['user']->lang['AVATAR_NOT_UPLOADED'];
-			return false;
-		}
+		$file = $upload->form_upload('uploadfile');
 	}
-	else if (preg_match('#^(http://).*?\.(jpg|jpeg|gif|png)$#i', $data['uploadurl'], $match))
+	else
 	{
-		if (empty($match[2]))
-		{
-			$error[] = $_CLASS['user']->lang['AVATAR_URL_INVALID'];
-			return false;
-		}
-
-		$url = parse_url($data['uploadurl']);
-
-		$host = $url['host'];
-		$path = dirname($url['path']);
-		$port = (!empty($url['port'])) ? $url['port'] : 80;
-		$filetype = array_pop(explode('.', $url['path']));
-		$realname = basename($url['path'], '.' . $filetype);
-		$filename = $url['path'];
-		$filesize = 0;
-
-		if (!($fsock = @fsockopen($host, $port, $errno, $errstr)))
-		{
-			$error[] = $_CLASS['user']->lang['AVATAR_NOT_UPLOADED'];
-			return false;
-		}
-
-		fputs($fsock, 'GET /' . $filename . " HTTP/1.1\r\n");
-		fputs($fsock, "HOST: " . $host . "\r\n");
-		fputs($fsock, "Connection: close\r\n\r\n");
-
-		$avatar_data = '';
-		while (!feof($fsock))
-		{
-			$avatar_data .= fread($fsock, $config['avatar_filesize']);
-		}
-		@fclose($fsock);
-		$avatar_data = array_pop(explode("\r\n\r\n", $avatar_data));
-
-		if (empty($avatar_data))
-		{
-			$error[] = $_CLASS['user']->lang['AVATAR_NOT_UPLOADED'];
-			return false;
-		}
-		unset($url_ary);
-
-		$tmp_path = (!@ini_get('safe_mode')) ? false : 'cache';
-		$filename = tempnam($tmp_path, uniqid(rand()) . '-');
-
-		if (!($fp = @fopen($filename, 'wb')))
-		{
-			$error[] = $_CLASS['user']->lang['AVATAR_NOT_UPLOADED'];
-			return false;
-		}
-		$filesize = fwrite($fp, $avatar_data);
-		fclose($fp);
-		unset($avatar_data);
-
-		if (!$filesize)
-		{
-			unlink($filename);
-			$error[] = $_CLASS['user']->lang['AVATAR_NOT_UPLOADED'];
-			return false;
-		}
-
-		$php_move = 'copy';
+		$file = $upload->remote_upload($data['uploadurl']);
 	}
 
-	list($width, $height) = getimagesize($filename);
+	$file->clean_filename('real', $_CLASS['core_user']->data['user_id'] . '_');
+	$file->move_file($config['avatar_path']);
 
-	if ($width > $config['avatar_max_width'] || $height > $config['avatar_max_height'] || $width < $config['avatar_min_width'] || $height < $config['avatar_min_height'] || !$width || !$height)
+	if (sizeof($file->error))
 	{
-		return sprintf($_CLASS['user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_min_width'], $config['avatar_min_height'], $config['avatar_max_width'], $config['avatar_max_height']);
+		$file->remove();
+		$error = array_merge($error, $file->error);
 	}
-
-	// Replace any chars which may cause us problems with _
-	$bad_chars = array(' ', '/', ':', '*', '?', '"', '<', '>', '|');
-
-	$realfilename = $data['user_id'] . '_' . str_replace($bad_chars, '_', $realname) . '.' . $filetype;
-
-	if(!$php_move($filename, $config['avatar_path'] . '/' . $realfilename))
-	{
-		@unlink($filename);
-		$error[] = $_CLASS['user']->lang['AVATAR_NOT_UPLOADED'];
-		return false;
-	}
-	@unlink($filename);
-
-	$filesize = @filesize($config['avatar_path'] . "/$realfilename");
-	if (!$filesize || $filesize > $config['avatar_filesize'])
-	{
-		@unlink($config['avatar_path'] . "/$realfilename");
-		$error[] = sprintf($_CLASS['user']->lang['AVATAR_WRONG_FILESIZE'], $config['avatar_filesize']);
-		return false;
-	}
-
-	return array(AVATAR_UPLOAD, $realfilename, $width, $height);
+	
+	return array(AVATAR_UPLOAD, $file->get('realname'), $file->get('width'), $file->get('height'));
 }
 
 function avatar_gallery($category, &$error)
 {
-	global $config, $_CLASS, $MAIN_CFG;
+	global $config, $_CLASS, $_CORE_CONFIG;
 
 	$path = $config['avatar_gallery_path'];
 	
 	if (!file_exists($path) || !is_dir($path))
 	{
-		return array($_CLASS['user']->lang['NONE'] => array());
+		return array($_CLASS['core_user']->lang['NONE'] => array());
 	}
 	
 	// To be replaced with SQL ... before M3 completion
@@ -1092,7 +1017,7 @@ function avatar_gallery($category, &$error)
 	
 	if (!sizeof($data))
 	{
-		return array($_CLASS['user']->lang['NONE'] => array());
+		return array($_CLASS['core_user']->lang['NONE'] => array());
 	}
 	
 	@ksort($data);
@@ -1115,17 +1040,17 @@ function group_create($group_id, $type, $name, $desc)
 	// Check data
 	if (!strlen($name) || strlen($name) > 40)
 	{
-		$error[] = (!strlen($name)) ? $_CLASS['user']->lang['GROUP_ERR_USERNAME'] : $_CLASS['user']->lang['GROUP_ERR_USER_LONG'];
+		$error[] = (!strlen($name)) ? $_CLASS['core_user']->lang['GROUP_ERR_USERNAME'] : $_CLASS['core_user']->lang['GROUP_ERR_USER_LONG'];
 	}
 
 	if (strlen($desc) > 255)
 	{
-		$error[] = $_CLASS['user']->lang['GROUP_ERR_DESC_LONG'];
+		$error[] = $_CLASS['core_user']->lang['GROUP_ERR_DESC_LONG'];
 	}
 
 	if (!in_array($type, array(GROUP_OPEN, GROUP_CLOSED, GROUP_HIDDEN, GROUP_SPECIAL, GROUP_FREE)))
 	{
-		$error[] = $_CLASS['user']->lang['GROUP_ERR_TYPE'];
+		$error[] = $_CLASS['core_user']->lang['GROUP_ERR_TYPE'];
 	}
 
 	if (!sizeof($error))
@@ -1149,7 +1074,20 @@ function group_create($group_id, $type, $name, $desc)
 			}
 			$i++;
 		}
+		
+		$group_only_ary = array('group_receive_pm' => 'int', 'group_message_limit' => 'int');
 
+		foreach ($group_only_ary as $attribute => $type)
+		{
+			if (func_num_args() > $i && ($value = func_get_arg($i)) !== false)
+			{
+				settype($value, $type);
+
+				$sql_ary[$attribute] = $value;
+			}
+			$i++;
+		}
+		
 		$sql = ($group_id) ? 'UPDATE ' . GROUPS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "	WHERE group_id = $group_id" : 'INSERT INTO ' . GROUPS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary);
 		$db->sql_query($sql);
 
@@ -1297,14 +1235,14 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 		switch (SQL_LAYER)
 		{
 			case 'mysql':
-			case 'mysql4':
 				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . " (user_id, group_id, group_leader) 
 					VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', "(\\1, $group_id, $leader)",  $add_id_ary));
 				$db->sql_query($sql);
 				break;
-
+			
+			case 'mysql4':
+			case 'mysqli':
 			case 'mssql':
-			case 'mssql-odbc':
 			case 'sqlite':
 				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . " (user_id, group_id, group_leader) 
 					" . implode(' UNION ALL ', preg_replace('#^([0-9]+)$#', "(\\1, $group_id, $leader)",  $add_id_ary));
@@ -1347,7 +1285,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 	if ($default)
 	{
 		$attribute_ary = array('group_colour' => 'string', 'group_rank' => 'int', 'group_avatar' => 'string', 'group_avatar_type' => 'int', 'group_avatar_width' => 'int', 'group_avatar_height' => 'int');
-
+	
 		// Were group attributes passed to the function? If not we need to obtain them
 		if (func_num_args() > 6)
 		{

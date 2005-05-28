@@ -32,55 +32,55 @@ function mcp_topic_view($id, $mode, $action, $url)
 	global $phpEx, $config, $site_file_root;
 	global $_CLASS, $db;
 
-	$_CLASS['template']->assign(array(
-		'L_SPLIT_TOPIC'				=> $_CLASS['user']->lang['SPLIT_TOPIC'],
-		'L_SPLIT_TOPIC_EXPLAIN'		=> $_CLASS['user']->lang['SPLIT_TOPIC_EXPLAIN'],
-		'L_SPLIT_SUBJECT'			=> $_CLASS['user']->lang['SPLIT_SUBJECT'],
-		'L_SPLIT_FORUM'				=> $_CLASS['user']->lang['SPLIT_FORUM'],
-		'L_TOPIC_ICON'				=> $_CLASS['user']->lang['TOPIC_ICON'],
-		'L_NONE'					=> $_CLASS['user']->lang['NONE'],
-		'L_MERGE_TOPIC'				=> $_CLASS['user']->lang['MERGE_TOPIC'],
-		'L_MERGE_TOPIC_EXPLAIN'		=> $_CLASS['user']->lang['MERGE_TOPIC_EXPLAIN'],
-		'L_MERGE_TOPIC_ID'			=> $_CLASS['user']->lang['MERGE_TOPIC_ID'],
-		'L_SELECT_TOPIC'			=> $_CLASS['user']->lang['SELECT_TOPIC'],
-		'L_DISPLAY_OPTIONS'			=> $_CLASS['user']->lang['DISPLAY_OPTIONS'],
-		'L_POSTS_PER_PAGE'			=> $_CLASS['user']->lang['POSTS_PER_PAGE'],
-		'L_POSTS_PER_PAGE_EXPLAIN'	=> $_CLASS['user']->lang['POSTS_PER_PAGE_EXPLAIN'],
-		'L_DISPLAY_POSTS'			=> $_CLASS['user']->lang['DISPLAY_POSTS'],
-		'L_SORT_BY'					=> $_CLASS['user']->lang['SORT_BY'],
-		'L_GO'						=> $_CLASS['user']->lang['GO'],			
-		'L_AUTHOR'					=> $_CLASS['user']->lang['AUTHOR'],
-		'L_MESSAGE'					=> $_CLASS['user']->lang['MESSAGE'],
-		'L_SELECT'					=> $_CLASS['user']->lang['SELECT'],
-		'L_POST_SUBJECT'			=> $_CLASS['user']->lang['POST_SUBJECT'],
-		'L_POST_DETAILS'			=> $_CLASS['user']->lang['POST_DETAILS'],
-		'L_POST_UNAPPROVED'			=> $_CLASS['user']->lang['POST_UNAPPROVED'],
-		'L_POST_REPORTED'			=> $_CLASS['user']->lang['POST_REPORTED'],
-		'L_POSTED'					=> $_CLASS['user']->lang['POSTED'],
-		'L_SELECT_ACTION'			=> $_CLASS['user']->lang['SELECT_ACTION'],
-		'L_APPROVE_POSTS'			=> $_CLASS['user']->lang['APPROVE_POSTS'],
-		'L_LOCK_POST_POSTS'			=> $_CLASS['user']->lang['LOCK_POST_POSTS'],
-		'L_LOCK_POST_EXPLAIN'		=> $_CLASS['user']->lang['LOCK_POST_EXPLAIN'],
-		'L_UNLOCK_POST_POSTS'		=> $_CLASS['user']->lang['UNLOCK_POST_POSTS'],
-		'L_MERGE_POSTS'				=> $_CLASS['user']->lang['MERGE_POSTS'],
-		'L_SPLIT_POSTS'				=> $_CLASS['user']->lang['SPLIT_POSTS'],
-		'L_SPLIT_AFTER'				=> $_CLASS['user']->lang['SPLIT_AFTER'],
-		'L_SUBMIT'					=> $_CLASS['user']->lang['SUBMIT'],
-		'L_MARK_ALL'				=> $_CLASS['user']->lang['MARK_ALL'],
-		'L_UNMARK_ALL'				=> $_CLASS['user']->lang['UNMARK_ALL'],
-		'L_JUMP_TO'					=> $_CLASS['user']->lang['JUMP_TO'],
-		'L_GO'						=> $_CLASS['user']->lang['GO'],
-		'L_DELETE_POSTS'			=> $_CLASS['user']->lang['DELETE_POSTS'])
+	$_CLASS['core_template']->assign(array(
+		'L_SPLIT_TOPIC'				=> $_CLASS['core_user']->lang['SPLIT_TOPIC'],
+		'L_SPLIT_TOPIC_EXPLAIN'		=> $_CLASS['core_user']->lang['SPLIT_TOPIC_EXPLAIN'],
+		'L_SPLIT_SUBJECT'			=> $_CLASS['core_user']->lang['SPLIT_SUBJECT'],
+		'L_SPLIT_FORUM'				=> $_CLASS['core_user']->lang['SPLIT_FORUM'],
+		'L_TOPIC_ICON'				=> $_CLASS['core_user']->lang['TOPIC_ICON'],
+		'L_NONE'					=> $_CLASS['core_user']->lang['NONE'],
+		'L_MERGE_TOPIC'				=> $_CLASS['core_user']->lang['MERGE_TOPIC'],
+		'L_MERGE_TOPIC_EXPLAIN'		=> $_CLASS['core_user']->lang['MERGE_TOPIC_EXPLAIN'],
+		'L_MERGE_TOPIC_ID'			=> $_CLASS['core_user']->lang['MERGE_TOPIC_ID'],
+		'L_SELECT_TOPIC'			=> $_CLASS['core_user']->lang['SELECT_TOPIC'],
+		'L_DISPLAY_OPTIONS'			=> $_CLASS['core_user']->lang['DISPLAY_OPTIONS'],
+		'L_POSTS_PER_PAGE'			=> $_CLASS['core_user']->lang['POSTS_PER_PAGE'],
+		'L_POSTS_PER_PAGE_EXPLAIN'	=> $_CLASS['core_user']->lang['POSTS_PER_PAGE_EXPLAIN'],
+		'L_DISPLAY_POSTS'			=> $_CLASS['core_user']->lang['DISPLAY_POSTS'],
+		'L_SORT_BY'					=> $_CLASS['core_user']->lang['SORT_BY'],
+		'L_GO'						=> $_CLASS['core_user']->lang['GO'],			
+		'L_AUTHOR'					=> $_CLASS['core_user']->lang['AUTHOR'],
+		'L_MESSAGE'					=> $_CLASS['core_user']->lang['MESSAGE'],
+		'L_SELECT'					=> $_CLASS['core_user']->lang['SELECT'],
+		'L_POST_SUBJECT'			=> $_CLASS['core_user']->lang['POST_SUBJECT'],
+		'L_POST_DETAILS'			=> $_CLASS['core_user']->lang['POST_DETAILS'],
+		'L_POST_UNAPPROVED'			=> $_CLASS['core_user']->lang['POST_UNAPPROVED'],
+		'L_POST_REPORTED'			=> $_CLASS['core_user']->lang['POST_REPORTED'],
+		'L_POSTED'					=> $_CLASS['core_user']->lang['POSTED'],
+		'L_SELECT_ACTION'			=> $_CLASS['core_user']->lang['SELECT_ACTION'],
+		'L_APPROVE_POSTS'			=> $_CLASS['core_user']->lang['APPROVE_POSTS'],
+		'L_LOCK_POST_POSTS'			=> $_CLASS['core_user']->lang['LOCK_POST_POSTS'],
+		'L_LOCK_POST_EXPLAIN'		=> $_CLASS['core_user']->lang['LOCK_POST_EXPLAIN'],
+		'L_UNLOCK_POST_POSTS'		=> $_CLASS['core_user']->lang['UNLOCK_POST_POSTS'],
+		'L_MERGE_POSTS'				=> $_CLASS['core_user']->lang['MERGE_POSTS'],
+		'L_SPLIT_POSTS'				=> $_CLASS['core_user']->lang['SPLIT_POSTS'],
+		'L_SPLIT_AFTER'				=> $_CLASS['core_user']->lang['SPLIT_AFTER'],
+		'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
+		'L_MARK_ALL'				=> $_CLASS['core_user']->lang['MARK_ALL'],
+		'L_UNMARK_ALL'				=> $_CLASS['core_user']->lang['UNMARK_ALL'],
+		'L_JUMP_TO'					=> $_CLASS['core_user']->lang['JUMP_TO'],
+		'L_GO'						=> $_CLASS['core_user']->lang['GO'],
+		'L_DELETE_POSTS'			=> $_CLASS['core_user']->lang['DELETE_POSTS'])
 	);
 	
-	$_CLASS['user']->add_lang('viewtopic');
+	$_CLASS['core_user']->add_lang('viewtopic');
 
 	$topic_id = request_var('t', 0);
 	$topic_info = get_topic_data(array($topic_id));
 
 	if (!sizeof($topic_info))
 	{
-		trigger_error($_CLASS['user']->lang['TOPIC_NOT_EXIST']);
+		trigger_error($_CLASS['core_user']->lang['TOPIC_NOT_EXIST']);
 	}
 
 	$topic_info = $topic_info[$topic_id];
@@ -91,8 +91,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 	$start = request_var('start', 0);
 	$to_topic_id = request_var('to_topic_id', 0);
 	$to_forum_id = request_var('to_forum_id', 0);
-
-	$post_id_list = get_array('post_id_list', 0);
+	$post_id_list = request_var('post_id_list', array(0));
 
 	// Split Topic?
 	if ($action == 'split_all' || $action == 'split_beyond')
@@ -154,7 +153,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 	foreach ($rowset as $i => $row)
 	{
 		$has_unapproved_posts = false;
-		$poster = ($row['poster_id'] != ANONYMOUS) ? $row['username'] : ((!$row['post_username']) ? $_CLASS['user']->lang['GUEST'] : $row['post_username']);
+		$poster = ($row['poster_id'] != ANONYMOUS) ? $row['username'] : ((!$row['post_username']) ? $_CLASS['core_user']->lang['GUEST'] : $row['post_username']);
 		$poster = ($row['user_colour']) ? '<span style="color:#' . $row['user_colour'] . '">' . $poster . '</span>' : $poster;
 
 		$message = $row['post_text'];
@@ -172,7 +171,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 			$bbcode->bbcode_second_pass($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
 		}
 
-		$message = smilie_text($message);
+		$message = smiley_text($message);
 		$message = str_replace("\n", '<br />', $message);
 
 		$checked = ($post_id_list && in_array(intval($row['post_id']), $post_id_list)) ? 'checked="checked" ' : '';
@@ -183,15 +182,15 @@ function mcp_topic_view($id, $mode, $action, $url)
 			$has_unapproved_posts = true;
 		}
 
-		$_CLASS['template']->assign_vars_array('postrow', array(
+		$_CLASS['core_template']->assign_vars_array('postrow', array(
 			'POSTER_NAME'	=> $poster,
-			'POST_DATE'		=> $_CLASS['user']->format_date($row['post_time']),
+			'POST_DATE'		=> $_CLASS['core_user']->format_date($row['post_time']),
 			'POST_SUBJECT'	=> $post_subject,
 			'MESSAGE'		=> $message,
 			'POST_ID'		=> $row['post_id'],
 
-			'POST_ICON_IMG' => ($row['post_time'] > $_CLASS['user']->data['user_lastvisit'] && $_CLASS['user']->data['user_id'] != ANONYMOUS) ? $_CLASS['user']->img('icon_post_new', $_CLASS['user']->lang['NEW_POST']) : $_CLASS['user']->img('icon_post', $_CLASS['user']->lang['POST']),
-
+			'MINI_POST_IMG' => ($row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $_CLASS['core_user']->data['is_registered']) ? $_CLASS['core_user']->img('icon_post_new', $_CLASS['core_user']->lang['NEW_POST']) : $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
+			
 			'S_CHECKBOX'		=> $s_checkbox,
 			'S_POST_REPORTED'	=> ($row['post_reported']) ? true : false,
 			'S_POST_UNAPPROVED'	=> ($row['post_approved']) ? false : true,
@@ -233,19 +232,19 @@ function mcp_topic_view($id, $mode, $action, $url)
 		}
 	}
 
-	$_CLASS['template']->assign(array(
+	$_CLASS['core_template']->assign(array(
 		'TOPIC_TITLE'		=> $topic_info['topic_title'],
 		'U_VIEWTOPIC'		=> getlink('Forums&amp;file=viewtopic&amp;f=' . $topic_info['forum_id'] . '&amp;t=' . $topic_info['topic_id']),
 
 		'TO_TOPIC_ID'		=> $to_topic_id,
-		'TO_TOPIC_INFO'		=> ($to_topic_id) ? sprintf($_CLASS['user']->lang['YOU_SELECTED_TOPIC'], $to_topic_id, '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_topic_info['forum_id'] . '&amp;t=' . $to_topic_id) . '" target="_new">' . $to_topic_info['topic_title'] . '</a>') : '',
+		'TO_TOPIC_INFO'		=> ($to_topic_id) ? sprintf($_CLASS['core_user']->lang['YOU_SELECTED_TOPIC'], $to_topic_id, '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_topic_info['forum_id'] . '&amp;t=' . $to_topic_id) . '" target="_new">' . $to_topic_info['topic_title'] . '</a>') : '',
 
 		'SPLIT_SUBJECT'		=> $subject,
 		'POSTS_PER_PAGE'	=> $posts_per_page,
 		'MODE'				=> $mode,
 
-		'REPORTED_IMG'		=> $_CLASS['user']->img('icon_reported', 'POST_REPORTED', false, true),
-		'UNAPPROVED_IMG'	=> $_CLASS['user']->img('icon_unapproved', 'POST_UNAPPROVED', false, true),
+		'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED', false, true),
+		'UNAPPROVED_IMG'	=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED', false, true),
 
 		'S_MCP_ACTION'		=> getlink("$url&amp;mode=$mode&amp;action=$action&amp;start=$start", false, false),
 		'S_FORUM_SELECT'	=> '<select name="to_forum_id">' . (($to_forum_id) ? make_forum_select($to_forum_id) : make_forum_select($topic_info['forum_id'])) . '</select>',
@@ -259,8 +258,8 @@ function mcp_topic_view($id, $mode, $action, $url)
 		'S_SHOW_TOPIC_ICONS'=> $s_topic_icons,
 		'S_TOPIC_ICON'		=> $icon_id,
 
-		'RETURN_TOPIC'		=> sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f={$topic_info['forum_id']}&amp;t={$topic_info['topic_id']}&amp;start=$start.").'">', '</a>'),
-		'RETURN_FORUM'		=> sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink("Forums&amp;file=viewforum&amp;f={$topic_info['forum_id']}&amp;start=$start").'">', '</a>'),
+		'RETURN_TOPIC'		=> sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f={$topic_info['forum_id']}&amp;t={$topic_info['topic_id']}&amp;start=$start.").'">', '</a>'),
+		'RETURN_FORUM'		=> sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink("Forums&amp;file=viewforum&amp;f={$topic_info['forum_id']}&amp;start=$start").'">', '</a>'),
 
 		'PAGE_NUMBER'		=> on_page($total, $posts_per_page, $start),
 		'PAGINATION'		=> (!$posts_per_page) ? '' : generate_pagination('Forums&amp;file=mcp&amp;t=' . $topic_info['topic_id'] . "&amp;mode=$mode&amp;action=$action&amp;to_topic_id=$to_topic_id&amp;posts_per_page=$posts_per_page&amp;st=$sort_days&amp;sk=$sort_key&amp;sd=$sort_dir", $total, $posts_per_page, $start),
@@ -272,10 +271,10 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 {
 	global $db, $_CLASS ;
 
-	$post_id_list	= get_array('post_id_list', 0);
+	$post_id_list   = request_var('post_id_list', array(0));
 	$start			= request_var('start', 0);
 		
-	if (!$post_id_list)
+	if (!sizeof($post_id_list))
 	{
 		trigger_error('NO_POST_SELECTED');
 	}
@@ -290,7 +289,7 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 
 	if (!sizeof($post_info))
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NO_POST_SELECTED']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_POST_SELECTED']);
 		return;
 	}
 
@@ -300,13 +299,13 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 	// Make some tests
 	if (!$subject)
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['EMPTY_SUBJECT']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['EMPTY_SUBJECT']);
 		return;
 	}
 
 	if ($to_forum_id <= 0)
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NO_DESTINATION_FORUM']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_DESTINATION_FORUM']);
 		return;
 	}
 
@@ -314,7 +313,7 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 
 	if (!sizeof($forum_info))
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NOT_MODERATOR']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NOT_MODERATOR']);
 		return;
 	}
 
@@ -322,11 +321,11 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 
 	if ($forum_info['forum_type'] != FORUM_POST)
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['FORUM_NOT_POSTABLE']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['FORUM_NOT_POSTABLE']);
 		return;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'post_id_list'	=> $post_id_list,
@@ -393,7 +392,7 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 
 		if (!sizeof($post_id_list))
 		{
-			trigger_error($_CLASS['user']->lang['NO_POST_SELECTED']);
+			trigger_error($_CLASS['core_user']->lang['NO_POST_SELECTED']);
 		}
 
 		$icon_id = request_var('icon', 0);
@@ -411,10 +410,16 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 		$to_topic_id = $db->sql_nextid();
 		move_posts($post_id_list, $to_topic_id);
 
+		// Change topic title of first post
+		$sql = 'UPDATE ' . POSTS_TABLE . " 
+			SET post_subject = '" . $db->sql_escape($subject) . "'
+			WHERE post_id = {$post_id_list[0]}";
+		$db->sql_query($sql);
+		
 		$success_msg = 'TOPIC_SPLIT_SUCCESS';
 
 		// Link back to both topics
-		$return_link = sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $post_info['forum_id'] . '&amp;t=' . $post_info['topic_id']) . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_NEW_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
+		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $post_info['forum_id'] . '&amp;t=' . $post_info['topic_id']) . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
 	}
 	else
 	{
@@ -434,8 +439,8 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . $return_link);
+		$_CLASS['core_display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }
 
@@ -446,7 +451,7 @@ function merge_posts($topic_id, $to_topic_id)
 
 	if (!$to_topic_id)
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NO_FINAL_TOPIC_SELECTED']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_FINAL_TOPIC_SELECTED']);
 		return;
 	}
 
@@ -454,18 +459,18 @@ function merge_posts($topic_id, $to_topic_id)
 
 	if (!sizeof($topic_data))
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NO_FINAL_TOPIC_SELECTED']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_FINAL_TOPIC_SELECTED']);
 		return;
 	}
 
 	$topic_data = $topic_data[$to_topic_id];
 
-	$post_id_list	= get_array('post_id_list', 0);
+	$post_id_list	= request_var('post_id_list', array(0));
 	$start			= request_var('start', 0);
 		
-	if (!$post_id_list)
+	if (!sizeof($post_id_list))
 	{
-		$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NO_POST_SELECTED']);
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_POST_SELECTED']);
 		return;
 	}
 	
@@ -474,7 +479,7 @@ function merge_posts($topic_id, $to_topic_id)
 		return;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'post_id_list'	=> $post_id_list,
@@ -503,11 +508,11 @@ function merge_posts($topic_id, $to_topic_id)
 
 		if (sizeof($topic_data))
 		{
-			$return_link .= sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $forum_id . '&amp;t=' . $topic_id) . '">', '</a>');
+			$return_link .= sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $forum_id . '&amp;t=' . $topic_id) . '">', '</a>');
 		}
 
 		// Link to the new topic
-		$return_link .= (($return_link) ? '<br /><br />' : '') . sprintf($_CLASS['user']->lang['RETURN_NEW_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
+		$return_link .= (($return_link) ? '<br /><br />' : '') . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
 	}
 	else
 	{
@@ -527,8 +532,8 @@ function merge_posts($topic_id, $to_topic_id)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . $return_link);
+		$_CLASS['core_display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }
 

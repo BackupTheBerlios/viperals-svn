@@ -26,6 +26,7 @@ $this->lang += array(
 	'ACTIVE_IN_FORUM'		=> 'Most active forum',
 	'ACTIVE_IN_TOPIC'		=> 'Most active topic',
 	'ADD_FRIEND'			=> 'Add friend',
+	'ADD_FOE'				=> 'Add foe',
 	'AFTER'					=> 'After',
 	'AIM'					=> 'AIM',
 

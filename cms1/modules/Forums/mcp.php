@@ -34,7 +34,7 @@ require_once($site_file_root.'includes/forums/functions.'.$phpEx);
 require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
 loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
-$_CLASS['auth']->acl($_CLASS['user']->data);
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 // ---------
 // FUNCTIONS
@@ -52,64 +52,24 @@ class module
 	{
 		global $_CLASS, $config;
 		
-		$_CLASS['template']->assign(array(
-			'L_OPTIONS'				=> $_CLASS['user']->lang['OPTIONS'],
-			'L_MESSAGE'				=> $_CLASS['user']->lang['MESSAGE'],
-			'L_YES'					=> $_CLASS['user']->lang['YES'],
-			'L_NO'					=> $_CLASS['user']->lang['NO'],
-			'L_RESET'				=> $_CLASS['user']->lang['RESET'],
+		$_CLASS['core_template']->assign(array(
+			'L_OPTIONS'				=> $_CLASS['core_user']->lang['OPTIONS'],
+			'L_MESSAGE'				=> $_CLASS['core_user']->lang['MESSAGE'],
+			'L_YES'					=> $_CLASS['core_user']->lang['YES'],
+			'L_NO'					=> $_CLASS['core_user']->lang['NO'],
+			'L_RESET'				=> $_CLASS['core_user']->lang['RESET'],
 			)
 		);
 		
-		if ($post_id)
-		{
-			// We determine the topic and forum id here, to make sure the moderator really has moderative rights on this post
-			$sql = 'SELECT topic_id, forum_id
-				FROM ' . POSTS_TABLE . "
-				WHERE post_id = $post_id";
-			$result = $_CLASS['db']->sql_query($sql);
-			$row = $_CLASS['db']->sql_fetchrow($result);
-			$_CLASS['db']->sql_freeresult($result);
-
-			$topic_id = (int) $row['topic_id'];
-			$forum_id = (int) $row['forum_id'];
-		}
-
-		if ($topic_id && !$forum_id)
-		{
-			$sql = 'SELECT forum_id
-				FROM ' . TOPICS_TABLE . "
-				WHERE topic_id = $topic_id";
-			$result = $_CLASS['db']->sql_query($sql);
-			$row = $_CLASS['db']->sql_fetchrow($result);
-			$_CLASS['db']->sql_freeresult($result);
-
-			$forum_id = (int) $row['forum_id'];
-		}
-
-		// If we do not have a forum id and the user is not a super moderator (global options are set to false, even if the user is able to moderator at least one forum
-		if (!$forum_id && !$_CLASS['auth']->acl_get('m_'))
-		{
-			$forum_list = get_forum_list('m_');
-
-			if (!sizeof($forum_list))
-			{
-				trigger_error('MODULE_NOT_EXIST');
-			}
-
-			// We do not check all forums, only the first one should be sufficiant.
-			$forum_id = $forum_list[0];
-		}
-
 		$sql = 'SELECT module_id, module_title, module_filename, module_subs, module_acl
 			FROM ' . MODULES_TABLE . "
 			WHERE module_type = '{$module_type}'
 				AND module_enabled = 1
 			ORDER BY module_order ASC";
-		$result = $_CLASS['db']->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
 		$i = 0;
-		while ($row = $_CLASS['db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			// Authorisation is required for the basic module
 			if ($row['module_acl'])
@@ -128,8 +88,8 @@ class module
 
 			// Get the localised lang string if available, or make up our own otherwise
 			$module_lang = strtoupper($module_type) . '_' . $row['module_title'];
-			$_CLASS['template']->assign_vars_array($module_type . '_section', array(
-				'L_TITLE'		=> (isset($_CLASS['user']->lang[$module_lang])) ? $_CLASS['user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
+			$_CLASS['core_template']->assign_vars_array($module_type . '_section', array(
+				'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
 				'S_SELECTED'	=> $selected, 
 				'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $row['module_id']))
 			);
@@ -186,9 +146,9 @@ class module
 						// Get the localised lang string if available, or make up our own otherwise
 						$module_lang = strtoupper($module_type . '_' . $module_name . '_' . $submodule_title);
 
-						$_CLASS['template']->assign_vars_array("{$module_type}_subsection", array(
+						$_CLASS['core_template']->assign_vars_array("{$module_type}_subsection", array(
 							'SECTION'	    => $j,
-							'L_TITLE'		=> (isset($_CLASS['user']->lang[$module_lang])) ? $_CLASS['user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
+							'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
 							'S_SELECTED'	=> $selected,
 							'ADD_ITEM'		=> $this->add_menu_item($row['module_filename'], $submodule_title),
 							'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title . $suffix))
@@ -206,7 +166,7 @@ class module
 
 			$i++;
 		}
-		$_CLASS['db']->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		if (!$module_id)
 		{
@@ -261,13 +221,13 @@ class module
 	{
 		global $_CLASS;
 
-		$_CLASS['display']->display_head($page_title);
+		$_CLASS['core_display']->display_head($page_title);
 		
 		page_header();
 
-		$_CLASS['template']->display('modules/Forums/'.$tpl_name);
+		$_CLASS['core_template']->display('modules/Forums/'.$tpl_name);
 
-		$_CLASS['display']->display_footer();
+		$_CLASS['core_display']->display_footer();
 	}
 
 	// Add Item to Submodule Title
@@ -298,10 +258,10 @@ class module
 					FROM ' . TOPICS_TABLE . '
 					WHERE forum_id IN (' . implode(', ', $forum_list) . ')
 						AND topic_approved = 0';
-				$result = $_CLASS['db']->sql_query($sql);
-				$total_topics = $_CLASS['db']->sql_fetchfield('total', 0, $result);
+				$result = $_CLASS['core_db']->sql_query($sql);
+				$total_topics = $_CLASS['core_db']->sql_fetchfield('total', 0, $result);
 
-				return ($total_topics) ? $total_topics : $_CLASS['user']->lang['NONE'];
+				return ($total_topics) ? $total_topics : $_CLASS['core_user']->lang['NONE'];
 				break;
 
 			case 'unapproved_posts':
@@ -312,10 +272,10 @@ class module
 							AND p.post_approved = 0
 							AND t.topic_id = p.topic_id
 							AND t.topic_first_post_id <> p.post_id';
-				$result = $_CLASS['db']->sql_query($sql);
-				$total_posts = $_CLASS['db']->sql_fetchfield('total', 0, $result);
+				$result = $_CLASS['core_db']->sql_query($sql);
+				$total_posts = $_CLASS['core_db']->sql_fetchfield('total', 0, $result);
 
-				return ($total_posts) ? $total_posts : $_CLASS['user']->lang['NONE'];
+				return ($total_posts) ? $total_posts : $_CLASS['core_user']->lang['NONE'];
 				break;
 		}
 	}
@@ -350,10 +310,21 @@ class module
 // FUNCTIONS
 // ---------
 
-$_CLASS['auth']->acl($_CLASS['user']->data);
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
-$_CLASS['user']->add_img();
-$_CLASS['user']->add_lang('mcp');
+$_CLASS['core_user']->add_img();
+$_CLASS['core_user']->add_lang('mcp');
+
+// Only Moderators can go beyond this point
+if (!$_CLASS['core_user']->data['is_registered'])
+{
+	if ($_CLASS['core_user']->data['is_bot'])
+	{
+		redirect(generate_link('Forums'));
+	}
+	
+	login_box('', $_CLASS['core_user']->lang['LOGIN_EXPLAIN_MCP']);
+}
 
 $mcp = new module();
 
@@ -380,24 +351,15 @@ if ($mode == 'approve' || $mode == 'disapprove')
 	$module = 'queue';
 }
 
-// Only Moderators can go beyond this point
-if ($_CLASS['user']->data['user_id'] == ANONYMOUS)
-{
-	login_box('', $_CLASS['user']->lang['LOGIN_EXPLAIN_MCP']);
-
-	if ($_CLASS['user']->data['user_id'] == ANONYMOUS)
-	{
-		redirect(generate_link('Forums'));
-	}
-}
-
 $quickmod = (isset($_REQUEST['quickmod'])) ? true : false;
 $action = request_var('action', '');
+$action_ary = request_var('action', array('' => 0));
 
-if (is_array($action))
+if (sizeof($action_ary))
 {
 	list($action, ) = each($action);
 }
+unset($action_ary);
 
 if ($action == 'merge_select')
 {
@@ -425,7 +387,47 @@ if (!$quickmod)
 	$post_id = request_var('p', 0);
 	$topic_id = request_var('t', 0);
 	$forum_id = request_var('f', 0);
+	
+	if ($post_id)
+	{
+		// We determine the topic and forum id here, to make sure the moderator really has moderative rights on this post
+		$sql = 'SELECT topic_id, forum_id
+			FROM ' . POSTS_TABLE . "
+			WHERE post_id = $post_id";
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
+		$topic_id = (int) $row['topic_id'];
+		$forum_id = (int) $row['forum_id'];
+	}
+
+	if ($topic_id && !$forum_id)
+	{
+		$sql = 'SELECT forum_id
+			FROM ' . TOPICS_TABLE . "
+			WHERE topic_id = $topic_id";
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		$forum_id = (int) $row['forum_id'];
+	}
+
+	// If we do not have a forum id and the user is not a super moderator (global options are set to false, even if the user is able to moderator at least one forum
+	if (!$forum_id && !$_CLASS['auth']->acl_get('m_'))
+	{
+		$forum_list = get_forum_list('m_');
+
+		if (!sizeof($forum_list))
+		{
+			trigger_error('MODULE_NOT_EXIST');
+		}
+
+		// We do not check all forums, only the first one should be sufficiant.
+		$forum_id = $forum_list[0];
+	}
+	
 	// Instantiate module system and generate list of available modules
 	$mcp->create('mcp', 'Forums&amp;file=mcp'.$SID, $post_id, $topic_id, $forum_id, $module, $mode);
 
@@ -458,36 +460,6 @@ switch ($mode)
 		break;
 	default:
 		trigger_error("$mode not allowed as quickmod");
-}
-
-
-
-//
-// LITTLE HELPER
-
-// request_var, the array way
-function get_array($var, $default_value)
-{
-	$ids = request_var($var, $default_value);
-	
-	if (!is_array($ids))
-	{
-		if (!$ids)
-		{
-			return $default_value;
-		}
-
-		$ids = array($ids);
-	}
-
-	$ids = array_unique($ids);
-
-	if (sizeof($ids) == 1 && !$ids[0])
-	{
-		return $default_value;
-	}
-
-	return $ids;
 }
 
 // Build simple hidden fields from array
@@ -528,9 +500,9 @@ function get_topic_data($topic_ids, $acl_list = false)
 		FROM ' . TOPICS_TABLE . ' t
 			LEFT JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
 		WHERE t.topic_id IN (' . implode(', ', $topic_ids) . ')';
-	$result = $_CLASS['db']->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 		
-	while ($row = $_CLASS['db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
 		{
@@ -555,9 +527,9 @@ function get_post_data($post_ids, $acl_list = false)
 		WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 			AND u.user_id = p.poster_id
 			AND t.topic_id = p.topic_id';
-	$result = $_CLASS['db']->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 		
-	while ($row = $_CLASS['db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
 		{
@@ -584,9 +556,9 @@ function get_forum_data($forum_id, $acl_list = 'f_list')
 	$sql = 'SELECT *
 		FROM ' . FORUMS_TABLE . '
 		WHERE forum_id ' . ((is_array($forum_id)) ? 'IN (' . implode(', ', $forum_id) . ')' : "= $forum_id");
-	$result = $_CLASS['db']->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 		
-	while ($row = $_CLASS['db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
 		{
@@ -703,34 +675,34 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 
 	$sort_key = request_var('sk', $default_key);
 	$sort_dir = request_var('sd', $default_dir);
-	$sort_dir_text = array('a' => $_CLASS['user']->lang['ASCENDING'], 'd' => $_CLASS['user']->lang['DESCENDING']);
+	$sort_dir_text = array('a' => $_CLASS['core_user']->lang['ASCENDING'], 'd' => $_CLASS['core_user']->lang['DESCENDING']);
 
 	switch ($type)
 	{
 		case 'topics':
-			$limit_days = array(0 => $_CLASS['user']->lang['ALL_TOPICS'], 1 => $_CLASS['user']->lang['1_DAY'], 7 => $_CLASS['user']->lang['7_DAYS'], 14 => $_CLASS['user']->lang['2_WEEKS'], 30 => $_CLASS['user']->lang['1_MONTH'], 90 => $_CLASS['user']->lang['3_MONTHS'], 180 => $_CLASS['user']->lang['6_MONTHS'], 364 => $_CLASS['user']->lang['1_YEAR']);
-			$sort_by_text = array('a' => $_CLASS['user']->lang['AUTHOR'], 't' => $_CLASS['user']->lang['POST_TIME'], 'tt' => $_CLASS['user']->lang['TOPIC_TIME'], 'r' => $_CLASS['user']->lang['REPLIES'], 's' => $_CLASS['user']->lang['SUBJECT'], 'v' => $_CLASS['user']->lang['VIEWS']);
+			$limit_days = array(0 => $_CLASS['core_user']->lang['ALL_TOPICS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
+			$sort_by_text = array('a' => $_CLASS['core_user']->lang['AUTHOR'], 't' => $_CLASS['core_user']->lang['POST_TIME'], 'tt' => $_CLASS['core_user']->lang['TOPIC_TIME'], 'r' => $_CLASS['core_user']->lang['REPLIES'], 's' => $_CLASS['core_user']->lang['SUBJECT'], 'v' => $_CLASS['core_user']->lang['VIEWS']);
 
 			$sort_by_sql = array('a' => 't.topic_first_poster_name', 't' => 't.topic_last_post_time', 'tt' => 't.topic_time', 'r' => (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? 't.topic_replies_real' : 't.topic_replies'), 's' => 't.topic_title', 'v' => 't.topic_views');
 			$limit_time_sql = ($min_time) ? "AND t.topic_last_post_time >= $min_time" : '';
 			break;
 
 		case 'posts':
-			$limit_days = array(0 => $_CLASS['user']->lang['ALL_POSTS'], 1 => $_CLASS['user']->lang['1_DAY'], 7 => $_CLASS['user']->lang['7_DAYS'], 14 => $_CLASS['user']->lang['2_WEEKS'], 30 => $_CLASS['user']->lang['1_MONTH'], 90 => $_CLASS['user']->lang['3_MONTHS'], 180 => $_CLASS['user']->lang['6_MONTHS'], 364 => $_CLASS['user']->lang['1_YEAR']);
-			$sort_by_text = array('a' => $_CLASS['user']->lang['AUTHOR'], 't' => $_CLASS['user']->lang['POST_TIME'], 's' => $_CLASS['user']->lang['SUBJECT']);
+			$limit_days = array(0 => $_CLASS['core_user']->lang['ALL_POSTS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
+			$sort_by_text = array('a' => $_CLASS['core_user']->lang['AUTHOR'], 't' => $_CLASS['core_user']->lang['POST_TIME'], 's' => $_CLASS['core_user']->lang['SUBJECT']);
 			$sort_by_sql = array('a' => 'u.username', 't' => 'p.post_id', 's' => 'p.post_subject');
 			$limit_time_sql = ($min_time) ? "AND p.post_time >= $min_time" : '';
 			break;
 
 		case 'reports':
-			$limit_days = array(0 => $_CLASS['user']->lang['ALL_REPORTS'], 1 => $_CLASS['user']->lang['1_DAY'], 7 => $_CLASS['user']->lang['7_DAYS'], 14 => $_CLASS['user']->lang['2_WEEKS'], 30 => $_CLASS['user']->lang['1_MONTH'], 90 => $_CLASS['user']->lang['3_MONTHS'], 180 => $_CLASS['user']->lang['6_MONTHS'], 364 => $_CLASS['user']->lang['1_YEAR']);
-			$sort_by_text = array('p' => $_CLASS['user']->lang['REPORT_PRIORITY'], 'r' => $_CLASS['user']->lang['REPORTER'], 't' => $_CLASS['user']->lang['REPORT_TIME']);
+			$limit_days = array(0 => $_CLASS['core_user']->lang['ALL_REPORTS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
+			$sort_by_text = array('p' => $_CLASS['core_user']->lang['REPORT_PRIORITY'], 'r' => $_CLASS['core_user']->lang['REPORTER'], 't' => $_CLASS['core_user']->lang['REPORT_TIME']);
 			$sort_by_sql = array('p' => 'rr.reason_priority', 'r' => 'u.username', 't' => 'r.report_time');
 			break;
 
 		case 'logs':
-			$limit_days = array(0 => $_CLASS['user']->lang['ALL_ENTRIES'], 1 => $_CLASS['user']->lang['1_DAY'], 7 => $_CLASS['user']->lang['7_DAYS'], 14 => $_CLASS['user']->lang['2_WEEKS'], 30 => $_CLASS['user']->lang['1_MONTH'], 90 => $_CLASS['user']->lang['3_MONTHS'], 180 => $_CLASS['user']->lang['6_MONTHS'], 364 => $_CLASS['user']->lang['1_YEAR']);
-			$sort_by_text = array('u' => $_CLASS['user']->lang['SORT_USERNAME'], 't' => $_CLASS['user']->lang['SORT_DATE'], 'i' => $_CLASS['user']->lang['SORT_IP'], 'o' => $_CLASS['user']->lang['SORT_ACTION']);
+			$limit_days = array(0 => $_CLASS['core_user']->lang['ALL_ENTRIES'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
+			$sort_by_text = array('u' => $_CLASS['core_user']->lang['SORT_USERNAME'], 't' => $_CLASS['core_user']->lang['SORT_DATE'], 'i' => $_CLASS['core_user']->lang['SORT_IP'], 'o' => $_CLASS['core_user']->lang['SORT_ACTION']);
 
 			$sort_by_sql = array('u' => 'l.user_id', 't' => 'l.log_time', 'i' => 'l.log_ip', 'o' => 'l.log_operation');
 			$limit_time_sql = ($min_time) ? "AND l.log_time >= $min_time" : '';
@@ -742,7 +714,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 	$s_limit_days = $s_sort_key = $s_sort_dir = $sort_url = '';
 	gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $sort_url);
 
-	$_CLASS['template']->assign(array(
+	$_CLASS['core_template']->assign(array(
 		'S_SELECT_SORT_DIR'	=>	$s_sort_dir,
 		'S_SELECT_SORT_KEY' =>	$s_sort_key,
 		'S_SELECT_SORT_DAYS'=>	$s_limit_days)
@@ -750,8 +722,8 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 
 	if (($sort_days && $mode != 'viewlogs') || $mode == 'reports' || $where_sql != 'WHERE')
 	{
-		$result = $_CLASS['db']->sql_query($sql);
-		$total = ($row = $_CLASS['db']->sql_fetchrow($result)) ? $row['total'] : 0;
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$total = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['total'] : 0;
 	}
 	else
 	{
@@ -776,9 +748,9 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	// With those two queries we make sure all ids are within one forum...
 	$sql = "SELECT forum_id FROM $table
 		WHERE $sql_id = {$ids[0]}";
-	$result = $_CLASS['db']->sql_query($sql);
-	$forum_id = (int) $_CLASS['db']->sql_fetchfield('forum_id', 0, $result);
-	$_CLASS['db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->sql_query($sql);
+	$forum_id = (int) $_CLASS['core_db']->sql_fetchfield('forum_id', 0, $result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	if (!$forum_id)
 	{
@@ -799,14 +771,14 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	$sql = "SELECT $sql_id FROM $table
 		WHERE $sql_id IN (" . implode(', ', $ids) . ")
 			AND (forum_id = $forum_id OR forum_id = 0)";
-	$result = $_CLASS['db']->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$ids = array();
-	while ($row = $_CLASS['db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$ids[] = $row[$sql_id];
 	}
-	$_CLASS['db']->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	return $forum_id;
 }

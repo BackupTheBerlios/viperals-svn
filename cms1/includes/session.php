@@ -21,7 +21,6 @@
 class session
 {
 	var $data = array();
-	var $session_id = '';
 	var $browser = '';
 	var $ip = '';
 	var $url = '';
@@ -30,37 +29,45 @@ class session
 	var $new_data = false;
 	var $new_session = false;
 	var $session_save = false;
+	var $need_url_id = false;
 
 
-	// Called at each page start ... checks for, updates and/or creates a session
 	function startup()
 	{
-		global $SID, $_CLASS, $MAIN_CFG, $mod;
+		global $_CLASS, $_CORE_CONFIG, $mod;
 		
 		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 		$this->browser = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'];
 		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
-
-		//Don't want the SID in the in the URL all block or module will need to replace it with the current SID
-		//Make this one replace on next look
-		$this->url = eregi_replace('sid=[a-z0-9]+','', $this->url);
-		$this->url = htmlentities(eregi_replace('sid=','', $this->url));
 		$this->page = $mod;
 
-		if (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) || isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data']))
+		if (($pos = strpos($this->url, 'sid')) !== false)
 		{
-			$sessiondata = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_data'])) : array();
-			$this->session_id = (!empty($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid'])) ? trim_text($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_sid']) : false;
-			$SID = (defined('NEED_SID')) ? '&amp;sid=' . $this->session_id : '';
+			$this->url = substr($this->url, 0, $pos-1);
 		}
-		else
+		
+		if (!isset($_COOKIE))
 		{
-			$sessiondata = array();
-			$this->session_id = get_variable('sid', 'GET', false);
-			$SID = '&amp;sid=' . $this->session_id;
+			$_COOKIE = array();
 		}
-
+		
+		$this->need_url_id = true;
+		
+		$session_data = (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) : array();
+		$session_data['session_id'] = get_variable('sid', 'GET', false);
+		
+		//print_r($session_data);
+		if (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']))
+		{
+			// session id in url > cookie
+			if (!$session_data['session_id'] || ($session_data['session_id'] && (trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']) === $session_data['session_id'])))
+			{
+				$session_data['session_id'] = trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']);
+				$this->need_url_id = (defined('NEED_SID')) ? true : false;
+			}
+		}
+		
 		// Obtain users IP
 		$this->ip = (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
 
@@ -79,48 +86,35 @@ class session
 			}
 		}
 
-		// Load limit check (if applicable)
-		if (@file_exists('/proc/loadavg'))
+// make use of the user_id stored in the cookies, or remove that coookie for non auto_login
+		if (!empty($session_data['session_id']))
 		{
-			if ($load = @file('/proc/loadavg'))
-			{
-				list($this->load) = explode(' ', $load[0]);
+			$sql = 'SELECT u.*, s.*
+				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
+				WHERE s.session_id = '" . $_CLASS['core_db']->sql_escape($session_data['session_id']) . "'
+					AND u.user_id = s.session_user_id";
+					
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-				if ($MAIN_CFG['server']['limit_load'] && $this->load > doubleval($MAIN_CFG['server']['limit_load']))
-				{
-					trigger_error('BOARD_UNAVAILABLE');
-				}
-			}
-		}
-
-		// session_id exists so go ahead and attempt to grab all data in preparation
-		if ($this->session_id && (!defined('NEED_SID')))
-		{
-			$sql = 'SELECT u.*, s.*, g.*
-				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . ' u, ' . GROUPS_TABLE . " g
-				WHERE s.session_id = '" . $_CLASS['db']->sql_escape($this->session_id) . "'
-					AND u.user_id = s.session_user_id
-					AND g.group_id = u.group_id";
-			$result = $_CLASS['db']->sql_query($sql);
-
-			$this->data = $_CLASS['db']->sql_fetchrow($result);
-			$_CLASS['db']->sql_freeresult($result);
+			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 	
 			// Did the session exist in the DB?
 			if (isset($this->data['user_id']))
 			{
 				// Validate IP length according to admin ... has no effect on IPv6
-				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $MAIN_CFG['user']['ip_check']));
-				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $MAIN_CFG['user']['ip_check']));
+				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $_CORE_CONFIG['user']['ip_check']));
+				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $_CORE_CONFIG['user']['ip_check']));
 
-				$s_browser = ($MAIN_CFG['user']['browser_check']) ? $this->data['session_browser'] : '';
-				$u_browser = ($MAIN_CFG['user']['browser_check']) ? $this->browser : '';
+				$s_browser = ($_CORE_CONFIG['user']['browser_check']) ? $this->data['session_browser'] : '';
+				$u_browser = ($_CORE_CONFIG['user']['browser_check']) ? $this->browser : '';
 
 				if ($u_ip == $s_ip && $s_browser == $u_browser)
 				{
 					// Set session update a minute or so after last update or if page changes
 					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
 					{
+// maybe save data sould be another array, incase someone changeds $this->data "with thet shouldn't"
 						$this->session_save = true;
 					}
 					
@@ -128,303 +122,317 @@ class session
 					{
 						@eval('$this->data[\'sessions\']='.$this->data['session_data'].';');
 						unset($this->data['session_data']);
+					} else {
+						$this->data['sessions'] = array();
 					}
 
+					$this->is_user = ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER)) ? true : false;
+					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS) ? true : false;
+/// Amin logging should have 3 option "user is admin" / "USer is not admin" / "Never checked"
+					$this->is_admin = ($this->data['session_admin']) ? true : false;
+
+					maintance_status();
+					load_status();
+					
 					return true;
 				}
 			}
+			
+			$this->data = array();
+		}
+		
+		maintance_status();
+		load_status();
+
+		if (isset($session_data['login_code']) && isset($session_data['user_id']))
+		{
+			return $this->create(array('user_id' => $session_data['user_id'], 'user_password' => $session_data['login_code'], 'auto_log' => true));
 		}
 
-		// If we reach here then no (valid) session exists. So we'll create a new one,
-		// using the cookie user_id if available to pull basic user prefs.
-		$autologin = (isset($sessiondata['autologinid'])) ? $sessiondata['autologinid'] : '';
-		$user_id = (isset($sessiondata['userid'])) ? intval($sessiondata['userid']) : ANONYMOUS;
-
-		return $this->create($user_id, $autologin);
+		return $this->create();
 	}
 
 	// Create a new session
-	function create(&$user_id, &$autologin, $set_autologin = false, $viewonline = 1, $admin = 0)
+	function create($data = array())
 	{
-		global $SID, $_CLASS, $config;
+		global $_CLASS, $config;
 		
-		$sessiondata = array();
-		$current_user = $user_id;
-		$bot = false;
+		$session_data = array(
+			'user_name'			=> false,
+			'user_id'			=> false,
+			'user_password'		=> false,
+			'admin_login'		=> false,
+			'auth_error_return'	=> false,
+			'auto_log'			=> false,
+		);
 		
-		// Pull bot information from DB and loop through it
-		$sql = 'SELECT user_id, bot_agent, bot_ip
-			FROM ' . BOTS_TABLE . '
-			WHERE bot_active = 1';
-		$result = $_CLASS['db']->sql_query($sql);
+		$session_data = array_merge($session_data, array_filter($data));
+		$session_data['user_id'] = (int) $session_data['user_id'];
+		$session_data['is_bot'] = false;
+		
+// bots shouldn't bypass auth and should use any session id that found with it's user_id in sessions
+		$bots_array = get_bots();
 
-		while ($row = $_CLASS['db']->sql_fetchrow($result))
+		foreach ($bots_array as $bot)
 		{
-			if ($row['bot_agent'] && preg_match('#' . preg_quote($row['bot_agent'], '#') . '#i', $this->browser))
+			if ($bot['bot_agent'] && preg_match('#' . preg_quote($bot['bot_agent'], '#') . '#i', $this->browser))
 			{
-				$bot = $row['user_id'];
+				$session_data['is_bot'] = true;
 			}
 			
-			if ($row['bot_ip'] && (!$row['bot_agent'] || $bot))
+			if ($bot['bot_ip'] && (!$bot['bot_agent'] || $session_data['is_bot']))
 			{
-				$bot = false;
+				$session_data['is_bot'] = false;
 				
-				foreach (explode(',', $row['bot_ip']) as $bot_ip)
+				foreach (explode(',', $bot['bot_ip']) as $bot_ip)
 				{
 					if (($bot_ip == $this->ip) || (strpos($this->ip, $bot_ip) === 0))
 					{
-						$bot = $row['user_id'];
-						break;
+						$session_data['is_bot'] = true;
 					}
 				}
 			}
-
-			if ($bot)
+			
+			if ($session_data['is_bot'])
 			{
-				$user_id = $bot;
+				$session_data['user_id'] = $bot['user_id'];
 				break;
 			}
 		}
 		
-		$_CLASS['db']->sql_freeresult($result);
+		$auth = false;
 
-		// Garbage collection ... remove old sessions updating user information
-		// if necessary. It means (potentially) 11 queries but only infrequently
-		if ($this->time > $config['session_last_gc'] + $config['session_gc'])
+		if ($session_data['user_password'] && ($session_data['user_name'] || $session_data['user_id']))
 		{
-			$this->gc($this->time);
+			$auth = $this->auth($session_data);
+
+			if ($session_data['auth_error_return'] && $auth !== true)
+			{
+				return $auth;
+			}
 		}
 
-		// Grab user data ... join on session if it exists for session time
-		$sql = 'SELECT u.*, s.session_time, s.session_id, s.session_admin, g.*
-			FROM (' . USERS_TABLE . ' u, ' . GROUPS_TABLE . ' g
-			LEFT JOIN ' . SESSIONS_TABLE . " s ON s.session_user_id = u.user_id)
-			WHERE u.user_id = $user_id
-				AND u.group_id = g.group_id
-			ORDER BY s.session_time DESC";
-		$result = $_CLASS['db']->sql_query_limit($sql, 1);
-
-		$this->data = $_CLASS['db']->sql_fetchrow($result);
-		$_CLASS['db']->sql_freeresult($result);
-
-		// Check autologin request, is it valid?
-		if (empty($this->data) || ($this->data['user_password'] != $autologin && !$set_autologin) || ($this->data['user_type'] == USER_INACTIVE && !$bot))
+		if ($auth === true)
 		{
-			$autologin = '';
-			$this->data['user_id'] = $user_id = ANONYMOUS;
-		}
-
-		// If we're a bot then we'll re-use an existing id if available
-		if ($bot && $this->data['session_id'])
-		{
-			$this->session_id = $this->data['session_id'];
-		}
-
-		if (!$this->data['session_time'] && $config['active_sessions'])
+			if ($session_data['user_id']) 
+			{
+				$where_sql =  'u.user_id = '.$session_data['user_id'];
+			} else {
+				$where_sql =  "u.username = '".$_CLASS['core_db']->sql_escape($session_data['user_name'])."'";
+			}
+			
+			$sql = 'SELECT u.*, s.*
+				FROM (' . USERS_TABLE . ' u
+					LEFT JOIN ' . SESSIONS_TABLE . " s ON s.session_user_id = u.user_id)
+					WHERE $where_sql
+				ORDER BY s.session_time DESC";
+			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+	
+			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
+// if you want users to log in more than once, need to check brower && ip
+// $this->data['session_time'] = $this->data['session_id'] = 0;
+		} 
+		
+		if (($auth !== true || !$this->data['session_time']) && $config['active_sessions'])
 		{
 			// Limit sessions in 1 minute period
 			$sql = 'SELECT COUNT(*) AS sessions
 				FROM ' . SESSIONS_TABLE . '
 				WHERE session_time >= ' . ($this->time - 60);
-			$result = $_CLASS['db']->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			$row = $_CLASS['db']->sql_fetchrow($result);
-			$_CLASS['db']->sql_freeresult($result);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			if (intval($row['sessions']) > intval($config['active_sessions']))
 			{
 				trigger_error('BOARD_UNAVAILABLE');
 			}
 		}
-
-		// Is user banned? Are they excluded?
-		if ($this->data['user_type'] != USER_FOUNDER && !$bot)
+		
+		if ($auth !== true)
 		{
-			$banned = false;
+			$sql = 'SELECT *
+				FROM ' . USERS_TABLE . '
+				WHERE user_id = ' . ANONYMOUS;
+			$result = $_CLASS['core_db']->sql_query($sql);
+	
+			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
-			$sql = 'SELECT ban_ip, ban_userid, ban_email, ban_exclude, ban_give_reason, ban_end
-				FROM ' . BANLIST_TABLE . '
-				WHERE ban_end >= ' . time() . '
-					OR ban_end = 0';
-			$result = $_CLASS['db']->sql_query($sql);
+			// reset and add some basics
+			$session_data += array('user_name' => false, 'user_id' => false, 'user_password' => false, 'auto_log' => false);
+			$this->data['session_time'] = $this->data['session_id'] = 0;
 
-			if ($row = $_CLASS['db']->sql_fetchrow($result))
-			{
-				do
-				{
-					if ((!empty($row['ban_userid']) && intval($row['ban_userid']) == $this->data['user_id']) ||
-						(!empty($row['ban_ip']) && preg_match('#^' . str_replace('*', '.*?', $row['ban_ip']) . '$#i', $this->ip)) ||
-						(!empty($row['ban_email']) && preg_match('#^' . str_replace('*', '.*?', $row['ban_email']) . '$#i', $this->data['user_email'])))
-					{
-						if (!empty($row['ban_exclude']))
-						{
-							$banned = false;
-							break;
-						}
-						else
-						{
-							$banned = true;
-						}
-					}
-				}
-				while ($row = $_CLASS['db']->sql_fetchrow($result));
-			}
-			$_CLASS['db']->sql_freeresult($result);
-
-			if ($banned)
-			{
-				// Initiate environment ... since it won't be set at this stage
-				$this->setup();
-
-				// Determine which message to output
-				$till_date = (!empty($row['ban_end'])) ? $this->format_date($row['ban_end']) : '';
-				$message = (!empty($row['ban_end'])) ? 'BOARD_BAN_TIME' : 'BOARD_BAN_PERM';
-
-				$message = sprintf($this->lang[$message], $till_date, '<a href="mailto:' . $MAIN_CFG['global']['admin_mail'] . '">', '</a>');
-				// More internal HTML ... :D
-				$message .= (!empty($row['ban_show_reason'])) ? '<br /><br />' . sprintf($this->lang['BOARD_BAN_REASON'], $row['ban_show_reason']) : '';
-				trigger_error($message);
-			}
 		}
-
+		
+		$this->is_user = (!$session_data['is_bot'] && ($auth === true)) ? true : false;
+/// Amin logging should have 3 option "user is admin" / "USer is not admin" / "Never checked"
+		$this->is_admin = ($this->is_user && $session_data['admin_login']) ? true : false;
+		$this->is_bot = ($session_data['is_bot']) ? true : false;
+		
 		// Is there an existing session? If so, grab last visit time from that
 		$this->data['session_last_visit'] = ($this->data['session_time']) ? $this->data['session_time'] : (($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : time());
-
-		// Create or update the session
-		$_CLASS['db']->sql_return_on_error(true);
-
-		if ($this->session_id)
-		{
-			$sql_ary = array(
-				'session_user_id'		=> (int) $user_id,
-				'session_start'			=> (int) $this->time,
-				'session_last_visit'	=> (int) $this->data['session_last_visit'],
-				'session_time'			=> (int) $this->time,
-				'session_browser'		=> (string) $this->browser,
-				'session_page'			=> (string) $this->page,
-				'session_url'			=> (string) $this->url,
-				'session_ip'			=> (string) $this->ip,
-				'session_admin'			=> (int) $this->data['session_admin'],
-				'session_viewonline'	=> (int) $viewonline,
-			);
+	
+		$sql_array = array(
+			'session_user_id'		=> (int) $this->data['user_id'],
+			'session_start'			=> (int) $this->time,
+			'session_last_visit'	=> (int) $this->data['session_last_visit'],
+			'session_time'			=> (int) $this->time,
+			'session_browser'		=> (string) $this->browser,
+			'session_page'			=> (string) $this->page,
+			'session_url'			=> (string) $this->url,
+			'session_ip'			=> (string) $this->ip,
+			'session_user_type'		=> (string) $this->data['user_type'],
+			'session_admin'			=> (int) $this->is_admin,
+			'session_viewonline'	=> (int) true,	// ADD
+		);
 		
-		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['db']->sql_build_array('UPDATE', $sql_ary) . "
-			WHERE session_id = '" . $_CLASS['db']->sql_escape($this->session_id) . "'";
+		
+		if ($this->data['session_id'])
+		{
+// if this is a user should we update the user:last_visit time considering it's like a new session
+			$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
+				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
 			
-		}
-		
-		if (!$this->session_id || !$_CLASS['db']->sql_query($sql) || !$_CLASS['db']->sql_affectedrows())
-		{
-			$_CLASS['db']->sql_return_on_error(false);
-			$this->session_id = md5(uniqid($this->ip));
+			$_CLASS['core_db']->sql_query($sql);
+			
+		} else {	
+	
+// maybe make a loop here incase, just incase the session_id already exsits
+			$sql_array['session_id'] = (string) md5(unique_id());
 
-			$sql_ary['session_id'] = (string) $this->session_id;
-
-			$_CLASS['db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['db']->sql_build_array('INSERT', $sql_ary));
+			$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
+			
 			$this->new_session = true;
 		}
 		
-		$_CLASS['db']->sql_return_on_error(false);
-
-		if (!$bot)
+// need to make sure that false values are also stored
+		$this->data = array_merge($this->data, $sql_array);
+		unset($sql_array);
+		
+		if ($this->time > $config['session_last_gc'] + $config['session_gc'])
 		{
-			$this->data['session_id'] = $this->session_id;
-
-			// Don't set cookies if we're an admin re-authenticating
-			if (!$admin || ($admin && $current_user == ANONYMOUS))
-			{
-				$sessiondata['userid'] = $user_id;
-				$sessiondata['autologinid'] = ($autologin && $user_id != ANONYMOUS) ? $autologin : '';
-
-				$this->set_cookie('data', serialize($sessiondata), $this->time + 31536000);
-				$this->set_cookie('sid', $this->session_id, 0);
-			}
-
-			$SID = '&amp;sid=' . $this->session_id;
-
-			if ($this->data['user_id'] != ANONYMOUS)
-			{
-				// Trigger EVT_NEW_SESSION
-			}
-		}
-		else
-		{
-			$SID = '';
+			$this->gc($this->time);
 		}
 
+		if ($session_data['auto_log'] && $this->is_user)
+		{
+			$cookie_data['login_code'] = $session_data['user_password'];
+			$cookie_data['user_id'] = $this->data['user_id'];
+			
+			$this->set_cookie('data', serialize($cookie_data), $this->time + 31536000);
+		} else 	{
+			$this->set_cookie('data', '', $this->time - 31536000);
+		}
+		
+		$this->set_cookie('sid', $this->data['session_id'], 0);
+
+		$this->need_url_id = true;
+		$this->data['sessions'] = array();
+	
 		return true;
 	}
 
 	// Destroy a session
 	function destroy()
 	{
-		global $SID, $_CLASS;
+		global $_CLASS;
 
 		$this->set_cookie('data', '', $this->time - 31536000);
 		$this->set_cookie('sid', '', $this->time - 31536000);
-		$SID = '&amp;sid=';
 
 		// Delete existing session, update last visit info first!
 		$sql = 'UPDATE ' . USERS_TABLE . '
 			SET user_lastvisit = ' . $this->data['session_time'] . '
 			WHERE user_id = ' . $this->data['user_id'];
-		$_CLASS['db']->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-			WHERE session_id = '" . $_CLASS['db']->sql_escape($this->session_id) . "'
+			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'
 				AND session_user_id = " . $this->data['user_id'];
-		$_CLASS['db']->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		// Reset some basic data immediately
-		$this->session_id = $this->data['username'] = '';
 		$this->data['user_id'] = ANONYMOUS;
-		$this->data['session_admin'] = 0;
 
-		$this->new_session = true;
+		$sql = 'SELECT *
+			FROM ' . USERS_TABLE . '
+			WHERE user_id = ' . ANONYMOUS;
+		$result = $_CLASS['core_db']->sql_query($sql);
+	
+		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		$this->data['session_id'] = '';
+		$this->need_url_id = $this->data['session_time'] = $this->data['session_admin'] = 0;
 		// Trigger EVENT_END_SESSION
 
 		return true;
 	}
-
-	// Garbage collection
-	function gc(&$time)
+	
+	function auth($data)
 	{
-		global $_CLASS, $MAIN_CFG;
+		global $config, $site_file_root;
+
+		$method = trim($config['auth_method']);
+
+		if (file_exists($site_file_root.'includes/auth/auth_' . $method . '.php'))
+		{
+			include_once($site_file_root.'includes/auth/auth_' . $method . '.php');
+
+			$method = 'login_' . $method;
+			if (function_exists($method))
+			{
+				return $method($data);
+			}
+		}
+
+		trigger_error('Authentication method not found', E_USER_ERROR);
+	}
+	
+	// Garbage collection
+	function gc($time)
+	{
+		global $_CLASS, $_CORE_CONFIG;
 
 		switch (SQL_LAYER)
 		{
 			case 'mysql4':
+			case 'mysqli':
+			
 				// Firstly, delete guest sessions
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 					WHERE session_user_id = ' . ANONYMOUS . '
-						AND session_time < ' . ($time - $MAIN_CFG['user']['session_length']);
-				$_CLASS['db']->sql_query($sql);
+						AND session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']);
+				$_CLASS['core_db']->sql_query($sql);
 
 				// Keep only the most recent session for each user
 				// Note: if the user is currently browsing the board, his
 				// last_visit field won't be updated, which I believe should be
 				// the normal behavior anyway
-				$_CLASS['db']->sql_return_on_error(TRUE);
+				$_CLASS['core_db']->sql_return_on_error(TRUE);
 
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 					USING ' . SESSIONS_TABLE . ' s1, ' . SESSIONS_TABLE . ' s2
 					WHERE s1.session_user_id = s2.session_user_id
 						AND s1.session_time < s2.session_time';
-				$_CLASS['db']->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 
-				$_CLASS['db']->sql_return_on_error(FALSE);
+				$_CLASS['core_db']->sql_return_on_error(FALSE);
 
 				// Update last visit time
 				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
 					SET u.user_lastvisit = s.session_time, u.user_lastpage = s.session_page
-					WHERE s.session_time < ' . ($time - $MAIN_CFG['user']['session_length']) . '
+					WHERE s.session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']) . '
 						AND u.user_id = s.session_user_id';
-				$_CLASS['db']->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 
 				// Delete everything else now
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $MAIN_CFG['user']['session_length']);
-				$_CLASS['db']->sql_query($sql);
+					WHERE session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']);
+				$_CLASS['core_db']->sql_query($sql);
 
 				set_config('session_last_gc', $time);
 				break;
@@ -434,28 +442,28 @@ class session
 				// Get expired sessions, only most recent for each user
 				$sql = 'SELECT session_user_id, session_page, MAX(session_time) AS recent_time
 					FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $MAIN_CFG['user']['session_length']) . '
+					WHERE session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']) . '
 					GROUP BY session_user_id, session_page';
-				$result = $_CLASS['db']->sql_query_limit($sql, 5);
+				$result = $_CLASS['core_db']->sql_query_limit($sql, 5);
 
 				$del_user_id = '';
 				$del_sessions = 0;
-				if ($row = $_CLASS['db']->sql_fetchrow($result))
+				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					do
 					{
 						if ($row['session_user_id'] != ANONYMOUS)
 						{
 							$sql = 'UPDATE ' . USERS_TABLE . '
-								SET user_lastvisit = ' . $row['recent_time'] . ", user_lastpage = '" . $_CLASS['db']->sql_escape($row['session_page']) . "'
+								SET user_lastvisit = ' . $row['recent_time'] . ", user_lastpage = '" . $_CLASS['core_db']->sql_escape($row['session_page']) . "'
 								WHERE user_id = " . $row['session_user_id'];
-							$_CLASS['db']->sql_query($sql);
+							$_CLASS['core_db']->sql_query($sql);
 						}
 
 						$del_user_id .= (($del_user_id != '') ? ', ' : '') . $row['session_user_id'];
 						$del_sessions++;
 					}
-					while ($row = $_CLASS['db']->sql_fetchrow($result));
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 				}
 
 				if ($del_user_id)
@@ -463,8 +471,8 @@ class session
 					// Delete expired sessions
 					$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
 						WHERE session_user_id IN ($del_user_id)
-							AND session_time < " . ($time - $MAIN_CFG['user']['session_length']);
-					$_CLASS['db']->sql_query($sql);
+							AND session_time < " . ($time - $_CORE_CONFIG['user']['session_length']);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 
 				if ($del_sessions < 5)
@@ -495,7 +503,7 @@ class session
 		$this->new_data = true;
 	}
 	
-	function set_data($name, $value)
+	function set_data($name, $value, $force_save = false)
 	{
 		if (!empty($this->data['sessions'][$name]) && ($this->data['sessions'][$name] == $value))
 		{
@@ -505,6 +513,11 @@ class session
 		$this->data['sessions'][$name] = $value;
 			
 		$this->new_data = true;
+		
+		if ($force_save)
+		{
+			$this->save();
+		}
 	}
 	
 	function save()
@@ -516,28 +529,34 @@ class session
 			return;
 		}
 		
-		if ($this->new_data && !empty($_CLASS['cache']))
+		if ($this->new_data && !empty($_CLASS['core_cache']))
 		{
-			$this->new_data = ", session_data = '".$_CLASS['db']->sql_escape($_CLASS['cache']->format_array($this->data['sessions']))."'";
+			$this->new_data = $_CLASS['core_cache']->format_array($this->data['sessions']);
+		} else {
+			$this->new_data = '';
 		}
 		
-		$sql = 'UPDATE ' . SESSIONS_TABLE . '
-			SET session_time = '.$this->time.", session_url = '" . $_CLASS['db']->sql_escape($this->url) . "', session_page = '" . $_CLASS['db']->sql_escape($this->page) . "'
-			".$this->new_data." WHERE session_id = '" . $_CLASS['db']->sql_escape($this->session_id) . "'";
-		$_CLASS['db']->sql_query($sql);
-
-		$this->new_data = $this->session_save = false;			
+		$sql_array = array(
+			'session_time'			=> (int) $this->time,
+			'session_page'			=> (string) $this->page,
+			'session_url'			=> (string) $this->url,
+			'session_data'			=> (string) $this->new_data,
+		);
+		
+		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
+				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
+				
+		$this->new_data = $this->session_save = false;
 	}
 	
-	// Set a cookie
 	function set_cookie($name, $cookiedata, $cookietime)
 	{
-		global $MAIN_CFG;
+		global $_CORE_CONFIG;
 		if ($this->server_local)
 		{
-			setcookie($MAIN_CFG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $MAIN_CFG['server']['cookie_path']);
+			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path']);
 		} else {
-			setcookie($MAIN_CFG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $MAIN_CFG['server']['cookie_path'], $MAIN_CFG['server']['cookie_domain'], $MAIN_CFG['server']['cookie_secure']);
+			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
 		}
 	}
 }
@@ -555,23 +574,23 @@ class user extends session
 	var $lang_name;
 	var $lang_path;
 
-	var $keyoptions = array('viewimg' => 0, 'viewflash' => 1, 'viewsmilies' => 2, 'viewsigs' => 3, 'viewavatars' => 4, 'viewcensors' => 5, 'attachsig' => 6, 'html' => 7, 'bbcode' => 8, 'smile' => 9, 'popuppm' => 10, 'report_pm_notify' => 11);
+	var $keyoptions = array('viewimg' => 0, 'viewflash' => 1, 'viewsmilies' => 2, 'viewsigs' => 3, 'viewavatars' => 4, 'viewcensors' => 5, 'attachsig' => 6, 'html' => 7, 'bbcode' => 8, 'smilies' => 9, 'popuppm' => 10, 'report_pm_notify' => 11);
 	var $keyvalues = array();
 
 	function start()
 	{
-		global $_CLASS, $MAIN_CFG, $phpEx, $site_file_root;
+		global $_CLASS, $_CORE_CONFIG, $phpEx, $site_file_root;
 
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
-			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $MAIN_CFG['global']['default_lang'];
+			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];
 			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 
 			$this->date_format = $this->data['user_dateformat'];
 			$this->timezone = $this->data['user_timezone'] * 3600;
 			$this->dst = $this->data['user_dst'] * 3600;
 		
-			if (VIPERAL != 'Admin' && $MAIN_CFG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - ($MAIN_CFG['user']['chg_passforce'] * 86400))
+			if (VIPERAL != 'Admin' && $_CORE_CONFIG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - ($_CORE_CONFIG['user']['chg_passforce'] * 86400))
 			{
 				global $name;
 
@@ -583,11 +602,11 @@ class user extends session
 		}
 		else
 		{
-			$this->lang_name = $MAIN_CFG['global']['default_lang'];
+			$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
 			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
-			$this->date_format = $MAIN_CFG['global']['default_dateformat'];
-			$this->timezone = $MAIN_CFG['global']['default_timezone'] * 3600;
-			$this->dst = $MAIN_CFG['global']['default_dst'] * 3600;
+			$this->date_format = $_CORE_CONFIG['global']['default_dateformat'];
+			$this->timezone = $_CORE_CONFIG['global']['default_timezone'] * 3600;
+			$this->dst = $_CORE_CONFIG['global']['default_dst'] * 3600;
 
 			if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
 			{
@@ -598,7 +617,7 @@ class user extends session
 					$accept_lang = substr($accept_lang, 0, 2) . '_' . strtoupper(substr($accept_lang, 3, 2));
 					if (file_exists('language/' . $accept_lang . "/common.$phpEx"))
 					{
-						$this->lang_name = $accept_lang;
+						$this->lang_name = $_CORE_CONFIG['global']['default_lang'] = $accept_lang;
 						$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
 						break;
 					}
@@ -608,7 +627,7 @@ class user extends session
 						$accept_lang = substr($accept_lang, 0, 2);
 						if (file_exists('language/' . $accept_lang . "/common.$phpEx"))
 						{
-							$this->lang_name = $accept_lang;
+							$this->lang_name = $_CORE_CONFIG['global']['default_lang'] = $accept_lang;
 							$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
 							break;
 						}
@@ -622,22 +641,22 @@ class user extends session
 
 	function add_img($img_file = false, $module = false, $lang = false)
 	{
-		global $phpEx;
+		global $phpEx, $site_file_root;
 
 		$img_file = ($img_file) ? "$img_file.$phpEx" : 'index.'.$phpEx;
 
 		if (!$img_file || !ereg('/', $img_file)) {
 		
-			global $Module, $_CLASS;
+			global $_CORE_MODULE, $_CLASS;
 			
-			$module = ($module) ? $module : $Module['name'];
+			$module = ($module) ? $module : $_CORE_MODULE['name'];
 			$lang = ($lang) ? $this->lang_name.'/' : '';
 			
-			if (file_exists('themes/'.$_CLASS['display']->theme.'/template/modules/'.$module."/images/$lang$img_file"))
+			if (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/'.$module."/images/$lang$img_file"))
 			{
-				include('themes/'.$_CLASS['display']->theme.'/template/modules/'.$module."/images/$lang$img_file");
+				include($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/'.$module."/images/$lang$img_file");
 			} else {
-				include('modules/'.$module."/images/$lang.$img_file");
+				include($site_file_root.'modules/'.$module."/images/$lang.$img_file");
 			}
 			
 		} else {
@@ -645,6 +664,17 @@ class user extends session
 			include($img_file.$phpEx);
 			
 		}
+	}
+	
+	function get_lang($lang)
+	{
+	
+		if (isset($this->lang[$lang]))
+		{
+			return $this->lang[$lang];
+		}
+		
+		return ucfirst(preg_replace('_', '', $lang));
 	}
 	
 	function img($img, $alt = '', $width = false, $suffix = '')
@@ -687,40 +717,37 @@ class user extends session
 		return '<img src=' . $imgs[$img . $suffix] . ' alt="' . $alt . '" title="' . $alt . '" name="' . $img . '" />';
 	}
 		
-	function add_lang($langfile = false, $module = false, $langfolder = false, $use_db = false)
+	function add_lang($langfile = false, $module = false)
 	{
 		global $phpEx, $site_file_root;
-
-		if ($use_db)
-		{
-			// now what can we use this for. 
-		}
+//Need a check for if the lang file exsists
+	
 		//print_r(debug_backtrace());
 		if (is_array($langfile))
 		{
 			foreach ($langfile as $key => $lang_file)
 			{
 				//$key = (string) $key;
-				$this->add_lang($lang_file);
+				$this->add_lang($lang_file, $module);
 			}
 			
 			unset($lang);
 			return;
 		}
 		
-		$langfile = ($langfile) ? "$langfile.$phpEx" : 'index.'.$phpEx;
-
-		if ($langfolder)
+		if (strpos($langfile, '/') !== false)
 		{
-			include($this->lang_path.(($module) ? $module.'/'  : '')."$langfile");
+			include($site_file_root."language/$this->lang_name/$langfile");
 			return;
 		}
 		
+		$langfile = ($langfile) ? $langfile.'.php' : 'index.php';
+		
 		if (!$module)
 		{
-			global $Module;
+			global $_CORE_MODULE;
 			
-			include($site_file_root.'modules/'.$Module['name']."/language/$this->lang_name/$langfile");
+			include($site_file_root.'modules/'.$_CORE_MODULE['name']."/language/$this->lang_name/$langfile");
 			return;
 		} 
 		
@@ -731,6 +758,11 @@ class user extends session
 	{
 		static $midnight;
 
+		if (!$gmepoch)
+		{
+			return;
+		}
+		
 		$format = (!$format) ? $this->date_format : $format;
 
 		if (!$midnight)
@@ -739,20 +771,43 @@ class user extends session
 			$midnight = gmmktime(0, 0, 0, $m, $d, $y) - $this->timezone - $this->dst;
 		}
 	
-		if ($gmepoch > $midnight && !$forcedate)
-		{
-			return preg_replace('#\|.*?\|#', $this->lang['datetime']['TODAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
-		}
-		else if ($gmepoch > $midnight - 86400 && !$forcedate)
-		{
-			return preg_replace('#\|.*?\|#', $this->lang['datetime']['YESTERDAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
-		}
-		else
+		if (strpos($format, '|') === false || (!($gmepoch > $midnight && !$forcedate) && !($gmepoch > $midnight - 86400 && !$forcedate)))
 		{
 			return strtr(@gmdate(str_replace('|', '', $format), $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']);
 		}
+		
+		if ($gmepoch > $midnight && !$forcedate)
+		{
+			$format = substr($format, 0, strpos($format, '|')) . '||' . substr(strrchr($format, '|'), 1);
+			return str_replace('||', $this->lang['datetime']['TODAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
+		}
+		else if ($gmepoch > $midnight - 86400 && !$forcedate)
+		{
+			$format = substr($format, 0, strpos($format, '|')) . '||' . substr(strrchr($format, '|'), 1);
+			return str_replace('||', $this->lang['datetime']['YESTERDAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
+		}
 	}
+	
+	// Get profile fields for user
+	function get_profile_fields($user_id)
+	{
+		global $user, $_CLASS;
 
+		if (isset($this->profile_fields))
+		{
+			return;
+		}
+
+		// TODO: think about adding this to the session code too?
+		// Grabbing all user specific options (all without the need of special complicate adding to the sql query) might be useful...
+		$sql = 'SELECT * FROM ' . PROFILE_DATA_TABLE . "
+			WHERE user_id = $user_id";
+		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+
+		$this->profile_fields = (!($row = $_CLASS['core_db']->sql_fetchrow($result))) ? array() : $row;
+		$_CLASS['core_db']->sql_freeresult($result);
+	}
+	
 	//remove this
 	function get_iso_lang_id()
 	{
@@ -771,31 +826,14 @@ class user extends session
 		$sql = 'SELECT lang_id
 			FROM ' . LANG_TABLE . "
 			WHERE lang_iso = '{$this->lang_name}'";
-		$result = $_CLASS['db']->sql_query($sql);
-
-		return (int) $_CLASS['db']->sql_fetchfield('lang_id', 0, $result);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		
+		$lang_id = (int) $_CLASS['core_db']->sql_fetchfield('lang_id', 0, $result);
+		$_CLASS['core_db']->sql_freeresult($result);
+		
+		return $lang_id;
 	}
-
-	// Get profile fields for user
-	function get_profile_fields($user_id)
-	{
-		global $user, $_CLASS;
-
-		if (isset($this->profile_fields))
-		{
-			return;
-		}
-
-		// TODO: think about adding this to the session code too?
-		// Grabbing all user specific options (all without the need of special complicate adding to the sql query) might be useful...
-		$sql = 'SELECT * FROM ' . PROFILE_DATA_TABLE . "
-			WHERE user_id = $user_id";
-		$result = $_CLASS['db']->sql_query_limit($sql, 1);
-
-		$this->profile_fields = (!($row = $_CLASS['db']->sql_fetchrow($result))) ? array() : $row;
-		$_CLASS['db']->sql_freeresult($result);
-	}
-
+	
 	// Start code for checking/setting option bit field for user table
 	function optionget($key, $data = false)
 	{

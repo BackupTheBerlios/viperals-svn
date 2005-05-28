@@ -6,6 +6,19 @@
 			<th width="20%">{$L_POSTER}</th>
 			<th width="80%">{$L_MESSAGE}</th>
 		</tr>
+		{*	<!-- IF TOTAL_ATTACHMENTS -->
+	<tr>
+		<td class="row3" colspan="6">
+			<table width="100%" cellspacing="1">
+			<tr>
+				<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{PAGE_NUMBER}<br /></td>
+				<td class="gensmall" nowrap="nowrap">&nbsp;[ {TOTAL_ATTACHMENTS} ]&nbsp;</td>
+				<td class="gensmall" width="100%" align="right" nowrap="nowrap"><!-- IF PAGINATION --><b><a href="javascript:jumpto();">{L_GOTO_PAGE}</a> <!-- IF PREVIOUS_PAGE --><a href="{PREVIOUS_PAGE}">{L_PREVIOUS}</a>&nbsp;&nbsp;<!-- ENDIF -->{PAGINATION}<!-- IF NEXT_PAGE -->&nbsp;&nbsp;<a href="{NEXT_PAGE}">{L_NEXT}</a><!-- ENDIF --></b><!-- ENDIF --></td>
+			</tr>
+			</table>
+		</td>
+	</tr>
+	<!-- ENDIF -->*}
 		{section name=shoutloop loop=$shout}
 		
 		{ if $smarty.section.shoutloop.rownum is even }

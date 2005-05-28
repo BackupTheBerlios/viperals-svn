@@ -29,8 +29,6 @@ class compress
 
 	function add_file($src, $src_rm_prefix = '', $src_add_prefix = '', $skip_files = '')
 	{
-		global $phpbb_root_path;
-
 		$skip_files = explode(',', $skip_files);
 
 		// Remove rm prefix from src path 
@@ -40,30 +38,30 @@ class compress
 		// Remove initial "/" if present
 		$src_path = (substr($src_path, 0, 1) == '/') ? substr($src_path, 1) : $src_path;
 
-		if (is_file($phpbb_root_path . $src))
+		if (is_file($src))
 		{
-			if (!($fp = @fopen("$phpbb_root_path$src", 'rb')))
+			if (!($fp = @fopen("$src", 'rb')))
 			{
 				return false;
 			}
 
-			$data = fread($fp, filesize("$phpbb_root_path$src"));
+			$data = fread($fp, filesize("$src"));
 			fclose($fp);
 
-			$this->data($src_path, $data, filemtime("$phpbb_root_path$src"), false);
+			$this->data($src_path, $data, filemtime("$src"), false);
 		}
-		else if (is_dir($phpbb_root_path . $src))
+		else if (is_dir($src))
 		{
 			// Clean up path, add closing / if not present
 			$src_path = ($src_path && substr($src_path, -1) != '/') ? $src_path . '/' : $src_path;
 
 			$filelist = array();
-			$filelist = filelist("$phpbb_root_path$src", '', '*');
+			$filelist = filelist("$src", '', '*');
 			krsort($filelist);
 
 			if ($src_path)
 			{
-				$mtime = (file_exists("$phpbb_root_path$src_path")) ? filemtime("$phpbb_root_path$src_path") : time();
+				$mtime = (file_exists("$src_path")) ? filemtime("$src_path") : time();
 				$this->data($src_path, '', $mtime, true);
 			}
 
@@ -75,7 +73,7 @@ class compress
 					$path = (substr($path, 0, 1) == '/') ? substr($path, 1) : $path;
 					$path = ($path && substr($path, -1) != '/') ? $path . '/' : $path;
 
-					$this->data("$src_path$path", '', filemtime("$phpbb_root_path$path"), true);
+					$this->data("$src_path$path", '', filemtime("$src_path$path"), true);
 				}
 
 				foreach ($file_ary as $file)
@@ -85,7 +83,7 @@ class compress
 						continue;
 					}
 
-					$this->data("$src_path$path$file", implode('', file("$phpbb_root_path$src$path$file")), filemtime("$phpbb_root_path$src$path$file"), false);
+					$this->data("$src_path$path$file", implode('', file("$src_path$path$file")), filemtime("$src_path$path$file"), false);
 				}
 			}
 
@@ -116,13 +114,18 @@ class compress
 	}
 }
 
-// Zip creation class from phpMyAdmin 2.3.0 © Tobias Ratschiller, Olivier Müller, Loïc Chapeaux, 
-// Marc Delisle, http://www.phpmyadmin.net/
-//
-// Modified extensively by psoTFX, © phpBB Group, 2003
-//
-// Based on work by Eric Mueller and Denis125
-// Official ZIP file format: http://www.pkware.com/appnote.txt
+/**
+* @package phpBB3
+*
+* Zip creation class from phpMyAdmin 2.3.0 © Tobias Ratschiller, Olivier Müller, Loïc Chapeaux, 
+* Marc Delisle, http://www.phpmyadmin.net/
+*
+* Modified extensively by psoTFX, © phpBB Group, 2003
+*
+* Based on work by Eric Mueller and Denis125
+* Official ZIP file format: http://www.pkware.com/appnote.txt
+*/
+
 class compress_zip extends compress
 {
 	var $datasec = array();
@@ -386,6 +389,24 @@ class compress_zip extends compress
 			pack('V', $this->datasec_len) .			// offset to start of central dir
 			"\x00\x00";								// .zip file comment length
 	}
+	
+	function download($filename)
+	{
+		global $phpbb_root_path;
+
+		$mimetype = 'application/zip';
+
+		header('Pragma: no-cache');
+		header("Content-Type: $mimetype; name=\"$filename.zip\"");
+		header("Content-disposition: attachment; filename=$filename.zip");
+
+		$fp = fopen("store/$filename.zip", 'rb');
+		while ($buffer = fread($fp, 1024))
+		{
+			echo $buffer;
+		}
+		fclose($fp);
+	}
 }
 
 // Tar/tar.gz compression routine
@@ -396,6 +417,7 @@ class compress_tar extends compress
 	var $isbz = false;
 	var $filename = '';
 	var $mode = '';
+	var $type = '';
 
 	function compress_tar($mode, $file, $type = '')
 	{
@@ -405,6 +427,7 @@ class compress_tar extends compress
 
 		$this->mode = &$mode;
 		$this->file = &$file;
+		$this->type = &$type;
 		$this->open();
 	}
 
@@ -541,6 +564,7 @@ class compress_tar extends compress
 		$header .= pack("x247");
 
 		// Checksum
+		$checksum = 0;
 		for ($i = 0; $i < 512; $i++)
 		{
 			$b = unpack("c1char", substr($header, $i, 1));
@@ -560,10 +584,43 @@ class compress_tar extends compress
 		unset($data);
 	}
 
-	function open($mode, $file)
+	function open()
 	{
 		$fzopen = ($this->isbz && function_exists('bzopen')) ? 'bzopen' : (($this->isgz && extension_loaded('zlib')) ? 'gzopen' : 'fopen');
 		return $this->fp = @$fzopen($this->file, $this->mode . 'b');
+	}
+	
+	function download($filename)
+	{
+		switch ($this->type)
+		{
+			case 'tar':
+				$mimetype = 'application/x-tar';
+				break;
+
+			case 'tar.gz':
+				$mimetype = 'application/x-gzip';
+				break;
+
+			case 'tar.bz2':
+				$mimetype = 'application/x-bzip2';
+				break;
+			
+			default:
+				$mimetype = 'application/octet-stream';
+				break;
+		}
+
+		header('Pragma: no-cache');
+		header("Content-Type: $mimetype; name=\"$filename.$this->type\"");
+		header("Content-disposition: attachment; filename=$filename.$this->type");
+
+		$fp = fopen("store/$filename.$this->type", 'rb');
+		while ($buffer = fread($fp, 1024))
+		{
+			echo $buffer;
+		}
+		fclose($fp);
 	}
 }
 

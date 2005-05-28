@@ -31,24 +31,24 @@ class mcp_queue extends module
 		global $db, $_CLASS, $site_file_root;
 		global $config, $phpEx;
 
-		$_CLASS['template']->assign(array(
-			'L_SELECT'						=> $_CLASS['user']->lang['FORUM'],
-			'L_TOPIC'						=> $_CLASS['user']->lang['TOPIC'],
-			'L_DISPLAY_OPTIONS'				=> $_CLASS['user']->lang['DISPLAY_OPTIONS'],
-			'L_DISPLAY_ITEMS'				=> $_CLASS['user']->lang['DISPLAY_ITEMS'],
-			'L_SORT_BY'						=> $_CLASS['user']->lang['SORT_BY'],
-			'L_FORUM'						=> $_CLASS['user']->lang['FORUM'],
-			'L_GO'							=> $_CLASS['user']->lang['GO'],
-			'L_VIEW_DETAILS'				=> $_CLASS['user']->lang['VIEW_DETAILS'],
-			'L_NO_POSTS'					=> $_CLASS['user']->lang['NO_POSTS'],
-			'L_APPROVE'						=> $_CLASS['user']->lang['APPROVE'],
-			'L_DISAPPROVE'					=> $_CLASS['user']->lang['DISAPPROVE'],
-			'L_MARK_ALL'					=> $_CLASS['user']->lang['MARK_ALL'],
-			'L_UNMARK_ALL'					=> $_CLASS['user']->lang['UNMARK_ALL'],
-			'L_AUTHOR'						=> $_CLASS['user']->lang['AUTHOR'],
-			'L_JUMP_TO'						=> $_CLASS['user']->lang['JUMP_TO'],
-			'L_GO'							=> $_CLASS['user']->lang['GO'],
-			'L_POST_TIME'					=> $_CLASS['user']->lang['POST_TIME'])
+		$_CLASS['core_template']->assign(array(
+			'L_SELECT'						=> $_CLASS['core_user']->lang['FORUM'],
+			'L_TOPIC'						=> $_CLASS['core_user']->lang['TOPIC'],
+			'L_DISPLAY_OPTIONS'				=> $_CLASS['core_user']->lang['DISPLAY_OPTIONS'],
+			'L_DISPLAY_ITEMS'				=> $_CLASS['core_user']->lang['DISPLAY_ITEMS'],
+			'L_SORT_BY'						=> $_CLASS['core_user']->lang['SORT_BY'],
+			'L_FORUM'						=> $_CLASS['core_user']->lang['FORUM'],
+			'L_GO'							=> $_CLASS['core_user']->lang['GO'],
+			'L_VIEW_DETAILS'				=> $_CLASS['core_user']->lang['VIEW_DETAILS'],
+			'L_NO_POSTS'					=> $_CLASS['core_user']->lang['NO_POSTS'],
+			'L_APPROVE'						=> $_CLASS['core_user']->lang['APPROVE'],
+			'L_DISAPPROVE'					=> $_CLASS['core_user']->lang['DISAPPROVE'],
+			'L_MARK_ALL'					=> $_CLASS['core_user']->lang['MARK_ALL'],
+			'L_UNMARK_ALL'					=> $_CLASS['core_user']->lang['UNMARK_ALL'],
+			'L_AUTHOR'						=> $_CLASS['core_user']->lang['AUTHOR'],
+			'L_JUMP_TO'						=> $_CLASS['core_user']->lang['JUMP_TO'],
+			'L_GO'							=> $_CLASS['core_user']->lang['GO'],
+			'L_POST_TIME'					=> $_CLASS['core_user']->lang['POST_TIME'])
 		);
 	
 		$forum_id = request_var('f', 0);
@@ -61,9 +61,9 @@ class mcp_queue extends module
 				require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
 				require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
 
-				$post_id_list = get_array('post_id_list', 0);
+				$post_id_list = request_var('post_id_list', array(0));
 
-				if (!$post_id_list)
+				if (!sizeof($post_id_list))
 				{
 					trigger_error('NO_POST_SELECTED');
 				}
@@ -81,7 +81,7 @@ class mcp_queue extends module
 			
 			case 'approve_details':
 				
-				$_CLASS['user']->add_lang('posting');
+				$_CLASS['core_user']->add_lang('posting');
 				require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
 
 				$post_id = request_var('p', 0);
@@ -104,7 +104,7 @@ class mcp_queue extends module
 
 				if ($post_info['topic_first_post_id'] != $post_id && topic_review($post_info['topic_id'], $post_info['forum_id'], 'topic_review', 0, false))
 				{
-					$_CLASS['template']->assign(array(
+					$_CLASS['core_template']->assign(array(
 						'S_TOPIC_REVIEW'	=> true,
 						'TOPIC_TITLE'		=> $post_info['topic_title'])
 					);
@@ -121,9 +121,9 @@ class mcp_queue extends module
 					$bbcode = new bbcode($post_info['bbcode_bitfield']);
 					$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 				}
-				$message = smilie_text($message);
+				$message = smiley_text($message);
 
-				$_CLASS['template']->assign(array(
+				$_CLASS['core_template']->assign(array(
 					'S_MCP_QUEUE'			=> true,
 					'S_APPROVE_ACTION'		=> getlink("Forums&amp;file=mcp&amp;i=queue&amp;p=$post_id&amp;f=$forum_id"),
 					
@@ -139,20 +139,20 @@ class mcp_queue extends module
 					'U_MCP_WARNINGS'		=> getlink('Forums&amp;file=mcp&amp;i=warnings&amp;mode=view_user&amp;u=' . $post_info['user_id']),
 					'U_EDIT'				=> ($_CLASS['auth']->acl_get('m_edit', $post_info['forum_id'])) ? getlink("Forums&amp;file=posting&amp;mode=edit&amp;f={$post_info['forum_id']}&amp;p={$post_info['post_id']}") : '',
 
-					'REPORTED_IMG'			=> $_CLASS['user']->img('icon_reported', $_CLASS['user']->lang['POST_REPORTED']),
-					'UNAPPROVED_IMG'		=> $_CLASS['user']->img('icon_unapproved', $_CLASS['user']->lang['POST_UNAPPROVED']),
-					'EDIT_IMG'				=> $_CLASS['user']->img('btn_edit', $_CLASS['user']->lang['EDIT_POST']),
+					'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', $_CLASS['core_user']->lang['POST_REPORTED']),
+					'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', $_CLASS['core_user']->lang['POST_UNAPPROVED']),
+					'EDIT_IMG'				=> $_CLASS['core_user']->img('btn_edit', $_CLASS['core_user']->lang['EDIT_POST']),
 
 					'POSTER_NAME'			=> $poster,
 					'POST_PREVIEW'			=> $message,
 					'POST_SUBJECT'			=> $post_info['post_subject'],
-					'POST_DATE'				=> $_CLASS['user']->format_date($post_info['post_time']),
+					'POST_DATE'				=> $_CLASS['core_user']->format_date($post_info['post_time']),
 					'POST_IP'				=> $post_info['poster_ip'],
 					'POST_IPADDR'			=> @gethostbyaddr($post_info['poster_ip']),
 					'POST_ID'				=> $post_info['post_id'])
 				);
 
-				$this->display($_CLASS['user']->lang['MCP_QUEUE'], 'mcp_post.html');
+				$this->display($_CLASS['core_user']->lang['MCP_QUEUE'], 'mcp_post.html');
 
 				break;
 
@@ -196,7 +196,7 @@ class mcp_queue extends module
 					$forum_list = $forum_id;
 				}
 
-				$forum_options = '<option value="0"' . (($forum_id == 0) ? ' selected="selected"' : '') . '>' . $_CLASS['user']->lang['ALL_FORUMS'] . '</option>';
+				$forum_options = '<option value="0"' . (($forum_id == 0) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['ALL_FORUMS'] . '</option>';
 				foreach ($forum_list_approve as $row)
 				{
 					$forum_options .= '<option value="' . $row['forum_id'] . '"' . (($forum_id == $row['forum_id']) ? ' selected="selected"' : '') . '>' . $row['forum_name'] . '</option>';
@@ -276,7 +276,7 @@ class mcp_queue extends module
 				{
 					if ($row['poster_id'] == ANONYMOUS)
 					{
-						$poster = (!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['user']->lang['GUEST'];
+						$poster = (!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST'];
 					}
 					else
 					{
@@ -285,7 +285,7 @@ class mcp_queue extends module
 
 					$s_checkbox = '<input type="checkbox" name="post_id_list[]" value="' . $row['post_id'] . '" />';
 
-					$_CLASS['template']->assign_vars_array('postrow', array(
+					$_CLASS['core_template']->assign_vars_array('postrow', array(
 						'U_VIEWFORUM'	=> getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']),
 						// Q: Why accessing the topic by a post_id instead of its topic_id?
 						// A: To prevent the post from being hidden because of wrong encoding or different charset
@@ -296,19 +296,19 @@ class mcp_queue extends module
 						'FORUM_NAME'	=> $row['forum_name'],
 						'TOPIC_TITLE'	=> $row['topic_title'],
 						'POSTER'		=> $poster,
-						'POST_TIME'		=> $_CLASS['user']->format_date($row['post_time']),
+						'POST_TIME'		=> $_CLASS['core_user']->format_date($row['post_time']),
 						'S_CHECKBOX'	=> $s_checkbox)
 					);
 				}
 				unset($rowset);
 
 				// Now display the page
-				$_CLASS['template']->assign(array(
-					'L_DISPLAY_ITEMS'		=> ($mode == 'unapproved_posts') ? $_CLASS['user']->lang['DISPLAY_POSTS'] : $_CLASS['user']->lang['DISPLAY_TOPICS'],
+				$_CLASS['core_template']->assign(array(
+					'L_DISPLAY_ITEMS'		=> ($mode == 'unapproved_posts') ? $_CLASS['core_user']->lang['DISPLAY_POSTS'] : $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
 					'S_FORUM_OPTIONS'		=> $forum_options)
 				);
 
-				$this->display($_CLASS['user']->lang['MCP_QUEUE'], 'mcp_queue.html');
+				$this->display($_CLASS['core_user']->lang['MCP_QUEUE'], 'mcp_queue.html');
 				break;
 		}
 	}
@@ -337,14 +337,14 @@ class mcp_queue extends module
 // Approve Post/Topic
 function approve_post($post_id_list)
 {
-	global $db, $_CLASS, $MAIN_CFG, $config;
+	global $db, $_CLASS, $_CORE_CONFIG, $config;
 
 	if (!($forum_id = check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_approve')))
 	{
 		trigger_error('NOT_AUTHORIZED');
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 	$success_msg = '';
 
 	$s_hidden_fields = build_hidden_fields(array(
@@ -480,7 +480,7 @@ function approve_post($post_id_list)
 
 				$messenger->assign_vars(array(
 					'EMAIL_SIG'		=> $email_sig,
-					'SITENAME'		=> $MAIN_CFG['global']['sitename'],
+					'SITENAME'		=> $_CORE_CONFIG['global']['sitename'],
 					'USERNAME'		=> $post_data['username'],
 					'POST_SUBJECT'	=> censor_text($post_data['post_subject']),
 					'TOPIC_TITLE'	=> censor_text($post_data['topic_title']),
@@ -491,12 +491,8 @@ function approve_post($post_id_list)
 
 				$messenger->send($post_data['user_notify_type']);
 				$messenger->reset();
-
-				if ($messenger->queue)
-				{
-					$messenger->queue->save();
-				}
 			}
+			$messenger->save_queue();
 		}
 
 		// Send out normal user notifications
@@ -528,7 +524,7 @@ function approve_post($post_id_list)
 	}
 	else
 	{
-		$_CLASS['template']->assign(array(
+		$_CLASS['core_template']->assign(array(
 			'S_NOTIFY_POSTER'	=> true,
 			'S_APPROVE'			=> true)
 		);
@@ -549,22 +545,22 @@ function approve_post($post_id_list)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, $redirect);
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(3, $redirect);
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
 
 // Disapprove Post/Topic
 function disapprove_post($post_id_list)
 {
-	global $db, $_CLASS, $MAIN_CFG, $config;
+	global $db, $_CLASS, $_CORE_CONFIG, $config;
 
 	if (!($forum_id = check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_approve')))
 	{
 		trigger_error('NOT_AUTHORIZED');
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 	$reason = request_var('reason', '');
 	$reason_id = request_var('reason_id', 0);
 	$success_msg = $additional_msg = '';
@@ -592,7 +588,7 @@ function disapprove_post($post_id_list)
 		}
 		else
 		{
-			$disapprove_reason = ($row['reason_name'] != 'other') ? $_CLASS['user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_name'])] : '';
+			$disapprove_reason = ($row['reason_name'] != 'other') ? $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_name'])] : '';
 			$disapprove_reason .= ($reason) ? "\n\n" . $_REQUEST['reason'] : '';
 			unset($reason);
 		}
@@ -690,7 +686,7 @@ function disapprove_post($post_id_list)
 
 				$messenger->assign_vars(array(
 					'EMAIL_SIG'		=> $email_sig,
-					'SITENAME'		=> $MAIN_CFG['global']['sitename'],
+					'SITENAME'		=> $_CORE_CONFIG['global']['sitename'],
 					'USERNAME'		=> $post_data['username'],
 					'REASON'		=> stripslashes($disapprove_reason),
 					'POST_SUBJECT'	=> censor_text($post_data['post_subject']),
@@ -699,12 +695,8 @@ function disapprove_post($post_id_list)
 
 				$messenger->send($post_data['user_notify_type']);
 				$messenger->reset();
-
-				if ($messenger->queue)
-				{
-					$messenger->queue->save();
-				}
 			}
+			$messenger->save_queue();
 		}
 		unset($post_info, $disapprove_reason);
 
@@ -728,11 +720,11 @@ function disapprove_post($post_id_list)
 		{
 			$row['reason_name'] = strtoupper($row['reason_name']);
 
-			$reason_title = (!empty($_CLASS['user']->lang['report_reasons']['TITLE'][$row['reason_name']])) ? $_CLASS['user']->lang['report_reasons']['TITLE'][$row['reason_name']] : ucwords(str_replace('_', ' ', $row['reason_name']));
+			$reason_title = (!empty($_CLASS['core_user']->lang['report_reasons']['TITLE'][$row['reason_name']])) ? $_CLASS['core_user']->lang['report_reasons']['TITLE'][$row['reason_name']] : ucwords(str_replace('_', ' ', $row['reason_name']));
 
-			$reason_desc = (!empty($_CLASS['user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_desc'];
+			$reason_desc = (!empty($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_desc'];
 
-			$_CLASS['template']->assign_vars_array('reason', array(
+			$_CLASS['core_template']->assign_vars_array('reason', array(
 				'ID'			=>	$row['reason_id'],
 				'NAME'			=>	htmlspecialchars($reason_title),
 				'DESCRIPTION'	=>	htmlspecialchars($reason_desc),
@@ -741,14 +733,14 @@ function disapprove_post($post_id_list)
 		}
 		$db->sql_freeresult($result);
 
-		$_CLASS['template']->assign(array(
+		$_CLASS['core_template']->assign(array(
 			'S_NOTIFY_POSTER'	=> true,
 			'S_APPROVE'			=> false,
 			'REASON'			=> $reason,
 			'ADDITIONAL_MSG'	=> $additional_msg)
 		);
 
-		confirm_box(false, 'APPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_approve.html');
+		confirm_box(false, 'DISAPPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_approve.html');
 	}
 
 	$redirect = request_var('redirect', getlink('Forums'));
@@ -764,8 +756,8 @@ function disapprove_post($post_id_list)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, getlink("Forums&amp;file=viewforum&amp;f=$forum_id"));
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(3, getlink("Forums&amp;file=viewforum&amp;f=$forum_id"));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
 

@@ -25,7 +25,7 @@
 
 function display_forums($root_data = '', $display_moderators = TRUE)
 {
-	global $config, $db, $SID, $_CLASS, $MAIN_CFG, $forum_moderators;
+	global $config, $db, $SID, $_CLASS, $_CORE_CONFIG, $forum_moderators;
 
 	// Get posted/get info
 	$mark_read = request_var('mark', '');
@@ -46,7 +46,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 	// Display list of active topics for this category?
 	$show_active = (isset($root_data['forum_flags']) && $root_data['forum_flags'] & 16) ? true : false;
 
-	if ($config['load_db_lastread'] && $_CLASS['user']->data['user_id'] != ANONYMOUS)
+	if ($config['load_db_lastread'] && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 	{
 		switch (SQL_LAYER)
 		{
@@ -54,7 +54,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 				break;
 
 			default:
-				$sql_from = '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
+				$sql_from = '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
 				break;
 		}
 		$lastread_select = ', ft.mark_time ';
@@ -64,7 +64,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		$sql_from = FORUMS_TABLE . ' f ';
 		$lastread_select = $sql_lastread = '';
 
-		$tracking_topics = (isset($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$MAIN_CFG['server']['cookie_name'] . '_track'])) : array();
+		$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
 	}
 
 	$sql = "SELECT f.* $lastread_select 
@@ -78,7 +78,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 
 	while ($row = $db->sql_fetchrow($result))
 	{
-		if ($mark_read == 'forums' && $_CLASS['user']->data['user_id'] != ANONYMOUS)
+		if ($mark_read == 'forums' && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 		{
 			if ($_CLASS['auth']->acl_get('f_list', $row['forum_id']))
 			{
@@ -139,7 +139,6 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 			$subforums[$parent_id]['display'] = ($row['display_on_index']) ? true : false;;
 			$subforums[$parent_id]['name'][$forum_id] = $row['forum_name'];
 
-			// Include subforum topic/post counts in parent counts
 			$forum_rows[$parent_id]['forum_topics'] += ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['forum_topics_real'] : $row['forum_topics'];
 			
 			// Do not list redirects in LINK Forums as Posts.
@@ -169,12 +168,12 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 
 		$mark_time_forum = ($config['load_db_lastread']) ? $row['mark_time'] : ((isset($tracking_topics[$forum_id][0])) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0);
 
-		if ($mark_time_forum < $row['forum_last_post_time'] && $_CLASS['user']->data['user_id'] != ANONYMOUS)
+		if ($mark_time_forum < $row['forum_last_post_time'] && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 		{
 			$forum_unread[$parent_id] = true;
 		}
 	}
-	$db->sql_freeresult();
+	$db->sql_freeresult($result);
 
 	// Handle marking posts
 	if ($mark_read == 'forums')
@@ -182,10 +181,10 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		markread('mark', $forum_id_ary);
 
 		$redirect = getlink('Forums');
-		$_CLASS['display']->meta_refresh(3, $redirect);
+		$_CLASS['core_display']->meta_refresh(3, $redirect);
 
 		$message = (strpos($redirect, 'viewforum') !== false) ? 'RETURN_FORUM' : 'RETURN_INDEX';
-		$message = $_CLASS['user']->lang['FORUMS_MARKED'] . '<br /><br />' . sprintf($_CLASS['user']->lang[$message], '<a href="' . $redirect . '">', '</a> ');
+		$message = $_CLASS['core_user']->lang['FORUMS_MARKED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang[$message], '<a href="' . $redirect . '">', '</a> ');
 		trigger_error($message);
 	}
 
@@ -214,7 +213,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		}
 		else if (!empty($hold))
 		{
-			$_CLASS['template']->assign_vars_array('forumrow', array(
+			$_CLASS['core_template']->assign_vars_array('forumrow', array(
 				'S_IS_CAT'			=>	TRUE,
 				'FORUM_ID'			=>	$hold['forum_id'],
 				'FORUM_NAME'		=>	$hold['forum_name'],
@@ -227,7 +226,8 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		$visible_forums++;
 		$forum_id = $row['forum_id'];
 
-
+		$subforums_list = $l_subforums = '';
+		
 		// Generate list of subforums if we need to
 		if (isset($subforums[$forum_id]))
 		{
@@ -251,7 +251,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 					}
 					$subforums_list = implode(', ', $links);
 
-					$l_subforums = (count($subforums[$forum_id]) == 1) ? $_CLASS['user']->lang['SUBFORUM'] . ': ' : $_CLASS['user']->lang['SUBFORUMS'] . ': ';
+					$l_subforums = (sizeof($subforums[$forum_id]) == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
 				}
 			}
 
@@ -269,9 +269,6 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 					$folder_image = 'forum_link';
 					break;
 			}
-
-			$subforums_list = '';
-			$l_subforums = '';
 		}
 
 
@@ -290,9 +287,9 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		// Create last post link information, if appropriate
 		if ($row['forum_last_post_id'])
 		{
-			$last_post_time = $_CLASS['user']->format_date($row['forum_last_post_time']);
+			$last_post_time = $_CLASS['core_user']->format_date($row['forum_last_post_time']);
 
-			$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['user']->lang['GUEST'];
+			$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'];
 			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
 			
 			$last_post_url = getlink('Forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].$SID.'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
@@ -307,25 +304,26 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		$l_moderator = $moderators_list = '';
 		if ($display_moderators && !empty($forum_moderators[$forum_id]))
 		{
-			$l_moderator = (count($forum_moderators[$forum_id]) == 1) ? $_CLASS['user']->lang['MODERATOR'] : $_CLASS['user']->lang['MODERATORS'];
+			$l_moderator = (sizeof($forum_moderators[$forum_id]) == 1) ? $_CLASS['core_user']->lang['MODERATOR'] : $_CLASS['core_user']->lang['MODERATORS'];
 			$moderators_list = implode(', ', $forum_moderators[$forum_id]);
 		}
 
 		$l_post_click_count = ($row['forum_type'] == FORUM_LINK) ? 'CLICKS' : 'POSTS';
 		$post_click_count = ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? $row['forum_posts'] : '';
 
-		$_CLASS['template']->assign_vars_array('forumrow', array(
+		$_CLASS['core_template']->assign_vars_array('forumrow', array(
 			'S_IS_CAT'			=> false, 
 			'S_IS_LINK'			=> ($row['forum_type'] != FORUM_LINK) ? false : true, 
 
-			'LAST_POST_IMG'		=> $_CLASS['user']->img('icon_post_latest', 'VIEW_LATEST_POST'), 
+			'LAST_POST_IMG'		=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'), 
 
 			'FORUM_ID'			=> $row['forum_id'], 
-			'FORUM_FOLDER_IMG'	=> ($row['forum_image']) ? '<img src="' . $row['forum_image'] . '" alt="' . $folder_alt . '" border="0" />' : $_CLASS['user']->img($folder_image, $folder_alt),
+			'FORUM_FOLDER_IMG'	=> ($row['forum_image']) ? '<img src="' . $row['forum_image'] . '" alt="' . $folder_alt . '" />' : $_CLASS['core_user']->img($folder_image, $folder_alt),
+			//'FORUM_FOLDER_IMG_SRC'	=> ($row['forum_image']) ? $row['forum_image'] : $_CLASS['core_user']->img($folder_image, $folder_alt, false, '', 'src'),
 			'FORUM_NAME'		=> $row['forum_name'],
 			'FORUM_DESC'		=> $row['forum_desc'], 
 			$l_post_click_count	=> $post_click_count,
-			'TOPICS'			=> ($_CLASS['auth']->acl_get('m_approve', $row['forum_id'])) ? $row['forum_topics_real'] : $row['forum_topics'],
+			'TOPICS'			=> $row['forum_topics'],
 			'LAST_POST_TIME'	=> $last_post_time,
 			'LAST_POSTER'		=> $last_poster,
 			'MODERATORS'		=> $moderators_list,
@@ -341,12 +339,12 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		);
 	}
 
-	$_CLASS['template']->assign(array(
+	$_CLASS['core_template']->assign(array(
 		'U_MARK_FORUMS'		=> getlink('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
 
 		'S_HAS_SUBFORUM'	=>	($visible_forums) ? true : false,
 
-		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['user']->lang['SUBFORUM'] : $_CLASS['user']->lang['SUBFORUMS'])
+		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS'])
 	);
 
 	return $active_forum_ary;
@@ -357,7 +355,7 @@ function topic_topic_author(&$topic_row)
 	global $_CLASS;
 
 	$topic_author = ($topic_row['topic_poster'] != ANONYMOUS) ? '<a href="'.getlink('Members_List&amp;mode=viewprofile&amp;u=' . $topic_row['topic_poster']) . '">' : '';
-	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? $topic_row['topic_first_poster_name'] : (($topic_row['topic_first_poster_name'] != '') ? $topic_row['topic_first_poster_name'] : $_CLASS['user']->lang['GUEST']);
+	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? $topic_row['topic_first_poster_name'] : (($topic_row['topic_first_poster_name'] != '') ? $topic_row['topic_first_poster_name'] : $_CLASS['core_user']->lang['GUEST']);
 	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? '</a>' : '';
 
 	return $topic_author;
@@ -384,7 +382,7 @@ function topic_generate_pagination($replies, $url)
 			}
 			else if ($times < $total_pages)
 			{
-				$pagination .= $_CLASS['user']->img['pagination_sep'];
+				$pagination .= $_CLASS['core_user']->img['pagination_sep'];
 			}
 			$times++;
 		}
@@ -406,48 +404,50 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 
 	if ($topic_row['topic_status'] == ITEM_MOVED)
 	{
-		$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_MOVED'];
+		$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_MOVED'];
 		$folder_img = 'folder_moved';
 		$folder_alt = 'VIEW_TOPIC_MOVED';
 	}
 	else
 	{
-		switch ($topic_row['topic_type'])
-		{
-			case POST_GLOBAL:
-			case POST_ANNOUNCE:
-				$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
-				$folder = 'folder_announce';
-				$folder_new = 'folder_announce_new';
-				break;
-
-			case POST_STICKY:
-				$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_STICKY'];
-				$folder = 'folder_sticky';
-				$folder_new = 'folder_sticky_new';
-				break;
-
-			default:
-				if ($replies >= $config['hot_threshold'])
-				{
-					$folder = 'folder_hot';
-					$folder_new = 'folder_hot_new';
-				}
-				else
-				{
-					$folder = 'folder';
-					$folder_new = 'folder_new';
-				}
-				break;
-		}
-
 		if ($topic_row['topic_status'] == ITEM_LOCKED)
 		{
-			$topic_type = $_CLASS['user']->lang['VIEW_TOPIC_LOCKED'];
+			$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_LOCKED'];
 			$folder = 'folder_locked';
 			$folder_new = 'folder_locked_new';
+			
+		} else {
+		
+			switch ($topic_row['topic_type'])
+			{
+				case POST_GLOBAL:
+				case POST_ANNOUNCE:
+					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
+					$folder = 'folder_announce';
+					$folder_new = 'folder_announce_new';
+					break;
+	
+				case POST_STICKY:
+					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_STICKY'];
+					$folder = 'folder_sticky';
+					$folder_new = 'folder_sticky_new';
+					break;
+	
+				default:
+					if ($replies >= $config['hot_threshold'])
+					{
+						$folder = 'folder_hot';
+						$folder_new = 'folder_hot_new';
+					}
+					else
+					{
+						$folder = 'folder';
+						$folder_new = 'folder_new';
+					}
+					break;
+			}
 		}
-
+		
 		if (is_user())
 		{
 			$unread_topic = $new_votes = true;
@@ -483,7 +483,7 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 
 	if ($topic_row['poll_start'])
 	{
-		$topic_type .= $_CLASS['user']->lang['VIEW_TOPIC_POLL'];
+		$topic_type .= $_CLASS['core_user']->lang['VIEW_TOPIC_POLL'];
 	}
 
 	return $unread_topic;
@@ -503,25 +503,20 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 
 	if (!isset($attachment_tpl))
 	{
-		if ($_CLASS['cache']->exists('attachment_tpl'))
+		if ($_CLASS['core_cache']->exists('attachment_tpl'))
 		{
-			$attachment_tpl = $_CLASS['cache']->get('attachment_tpl');
+			$attachment_tpl = $_CLASS['core_cache']->get('attachment_tpl');
 		}
 		else
 		{
 			$attachment_tpl = array();
 
 			// Generate Template
-			// TODO: secondary template  
-			//Fix this
-			$template_filename = 'themes/'.$_CLASS['display']->theme.'/template/modules/Forums/attachment.html';
-			//////////////
-			////////////
-			////////////
-			/////////////
+			$template_filename = (file_exists('themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html')) ? 'themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html' : 'template/modules/Forums/attachment.html';
+
 			if (!($fp = @fopen($template_filename, 'rb')))
 			{
-				trigger_error('Could not load attachment template');
+				trigger_error('Could not load template file "' . $template_filename . '"');
 			}
 			$attachment_template = fread($fp, filesize($template_filename));
 			@fclose($fp);
@@ -538,7 +533,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 			}
 			unset($tpl);
 
-			$_CLASS['cache']->put('attachment_tpl', $attachment_tpl);
+			$_CLASS['core_cache']->put('attachment_tpl', $attachment_tpl);
 		}
 	}
 	
@@ -552,14 +547,14 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 	{
 		// Some basics...
 		$attachment['extension'] = strtolower(trim($attachment['extension']));
-		$filename = $config['upload_dir'] . '/' . $attachment['physical_filename'];
-		$thumbnail_filename = $config['upload_dir'] . '/thumb_' . $attachment['physical_filename'];
+		$filename = $config['upload_path'] . '/' . basename($attachment['physical_filename']);
+		$thumbnail_filename = $config['upload_path'] . '/thumb_' . basename($attachment['physical_filename']);
 
 		$upload_image = '';
 
-		if ($_CLASS['user']->img('icon_attach', '') && !$extensions[$attachment['extension']]['upload_icon'])
+		if ($_CLASS['core_user']->img('icon_attach', '') && !$extensions[$attachment['extension']]['upload_icon'])
 		{
-			$upload_image = $_CLASS['user']->img('icon_attach', '');
+			$upload_image = $_CLASS['core_user']->img('icon_attach', '');
 		}
 		else if ($extensions[$attachment['extension']]['upload_icon'])
 		{
@@ -567,11 +562,11 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 		}
 	
 		$filesize = $attachment['filesize'];
-		$size_lang = ($filesize >= 1048576) ? $_CLASS['user']->lang['MB'] : ( ($filesize >= 1024) ? $_CLASS['user']->lang['KB'] : $_CLASS['user']->lang['BYTES'] );
+		$size_lang = ($filesize >= 1048576) ? $_CLASS['core_user']->lang['MB'] : ( ($filesize >= 1024) ? $_CLASS['core_user']->lang['KB'] : $_CLASS['core_user']->lang['BYTES'] );
 
 		$filesize = ($filesize >= 1048576) ? round((round($filesize / 1048576 * 100) / 100), 2) : (($filesize >= 1024) ? round((round($filesize / 1024 * 100) / 100), 2) : $filesize);
 
-		$display_name = $attachment['real_filename']; 
+		$display_name = basename($attachment['real_filename']);
 		$comment = str_replace("\n", '<br />', censor_text($attachment['comment']));
 
 		$denied = false;
@@ -581,16 +576,16 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 			$denied = true;
 
 			$template_array['VAR'] = array('{L_DENIED}');
-			$template_array['VAL'] = array(sprintf($_CLASS['user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
+			$template_array['VAL'] = array(sprintf($_CLASS['core_user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
 
 			$tpl = str_replace($template_array['VAR'], $template_array['VAL'], $attachment_tpl['DENIED']);
 
 			// Replace {L_*} lang strings
-			$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['user']->lang['\$1'])) ? \$_CLASS['user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
+			$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['core_user']->lang['\$1'])) ? \$_CLASS['core_user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
 
 			if (!$return)
 			{
-				$_CLASS['template']->assign_vars_array($blockname, array(
+				$_CLASS['core_template']->assign_vars_array($blockname, array(
 					'DISPLAY_ATTACHMENT' => $tpl)
 				);
 			}
@@ -639,7 +634,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 					$img_source = $filename;
 					$update_count[] = $attachment['attach_id'];
 
-					$l_downloaded_viewed = $_CLASS['user']->lang['VIEWED'];
+					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
 					$download_link = $img_source;
 					break;
 					
@@ -647,7 +642,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 				case ATTACHMENT_CATEGORY_THUMB:
 					$thumb_source = $thumbnail_filename;
 
-					$l_downloaded_viewed = $_CLASS['user']->lang['VIEWED'];
+					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
 					$download_link = (!$force_physical) ? getlink('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
 
 					$additional_array['VAR'][] = '{THUMB_IMG}';
@@ -656,7 +651,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 
 				// Windows Media Streams
 				case ATTACHMENT_CATEGORY_WM:
-					$l_downloaded_viewed = $_CLASS['user']->lang['VIEWED'];
+					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
 					$download_link = $filename;
 
 					// Viewed/Heared File ... update the download count (download.php is not called here)
@@ -665,7 +660,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 
 				// Real Media Streams
 				case ATTACHMENT_CATEGORY_RM:
-					$l_downloaded_viewed = $_CLASS['user']->lang['VIEWED'];
+					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
 					$download_link = $filename;
 
 					$additional_array['VAR'][] = '{U_FORUM}';
@@ -681,7 +676,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 				case SWF_CAT:
 					list($width, $height) = swf_getdimension($filename);
 
-					$l_downloaded_viewed = $_CLASS['user']->lang['VIEWED'];
+					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
 					$download_link = $filename;
 					
 					$additional_array = array(
@@ -694,12 +689,12 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 					break;
 */
 				default:
-					$l_downloaded_viewed = $_CLASS['user']->lang['DOWNLOADED'];
+					$l_downloaded_viewed = $_CLASS['core_user']->lang['DOWNLOADED'];
 					$download_link = (!$force_physical) ? getlink('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
 					break;
 			}
 
-			$l_download_count = ($attachment['download_count'] == 0) ? $_CLASS['user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
+			$l_download_count = ($attachment['download_count'] == 0) ? $_CLASS['core_user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
 
 			$current_block = ($display_cat) ? $blocks[$display_cat] : 'FILE';
 			
@@ -714,11 +709,11 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 			$tpl = str_replace($template_array['VAR'], $template_array['VAL'], $attachment_tpl[$current_block]);
 
 			// Replace {L_*} lang strings
-			$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['user']->lang['\$1'])) ? \$_CLASS['user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
+			$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['core_user']->lang['\$1'])) ? \$_CLASS['core_user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
 
 			if (!$return)
 			{
-				$_CLASS['template']->assign_vars_array($blockname, array(
+				$_CLASS['core_template']->assign_vars_array($blockname, array(
 					'DISPLAY_ATTACHMENT' => $tpl)
 				);
 			}

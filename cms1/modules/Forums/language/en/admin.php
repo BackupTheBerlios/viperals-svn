@@ -1,15 +1,14 @@
 <?php
-// -------------------------------------------------------------
-//
-// $Id: admin.php,v 1.15 2004/09/16 21:49:24 acydburn Exp $
-//
-// FILENAME  : admin.php [ English ]
-// STARTED   : Sat Dec 16, 2000
-// COPYRIGHT : © 2001, 2003 phpBB Group
-// WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ]
-//
-// -------------------------------------------------------------
+/** 
+*
+* admin [English]
+*
+* @package phpBB3
+* @version $Id: admin.php,v 1.27 2005/05/15 20:17:34 acydburn Exp $
+* @copyright (c) 2005 phpBB Group 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*
+*/
 
 // DEVELOPERS PLEASE NOTE
 //
@@ -34,6 +33,20 @@ $this->lang += array(
 	'RETURN_TO'		=> 'Return to ...',
 	'FORUM_INDEX'	=> 'Forum Index',
 	'ADMIN_INDEX'	=> 'Admin Index',
+
+	'ACP_INDEX'				=> 'Admin index',
+
+	'ACP_CAT_GENERAL'		=> 'General',
+	'ACP_CAT_FORUM'			=> 'Forum',
+	'ACP_BOARD_SETTINGS'	=> 'Board settings',
+	'ACP_BOARD_DEFAULTS'	=> 'Board defaults',
+	'ACP_CAT_SERVER'		=> 'Server',
+	'ACP_BOARD_SERVER'		=> 'Server settings',
+
+	'ACP_CAT_USERGROUP'		=> 'Users &amp; Groups',
+	'ACP_USERS_MANAGE'		=> 'Edit user data',
+	
+
 
 	'DB_CAT'		=> 'Database',
 	'DB_BACKUP'		=> 'Backup Database',
@@ -71,7 +84,7 @@ $this->lang += array(
 	'GROUP_PERMS'	=> 'Group permissions',
 
 	'POST_CAT'		=> 'Posting',
-	'SMILE'			=> 'Smilies',
+	'SMILIES'		=> 'Smilies',
 	'ICONS'			=> 'Icons',
 	'WORD_CENSOR'	=> 'Word Censors',
 
@@ -93,6 +106,10 @@ $this->lang += array(
 	'GROUP_MANAGE'	=> 'Manage groups',
 	'CUSTOM_PROFILE_FIELDS'	=> 'Profile fields',
 
+	'LANGUAGE_CAT'		=> 'Language',
+	'LANGUAGE_PACKS'	=> 'Language Packs',
+
+	
 	'ADMINISTRATORS'	=> 'Administrators',
 	'USERNAMES_EXPLAIN'	=> 'Place each username on a seperate line',
 	'LOOK_UP_FORUM'		=> 'Select a Forum',
@@ -111,8 +128,8 @@ $this->lang += array(
 
 	'CONFIRM_OPERATION'	=> 'Are you sure you wish to carry out this operation?',
 
-	'log_index_activate'	=> '<b>Activated inactive users</b><br />&#187; %s users',
-	'log_index_delete'		=> '<b>Deleted inactive users</b><br />&#187; %s',
+	'LOG_INDEX_ACTIVATE'	=> '<b>Activated inactive users</b><br />&#187; %s',
+	'LOG_INDEX_DELETE'		=> '<b>Deleted inactive users</b><br />&#187; %s',
 	'LOG_INDEX_REMIND'		=> '<b>Sent reminder emails to inactive users</b><br />&#187; %s',
 
 	'LOG_USER_INACTIVE'		=> '<b>User deactivated</b><br />&#187; %s',
@@ -138,12 +155,12 @@ $this->lang += array(
 	'LOG_PRUNE'				=> '<b>Pruned forums</b><br />&#187; %s',
 	'LOG_AUTO_PRUNE'		=> '<b>Auto-pruned forums</b><br />&#187; %s',
 
-	'LOG_BAN_EXCLUDE_USER'	=> '<b>Excluded user from ban</b> for reason %s<br />&#187; %s ',
-	'LOG_BAN_EXCLUDE_IP'	=> '<b>Excluded ip from ban</b> for reason %s<br />&#187; %s ',
-	'LOG_BAN_EXCLUDE_EMAIL' => '<b>Excluded email from ban</b> for reason %s<br />&#187; %s ',
-	'LOG_BAN_USER'			=> '<b>Banned User</b> for reason %s<br />&#187; %s ',
-	'LOG_BAN_IP'			=> '<b>Banned ip</b> for reason %s<br />&#187; %s',
-	'LOG_BAN_EMAIL'			=> '<b>Banned email</b> for reason %s<br />&#187; %s',
+	'LOG_BAN_EXCLUDE_USER'	=> '<b>Excluded user from ban</b> for reason "<i>%s</i>"<br />&#187; %s ',
+	'LOG_BAN_EXCLUDE_IP'	=> '<b>Excluded ip from ban</b> for reason "<i>%s</i>"<br />&#187; %s ',
+	'LOG_BAN_EXCLUDE_EMAIL' => '<b>Excluded email from ban</b> for reason "<i>%s</i>"<br />&#187; %s ',
+	'LOG_BAN_USER'			=> '<b>Banned User</b> for reason "<i>%s</i>"<br />&#187; %s ',
+	'LOG_BAN_IP'			=> '<b>Banned ip</b> for reason "<i>%s</i>"<br />&#187; %s',
+	'LOG_BAN_EMAIL'			=> '<b>Banned email</b> for reason "<i>%s</i>"<br />&#187; %s',
 	'LOG_UNBAN_USER'		=> '<b>Unbanned user</b><br />&#187; %s',
 	'LOG_UNBAN_IP'			=> '<b>Unbanned ip</b><br />&#187; %s',
 	'LOG_UNBAN_EMAIL'		=> '<b>Unbanned email</b><br />&#187; %s',
@@ -177,6 +194,7 @@ $this->lang += array(
 	'log_prune_user_del_anon'=> '<b>Users Pruned and Posts Retained</b><br />%s',
 
 	'LOG_RESYNC_STATS'		=> '<b>Post, topic and user stats reset</b>',
+	'LOG_RESYNC_POSTCOUNTS'	=> '<b>User postcounts synced</b>',
 	'LOG_RESET_DATE'		=> '<b>Board start date reset</b>',
 	'LOG_RESET_ONLINE'		=> '<b>Most users online reset</b>',
 
@@ -253,12 +271,13 @@ $this->lang += array(
 	'LOG_JAB_REGISTER'	=> '<b>Jabber account registered</b>',
 	'LOG_JAB_CHANGED'	=> '<b>Jabber account changed</b>',
 
-	'LOG_EMAIL_ERROR'	=> '%s',
-	'LOG_JABBER_ERROR'	=> '%s',
-
 	'LOG_BOT_ADDED'		=> '<b>New bot added</b><br />&#187; %s',
 	'LOG_BOT_UPDATED'	=> '<b>Existing bot updated</b><br />&#187; %s',
 	'LOG_BOT_DELETE'	=> '<b>Deleted bot</b><br />&#187; %s',
+
+	'LOG_DELETE_LANGUAGE_PACK'		=> '<b>Deleted language pack</b><br />&#187; %s',
+	'LOG_LANGUAGE_PACK_INSTALLED'	=> '<b>Installed language pack</b><br />&#187; %s',
+	'LOG_UPDATE_LANG_DETAILS'		=> '<b>Updated language pack details</b><br />&#187; %s',
 );
 
 // Index page
@@ -288,6 +307,7 @@ $this->lang += array(
 	'RESET_ONLINE'		=> 'Reset Online',
 	'RESET_DATE'		=> 'Reset Date',
 	'RESYNC_STATS'		=> 'Resync Stats',
+	'RESYNC_POSTCOUNTS'	=> 'Resync Postcounts',
 
 	'INACTIVE_USERS'		=> 'Inactive Users',
 	'INACTIVE_USERS_EXPLAIN'=> 'This is a list of users who have registered but whos accounts are inactive. You can activate, delete or remind (by sending an email) these users if you wish.',
@@ -411,7 +431,7 @@ $this->lang += array(
 	'acl_a_cookies' 	=> 'Can alter cookie settings',
 	'acl_a_names' 		=> 'Can alter disallowed names',
 	'acl_a_words' 		=> 'Can alter word censors',
-	'acl_a_icons' 		=> 'Can alter topic icons and emoticons',
+	'acl_a_icons' 		=> 'Can alter topic icons and smilies',
 	'acl_a_search' 		=> 'Can re-index search tables',
 	'acl_a_prune' 		=> 'Can prune forums',
 	'acl_a_bbcode' 		=> 'Can define BBCode tags',
@@ -502,13 +522,13 @@ $this->lang += array(
 	'acl_u_savedrafts'	=> 'Can save drafts',
 	'acl_u_download'	=> 'Can download files',
 	'acl_u_attach'		=> 'Can attach files',
+	'acl_u_sig'			=> 'Can use signature',
 
 	'acl_u_pm_attach'	=> 'Can attach files in private messages',
 	'acl_u_pm_html'		=> 'Can post HTML in private messages',
 	'acl_u_pm_bbcode'	=> 'Can post BBCode in private messages',
 	'acl_u_pm_smilies'	=> 'Can post smilies in private messages',
 	'acl_u_pm_download'	=> 'Can download files in private messages',
-	'acl_u_pm_sig'		=> 'Can use signature in private messages',
 	'acl_u_pm_report'	=> 'Can report private messages',
 	'acl_u_pm_edit'		=> 'Can edit own private messages',
 	'acl_u_pm_printpm'	=> 'Can print private messages',
@@ -619,10 +639,8 @@ $this->lang += array(
 	'ALLOW_BBCODE_PM'	=> 'Allow BBCode in private messages',
 	'ALLOW_SMILIES_PM'	=> 'Allow smilies in private messages',
 	'ALLOW_DOWNLOAD_PM'	=> 'Allow downloading of attachments in private messages',
-	'ALLOW_SIG_PM'		=> 'Allow signatures in private messages',
 	'ALLOW_REPORT_PM'	=> 'Allow reporting of private messages',
 	'ALLOW_FORWARD_PM'	=> 'Allow forwarding of private messages',
-	'ALLOW_QUOTE_PM'	=> 'Allow quoting of private messages',
 	'ALLOW_PRINT_PM'	=> 'Allow print view in private messaging',
 	'ALLOW_EMAIL_PM'	=> 'Allow emailing private messages',
 	'ALLOW_IMG_PM'		=> 'Allow use of IMG BBCode Tag',
@@ -678,7 +696,7 @@ $this->lang += array(
 	'BROWSER_VALID_EXPLAIN'		=> 'Enables browser validation for each session inproving security.',
 	'ENABLE_GZIP'				=> 'Enable GZip Compression',
 	'SMILIES_PATH'				=> 'Smilies storage path',
-	'SMILIES_PATH_EXPLAIN'		=> 'Path under your phpBB root dir, e.g. images/smiles',
+	'SMILIES_PATH_EXPLAIN'		=> 'Path under your phpBB root dir, e.g. images/smilies',
 	'ICONS_PATH'				=> 'Post icons storage path',
 	'ICONS_PATH_EXPLAIN'		=> 'Path under your phpBB root dir, e.g. images/icons',
 	'UPLOAD_ICONS_PATH'			=> 'Extension group icons storage path',
@@ -704,6 +722,8 @@ $this->lang += array(
 	'ONLINE_LENGTH_EXPLAIN'		=> 'Time in minutes after which inactive users will not appear in viewonline listings, lower equals less processing.',
 	'YES_ONLINE'				=> 'Enable online user listings',
 	'YES_ONLINE_EXPLAIN'		=> 'Display online user information on index, forum and topic pages.',
+	'YES_ONLINE_GUESTS'			=> 'Enable online guest listings in viewonline',
+	'YES_ONLINE_GUESTS_EXPLAIN'	=> 'Allow display of guest user informations in viewonline.',
 	'YES_ONLINE_TRACK'			=> 'Enable display of user online img',
 	'YES_ONLINE_TRACK_EXPLAIN'	=> 'Display online information for user in profiles and viewtopic.',
 	'YES_BIRTHDAYS'				=> 'Enable birthday listing',
@@ -725,7 +745,9 @@ $this->lang += array(
 	'ENABLE_EMAIL'				=> 'Enable board-wide emails',
 	'ENABLE_EMAIL_EXPLAIN'		=> 'If this is set to disabled no emails will be sent by the board at all.',
 	'BOARD_EMAIL_FORM'			=> 'Users send email via board',
-	'BOARD_EMAIL_FORM_EXPLAIN'	=> 'This function keeps email addresses completely private.',
+	'BOARD_EMAIL_FORM_EXPLAIN'	=> 'Instead of showing the users email address users are able to send emails via the board.',
+	'BOARD_HIDE_EMAILS'			=> 'Hide email addresses',
+	'BOARD_HIDE_EMAILS_EXPLAIN'	=> 'This function keeps email addresses completely private.',
 	'EMAIL_FUNCTION_NAME'		=> 'Email Function Name',
 	'EMAIL_FUNCTION_NAME_EXPLAIN' => 'The email function used to send mails through PHP.',
 	'EMAIL_PACKAGE_SIZE'		=> 'Email Package Size',
@@ -770,6 +792,8 @@ $this->lang += array(
 	'ACC_DISABLE'				=> 'Disable',
 	'VISUAL_CONFIRM'			=> 'Enable visual confirmation',
 	'VISUAL_CONFIRM_EXPLAIN'	=> 'Requires new users enter a random code matching an image to help prevent mass registrations.',
+	'LOGIN_LIMIT'				=> 'Login attempts',
+	'LOGIN_LIMIT_EXPLAIN'		=> 'Number of failed logins users can make before being locked out that session',
 	'REG_LIMIT'					=> 'Registration attempts',
 	'REG_LIMIT_EXPLAIN'			=> 'Number of attempts users can make at the confirmation code before being locked out that session.',
 	'FORCE_PASS_CHANGE'			=> 'Force password change',
@@ -998,60 +1022,71 @@ $this->lang += array(
 // Smiley and topic icons
 $this->lang += array(
 	'ICONS_EXPLAIN'	=> 'From this page you can add, remove and edit the icons users may add to their topics or posts. These icons are generally displayed next to topic titles on the forum listing, or the post subjects in topic listings. You can also install and create new packages of icons.',
-	'SMILE_EXPLAIN' => 'Smilies or emoticons are typically small, sometimes animated images used to convey an emotion or feeling. From this page you can add, remove and edit the emoticons users can use in their posts and private messages. You can also install and create new packages of smilies.',
-	'IMPORT_SMILE'	=> 'Install smilies pak',
-	'EXPORT_SMILE'	=> 'Create smilies pak',
+	'SMILIES_EXPLAIN' => 'Smilies or emoticons are typically small, sometimes animated images used to convey an emotion or feeling. From this page you can add, remove and edit the emoticons users can use in their posts and private messages. You can also install and create new packages of smilies.',
+	'IMPORT_SMILIES'	=> 'Install smilies pak',
+	'EXPORT_SMILIES'	=> 'Create smilies pak',
 	'IMPORT_ICONS'	=> 'Install icons pak',
 	'EXPORT_ICONS'	=> 'Create icons pak',
-	'MASS_ADD_SMILE'=> 'Add multiple smilies',
-	'ADD_SMILE'		=> 'Add single smilie',
+	'MASS_ADD_SMILIES'=> 'Add multiple smilies',
+	'ADD_SMILIES'	=> 'Add single smiley',
 	'ADD_ICONS'		=> 'Add single icon',
 	'ADD_ICONS'		=> 'Add multiple icons',
-	'EDIT_SMILE'	=> 'Edit smilies',
+	'EDIT_SMILIES'	=> 'Edit smilies',
 	'EDIT_ICONS'	=> 'Edit Icons',
-	'SMILE_NOT_DISPLAYED' => 'The following smilies are not displayed on the posting page',
+	'SMILIES_NOT_DISPLAYED' => 'The following smilies are not displayed on the posting page',
 	'ICONS_NOT_DISPLAYED' => 'The following icons are not displayed on the posting page',
+	'CODE'			=> 'Code',
 	'EMOTION'		=> 'Emotion',
 	'REORDER'		=> 'Reorder',
 	'DISPLAY'		=> 'Display',
 	'DIMENSIONS'	=> 'Dimensions',
 	'FIRST'			=> 'First',
-	'AFTER_SMILE'	=> 'After %s',
+	'AFTER_SMILIES'	=> 'After %s',
 	'AFTER_ICONS'	=> 'After %s',
-	'SMILE_CONFIG'	=> 'Smilie configuration',
-	'SMILE_IMAGE'	=> 'Smilie image',
-	'SMILE_CODE'	=> 'Smilie code',
-	'SMILE_URL'		=> 'Smilie image file',
-	'SMILE_ORDER'	=> 'Smilie order',
-	'SMILE_EMOTION' => 'Emotion',
-	'SMILE_ADD'		=> 'Add a new Smilie',
-	'SMILE_EDIT'	=> 'Edit Smilie',
-	'SMILE_LOCATION'=> 'Smilie location',
-	'ICONS_CONFIG'	=> 'Icon configuration',
-	'ICONS_IMAGE'	=> 'Icon image',
-	'ICONS_ORDER'	=> 'Icon order',
-	'ICONS_LOCATION'=> 'Icon location',
-	'ICONS_ADD'		=> 'Add a new Icon',
-	'ICONS_EDIT'	=> 'Edit Icon',
-	'EXPORT_SMILE_EXPLAIN' => 'To create a package of your currently installed smilies, click %sHERE%s to download the emoticons.pak file. Once downloaded create a zip or tgz file containing all of your smilies plus this .pak configuration file.',
+
+	'SMILIES_CONFIG'	=> 'Smiley configuration',
+	'SMILIES_IMAGE'		=> 'Smiley image',
+	'SMILIES_CODE'		=> 'Smiley code',
+	'SMILIES_URL'		=> 'Smiley image file',
+	'SMILIES_ORDER'		=> 'Smiley order',
+	'SMILIES_EMOTION'	=> 'Emotion',
+	'SMILIES_ADD'		=> 'Add a new Smiley',
+	'SMILIES_EDIT'		=> 'Edit Smiley',
+	'SMILIES_LOCATION'	=> 'Smiley location',
+	'SMILIES_WIDTH'		=> 'Smiley width',
+	'SMILIES_HEIGHT'	=> 'Smiley height',
+
+	'ICONS_CONFIG'		=> 'Icon configuration',
+	'ICONS_IMAGE'		=> 'Icon image',
+	'ICONS_LOCATION'	=> 'Icon location',
+	'ICONS_URL'			=> 'Icon image file',
+	'ICONS_ORDER'		=> 'Icon order',
+	'ICONS_ADD'			=> 'Add a new Icon',
+	'ICONS_EDIT'		=> 'Edit Icon',
+	'ICONS_WIDTH'		=> 'Icon width',
+	'ICONS_HEIGHT'		=> 'Icon height',
+
+	'EXPORT_SMILIES_EXPLAIN' => 'To create a package of your currently installed smilies, click %sHERE%s to download the smilies.pak file. Once downloaded create a zip or tgz file containing all of your smilies plus this .pak configuration file.',
 	'EXPORT_ICONS_EXPLAIN' => 'To create a package of your currently installed icons, click %sHERE%s to download the icons package file. Once downloaded create a zip or tgz file containing all of your icons plus this .pak configuration file.',
-	'NO_SMILE_EXPORT'	=> 'You have no smilies with which to create a package.',
+	'NO_SMILIES_EXPORT'	=> 'You have no smilies with which to create a package.',
 	'NO_ICONS_EXPORT'	=> 'You have no icons with which to create a package.',
 	'WRONG_PAK_TYPE'	=> 'The specified package does not contain the appropriate data.',
 	'SELECT_PACKAGE'	=> 'Select a package file',
 	'DELETE_ALL'		=> 'Delete all',
 	'KEEP_ALL'			=> 'Keep all',
 	'REPLACE_MATCHES'	=> 'Replace matches',
-	'NO_SMILE_PAK'		=> 'No smilie packages found.',
-	'CURRENT_SMILE'		=> 'Current smilies',
-	'SMILE_IMPORT_SUCCESS' => 'The smilies pack was imported successfully',
+	'NO_SMILIES_PAK'	=> 'No smiley packages found.',
+	'CURRENT_SMILIES'	=> 'Current smilies',
+	'SMILIES_IMPORT_SUCCESS' => 'The smilies pack was imported successfully',
 	'NO_ICONS_PAK' => 'No icon packages found.',
 	'CURRENT_ICONS' => 'Current icons',
+	'DISPLAY_ON_POSTING'	=> 'Display on posting',
+	
 	'ICONS_IMPORT_SUCCESS' => 'The icons pack was imported successfully',
-	'SMILE_DELETED' => 'The smilie has been removed successfully.',
-	'SMILE_EDITED' => 'The smilie has been updated successfully.',
-	'SMILE_ADDED' => 'The smilie has been added successfully.',
-	'SMILE_IMPORTED' => 'The smilies pack has been installed successfully.',
+	'SMILIES_DELETED' => 'The smiley has been removed successfully.',
+	'SMILIES_EDITED' => 'The smiley has been updated successfully.',
+	'SMILIES_ADDED' => 'The smiley has been added successfully.',
+	'SMILIES_IMPORTED' => 'The smilies pack has been installed successfully.',
 	'ICONS_DELETED' => 'The icon has been removed successfully.',
 	'ICONS_EDITED' => 'The icon has been updated successfully.',
 	'ICONS_ADDED' => 'The icon has been added successfully.',
@@ -1890,9 +1925,9 @@ $this->lang += array(
 	'DLL_FIREBIRD'		=> 'Firebird 1.5+',
 	'DLL_MYSQL'			=> 'MySQL 3.23.x/4.x',
 	'DLL_MYSQL4'		=> 'MySQL 4.1+',
+	'DLL_MYSQLI'		=> 'MySQL 4.1+ with MySQLi Extension',
 	'DLL_MSSQL'			=> 'MSSQL Server 2000',
 	'DLL_MSSQL-ODBC'	=> 'MSSQL Server 2000 via ODBC',
-	'DLL_MSACCESS'		=> 'MS Access via ODBC',
 	'DLL_ORACLE'		=> 'Oracle',
 	'DLL_POSTGRES'		=> 'PostgreSQL 7.x',
 	'DLL_SQLITE'		=> 'SQLite',
@@ -2028,13 +2063,14 @@ $this->lang += array(
 	'NO_FIELD_TYPE'				=> 'No Field type specified',
 	'FIRST_OPTION'				=> 'First Option',
 	'SECOND_OPTION'				=> 'Second Option',
-	'EMPTY_FIELD_NAME'			=> 'Empty field name',
+	'EMPTY_FIELD_IDENT'			=> 'Empty field name',
+	'INVALID_CHARS_FIELD_IDENT'	=> 'Field name can only contain lowercase a-z and _',
 	'EMPTY_USER_FIELD_NAME'		=> 'Empty Field Name presented to the user',
 
 	'PROFILE_BASIC_OPTIONS'		=> 'Basic Options',
 	'PROFILE_TYPE_OPTIONS'		=> 'Profile type specific options',
 	'PROFILE_LANG_OPTIONS'		=> 'Language specific options',
-	
+
 	'STEP_1_TITLE_CREATE'		=> 'Add Profile Field',
 	'STEP_1_TITLE_EDIT'			=> 'Edit Profile Field',
 
@@ -2046,7 +2082,7 @@ $this->lang += array(
 
 	'STEP_2_EXPLAIN_CREATE'		=> 'Here you are able to define some common options. Further you are able to preview the field you generated, as the user will see it. Play around with it until you are satisfied as how the field behaves.',
 	'STEP_2_EXPLAIN_EDIT'		=> 'Here you are able to change some common options. Further you are able to preview the changed field, as the user will see it. Play around with it until you are satisfied as how the field behaves.<br /><b>Please note that changes to profile fields will not affect existing profile fields entered by your users.</b>',
-	
+
 	'STEP_3_TITLE_CREATE'		=> 'Remaining Language Definitions',
 	'STEP_3_TITLE_EDIT'			=> 'Language Definitions',
 
@@ -2069,13 +2105,22 @@ $this->lang += array(
 	'DISPLAY_AT_REGISTRATION'	=> 'Display at registration screen',
 	'HIDE_PROFILE_FIELD'		=> 'Hide Profile Field',
 	'HIDE_PROFILE_FIELD_EXPLAIN'=> 'Only Administrators and Moderators are able to see/fill out this profile field',
+	'EXCLUDE_FROM_VIEW'			=> 'Do not display profile field',
+	'EXCLUDE_FROM_VIEW_EXPLAIN'	=> 'The profile field will not be shown on viewtopic/viewprofile/memberlist/etc.',
 
 	'ADDED_PROFILE_FIELD'		=> 'Successfully added custom profile field',
 	'CREATE_NEW_FIELD'			=> 'Create New Field',
-	'DELETED_PROFILE_FIELD'		=> 'Successfully deleted profile field.',
+	'REMOVED_PROFILE_FIELD'		=> 'Successfully removed profile field.',
 	'CONFIRM_DELETE_PROFILE_FIELD'	=> 'Are you sure you want to delete this profile field?',
 	'PROFILE_FIELD_ACTIVATED'	=> 'Profile field successfully activated',
 	'PROFILE_FIELD_DEACTIVATED'	=> 'Profile field successfully deactivated',
+	'CHANGED_PROFILE_FIELD'		=> 'Successfully changed profile field',
+
+	'LOG_CREATE_PROFILE_FIELD'		=> '<b>Profile field added</b><br />&#187; %s',
+	'LOG_EDIT_PROFILE_FIELD'		=> '<b>Profile field changed</b><br />&#187; %s',
+	'LOG_ACTIVATE_PROFILE_FIELD'	=> '<b>Profile field activated</b><br />&#187; %s',
+	'LOG_DEACTIVATE_PROFILE_FIELD'	=> '<b>Profile field deactivated</b><br />&#187; %s',
+	'LOG_REMOVED_PROFILE_FIELD'		=> '<b>Profile field removed</b><br />&#187; %s',
 
 	'CHARS_ANY'		=> 'Any character',
 	'NUMBERS_ONLY'	=> 'Only numbers (0-9)',
@@ -2084,8 +2129,8 @@ $this->lang += array(
 
 	'FIELD_TYPE'			=> 'Field Type',
 	'FIELD_TYPE_EXPLAIN'	=> 'You are not able to change the field type later.',
-	'FIELD_NAME'			=> 'Field Name',
-	'FIELD_NAME_EXPLAIN'	=> 'The Field Name is a name for you to identify the profile field, it is not displayed to the user.',
+	'FIELD_IDENT'			=> 'Field Name',
+	'FIELD_IDENT_EXPLAIN'	=> 'The Field Name is a name for you to identify the profile field, it is not displayed to the user.',
 	'LANG_SPECIFIC_OPTIONS'	=> 'Language specific options [<b>%s</b>]',
 	'USER_FIELD_NAME'		=> 'Field Name presented to the user',
 	'FIELD_DESCRIPTION'		=> 'Field Description',
@@ -2114,6 +2159,58 @@ $this->lang += array(
 
 	'DEFAULT_ISO_LANGUAGE'	=> 'Default Language [%s]',
 	'ISO_LANGUAGE'			=> 'Language [%s]',
+
+	'NO_FIELD_ID'			=> 'No field id specified',
+	'FIELD_NOT_FOUND'		=> 'Profile field not found',
+	'NO_FIELD_ENTRIES'		=> 'No Entries defined',
+);
+
+// Language Packs
+$this->lang += array(
+	'LANGUAGE_PACKS_EXPLAIN'	=> 'Here you are able to install/remove language packs',
+	'LANGUAGE_PACK_NAME'		=> 'Name',
+	'LANGUAGE_PACK_LOCALNAME'	=> 'Local name',
+	'LANGUAGE_PACK_ISO'			=> 'ISO',
+	'LANGUAGE_PACK_USED_BY'		=> 'Used by',
+	'INSTALLED_LANGUAGE_PACKS'	=> 'Installed language packs',
+	'UNINSTALLED_LANGUAGE_PACKS'=> 'Uninstalled language packs',
+	'NO_UNINSTALLED_LANGUAGE_PACKS'	=> 'No uninstalled language packs',
+	'NO_LANG_ID'				=> 'You haven\'t specified a language pack',
+	'NO_REMOVE_DEFAULT_LANG'	=> 'You are not able to remove the default language pack.<br />If you want to remove this language pack, change your boards default language first.',
+	'LANGUAGE_PACK_DELETED'		=> 'The language pack <b>%s</b> has been removed successfully. All users using this language have been resetted to the boards default language.',
+	'LANGUAGE_PACK_NOT_EXIST'	=> 'The selected language pack does not exist.',
+	'LANGUAGE_PACK_ALREADY_INSTALLED'	=> 'This language pack is already installed.',
+	'INVALID_LANGUAGE_PACK'		=> 'The selected language pack seems to be not valid. Please verify the language pack and upload it again if necessary.',
+	'LANGUAGE_PACK_INSTALLED'	=> 'The language pack <b>%s</b> has been successfully installed.',
+	'LANGUAGE_PACK_DETAILS'		=> 'Language Pack Details',
+	'WRONG_LANGUAGE_FILE'		=> 'Selected language file is invalid',
+	'LANGUAGE_DETAILS_UPDATED'	=> 'Language details successfully updated',
+
+	'LANG_ENGLISH_NAME'			=> 'English name',
+	'LANG_LOCAL_NAME'			=> 'Local name',
+	'LANG_ISO_CODE'				=> 'ISO Code',
+	'LANG_AUTHOR'				=> 'Language Pack Author',
+
+	'MISSING_LANGUAGE_FILE'		=> 'Missing Language File: <span style="color:red">%s</span>',
+	'THOSE_MISSING_LANG_FILES'	=> 'The following language files are missing from the %s language folder',
+	'MISSING_LANG_VARIABLES'	=> 'Missing Language Variables',
+	'THOSE_MISSING_LANG_VARIABLES'	=> 'The following language variables are missing from the <b>%s</b> language pack',
+
+	'LANGUAGE_KEY'				=> 'Language Key',
+	'LANGUAGE_VARIABLE'			=> 'Language Variable',
+	'LANGUAGE_FILES'			=> 'Language Files',
+	'HELP_FILES'				=> 'Help Files',
+	'EMAIL_TEMPLATES'			=> 'Email Templates',
+
+	'LANGUAGE_ENTRIES'			=> 'Language Entries',
+	'LANGUAGE_ENTRIES_EXPLAIN'	=> 'Here you are able to change existing language pack entries or not already translated ones.<br /><b>Note:</b> Once you changed a language file, the changes will be stored within a seperate folder for you to download. The changes will not be seen by your users until you replace the original language files at your webspace (by uploading them).',
+	'REMOVE_FROM_STORAGE_FOLDER'=> 'Remove from storage folder',
+	'FILE_CONTENTS'				=> 'File Contents',
+	'FILE_FROM_STORAGE'			=> 'File from storage folder',
+	'SUBMIT_AND_DOWNLOAD'		=> 'Submit and Download File',
+	'SELECT_DOWNLOAD_FORMAT'	=> 'Select download format',
+	'DOWNLOAD_AS'				=> 'Download as',
+	'DOWNLOAD'					=> 'Download',
 );
 
 ?>

@@ -81,74 +81,100 @@ class bbcode
 							${$type}['search'][] = str_replace('$uid', $this->bbcode_uid, $search);
 							${$type}['replace'][] = $replace;
 						}
+
+						if (sizeof($str['search']))
+						{
+							$message = str_replace($str['search'], $str['replace'], $message);
+							$str = array('search' => array(), 'replace' => array());
+						}
+
+						if (sizeof($preg['search']))
+						{
+							$message = preg_replace($preg['search'], $preg['replace'], $message);
+							$preg = array('search' => array(), 'replace' => array());
+						}
 					}
 				}
 			}
 		}
 
-		if (count($str['search']))
-		{
-			$message = str_replace($str['search'], $str['replace'], $message);
-		}
-		if (count($preg['search']))
-		{
-			$message = preg_replace($preg['search'], $preg['replace'], $message);
-		}
-		
 		// Remove the uid from tags that have not been transformed into HTML
 		$message = str_replace(':' . $this->bbcode_uid, '', $message);
-		$message = $this->decode_bbcode_php($message);
+		
+		$match_count = preg_match_all("#\<!--php-->(.*?)\<!--/php-->#si", $message, $matches);
+		
+		if ($match_count)
+		{
+			$conf = array('highlight.bg', 'highlight.comment', 'highlight.default', 'highlight.html', 'highlight.keyword', 'highlight.string');
+			foreach ($conf as $ini_var)
+			{
+				ini_set($ini_var, str_replace('highlight.', 'syntax', $ini_var));
+			}
+			
+			for ($i = 0; $i < $match_count; $i++)
+			{
+				$after = $this->decode_php($matches[1][$i]);
+				$after = '<div class="codetitle"><b>PHP:</b></div><div class="codecontent">'.$after.'</div>';
+				
+				$before = '<!--php-->' . $matches[1][$i] . '<!--/php-->';
+				$message = str_replace($before, $after, $message);
+			}
+		}
+		return $message;
 	}
 	
-	function decode_bbcode_php($text)
+	function decode_php($text)
 	{
-		$code_start_html = '<div class="codetitle"><b>PHP:</b></div><div class="codecontent">';
-		$code_end_html =  '</div>';
-		$matches = array();
-		$match_count = preg_match_all("#\<!--php-->(.*?)\<!--/php-->#si", $text, $matches);
-	
-		for ($i = 0; $i < $match_count; $i++) {
-			$before_replace = $matches[1][$i];
-			$after_replace = trim($matches[1][$i]);
+		global $phpversion;
+		
+		$text = trim($text);
+		
+		$remove_tags = false;
+		$str_from = array('&lt;', '&gt;', '&#39;', '&amp;');
+		$str_to = array('<', '>', '\'', '&');
 
-			$str_to_match = '<!--php-->' . $before_replace . '<!--/php-->';
-			$replacement = $code_start_html;
-			
-
-			$after_replace = str_replace('&lt;', '<', $after_replace);
-			$after_replace = str_replace('&gt;', '>', $after_replace);
-			$after_replace = str_replace("<br />\r\n", "\n", $after_replace);
-			$after_replace = str_replace("<br />\n", "\n", $after_replace);
-			$after_replace = str_replace('&amp;', '&', $after_replace);
-			$after_replace = str_replace('&quot;', '"', $after_replace);
-			$after_replace = str_replace('&#39;', "'", $after_replace);
-
-			$added = FALSE;
-			if (preg_match('/^<\?.*?\?>$/si', $after_replace) <= 0) {
-				$after_replace = "<?php $after_replace ?>";
-				$added = TRUE;
-			}
-
-			$after_replace = highlight_string($after_replace, TRUE);
-
-			if ($added == TRUE) {
-				$after_replace = str_replace('<font color="#0000BB">&lt;?php', '<font color="#0000BB">', $after_replace);
-				$after_replace = str_replace('&lt;?php', '', $after_replace); // php 5
-				$after_replace = str_replace('<font color="#0000BB">?&gt;</font>', '', $after_replace);
-				$after_replace = str_replace('?&gt;', '', $after_replace); // php 5
-
-			}
-			$after_replace = preg_replace('/<font color="(.*?)">/si', '<span style="color: \\1;">', $after_replace);
-			$after_replace = str_replace('</font>', '</span>', $after_replace);
-			$after_replace = str_replace("\n", '', $after_replace);
-			$replacement .= $after_replace;
-			$replacement .= $code_end_html;
-	
-			$text = str_replace($str_to_match, $replacement, $text);
+		$text = str_replace($str_from, $str_to, $text);
+		if (!preg_match('/^\<\?.*?\?\>/is', $text))
+		{
+			$remove_tags = true;
+			$text = "<?php $text ?>";
 		}
-	
-		//$text = str_replace('<!--php-->', $code_start_html, $text);
-		//$text = str_replace('<!--/php-->', $code_end_html, $text);
+
+		// Because highlight_string is specialcharing the text (but we already did this before), we have to reverse this in order to get correct results
+		$text = strtr($text, array_flip(get_html_translation_table(HTML_ENTITIES)));
+		
+		if ($phpversion < 420) {
+			ob_start();
+			highlight_string($text);
+			$text = ob_get_contents();
+			ob_end_clean();
+		} else {
+			$text = highlight_string($text, true);
+		}
+		
+		$str_from = array('<font color="syntax', '</font>', '<code>', '</code>','[', ']', '.', ':');
+		$str_to = array('<span class="syntax', '</span>', '', '', '&#91;', '&#93;', '&#46;', '&#58');
+
+		if ($remove_tags)
+		{
+			$str_from[] = '<span class="syntaxdefault">&lt;?php </span>';
+			$str_to[] = '';
+			$str_from[] = '<span class="syntaxkeyword">&lt;?</span><span class="syntaxdefault">php </span>';
+			$str_to[] = '';
+			$str_from[] = '<span class="syntaxdefault">&lt;?php ';
+			$str_to[] = '<span class="syntaxdefault">';
+		}
+
+		$text = str_replace($str_from, $str_to, $text);
+		$text = preg_replace('#^(<span class="[a-z_]+">)\n?(.*?)\n?(</span>)$#is', '$1$2$3', $text);
+
+		if ($remove_tags)
+		{
+			$text = preg_replace('#(<span class="[a-z]+">)?\?&gt;</span>#', '', $text);
+		}
+
+		$text = preg_replace('#^<span class="[a-z]+"><span class="([a-z]+)">(.*)</span></span>#s', '<span class="$1">$2</span>', $text);
+		$text = preg_replace('#(?:[\n\r\s\t]|&nbsp;)*</span>$#', '</span>', $text);
 	
 		return $text;
 	}
@@ -160,13 +186,13 @@ class bbcode
 	//
 	function bbcode_cache_init()
 	{
-		global $_CLASS;
+		global $_CLASS, $site_file_root;
 
 		if (empty($this->template_filename))
 		{
 			$style = 'primary';
-			$this->template_bitfield = $_CLASS['user']->img['bbcode_bitfield'];
-			$this->template_filename = file_exists('themes/' . $_CLASS['display']->theme . '/template/modules/Forums/bbcode.html') ? 'themes/' . $_CLASS['display']->theme . '/template/modules/Forums/bbcode.html' : 'includes/templates/modules/Forums/bbcode.html';
+			$this->template_bitfield = $_CLASS['core_user']->img['bbcode_bitfield'];
+			$this->template_filename = file_exists($site_file_root.'themes/' . $_CLASS['core_display']->theme . '/template/modules/Forums/bbcode.html') ? $site_file_root.'themes/' . $_CLASS['core_display']->theme . '/template/modules/Forums/bbcode.html' : $site_file_root.'includes/templates/modules/Forums/bbcode.html';
 		}
 
 		$sql = '';
@@ -212,11 +238,10 @@ class bbcode
 				case 0:
 					$this->bbcode_cache[$bbcode_id] = array(
 						'str' => array(
-							'[quote:$uid]'	=>	$this->bbcode_tpl('quote_open', $bbcode_id),
 							'[/quote:$uid]'	=>	$this->bbcode_tpl('quote_close', $bbcode_id)
 						),
 						'preg' => array(
-							'#\[quote=&quot;(.*?)&quot;:$uid\]#'	=>	$this->bbcode_tpl('quote_username_open', $bbcode_id)
+							'#\[quote(?:=&quot;(.*?)&quot;)?:$uid\](.)#ise' =>      "\$this->bbcode_second_pass_quote('\$1', '\$2')"
 						)
 					);
 				break;
@@ -239,7 +264,7 @@ class bbcode
 					));
 				break;
 				case 4:
-					if ($_CLASS['user']->optionget('viewimg'))
+					if ($_CLASS['core_user']->optionget('viewimg'))
 					{
 						$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 							'#\[img:$uid\](.*?)\[/img:$uid\]#s'		=>	$this->bbcode_tpl('img', $bbcode_id)
@@ -275,6 +300,11 @@ class bbcode
 				break;
 				case 9:
 					$this->bbcode_cache[$bbcode_id] = array(
+						'preg' => array(
+							'#(\[\/?(list|\*):[mou]?:?$uid\])[\n]{1}#'	=> "\$1",
+							'#(\[list=([^\[]+):$uid\])[\n]{1}#'	=> "\$1",
+							'#\[list=([^\[]+):$uid\]#e'	=>	"\$this->bbcode_list('\$1')",
+						),
 						'str' => array(
 							'[list:$uid]'		=>	$this->bbcode_tpl('ulist_open_default', $bbcode_id),
 							'[/list:u:$uid]'	=>	$this->bbcode_tpl('ulist_close', $bbcode_id),
@@ -283,9 +313,6 @@ class bbcode
 							'[/*:$uid]'			=>	$this->bbcode_tpl('listitem_close', $bbcode_id),
 							'[/*:m:$uid]'		=>	$this->bbcode_tpl('listitem_close', $bbcode_id)
 						),
-						'preg' => array(
-							'#\[list=([^\[]+):$uid\]#e'	=>	"\$this->bbcode_list('\$1')",
-						)
 					);
 				break;
 				case 10:
@@ -295,7 +322,7 @@ class bbcode
 					));
 				break;
 				case 11:
-					if ($_CLASS['user']->optionget('viewflash'))
+					if ($_CLASS['core_user']->optionget('viewflash'))
 					{
 						$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 							'#\[flash=([0-9]+),([0-9]+):$uid\](.*?)\[/flash:$uid\]#'	=>	$this->bbcode_tpl('flash', $bbcode_id)
@@ -353,7 +380,7 @@ class bbcode
 						}
 
 						// Replace {L_*} lang strings
-						$bbcode_tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['user']->lang['\$1'])) ? \$_CLASS['user']->lang['\$1'] : ucwords(strtolower(str_replace'_', ' ', '\$1')))", $bbcode_tpl);
+						$bbcode_tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['core_user']->lang['\$1'])) ? \$_CLASS['core_user']->lang['\$1'] : ucwords(strtolower(str_replace'_', ' ', '\$1')))", $bbcode_tpl);
 
 						if (!empty($rowset[$bbcode_id]['second_pass_replace']))
 						{
@@ -389,7 +416,6 @@ class bbcode
 				'i_close'	=>	'</span>',
 				'u_open'	=>	'<span style="text-decoration: underline">',
 				'u_close'	=>	'</span>',
-				'url'		=>	'<a href="$1" target="_blank">$2</a>',
 				'img'		=>	'<img src="$1" border="0" />',
 				'size'		=>	'<span style="font-size: $1px; line-height: normal">$2</span>',
 				'color'		=>	'<span style="color: $1">$2</span>',
@@ -442,7 +468,7 @@ class bbcode
 			'email'					=>	array('{EMAIL}'		=>	'$1', '{DESCRIPTION}'	=>	'$2')
 		);
 
-		$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['user']->lang['\$1'])) ? \$_CLASS['user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
+		$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['core_user']->lang['\$1'])) ? \$_CLASS['core_user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
 
 		if (!empty($replacements[$tpl_name]))
 		{
@@ -494,7 +520,7 @@ class bbcode
 		{
 			$tpl = 'olist_open';
 			$type = 'arabic-numbers';
-			$start = intval($chr);
+			$start = intval($type);
 		}
 		else
 		{
@@ -506,6 +532,23 @@ class bbcode
 		return str_replace('{LIST_TYPE}', $type, $this->bbcode_tpl($tpl));
 	}
 
+	function bbcode_second_pass_quote($username, $quote)
+	{
+		// when using the /e modifier, preg_replace slashes double-quotes but does not
+		// seem to slash anything else
+		$quote = str_replace('\"', '"', $quote);
+
+		// remove newline at the beginning
+		if ($quote{0} == "\n")
+		{
+			$quote = substr($quote, 1);
+		}
+
+		$quote = (($username) ? str_replace('$1', $username, $this->bbcode_tpl('quote_username_open')) : $this->bbcode_tpl('quote_open')) . $quote;
+
+		return $quote;
+	}
+	
 	function bbcode_second_pass_code($type, $code)
 	{
 		// when using the /e modifier, preg_replace slashes double-quotes but does not

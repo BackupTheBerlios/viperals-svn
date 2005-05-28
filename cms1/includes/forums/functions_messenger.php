@@ -25,13 +25,12 @@
 
 class messenger
 {
-	var $msg, $subject, $extra_headers, $encoding;
-	var $to_address, $cc_address, $bcc_address, $reply_to, $from;
-	var $queue, $jabber;
+	var $vars, $msg, $extra_headers, $replyto, $from, $subject, $necoding;
+	var $addresses = array();
 
 	var $mail_priority = MAIL_NORMAL_PRIORITY;
-	var $tpl_msg = array();
 	var $use_queue = true;
+	var $tpl_msg = array();
 
 	function messenger($use_queue = true)
 	{
@@ -45,13 +44,14 @@ class messenger
 		}
 
 		$this->use_queue = $use_queue;
+		$this->subject = '';
 	}
 
 	// Resets all the data (address, template file, etc etc) to default
 	function reset()
 	{
 		$this->addresses = array();
-		$this->vars = $this->msg = $this->extra_headers = $this->replyto = $this->from = '';
+		$this->vars = $this->msg = $this->extra_headers = $this->replyto = $this->from = $this->encoding = '';
 		$this->mail_priority = MAIL_NORMAL_PRIORITY;
 	}
 
@@ -189,22 +189,22 @@ class messenger
 		$match = array();
 		if (preg_match('#^(Subject:(.*?))$#m', $this->msg, $match))
 		{
-			$this->subject = (trim($match[2]) != '') ? trim($match[2]) : (($this->subject != '') ? $this->subject : $_CLASS['user']->lang['NO_SUBJECT']);
+			$this->subject = (trim($match[2]) != '') ? trim($match[2]) : (($this->subject != '') ? $this->subject : $_CLASS['core_user']->lang['NO_SUBJECT']);
 			$drop_header .= '[\r\n]*?' . preg_quote($match[1], '#');
 		}
 		else
 		{
-			$this->subject = (($this->subject != '') ? $this->subject : $_CLASS['user']->lang['NO_SUBJECT']);
+			$this->subject = (($this->subject != '') ? $this->subject : $_CLASS['core_user']->lang['NO_SUBJECT']);
 		}
 
 		if (preg_match('#^(Charset:(.*?))$#m', $this->msg, $match))
 		{
-			$this->encoding = (trim($match[2]) != '') ? trim($match[2]) : trim($_CLASS['user']->lang['ENCODING']);
+			$this->encoding = (trim($match[2]) != '') ? trim($match[2]) : trim($_CLASS['core_user']->lang['ENCODING']);
 			$drop_header .= '[\r\n]*?' . preg_quote($match[1], '#');
 		}
 		else
 		{
-			$this->encoding = trim($_CLASS['user']->lang['ENCODING']);
+			$this->encoding = trim($_CLASS['core_user']->lang['ENCODING']);
 		}
 
 		if ($drop_header)
@@ -237,13 +237,13 @@ class messenger
 
 	function error($type, $msg)
 	{
-		global $_CLASS, $phpEx;
+		global $_CLASS, $site_file_root, $phpEx;
 
 		// Session doesn't exist, create it
-		$_CLASS['user']->start();
+		$_CLASS['core_user']->start();
 
-		require_once('includes/forums/functions_admin.'.$phpEx);
-		add_log('critical', $type . '_ERROR', $msg);
+		require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
+		add_log('critical', 'LOG_' . $type . '_ERROR', $msg);
 	}
 
 	//
@@ -274,6 +274,11 @@ class messenger
 		// Build to, cc and bcc strings
 		foreach ($this->addresses as $type => $address_ary)
 		{
+			if ($type == 'im')
+			{
+				continue;
+			}
+			
 			foreach ($address_ary as $which_ary)
 			{
 				$$type .= (($$type != '') ? ', ' : '') . (($which_ary['name'] != '') ?  '"' . mail_encode($which_ary['name'], $this->encoding) . '" <' . $which_ary['email'] . '>' : $which_ary['email']);
@@ -342,7 +347,7 @@ class messenger
 
 	function msg_jabber()
 	{
-		global $config, $db, $_CLASS, $phpEx;
+		global $config, $db, $site_file_root, $_CLASS, $phpEx;
 
 		if (empty($config['jab_enable']) || empty($config['jab_host']) || empty($config['jab_username']) || empty($config['jab_password']))
 		{
@@ -369,8 +374,8 @@ class messenger
 
 		if (!$use_queue)
 		{
-			require_once('includes/forums/functions_jabber.'.$phpEx);
-			$this->jabber = new Jabber;
+			require_once($site_file_root.'includes/forums/functions_jabber.'.$phpEx);
+			$this->jabber = new jabber;
 
 			$this->jabber->server	= $config['jab_host'];
 			$this->jabber->port		= ($config['jab_port']) ? $config['jab_port'] : 5222;
@@ -378,32 +383,32 @@ class messenger
 			$this->jabber->password = $config['jab_password'];
 			$this->jabber->resource = ($config['jab_resource']) ? $config['jab_resource'] : '';
 
-			if (!$this->jabber->Connect())
+			if (!$this->jabber->connect())
 			{
 				$this->error('JABBER', 'Could not connect to Jabber server');
 				return false;
 			}
 
-			if (!$this->jabber->SendAuth())
+			if (!$this->jabber->send_auth())
 			{
 				$this->error('JABBER', 'Could not authorise on Jabber server');
 				return false;
 			}
-			$this->jabber->SendPresence(NULL, NULL, 'online');
+			$this->jabber->send_presence(NULL, NULL, 'online');
 
 			foreach ($addresses as $address)
 			{
-				$this->jabber->SendMessage($address, 'normal', NULL, array('body' => $msg));
+				$this->jabber->send_message($address, 'normal', NULL, array('body' => $msg));
 			}
 
 			sleep(1);
-			$this->jabber->Disconnect();
+			$this->jabber->disconnect();
 		}
 		else
 		{
 			$this->queue->put('jabber', array(
 				'addresses'		=> $addresses,
-				'subject'		=> htmlentities($subject),
+				'subject'		=> htmlentities($this->subject),
 				'msg'			=> htmlentities($this->msg))
 			);
 		}
@@ -422,10 +427,10 @@ class queue
 
 	function queue()
 	{
-		global $phpEx, $MAIN_CFG;
+		global $phpEx, $site_file_root;
 
 		$this->data = array();
-		$this->cache_file = "cache/queue.$phpEx";
+		$this->cache_file = $site_file_root."cache/queue.$phpEx";
 	}
 	
 	function init($object, $package_size)
@@ -443,9 +448,9 @@ class queue
 	// Using lock file...
 	function process()
 	{
-		global $db, $config, $phpEx;
+		global $db, $site_file_root, $config, $phpEx;
 
-		set_config('last_queue_run', time());
+		set_config('last_queue_run', time(), true);
 
 		// Delete stale lock file
 		if (file_exists($this->cache_file . '.lock') && !file_exists($this->cache_file))
@@ -469,7 +474,7 @@ class queue
 			@set_time_limit(60);
 
 			$package_size = $data_ary['package_size'];
-			$num_items = (count($data_ary['data']) < $package_size) ? count($data_ary['data']) : $package_size;
+			$num_items = (sizeof($data_ary['data']) < $package_size) ? sizeof($data_ary['data']) : $package_size;
 
 			switch ($object)
 			{
@@ -489,8 +494,8 @@ class queue
 						continue 2;
 					}
 
-					require_once('includes/forums/functions_jabber.'.$phpEx);
-					$this->jabber = new Jabber;
+					require_once($site_file_root.'includes/forums/functions_jabber.'.$phpEx);
+					$this->jabber = new jabber;
 
 					$this->jabber->server	= $config['jab_host'];
 					$this->jabber->port		= ($config['jab_port']) ? $config['jab_port'] : 5222;
@@ -498,18 +503,18 @@ class queue
 					$this->jabber->password = $config['jab_password'];
 					$this->jabber->resource = ($config['jab_resource']) ? $config['jab_resource'] : '';
 
-					if (!$this->jabber->Connect())
+					if (!$this->jabber->connect())
 					{
 						messenger::error('JABBER', 'Could not connect to Jabber server');
 						continue 2;
 					}
 
-					if (!$this->jabber->SendAuth())
+					if (!$this->jabber->send_auth())
 					{
 						messenger::error('JABBER', 'Could not authorise on Jabber server');
 						continue 2;
 					}
-					$this->jabber->SendPresence(NULL, NULL, 'online');
+					$this->jabber->send_presence(NULL, NULL, 'online');
 					break;
 
 				default:
@@ -541,14 +546,14 @@ class queue
 					case 'jabber':
 						foreach ($addresses as $address)
 						{
-							$this->jabber->SendMessage($address, 'normal', NULL, array('body' => $msg));
+							$this->jabber->send_message($address, 'normal', NULL, array('body' => $msg));
 						}
 						break;
 				}
 			}
 
 			// No more data for this object? Unset it
-			if (!count($this->queue_data[$object]['data']))
+			if (!sizeof($this->queue_data[$object]['data']))
 			{
 				unset($this->queue_data[$object]);
 			}
@@ -560,7 +565,7 @@ class queue
 					// Hang about a couple of secs to ensure the messages are
 					// handled, then disconnect
 					sleep(1);
-					$this->jabber->Disconnect();
+					$this->jabber->disconnect();
 					break;
 			}
 		}
@@ -598,9 +603,13 @@ class queue
 			
 			foreach ($this->queue_data as $object => $data_ary)
 			{
-				if (count($this->data[$object]))
+				if (isset($this->data[$object]) && sizeof($this->data[$object]))
 				{
 					$this->data[$object]['data'] = array_merge($data_ary['data'], $this->data[$object]['data']);
+				}
+				else
+				{
+					$this->data[$object]['data'] = $data_ary['data'];
 				}
 			}
 		}
@@ -786,7 +795,7 @@ function smtpmail($addresses, $subject, $message, &$err_msg, $encoding, $headers
 	// We try to send messages even if a few people do not seem to have valid email addresses, but if no one has, we have to exit here.
 	if (!$rcpt)
 	{
-		$err_msg .= '<br /><br />' . sprintf($_CLASS['user']->lang['INVALID_EMAIL_LOG'], htmlspecialchars($mail_to_address));
+		$err_msg .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['INVALID_EMAIL_LOG'], htmlspecialchars($mail_to_address));
 		$smtp->close_session();
 		return false;
 	}
@@ -837,6 +846,7 @@ function smtpmail($addresses, $subject, $message, &$err_msg, $encoding, $headers
 
 // SMTP Class
 // Auth Mechanisms originally taken from the AUTH Modules found within the PHP Extension and Application Repository (PEAR)
+// See docs/AUTHORS for more details
 class smtp_class
 {
 	var $server_response = '';

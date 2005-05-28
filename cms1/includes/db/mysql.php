@@ -57,13 +57,14 @@ class sql_db
 	{
 		if (!$this->db_connect_id)
 		{
-			return false;
+			return;
 		}
 
-		if (!empty($this->open_queries))
+		if (sizeof($this->open_queries))
 		{
-			foreach ($this->open_queries as $query_id)
+			foreach ($this->open_queries as $i_query_id => $query_id)
 			{
+				//echo $query_id;
 				@mysql_free_result($query_id);
 			}
 		}
@@ -86,18 +87,23 @@ class sql_db
 		switch ($status)
 		{
 			case 'begin':
-				$this->transaction = true;
 				$result = @mysql_query('BEGIN', $this->db_connect_id);
+				$this->transaction = true;
 				break;
 
 			case 'commit':
-				$this->transaction = false;
 				$result = @mysql_query('COMMIT', $this->db_connect_id);
+				$this->transaction = false;
+				
+				if (!$result)
+				{
+					@mysql_query('ROLLBACK', $this->db_connect_id);
+				}
 				break;
 
 			case 'rollback':
-				$this->transaction = false;
 				$result = @mysql_query('ROLLBACK', $this->db_connect_id);
+				$this->transaction = false;
 				break;
 
 			default:
@@ -123,7 +129,7 @@ class sql_db
 		}
 		//print_r($caller_info);
 
-		$this->query_result = ($cache_ttl && !empty($_CLASS['cache'])) ? $_CLASS['cache']->sql_load($query) : false;
+		$this->query_result = ($cache_ttl && !empty($_CLASS['core_cache'])) ? $_CLASS['core_cache']->sql_load($query) : false;
 
 		if (!$this->query_result)
 		{
@@ -137,14 +143,16 @@ class sql_db
 
 			$this->sql_report('stop', $query);
 
-			if ($cache_ttl && method_exists($_CLASS['cache'], 'sql_save'))
+			if ($cache_ttl && method_exists($_CLASS['core_cache'], 'sql_save'))
 			{
-				$_CLASS['cache']->sql_save($query, $this->query_result, $cache_ttl);
-				// mysql_free_result happened within sql_save()
+				$this->open_queries[(int) $this->query_result] = $this->query_result;
+				
+				$_CLASS['core_cache']->sql_save($query, $this->query_result, $cache_ttl);
+				// mysql_free_result called within sql_save()
 			}
-			elseif (preg_match('/^SELECT/', $query))
+			else if (strpos($query, 'SELECT') !== false && $this->query_result)
 			{
-				$this->open_queries[] = $this->query_result;
+				$this->open_queries[(int) $this->query_result] = $this->query_result;
 			}
 		}
 		else
@@ -244,39 +252,42 @@ class sql_db
 		return ($this->db_connect_id) ? @mysql_affected_rows($this->db_connect_id) : false;
 	}
 
-	function sql_fetchrow($query_id = 0)
+	function sql_fetchrow($query_id = false)
 	{
-		global $_CLASS, $Module;
-
+		//global $_CLASS, $_CORE_MODULE;
+		global $_CLASS;
+		
 		if (!$query_id)
 		{
 			return false;
 		}
 
-		if (!empty($_CLASS['cache']) && $_CLASS['cache']->sql_exists($query_id))
+		if (!empty($_CLASS['core_cache']) && $_CLASS['core_cache']->sql_exists($query_id))
 		{
-			return $_CLASS['cache']->sql_fetchrow($query_id);
+			return $_CLASS['core_cache']->sql_fetchrow($query_id);
 		}
 		
-        if ($Module['compatiblity'])
+       /* if ($_CORE_MODULE['compatiblity'])
         {
 			//Have to get both associative and number indices
 			//Not as fast as only the associative indeces MYSQL_ASSOC
 			return mysql_fetch_array($query_id);
-        }
+        }*/
 		
 		return mysql_fetch_assoc($query_id);
 	}
 
-	function sql_fetchrowset($query_id = 0)
+	function sql_fetchrowset($query_id = false)
 	{
 		if (!$query_id)
 		{
 			return false;
 		}
 		
-		$this->rowset[$query_id] = false;
+		unset($this->rowset[$query_id]);
 		unset($this->row[$query_id]);
+		
+		$result = array();
 		
 		while ($this->rowset[$query_id] = $this->sql_fetchrow($query_id))
 		{
@@ -285,7 +296,7 @@ class sql_db
 		return $result;
 	}
 
-	function sql_fetchfield($field, $rownum = -1, $query_id = 0)
+	function sql_fetchfield($field, $rownum = -1, $query_id = false)
 	{
 		if (!$query_id)
 		{
@@ -300,7 +311,7 @@ class sql_db
 		{
 			if (empty($this->row[$query_id]) && empty($this->rowset[$query_id]))
 			{
-				if ($this->sql_fetchrow())
+				if ($this->sql_fetchrow($query_id))
 				{
 					$result = $this->row[$query_id][$field];
 				}
@@ -320,7 +331,7 @@ class sql_db
 		return $result;
 	}
 
-	function sql_rowseek($rownum, $query_id = 0)
+	function sql_rowseek($rownum, $query_id = false)
 	{
 		if (!$query_id)
 		{
@@ -337,20 +348,20 @@ class sql_db
 
 	function sql_freeresult($query_id = false)
 	{
-		if (!$query_id)
+		if (!$query_id || !isset($this->open_queries[(int) $query_id]))
 		{
 			return false;
 		}
 		
-		$key = array_search($query_id, $this->open_queries);
+		/*$key = array_search($query_id, $this->open_queries);
 		
 		if (!$key || $key == NULL)
 		{
 			// Add a freeresults for cache
 			return false;
-		}
+		}*/
 		
-		unset($this->open_queries[$query_id]);
+		unset($this->open_queries[(int) $query_id]);
 
 		return mysql_free_result($query_id);
 	}
@@ -368,8 +379,8 @@ class sql_db
 			$this_page = (!empty($_SERVER['PHP_SELF'])) ? $_SERVER['PHP_SELF'] : $_ENV['PHP_SELF'];
 			$this_page .= '&' . ((!empty($_SERVER['QUERY_STRING'])) ? $_SERVER['QUERY_STRING'] : $_ENV['QUERY_STRING']);
 			
-			$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);// Dam Windows
-			$this->caller_info[0]['file'] = htmlentities(ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']), ENT_QUOTES);
+			$this->caller_info[0]['file'] = str_replace('\\','/', $this->caller_info[0]['file']); // Damn Windows
+			$this->caller_info[0]['file'] = htmlentities(str_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']), ENT_QUOTES);
 
 			$message = '<u>SQL ERROR</u> [ ' . SQL_LAYER . ' ]<br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$this->caller_info[0]['file'].'<br /><br />Line:<br /><br />'.$this->caller_info[0]['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'  . htmlspecialchars($this_page) . (($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
 
@@ -391,7 +402,7 @@ class sql_db
 
 	function sql_report($mode, $query = '')
 	{
-		global $db, $_CLASS, $MAIN_CFG;
+		global $db, $_CLASS, $_CORE_CONFIG;
 		static $starttime, $query_hold;
 
 		
@@ -403,7 +414,7 @@ class sql_db
 		switch ($mode)
 		{
 			case 'start':
-				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
+				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == 3)
 				{
 					$query_hold = $query;
 					
@@ -436,7 +447,7 @@ class sql_db
 
 			case 'fromcache':
 			
-				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
+				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == 3)
 				{
 					return;
 				}
@@ -469,11 +480,11 @@ class sql_db
 				$this->sql_time += $endtime - $starttime;
 				
 				// Dam Windows
-				$this->caller_info[0]['file'] = ereg_replace("[\]",'/', $this->caller_info[0]['file']);
+				$this->caller_info[0]['file'] = str_replace('\\','/', $this->caller_info[0]['file']);
 				// remove the root directorys
-				$this->caller_info[0]['file'] = ereg_replace($site_file_root, '', ereg_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']));
+				$this->caller_info[0]['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']));
 	
-				if (empty($MAIN_CFG['global']['error']) || $MAIN_CFG['global']['error'] == 3)
+				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == 3)
 				{
 					if ($this->query_result)
 					{

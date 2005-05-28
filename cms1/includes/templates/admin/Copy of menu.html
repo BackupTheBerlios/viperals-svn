@@ -1,0 +1,20 @@
+<table width="100%"><tr><td>
+  {section name=menucatloop loop=$menucat}
+
+<fieldset>
+  <legend="title"><b>{$menucat[menucatloop].TITLE}</b></legend>
+    <table border="0" cellspacing="0" cellpadding="0">
+    <tr>
+     {section name=menuitemloop loop=$menuitem}
+	 { if $menuitem[menuitemloop].S_NEW_ROW }</tr><tr>{ /if }
+		{if $menuitem[menuitemloop].CATNUM  eq $smarty.section.menucatloop.index }
+      <td align="center" valign="bottom" width="130">
+      <a href="{$menuitem[menuitemloop].U_OPTION}">{$menuitem[menuitemloop].IMAGE}<br />
+      <input type="button" value="{$menuitem[menuitemloop].TITLE}" class="mainoption" style="width:120px" onclick="parent.location='{$menuitem[menuitemloop].U_OPTION}'" /></a></td>
+		{ /if }
+    {/section}
+    </tr>
+    </table>
+</fieldset>
+{/section}
+</td></tr></table>

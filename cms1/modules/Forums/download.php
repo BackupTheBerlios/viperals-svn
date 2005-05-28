@@ -32,7 +32,7 @@ if (!defined('VIPERAL'))
 require_once($site_file_root.'includes/forums/functions.'.$phpEx);
 loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
 
-$_CLASS['auth']->acl($_CLASS['user']->data);
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $download_id = request_var('id', 0);
 
@@ -40,7 +40,7 @@ $download_id = request_var('id', 0);
 $thumbnail = request_var('t', false);
 
 // Start session management
-$_CLASS['user']->add_lang('viewtopic');
+$_CLASS['core_user']->add_lang('viewtopic');
 
 if (!$download_id)
 {
@@ -52,7 +52,7 @@ if (!$config['allow_attachments'] && !$config['allow_pm_attach'])
 	trigger_error('ATTACHMENT_FUNCTIONALITY_DISABLED');
 }
 
-$sql = 'SELECT *
+$sql = 'SELECT attach_id, in_message, post_msg_id, extension
 	FROM ' . ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
 $result = $db->sql_query_limit($sql, 1);
@@ -106,15 +106,30 @@ else
 $extensions = array();
 if (!extension_allowed($row['forum_id'], $attachment['extension'], $extensions))
 {
-	trigger_error(sprintf($_CLASS['user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
+	trigger_error(sprintf($_CLASS['core_user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
 }
 
 if (!download_allowed())
 {
-	trigger_error($_CLASS['user']->lang['LINKAGE_FORBIDDEN']);
+	trigger_error($_CLASS['core_user']->lang['LINKAGE_FORBIDDEN']);
 }
 
 $download_mode = (int) $extensions[$attachment['extension']]['download_mode'];
+
+// Fetching filename here to prevent sniffing of filename
+$sql = 'SELECT attach_id, in_message, post_msg_id, extension, physical_filename, real_filename, mimetype
+	FROM ' . ATTACHMENTS_TABLE . "
+	WHERE attach_id = $download_id";
+$result = $db->sql_query_limit($sql, 1);
+
+if (!($attachment = $db->sql_fetchrow($result)))
+{
+	trigger_error('ERROR_NO_ATTACHMENT');
+}
+$db->sql_freeresult($result);
+
+$attachment['physical_filename'] = basename($attachment['physical_filename']);
+
 
 if ($thumbnail)
 {
@@ -132,16 +147,16 @@ else
 // Determine the 'presenting'-method
 if ($download_mode == PHYSICAL_LINK)
 {
-	if (!@is_dir($config['upload_dir']))
+	if (!@is_dir($config['upload_path']))
 	{
-		trigger_error($_CLASS['user']->lang['PHYSICAL_DOWNLOAD_NOT_POSSIBLE']);
+		trigger_error($_CLASS['core_user']->lang['PHYSICAL_DOWNLOAD_NOT_POSSIBLE']);
 	}
 
-	redirect($config['upload_dir'] . '/' . $attachment['physical_filename']);
+	redirect($config['upload_path'] . '/' . $attachment['physical_filename']);
 }
 else
 {
-	send_file_to_browser($attachment, $config['upload_dir'], $extensions[$attachment['extension']]['display_cat']);
+	send_file_to_browser($attachment, $config['upload_path'], $extensions[$attachment['extension']]['display_cat']);
 	exit;
 }
 
@@ -152,18 +167,18 @@ else
 
 function send_file_to_browser($attachment, $upload_dir, $category)
 {
-	global $_SERVER, $HTTP_USER_AGENT, $HTTP_SERVER_VARS, $_CLASS, $db, $config;
+	global $_CLASS, $db, $config;
 
 	$filename = $upload_dir . '/' . $attachment['physical_filename'];
 
 	if (!@file_exists($filename))
 	{
-		trigger_error($_CLASS['user']->lang['ERROR_NO_ATTACHMENT'] . '<br /><br />' . sprintf($_CLASS['user']->lang['FILE_NOT_FOUND_404'], $filename));
+		trigger_error($_CLASS['core_user']->lang['ERROR_NO_ATTACHMENT'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['FILE_NOT_FOUND_404'], $filename));
 	}
 
 	// Determine the Browser the User is using, because of some nasty incompatibilities.
 	// borrowed from phpMyAdmin. :)
-	$user_agent = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : ((!empty($HTTP_SERVER_VARS['HTTP_USER_AGENT'])) ? $HTTP_SERVER_VARS['HTTP_USER_AGENT'] : '');
+	$user_agent = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
 	if (ereg('Opera(/| )([0-9].[0-9]{1,2})', $user_agent, $log_version))
 	{
@@ -208,11 +223,13 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 		$attachment['mimetype'] = ($browser_agent == 'ie' || $browser_agent == 'opera') ? 'application/octetstream' : 'application/octet-stream';
 	}
 
+	if (@ob_get_length())
+	{
+		@ob_end_clean();
+	}
+	
 	// Now the tricky part... let's dance
-	// TODO: needs a little bit more testing... seems to break on some configurations (incomplete files)
-
 	header('Pragma: public');
-//	header('Content-Transfer-Encoding: none');
 
 	// Send out the Headers
 	header('Content-Type: ' . $attachment['mimetype'] . '; name="' . $attachment['real_filename'] . '"');
@@ -230,12 +247,12 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 	{
 		trigger_error('Unable to deliver file.<br />Error was: ' . $php_errormsg, E_USER_WARNING);
 	}
-	if (!empty($_CLASS['cache']))
+	if (!empty($_CLASS['core_cache']))
 	{
-		$_CLASS['cache']->unload();
+		$_CLASS['core_cache']->unload();
 	}
 	
-	$_CLASS['db']->sql_close();
+	$_CLASS['core_db']->sql_close();
 	flush();
 	exit;
 }

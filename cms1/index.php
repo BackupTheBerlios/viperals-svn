@@ -12,14 +12,14 @@
 //**************************************************************//
 define('VIPERAL', 'CMS');
 
-//$site_file_root = getenv('DOCUMENT_ROOT').'/';
-$site_file_root = 'C:/Program Files/Apache Group/Apache2/cms/';
+//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
+$site_file_root = 'C:/apachefriends/xampp/cms/';
 
 require($site_file_root.'core.php');
 
 if (!$mod)
 {
-	$_CLASS['display']->homepage = true;
+	$_CLASS['core_display']->homepage = true;
 	
 } else {
 
@@ -40,67 +40,73 @@ switch ($mod)
     	break;
 }
 
-if ($_CLASS['display']->homepage)
+if ($_CLASS['core_display']->homepage)
 {
-	$result = $_CLASS['db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage > 0 ORDER BY homepage ASC');
+	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage > 0 ORDER BY homepage ASC');
 	
-	While ($row = $_CLASS['db']->sql_fetchrow($result))
+	While ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
-		$_CLASS['display']->add_module($row);
+		$_CLASS['core_display']->add_module($row);
 	}
 	
-	$Module = $_CLASS['display']->get_module();
-	$path = 'modules/'.$Module['name'].'/index.php';
+	$_CORE_MODULE = $_CLASS['core_display']->get_module();
+	$path = 'modules/'.$_CORE_MODULE['name'].'/index.php';
 
 } else {
 
-	$result = $_CLASS['db']->sql_query_limit('SELECT * FROM '.$prefix."_modules WHERE name='".$_CLASS['db']->sql_escape($mod)."'", 1);
-	$Module = $_CLASS['db']->sql_fetchrow($result);
+	$result = $_CLASS['core_db']->sql_query_limit('SELECT * FROM '.$prefix."_modules WHERE name='".$_CLASS['core_db']->sql_escape($mod)."'", 1);
+	$_CORE_MODULE = $_CLASS['core_db']->sql_fetchrow($result);
 
 }
 
-$_CLASS['db']->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 $path = $site_file_root.$path;
 
-if (!$Module || !file_exists($path))
+if (!$_CORE_MODULE || !file_exists($path))
 {
-	$Module['sides'] = BLOCK_ALL;
+	$_CORE_MODULE['sides'] = BLOCK_ALL;
 
-	if ($_CLASS['display']->homepage) 
+	if ($_CLASS['core_display']->homepage) 
 	{
-		if ($_CLASS['user']->admin_auth('modules'))
+		if ($_CLASS['core_user']->admin_auth('modules'))
 		{
 			// display message inline
-			trigger_error('_NO_HOMEPAGE_ADMIN');
+			trigger_error('_NO_HOMEPAGE_ADMIN', E_USER_NOTICE);
 		} else {
-			// Maybe someone wants only messages or blocks !. 
-			$_CLASS['display']->display_head();
-			$_CLASS['display']->display_footer();
+			// Maybe someone wants only messages and/or blocks !
+			$_CLASS['core_display']->display_head();
+			$_CLASS['core_display']->display_footer();
 		}
 	} else {
-		trigger_error('_PAGE_NOT_FOUND');
+		// Uncomment below for an embedded error
+		// $_CLASS['core_display']->display_head();
+		trigger_error('_PAGE_NOT_FOUND', E_USER_ERROR);
 	}
 }
 
-if (!$Module['active'])
+if (!$_CORE_MODULE['active'])
 {
-	$Module['sides'] = BLOCK_ALL;
+	$_CORE_MODULE['sides'] = BLOCK_ALL;
 	trigger_error('_MODULE_UNACTIVE');
 }
 
 //Need to add a way off getting a text auth message for ( only when there is one group auth or registered user )
-if (!$_CLASS['display']->homepage && !$_CLASS['user']->auth($Module['auth']))
-{
-	trigger_error('Not Auth!');
-}
+//if (!$_CLASS['core_display']->homepage && !$_CLASS['core_auth']->auth($_CORE_MODULE['auth']))
+//{
+//	trigger_error('Not Auth!');
+//}
 
-if ($Module['editor'] && $MAIN_CFG['global']['wysiwyg'] && $_CLASS['user']->data['wysiwyg'])
+/*
+if ($_CORE_MODULE['editor'] && $MAIN_CFG['global']['wysiwyg'] && $_CLASS['core_user']->data['wysiwyg'])
 {
-	loadclass($site_file_root.'includes/editor.php');
-	$_CLASS['editor']->setup($Module['editor'], $Module['editortype']);
-}
+	loadclass($site_file_root.'includes/core_editor.php');
+	$_CLASS['core_editor']->setup($_CORE_MODULE['editor'], $_CORE_MODULE['editortype']);
+}*/
 
-if ($Module['compatiblity'])
+//loadclass($site_file_root.'includes/core_editor.php', 'core_editor');
+//$_CLASS['core_editor']->setup();
+	
+if ($_CORE_MODULE['compatiblity'])
 {
 	require($site_file_root.'includes/compatiblity/index.php');
 }

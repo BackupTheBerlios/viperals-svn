@@ -41,9 +41,9 @@ class mcp_main extends module
 		{
 			case 'lock':
 			case 'unlock':
-				$topic_ids = get_array((!$quickmod) ? 'topic_id_list' : 't', 0);
+				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 		
-				if (!$topic_ids)
+				if (!sizeof($topic_ids))
 				{
 					trigger_error('NO_TOPIC_SELECTED');
 				}
@@ -54,9 +54,9 @@ class mcp_main extends module
 			case 'lock_post':
 			case 'unlock_post':
 
-				$post_ids = get_array((!$quickmod) ? 'post_id_list' : 'p', 0);
+				$post_ids = (!$quickmod) ? request_var('post_id_list', array(0)) : array(request_var('p', 0));
 		
-				if (!$post_ids)
+				if (!sizeof($post_ids))
 				{
 					trigger_error('NO_POST_SELECTED');
 				}
@@ -69,9 +69,9 @@ class mcp_main extends module
 			case 'make_global':
 			case 'make_normal':
 				
-				$topic_ids = get_array((!$quickmod) ? 'topic_id_list' : 't', 0);
+				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 		
-				if (!$topic_ids)
+				if (!sizeof($topic_ids))
 				{
 					trigger_error('NO_TOPIC_SELECTED');
 				}
@@ -81,11 +81,11 @@ class mcp_main extends module
 				break;
 
 			case 'move':
-				$_CLASS['user']->add_lang('viewtopic');
+				$_CLASS['core_user']->add_lang('viewtopic');
 
-				$topic_ids = get_array((!$quickmod) ? 'topic_id_list' : 't', 0);
+				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 		
-				if (!$topic_ids)
+				if (!sizeof($topic_ids))
 				{
 					trigger_error('NO_TOPIC_SELECTED');
 				}
@@ -95,11 +95,11 @@ class mcp_main extends module
 				break;
 
 			case 'fork':
-				$_CLASS['user']->add_lang('viewtopic');
+				$_CLASS['core_user']->add_lang('viewtopic');
 
-				$topic_ids = get_array((!$quickmod) ? 'topic_id_list' : 't', 0);
+				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 		
-				if (!$topic_ids)
+				if (!sizeof($topic_ids))
 				{
 					trigger_error('NO_TOPIC_SELECTED');
 				}
@@ -109,11 +109,11 @@ class mcp_main extends module
 				break;
 
 			case 'delete_topic':
-				$_CLASS['user']->add_lang('viewtopic');
+				$_CLASS['core_user']->add_lang('viewtopic');
 
-				$topic_ids = get_array((!$quickmod) ? 'topic_id_list' : 't', 0);
+				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 		
-				if (!$topic_ids)
+				if (!sizeof($topic_ids))
 				{
 					trigger_error('NO_TOPIC_SELECTED');
 				}
@@ -122,11 +122,11 @@ class mcp_main extends module
 				break;
 
 			case 'delete_post':
-				$_CLASS['user']->add_lang('posting');
+				$_CLASS['core_user']->add_lang('posting');
 
-				$post_ids = get_array((!$quickmod) ? 'post_id_list' : 'p', 0);
+				$post_ids = (!$quickmod) ? request_var('post_id_list', array(0)) : array(request_var('p', 0));
 		
-				if (!$post_ids)
+				if (!sizeof($post_ids))
 				{
 					trigger_error('NO_POST_SELECTED');
 				}
@@ -139,13 +139,13 @@ class mcp_main extends module
 
 				mcp_front_view($id, $mode, $action, $url);
 
-				$this->display($_CLASS['user']->lang['MCP'], 'mcp_front.html');
+				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
 				break;
 
 			case 'forum_view':
 				require($site_file_root.'includes/forums/mcp/mcp_forum.' . $phpEx);
 				
-				$_CLASS['user']->add_lang('viewforum');
+				$_CLASS['core_user']->add_lang('viewforum');
 
 				$forum_id = request_var('f', 0);
 
@@ -161,7 +161,7 @@ class mcp_main extends module
 
 				mcp_forum_view($id, $mode, $action, $url, $forum_info);
 				
-				$this->display($_CLASS['user']->lang['MCP'], 'mcp_forum.html');
+				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_forum.html');
 				break;
 
 			case 'topic_view':
@@ -169,7 +169,7 @@ class mcp_main extends module
 				
 				mcp_topic_view($id, $mode, $action, $url);
 				
-				$this->display($_CLASS['user']->lang['MCP'], 'mcp_topic.html');
+				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_topic.html');
 				break;
 				
 			case 'post_details':
@@ -177,7 +177,7 @@ class mcp_main extends module
 				
 				mcp_post_details($id, $mode, $action, $url);
 				
-				$this->display($_CLASS['user']->lang['MCP'], 'mcp_post.html');
+				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_post.html');
 				break;			
 
 			default:
@@ -234,7 +234,7 @@ function lock_unlock($mode, $ids)
 		return;
 	}
 	
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
 	$s_hidden_fields = build_hidden_fields(array(
 		$sql_id . '_list'	=> $ids,
@@ -277,8 +277,8 @@ function lock_unlock($mode, $ids)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(2, $redirect);
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(2, $redirect);
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 	}
 }
 
@@ -316,7 +316,7 @@ function change_topic_type($mode, $topic_ids)
 			break;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
@@ -381,8 +381,8 @@ function change_topic_type($mode, $topic_ids)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(2, $redirect);
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(2, $redirect);
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 	}
 }
 
@@ -391,9 +391,9 @@ function mcp_move_topic($topic_ids)
 {
 	global $db, $_CLASS;
 	
-	$_CLASS['template']->assign(array(
-		'L_SELECT_DESTINATION_FORUM'=> $_CLASS['user']->lang['SELECT_DESTINATION_FORUM'],
-		'L_LEAVE_SHADOW'			=> $_CLASS['user']->lang['LEAVE_SHADOW'])
+	$_CLASS['core_template']->assign(array(
+		'L_SELECT_DESTINATION_FORUM'=> $_CLASS['core_user']->lang['SELECT_DESTINATION_FORUM'],
+		'L_LEAVE_SHADOW'			=> $_CLASS['core_user']->lang['LEAVE_SHADOW'])
 	);
 	
 	if (!($forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', 'm_move')))
@@ -402,7 +402,7 @@ function mcp_move_topic($topic_ids)
 	}
 				
 	$to_forum_id = request_var('to_forum_id', 0);
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 	$additional_msg = $success_msg = '';
 
 	$s_hidden_fields = build_hidden_fields(array(
@@ -418,7 +418,7 @@ function mcp_move_topic($topic_ids)
 
 		if (!sizeof($forum_data))
 		{
-			$additional_msg = $_CLASS['user']->lang['FORUM_NOT_EXIST'];
+			$additional_msg = $_CLASS['core_user']->lang['FORUM_NOT_EXIST'];
 		}
 		else
 		{
@@ -426,15 +426,15 @@ function mcp_move_topic($topic_ids)
 	
 			if ($forum_data['forum_type'] != FORUM_POST)
 			{
-				$additional_msg = $_CLASS['user']->lang['FORUM_NOT_POSTABLE'];
+				$additional_msg = $_CLASS['core_user']->lang['FORUM_NOT_POSTABLE'];
 			}
 			else if (!$_CLASS['auth']->acl_get('f_post', $to_forum_id))
 			{
-				$additional_msg = $_CLASS['user']->lang['USER_CANNOT_POST'];
+				$additional_msg = $_CLASS['core_user']->lang['USER_CANNOT_POST'];
 			}
 			else if ($forum_id == $to_forum_id)
 			{
-				$additional_msg = $_CLASS['user']->lang['CANNOT_MOVE_SAME_FORUM'];
+				$additional_msg = $_CLASS['core_user']->lang['CANNOT_MOVE_SAME_FORUM'];
 			}
 		}
 	}
@@ -495,10 +495,10 @@ function mcp_move_topic($topic_ids)
 				);
 
 				$db->sql_query('INSERT INTO ' . TOPICS_TABLE . $db->sql_build_array('INSERT', $shadow));
-				$next_id = $db->sql_nextid();
-
+				
+				// $next_id = $db->sql_nextid();
 				// Mark Shadow topic read
-				markread('topic', $row['forum_id'], $next_id);
+				// markread('topic', $row['forum_id'], $next_id);
 			}
 		}
 		unset($topic_data);
@@ -510,7 +510,7 @@ function mcp_move_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['template']->assign(array(
+		$_CLASS['core_template']->assign(array(
 			'S_FORUM_SELECT'		=> make_forum_select($to_forum_id, $forum_id, false, true, true),
 			'S_CAN_LEAVE_SHADOW'	=> true,
 			'ADDITIONAL_MSG'		=> $additional_msg)
@@ -532,8 +532,8 @@ function mcp_move_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, $redirect);
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(3, $redirect);
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>'));
 	}
 }
 
@@ -547,7 +547,7 @@ function mcp_delete_topic($topic_ids)
 		return;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
@@ -590,8 +590,8 @@ function mcp_delete_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
 
@@ -605,7 +605,7 @@ function mcp_delete_post($post_ids)
 		return;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'post_id_list'	=> $post_ids,
@@ -651,9 +651,9 @@ function mcp_delete_post($post_ids)
 		$return_link = array();
 		if ($affected_topics == 1 && !$deleted_topics && $topic_id)
 		{
-			$return_link[] = sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
+			$return_link[] = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
 		}
-		$return_link[] = sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f='.$forum_id).'">', '</a>');
+		$return_link[] = sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f='.$forum_id).'">', '</a>');
 
 		if (sizeof($post_ids) == 1)
 		{
@@ -661,11 +661,11 @@ function mcp_delete_post($post_ids)
 			{
 				// We deleted the only post of a topic, which in turn has
 				// been removed from the database
-				$success_msg = $_CLASS['user']->lang['TOPIC_DELETED_SUCCESS'];
+				$success_msg = $_CLASS['core_user']->lang['TOPIC_DELETED_SUCCESS'];
 			}
 			else
 			{
-				$success_msg = $_CLASS['user']->lang['POST_DELETED_SUCCESS'];
+				$success_msg = $_CLASS['core_user']->lang['POST_DELETED_SUCCESS'];
 			}
 		}
 		else
@@ -673,11 +673,11 @@ function mcp_delete_post($post_ids)
 			if ($deleted_topics)
 			{
 				// Some of topics disappeared
-				$success_msg = $_CLASS['user']->lang['POSTS_DELETED_SUCCESS'] . '<br /><br />' . $_CLASS['user']->lang['EMPTY_TOPICS_REMOVED_WARNING'];
+				$success_msg = $_CLASS['core_user']->lang['POSTS_DELETED_SUCCESS'] . '<br /><br />' . $_CLASS['core_user']->lang['EMPTY_TOPICS_REMOVED_WARNING'];
 			}
 			else
 			{
-				$success_msg = $_CLASS['user']->lang['POSTS_DELETED_SUCCESS'];
+				$success_msg = $_CLASS['core_user']->lang['POSTS_DELETED_SUCCESS'];
 			}
 		}
 	}
@@ -699,8 +699,8 @@ function mcp_delete_post($post_ids)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, $redirect);
-		trigger_error($success_msg . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . implode('<br /><br />', $return_link));
+		$_CLASS['core_display']->meta_refresh(3, $redirect);
+		trigger_error($success_msg . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . implode('<br /><br />', $return_link));
 	}
 }
 
@@ -715,7 +715,7 @@ function mcp_fork_topic($topic_ids)
 	}
 	
 	$to_forum_id = request_var('to_forum_id', 0);
-	$redirect = request_var('redirect', $_CLASS['user']->data['session_page']);
+	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 	$additional_msg = $success_msg = '';
 
 	$s_hidden_fields = build_hidden_fields(array(
@@ -731,11 +731,11 @@ function mcp_fork_topic($topic_ids)
 
 		if (!sizeof($topic_ids))
 		{
-			$additional_msg = $_CLASS['user']->lang['NO_TOPICS_SELECTED'];
+			$additional_msg = $_CLASS['core_user']->lang['NO_TOPICS_SELECTED'];
 		}
 		else if (!sizeof($forum_data))
 		{
-			$additional_msg = $_CLASS['user']->lang['FORUM_NOT_EXIST'];
+			$additional_msg = $_CLASS['core_user']->lang['FORUM_NOT_EXIST'];
 		}
 		else
 		{
@@ -743,11 +743,11 @@ function mcp_fork_topic($topic_ids)
 	
 			if ($forum_data['forum_type'] != FORUM_POST)
 			{
-				$additional_msg = $_CLASS['user']->lang['FORUM_NOT_POSTABLE'];
+				$additional_msg = $_CLASS['core_user']->lang['FORUM_NOT_POSTABLE'];
 			}
 			else if (!$_CLASS['auth']->acl_get('f_post', $to_forum_id))
 			{
-				$additional_msg = $_CLASS['user']->lang['USER_CANNOT_POST'];
+				$additional_msg = $_CLASS['core_user']->lang['USER_CANNOT_POST'];
 			}
 		}
 	}
@@ -882,8 +882,8 @@ function mcp_fork_topic($topic_ids)
 							'topic_id'			=> (int) $new_topic_id,
 							'in_message'		=> 0,
 							'poster_id'			=> (int) $attach_row['poster_id'],
-							'physical_filename'	=> (string) $attach_row['physical_filename'],
-							'real_filename'		=> (string) $attach_row['real_filename'],
+							'physical_filename'	=> (string) basename($attach_row['physical_filename']),
+							'real_filename'		=> (string) basename($attach_row['real_filename']),
 							'download_count'	=> (int) $attach_row['download_count'],
 							'comment'			=> (string) $attach_row['comment'],
 							'extension'			=> (string) $attach_row['extension'],
@@ -915,7 +915,7 @@ function mcp_fork_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['template']->assign(array(
+		$_CLASS['core_template']->assign(array(
 			'S_FORUM_SELECT'		=> make_forum_select($to_forum_id, false, false, true, true),
 			'S_CAN_LEAVE_SHADOW'	=> false,
 			'ADDITIONAL_MSG'		=> $additional_msg)
@@ -937,15 +937,15 @@ function mcp_fork_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
-		$return_link = sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>');
+		$_CLASS['core_display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>');
 
 		if ($forum_id != $to_forum_id)
 		{
-			$return_link .= '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>');
+			$return_link .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>');
 		}
 
-		trigger_error($_CLASS['user']->lang[$success_msg] . '<br /><br />' . $return_link);
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }
 

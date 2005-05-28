@@ -11,7 +11,7 @@
 //																//
 //**************************************************************//
  
-class display
+class core_display
 {
 
 	var $header = array('js'=>'', 'regular'=>'', 'meta'=>'', 'body'=>'');
@@ -19,18 +19,18 @@ class display
 	var $message = '';
 	var $theme = false;
 	var $homepage = false;
-	var $modules = array();
+	var $_CORE_MODULEs = array();
 	
-	function display()
+	function core_display()
 	{
-		global $_CLASS, $site_file_root, $MAIN_CFG, $SID;
+		global $_CLASS, $site_file_root, $_CORE_CONFIG, $SID;
 		
 		//make sure to add a test for https, bla bla bla
-		$this->siteurl = 'http://'.getenv('HTTP_HOST').$MAIN_CFG['server']['path'];
+		$this->siteurl = 'http://'.getenv('HTTP_HOST').$_CORE_CONFIG['server']['path'];
 		$this->copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
 		
 		$this->themeprev = get_variable('prevtheme', 'REQUEST', false);
-		$this->theme = $_CLASS['user']->get_data('theme');
+		$this->theme = $_CLASS['core_user']->get_data('theme');
 		
 		if ($this->themeprev && ($this->themeprev != $this->theme) && $this->check_theme($this->themeprev))
 		{
@@ -39,7 +39,7 @@ class display
 			
 			if (!get_variable('prevtemp', 'REQUEST', false))
 			{
-				$_CLASS['user']->set_data('theme', $this->theme);
+				$_CLASS['core_user']->set_data('theme', $this->theme);
 			}
 		}
 		elseif ($this->theme && $this->check_theme($this->theme))
@@ -48,15 +48,15 @@ class display
 		}
 		else
 		{
-           	$this->theme = ($_CLASS['user']->data['theme']) ? $_CLASS['user']->data['theme'] : $MAIN_CFG['global']['default_theme'];     
+           	$this->theme = ($_CLASS['core_user']->data['theme']) ? $_CLASS['core_user']->data['theme'] : $_CORE_CONFIG['global']['default_theme'];     
 	
 			if ($this->check_theme($this->theme))
 			{
 				define('THEMEPLATE', $this->temp);
 				
-			} elseif ($this->check_theme($MAIN_CFG['global']['default_theme'])) {
+			} elseif ($this->check_theme($_CORE_CONFIG['global']['default_theme'])) {
 				
-				$this->theme = $MAIN_CFG['global']['default_theme'];
+				$this->theme = $_CORE_CONFIG['global']['default_theme'];
 				define('THEMEPLATE', $this->temp);
 				
 			} else {
@@ -110,11 +110,13 @@ class display
 	
 	function add_module($module)
 	{
+		global $_CLASS;
+		
 		//authization check here
-		if (!$_CLASS['user']->admin_auth('modules') && !$_CLASS['user']->auth($module['auth']))
-		{
-			return;
-		}
+		//if (!$_CLASS['core_user']->admin_auth('modules') && !$_CLASS['core_user']->auth($module['auth']))
+		//{
+		//	return;
+		//}
 		
 		//first module control the sides.
 		if (!empty($this->modules))
@@ -127,12 +129,17 @@ class display
 	
 	function get_module()
 	{
-		return array_shift($this->modules);
+		if (isset($this->modules))
+		{
+			// this also unsets $this->modules
+			return array_shift($this->modules);
+		}
+		return false;
 	}
 	
 	function display_head($title = false)
 	{
-		global $_CLASS, $MAIN_CFG, $Module;
+		global $_CLASS, $_CORE_CONFIG, $_CORE_MODULE;
 		
 		if ($this->displayed['header'])
 		{
@@ -148,11 +155,11 @@ class display
 
 		if ($title)
 		{
-			$Module['title'] = $title;
+			$_CORE_MODULE['title'] = $title;
 		}
 		
-		header('Content-Type: text/html; charset='.$_CLASS['user']->lang['ENCODING']);
-		header('Content-language: ' . $_CLASS['user']->lang['LANG']);
+		header('Content-Type: text/html; charset='.$_CLASS['core_user']->lang['ENCODING']);
+		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
 		
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
 		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
@@ -160,18 +167,18 @@ class display
 		header('Expires: 0');
 		header('Pragma: no-cache');
 		
-		if (is_user() && $_CLASS['user']->data['user_new_privmsg'] && $_CLASS['user']->optionget('popuppm'))
-		{
-			if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] < $_CLASS['user']->data['session_last_visit'])
-			{
-				$this->header['js'] .= '<script type="text/javascript">window.open(\''. getlink('Control_Panel&i=pm&mode=popup', false, true)."', '_phpbbprivmsg',HEIGHT=225,resizable=yes,WIDTH=400');</script>";
 
-				if (!$_CLASS['user']->data['user_last_privmsg'] || $_CLASS['user']->data['user_last_privmsg'] > $_CLASS['user']->data['session_last_visit'])
+		if (is_user() && $_CLASS['core_user']->data['user_new_privmsg'] && $_CLASS['core_user']->optionget('popuppm'))
+		{
+			if (!$_CLASS['core_user']->data['user_last_privmsg'] || ($_CLASS['core_user']->data['user_last_privmsg'] > $_CLASS['core_user']->data['session_time']))
+			{
+				$this->header['js'] .= '<script type="text/javascript">window.open(\''. preg_replace('/&amp;/', '&', generate_link('Control_Panel&i=pm&mode=popup', array('full' => true)))."', '_phpbbprivmsg','height=135,resizable=yes,status=no,width=400');</script>";
+
+				if (!$_CLASS['core_user']->data['user_last_privmsg'] || $_CLASS['core_user']->data['user_last_privmsg'] > $_CLASS['core_user']->data['session_last_visit'])
 				{
-					$sql = 'UPDATE ' . USERS_TABLE . '
-						SET user_last_privmsg = ' . time() . '
-						WHERE user_id = ' . $_CLASS['user']->data['user_id'];
-					$_CLASS['db']->sql_query($sql);
+// Maybe just make just user_new_privmsg or set time to 0 
+					$sql = 'UPDATE ' . USERS_TABLE . ' SET user_last_privmsg = ' . $_CLASS['core_user']->data['session_time'] . ' WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
+					$_CLASS['core_db']->sql_query($sql);
 				}
 			}
 		}
@@ -185,23 +192,23 @@ class display
 		
 		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.$this->siteurl.'backend.php?feed=rdf" />';
 		
-		if ($MAIN_CFG['global']['block_frames'])
+		if ($_CORE_CONFIG['global']['block_frames'])
 		{
 			$this->header['js'] .= '<script type="text/javascript">if (self != top) top.location.replace(self.location)</script>';
 		}
 		
-		if ($MAIN_CFG['global']['maintenance'])
+		if ($_CORE_CONFIG['global']['maintenance'])
 		{
 			$this->message = 'Note your in Maintenance mode<br />';
 		}
 	
-		$_CLASS['template']->assign(array(
-			'SITE_LANG'			=>	$_CLASS['user']->lang['LANG'],
-			'SITE_TITLE'		=>	$MAIN_CFG['global']['sitename'].': '.$Module['title'],
+		$_CLASS['core_template']->assign(array(
+			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
+			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.$_CORE_MODULE['title'],
 			'SITE_BASE'			=>	$this->siteurl,
-			'SITE_CHARSET'		=>	$_CLASS['user']->lang['ENCODING'],
-			'SITE_NAME'			=>	$MAIN_CFG['global']['sitename'],
-			'SITE_URL'			=>	$MAIN_CFG['global']['siteurl'],
+			'SITE_CHARSET'		=>	$_CLASS['core_user']->lang['ENCODING'],
+			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
+			'SITE_URL'			=>	$_CORE_CONFIG['global']['site_url'],
 			'HEADER_MESSAGE'	=>	$this->message,
 			'HEADER_REGULAR'	=>	$this->header['meta'].$this->header['regular'],
 			'HEADER_JS' 		=>	$this->header['js'],
@@ -212,7 +219,7 @@ class display
 		if (!THEMEPLATE)
 		{
 				
-			$_CLASS['template']->display('head.html');
+			$_CLASS['core_template']->display('head.html');
 			themeheader();
 			
 			if ($this->message)
@@ -222,11 +229,11 @@ class display
 			
 		}
 		
-		$_CLASS['blocks']->display(BLOCK_MESSAGE);
+		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_TOP);
 		
 		if ($this->homepage)
 		{  
-			$_CLASS['blocks']->display(BLOCK_TOP);
+			$_CLASS['core_blocks']->display(BLOCK_TOP);
 		}
 		
 		if (THEMEPLATE)
@@ -242,7 +249,7 @@ class display
 	
 	function display_footer($save = true)
 	{
-		global $_CLASS, $Module, $MAIN_CFG;
+		global $_CLASS, $_CORE_MODULE, $_CORE_CONFIG;
 		
 		if ($this->displayed['footer'])
 		{
@@ -257,24 +264,24 @@ class display
 			die;
 		}
 		
-		if ($Module = $this->get_module())
+		if ($_CORE_MODULE = $this->get_module())
 		{
 			global $site_file_root;
-			require($site_file_root.'modules/'.$Module['name'].'/index.php');
+			require($site_file_root.'modules/'.$_CORE_MODULE['name'].'/index.php');
 		}
 		
 		$this->displayed['footer'] = true;
 
-		if ($Module['compatiblity'] && $Module['copyright'])
+		if ($_CORE_MODULE['compatiblity'] && $_CORE_MODULE['copyright'])
 		{
 			OpenTable();
-			echo '<div align="center">'.$Module['copyright'].'</div>';
+			echo '<div align="center">'.$_CORE_MODULE['copyright'].'</div>';
 			CloseTable();
 		}
 		
 		if ($this->homepage)
 		{
-			$_CLASS['blocks']->display(BLOCK_BOTTOM);
+			$_CLASS['core_blocks']->display(BLOCK_BOTTOM);
 		}
 		
 		if ($this->displayed['header'])
@@ -291,12 +298,12 @@ class display
 	
 	function footer_debug()
 	{
-		global $MAIN_CFG, $SID, $mainindex, $SID, $_CLASS, $starttime;
+		global $_CORE_CONFIG, $SID, $mainindex, $SID, $_CLASS, $starttime;
 	
 		$mtime = explode(' ', microtime());
-		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['db']->sql_time;
+		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['core_db']->sql_time;
 	
-		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['db']->sql_time, 4).'s | ' . $_CLASS['db']->sql_num_queries() . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['user']->load) ? $_CLASS['user']->load : 'N/A');
+		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->sql_time, 4).'s | ' . $_CLASS['core_db']->sql_num_queries() . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
 		
 		if (function_exists('memory_get_usage'))
 		{
@@ -305,7 +312,7 @@ class display
 				global $base_memory_usage;
 				
 				$memory_usage -= $base_memory_usage;
-				$memory_usage = ($memory_usage >= 1048576) ? round((round($memory_usage / 1048576 * 100) / 100), 2) . ' ' . $_CLASS['user']->lang['MB'] : (($memory_usage >= 1024) ? round((round($memory_usage / 1024 * 100) / 100), 2) . ' ' . $_CLASS['user']->lang['KB'] : $memory_usage . ' ' . $_CLASS['user']->lang['BYTES']);
+				$memory_usage = ($memory_usage >= 1048576) ? round((round($memory_usage / 1048576 * 100) / 100), 2) . ' ' . $_CLASS['core_user']->lang['MB'] : (($memory_usage >= 1024) ? round((round($memory_usage / 1024 * 100) / 100), 2) . ' ' . $_CLASS['core_user']->lang['KB'] : $memory_usage . ' ' . $_CLASS['core_user']->lang['BYTES']);
 		
 				$debug_output .= ' | Memory Usage: ' . $memory_usage;	
 			}
@@ -317,18 +324,18 @@ class display
 	function footmsg()
 	{
 	
-		global $MAIN_CFG;
+		global $_CORE_CONFIG;
 		
 		$footer = $this->copyright.'<br />';
 		
-		if ($MAIN_CFG['global']['foot1']) {
-			$footer .= $MAIN_CFG['global']['foot1'] . '<br />';
+		if ($_CORE_CONFIG['global']['foot1']) {
+			$footer .= $_CORE_CONFIG['global']['foot1'] . '<br />';
 		}
-		if ($MAIN_CFG['global']['foot2']) {
-			$footer .= $MAIN_CFG['global']['foot2']. '<br />';
+		if ($_CORE_CONFIG['global']['foot2']) {
+			$footer .= $_CORE_CONFIG['global']['foot2']. '<br />';
 		}
-		if ($MAIN_CFG['global']['foot3']) {
-			$footer .= $MAIN_CFG['global']['foot3'] . '<br />';
+		if ($_CORE_CONFIG['global']['foot3']) {
+			$footer .= $_CORE_CONFIG['global']['foot3'] . '<br />';
 		}
 				
 		return $footer.'[ '.$this->footer_debug(). ']<br />';
@@ -337,7 +344,8 @@ class display
 	function meta_refresh($time, $url)
 	{
 		global $_CLASS;
-		$this->header['meta'] = '<meta http-equiv="refresh" content="' . $time . ';url=' . $url . '">';
+		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . $url . '">';
+		//<meta http-equiv="refresh" content="3;url=index.php?sid=">
 	}
 	
 	function overLIB()

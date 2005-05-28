@@ -28,46 +28,46 @@ function mcp_post_details($id, $mode, $action, $url)
 	global $phpEx, $config;
 	global $_CLASS, $db;
 	
-	$_CLASS['user']->add_lang('posting');
+	$_CLASS['core_user']->add_lang('posting');
 
-	$_CLASS['template']->assign(array(
-		'L_POST_DETAILS'		=> $_CLASS['user']->lang['POST_DETAILS'],
-		'L_POST_SUBJECT'		=> $_CLASS['user']->lang['POST_SUBJECT'],
-		'L_POSTER'				=> $_CLASS['user']->lang['POSTER'],
-		'L_READ_PROFILE'		=> $_CLASS['user']->lang['READ_PROFILE'],
-		'L_READ_USERNOTES'		=> $_CLASS['user']->lang['READ_USERNOTES'],
-		'L_READ_WARNINGS'		=> $_CLASS['user']->lang['READ_WARNINGS'],
-		'L_THIS_POST_IP'		=> $_CLASS['user']->lang['THIS_POST_IP'],
-		'L_POSTED'				=> $_CLASS['user']->lang['POSTED'],
-		'L_PREVIEW'				=> $_CLASS['user']->lang['PREVIEW'],
-		'L_APPROVE'				=> $_CLASS['user']->lang['APPROVE'],
-		'L_DISAPPROVE'			=> $_CLASS['user']->lang['DISAPPROVE'],
-		'L_REPORTS'				=> $_CLASS['user']->lang['REPORTS'],
-		'L_ADD_FEEDBACK'		=> $_CLASS['user']->lang['ADD_FEEDBACK'],
-		'L_FEEDBACK'			=> $_CLASS['user']->lang['FEEDBACK'],
-		'L_DELETE_MARKED'		=> $_CLASS['user']->lang['DELETE_MARKED'],
-		'L_DELETE_ALL'			=> $_CLASS['user']->lang['DELETE_ALL'],
-		'L_REPORTER'			=> $_CLASS['user']->lang['REPORTER'],
-		'L_MORE_INFO'			=> $_CLASS['user']->lang['MORE_INFO'],
-		'L_MOD_OPTIONS'			=> $_CLASS['user']->lang['MOD_OPTIONS'],
-		'L_CHANGE_POSTER'		=> $_CLASS['user']->lang['CHANGE_POSTER'],
-		'L_CONFIRM'				=> $_CLASS['user']->lang['CONFIRM'],
-		'L_SEARCH'				=> $_CLASS['user']->lang['SEARCH'],
-		'L_MOD_OPTIONS'			=> $_CLASS['user']->lang['MOD_OPTIONS'],
-		'L_UNLOCK_POST'			=> $_CLASS['user']->lang['UNLOCK_POST'],
-		'L_UNLOCK_POST_EXPLAIN'	=> $_CLASS['user']->lang['UNLOCK_POST_EXPLAIN'],
-		'L_LOCK_POST'			=> $_CLASS['user']->lang['LOCK_POST'],
-		'L_LOCK_POST_EXPLAIN'	=> $_CLASS['user']->lang['LOCK_POST_EXPLAIN'],
-		'L_DELETE_POST'			=> $_CLASS['user']->lang['DELETE_POST'],
-		'L_SUBMIT'				=> $_CLASS['user']->lang['SUBMIT'],
-		'L_IP_INFO'				=> $_CLASS['user']->lang['IP_INFO'],
-		'L_OTHER_USERS'			=> $_CLASS['user']->lang['OTHER_USERS'],
-		'L_NO_MATCHES_FOUND'	=> $_CLASS['user']->lang['NO_MATCHES_FOUND'],
-		'L_OTHER_IPS'			=> $_CLASS['user']->lang['OTHER_IPS'],
-		'L_LOOKUP_ALL'			=> $_CLASS['user']->lang['LOOKUP_ALL'],
-		'L_JUMP_TO'				=> $_CLASS['user']->lang['JUMP_TO'],
-		'L_GO'					=> $_CLASS['user']->lang['GO'],
-		'L_LOOKUP_IP'			=> $_CLASS['user']->lang['LOOKUP_IP'])
+	$_CLASS['core_template']->assign(array(
+		'L_POST_DETAILS'		=> $_CLASS['core_user']->lang['POST_DETAILS'],
+		'L_POST_SUBJECT'		=> $_CLASS['core_user']->lang['POST_SUBJECT'],
+		'L_POSTER'				=> $_CLASS['core_user']->lang['POSTER'],
+		'L_READ_PROFILE'		=> $_CLASS['core_user']->lang['READ_PROFILE'],
+		'L_READ_USERNOTES'		=> $_CLASS['core_user']->lang['READ_USERNOTES'],
+		'L_READ_WARNINGS'		=> $_CLASS['core_user']->lang['READ_WARNINGS'],
+		'L_THIS_POST_IP'		=> $_CLASS['core_user']->lang['THIS_POST_IP'],
+		'L_POSTED'				=> $_CLASS['core_user']->lang['POSTED'],
+		'L_PREVIEW'				=> $_CLASS['core_user']->lang['PREVIEW'],
+		'L_APPROVE'				=> $_CLASS['core_user']->lang['APPROVE'],
+		'L_DISAPPROVE'			=> $_CLASS['core_user']->lang['DISAPPROVE'],
+		'L_REPORTS'				=> $_CLASS['core_user']->lang['REPORTS'],
+		'L_ADD_FEEDBACK'		=> $_CLASS['core_user']->lang['ADD_FEEDBACK'],
+		'L_FEEDBACK'			=> $_CLASS['core_user']->lang['FEEDBACK'],
+		'L_DELETE_MARKED'		=> $_CLASS['core_user']->lang['DELETE_MARKED'],
+		'L_DELETE_ALL'			=> $_CLASS['core_user']->lang['DELETE_ALL'],
+		'L_REPORTER'			=> $_CLASS['core_user']->lang['REPORTER'],
+		'L_MORE_INFO'			=> $_CLASS['core_user']->lang['MORE_INFO'],
+		'L_MOD_OPTIONS'			=> $_CLASS['core_user']->lang['MOD_OPTIONS'],
+		'L_CHANGE_POSTER'		=> $_CLASS['core_user']->lang['CHANGE_POSTER'],
+		'L_CONFIRM'				=> $_CLASS['core_user']->lang['CONFIRM'],
+		'L_SEARCH'				=> $_CLASS['core_user']->lang['SEARCH'],
+		'L_MOD_OPTIONS'			=> $_CLASS['core_user']->lang['MOD_OPTIONS'],
+		'L_UNLOCK_POST'			=> $_CLASS['core_user']->lang['UNLOCK_POST'],
+		'L_UNLOCK_POST_EXPLAIN'	=> $_CLASS['core_user']->lang['UNLOCK_POST_EXPLAIN'],
+		'L_LOCK_POST'			=> $_CLASS['core_user']->lang['LOCK_POST'],
+		'L_LOCK_POST_EXPLAIN'	=> $_CLASS['core_user']->lang['LOCK_POST_EXPLAIN'],
+		'L_DELETE_POST'			=> $_CLASS['core_user']->lang['DELETE_POST'],
+		'L_SUBMIT'				=> $_CLASS['core_user']->lang['SUBMIT'],
+		'L_IP_INFO'				=> $_CLASS['core_user']->lang['IP_INFO'],
+		'L_OTHER_USERS'			=> $_CLASS['core_user']->lang['OTHER_USERS'],
+		'L_NO_MATCHES_FOUND'	=> $_CLASS['core_user']->lang['NO_MATCHES_FOUND'],
+		'L_OTHER_IPS'			=> $_CLASS['core_user']->lang['OTHER_IPS'],
+		'L_LOOKUP_ALL'			=> $_CLASS['core_user']->lang['LOOKUP_ALL'],
+		'L_JUMP_TO'				=> $_CLASS['core_user']->lang['JUMP_TO'],
+		'L_GO'					=> $_CLASS['core_user']->lang['GO'],
+		'L_LOOKUP_IP'			=> $_CLASS['core_user']->lang['LOOKUP_IP'])
 	);
 	
 
@@ -79,7 +79,7 @@ function mcp_post_details($id, $mode, $action, $url)
 
 	if (!sizeof($post_info))
 	{
-		trigger_error($_CLASS['user']->lang['POST_NOT_EXIST']);
+		trigger_error($_CLASS['core_user']->lang['POST_NOT_EXIST']);
 	}
 
 	$post_info = $post_info[$post_id];
@@ -122,10 +122,10 @@ function mcp_post_details($id, $mode, $action, $url)
 
 			if (!$user_select)
 			{
-				$_CLASS['template']->assign('MESSAGE', $_CLASS['user']->lang['NO_MATCHES_FOUND']);
+				$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_MATCHES_FOUND']);
 			}
 
-			$_CLASS['template']->assign(array(
+			$_CLASS['core_template']->assign(array(
 				'S_USER_SELECT'		=>	$user_select,
 				'SEARCH_USERNAME'	=>	request_var('username', ''))
 			);
@@ -153,7 +153,7 @@ function mcp_post_details($id, $mode, $action, $url)
 
 				if (!sizeof($post_info))
 				{
-					trigger_error($_CLASS['user']->lang['POST_NOT_EXIST']);
+					trigger_error($_CLASS['core_user']->lang['POST_NOT_EXIST']);
 				}
 
 				$post_info = $post_info[$post_id];
@@ -192,8 +192,8 @@ function mcp_post_details($id, $mode, $action, $url)
 
 				$msg = ($deletemark) ? 'MARKED_DELETED' : 'ALL_DELETED';
 				$redirect = getlink("$url&amp;i=$id&amp;mode=post_details", false, false);
-				$_CLASS['display']->meta_refresh(2, $redirect);
-				trigger_error($_CLASS['user']->lang[$msg] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
+				$_CLASS['core_display']->meta_refresh(2, $redirect);
+				trigger_error($_CLASS['core_user']->lang[$msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 			}
 
 			if ($usernote && $action == 'add_feedback')
@@ -202,8 +202,8 @@ function mcp_post_details($id, $mode, $action, $url)
 				add_log('user', $post_info['user_id'], 'LOG_USER_GENERAL', $usernote);
 
 				$redirect = getlink("$url&amp;i=$id&amp;mode=post_details", false, false);
-				$_CLASS['display']->meta_refresh(2, $redirect);
-				trigger_error($_CLASS['user']->lang['USER_FEEDBACK_ADDED'] . '<br /><br />' . sprintf($_CLASS['user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
+				$_CLASS['core_display']->meta_refresh(2, $redirect);
+				trigger_error($_CLASS['core_user']->lang['USER_FEEDBACK_ADDED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 			}
 			break;
 			
@@ -223,9 +223,9 @@ function mcp_post_details($id, $mode, $action, $url)
 		$bbcode = new bbcode($post_info['bbcode_bitfield']);
 		$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 	}
-	$message = smilie_text($message);
+	$message = smiley_text($message);
 
-	$_CLASS['template']->assign(array(
+	$_CLASS['core_template']->assign(array(
 		'U_MCP_ACTION'			=> getlink($url.'&amp;i=main&amp;quickmod=1', false, false), // Use this for mode paramaters
 		'U_POST_ACTION'			=> getlink("$url&amp;i=$id&amp;mode=post_details", false, false), // Use this for action parameters
 		'U_APPROVE_ACTION'		=> getlink('Forums&amp;file=mcp&amp;i=queue&amp;p='.$post_id, false, false),
@@ -247,16 +247,16 @@ function mcp_post_details($id, $mode, $action, $url)
 //		'U_MCP_WARNINGS'		=> getlink('Forums&amp;file=mcp&amp;i=warnings&amp;mode=view_user&amp;u=' . $post_info['user_id'], false, false),
 		'U_EDIT'				=> ($_CLASS['auth']->acl_get('m_edit', $post_info['forum_id'])) ? getlink("Forums&amp;file=posting&amp;mode=edit&amp;f={$post_info['forum_id']}&amp;p={$post_info['post_id']}", false, false) : '',
 
-		'RETURN_TOPIC'			=> sprintf($_CLASS['user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;p=$post_id#$post_id", false, false).'">', '</a>'),
-		'RETURN_FORUM'			=> sprintf($_CLASS['user']->lang['RETURN_FORUM'], '<a href="'.getlink("Forums&amp;file=viewforum&amp;f={$post_info['forum_id']}&amp;start={$start}", false, false).'">', '</a>'),
-		'REPORTED_IMG'			=> $_CLASS['user']->img('icon_reported', $_CLASS['user']->lang['POST_REPORTED']),
-		'UNAPPROVED_IMG'		=> $_CLASS['user']->img('icon_unapproved', $_CLASS['user']->lang['POST_UNAPPROVED']),
-		'EDIT_IMG'				=> $_CLASS['user']->img('btn_edit', $_CLASS['user']->lang['EDIT_POST']),
+		'RETURN_TOPIC'			=> sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;p=$post_id#$post_id", false, false).'">', '</a>'),
+		'RETURN_FORUM'			=> sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink("Forums&amp;file=viewforum&amp;f={$post_info['forum_id']}&amp;start={$start}", false, false).'">', '</a>'),
+		'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', $_CLASS['core_user']->lang['POST_REPORTED']),
+		'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', $_CLASS['core_user']->lang['POST_UNAPPROVED']),
+		'EDIT_IMG'				=> $_CLASS['core_user']->img('btn_edit', $_CLASS['core_user']->lang['EDIT_POST']),
 
 		'POSTER_NAME'			=> $poster,
 		'POST_PREVIEW'			=> $message,
 		'POST_SUBJECT'			=> $post_info['post_subject'],
-		'POST_DATE'				=> $_CLASS['user']->format_date($post_info['post_time']),
+		'POST_DATE'				=> $_CLASS['core_user']->format_date($post_info['post_time']),
 		'POST_IP'				=> $post_info['poster_ip'],
 		'POST_IPADDR'			=> @gethostbyaddr($post_info['poster_ip']),
 		'POST_ID'				=> $post_info['post_id'])
@@ -269,13 +269,13 @@ function mcp_post_details($id, $mode, $action, $url)
 
 	if ($log_count)
 	{
-		$_CLASS['template']->assign('S_USER_NOTES', true);
+		$_CLASS['core_template']->assign('S_USER_NOTES', true);
 
 		foreach ($log_data as $row)
 		{
-			$_CLASS['template']->assign_vars_array('usernotes', array(
+			$_CLASS['core_template']->assign_vars_array('usernotes', array(
 				'REPORT_BY'		=> $row['username'],
-				'REPORT_AT'		=> $_CLASS['user']->format_date($row['time']),
+				'REPORT_AT'		=> $_CLASS['core_user']->format_date($row['time']),
 				'ACTION'		=> $row['action'],
 				'ID'			=> $row['id'])
 			);
@@ -295,18 +295,18 @@ function mcp_post_details($id, $mode, $action, $url)
 
 		if ($row = $db->sql_fetchrow($result))
 		{
-			$_CLASS['template']->assign('S_SHOW_REPORTS', true);
+			$_CLASS['core_template']->assign('S_SHOW_REPORTS', true);
 
 			do
 			{
-				$_CLASS['template']->assign_vars_array('reports', array(
+				$_CLASS['core_template']->assign_vars_array('reports', array(
 					'REPORT_ID'		=> $row['report_id'],
-					'REASON_TITLE'	=> $_CLASS['user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_name'])],
-					'REASON_DESC'	=> $_CLASS['user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_name'])],
-					'REPORTER'		=> ($row['user_id'] != ANONYMOUS) ? $row['username'] : $_CLASS['user']->lang['GUEST'],
+					'REASON_TITLE'	=> $_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_name'])],
+					'REASON_DESC'	=> $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_name'])],
+					'REPORTER'		=> ($row['user_id'] != ANONYMOUS) ? $row['username'] : $_CLASS['core_user']->lang['GUEST'],
 					'U_REPORTER'	=> ($row['user_id'] != ANONYMOUS) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : '',
 					'USER_NOTIFY'	=> ($row['user_notify']) ? true : false,
-					'REPORT_TIME'	=> $_CLASS['user']->format_date($row['report_time']),
+					'REPORT_TIME'	=> $_CLASS['core_user']->format_date($row['report_time']),
 					'REPORT_TEXT'	=> str_replace("\n", '<br />', trim($row['report_text'])))
 				);
 			}
@@ -322,7 +322,7 @@ function mcp_post_details($id, $mode, $action, $url)
 
 		if ($rdns_ip_num != 'all')
 		{
-			$_CLASS['template']->assign(array(
+			$_CLASS['core_template']->assign(array(
 				'U_LOOKUP_ALL'	=> getlink($url.'&amp;i=main&amp;mode=post_details&amp;rdns=all', false, false))
 			);
 		}
@@ -346,10 +346,10 @@ function mcp_post_details($id, $mode, $action, $url)
 				$users_ary[strtolower($row['username'])] = $row;
 			}
 
-			$_CLASS['template']->assign_vars_array('userrow', array(
-				'USERNAME'		=> ($row['user_id'] == ANONYMOUS) ? $_CLASS['user']->lang['GUEST'] : $row['username'],
+			$_CLASS['core_template']->assign_vars_array('userrow', array(
+				'USERNAME'		=> ($row['user_id'] == ANONYMOUS) ? $_CLASS['core_user']->lang['GUEST'] : $row['username'],
 				'NUM_POSTS'		=> $row['postings'],	
-				'L_POST_S'		=> ($row['postings'] == 1) ? $_CLASS['user']->lang['POST'] : $_CLASS['user']->lang['POSTS'],
+				'L_POST_S'		=> ($row['postings'] == 1) ? $_CLASS['core_user']->lang['POST'] : $_CLASS['core_user']->lang['POSTS'],
 
 				'U_PROFILE'		=> ($row['user_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 				'U_SEARCHPOSTS' => getlink('Forums&amp;file=search&amp;search_author=' . urlencode($row['username']) . '&amp;showresults=topics', false, false))
@@ -369,11 +369,11 @@ function mcp_post_details($id, $mode, $action, $url)
 		{
 			$hostname = (($rdns_ip_num == $row['poster_ip'] || $rdns_ip_num == 'all') && $row['poster_ip']) ? @gethostbyaddr($row['poster_ip']) : '';
 
-			$_CLASS['template']->assign_vars_array('iprow', array(
+			$_CLASS['core_template']->assign_vars_array('iprow', array(
 				'IP'			=> $row['poster_ip'],
 				'HOSTNAME'		=> $hostname,
 				'NUM_POSTS'		=> $row['postings'],	
-				'L_POST_S'		=> ($row['postings'] == 1) ? $_CLASS['user']->lang['POST'] : $_CLASS['user']->lang['POSTS'],
+				'L_POST_S'		=> ($row['postings'] == 1) ? $_CLASS['core_user']->lang['POST'] : $_CLASS['core_user']->lang['POSTS'],
 
 				'U_LOOKUP_IP'	=> ($rdns_ip_num == $row['poster_ip'] || $rdns_ip_num == 'all') ? '' : getlink("$url&amp;i=$id&amp;mode=post_details&amp;rdns={$row['poster_ip']}#ip", false, false),
 				'U_WHOIS'		=> getlink("Forums&amp;file=mcp&amp;i=$id&amp;mode=whois&amp;ip={$row['poster_ip']}", false, false))
@@ -392,7 +392,7 @@ function mcp_post_details($id, $mode, $action, $url)
 			{
 				$user_select .= '<option value="' . $row['user_id'] . '">' . $row['username'] . "</option>\n";
 			}
-			$_CLASS['template']->assign('S_USER_SELECT', $user_select);
+			$_CLASS['core_template']->assign('S_USER_SELECT', $user_select);
 		}
 	}
 

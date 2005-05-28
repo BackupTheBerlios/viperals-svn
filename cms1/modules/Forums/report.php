@@ -30,15 +30,15 @@ if (!defined('VIPERAL'))
 
 require_once($site_file_root.'includes/forums/functions.'.$phpEx);
 loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
-$_CLASS['auth']->acl($_CLASS['user']->data);
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
-$_CLASS['user']->add_lang('mcp');
+$_CLASS['core_user']->add_lang('mcp');
 
 // Report PM or Post?
 $id = request_var('p', request_var('pm', 0));
 $report_post = (request_var('p', 0)) ? true : false;
 $reason_id	= request_var('reason_id', 0);
-$user_notify= (!empty($_REQUEST['notify']) && $_CLASS['user']->data['user_id'] != ANONYMOUS) ? true : false;
+$user_notify= (!empty($_REQUEST['notify']) && $_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false;
 $report_text= request_var('report_text', '');
 
 if (!$id)
@@ -68,7 +68,7 @@ else
 	$sql = 'SELECT p.*, t.*
 		FROM ' . PRIVMSGS_TABLE . ' p, ' . PRIVMSGS_TO_TABLE . " t
 		WHERE t.msg_id = $id
-			AND t.user_id = " . $_CLASS['user']->data['user_id'] . '
+			AND t.user_id = " . $_CLASS['core_user']->data['user_id'] . '
 			AND t.msg_id = p.msg_id';
 }
 
@@ -76,7 +76,7 @@ $result = $db->sql_query($sql);
 
 if (!($report_data = $db->sql_fetchrow($result)))
 {
-	$message = ($report_post) ? $_CLASS['user']->lang['POST_NOT_EXIST'] : $_CLASS['user']->lang['PM_NOT_EXIST'];
+	$message = ($report_post) ? $_CLASS['core_user']->lang['POST_NOT_EXIST'] : $_CLASS['core_user']->lang['PM_NOT_EXIST'];
 	trigger_error($message);
 }
 
@@ -109,12 +109,12 @@ else
 $sql = 'SELECT *
 	FROM ' . REPORTS_TABLE . '
 	WHERE ' . (($report_post) ? "post_id = $id" : "msg_id = $id") . '
-		AND user_id = ' . $_CLASS['user']->data['user_id'];
+		AND user_id = ' . $_CLASS['core_user']->data['user_id'];
 $result = $db->sql_query($sql);
 
 if ($row = $db->sql_fetchrow($result))
 {
-	if ($_CLASS['user']->data['user_id'] != ANONYMOUS)
+	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 	{
 		// A report exists, extract $row if we're going to display the form
 		if ($reason_id)
@@ -129,7 +129,7 @@ if ($row = $db->sql_fetchrow($result))
 	}
 	else
 	{
-		trigger_error($_CLASS['user']->lang['ALREADY_REPORTED'] . '<br /><br />' . sprintf($_CLASS['user']->lang[(($report_post) ? 'RETURN_TOPIC' : 'RETURN_MESSAGE')], '<a href="' . $redirect_url . '">', '</a>'));
+		trigger_error($_CLASS['core_user']->lang['ALREADY_REPORTED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang[(($report_post) ? 'RETURN_TOPIC' : 'RETURN_MESSAGE')], '<a href="' . $redirect_url . '">', '</a>'));
 	}
 }
 else
@@ -151,13 +151,13 @@ if (isset($_POST['submit']) && $reason_id)
 	}
 	$db->sql_freeresult($result);
 
-	$reason_desc = (!empty($_CLASS['user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_name'];
-
+	$reason_desc = (!empty($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_description'];
+	
 	$sql_ary = array(
 		'reason_id'		=> (int) $reason_id,
 		'post_id'		=> ($report_post) ? $id : 0,
 		'msg_id'		=> ($report_post) ? 0 : $id,
-		'user_id'		=> (int) $_CLASS['user']->data['user_id'],
+		'user_id'		=> (int) $_CLASS['core_user']->data['user_id'],
 		'user_notify'	=> (int) $user_notify,
 		'report_time'	=> (int) time(),
 		'report_text'	=> (string) $report_text
@@ -256,7 +256,7 @@ if (isset($_POST['submit']) && $reason_id)
 			'lang'	=> $row['user_lang'],
 			'notify_type'	=> $row['user_notify_type'],
 			
-			'pm'	=> $_CLASS['user']->optionget('report_pm_notify', $row['user_options'])
+			'pm'	=> $_CLASS['core_user']->optionget('report_pm_notify', $row['user_options'])
 		);
 	}
 	$db->sql_freeresult($result);
@@ -264,7 +264,7 @@ if (isset($_POST['submit']) && $reason_id)
 	$report_data = array(
 		'id'		=> $id,
 		'report_id'	=> $report_id,
-		'reporter'	=> $_CLASS['user']->data['username'],
+		'reporter'	=> $_CLASS['core_user']->data['username'],
 		'reason'	=> $reason_desc,
 		'text'		=> $report_text,
 		'subject'	=> ($report_post) ? $report_data['post_subject'] : $report_data['message_subject'],
@@ -273,9 +273,9 @@ if (isset($_POST['submit']) && $reason_id)
 
 	report_notification($notify_user, $report_post, $report_data);
 
-	$_CLASS['display']->meta_refresh(3, $redirect_url);
+	$_CLASS['core_display']->meta_refresh(3, $redirect_url);
 
-	$message = $_CLASS['user']->lang[(($report_post) ? 'POST' : 'MESSAGE') . '_REPORTED_SUCCESS'] . '<br /><br />' . sprintf($_CLASS['user']->lang[(($report_post) ? 'RETURN_TOPIC' : 'RETURN_MESSAGE')], '<a href="' . $redirect_url . '">', '</a>');
+	$message = $_CLASS['core_user']->lang[(($report_post) ? 'POST' : 'MESSAGE') . '_REPORTED_SUCCESS'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang[(($report_post) ? 'RETURN_TOPIC' : 'RETURN_MESSAGE')], '<a href="' . $redirect_url . '">', '</a>');
 	trigger_error($message);
 }
 
@@ -289,11 +289,11 @@ while ($row = $db->sql_fetchrow($result))
 {
 	$row['reason_name'] = strtoupper($row['reason_name']);
 
-	$reason_title = (!empty($_CLASS['user']->lang['report_reasons']['TITLE'][$row['reason_name']])) ? $_CLASS['user']->lang['report_reasons']['TITLE'][$row['reason_name']] : ucwords(str_replace('_', ' ', $row['reason_name']));
+	$reason_title = (!empty($_CLASS['core_user']->lang['report_reasons']['TITLE'][$row['reason_name']])) ? $_CLASS['core_user']->lang['report_reasons']['TITLE'][$row['reason_name']] : ucwords(str_replace('_', ' ', $row['reason_name']));
 
-	$reason_desc = (!empty($_CLASS['user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_desc'];
+	$reason_desc = (!empty($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_desc'];
 
-	$_CLASS['template']->assign_vars_array('reason', array(
+	$_CLASS['core_template']->assign_vars_array('reason', array(
 		'ID'			=>	$row['reason_id'],
 		'NAME'			=>	htmlspecialchars($reason_title),
 		'DESCRIPTION'	=>	htmlspecialchars($reason_desc),
@@ -303,11 +303,11 @@ while ($row = $db->sql_fetchrow($result))
 
 $u_report = ($report_post) ? "p=$id" : "pm=$id";
 
-$_CLASS['template']->assign(array(
+$_CLASS['core_template']->assign(array(
 	'REPORT_TEXT'		=>	$report_text,
 	'S_REPORT_ACTION'	=>	generate_link("Forums&amp;file=report&amp;$u_report" . (($report_id) ? "&amp;report_id=$report_id" : '')),
 	'S_NOTIFY'			=> (!empty($user_notify)) ? true : false,
-	'S_CAN_NOTIFY'		=> ($_CLASS['user']->data['user_id'] == ANONYMOUS) ? false : true,
+	'S_CAN_NOTIFY'		=> ($_CLASS['core_user']->data['user_id'] == ANONYMOUS) ? false : true,
 	'S_REPORT_POST'		=> $report_post)
 );
 
@@ -317,27 +317,27 @@ if ($report_post)
 }
 
 /// lets assign those language that are needed///
-$_CLASS['template']->assign(array(
-	'L_REPORT_POST'				=> $_CLASS['user']->lang['REPORT_POST'],
-	'L_REPORT_POST_EXPLAIN'		=> $_CLASS['user']->lang['REPORT_POST_EXPLAIN'],
-	'L_REASON'					=> $_CLASS['user']->lang['REASON'],
-	'L_REPORT_NOTIFY'			=> $_CLASS['user']->lang['REPORT_NOTIFY'],
-	'L_REPORT_NOTIFY_EXPLAIN'	=> $_CLASS['user']->lang['REPORT_NOTIFY_EXPLAIN'],
-	'L_YES'						=> $_CLASS['user']->lang['YES'],
-	'L_NO'						=> $_CLASS['user']->lang['NO'],
-	'L_MORE_INFO'				=> $_CLASS['user']->lang['MORE_INFO'],
-	'L_CAN_LEAVE_BLANK'			=> $_CLASS['user']->lang['CAN_LEAVE_BLANK'],
-	'L_SUBMIT'					=> $_CLASS['user']->lang['SUBMIT'],
-	'L_CANCEL'					=> $_CLASS['user']->lang['CANCEL'])
+$_CLASS['core_template']->assign(array(
+	'L_REPORT_POST'				=> $_CLASS['core_user']->lang['REPORT_POST'],
+	'L_REPORT_POST_EXPLAIN'		=> $_CLASS['core_user']->lang['REPORT_POST_EXPLAIN'],
+	'L_REASON'					=> $_CLASS['core_user']->lang['REASON'],
+	'L_REPORT_NOTIFY'			=> $_CLASS['core_user']->lang['REPORT_NOTIFY'],
+	'L_REPORT_NOTIFY_EXPLAIN'	=> $_CLASS['core_user']->lang['REPORT_NOTIFY_EXPLAIN'],
+	'L_YES'						=> $_CLASS['core_user']->lang['YES'],
+	'L_NO'						=> $_CLASS['core_user']->lang['NO'],
+	'L_MORE_INFO'				=> $_CLASS['core_user']->lang['MORE_INFO'],
+	'L_CAN_LEAVE_BLANK'			=> $_CLASS['core_user']->lang['CAN_LEAVE_BLANK'],
+	'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
+	'L_CANCEL'					=> $_CLASS['core_user']->lang['CANCEL'])
 );
 
-$_CLASS['display']->display_head(($report_post) ? $_CLASS['user']->lang['REPORT_POST'] : $_CLASS['user']->lang['REPORT_MESSAGE']);
+$_CLASS['core_display']->display_head(($report_post) ? $_CLASS['core_user']->lang['REPORT_POST'] : $_CLASS['core_user']->lang['REPORT_MESSAGE']);
 
 page_header();
 
-$_CLASS['template']->display('modules/Forums/report_body.html');
+$_CLASS['core_template']->display('modules/Forums/report_body.html');
 
-$_CLASS['display']->display_footer();
+$_CLASS['core_display']->display_footer();
 
 function report_notification($notify_user, $report_post, $report_data)
 {
@@ -379,10 +379,7 @@ function report_notification($notify_user, $report_post, $report_data)
 			$messenger->send($notify_row['notify_type']);
 			$messenger->reset();
 
-			if ($messenger->queue)
-			{
-				$messenger->queue->save();
-			}
+			$messenger->save_queue();
 		}
 		else
 		{

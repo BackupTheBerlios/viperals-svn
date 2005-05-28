@@ -112,34 +112,8 @@ $global_rule_conditions = array(
 	RULE_IS_GROUP		=> 'group'
 );
 
-// Get number of unread messages from all folder
-function get_unread_pm($user_id)
-{
-	global $db;
-
-	$unread_pm = array();
-
-	$sql = 'SELECT folder_id, SUM(unread) as sum_unread
-		FROM ' . PRIVMSGS_TO_TABLE . "
-		WHERE user_id = $user_id
-			AND folder_id <> " . PRIVMSGS_OUTBOX . '
-		GROUP BY folder_id';
-	$result = $db->sql_query($sql);
-
-	while ($row = $db->sql_fetchrow($result))
-	{
-		if ($row['sum_unread'])
-		{
-			$unread_pm[$row['folder_id']] = $row['sum_unread'];
-		}
-	}
-	$db->sql_freeresult($result);
-
-	return $unread_pm;
-}
-
 // Get all folder
-function get_folder($user_id, &$folder)
+ function get_folder($user_id, &$folder, $folder_id = false)
 {
 	global $db, $_CLASS;
 
@@ -148,27 +122,42 @@ function get_folder($user_id, &$folder)
 		$folder = array();
 	}
 
-	$sql = 'SELECT folder_id, COUNT(msg_id) as num_messages
+	// Get folder informations
+	$sql = 'SELECT folder_id, COUNT(msg_id) as num_messages, SUM(unread) as num_unread
 		FROM ' . PRIVMSGS_TO_TABLE . "
 		WHERE user_id = $user_id
 			AND folder_id <> " . PRIVMSGS_NO_BOX . '
 		GROUP BY folder_id';
 	$result = $db->sql_query($sql);
 
-	$num_messages = array();
+	$num_messages = $num_unread = array();
 	while ($row = $db->sql_fetchrow($result))
 	{
 		$num_messages[(int) $row['folder_id']] = $row['num_messages'];
+		$num_unread[(int) $row['folder_id']] = $row['num_unread'];
 	}
 	$db->sql_freeresult($result);
 
-	if (!isset($num_messages[PRIVMSGS_OUTBOX]))
+	// Make sure the default boxes are defined
+	foreach (array(PRIVMSGS_INBOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX) as $default_folder)
 	{
-		$num_messages[PRIVMSGS_OUTBOX] = 0;
+		if (!isset($num_messages[$default_folder]))
+		{
+			$num_messages[$default_folder] = 0;
+		}
+
+		if (!isset($num_unread[$default_folder]))
+		{
+			$num_unread[$default_folder] = 0;
+		}
 	}
 
-	$folder[PRIVMSGS_INBOX] = array('folder_name' => $_CLASS['user']->lang['PM_INBOX'], 'num_messages' => (int) $num_messages[PRIVMSGS_INBOX]);
+	// Adjust unread status for outbox
+	$num_unread[PRIVMSGS_OUTBOX] = $num_messages[PRIVMSGS_OUTBOX];
+	
+	$folder[PRIVMSGS_INBOX] = array('folder_name' => $_CLASS['core_user']->lang['PM_INBOX'], 'num_messages' => $num_messages[PRIVMSGS_INBOX], 'unread_messages' => $num_unread[PRIVMSGS_INBOX]);
 
+	// Custom Folder
 	$sql = 'SELECT folder_id, folder_name, pm_count
 		FROM ' . PRIVMSGS_FOLDER_TABLE . "
 			WHERE user_id = $user_id";
@@ -176,12 +165,27 @@ function get_folder($user_id, &$folder)
 			
 	while ($row = $db->sql_fetchrow($result))
 	{
-		$folder[$row['folder_id']] = array('folder_name' => $row['folder_name'], 'num_messages' => $row['pm_count']);
+		$folder[$row['folder_id']] = array('folder_name' => $row['folder_name'], 'num_messages' => $row['pm_count'], 'unread_messages' => ((isset($num_unread[$row['folder_id']])) ? $num_unread[$row['folder_id']] : 0));
 	}
 	$db->sql_freeresult($result);
 
-	$folder[PRIVMSGS_OUTBOX] = array('folder_name' => $_CLASS['user']->lang['PM_OUTBOX'], 'num_messages' => (int) $num_messages[PRIVMSGS_OUTBOX]);
-	$folder[PRIVMSGS_SENTBOX] = array('folder_name' => $_CLASS['user']->lang['PM_SENTBOX'], 'num_messages' => (int) $num_messages[PRIVMSGS_SENTBOX]);
+	$folder[PRIVMSGS_OUTBOX] = array('folder_name' => $_CLASS['core_user']->lang['PM_OUTBOX'], 'num_messages' => $num_messages[PRIVMSGS_OUTBOX], 'unread_messages' => $num_unread[PRIVMSGS_OUTBOX]);
+	$folder[PRIVMSGS_SENTBOX] = array('folder_name' => $_CLASS['core_user']->lang['PM_SENTBOX'], 'num_messages' => $num_messages[PRIVMSGS_SENTBOX], 'unread_messages' => $num_unread[PRIVMSGS_SENTBOX]);
+
+	// Define Folder Array for template designers (and for making custom folders usable by the template too)
+	foreach ($folder as $f_id => $folder_ary)
+	{
+		$_CLASS['core_template']->assign_vars_array('folder', array(
+			'FOLDER_ID'			=> $f_id,
+			'FOLDER_NAME'		=> $folder_ary['folder_name'],
+			'NUM_MESSAGES'		=> $folder_ary['num_messages'],
+			'UNREAD_MESSAGES'	=> $folder_ary['unread_messages'],
+
+			'S_CUR_FOLDER'		=> ($f_id == $folder_id) ? true : false,
+			'S_UNREAD_MESSAGES'	=> ($folder_ary['unread_messages']) ? true : false,
+			'S_CUSTOM_FOLDER'	=> ($f_id > 0) ? true : false)
+		);
+	}
 
 	return;
 }
@@ -191,19 +195,17 @@ function clean_sentbox($num_sentbox_messages)
 {
 	global $db, $_CLASS, $config;
 
-	$message_limit = (!$_CLASS['user']->data['group_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['user']->data['group_message_limit'];
-
 	// Check Message Limit - 
-	if ($message_limit && $num_sentbox_messages > $message_limit)
+	if ($_CLASS['core_user']->data['message_limit'] && $num_sentbox_messages > $_CLASS['core_user']->data['message_limit'])
 	{
 		// Delete old messages
 		$sql = 'SELECT t.msg_id
 			FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p
 			WHERE t.msg_id = p.msg_id
-				AND t.user_id = ' . $_CLASS['user']->data['user_id'] . '
+				AND t.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND t.folder_id = ' . PRIVMSGS_SENTBOX . '
 			ORDER BY p.message_time ASC';
-		$result = $db->sql_query_limit($sql, ($num_sentbox_messages - $message_limit));
+		$result = $db->sql_query_limit($sql, ($num_sentbox_messages - $_CLASS['core_user']->data['message_limit']));
 
 		$delete_ids = array();
 		while ($row = $db->sql_fetchrow($result))
@@ -211,7 +213,7 @@ function clean_sentbox($num_sentbox_messages)
 			$delete_ids[] = $row['msg_id'];
 		}
 		$db->sql_freeresult($result);
-		delete_pm($_CLASS['user']->data['user_id'], $delete_ids, PRIVMSGS_SENTBOX);
+		delete_pm($_CLASS['core_user']->data['user_id'], $delete_ids, PRIVMSGS_SENTBOX);
 	}
 }
 
@@ -265,14 +267,14 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 {
 	global $db, $_CLASS, $config;
 
-	if (!$_CLASS['user']->data['user_new_privmsg'])
+	if (!$_CLASS['core_user']->data['user_new_privmsg'])
 	{
 		return;
 	}
 
-	$user_new_privmsg = (int) $_CLASS['user']->data['user_new_privmsg'];
-	$user_message_rules = (int) $_CLASS['user']->data['user_message_rules'];
-	$user_id = (int) $_CLASS['user']->data['user_id'];
+	$user_new_privmsg = (int) $_CLASS['core_user']->data['user_new_privmsg'];
+	$user_message_rules = (int) $_CLASS['core_user']->data['user_message_rules'];
+	$user_id = (int) $_CLASS['core_user']->data['user_id'];
 
 	$user_rules = $zebra = array();
 	if ($user_message_rules)
@@ -326,7 +328,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 		$row['bcc']		= explode(':', $row['bcc_address']);
 		$row['friend']	= (isset($zebra[$row['author_id']])) ? $zebra[$row['author_id']]['friend'] : 0;
 		$row['foe']		= (isset($zebra[$row['author_id']])) ? $zebra[$row['author_id']]['foe'] : 0;
-		$row['user_in_group'] = $_CLASS['user']->data['group_id'];
+		$row['user_in_group'] = $_CLASS['core_user']->data['group_id'];
 						
 		// Check Rule - this should be very quick since we have all informations we need
 		$is_match = false;
@@ -440,7 +442,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	if (sizeof($move_into_folder))
 	{
 		// Determine Full Folder Action - we need the move to folder id later eventually
-		$full_folder_action = ($_CLASS['user']->data['user_full_folder'] == FULL_FOLDER_NONE) ? ($config['full_folder_action'] - (FULL_FOLDER_NONE*(-1))) : $_CLASS['user']->data['user_full_folder'];
+		$full_folder_action = ($_CLASS['core_user']->data['user_full_folder'] == FULL_FOLDER_NONE) ? ($config['full_folder_action'] - (FULL_FOLDER_NONE*(-1))) : $_CLASS['core_user']->data['user_full_folder'];
 
 		$sql = 'SELECT folder_id, pm_count 
 			FROM ' . PRIVMSGS_FOLDER_TABLE . '
@@ -471,18 +473,17 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	// Here we have ideally only one folder to move into
 	foreach ($move_into_folder as $folder_id => $msg_ary)
 	{
-		$message_limit = (!$_CLASS['user']->data['group_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['user']->data['group_message_limit'];
 		$dest_folder = $folder_id;
 		$full_folder_action = FULL_FOLDER_NONE;
 
 		// Check Message Limit - we calculate with the complete array, most of the time it is one message
 		// But we are making sure that the other way around works too (more messages in queue than allowed to be stored)
-		if ($message_limit && $folder[$folder_id] && ($folder[$folder_id] + sizeof($msg_ary)) > $message_limit)
+		if ($_CLASS['core_user']->data['message_limit'] && $folder[$folder_id] && ($folder[$folder_id] + sizeof($msg_ary)) > $_CLASS['core_user']->data['message_limit'])
 		{
-			$full_folder_action = ($_CLASS['user']->data['user_full_folder'] == FULL_FOLDER_NONE) ? ($config['full_folder_action'] - (FULL_FOLDER_NONE*(-1))) : $_CLASS['user']->data['user_full_folder'];
+			$full_folder_action = ($_CLASS['core_user']->data['user_full_folder'] == FULL_FOLDER_NONE) ? ($config['full_folder_action'] - (FULL_FOLDER_NONE*(-1))) : $_CLASS['core_user']->data['user_full_folder'];
 
 			// If destination folder itself is full...
-			if ($full_folder_action >= 0 && ($folder[$full_folder_action] + sizeof($msg_ary)) > $message_limit)
+			if ($full_folder_action >= 0 && ($folder[$full_folder_action] + sizeof($msg_ary)) > $_CLASS['core_user']->data['message_limit'])
 			{
 				$full_folder_action = $config['full_folder_action'] - (FULL_FOLDER_NONE*(-1));
 			}
@@ -501,7 +502,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 						AND t.user_id = $user_id
 						AND t.folder_id = $dest_folder
 					ORDER BY p.message_time ASC";
-				$result = $db->sql_query_limit($sql, (($folder[$dest_folder] + sizeof($msg_ary)) - $message_limit));
+				$result = $db->sql_query_limit($sql, (($folder[$dest_folder] + sizeof($msg_ary)) - $_CLASS['core_user']->data['message_limit']));
 
 				$delete_ids = array();
 				while ($row = $db->sql_fetchrow($result))
@@ -513,7 +514,17 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			}
 		}
 		
-		if ($full_folder_action < 0)
+		if ($full_folder_action == FULL_FOLDER_HOLD)
+		{
+			$num_not_moved += sizeof($msg_ary);
+			$sql = 'UPDATE ' . PRIVMSGS_TO_TABLE . '
+				SET folder_id = ' . PRIVMSGS_HOLD_BOX . '
+				WHERE folder_id = ' . PRIVMSGS_NO_BOX . "
+					AND user_id = $user_id
+					AND msg_id IN (" . implode(', ', $msg_ary) . ')';
+			$db->sql_query($sql);
+		}
+		else
 		{
 			$sql = 'UPDATE ' . PRIVMSGS_TO_TABLE . " 
 				SET folder_id = $dest_folder, new = 0
@@ -535,16 +546,6 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			{
 				$num_new += $db->sql_affectedrows();
 			}
-		}
-		else
-		{
-			$num_not_moved += sizeof($msg_ary);
-			$sql = 'UPDATE ' . PRIVMSGS_TO_TABLE . ' 
-				SET folder_id = ' . PRIVMSGS_HOLD_BOX . '
-				WHERE folder_id = ' . PRIVMSGS_NO_BOX . "
-					AND user_id = $user_id
-					AND msg_id IN (" . implode(', ', $msg_ary) . ')';
-			$db->sql_query($sql);
 		}
 	}
 
@@ -570,8 +571,8 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 		}
 		
 		$db->sql_query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
-		$_CLASS['user']->data['user_new_privmsg'] -= $num_new;
-		$_CLASS['user']->data['user_unread_privmsg'] -= $num_unread;
+		$_CLASS['core_user']->data['user_new_privmsg'] -= $num_new;
+		$_CLASS['core_user']->data['user_unread_privmsg'] -= $num_unread;
 	}
 
 	return $num_not_moved;
@@ -610,8 +611,8 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 
 			if ($row['pm_count'] + sizeof($move_msg_ids) > $message_limit)
 			{
-				$message = sprintf($_CLASS['user']->lang['NOT_ENOUGH_SPACE_FOLDER'], $row['folder_name']) . '<br /><br />';
-				$message .= sprintf($_CLASS['user']->lang['CLICK_RETURN_FOLDER'], '<a href="'.getlink('Control_Panel&amp;i=pm&amp;folder='.$row['folder_id']).'">', '</a>', $row['folder_name']);
+				$message = sprintf($_CLASS['core_user']->lang['NOT_ENOUGH_SPACE_FOLDER'], $row['folder_name']) . '<br /><br />';
+				$message .= sprintf($_CLASS['core_user']->lang['CLICK_RETURN_FOLDER'], '<a href="'.getlink('Control_Panel&amp;i=pm&amp;folder='.$row['folder_id']).'">', '</a>', $row['folder_name']);
 				trigger_error($message);
 			}
 		}
@@ -624,8 +625,8 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 			$result = $db->sql_query($sql);
 			if ($db->sql_fetchfield('num_messages', 0, $result) + sizeof($move_msg_ids) > $message_limit)
 			{
-				$message = sprintf($_CLASS['user']->lang['NOT_ENOUGH_SPACE_FOLDER'], $_CLASS['user']->lang['PM_INBOX']) . '<br /><br />';
-				$message .= sprintf($_CLASS['user']->lang['CLICK_RETURN_FOLDER'], '<a href="'.getlink('Control_Panel&amp;i=pm&amp;folder=inbox').'">', '</a>', $_CLASS['user']->lang['PM_INBOX']);
+				$message = sprintf($_CLASS['core_user']->lang['NOT_ENOUGH_SPACE_FOLDER'], $_CLASS['core_user']->lang['PM_INBOX']) . '<br /><br />';
+				$message .= sprintf($_CLASS['core_user']->lang['CLICK_RETURN_FOLDER'], '<a href="'.getlink('Control_Panel&amp;i=pm&amp;folder=inbox').'">', '</a>', $_CLASS['core_user']->lang['PM_INBOX']);
 				trigger_error($message);
 			}
 		}
@@ -738,8 +739,12 @@ function handle_mark_actions($user_id, $mark_action)
 			if (confirm_box(true))
 			{
 				delete_pm($user_id, $msg_ids, $cur_folder_id);
-				// TODO: meta blabla
-				trigger_error('MESSAGE_DELETED');
+				
+				$success_msg = (sizeof($msg_ids) == 1) ? 'MESSAGE_DELETED' : 'MESSAGES_DELETED';
+				$redirect = generate_link('Control_Panel&amp;i=pm&amp;folder='.$cur_folder_id);
+				$_CLASS['core_display']->meta_refresh(3, $redirect);
+				
+				trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FOLDER'], '<a href="' . $redirect . '">', '</a>'));
 			}
 			else
 			{
@@ -948,12 +953,13 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 		{
 			$sql = 'SELECT user_id, username, user_colour 
 				FROM ' . USERS_TABLE . '
-				WHERE user_id IN (' . implode(', ', $u) . ')';
+				WHERE user_id IN (' . implode(', ', $u) . ')
+					AND user_type IN (' . USER_NORMAL . ', ' . USER_FOUNDER . ')';
 			$result = $db->sql_query($sql);
 
 			while ($row = $db->sql_fetchrow($result))
 			{
-				if ($check_type == 'to' || $author_id == $_CLASS['user']->data['user_id'] || $row['user_id'] == $_CLASS['user']->data['user_id'])
+				if ($check_type == 'to' || $author_id == $_CLASS['core_user']->data['user_id'] || $row['user_id'] == $_CLASS['core_user']->data['user_id'])
 				{
 					if ($plaintext)
 					{
@@ -979,7 +985,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 		
 				while ($row = $db->sql_fetchrow($result))
 				{
-					if ($check_type == 'to' || $author_id == $_CLASS['user']->data['user_id'] || $row['user_id'] == $_CLASS['user']->data['user_id'])
+					if ($check_type == 'to' || $author_id == $_CLASS['core_user']->data['user_id'] || $row['user_id'] == $_CLASS['core_user']->data['user_id'])
 					{
 						$address[] = $row['group_name'];
 					}
@@ -999,7 +1005,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 				{
 					if (!isset($address['group'][$row['group_id']]))
 					{
-						if ($check_type == 'to' || $author_id == $_CLASS['user']->data['user_id'] || $row['user_id'] == $_CLASS['user']->data['user_id'])
+						if ($check_type == 'to' || $author_id == $_CLASS['core_user']->data['user_id'] || $row['user_id'] == $_CLASS['core_user']->data['user_id'])
 						{
 							$address['group'][$row['group_id']] = array('name' => $row['group_name'], 'colour' => $row['group_colour']);
 						}
@@ -1016,13 +1022,13 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 
 		if (sizeof($address) && !$plaintext)
 		{
-			$_CLASS['template']->assign('S_' . strtoupper($check_type) . '_RECIPIENT', true);
+			$_CLASS['core_template']->assign('S_' . strtoupper($check_type) . '_RECIPIENT', true);
 
 			foreach ($address as $type => $adr_ary)
 			{
 				foreach ($adr_ary as $id => $row)
 				{
-					$_CLASS['template']->assign_vars_array($check_type . '_recipient', array(
+					$_CLASS['core_template']->assign_vars_array($check_type . '_recipient', array(
 						'NAME'		=> $row['name'],
 						'IS_GROUP'	=> ($type == 'group'),
 						'IS_USER'	=> ($type == 'user'),
@@ -1055,17 +1061,16 @@ function get_folder_status($folder_id, $folder)
 	}
 	$return = array();
 
-	$message_limit = (!$_CLASS['user']->data['group_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['user']->data['group_message_limit'];
-
 	$return = array(
 		'folder_name'	=> $folder['folder_name'], 
 		'cur'			=> $folder['num_messages'],
 		'remaining'		=> $message_limit - $folder['num_messages'],
-		'max'			=> $message_limit,
-		'percent'		=> ($message_limit > 0) ? round(($folder['num_messages'] / $message_limit) * 100) : 100
+		'remaining'		=> $_CLASS['core_user']->data['message_limit'] - $folder['num_messages'],
+		'max'			=> $_CLASS['core_user']->data['message_limit'],
+		'percent'		=> ($_CLASS['core_user']->data['message_limit'] > 0) ? round(($folder['num_messages'] / $_CLASS['core_user']->data['message_limit']) * 100) : 100
 	);
 
-	$return['message'] = sprintf($_CLASS['user']->lang['FOLDER_STATUS_MSG'], $return['percent'], $return['cur'], $return['max']);
+	$return['message'] = sprintf($_CLASS['core_user']->lang['FOLDER_STATUS_MSG'], $return['percent'], $return['cur'], $return['max']);
 
 	return $return;
 }
@@ -1147,16 +1152,16 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			// Set message_replied switch for this user
 			$sql = 'UPDATE ' . PRIVMSGS_TO_TABLE . '
 				SET replied = 1
-				WHERE user_id = ' . $_CLASS['user']->data['user_id'] . '
+				WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 					AND msg_id = ' . $data['reply_from_msg_id'];
 
 		case 'forward':
 		case 'post':
 			$sql_data = array(
 				'root_level'		=> $root_level,
-				'author_id'			=> (int) $_CLASS['user']->data['user_id'],
+				'author_id'			=> (int) $_CLASS['core_user']->data['user_id'],
 				'icon_id'			=> $data['icon_id'], 
-				'author_ip' 		=> $_CLASS['user']->ip,
+				'author_ip' 		=> $_CLASS['core_user']->ip,
 				'message_time'		=> $current_time,
 				'enable_bbcode' 	=> $data['enable_bbcode'],
 				'enable_html' 		=> $data['enable_html'],
@@ -1166,8 +1171,8 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'message_subject'	=> $subject,
 				'message_text' 		=> $data['message'],
 				'message_checksum'	=> $data['message_md5'],
-				'message_encoding'	=> $_CLASS['user']->lang['ENCODING'],
-				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data']['physical_filename'])) ? 1 : 0,
+				'message_encoding'	=> $_CLASS['core_user']->lang['ENCODING'],
+				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],
 				'to_address'		=> implode(':', $to),
@@ -1187,8 +1192,8 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'message_subject'	=> $subject,
 				'message_text' 		=> $data['message'],
 				'message_checksum'	=> $data['message_md5'],
-				'message_encoding'	=> $_CLASS['user']->lang['ENCODING'],
-				'message_attachment'=> (sizeof($data['filename_data']['physical_filename'])) ? 1 : 0,
+				'message_encoding'	=> $_CLASS['core_user']->lang['ENCODING'],
+				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid']
 			);
@@ -1226,7 +1231,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			$db->sql_query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $db->sql_build_array('INSERT', array(
 				'msg_id'	=> $data['msg_id'],
 				'user_id'	=> $user_id,
-				'author_id'	=> $_CLASS['user']->data['user_id'],
+				'author_id'	=> $_CLASS['core_user']->data['user_id'],
 				'folder_id'	=> PRIVMSGS_NO_BOX,
 				'new'		=> 1,
 				'unread'	=> 1,
@@ -1235,7 +1240,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		}
 
 		$sql = 'UPDATE ' . USERS_TABLE . ' 
-			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1, user_last_privmsg = '.time().'
+			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1, user_last_privmsg = ' . time() . '
 			WHERE user_id IN (' . implode(', ', array_keys($recipients)) . ')';
 		$db->sql_query($sql);
 
@@ -1244,8 +1249,8 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		{
 			$db->sql_query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $db->sql_build_array('INSERT', array(
 				'msg_id'	=> (int) $data['msg_id'],
-				'user_id'	=> (int) $_CLASS['user']->data['user_id'],
-				'author_id'	=> (int) $_CLASS['user']->data['user_id'],
+				'user_id'	=> (int) $_CLASS['core_user']->data['user_id'],
+				'author_id'	=> (int) $_CLASS['core_user']->data['user_id'],
 				'folder_id'	=> PRIVMSGS_OUTBOX,
 				'new'		=> 0,
 				'unread'	=> 0,
@@ -1261,7 +1266,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	{
 		$sql = 'UPDATE ' . USERS_TABLE . "
 			SET user_lastpost_time = $current_time
-			WHERE user_id = " . $_CLASS['user']->data['user_id'];
+			WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
 		$db->sql_query($sql);
 	}
 
@@ -1289,9 +1294,9 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 					'post_msg_id'		=> $data['msg_id'],
 					'topic_id'			=> 0,
 					'in_message'		=> 1,
-					'poster_id'			=> $_CLASS['user']->data['user_id'],
-					'physical_filename'	=> $attach_row['physical_filename'],
-					'real_filename'		=> $attach_row['real_filename'],
+					'poster_id'			=> $_CLASS['core_user']->data['user_id'],
+					'physical_filename'	=> basename($attach_row['physical_filename']),
+					'real_filename'		=> basename($attach_row['real_filename']),
 					'comment'			=> $attach_row['comment'],
 					'extension'			=> $attach_row['extension'],
 					'mimetype'			=> $attach_row['mimetype'],
@@ -1332,14 +1337,14 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	{
 		$sql = 'DELETE FROM ' . DRAFTS_TABLE . " 
 			WHERE draft_id = $draft_id 
-				AND user_id = " . $_CLASS['user']->data['user_id'];
+				AND user_id = " . $_CLASS['core_user']->data['user_id'];
 		$db->sql_query($sql);
 	}
 
 	// Send Notifications
 	if ($mode != 'edit')
 	{
-		pm_notification($mode, stripslashes($_CLASS['user']->data['username']), $recipients, stripslashes($subject), stripslashes($data['message']));
+		pm_notification($mode, stripslashes($_CLASS['core_user']->data['username']), $recipients, stripslashes($subject), stripslashes($data['message']));
 	}
 
 	return $data['msg_id'];
@@ -1357,7 +1362,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 		FROM ' . BANLIST_TABLE;
 	$result = $db->sql_query($sql);
 
-	unset($recipients[ANONYMOUS], $recipients[$_CLASS['user']->data['user_id']]);
+	unset($recipients[ANONYMOUS], $recipients[$_CLASS['core_user']->data['user_id']]);
 	
 	while ($row = $db->sql_fetchrow($result))
 	{
@@ -1375,7 +1380,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 
 	$recipient_list = implode(', ', array_keys($recipients));
 
-	$sql = 'SELECT user_id, username, user_email, user_lang, user_notify_type, user_jabber 
+	$sql = 'SELECT user_id, username, user_email, user_lang, user_notify_pm, user_notify_type, user_jabber
 		FROM ' . USERS_TABLE . "
 		WHERE user_id IN ($recipient_list)";
 	$result = $db->sql_query($sql);
@@ -1383,7 +1388,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 	$msg_list_ary = array();
 	while ($row = $db->sql_fetchrow($result))
 	{
-		if (trim($row['user_email']))
+		if ($row['user_notify_pm'] == 1 && trim($row['user_email']))
 		{
 			$msg_list_ary[] = array(
 				'method'	=> $row['user_notify_type'],
@@ -1431,7 +1436,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 
 	if ($messenger->queue)
 	{
-		$messenger->queue->save();
+		$messenger->save_queue();
 	}
 
 	unset($messenger);

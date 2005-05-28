@@ -1,0 +1,82 @@
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th align="center"><b>{$L_TITLE}</b></th>
+			<th colspan="2"><b>{$L_POSITION}</b></th>
+			<th><b>{$L_ACTIVE}</b></th>
+			{ if isset($multilingual) }
+				<th align="center"><b>{$L_LANGUAGE}</b></th>
+			{ /if }
+			<th align="center"><b>{$L_FUNCTIONS}</b></th>
+		</tr>
+    { if isset($top_admin_messages) }
+    	<tr>
+			<td class="row3" colspan="8"><b class="gensmall">Top Messages</b></td>
+		</tr>
+    {section name=top_admin_messagesloop loop=$top_admin_messages}
+		<tr>
+			<td class="row1"><a href="{ $top_admin_messages[top_admin_messagesloop].EDIT_LINK }" title="{$L_EDIT}">{ $top_admin_messages[top_admin_messagesloop].TITLE }</a><br />
+				{ if $top_admin_messages[top_admin_messagesloop].STARTS }<br /><b>{$L_STARTS}: </b>{ $top_admin_messages[top_admin_messagesloop].STARTS }{ /if }
+				{ if $top_admin_messages[top_admin_messagesloop].EXPIRES }<br /><b>{$L_EXPIRES}: </b>{ $top_admin_messages[top_admin_messagesloop].EXPIRES }{ /if }
+			</td>
+			{* <td class="row2" {$top_admin_messages[top_admin_messagesloop].POSITION }</td> *}
+			<td class="row1"align="center" >{ $top_admin_messages[top_admin_messagesloop].LEFT_OPTIONS }</td><td class="row1" align="center">{ $top_admin_messages[top_admin_messagesloop].RIGHT_OPTIONS }</td>
+			{* <td class="row2" align="center">{ $top_admin_messages[top_admin_messagesloop].TYPE }</td> *}
+			<td class="row1" align="center"><a href="{ $top_admin_messages[top_admin_messagesloop].ACTIVE_LINK }"><img src="images/{ $top_admin_messages[top_admin_messagesloop].ACTIVE }" alt="{ $top_admin_messages[top_admin_messagesloop].CHANGE }" title="{ $top_admin_messages[top_admin_messagesloop].CHANGE }" border="0"></a></td>
+			{ if isset($multilingual) }
+			   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+			{ /if }
+			
+			
+			<td class="row1" align="center">[
+			{ if $top_admin_messages[top_admin_messagesloop].VIEW_LINK }
+			 <a href="{ $top_admin_messages[top_admin_messagesloop].VIEW_LINK }">{ $L_VIEW }</a>
+			{ /if }
+			
+			
+			 { if $top_admin_messages[top_admin_messagesloop].DELETE_LINK }
+				 | <a href="{ $top_admin_messages[top_admin_messagesloop].DELETE_LINK }">{ $L_DELETE }</a>
+			{ /if }
+			]  </td>
+		  </tr>
+	{ /section }
+	{ /if }
+	{ if isset($bottom_admin_messages) }
+    	<tr>
+			<td class="row3" colspan="8"><b class="gensmall">Top Messages</b></td>
+		</tr>
+	{section name=bottom_admin_messagesloop loop=$bottom_admin_messages}
+		<tr>
+			<td class="row1"><a href="{ $bottom_admin_messages[bottom_admin_messagesloop].EDIT_LINK }" title="{$L_EDIT}">{ $bottom_admin_messages[bottom_admin_messagesloop].TITLE }</a><br />
+				{ if $bottom_admin_messages[bottom_admin_messagesloop].STARTS }<br /><b>{$L_STARTS}: </b>{ $bottom_admin_messages[bottom_admin_messagesloop].STARTS }{ /if }
+				{ if $bottom_admin_messages[bottom_admin_messagesloop].EXPIRES }<br /><b>{$L_EXPIRES}: </b>{ $bottom_admin_messages[bottom_admin_messagesloop].EXPIRES }{ /if }
+			</td>
+			{* <td class="row2" {$bottom_admin_messages[bottom_admin_messagesloop].POSITION }</td> *}
+			<td class="row1"align="center" >{ $bottom_admin_messages[bottom_admin_messagesloop].LEFT_OPTIONS }</td><td class="row1" align="center">{ $bottom_admin_messages[bottom_admin_messagesloop].RIGHT_OPTIONS }</td>
+			{* <td class="row2" align="center">{ $bottom_admin_messages[bottom_admin_messagesloop].TYPE }</td> *}
+			<td class="row1" align="center"><a href="{ $bottom_admin_messages[bottom_admin_messagesloop].ACTIVE_LINK }"><img src="images/{ $bottom_admin_messages[bottom_admin_messagesloop].ACTIVE }" alt="{ $bottom_admin_messages[bottom_admin_messagesloop].CHANGE }" title="{ $bottom_admin_messages[bottom_admin_messagesloop].CHANGE }" border="0"></a></td>
+			{ if isset($multilingual) }
+			   <td> (($block['language'] == '') ? _ALL : ucfirst($block['language'])).'</td>
+			{ /if }
+			
+			
+			<td class="row1" align="center">[
+			{ if $bottom_admin_messages[bottom_admin_messagesloop].VIEW_LINK }
+			 <a href="{ $bottom_admin_messages[bottom_admin_messagesloop].VIEW_LINK }">{ $L_VIEW }</a>
+			{ /if }
+			
+			
+			 { if $bottom_admin_messages[bottom_admin_messagesloop].DELETE_LINK }
+				 | <a href="{ $bottom_admin_messages[bottom_admin_messagesloop].DELETE_LINK }">{ $L_DELETE }</a>
+			{ /if }
+			]  </td>
+		  </tr>
+	{ /section }
+	{ /if }
+  		  <tr>
+			<td class="cat" colspan="8">
+				<form action="{ $B_ACTION }" method="post"><input value="{ $L_ADD_NEW }" name="regular" type="submit" /></form>
+			</td>
+		  </tr>
+  </tbody>
+</table>

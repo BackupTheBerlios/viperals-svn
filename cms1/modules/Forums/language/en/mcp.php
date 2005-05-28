@@ -90,6 +90,7 @@ $this->lang += array(
 	'LOG_UNLOCK'			=> '<b>Unlocked topic</b><br />&#187; %s',
 	'LOG_UNLOCK_POST'		=> '<b>Unlocked post</b><br />&#187; %s',
 	'LOG_UNRATE'			=> '<b>Unrated post</b><br />&#187; %s',
+	'LOG_USER_LOCK'                 => '<b>User locked own topic</b><br />&#187; %s',
 	'LOGVIEW_VIEWTOPIC'		=> 'View Topic',
 	'LOGVIEW_VIEWLOGS'		=> 'View Topic Log',
 	'LOGVIEW_VIEWFORUM'		=> 'View Forum',

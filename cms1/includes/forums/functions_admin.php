@@ -29,23 +29,26 @@ function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl =
 	global $db, $_CLASS;
 
 	$acl = ($ignore_acl) ? '' : array('f_list', 'a_forum', 'a_forumadd', 'a_forumdel');
-	$rowset = get_forum_list($acl, false, $ignore_nonpost, true);
 
-	$right = $cat_right = 0;
-	$forum_list = $padding = $holding = '';
+	// This query is identical to the jumpbox one
+	$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, left_id, right_id
+		FROM ' . FORUMS_TABLE . '
+		ORDER BY left_id ASC';
+	$result = $db->sql_query($sql);
+
+	$right = $iteration = 0;
 	$padding_store = array('0' => '');
+	$forum_list = $padding = '';
 
-	foreach ($rowset as $row)
+	// Sometimes it could happen that forums will be displayed here not be displayed within the index page
+	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
+	// If this happens, the padding could be "broken"
+
+	while ($row = $db->sql_fetchrow($result))
 	{
-		if ((is_array($ignore_id) && in_array($row['forum_id'], $ignore_id)) || 
-			$row['forum_id'] == $ignore_id)
-		{
-			continue;
-		}
-
 		if ($row['left_id'] < $right)
 		{
-			$padding .= '&nbsp; &nbsp; &nbsp;';
+			$padding .= '&nbsp; &nbsp;';
 			$padding_store[$row['parent_id']] = $padding;
 		}
 		else if ($row['left_id'] > $right + 1)
@@ -55,30 +58,34 @@ function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl =
 
 		$right = $row['right_id'];
 
+		if ($acl && !$_CLASS['auth']->acl_gets($acl, $row['forum_id']))
+		{
+			continue;
+		}
+
+		if ((is_array($ignore_id) && in_array($row['forum_id'], $ignore_id)) || $row['forum_id'] == $ignore_id)
+		{
+			continue;
+		}
+
+		if ($row['forum_type'] == FORUM_CAT && ($row['left_id'] + 1 == $row['right_id']) && $ignore_emptycat)
+		{
+			// Non-postable forum with no subforums, don't display
+			continue;
+		}
+
+		if ($row['forum_type'] != FORUM_POST && $ignore_nonpost)
+		{
+			continue;
+		}
+
 		$selected = (is_array($select_id)) ? ((in_array($row['forum_id'], $select_id)) ? ' selected="selected"' : '') : (($row['forum_id'] == $select_id) ? ' selected="selected"' : '');
 
-		if ($row['left_id'] > $cat_right)
-		{
-			$holding = '';
-		}
+		$forum_list .= '<option value="' . $row['forum_id'] . '"' . $selected . '>' . $padding . $row['forum_name'] . '</option>';
 
-		if ($row['right_id'] - $row['left_id'] > 1 && $ignore_emptycat)
-		{
-			$cat_right = max($cat_right, $row['right_id']);
-
-			$holding .= '<option value="' . $row['forum_id'] . '"' . $selected . '>' . $padding . $row['forum_name'] . '</option>';
-		}
-		else
-		{
-			$forum_list .= $holding . '<option value="' . $row['forum_id'] . '"' . $selected . '>' . $padding . $row['forum_name'] . '</option>';
-			$holding = '';
-		}
+		$iteration++;
 	}
-
-	if (!$right)
-	{
-		$forum_list .= '<option value="-1">' . $_CLASS['user']->lang['NO_FORUMS'] . '</option>';
-	}
+	unset($padding_store);
 
 	return $forum_list;
 }
@@ -88,7 +95,7 @@ function size_select($select_name, $size_compare)
 {
 	global $_CLASS;
 
-	$size_types_text = array($_CLASS['user']->lang['BYTES'], $_CLASS['user']->lang['KB'], $_CLASS['user']->lang['MB']);
+	$size_types_text = array($_CLASS['core_user']->lang['BYTES'], $_CLASS['core_user']->lang['KB'], $_CLASS['core_user']->lang['MB']);
 	$size_types = array('b', 'kb', 'mb');
 
 	$select_field = '<select name="' . $select_name . '">';
@@ -332,7 +339,7 @@ function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
 		$where_ids = array_unique($where_ids);
 	}
 
-	if (!count($where_ids))
+	if (!sizeof($where_ids))
 	{
 		return array('topics' => 0, 'posts' => 0);
 	}
@@ -416,7 +423,7 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 		$forum_ids[] = $row['forum_id'];
 	}
 
-	if (!count($post_ids))
+	if (!sizeof($post_ids))
 	{
 		return false;
 	}
@@ -426,7 +433,8 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 	$db->sql_transaction('begin');
 
 	$table_ary = array(POSTS_TABLE, RATINGS_TABLE, REPORTS_TABLE, SEARCH_MATCH_TABLE);
-
+	//$table_ary = array(POSTS_TABLE, REPORTS_TABLE, SEARCH_MATCH_TABLE);
+	
 	foreach ($table_ary as $table)
 	{
 		$sql = "DELETE FROM $table 
@@ -648,6 +656,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 	switch (SQL_LAYER)
 	{
 		case 'mysql4':
+		case 'mysqli':
 			$sql = 'DELETE t.*
 				FROM ' . TOPICS_TABLE . ' t, ' . TOPICS_TABLE . ' t2
 				WHERE t.topic_moved_id = t2.topic_id
@@ -670,7 +679,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 				$topic_ids[] = $row['topic_id'];
 			}
 
-			if (count($topic_ids))
+			if (sizeof($topic_ids))
 			{
 				$sql = 'DELETE FROM ' . TOPICS_TABLE . '
 					WHERE topic_id IN (' . implode(',', $topic_ids) . ')';
@@ -688,28 +697,11 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 // Delete File
 function phpbb_unlink($filename, $mode = 'file')
 {
-	global $config, $_CLASS, $phpbb_root_path;
+	global $config;
 
-	$filename = ($mode == 'thumbnail') ? $config['upload_dir'] . '/thumb_' . $filename : $config['upload_dir'] . '/' . $filename;
-	$deleted = @unlink($filename);
+	$filename = ($mode == 'thumbnail') ? $config['upload_path'] . '/thumb_' . basename($filename) : $config['upload_path'] . '/' . basename($filename);
 
-	if (file_exists($filename))
-	{
-		$filesys = str_replace('/','\\', $filename);
-		$deleted = @system("del $filesys");
-
-		if (file_exists($filename)) 
-		{
-			$filename = realpath($filename);
-			@chmod($filename, 0777);
-			if (!($deleted = @unlink($filename)))
-			{
-				$deleted = @system("del $filename");
-			}
-		}
-	}
-
-	return $deleted;
+	return @unlink($filename);
 }
 
 // All-encompasing sync function
@@ -745,11 +737,12 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 	{
 		if (!$where_type)
 		{
-			$where_sql = '';
-			$where_sql_and = 'WHERE';
+				$where_sql = '';
+				$where_sql_and = 'WHERE';
 		}
 		elseif ($where_type == 'range')
 		{
+			// Only check a range of topics/forums. For instance: 'topic_id BETWEEN 1 AND 60'
 			$where_sql = 'WHERE (' . $mode{0} . ".$where_ids)";
 			$where_sql_and = $where_sql . "\n\tAND";
 		}
@@ -757,8 +750,11 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 		{
 			if (!sizeof($where_ids))
 			{
+				// Empty array with IDs. This means that we don't have any work to do. Just return.
 				return;
 			}
+			// Limit the topics/forums we are syncing, use specific topic/forum IDs.
+         // $where_type contains the field for the where clause (forum_id, topic_id)
 			$where_sql = 'WHERE ' . $mode{0} . ".$where_type IN (" . implode(', ', $where_ids) . ')';
 			$where_sql_and = $where_sql . "\n\tAND";
 		}
@@ -769,6 +765,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 		{
 			return;
 		}
+		// $where_type contains the field for the where clause (forum_id, topic_id)
 		$where_sql = 'WHERE ' . $mode{0} . ".$where_type IN (" . implode(', ', $where_ids) . ')';
 		$where_sql_and = $where_sql . "\n\tAND";
 	}
@@ -779,6 +776,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			switch (SQL_LAYER)
 			{
 				case 'mysql4':
+				case 'mysqli':
 					$sql = 'DELETE FROM ' . TOPICS_TABLE . '
 						USING ' . TOPICS_TABLE . ' t1, ' . TOPICS_TABLE . " t2
 						WHERE t1.topic_moved_id = t2.topic_id
@@ -815,6 +813,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			switch (SQL_LAYER)
 			{
 				case 'mysql4':
+				case 'mysqli':
 					$sql = 'UPDATE ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . " p
 						SET t.topic_approved = p.post_approved
 						$where_sql_and t.topic_first_post_id = p.post_id";
@@ -835,7 +834,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 					$db->sql_freeresult();
 
-					if (!count($topic_ids))
+					if (!sizeof($topic_ids))
 					{
 						return;
 					}
@@ -889,7 +888,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$post_ids[] = $post_id;
 			}
 
-			if (count($post_ids))
+			if (sizeof($post_ids))
 			{
 				$sql = 'UPDATE ' . POSTS_TABLE . '
 					SET post_reported = 1 - post_reported
@@ -927,7 +926,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				}
 			}
 
-			if (count($topic_ids))
+			if (sizeof($topic_ids))
 			{
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_reported = 1 - topic_reported
@@ -979,7 +978,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$post_ids[] = $post_id;
 			}
 
-			if (count($post_ids))
+			if (sizeof($post_ids))
 			{
 				$sql = 'UPDATE ' . POSTS_TABLE . '
 					SET post_attachment = 1 - post_attachment
@@ -1017,7 +1016,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				}
 			}
 
-			if (count($topic_ids))
+			if (sizeof($topic_ids))
 			{
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_attachment = 1 - topic_attachment
@@ -1027,7 +1026,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			break;
 
 		case 'forum':
-			// 1° Get the list of all forums
+			// 1: Get the list of all forums
 			$sql = 'SELECT f.*
 				FROM ' . FORUMS_TABLE . " f
 				$where_sql";
@@ -1054,7 +1053,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$forum_data[$forum_id]['last_poster_name'] = '';
 			}
 
-			// 2° Get topic counts for each forum
+			// 2: Get topic counts for each forum
 			$sql = 'SELECT forum_id, topic_approved, COUNT(topic_id) AS forum_topics
 				FROM ' . TOPICS_TABLE . '
 				WHERE forum_id IN (' . implode(', ', $forum_ids) . ')
@@ -1071,7 +1070,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				}
 			}
 
-			// 3° Get post count and last_post_id for each forum
+			// 3: Get post count and last_post_id for each forum
 			$sql = 'SELECT forum_id, COUNT(post_id) AS forum_posts, MAX(post_id) AS last_post_id
 				FROM ' . POSTS_TABLE . '
 				WHERE forum_id IN (' . implode(', ', $forum_ids) . ')
@@ -1088,8 +1087,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$post_ids[] = $row['last_post_id'];
 			}
 
-			// 4° Retrieve last_post infos
-			if (count($post_ids))
+			// 4: Retrieve last_post infos
+			if (sizeof($post_ids))
 			{
 				$sql = 'SELECT p.post_id, p.poster_id, p.post_time, p.post_username, u.username
 					FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
@@ -1125,7 +1124,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				unset($post_info);
 			}
 
-			// 5° Now do that thing
+			// 5: Now do that thing
 			$fieldnames = array('posts', 'topics', 'topics_real', 'last_post_id', 'last_post_time', 'last_poster_id', 'last_poster_name');
 
 			foreach ($forum_data as $forum_id => $row)
@@ -1147,7 +1146,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 				}
 
-				if (count($sql))
+				if (sizeof($sql))
 				{
 					$sql = 'UPDATE ' . FORUMS_TABLE . '
 						SET ' . $db->sql_build_array('UPDATE', $sql) . '
@@ -1186,10 +1185,11 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$db->sql_freeresult($result);
 
 			// Use "t" as table alias because of the $where_sql clause
+         // NOTE: 't.post_approved' in the GROUP BY is causing a major slowdown.
 			$sql = 'SELECT t.topic_id, t.post_approved, COUNT(t.post_id) AS total_posts, MIN(t.post_id) AS first_post_id, MAX(t.post_id) AS last_post_id
 				FROM ' . POSTS_TABLE . " t
 				$where_sql
-				GROUP BY t.topic_id, t.post_approved";
+				GROUP BY t.topic_id"; //, t.post_approved";
 			$result = $db->sql_query($sql);
 
 			while ($row = $db->sql_fetchrow($result))
@@ -1232,18 +1232,18 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			}
 
 			// Now we delete empty topics and orphan posts
-			if (count($delete_posts))
+			if (sizeof($delete_posts))
 			{
 				delete_posts('topic_id', array_keys($delete_posts), FALSE);
 				unset($delete_posts);
 			}
-			if (!count($topic_data))
+			if (!sizeof($topic_data))
 			{
 				// If we get there, topic ids were invalid or topics did not contain any posts
 				delete_topics($where_type, $where_ids, TRUE);
 				return;
 			}
-			if (count($delete_topics))
+			if (sizeof($delete_topics))
 			{
 				$delete_topic_ids = array();
 				foreach ($delete_topics as $topic_id => $void)
@@ -1287,7 +1287,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$db->sql_freeresult($result);
 
 			// approved becomes unapproved, and vice-versa
-			if (count($approved_unapproved_ids))
+			if (sizeof($approved_unapproved_ids))
 			{
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_approved = 1 - topic_approved
@@ -1296,7 +1296,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			}
 			unset($approved_unapproved_ids);
 
-			// These are field that will be synchronised
+			// These are fields that will be synchronised
 			$fieldnames = array('time', 'replies', 'replies_real', 'poster', 'first_post_id', 'first_poster_name', 'last_post_id', 'last_post_time', 'last_poster_id', 'last_poster_name');
 
 			if ($sync_extra)
@@ -1346,7 +1346,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 				}
 
-				if (count($sql))
+				if (sizeof($sql))
 				{
 					$sql = 'UPDATE ' . TOPICS_TABLE . '
 						SET ' . $db->sql_build_array('UPDATE', $sql) . '
@@ -1359,14 +1359,15 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			unset($topic_data);
 
 			// if some topics have been resync'ed then resync parent forums
-			if ($resync_parents && count($resync_forums))
+			// except when we're only syncing a range, we don't want to sync forums during
+			// batch processing.
+			if ($resync_parents && sizeof($resync_forums) && $where_type != 'range')
 			{
 				sync('forum', 'forum_id', $resync_forums, TRUE);
 			}
 			break;
 	}
 }
-
 
 function prune($forum_id, $prune_mode, $prune_date, $prune_flags = 0, $auto_sync = true)
 {
@@ -1466,12 +1467,12 @@ function remove_comments(&$output)
 	$output = '';
 
 	// try to keep mem. use down
-	$linecount = count($lines);
+	$linecount = sizeof($lines);
 
 	$in_comment = false;
 	for($i = 0; $i < $linecount; $i++)
 	{
-		if (preg_match('#^\/\*#', preg_quote($lines[$i])))
+		if (trim($lines[$i]) == '/*')
 		{
 			$in_comment = true;
 		}
@@ -1481,7 +1482,7 @@ function remove_comments(&$output)
 			$output .= $lines[$i] . "\n";
 		}
 
-		if (preg_match('#\*\/$#', preg_quote($lines[$i])))
+		if (trim($lines[$i]) == '*/')
 		{
 			$in_comment = false;
 		}
@@ -1512,11 +1513,11 @@ function split_sql_file($sql, $delimiter)
 	$matches = array();
 
 	// this is faster than calling count($oktens) every time thru the loop.
-	$token_count = count($tokens);
+	$token_count = sizeof($tokens);
 	for ($i = 0; $i < $token_count; $i++)
 	{
 		// Don't wanna add an empty string as the last thing in the array.
-		if ($i != $token_count - 1 || strlen($tokens[$i] > 0))
+		if ($i != $token_count - 1)
 		{
 			// This is the total number of single quotes in the token.
 			$total_quotes = preg_match_all("#'#", $tokens[$i], $matches);
@@ -1654,12 +1655,14 @@ function cache_moderators()
 		switch (SQL_LAYER)
 		{
 			case 'mysql':
-			case 'mysql4':
+			
 				$sql = 'INSERT INTO ' . MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, groupname) 
 					VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\1)',  $m_sql));
 				$db->sql_query($sql);
 				break;
 
+			case 'mysql4':
+			case 'mysqli':
 			case 'mssql':
 			case 'sqlite':
 				$sql = 'INSERT INTO ' . MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, groupname)
@@ -1676,8 +1679,6 @@ function cache_moderators()
 				}
 		}
 	}
-
-	$_CLASS['cache']->destroy(MODERATOR_TABLE);
 }
 
 // Logging functions
@@ -1698,22 +1699,22 @@ function add_log()
 	{
 		case 'admin':
 			$sql = 'INSERT INTO ' . LOG_TABLE . ' (log_type, user_id, log_ip, log_time, log_operation, log_data)
-				VALUES (' . LOG_ADMIN . ', ' . $_CLASS['user']->data['user_id'] . ", '".$_CLASS['user']->ip."', " . time() . ", '$action', '$data')";
+				VALUES (' . LOG_ADMIN . ', ' . $_CLASS['core_user']->data['user_id'] . ", '".$_CLASS['core_user']->ip."', " . time() . ", '$action', '$data')";
 			break;
 		
 		case 'mod':
 			$sql = 'INSERT INTO ' . LOG_TABLE . ' (log_type, user_id, forum_id, topic_id, log_ip, log_time, log_operation, log_data)
-				VALUES (' . LOG_MOD . ', ' . $_CLASS['user']->data['user_id'] . ", $forum_id, $topic_id, '".$_CLASS['user']->ip."', " . time() . ", '$action', '$data')";
+				VALUES (' . LOG_MOD . ', ' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $topic_id, '".$_CLASS['core_user']->ip."', " . time() . ", '$action', '$data')";
 			break;
 
 		case 'user':
 			$sql = 'INSERT INTO ' . LOG_TABLE . ' (log_type, user_id, reportee_id, log_ip, log_time, log_operation, log_data)
-				VALUES (' . LOG_USERS . ', ' . $_CLASS['user']->data['user_id'] . ", $reportee_id, '".$_CLASS['user']->ip."', " . time() . ", '$action', '$data')";
+				VALUES (' . LOG_USERS . ', ' . $_CLASS['core_user']->data['user_id'] . ", $reportee_id, '".$_CLASS['core_user']->ip."', " . time() . ", '$action', '$data')";
 			break;
 
 		case 'critical':
 			$sql = 'INSERT INTO ' . LOG_TABLE . ' (log_type, user_id, log_ip, log_time, log_operation, log_data)
-				VALUES (' . LOG_CRITICAL . ', ' . $_CLASS['user']->data['user_id'] . ", '".$_CLASS['user']->ip."', " . time() . ", '$action', '$data')";
+				VALUES (' . LOG_CRITICAL . ', ' . $_CLASS['core_user']->data['user_id'] . ", '".$_CLASS['core_user']->ip."', " . time() . ", '$action', '$data')";
 			break;
 		
 		default:
@@ -1796,13 +1797,13 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 		$log[$i]['topic_id'] = $row['topic_id'];
 		$log[$i]['viewforum'] = ($row['forum_id'] && $_CLASS['auth']->acl_get('f_read', $row['forum_id'])) ? ((defined('IN_ADMIN')) ? '../' : '') . getlink("Forums&amp;file=viewforum$SID&amp;f=" . $row['forum_id']) : '';
 
-		$log[$i]['action'] = (!empty($_CLASS['user']->lang[$row['log_operation']])) ? $_CLASS['user']->lang[$row['log_operation']] : ucfirst(str_replace('_', ' ', $row['log_operation']));
-
+		$log[$i]['action'] = (isset($_CLASS['core_user']->lang[$row['log_operation']])) ? $_CLASS['core_user']->lang[$row['log_operation']] : '{' . ucfirst(str_replace('_', ' ', $row['log_operation'])) . '}';
+		
 		if (!empty($row['log_data']))
 		{
 			$log_data_ary = unserialize(stripslashes($row['log_data']));
 
-			if (!empty($_CLASS['user']->lang[$row['log_operation']]))
+			if (isset($_CLASS['core_user']->lang[$row['log_operation']]))
 			{
 				foreach ($log_data_ary as $log_data)
 				{
@@ -1813,7 +1814,7 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 			}
 			else
 			{
-				$log[$i]['action'] = implode('', $log_data_ary);
+				$log[$i]['action'] .= '<br />' . implode('', $log_data_ary);
 			}
 		}
 
@@ -1821,7 +1822,7 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 	}
 	$db->sql_freeresult($result);
 
-	if (count($topic_id_list))
+	if (sizeof($topic_id_list))
 	{
 		$topic_id_list = array_unique($topic_id_list);
 
@@ -1836,7 +1837,7 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 		{
 			if ($_CLASS['auth']->acl_get('f_read', $row['forum_id']))
 			{
-				// DEBUG!!
+				// DEBUG!! - global topic
 				$config['default_forum_id'] = 2;
 				$is_auth[$row['topic_id']] = ($row['forum_id']) ? $row['forum_id'] : $config['default_forum_id'];
 			}
@@ -1854,8 +1855,8 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 		}
 	}
 
-	$sql = "SELECT COUNT(*) AS total_entries
-		FROM " . LOG_TABLE . " l
+	$sql = 'SELECT COUNT(l.log_id) AS total_entries
+		FROM ' . LOG_TABLE . " l
 		WHERE l.log_type = $log_type
 			AND l.log_time >= $limit_days
 			$sql_forum";
@@ -1966,10 +1967,11 @@ if (class_exists('auth'))
 						switch (SQL_LAYER)
 						{
 							case 'mysql':
-							case 'mysql4':
 								$sql = 'VALUES ' . implode(', ', preg_replace('#^(.*?)$#', '(\1)', $sql_subary));
 								break;
 
+							case 'mysql4':
+							case 'mysqli':
 							case 'mssql':
 							case 'sqlite':
 								$sql = implode(' UNION ALL ', preg_replace('#^(.*?)$#', 'SELECT \1', $sql_subary));
@@ -2108,12 +2110,16 @@ if (class_exists('auth'))
 					switch (SQL_LAYER)
 					{
 						case 'mysql':
-						case 'mysql4':
 							$sql .= (($sql != '') ? ', ' : '') . "('$option', " . $type_sql[$type] . ")";
 							break;
+							
+						case 'mysql4':
+						case 'mysqli':
 						case 'mssql':
+						case 'sqlite':
 							$sql .= (($sql != '') ? ' UNION ALL ' : '') . " SELECT '$option', " . $type_sql[$type];
 							break;
+							
 						default:
 							$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
 								VALUES ($option, " . $type_sql[$type] . ")";
@@ -2130,7 +2136,7 @@ if (class_exists('auth'))
 				$db->sql_query($sql);
 			}
 
-			$_CLASS['cache']->destroy('acl_options');
+			$_CLASS['core_cache']->destroy('acl_options');
 		}
 	}
 }
@@ -2213,6 +2219,27 @@ function update_post_information($type, $ids)
 			WHERE {$type}_id = $update_id";
 		$db->sql_query($sql);
 	}
+}
+
+/**
+* Tidy topic tracking tables
+* Removes all tracking rows older than 6 months, including mark_posted informations
+*/
+function tidy_database()
+{
+	global $db;
+
+	$remove_date = time() - (3 * 62 * 24 * 3600);
+
+	$sql = 'DELETE FROM ' . FORUMS_TRACK_TABLE . '
+		WHERE mark_time < ' . $remove_date;
+	$db->sql_query($sql);
+
+	$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
+		WHERE mark_time < ' . $remove_date;
+	$db->sql_query($sql);
+
+	set_config('database_last_gc', time(), true);
 }
 
 ?>

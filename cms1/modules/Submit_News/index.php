@@ -6,7 +6,7 @@ if (!defined('VIPERAL')) {
 }
 
 
-$_CLASS['user']->add_lang();
+$_CLASS['core_user']->add_lang();
 
 if (isset($_POST['preview']) || isset($_POST['previewfull']))
 {
@@ -21,32 +21,32 @@ if (isset($_POST['preview']) || isset($_POST['previewfull']))
 		submit_news();
 }
 
-$_CLASS['display']->display_footer();
+$_CLASS['core_display']->display_footer();
 
 
 function submit_news($name='', $email='', $title='', $intro='', $story='', $notes='', $error = false)
 {
-	global $_CLASS, $Module;
+	global $_CLASS, $_CORE_MODULE;
 	
-	$_CLASS['display']->display_head($_CLASS['user']->lang['SUBMIT_NEWS']);
+	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SUBMIT_NEWS']);
 
-	$_CLASS['template']->assign(array( 
-		'L_STORY_TITLE'			=> $_CLASS['user']->lang['STORY_TITLE'],
-		'L_STORY_INTRO' 		=> $_CLASS['user']->lang['STORY_INTRO'],
-		'L_STORY_MESSAGE' 		=> $_CLASS['user']->lang['STORY_MESSAGE'],
-		'L_STORY_NOTES' 		=> $_CLASS['user']->lang['STORY_NOTES'],
-		'L_STORY_INTRO_HELP' 	=> $_CLASS['user']->lang['STORY_INTRO_HELP'],
-		'L_STORY_STORY_HELP' 	=> $_CLASS['user']->lang['STORY_STORY_HELP'],
-		'L_STORY_NOTES_HELP' 	=> $_CLASS['user']->lang['STORY_NOTES_HELP'],
-		'L_YOURNAME' 			=> $_CLASS['user']->lang['YOURNAME'],
-		'L_YOUREMAIL'	 		=> $_CLASS['user']->lang['YOUREMAIL'],
-		'L_PREVIEW' 			=> $_CLASS['user']->lang['PREVIEW'],
-		'L_SUBMIT' 				=> $_CLASS['user']->lang['SUBMIT'],
-		'L_SUBMIT_MESSAGE' 		=> (is_user()) ? $_CLASS['user']->lang['MSG_USER'] : $_CLASS['user']->lang['MSG_ANON'],
-		'L_SUBMIT_INTRO'		=> $_CLASS['user']->lang['SUBMIT_INTRO'],
+	$_CLASS['core_template']->assign(array( 
+		'L_STORY_TITLE'			=> $_CLASS['core_user']->lang['STORY_TITLE'],
+		'L_STORY_INTRO' 		=> $_CLASS['core_user']->lang['STORY_INTRO'],
+		'L_STORY_MESSAGE' 		=> $_CLASS['core_user']->lang['STORY_MESSAGE'],
+		'L_STORY_NOTES' 		=> $_CLASS['core_user']->lang['STORY_NOTES'],
+		'L_STORY_INTRO_HELP' 	=> $_CLASS['core_user']->lang['STORY_INTRO_HELP'],
+		'L_STORY_STORY_HELP' 	=> $_CLASS['core_user']->lang['STORY_STORY_HELP'],
+		'L_STORY_NOTES_HELP' 	=> $_CLASS['core_user']->lang['STORY_NOTES_HELP'],
+		'L_YOURNAME' 			=> $_CLASS['core_user']->lang['YOURNAME'],
+		'L_YOUREMAIL'	 		=> $_CLASS['core_user']->lang['YOUREMAIL'],
+		'L_PREVIEW' 			=> $_CLASS['core_user']->lang['PREVIEW'],
+		'L_SUBMIT' 				=> $_CLASS['core_user']->lang['SUBMIT'],
+		'L_SUBMIT_MESSAGE' 		=> (is_user()) ? $_CLASS['core_user']->lang['MSG_USER'] : $_CLASS['core_user']->lang['MSG_ANON'],
+		'L_SUBMIT_INTRO'		=> $_CLASS['core_user']->lang['SUBMIT_INTRO'],
 		'LOGIN'					=> is_user(),
 		'ERROR' 				=> $error,
-		'ACTION' 				=> getlink($Module['name']),
+		'ACTION' 				=> getlink($_CORE_MODULE['name']),
 		'EMAIL' 				=> $email,
 		'NAME' 					=> $name,
 		'TITLE'					=> $title,
@@ -56,34 +56,34 @@ function submit_news($name='', $email='', $title='', $intro='', $story='', $note
 		)
 	);
 		
-	$_CLASS['template']->display('modules/Submit_News/index.html');
+	$_CLASS['core_template']->display('modules/Submit_News/index.html');
 
 }
 
 function submit_news_preview()
 {
-	global $_CLASS, $Module;
+	global $_CLASS, $_CORE_MODULE;
 	
 	submit_news_getdata($data, $error);
 
 	$full = isset($_POST['previewfull']);
 	
-	$_CLASS['display']->display_head($_CLASS['user']->lang['SUBMIT_NEWS']);
+	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SUBMIT_NEWS']);
 
 	if (THEMEPLATE)
 	{
 	
-		$_CLASS['user']->add_lang();
+		$_CLASS['core_user']->add_lang();
 		
-        $_CLASS['template']->assign_vars_array('news', array(
+        $_CLASS['core_template']->assign_vars_array('news', array(
 		   //'IMG_TOPIC'   => (file_exists("themes/$ThemeSel/images/topics/$topicinfo[topicimage]") ? "themes/$ThemeSel/images/topics/$topicinfo[topicimage]" : "$tipath$topicinfo[topicimage]"),
 			'POSTER' 		=> $data['NAME'],
 			'POSTER_LINK'	=> '',
 			'CONTENT'		=> ($full) ? $data['STORY'] : $data['INTRO'],
-			'FULL_STORY'	=> (strlen($data['STORY']) > 5) ? true : false,
+			'FULL_STORY'	=> (strlen($data['STORY']) > 8) ? true : false,
 			'CONTENT_LINK'  => '',
 			'PRINT_LINK' 	=> '',
-			'TIME'			=> $_CLASS['user']->format_date(time()),
+			'TIME'			=> $_CLASS['core_user']->format_date(time()),
 			'TITLE'			=> $data['TITLE'],
 			'ID'       		=> '',
 			'IMAGE'    		=> 'themes/viperal/images/plus.gif',
@@ -92,8 +92,8 @@ function submit_news_preview()
 			)
 		);
 
-		$_CLASS['template']->assign('NEWS_PAGINATION', false);
-        $_CLASS['template']->display('modules/News/index.html');
+		$_CLASS['core_template']->assign('NEWS_PAGINATION', false);
+        $_CLASS['core_template']->display('modules/News/index.html');
 	}  
 		
 	submit_news($data['NAME'], $data['EMAIL'], $data['TITLE'], $data['INTRO'], $data['STORY'], $data['NOTES'], $error);
@@ -102,7 +102,7 @@ function submit_news_preview()
 
 function submit_news_post()
 {
-	global $_CLASS, $Module, $prefix;
+	global $_CLASS, $_CORE_MODULE, $prefix;
 	
 	submit_news_getdata($data, $error);
 
@@ -112,20 +112,20 @@ function submit_news_post()
 		return;
 	}
 	
-	$sql = 'INSERT INTO '.$prefix.'_news ' . $_CLASS['db']->sql_build_array('INSERT', array(
+	$sql = 'INSERT INTO '.$prefix.'_news ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'title'			=>	$data['TITLE'],
 			'time'			=>	time(),
 			'intro'			=>	$data['INTRO'],
 			'story'			=>	$data['STORY'],
 			'notes'			=>	$data['NOTES'],
 			'poster_name' 	=>	$data['NAME'],
-			'poster_id' 	=>	(is_user()) ? $_CLASS['user']->data['user_id'] : '',
-			'poster_ip'		=>	$_CLASS['user']->ip,
+			'poster_id' 	=>	(is_user()) ? $_CLASS['core_user']->data['user_id'] : '',
+			'poster_ip'		=>	$_CLASS['core_user']->ip,
 			'status'		=> 0
 			)
 	);
 	
-	$_CLASS['db']->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 	
 	global $msg_title;
 	
@@ -141,8 +141,8 @@ function submit_news_getdata(&$data, &$error)
 	
 	$error = false;
 	
-	$data['NAME'] = (is_user()) ? $_CLASS['user']->data['username'] : get_variable('username', 'POST', false);
-	$data['EMAIL'] = (is_user()) ? $_CLASS['user']->data['user_email'] : get_variable('email', 'POST', false);
+	$data['NAME'] = (is_user()) ? $_CLASS['core_user']->data['username'] : get_variable('username', 'POST', false);
+	$data['EMAIL'] = (is_user()) ? $_CLASS['core_user']->data['user_email'] : get_variable('email', 'POST', false);
 	$data['INTRO'] = get_variable('intro', 'POST', false);
 	$data['TITLE'] = get_variable('title', 'POST', false);
 	
@@ -150,12 +150,12 @@ function submit_news_getdata(&$data, &$error)
 	{
 		if (!$value)
 		{
-				$error .= $_CLASS['user']->lang['ERROR_'.$field].'<br />';
+				$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
 				unset($field, $value, $lang);
 				
         } elseif ($field == 'EMAIL' && !is_user()  && !check_email($value)) {
         
-        	$error .= $_CLASS['user']->lang['BAD_EMAIL'].'<br />';
+        	$error .= $_CLASS['core_user']->lang['BAD_EMAIL'].'<br />';
         	
 		}
 	}
