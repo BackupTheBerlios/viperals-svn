@@ -34,7 +34,10 @@ class session
 
 	function startup()
 	{
-		global $_CLASS, $_CORE_CONFIG, $mod;
+		global $_CLASS, $_CORE_CONFIG, $SID, $mod;
+		
+// make sure all $SID is removed first XSS problems
+		$SID = false;
 		
 		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
@@ -86,7 +89,6 @@ class session
 			}
 		}
 
-// make use of the user_id stored in the cookies, or remove that coookie for non auto_login
 		if (!empty($session_data['session_id']))
 		{
 			$sql = 'SELECT u.*, s.*
@@ -114,18 +116,11 @@ class session
 					// Set session update a minute or so after last update or if page changes
 					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
 					{
-// maybe save data sould be another array, incase someone changeds $this->data "with thet shouldn't"
 						$this->session_save = true;
 					}
 					
-					if ($this->data['session_data'])
-					{
-						@eval('$this->data[\'sessions\']='.$this->data['session_data'].';');
-						unset($this->data['session_data']);
-					} else {
-						$this->data['sessions'] = array();
-					}
-
+					$this->data['session_data'] = unserialize($this->data['session_data']);
+					
 					$this->is_user = ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER)) ? true : false;
 					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS) ? true : false;
 /// Amin logging should have 3 option "user is admin" / "USer is not admin" / "Never checked"
@@ -178,7 +173,6 @@ class session
 		$session_data['user_id'] = (int) $session_data['user_id'];
 		$session_data['is_bot'] = false;
 		
-// bots shouldn't bypass auth and should use any session id that found with it's user_id in sessions
 		$bots_array = get_bots();
 
 		foreach ($bots_array as $bot)
@@ -238,8 +232,52 @@ class session
 	
 			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
-// if you want users to log in more than once, need to check brower && ip
-// $this->data['session_time'] = $this->data['session_id'] = 0;
+			
+			/*
+			If you want users to log in more than once, need to check brower && ip
+			Use regular for bots. May only be usefull for developers.
+			
+			if (!$session_data['is_bot'])
+			{
+				if ($session_data['user_id']) 
+				{
+					$where_sql =  'user_id = '.$session_data['user_id'];
+				} else {
+					$where_sql =  "username = '".$_CLASS['core_db']->sql_escape($session_data['user_name'])."'";
+				}
+			
+				$sql = 'SELECT * FROM '. USERS_TABLE . '
+						WHERE '.$where_sql;
+						
+				$result = $_CLASS['core_db']->sql_query($sql);
+				$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+				$_CLASS['core_db']->sql_freeresult($result);
+				
+				// Look at database.sessions indexs
+				$sql = 'SELECT * FROM ' . SESSIONS_TABLE . "
+						WHERE session_ip = '".$_CLASS['core_db']->sql_escape($this->ip)."'
+							 AND session_browser = '".$_CLASS['core_db']->sql_escape($this->browser)."'";
+						//ORDER BY session_time DESC";
+	
+				$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+				
+				if ($sessions_dump = $_CLASS['core_db']->sql_fetchrow($result))
+				{
+					$this->data += $sessions_dump;
+				}
+				else
+				{
+					$this->data['session_time'] = $this->data['session_id'] = 0;
+				}
+				
+				$_CLASS['core_db']->sql_freeresult($result);
+				unset($sessions_dump);
+			{
+			else 
+			{
+				regular fetch here
+			}
+			*/
 		} 
 		
 		if (($auth !== true || !$this->data['session_time']) && $config['active_sessions'])
@@ -280,7 +318,6 @@ class session
 		$this->is_admin = ($this->is_user && $session_data['admin_login']) ? true : false;
 		$this->is_bot = ($session_data['is_bot']) ? true : false;
 		
-		// Is there an existing session? If so, grab last visit time from that
 		$this->data['session_last_visit'] = ($this->data['session_time']) ? $this->data['session_time'] : (($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : time());
 	
 		$sql_array = array(
@@ -332,7 +369,7 @@ class session
 			
 			$this->set_cookie('data', serialize($cookie_data), $this->time + 31536000);
 		}
-		elseif (!$this->new_session)
+		elseif ($this->new_session)
 		{
 			$this->set_cookie('data', '', 0);
 		}
@@ -499,28 +536,28 @@ class session
 	
 	function get_data($name)
 	{
-		return (empty($this->data['sessions'][$name])) ? false : $this->data['sessions'][$name];
+		return (empty($this->data['session_data'][$name])) ? false : $this->data['session_data'][$name];
 	}
 	
 	function kill_data($name)
 	{
-		if (empty($this->data['sessions'][$name]))
+		if (empty($this->data['session_data'][$name]))
 		{
 			return;
 		}
 		
-		unset($this->data['sessions'][$name]);
+		unset($this->data['session_data'][$name]);
 		$this->new_data = true;
 	}
 	
 	function set_data($name, $value, $force_save = false)
 	{
-		if (!empty($this->data['sessions'][$name]) && ($this->data['sessions'][$name] == $value))
+		if (!empty($this->data['session_data'][$name]) && ($this->data['session_data'][$name] == $value))
 		{
 			return;
 		}
 		
-		$this->data['sessions'][$name] = $value;
+		$this->data['session_data'][$name] = $value;
 			
 		$this->new_data = true;
 		
@@ -539,18 +576,11 @@ class session
 			return;
 		}
 		
-		if ($this->new_data && !empty($_CLASS['core_cache']))
-		{
-			$this->new_data = $_CLASS['core_cache']->format_array($this->data['sessions']);
-		} else {
-			$this->new_data = '';
-		}
-		
 		$sql_array = array(
 			'session_time'			=> (int) $this->time,
 			'session_page'			=> (string) $this->page,
 			'session_url'			=> (string) $this->url,
-			'session_data'			=> (string) $this->new_data,
+			'session_data'			=> (string) serialize($this->data['session_data']),
 		);
 		
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
@@ -591,11 +621,11 @@ class user extends session
 
 	function start()
 	{
-		global $_CLASS, $_CORE_CONFIG, $phpEx, $site_file_root;
+		global $_CLASS, $_CORE_CONFIG, $site_file_root;
 
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
-			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . "/common.$phpEx")) ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];
+			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . '/common.php')) ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];
 			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 
 			$this->date_format = $this->data['user_dateformat'];
@@ -627,7 +657,7 @@ class user extends session
 				{
 					// Set correct format ... guess full xx_YY form
 					$accept_lang = substr($accept_lang, 0, 2) . '_' . strtoupper(substr($accept_lang, 3, 2));
-					if (file_exists('language/' . $accept_lang . "/common.$phpEx"))
+					if (file_exists('language/' . $accept_lang . '/common.php'))
 					{
 						$this->lang_name = $_CORE_CONFIG['global']['default_lang'] = $accept_lang;
 						$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
@@ -637,7 +667,7 @@ class user extends session
 					{
 						// No match on xx_YY so try xx
 						$accept_lang = substr($accept_lang, 0, 2);
-						if (file_exists('language/' . $accept_lang . "/common.$phpEx"))
+						if (file_exists('language/' . $accept_lang . '/common.php'))
 						{
 							$this->lang_name = $_CORE_CONFIG['global']['default_lang'] = $accept_lang;
 							$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
@@ -648,14 +678,14 @@ class user extends session
 			}
 		}
 		
-		require($this->lang_path . "common.$phpEx");
+		require($this->lang_path . 'common.php');
 	}
 
 	function add_img($img_file = false, $module = false, $lang = false)
 	{
-		global $phpEx, $site_file_root;
+		global $site_file_root;
 
-		$img_file = ($img_file) ? "$img_file.$phpEx" : 'index.'.$phpEx;
+		$img_file = ($img_file) ? "$img_file.php" : 'index.php';
 
 		if (!$img_file || !ereg('/', $img_file)) {
 		
@@ -673,7 +703,7 @@ class user extends session
 			
 		} else {
 		
-			include($img_file.$phpEx);
+			include($img_file.'.php');
 			
 		}
 	}
@@ -731,7 +761,7 @@ class user extends session
 		
 	function add_lang($langfile = false, $module = false)
 	{
-		global $phpEx, $site_file_root;
+		global $site_file_root;
 //Need a check for if the lang file exsists
 	
 		//print_r(debug_backtrace());
