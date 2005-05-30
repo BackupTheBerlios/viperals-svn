@@ -10,8 +10,7 @@ function block_change($id)
 
 	if (!$block)
 	{
-		// use trigger error
-		url_redirect(generate_link('', array('admin' => true)));
+		trigger_error('BLOCK_NOT_FOUND');
 	}
 	
 	check_position($block['position']);
@@ -26,20 +25,23 @@ function block_weight($id, $option)
 { 
 	global $_CLASS;
 	
-	// Add in_array so we don't waste time
+	if (!in_array($option, array('down', 'up', 'bottom', 'top')))
+	{
+		return;
+	}
 	
-	$result = $_CLASS['core_db']->sql_query('SELECT position, weight FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+	$result = $_CLASS['core_db']->sql_query('SELECT position, weight FROM '.BLOCKS_TABLE.' WHERE id='. (int) $id);
 	$block = $_CLASS['core_db']->sql_fetchrow($result);
 	$_CLASS['core_db']->sql_freeresult($result);
 			
 	if (!$block)
 	{
-		// use trigger error
-		url_redirect(generate_link('', array('admin' => true)));
+		trigger_error('BLOCK_NOT_FOUND');
 	}
 	
 	check_position($block['position']);
-
+	$block['weight'] = (int) $block['weight'];
+	
 	switch ($option)
 	{
 	
@@ -51,8 +53,8 @@ function block_weight($id, $option)
 			
 			if ($block['weight'] < $maxweight['weight'])
 			{
-				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight='.($block['weight']+1));
-				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight+1 WHERE id ='. $id);
+				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight='.($block['weight'] + 1));
+				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight='.($block['weight'] + 1).' WHERE id ='. $id);
 			}
 			
 			$_CLASS['core_cache']->destroy('blocks');
@@ -62,8 +64,8 @@ function block_weight($id, $option)
 		
 			if ($block['weight'] && $block['weight'] != 1)
 			{
-				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight+1 WHERE position='.$block['position'].' AND weight='.($block['weight']-1));
-				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE id ='. $id);
+				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight+1 WHERE position='.$block['position'].' AND weight='.($block['weight'] - 1));
+				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight='.($block['weight'] -1 ).' WHERE id ='. $id);
 			}
 			
 			$_CLASS['core_cache']->destroy('blocks');
@@ -108,8 +110,7 @@ function block_delete($id)
 
 	if (!$block || ($block['type'] == BLOCKTYPE_SYSTEM))
 	{
-		// use trigger error
-		url_redirect(generate_link('', array('admin' => true)));
+		trigger_error(($block) ? 'BLOCK_NOT_DELETABLE' : 'BLOCK_NOT_FOUND');
 	}
 	
 	check_position($block['position']);
@@ -123,7 +124,7 @@ function block_delete($id)
         $_CLASS['core_cache']->destroy('blocks');
 		        
     } else {
-    
+// We'll be using "$_POST", A simple "Delete" bottom, along with a link to "Go Back"
 		$_CLASS['core_display']->display_head();
 		OpenTable();
 		echo '<center>Remove Message ?';
@@ -132,6 +133,5 @@ function block_delete($id)
         $_CLASS['core_display']->display_footer();
     }
 }
-
 
 ?>

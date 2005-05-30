@@ -91,7 +91,10 @@
 		<div>This page contains the Query information<br/>This page is accurate to the page you browsing.</div>
 		<hr width="50%">
 		<p class="discription"></p>
-
+		{ if !isset($query) }
+		
+			<div class="error_header">Sorry No query data found</div>
+		{ else }
 		{section name=queryloop loop=$query}
 		<table class="tablebg" align="center" cellpadding="10" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
 			<tbody>
@@ -137,10 +140,8 @@
 		</tr>
 	</tbody>
 </table><br/>
-	{ sectionelse }
-			<div class="error_header">Sorry No query data found</div>
 	{ /section }
-
+	{ /if }
 { /if }
 
 

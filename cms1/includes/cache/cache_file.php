@@ -94,7 +94,7 @@ class cache
 			
 			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
-				$_CORE_CONFIG[$row['cfg_name']][$row['cfg_field']] = $row['cfg_value'];
+				$_CORE_CONFIG[$row['section']][$row['name']] = $row['value'];
 			}
 			$_CLASS['core_db']->sql_freeresult($result);
 		
@@ -185,6 +185,7 @@ class cache
 		if (!empty($this->vars[$var_name]))
 		{
 			unset($this->vars[$var_name]);
+			unset($this->var_expires[$var_name]);
 		}
 	}
 	
@@ -280,13 +281,12 @@ class cache
 					unlink($this->cache_dir . $entry);
 				}
 			}
-			@closedir($dir);
+			closedir($dir);
 		}
 		elseif (file_exists($this->cache_dir . 'data_' . $var_name . ".php"))
 		{
 			unlink($this->cache_dir . "data_$var_name.php");
-			unset($this->vars[$var_name]);
-			unset($this->var_expires[$var_name]);
+			$this->remove($var_name);
 		}
 	}
 
@@ -316,6 +316,7 @@ class cache
 		return 'array(' . implode(',', $lines) . ')';
 	}
 
+// See what can be done here
 	function sql_load($query)
 	{
 		// Remove extra spaces and tabs
@@ -327,7 +328,7 @@ class cache
 			return false;
 		}
 
-		@include($this->cache_dir . 'sql_' . md5($query) . ".php");
+		include($this->cache_dir . 'sql_' . md5($query) . ".php");
 
 		if (!isset($expired))
 		{

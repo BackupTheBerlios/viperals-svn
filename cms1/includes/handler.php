@@ -24,7 +24,7 @@ class core_error_handler
 	var $logging;
 	var $error_setting = array('type', 'title', 'redirect');
 	
-	function start($report = ERROR_NONE, $logfile = false)
+	function start($report = ERROR_NONE, $log_file = false)
 	{
 		if ($this->active)
 		{
@@ -36,15 +36,15 @@ class core_error_handler
 		$this->previous_level = ini_set('error_reporting', 0);
 		$this->logging = ($logfile && is_writable($logfile)) ? true : false;
 		
-		if ($this->logging)
+		if ($this->logging && $log_file)
 		{
-			$this->previous_logger = ini_set('error_log', $logfile);
+			$this->previous_logger = ini_set('error_log', $log_file);
 		}
 		
 		set_error_handler(array(&$this, 'handler'));
 	}
 	
-	function stop($level = 0)
+	function stop($level = false)
 	{
 		if (!$this->active)
 		{
@@ -166,10 +166,6 @@ class core_error_handler
 	
 			case E_USER_NOTICE:
 
-				global $msg_title;
-				// remove msg_title fix those in Forums
-				
-				//$msg_title = (!isset($msg_title)) ? $_CLASS['core_user']->lang['INFORMATION'] : ((!empty($_CLASS['core_user']->lang[$msg_title])) ? $_CLASS['core_user']->lang[$msg_title] : $msg_title);
 				$this->error_setting['title'] = (!empty($_CLASS['core_user']->lang[$this->error_setting['title']])) ? $_CLASS['core_user']->lang[$this->error_setting['title']] : $this->error_setting['title'];
 				
 				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;

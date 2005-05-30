@@ -11,17 +11,12 @@
 //																//
 //**************************************************************//
 
-define('VIPERAL', 'MINILOAD');
+define('VIPERAL', 'Admin');
 
 //echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
 $site_file_root = 'C:/apachefriends/xampp/cms/';
 
 require($site_file_root.'core.php');
-
-$_CLASS['core_user']	=& new user();
-
-$_CLASS['core_user']->startup();
-$_CLASS['core_user']->start();
 
 if (!$_CLASS['core_user']->is_admin)
 {
@@ -126,7 +121,6 @@ class debug
 		
 		$this->querydetails = $_CLASS['core_user']->get_data('querydetails');
 		$this->querylist = $_CLASS['core_user']->get_data('querylist');
-
 		$tempid = false;
 
 		foreach ($this->querylist as $key => $value)

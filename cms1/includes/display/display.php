@@ -197,9 +197,9 @@ class core_display
 			$this->header['js'] .= '<script type="text/javascript">if (self != top) top.location.replace(self.location)</script>';
 		}
 		
-		if ($_CORE_CONFIG['global']['maintenance'])
+		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['time'] < time())
 		{
-			$this->message = 'Note your in Maintenance mode<br />';
+			$this->message = '<b>System is in maintenance mode</b><br />';
 		}
 	
 		$_CLASS['core_template']->assign(array(
@@ -345,21 +345,6 @@ class core_display
 	{
 		global $_CLASS;
 		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . $url . '">';
-		//<meta http-equiv="refresh" content="3;url=index.php?sid=">
-	}
-	
-	function overLIB()
-	{
-		static $displayed = false;
-		
-		if ($displayed)
-		{
-			return;
-		}
-		
-		$displayed = true;
-		$this->header['js'] .= '<script type="text/javascript" src="/includes/javascript/overlib_mini.js"></script>';
-		$this->header['body'] .= '<div id="overDiv" style="position:absolute; visibility:hidden; z-index:10;"></div>';
 	}
 }
 

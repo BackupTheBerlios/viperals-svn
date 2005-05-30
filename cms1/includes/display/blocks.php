@@ -90,9 +90,8 @@ class core_blocks
 //remove $this->blocks_loaded
 		$this->blocks_loaded = true;
 				
-		$option_array = array('title','position', 'file' , 'time' ,'expires', 'id',	'auth',	'type', 'options');
+		$option_array = array('title','position', 'content', 'file' , 'time' ,'expires', 'id',	'auth',	'type', 'options');
 		
-// use an array_merge
 		foreach($option_array as $option)
 		{
 			$data_perpared[$option] = (empty($data[$option])) ? '' : $data[$option];
@@ -125,14 +124,13 @@ class core_blocks
 		
 		foreach($this->blocks_array[$position] as $this->block)
 		{
-			$this->block['position'] = $position;
-			
 			//auth check and language check here.
 			/*if (!$_CLASS['core_user']->admin_auth('blocks') && !$_CLASS['core_user']->auth($this->block['auth']))
 			{
 				continue;
 			}*/
-
+			$this->content = '';
+			
 			if ($this->block['expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['expires']))
 			{
 				$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires > 0 AND expires <='.$_CLASS['core_user']->time);
@@ -193,7 +191,8 @@ class core_blocks
 		
 		if ($this->block['file'] && file_exists($site_file_root.'blocks/'.$this->block['file']))
 		{
-			
+			$this->info = false;
+
 			/*
 			$startqueries = $_CLASS['core_db']->sql_num_queries();
 			$startqueriestime = $_CLASS['core_db']->sql_time;
@@ -246,8 +245,6 @@ class core_blocks
 		} else {
 			$this->block_center();
 		}
-		
-		$this->content = $this->template = $this->info = false;
 	}
 			
 	function block_message()

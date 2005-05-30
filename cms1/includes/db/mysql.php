@@ -371,6 +371,40 @@ class sql_db
 		return mysql_escape_string($msg);
 	}
 	
+	function sql_optimize_tables($tables = false)
+	{
+		global $_CORE_CONFIG;
+	
+		if (is_array($table))
+		{
+// la la la la la
+			return;
+		}
+	
+		$result = $this->sql_query('SHOW TABLES');
+		$table = false;
+		
+		while ($row = $this->sql_fetchrow($result))
+		{
+			if ($table)
+			{
+				$table .= ', ' . $this->sql_escape($row[$key[0]]);
+			}
+			else
+			{
+				$key = array_keys($row);
+				$table = $this->sql_escape($row[$key[0]]);
+			}
+		}
+		$this->sql_freeresult($result);
+		
+		if ($table)
+		{
+			$this->sql_query('OPTIMIZE TABLE '. $table);
+			echo $table;
+		}
+	}
+
 	function sql_error($sql = '')
 	{
 		if (!$this->return_on_error)

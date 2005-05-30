@@ -22,20 +22,20 @@
  * smarty-general-subscribe@lists.php.net
  *
  * @link http://smarty.php.net/
- * @copyright 2001-2004 ispi of Lincoln, Inc.
- * @author Monte Ohrt <monte@ispi.net>
+ * @copyright 2001-2005 New Digital Group, Inc.
+ * @author Monte Ohrt <monte at ohrt dot com>
  * @author Andrei Zmievski <andrei@php.net>
  * @package Smarty
- * @version 2.6.6-dev-2
+ * @version 2.6.10-dev
  */
 
-/* $Id: Smarty.class.php,v 1.504 2004/09/29 07:23:45 messju Exp $ */
+/* $Id: Smarty.class.php,v 1.514 2004/09/29 07:23:45 messju Exp $ */
 
 if (!defined('SMARTY_DIR')) {
     define('SMARTY_DIR', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 }
 if (!defined('SMARTY_CORE_DIR')) {
-	define('SMARTY_CORE_DIR', SMARTY_DIR . 'internals' . DIRECTORY_SEPARATOR);
+    define('SMARTY_CORE_DIR', SMARTY_DIR . 'internals' . DIRECTORY_SEPARATOR);
 }
 
 define('SMARTY_PHP_PASSTHRU',   0);
@@ -62,17 +62,16 @@ class Smarty
     var $security       =   false;
     var $secure_dir     =   array();
     var $security_settings  = array(
-                                    'PHP_HANDLING'		=> false,
-                                    'IF_FUNCS'			=> array('array', 'list',
+                                    'PHP_HANDLING'    => false,
+                                    'IF_FUNCS'        => array('array', 'list',
                                                                'isset', 'empty',
                                                                'count', 'sizeof',
                                                                'in_array', 'is_array',
-                                                               'true','false'),
-                                    'INCLUDE_ANY'		=> false,
-                                    'PHP_TAGS'			=> false,
-                                    'MODIFIER_FUNCS'	=> array('count'),
-                                    'MODIFIER_FUNCS'	=> array('count'),
-                                    'ALLOW_CONSTANTS'	=> false
+                                                               'true', 'false', 'null'),
+                                    'INCLUDE_ANY'     => false,
+                                    'PHP_TAGS'        => false,
+                                    'MODIFIER_FUNCS'  => array('count'),
+                                    'ALLOW_CONSTANTS'  => false
                                    );
     var $trusted_dir        = array();
     var $left_delimiter  =  '{';
@@ -103,7 +102,7 @@ class Smarty
     var $_conf_obj				= null;
     var $_config				= array(array('vars'  => array(), 'files' => array()));
     var $_smarty_md5			= 'f8d698aea36fcbead2b9d5359ffca76f';
-    var $_version				= '2.6.6-dev-2';
+    var $_version				= '2.6.9-dev';
     var $_inclusion_depth		= 0;
     var $_compile_id			= null;
     var $_smarty_debug_id		= 'SMARTY_DEBUG';
@@ -369,10 +368,10 @@ class Smarty
 
        	global $_CLASS, $site_file_root;
        	
-       	if (!empty($_CLASS['display']) && file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$tpl_file))
+       	if (!empty($_CLASS['core_display']) && file_exists('themes/' . $_CLASS['core_display']->theme . '/template/'.$tpl_file))
 		{ 
-			$this->template_dir = 'themes/' . $_CLASS['display']->theme . '/template';
-			$this->cache_dir = $this->compile_dir = $site_file_root.'cache/'.$_CLASS['display']->theme;
+			$this->template_dir = 'themes/' . $_CLASS['core_display']->theme . '/template';
+			$this->cache_dir = $this->compile_dir = $site_file_root.'cache/'.$_CLASS['core_display']->theme;
 		} else {
         	$this->template_dir = $site_file_root.'includes/templates';
         	$this->cache_dir = $this->compile_dir = $site_file_root.'cache';
@@ -432,10 +431,10 @@ class Smarty
     function display($resource_name, $cache_id = null, $compile_id = null)
     {
 		global $_CLASS, $site_file_root;
-       	if (!empty($_CLASS['display']) && file_exists('themes/' . $_CLASS['display']->theme . '/template/'.$resource_name))
+       	if (!empty($_CLASS['core_display']) && file_exists($site_file_root.'themes/' . $_CLASS['core_display']->theme . '/template/'.$resource_name))
 		{ 
-			$this->template_dir = 'themes/' . $_CLASS['display']->theme . '/template';
-			$this->cache_dir = $this->compile_dir = $site_file_root.'cache/'.$_CLASS['display']->theme;
+			$this->template_dir = $site_file_root.'themes/' . $_CLASS['core_display']->theme . '/template';
+			$this->cache_dir = $this->compile_dir = $site_file_root.'cache/'.$_CLASS['core_display']->theme;
 		} else {
         	$this->template_dir = $site_file_root.'includes/templates';
         	$this->cache_dir = $this->compile_dir = $site_file_root.'cache';
@@ -463,8 +462,7 @@ class Smarty
                     $this->debugging = true;
                 }
             } else {
-                $_cookie_var = $this->request_use_auto_globals ? $_COOKIE['SMARTY_DEBUG'] : $GLOBALS['HTTP_COOKIE_VARS']['SMARTY_DEBUG'];
-                $this->debugging = $_cookie_var ? true : false;
+                $this->debugging = (bool)($this->request_use_auto_globals ? @$_COOKIE['SMARTY_DEBUG'] : @$GLOBALS['HTTP_COOKIE_VARS']['SMARTY_DEBUG']);
             }
         }
         if ($this->debugging) {
@@ -496,7 +494,7 @@ class Smarty
             require_once(SMARTY_CORE_DIR . 'core.read_cache_file.php');
             if (smarty_core_read_cache_file($_params, $this)) {
                 $_smarty_results = $_params['results'];
-               if (!empty($this->_cache_info['insert_tags'])) {
+                if (!empty($this->_cache_info['insert_tags'])) {
                     $_params = array('plugins' => $this->_cache_info['insert_tags']);
                     require_once(SMARTY_CORE_DIR . 'core.load_plugins.php');
                     smarty_core_load_plugins($_params, $this);
@@ -686,7 +684,7 @@ class Smarty
         if ($this->_compile_source($resource_name, $_source_content, $_compiled_content, $_cache_include)) {
             if ($this->_cache_include_info) {
                 require_once(SMARTY_CORE_DIR . 'core.write_compiled_include.php');
-				smarty_core_write_compiled_include(array_merge($this->_cache_include_info, array('compiled_content'=>$_compiled_content, 'resource_name'=>$resource_name)),  $this);
+                smarty_core_write_compiled_include(array_merge($this->_cache_include_info, array('compiled_content'=>$_compiled_content, 'resource_name'=>$resource_name)),  $this);
             }
 
             $_params = array('compile_path'=>$compile_path, 'compiled_content' => $_compiled_content);
@@ -701,12 +699,12 @@ class Smarty
     }
     function _compile_source($resource_name, &$source_content, &$compiled_content, $cache_include_path=null)
     {
-        if (file_exists(SMARTY_DIR . $this->compiler_file)) {
+        if (file_exists(SMARTY_DIR . $this->compiler_file))
+        {
             require_once(SMARTY_DIR . $this->compiler_file);
         } else {
             require_once($this->compiler_file);
         }
-
 
         $smarty_compiler = new $this->compiler_class;
 
@@ -733,15 +731,16 @@ class Smarty
         $smarty_compiler->_config            = $this->_config;
         $smarty_compiler->request_use_auto_globals  = $this->request_use_auto_globals;
 
-		if (isset($cache_include_path) && isset($this->_cache_serials[$cache_include_path])) {
-			$smarty_compiler->_cache_serial = $this->_cache_serials[$cache_include_path];
-		}
+        if (isset($cache_include_path) && isset($this->_cache_serials[$cache_include_path])) {
+            $smarty_compiler->_cache_serial = $this->_cache_serials[$cache_include_path];
+        }
         $smarty_compiler->_cache_include = $cache_include_path;
 
 
         $_results = $smarty_compiler->_compile_file($resource_name, $source_content, $compiled_content);
 
-        if ($smarty_compiler->_cache_serial) {
+        if ($smarty_compiler->_cache_serial)
+        {
             $this->_cache_include_info = array(
                 'cache_serial'=>$smarty_compiler->_cache_serial
                 ,'plugins_code'=>$smarty_compiler->_plugins_code

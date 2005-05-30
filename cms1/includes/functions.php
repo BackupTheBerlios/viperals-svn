@@ -11,411 +11,135 @@
 //																//
 //**************************************************************//
 
-function is_admin()
+function check_email($email)
 {
-    global $_CLASS;
-    return ($_CLASS['core_user']->data['session_admin']) ? true : false;
+	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
 }
 
-function is_user()
-{
-    global $_CLASS;
-    return ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false;
-}
-
-function unique_id()
-{
-	list($sec, $usec) = explode(' ', microtime());
-	mt_srand((float) $sec + ((float) $usec * 100000));
-	return uniqid(mt_rand(), true);
-}
-
-function encode_password($pure, $encoding = 'md5')
-{
-	return md5($pure);
-}
-
-// Generate login box or verify password
-function login_box($login_options = false)
-{
-	global $SID, $_CLASS, $_CORE_CONFIG;
-	
-	$err = '';
-	$login_array = array(
-		'redirect' 		=> false,
-		'explain' 	 	=> '',
-		'success'  		=> '',
-		'admin_login'	=> false,
-		'full_login'	=> true,
-	 );
-	
-	if (is_array($login_options))
-	{
-		$login_array = array_merge($login_array, $login_options);
-	} 	
-	
-	if (isset($_POST['login']))
-	{
-		$data = array(
-			'user_name'			=> get_variable('username', 'POST'),
-			'user_password'		=> get_variable('password', 'POST'),
-			'admin_login'		=> $login_array['admin_login'],
-			'auto_log'			=> (!empty($_POST['autologin'])) ? true : false,
-			'show_online'		=> (!empty($_POST['viewonline'])) ? 0 : 1,
-			'auth_error_return'	=> true,
-		 );
-		
-		$result = false;
-		
-		if ($data['user_name'] && $data['user_password'] && ($result = $_CLASS['core_user']->create($data)) === true)
-		{
-			if ($login_array['admin_login'])
-			{
-				//add_log('admin', 'LOG_ADMIN_AUTH_SUCCESS');
-			}
-			
-			$login_array['redirect'] = get_variable('redirect', 'POST', false);
-			
-			if ($login_array['redirect'])
-			{
-				$login_array['redirect'] = (strpos($login_array['redirect'], '?') !== false) ? $login_array['redirect'].'&amp;' : $login_array['redirect'].'?';
-				$login_array['redirect'] .= 'sid='.$_CLASS['core_user']->data['session_id'];
-			} else {
-				$login_array['redirect'] = generate_link();
-			}
-
-			//$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
-
-			$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
-			trigger_error($message);
-		}
-
-		if ($login_array['admin_login'])
-		{
-			//add_log('admin', 'LOG_ADMIN_AUTH_FAIL');
-		}
-		
-		if (is_string($result))
-		{
-			trigger_error($result, E_USER_ERROR);
-		}
-
-		// If we get an integer zero then we are inactive, else the username/password is wrong
-		$err = ($result === 0) ? $_CLASS['core_user']->lang['ACTIVE_ERROR'] :  $_CLASS['core_user']->lang['LOGIN_ERROR'];
-	}
-
-	if (!$login_array['redirect'])
-	{
-		$login_array['redirect'] = htmlspecialchars($_CLASS['core_user']->url);
-	}
-	
-	$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
-	$s_hidden_fields .= '<input type="hidden" name="sid" value="' . $_CLASS['core_user']->data['session_id'] . '" />';
-
-	$_CLASS['core_template']->assign(array(
-		'LOGIN_ERROR'			=> $err, 
-		'LOGIN_EXPLAIN'			=> $login_array['explain'], 
-		'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
-		'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
-		'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
-		'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
-		'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
-		'USERNAME'				=> '',
-		'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']) ? true : false,
-		'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link('Control_Panel&amp;mode=login') : generate_link(false, array('admin' => true)),
-		'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
-		'L_LOGIN'				=> $_CLASS['core_user']->lang['LOGIN'],
-		'L_LOGIN_INFO'			=> $_CLASS['core_user']->lang['LOGIN_INFO'], 
-		'L_TERMS_USE'			=> $_CLASS['core_user']->lang['TERMS_USE'],
-		'L_USERNAME'			=> $_CLASS['core_user']->lang['USERNAME'],
-		'L_PASSWORD' 			=> $_CLASS['core_user']->lang['PASSWORD'],
-		'L_REGISTER'			=> $_CLASS['core_user']->lang['REGISTER'],
-		'L_RESEND_ACTIVATION'	=> $_CLASS['core_user']->lang['RESEND_ACTIVATION'],
-		'L_FORGOT_PASS'			=> $_CLASS['core_user']->lang['FORGOT_PASS'],
-		'L_HIDE_ME'				=> $_CLASS['core_user']->lang['HIDE_ME'],
-		'L_LOG_ME_IN'			=> $_CLASS['core_user']->lang['LOG_ME_IN'],
-		'L_PRIVACY'				=> $_CLASS['core_user']->lang['PRIVACY']
-		)
-	);
-	
-	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['LOGIN']);
-	
-	$_CLASS['core_template']->display('modules/Forums/login_body.html');
-	
-	$_CLASS['core_display']->display_footer();
-}
-
-function set_config($config_name, $config_value, $is_dynamic = false)
-{
-	global $_CLASS, $config;
-
-	$sql = 'UPDATE ' . CONFIG_TABLE . "
-		SET config_value = '" . $_CLASS['core_db']->sql_escape($config_value) . "'
-		WHERE config_name = '" . $_CLASS['core_db']->sql_escape($config_name) . "'";
-	$_CLASS['core_db']->sql_query($sql);
-
-	if (!$_CLASS['core_db']->sql_affectedrows() && !isset($config[$config_name]))
-	{
-		$sql = 'INSERT INTO ' . CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
-			'config_name'	=> $config_name,
-			'config_value'	=> $config_value,
-			'is_dynamic'	=> ($is_dynamic) ? 1 : 0));
-		$_CLASS['core_db']->sql_query($sql);
-	}
-
-	$config[$config_name] = $config_value;
-
-	if (!$is_dynamic)
-	{
-		$_CLASS['core_cache']->destroy('config');
-	}
-}
-
-function maintance_status($return = false)
+function check_load_status($return = false)
 {
 	global $_CORE_CONFIG, $_CLASS;
-// Add maintance start time, so we can notify users when maintance is starting with popup maybe !
+	static $load_status = 'unset';
 	
-	if ($_CORE_CONFIG['global']['maintenance'] && VIPERAL != 'Admin')
+	if ($load_status != 'unset')
 	{
-		if (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin)
-		{
-			return false;
-		}
-		
-		if ($return)
-		{
-			return true;
-		}
-
-		trigger_error($_CORE_CONFIG['global']['maintenance_text'], E_USER_ERROR);
+		return $load_status;
 	}
 	
-	return false;
-}
-
-function load_status($return = false)
-{
-	global $_CORE_CONFIG, $_CLASS;
-	
-	$load = false;
+	$load_status = 0;
 	
 	if (@file_exists('/proc/loadavg'))
 	{
-		if ($load_tmp = @file('/proc/loadavg'))
+		if ($load = @file('/proc/loadavg'))
 		{
-			list($load) = explode(' ', $load_tmp[0]);
+			list($load_status) = explode(' ', $load[0]);
 
-			if ($_CORE_CONFIG['server']['limit_load'] && $load > doubleval($_CORE_CONFIG['server']['limit_load']) && VIPERAL != 'Admin')
+			if ($_CORE_CONFIG['server']['limit_load'] && $load_status > doubleval($_CORE_CONFIG['server']['limit_load']) && VIPERAL != 'Admin')
 			{
-				if (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin)
+				if (VIPERAL == 'Admin' || (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin))
 				{
-					return false;
+					return $load_status;
 				}
 				
 				if ($return)
 				{
-					return true;
+					return $load_status = true;
 				}
 				trigger_error('BOARD_UNAVAILABLE');
 			}
 		}
 	}
 
-	return $load;
+	return $load_status;
 }
-function script_close($save = true)
+
+function check_maintance_status($return = false)
 {
-	global $_CORE_CONFIG, $site_file_root, $_CLASS;
-
-	if (!empty($_CLASS['core_user']))
+	global $_CORE_CONFIG, $_CLASS;
+	static $maintance_status = 'unset';
+	
+	if ($maintance_status != 'unset')
 	{
-
-		//Handle email/cron queue. // phpbb 2.1.2 only.
-		//if (time() - $config['queue_interval'] >= $config['last_queue_run'] && !defined('IN_ADMIN'))
-		if (file_exists($site_file_root.'cache/queue.php'))
+		return $maintance_status;
+	}
+	
+	if ($_CORE_CONFIG['maintenance']['active'])
+	{
+		if ($_CORE_CONFIG['maintenance']['time'] < time())
 		{
-			require_once($site_file_root.'includes/forums/functions_messenger.php');
-			$queue = new queue();
-			$queue->process();
-		}
-		
-		if ($save)
-		{
-			if ($_CORE_CONFIG['global']['error'])
+			if (VIPERAL == 'Admin' || (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin))
 			{
-				if (!empty($_CLASS['core_db']->querylist))
-				{
-					$_CLASS['core_user']->set_data('querylist', $_CLASS['core_db']->querylist);
-					$_CLASS['core_user']->set_data('querydetails', $_CLASS['core_db']->querydetails);
-				}
-				
-				if (isset($_CLASS['core_error_handler']) && (!empty($_CLASS['core_db']->querylist) || !empty($_CLASS['core_error_handler']->error_array)))
-				{
-					$_CLASS['core_user']->set_data('debug', $_CLASS['core_error_handler']->error_array);
-				}
+				return $maintance_status = false;
 			}
-						
-			$_CLASS['core_user']->save();
-		}	
-	}
-	
-	if (!empty($_CLASS['core_cache']))
-	{
-		$_CLASS['core_cache']->save();
-	}
-	
-	if (!empty($_CLASS['core_error_handler']))
-	{
-		$_CLASS['core_error_handler']->stop();  //stopped to halt the db sql_close error, look into a fix.
-	}
-	
-	if (!empty($_CLASS['core_db']))
-	{
-		$_CLASS['core_db']->sql_close();
-	}
-	
-	/*
-	// Call cron-type script
-	if (!defined('IN_CRON'))
-	{
-		$cron_type = '';
-
-		if (time() - $config['queue_interval'] > $config['last_queue_run'] && !defined('IN_ADMIN') && file_exists($phpbb_root_path . 'cache/queue.' . $phpEx))
-		{
-			// Process email queue
-			$cron_type = 'queue';
+			
+			if ($return)
+			{
+				return $maintance_status = true;
+			}
+			
+			trigger_error($_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
 		}
-		else if (method_exists($cache, 'tidy') && time() - $config['cache_gc'] > $config['cache_last_gc'])
-		{
-			// Tidy the cache
-			$cron_type = 'tidy_cache';
-		}
-		else if (time() - (7 * 24 * 3600) > $config['database_last_gc'])
-		{
-			// Tidy some table rows every week
-			$cron_type = 'tidy_database';
-		}
-
-		if ($cron_type)
-		{
-			$template->assign_var('RUN_CRON_TASK', '<img src="' . $phpbb_root_path . 'cron.' . $phpEx . '?cron_type=' . $cron_type . '" width="1" height="1" />');
-		}
-	} */
-	
-	/*
-	if (!class_exists('tidy'))
-	{
-		$html = ob_get_clean();
 		
-		// Specify configuration
-		$config = array(
-				   'indent'        => true,
-				   'output-xhtml'  => true,
-				   'wrap'          => 200);
-		
-		// Tidy
-		$tidy = new tidy;
-		$tidy->parseString($html, $config, 'utf8');
-		$tidy->cleanRepair();
-		
-		// Output
-		echo $tidy;
-	}*/
+		return $_CORE_CONFIG['maintenance']['time'];
+	}
+	
+	return $maintance_status = false;
 }
 
-function session_users()
+function check_variable($variable, $default, $vartype)
 {
-	global $_CLASS, $config;
-	static $loaded = false;
-	
-	if ($loaded) 
+	switch ($vartype)
 	{
-		return $loaded;
-	}
-	
-	$loaded = array();
-	
-	$sql = 'SELECT u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour, s.session_ip, s.session_viewonline, s.session_url, s.session_page
-			FROM '.USERS_TABLE.' u, ' . SESSIONS_TABLE . ' s
-			WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
-			AND u.user_id = s.session_user_id
-			ORDER BY u.username ASC, s.session_ip ASC';
-	$result = $_CLASS['core_db']->sql_query($sql);
-	
-	$update = false;
-	
-	while($row = $_CLASS['core_db']->sql_fetchrow($result))
-	{
-		// update current user info with current page and url as it is done at the end of script.
-		if (!$update && (($row['user_id'] != ANONYMOUS && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || ($row['user_id'] == ANONYMOUS && $row['session_ip'] == $_CLASS['core_user']->ip)))
-		{
-			$row['session_url'] = $_CLASS['core_user']->url;
-			$row['session_page'] = $_CLASS['core_user']->page;
-			$update = true;
-		}
+	 	Case 'integer':
+			$variable = (is_numeric($variable)) ? (int) $variable : $default;
+		break;
 		
-		$loaded[] = $row;
+		default:
+			$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
+			$variable = strip_slashes($variable);
+		break;
 	}
 	
-	$_CLASS['core_db']->sql_freeresult($result);
-	return $loaded;
+	return $variable;
 }
 
-function loadclass($file, $name, $class = false)
+function encode_password($pure, $encoding = 'md5')
+{
+	switch ($encoding)
+	{
+		Case 'md5':
+			return md5($pure);
+		
+		Default:
+			return md5($pure);
+	}
+}
+
+function get_bots()
 {
 	global $_CLASS;
-	
-	$class = ($class) ? $class : $name;
-	
-	if (empty($_CLASS[$name]) || !is_object($_CLASS[$name]))
+
+/// Bot is not going to be saved in a bot table anymore, it will be saved in user_type
+	if (($bots = $_CLASS['core_cache']->get('bots')) === false)
 	{
-		if ($file)
+		$bots = array();
+		
+		$sql = 'SELECT user_id, bot_agent, bot_ip
+			FROM ' . BOTS_TABLE . '
+			WHERE bot_active = 1';
+		$result = $_CLASS['core_db']->sql_query($sql);
+			
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			require_once($file);
+			$bots[] = $row;
 		}
-		$_CLASS[$name] =& new $class;
+		
+		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_cache']->put('bots', $bots);
 	}
+	
+	return $bots;
 }
-
-
-/// This does the optimizatiopn 2x
-/// Need to resave the config table after it is distroyed
-function optimize_table($table = false)
-{
-	global $_CLASS, $_CORE_CONFIG, $prefix;
-	// this needs alot of testing lol. works for me for now.
-	if ($table)
-	{
-		$_CLASS['core_db']->sql_query('OPTIMIZE TABLE '. $_CLASS['core_db']->sql_escape($table));
-		return;
-	}
-
-	$result = $_CLASS['core_db']->sql_query('SHOW TABLES');
-	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-	{
-		$key = array_keys($row);
-
-		if ($table)
-		{
-			$table .= ', ' . $row[$key[0]];
-		} else {
-			$table = $row[$key[0]];
-		}
-	}
-	
-	if ($table)
-	{
-		$_CLASS['core_db']->sql_query('OPTIMIZE TABLE '. $_CLASS['core_db']->sql_escape($table));
-		$time = time() + $_CORE_CONFIG['server']['optimize_rate'];
-	}
-
-	$_CLASS['core_db']->sql_query('UPDATE '.$prefix.'_config_custom SET cfg_value='.$time." WHERE cfg_field='optimize_last' AND cfg_name='server'");
-	$_CLASS['core_cache']->destroy('main_cfg');
-	
-}
-
 
 function get_variable($var_name, $type, $default = '', $vartype = 'string')
 {
@@ -423,8 +147,8 @@ function get_variable($var_name, $type, $default = '', $vartype = 'string')
 
 	global $$type;
 	
-	// not sure how good this is, check mem. usage
-	// If linking works the way I think  it should be ok, else it could slow things down
+// not sure how good this is, check mem. usage
+// If linking works the way I think  it should be ok, else it could slow things down
 	$type =& $$type;
 	
 	if  (isset($type[$var_name]) && !is_array($type[$var_name]))
@@ -473,99 +197,20 @@ function get_variable($var_name, $type, $default = '', $vartype = 'string')
 	}
 }
 
-function check_variable($variable, $default, $vartype)
+function generate_base_url()
 {
-	switch ($vartype)
+	static $base = false;
+	
+	if (!$base)
 	{
-	 	Case 'integer':
-			$variable = (is_numeric($variable)) ? (int) $variable : $default;
-		break;
+		global $_CORE_CONFIG;
 		
-		default:
-			$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
-			$variable = strip_slashes($variable);
-		break;
+		$base = ($_CORE_CONFIG['server']['cookie_secure']) ? 'https://' : 'http://' ;
+		$base .= trim((isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_CORE_CONFIG['server']['site_domain']));
+		$base .= (($_CORE_CONFIG['server']['site_port'] <> 80) ? ':' . trim($_CORE_CONFIG['server']['site_port']) : '') . $_CORE_CONFIG['server']['site_path'];
 	}
 	
-	return $variable;
-}
-
-function strip_slashes($str)
-{
-	return (STRIP) ? stripslashes($str) : $str ;
-}
-
-function get_bots()
-{
-	global $_CLASS;
-	
-	if (($bots = $_CLASS['core_cache']->get('bots')) === false)
-	{
-		$bots = array();
-		
-		$sql = 'SELECT user_id, bot_agent, bot_ip
-			FROM ' . BOTS_TABLE . '
-			WHERE bot_active = 1';
-		$result = $_CLASS['core_db']->sql_query($sql);
-			
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-		{
-			$bots[] = $row;
-		}
-		
-		$_CLASS['core_db']->sql_freeresult($result);
-		$_CLASS['core_cache']->put('bots', $bots);
-	}
-	
-	return $bots;
-}
-
-// fix me, add preg replace,
-function trim_text($text, $replacement = ' ')
-{
-	$text = str_replace("\r\n", $replacement, $text);
-	$text = str_replace("\n", $replacement, $text);
-	return trim($text);
-}
-
-function theme_select($default = false)
-{
-	global $site_file_root, $_CLASS;
-	
-	$themetmp = array();
-	$default = ($default) ? $default : $_CLASS['core_display']->theme;
-	
-	$theme = '';
-	$handle = opendir($site_file_root.'themes');
-	while ($file = readdir($handle))
-	{
-		if (!strpos('.',$file))
-		{
-			if (file_exists($site_file_root."themes/$file/index.php"))
-			{
-				$themetmp[] = array('file' => $file, 'template'=> true);
-			} elseif (file_exists($site_file_root."themes/$file/theme.php")) {
-				$themetmp[] = array('file' => $file, 'template'=> false);
-			} 
-		} 
-	}
-	
-	closedir($handle);
-	
-	$count = count($themetmp);
-	
-	for ($i=0; $i < $count; $i++)
-	{
-		$themetmp[$i]['name'] = ($themetmp[$i]['template']) ? $themetmp[$i]['file'].' *' : $themetmp[$i]['file'];
-		if ($themetmp[$i]['file'] == $default)
-		{
-			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['name'].'</option>';
-		} else {
-			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['name'].'</option>';
-		}
-	}
-	
-	return $theme;
+	return $base;
 }
 
 function generate_link($link = false, $link_options = false)
@@ -620,62 +265,6 @@ function generate_link($link = false, $link_options = false)
     }
     
     return $link;
-}
-
-function generate_base_url()
-{
-	static $base = false;
-	
-	if (!$base)
-	{
-		global $_CORE_CONFIG;
-		
-		$base = ($_CORE_CONFIG['server']['cookie_secure']) ? 'https://' : 'http://' ;
-		$base .= trim((isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_CORE_CONFIG['server']['site_domain']));
-		$base .= (($_CORE_CONFIG['server']['site_port'] <> 80) ? ':' . trim($_CORE_CONFIG['server']['site_port']) : '') . $_CORE_CONFIG['server']['site_path'];
-	}
-	
-	return $base;
-}
-
-function getlink($str = false, $UseLEO = true, $full = false, $showSID = true)
- {
-    global $_CORE_MODULE, $mainindex, $_CORE_CONFIG, $_CLASS, $SID;
-    
-    if (!$str)
-    {
-		$str = $_CORE_MODULE['title'];
-    }
-    
-    return generate_link($str);
-}
-
-function adminlink($link = false)
-{
-    return generate_link($link, array('admin' => true));
-}
-
-function url_redirect($url = false)
-{
-    global $db, $cache, $mainindex;
-
-	script_close();
-	
-	$url = ($url) ? $url : 'http://'.getenv('HTTP_HOST').'/'.$_CORE_CONFIG['server']['path'].$mainindex;
-	$url = str_replace('&amp;', '&', $url);
-	
-	// Redirect via an HTML form for PITA webservers
-	if (preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
-	{
-		header('Refresh: 0; URL=' . $url);
-		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($user->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
-		exit;
-	}
-
-	// Behave as per HTTP/1.1 spec for others
-	header('Location: ' . $url);
-	
-    exit;
 }
 
 function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = false, $tpl_prefix = '')
@@ -760,6 +349,304 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 	return $page_string;
 }
 
+function unique_id()
+{
+	list($sec, $usec) = explode(' ', microtime());
+	mt_srand((float) $sec + ((float) $usec * 100000));
+	return uniqid(mt_rand(), true);
+}
+
+function loadclass($file, $name, $class = false)
+{
+	global $_CLASS;
+	
+	$class = ($class) ? $class : $name;
+	
+	if (empty($_CLASS[$name]) || !is_object($_CLASS[$name]))
+	{
+		if ($file)
+		{
+			require_once($file);
+		}
+		$_CLASS[$name] =& new $class;
+	}
+}
+
+function login_box($login_options = false)
+{
+	global $_CLASS, $_CORE_CONFIG;
+	
+	$err = '';
+	$login_array = array(
+		'redirect' 		=> false,
+		'explain' 	 	=> '',
+		'success'  		=> '',
+		'admin_login'	=> false,
+		'full_login'	=> true,
+	 );
+	
+	if (is_array($login_options))
+	{
+		$login_array = array_merge($login_array, $login_options);
+	} 	
+	
+	if (isset($_POST['login']))
+	{
+		$data = array(
+			'user_name'			=> get_variable('username', 'POST'),
+			'user_password'		=> get_variable('password', 'POST'),
+			'admin_login'		=> $login_array['admin_login'],
+			'auto_log'			=> (!empty($_POST['autologin'])) ? true : false,
+			'show_online'		=> (!empty($_POST['viewonline'])) ? 0 : 1,
+			'auth_error_return'	=> true,
+		 );
+		
+		$result = false;
+		
+		if ($data['user_name'] && $data['user_password'] && ($result = $_CLASS['core_user']->create($data)) === true)
+		{
+			if ($login_array['admin_login'])
+			{
+// log
+			}
+			
+			$login_array['redirect'] = get_variable('redirect', 'POST', false);
+			
+			if ($login_array['redirect'])
+			{
+				$login_array['redirect'] = (strpos($login_array['redirect'], '?') !== false) ? $login_array['redirect'].'&amp;' : $login_array['redirect'].'?';
+				$login_array['redirect'] .= 'sid='.$_CLASS['core_user']->data['session_id'];
+			} else {
+				$login_array['redirect'] = generate_link();
+			}
+
+			//$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
+
+			$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
+			trigger_error($message);
+		}
+
+		if ($login_array['admin_login'])
+		{
+// log
+		}
+		
+		if (is_string($result))
+		{
+			trigger_error($result, E_USER_ERROR);
+		}
+
+		$error = ($result === USER_INACTIVE) ? $_CLASS['core_user']->lang['ACTIVE_ERROR'] :  $_CLASS['core_user']->lang['LOGIN_ERROR'];
+//USER_IGNORE  I think this is unactivated accounts
+	}
+
+	if (!$login_array['redirect'])
+	{
+		$login_array['redirect'] = htmlspecialchars($_CLASS['core_user']->url);
+	}
+	
+	$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
+
+	$_CLASS['core_template']->assign(array(
+		'LOGIN_ERROR'			=> $err, 
+		'LOGIN_EXPLAIN'			=> $login_array['explain'], 
+		'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
+		'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
+		'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
+		'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
+		'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
+		'USERNAME'				=> '',
+		'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']) ? true : false,
+		'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link('Control_Panel&amp;mode=login') : generate_link(false, array('admin' => true)),
+		'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
+		'L_LOGIN'				=> $_CLASS['core_user']->lang['LOGIN'],
+		'L_LOGIN_INFO'			=> $_CLASS['core_user']->lang['LOGIN_INFO'], 
+		'L_TERMS_USE'			=> $_CLASS['core_user']->lang['TERMS_USE'],
+		'L_USERNAME'			=> $_CLASS['core_user']->lang['USERNAME'],
+		'L_PASSWORD' 			=> $_CLASS['core_user']->lang['PASSWORD'],
+		'L_REGISTER'			=> $_CLASS['core_user']->lang['REGISTER'],
+		'L_RESEND_ACTIVATION'	=> $_CLASS['core_user']->lang['RESEND_ACTIVATION'],
+		'L_FORGOT_PASS'			=> $_CLASS['core_user']->lang['FORGOT_PASS'],
+		'L_HIDE_ME'				=> $_CLASS['core_user']->lang['HIDE_ME'],
+		'L_LOG_ME_IN'			=> $_CLASS['core_user']->lang['LOG_ME_IN'],
+		'L_PRIVACY'				=> $_CLASS['core_user']->lang['PRIVACY']
+		)
+	);
+	
+	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['LOGIN']);
+	
+	$_CLASS['core_template']->display('modules/Forums/login_body.html');
+	
+	$_CLASS['core_display']->display_footer();
+}
+
+function set_core_config($section, $name, $value)
+{
+	global $_CLASS, $_CORE_CONFIG;
+	
+	$_CLASS['core_db']->sql_return_on_error(true);
+
+	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET value ='".$_CLASS['core_db']->sql_escape($value) . "'
+		WHERE (section = '" . $_CLASS['core_db']->sql_escape($section) . "')
+			AND (name = '". $_CLASS['core_db']->sql_escape($name) ."')";
+
+	if (!$_CLASS['core_db']->sql_query($sql))
+	{
+		$sql_array = array(
+			'section'	=> $section,
+			'name'		=> $name,
+			'value'		=> $value
+		);
+		
+		$_CLASS['core_db']->sql_return_on_error(false);
+
+		$sql = 'INSERT INTO ' . CORE_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array);
+		$_CLASS['core_db']->sql_query($sql);
+	}
+
+	$_CLASS['core_db']->sql_return_on_error(false);
+	
+	$_CORE_CONFIG[$section][$name] = $value;
+
+	$_CLASS['core_cache']->destroy('core_config');
+}
+
+function set_config($config_name, $config_value, $is_dynamic = false)
+{
+	global $_CLASS, $config;
+
+	$sql = 'UPDATE ' . CONFIG_TABLE . "
+		SET config_value = '" . $_CLASS['core_db']->sql_escape($config_value) . "'
+		WHERE config_name = '" . $_CLASS['core_db']->sql_escape($config_name) . "'";
+	$_CLASS['core_db']->sql_query($sql);
+
+	if (!$_CLASS['core_db']->sql_affectedrows() && !isset($config[$config_name]))
+	{
+		$sql = 'INSERT INTO ' . CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+			'config_name'	=> $config_name,
+			'config_value'	=> $config_value,
+			'is_dynamic'	=> ($is_dynamic) ? 1 : 0));
+		$_CLASS['core_db']->sql_query($sql);
+	}
+
+	$config[$config_name] = $config_value;
+
+	if (!$is_dynamic)
+	{
+		$_CLASS['core_cache']->destroy('config');
+	}
+}
+
+function script_close($save = true)
+{
+	global $_CORE_CONFIG, $site_file_root, $_CLASS;
+
+	if (defined('SCRIPT_CLOSED'))
+	{
+		return;
+	}
+	
+	define('SCRIPT_CLOSED', true);
+
+	$closed = true;
+	
+	if (!empty($_CLASS['core_user']))
+	{
+
+//Handle email/cron queue. // phpbb 2.1.2 only.
+//if (time() - $config['queue_interval'] >= $config['last_queue_run'] && !defined('IN_ADMIN'))
+		if (file_exists($site_file_root.'cache/queue.php'))
+		{
+			require_once($site_file_root.'includes/forums/functions_messenger.php');
+			$queue = new queue();
+			$queue->process();
+		}
+		
+		if ($save)
+		{
+			if ($_CORE_CONFIG['global']['error'])
+			{
+				if (!empty($_CLASS['core_db']->querylist))
+				{
+					$_CLASS['core_user']->set_data('querylist', $_CLASS['core_db']->querylist);
+					$_CLASS['core_user']->set_data('querydetails', $_CLASS['core_db']->querydetails);
+				}
+				
+				if (isset($_CLASS['core_error_handler']) && (!empty($_CLASS['core_db']->querylist) || !empty($_CLASS['core_error_handler']->error_array)))
+				{
+					$_CLASS['core_user']->set_data('debug', $_CLASS['core_error_handler']->error_array);
+				}
+			}
+						
+			$_CLASS['core_user']->save();
+		}	
+	}
+	
+	if (!empty($_CLASS['core_cache']))
+	{
+		$_CLASS['core_cache']->save();
+	}
+	
+	if (!empty($_CLASS['core_error_handler']))
+	{
+		$_CLASS['core_error_handler']->stop();
+//stopped to halt the db sql_close error, look into a fix.
+	}
+	
+	if (!empty($_CLASS['core_db']))
+	{
+		$_CLASS['core_db']->sql_close();
+	}
+	
+	/*
+	// Call cron-type script
+	if (!defined('IN_CRON'))
+	{
+		$cron_type = '';
+
+		if (time() - $config['queue_interval'] > $config['last_queue_run'] && !defined('IN_ADMIN') && file_exists($phpbb_root_path . 'cache/queue.' . $phpEx))
+		{
+			// Process email queue
+			$cron_type = 'queue';
+		}
+		else if (method_exists($cache, 'tidy') && time() - $config['cache_gc'] > $config['cache_last_gc'])
+		{
+			// Tidy the cache
+			$cron_type = 'tidy_cache';
+		}
+		else if (time() - (7 * 24 * 3600) > $config['database_last_gc'])
+		{
+			// Tidy some table rows every week
+			$cron_type = 'tidy_database';
+		}
+
+		if ($cron_type)
+		{
+			$template->assign_var('RUN_CRON_TASK', '<img src="' . $phpbb_root_path . 'cron.' . $phpEx . '?cron_type=' . $cron_type . '" width="1" height="1" />');
+		}
+	} */
+	
+	/*
+	if (!class_exists('tidy'))
+	{
+		$html = ob_get_clean();
+		
+		// Specify configuration
+		$config = array(
+				   'indent'        => true,
+				   'output-xhtml'  => true,
+				   'wrap'          => 200);
+		
+		// Tidy
+		$tidy = new tidy;
+		$tidy->parseString($html, $config, 'utf8');
+		$tidy->cleanRepair();
+		
+		// Output
+		echo $tidy;
+	}*/
+}
+
 function on_page($num_items, $per_page, $start)
 {
 	global $_CLASS;
@@ -771,8 +658,191 @@ function on_page($num_items, $per_page, $start)
 	return sprintf($_CLASS['core_user']->lang['PAGE_OF'], $on_page, max(ceil($num_items / $per_page), 1));
 }
 
-function check_email($email)
+function strip_slashes($str)
 {
-	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
+	return (STRIP) ? stripslashes($str) : $str ;
 }
+
+
+function theme_select($default = false)
+{
+	global $site_file_root, $_CLASS;
+	
+	$themetmp = array();
+	$default = ($default) ? $default : $_CLASS['core_display']->theme;
+	
+	$theme = '';
+	$handle = opendir($site_file_root.'themes');
+	while ($file = readdir($handle))
+	{
+		if (!strpos('.',$file))
+		{
+			if (file_exists($site_file_root."themes/$file/index.php"))
+			{
+				$themetmp[] = array('file' => $file, 'template'=> true);
+			} elseif (file_exists($site_file_root."themes/$file/theme.php")) {
+				$themetmp[] = array('file' => $file, 'template'=> false);
+			} 
+		} 
+	}
+	
+	closedir($handle);
+	
+	$count = count($themetmp);
+	
+	for ($i=0; $i < $count; $i++)
+	{
+		$themetmp[$i]['name'] = ($themetmp[$i]['template']) ? $themetmp[$i]['file'].' *' : $themetmp[$i]['file'];
+		if ($themetmp[$i]['file'] == $default)
+		{
+			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['name'].'</option>';
+		} else {
+			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['name'].'</option>';
+		}
+	}
+	
+	return $theme;
+}
+
+// fix me, add preg replace,
+function trim_text($text, $replacement = ' ')
+{
+	$text = str_replace("\r\n", $replacement, $text);
+	$text = str_replace("\n", $replacement, $text);
+	return trim($text);
+}
+
+function url_redirect($url = false)
+{
+    global $db, $cache, $mainindex;
+
+	script_close();
+	
+	$url = ($url) ? $url : 'http://'.getenv('HTTP_HOST').'/'.$_CORE_CONFIG['server']['path'].$mainindex;
+	$url = str_replace('&amp;', '&', $url);
+	
+	// Redirect via an HTML form for PITA webservers
+	if (preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
+	{
+		header('Refresh: 0; URL=' . $url);
+		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($user->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
+		exit;
+	}
+
+	header('Location: ' . $url);
+	
+    exit;
+}
+
+
+/////////////////////
+/// To be removed ///
+/////////////////////
+
+function adminlink($link = false)
+{
+    return generate_link($link, array('admin' => true));
+}
+
+function getlink($str = false, $UseLEO = true, $full = false, $showSID = true)
+ {
+    global $_CORE_MODULE, $mainindex, $_CORE_CONFIG, $_CLASS, $SID;
+    
+    if (!$str)
+    {
+		$str = $_CORE_MODULE['title'];
+    }
+    
+    return generate_link($str);
+}
+
+function is_admin()
+{
+    global $_CLASS;
+    return ($_CLASS['core_user']->data['session_admin']) ? true : false;
+}
+
+function is_user()
+{
+    global $_CLASS;
+    return ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false;
+}
+
+/// REMOVE THIS
+/// IT WOULD CASE MORE SPEED PROBLEMS THAN SOLVE
+function session_users()
+{
+	global $_CLASS, $config;
+	static $loaded = false;
+	
+	if ($loaded) 
+	{
+		return $loaded;
+	}
+	
+	$loaded = array();
+	
+	$sql = 'SELECT s.*, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
+				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
+					WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
+				AND u.user_id = s.session_user_id';
+			//ORDER BY u.username ASC, s.session_ip ASC'; //mysql Using temporary 
+	$result = $_CLASS['core_db']->sql_query($sql);
+	
+	$update = false;
+	
+	while($row = $_CLASS['core_db']->sql_fetchrow($result))
+	{
+		// update current user info with current page and url as it is done at the end of script.
+		if (!$update && (($row['user_id'] != ANONYMOUS && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || ($row['user_id'] == ANONYMOUS && $row['session_ip'] == $_CLASS['core_user']->ip)))
+		{
+			$row['session_url'] = $_CLASS['core_user']->url;
+			$row['session_page'] = $_CLASS['core_user']->page;
+			$update = true;
+		}
+		
+		$loaded[] = $row;
+	}
+	
+	$_CLASS['core_db']->sql_freeresult($result);
+	return $loaded;
+}
+
+function send_mail(&$mailer_message, $message, $html='', $subject='', $to='', $to_name='', $from='', $from_name='' )
+{
+	global $_CORE_CONFIG, $_CLASS, $phpEx;
+
+	loadclass($site_file_root.'includes/mailer/class.phpmailer.php', 'PHPMailer');
+	
+	ini_set('sendmail_from', ($from) ? $from : $_CORE_CONFIG['global']['admin_mail']);
+
+	if ($_CORE_CONFIG['email']['smtp_on'])
+	{
+		$_CLASS['PHPMailer']->IsSMTP();
+		$_CLASS['PHPMailer']->Host = $_CORE_CONFIG['email']['smtphost'];
+		
+		if ($_CORE_CONFIG['email']['smtp_auth'])
+		{
+			$_CLASS['PHPMailer']->SMTPAuth = true;
+			$_CLASS['PHPMailer']->Username = $_CORE_CONFIG['email']['smtp_uname'];
+			$_CLASS['PHPMailer']->Password = $_CORE_CONFIG['email']['smtp_pass'];
+		}
+	}
+	
+	$_CLASS['PHPMailer']->From = ($from) ? trim_text($from) : $_CORE_CONFIG['global']['admin_mail'];;
+	$_CLASS['PHPMailer']->FromName = ($from_name) ? trim_text($from_name) : $_CORE_CONFIG['global']['sitename'];
+	$_CLASS['PHPMailer']->AddAddress(($to) ? trim_text($to) : $_CORE_CONFIG['global']['admin_mail'], $to_name);
+	//$_CLASS['PHPMailer']->AddReplyTo($from, $from_name);
+	$AltBody = strip_tags($message);
+	
+	$_CLASS['PHPMailer']->Subject = strip_tags(trim_text($subject));
+	$_CLASS['PHPMailer']->IsHTML(($_CORE_CONFIG['email']['allow_html_email']) ? true : false);
+	$_CLASS['PHPMailer']->Body	= ($_CORE_CONFIG['email']['allow_html_email']) ? $message : $AltBody;
+
+	
+	$_CLASS['PHPMailer']->AltBody = $AltBody;
+	
+	return $_CLASS['PHPMailer']->Send();
+}
+
 ?>

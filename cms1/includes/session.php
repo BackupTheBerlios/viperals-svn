@@ -131,8 +131,12 @@ class session
 /// Amin logging should have 3 option "user is admin" / "USer is not admin" / "Never checked"
 					$this->is_admin = ($this->data['session_admin']) ? true : false;
 
-					maintance_status();
-					load_status();
+					check_maintance_status();
+					
+					if (check_load_status())
+					{
+						$this->load = check_load_status();
+					}
 					
 					return true;
 				}
@@ -141,8 +145,12 @@ class session
 			$this->data = array();
 		}
 		
-		maintance_status();
-		load_status();
+		check_maintance_status();
+		
+		if (check_load_status())
+		{
+			$this->load = check_load_status();
+		}
 
 		if (isset($session_data['login_code']) && isset($session_data['user_id']))
 		{
@@ -323,8 +331,10 @@ class session
 			$cookie_data['user_id'] = $this->data['user_id'];
 			
 			$this->set_cookie('data', serialize($cookie_data), $this->time + 31536000);
-		} else 	{
-			$this->set_cookie('data', '', $this->time - 31536000);
+		}
+		elseif (!$this->new_session)
+		{
+			$this->set_cookie('data', '', 0);
 		}
 		
 		$this->set_cookie('sid', $this->data['session_id'], 0);
@@ -545,7 +555,9 @@ class session
 		
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
 				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
-				
+		
+		$_CLASS['core_db']->sql_query($sql);
+		
 		$this->new_data = $this->session_save = false;
 	}
 	
@@ -674,7 +686,7 @@ class user extends session
 			return $this->lang[$lang];
 		}
 		
-		return ucfirst(preg_replace('_', '', $lang));
+		return ucfirst(strtolower(preg_replace('/_/', ' ', $lang)));
 	}
 	
 	function img($img, $alt = '', $width = false, $suffix = '')
