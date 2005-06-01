@@ -1,16 +1,10 @@
-<div id="AdminMenu" ></div>
-
-{ include file='admin/menu.html' }
-
 <table class="tablebg" style="width:100%" cellpadding="4" cellspacing="1">
- <tr>
-  <th width="25%">{ if $A_OPTION eq 'site' }{ $L_SITE }{ else }<a href="{ $A_L_SITE }"><b>{ $L_SITE }</b></a>{ /if }</th>
-  <th width="25%">{ if $A_OPTION eq 'wysiwyg' }{ $L_WYSIWYG_EDITOR }{ else }<a href="{ $A_L_WYSIWYG }"><b>{ $L_WYSIWYG_EDITOR }</b></a>{ /if }</th>
-  <th width="25%">{ if $A_OPTION eq 'users' }{ $L_USERS_OPTIONS }{ else }<a href="{ $A_L_USERS }"><b>{ $L_USERS_OPTIONS }</b></a>{ /if }</th>
-  <th width="25%">{ if $A_OPTION eq 'system' }{ $L_SYSTEM }{ else }<a href="{ $A_L_SYSTEM }"><b>{ $L_SYSTEM }</b></a>{ /if }</th>
-</tr>
+	<tr>
+{ section name=a_options_loop loop=$a_options }
+		<th width="25%">{ if $a_options[a_options_loop].ACTIVE }{ $a_options[a_options_loop].LANG }{ else }<a href="{ $a_options[a_options_loop].LINK }"><b>{ $a_options[a_options_loop].LANG }</b></a>{ /if }</th>
+{ /section }
+	</tr>
 </table>
-
 
 <div class="OpenTable"><div class="outer"><div class="inner">
 <form action="{ $ACTION }" method="post">
@@ -22,33 +16,27 @@
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_SITE_NAME }: </b></td>
-		<td class="row2"><input class="post" size="40" maxlength="255" name="sitename" value="{ $SITE_NAME }" type="text"></td>
-
+		<td class="row2"><input class="post" size="40" maxlength="255" name="site_name" value="{ $SITE_NAME }" type="text"></td>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_SITE_URL }: </b></td>
-		<td class="row2"><input class="post" size="40" maxlength="255" name="siteurl" value="{ $SITE_URL }" type="text"></td>
-
+		<td class="row2"><input class="post" size="40" maxlength="255" name="site_url" value="{ $SITE_URL }" type="text"></td>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_SITE_LOGO }: </b></td>
 		<td class="row2"><input class="post" size="40" maxlength="255" name="site_logo" value="{ $SITE_LOGO }" type="text"></td>
-
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_SLOGAN }: </b></td>
 		<td class="row2"><input class="post" size="40" maxlength="255" name="slogan" value="{ $SLOGAN }" type="text"></td>
-
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_START_DATE }: </b></td>
 		<td class="row2"><input class="post" size="40" maxlength="255" name="startdate" value="{ $START_DATE }" type="text"></td>
-
 	</tr>
-		<tr>
+	<tr>
 		<td class="row1" width="50%"><b>{ $L_LINK_OPTIMIZATION }: </b></td>
 		<td class="row2"><input name="link_optimization" value="1" { if $LINK_OPTIMIZATION } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="link_optimization" value="0" { if !$LINK_OPTIMIZATION } checked="checked" { /if } type="radio">{ $L_NO }</td>
-
 	</tr>
 	<tr>
 
@@ -62,22 +50,26 @@
 		</td>
 	</tr>
 	<tr>
-
+	<td class="row1" width="50%" valign="top"><b>{ $L_FOOTER_MESSAGE }: </b></td>
+		<td class="row2">
+		<textarea name="foot1" rows="5" cols="40">{ $FOOTER_FIRST }</textarea><br /><br />
+		<textarea name="foot2" rows="5" cols="40">{ $FOOTER_SECOND }</textarea>
+	</tr>
+{ elseif $A_OPTION eq 'system' }
+	<tr>
+		<th colspan="2">{ $L_MAINTENANCE }</th>
+	</tr>
+	<tr>
 		<td class="row1" width="50%"><b>{ $L_MAINTENANCE }: </b></td>
 		<td class="row2"><input name="maintenance" value="1" { if $MAINTENANCE } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="maintenance" value="0" { if !$MAINTENANCE } checked="checked" { /if } type="radio">{ $L_NO }<br /></td>
 	</tr>
 	<tr>
-		<td class="row1" width="50%" valign="top"><b>{ $L_MAINTENANCE_TEXT }: </b></td>
-		<td class="row2"><br /><textarea name="maintenance_text" rows="5" cols="40">{ $MAINTENANCE_MSG }</textarea></td>
+		<td class="row1" width="50%"><b>{ $L_MAINTENANCE_START }: </b></td>
+		<td class="row2"><input class="post" size="40" maxlength="255" name="maintenance_start" value="{ $MAINTENANCE_START }" type="text"></td>
 	</tr>
 	<tr>
-	<td class="row1" width="50%" valign="top"><b>{ $L_FOOTER_MESSAGE }: </b></td>
-		<td class="row2">
-		<textarea name="foot1" rows="5" cols="40">{ $A_FIRST_FOOTER }</textarea><br />
-
-		<br /><textarea name="foot2" rows="5" cols="40">{ $A_SECOND_FOOTER }</textarea><br />
-
-		<br /><textarea name="foot3" rows="5" cols="40">{ $A_THIRD_FOOTER }</textarea></td>
+		<td class="row1" width="50%" valign="top"><b>{ $L_MAINTENANCE_TEXT }: </b></td>
+		<td class="row2"><br /><textarea name="maintenance_text" rows="5" cols="40">{ $MAINTENANCE_MSG }</textarea></td>
 	</tr>
 { elseif $A_OPTION eq 'wysiwyg' }
 	<tr>
@@ -185,4 +177,3 @@
 		<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="btnmain" type="submit">&nbsp;&nbsp;<input value="Reset" class="btnlite" type="reset"></td>
 	</tr>
 </tbody></table></form>
-</div></div></div>

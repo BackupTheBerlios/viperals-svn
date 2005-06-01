@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -42,7 +44,7 @@ switch ($mod)
 
 if ($_CLASS['core_display']->homepage)
 {
-	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.$prefix.'_modules WHERE homepage > 0 ORDER BY homepage ASC');
+	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE homepage > 0 ORDER BY homepage ASC');
 	
 	While ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
@@ -54,7 +56,7 @@ if ($_CLASS['core_display']->homepage)
 
 } else {
 
-	$result = $_CLASS['core_db']->sql_query_limit('SELECT * FROM '.$prefix."_modules WHERE name='".$_CLASS['core_db']->sql_escape($mod)."'", 1);
+	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE name='".$_CLASS['core_db']->sql_escape($mod)."'");
 	$_CORE_MODULE = $_CLASS['core_db']->sql_fetchrow($result);
 
 }

@@ -3,13 +3,16 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+// Update/Add Copyright on non orignal code
 
 function check_email($email)
 {
@@ -103,16 +106,42 @@ function check_variable($variable, $default, $vartype)
 	return $variable;
 }
 
+function check_theme($theme)
+{
+	global $site_file_root;
+	
+	if (file_exists($site_file_root.'themes/'.$theme.'/index.php'))
+	{
+		return true;
+	}
+	return false;
+}
+
 function encode_password($pure, $encoding = 'md5')
 {
+// now far should we going to take this ?
+// don't want to end up with a class
 	switch ($encoding)
 	{
 		Case 'md5':
 			return md5($pure);
 		
-		Default:
-			return md5($pure);
+		Case 'sha1':
+			if (function_exists('sha1'))
+			{
+				return sha1($pure);
+			}
+			$encoding = 'MHASH_SHA1';
 	}
+	
+	if (strpos($encoding, 'MHASH_') !== false && function_exists('mhash'))
+	{
+			$enconded =	mhash($encoding, $pure);
+			$enconded = bin2hex($enconded);
+			return $enconded;
+	}
+	
+	return false;
 }
 
 function get_bots()
@@ -157,7 +186,6 @@ function get_variable($var_name, $type, $default = '', $vartype = 'string')
 	} else {
 		return $default;
 	}*/
-	
 					
 	switch ($type)
 	{
@@ -231,6 +259,8 @@ function generate_link($link = false, $link_options = false)
 	
 	$file = ($options['admin']) ? $adminindex : $mainindex;
 	
+	//$_CLASS['core_user']->need_url_id = true;
+	
 	if (!$link)
 	{
 		$link = $file;
@@ -256,9 +286,6 @@ function generate_link($link = false, $link_options = false)
 		}
     }
     
-    $_CLASS['core_user']->need_url_id = true;
-
-	
     if ($options['full'])
     {
 		return generate_base_url().$link;
@@ -383,12 +410,18 @@ function login_box($login_options = false)
 		'success'  		=> '',
 		'admin_login'	=> false,
 		'full_login'	=> true,
+		'full_screen'	=> false,
 	 );
 	
 	if (is_array($login_options))
 	{
 		$login_array = array_merge($login_array, $login_options);
 	} 	
+	
+	if ($login_array['full_screen'])
+	{
+		$_CLASS['core_user']->start();
+	}
 	
 	if (isset($_POST['login']))
 	{
@@ -402,7 +435,7 @@ function login_box($login_options = false)
 		 );
 		
 		$result = false;
-		
+
 		if ($data['user_name'] && $data['user_password'] && ($result = $_CLASS['core_user']->create($data)) === true)
 		{
 			if ($login_array['admin_login'])
@@ -420,7 +453,7 @@ function login_box($login_options = false)
 				$login_array['redirect'] = generate_link();
 			}
 
-			//$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
+			$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
 
 			$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
 			trigger_error($message);
@@ -473,14 +506,19 @@ function login_box($login_options = false)
 		)
 	);
 	
+	if ($login_array['full_screen'])
+	{
+		$_CLASS['core_template']->display('login_body_full.html');
+		script_close(false);
+		die;
+	}
+
 	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['LOGIN']);
-	
-	$_CLASS['core_template']->display('modules/Forums/login_body.html');
-	
+	$_CLASS['core_template']->display('login_body.html');
 	$_CLASS['core_display']->display_footer();
 }
 
-function set_core_config($section, $name, $value)
+function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
 	
@@ -490,7 +528,7 @@ function set_core_config($section, $name, $value)
 		WHERE (section = '" . $_CLASS['core_db']->sql_escape($section) . "')
 			AND (name = '". $_CLASS['core_db']->sql_escape($name) ."')";
 
-	if (!$_CLASS['core_db']->sql_query($sql))
+	if (!$_CLASS['core_db']->sql_query($sql) && $auto_add)
 	{
 		$sql_array = array(
 			'section'	=> $section,
@@ -507,8 +545,11 @@ function set_core_config($section, $name, $value)
 	$_CLASS['core_db']->sql_return_on_error(false);
 	
 	$_CORE_CONFIG[$section][$name] = $value;
-
-	$_CLASS['core_cache']->destroy('core_config');
+	
+	if ($clear_cache)
+	{
+		$_CLASS['core_cache']->destroy('core_config');
+	}
 }
 
 function set_config($config_name, $config_value, $is_dynamic = false)
@@ -658,118 +699,6 @@ function on_page($num_items, $per_page, $start)
 	return sprintf($_CLASS['core_user']->lang['PAGE_OF'], $on_page, max(ceil($num_items / $per_page), 1));
 }
 
-function strip_slashes($str)
-{
-	return (STRIP) ? stripslashes($str) : $str ;
-}
-
-
-function theme_select($default = false)
-{
-	global $site_file_root, $_CLASS;
-	
-	$themetmp = array();
-	$default = ($default) ? $default : $_CLASS['core_display']->theme;
-	
-	$theme = '';
-	$handle = opendir($site_file_root.'themes');
-	while ($file = readdir($handle))
-	{
-		if (!strpos('.',$file))
-		{
-			if (file_exists($site_file_root."themes/$file/index.php"))
-			{
-				$themetmp[] = array('file' => $file, 'template'=> true);
-			} elseif (file_exists($site_file_root."themes/$file/theme.php")) {
-				$themetmp[] = array('file' => $file, 'template'=> false);
-			} 
-		} 
-	}
-	
-	closedir($handle);
-	
-	$count = count($themetmp);
-	
-	for ($i=0; $i < $count; $i++)
-	{
-		$themetmp[$i]['name'] = ($themetmp[$i]['template']) ? $themetmp[$i]['file'].' *' : $themetmp[$i]['file'];
-		if ($themetmp[$i]['file'] == $default)
-		{
-			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['name'].'</option>';
-		} else {
-			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['name'].'</option>';
-		}
-	}
-	
-	return $theme;
-}
-
-// fix me, add preg replace,
-function trim_text($text, $replacement = ' ')
-{
-	$text = str_replace("\r\n", $replacement, $text);
-	$text = str_replace("\n", $replacement, $text);
-	return trim($text);
-}
-
-function url_redirect($url = false)
-{
-    global $db, $cache, $mainindex;
-
-	script_close();
-	
-	$url = ($url) ? $url : 'http://'.getenv('HTTP_HOST').'/'.$_CORE_CONFIG['server']['path'].$mainindex;
-	$url = str_replace('&amp;', '&', $url);
-	
-	// Redirect via an HTML form for PITA webservers
-	if (preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
-	{
-		header('Refresh: 0; URL=' . $url);
-		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($user->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
-		exit;
-	}
-
-	header('Location: ' . $url);
-	
-    exit;
-}
-
-
-/////////////////////
-/// To be removed ///
-/////////////////////
-
-function adminlink($link = false)
-{
-    return generate_link($link, array('admin' => true));
-}
-
-function getlink($str = false, $UseLEO = true, $full = false, $showSID = true)
- {
-    global $_CORE_MODULE, $mainindex, $_CORE_CONFIG, $_CLASS, $SID;
-    
-    if (!$str)
-    {
-		$str = $_CORE_MODULE['title'];
-    }
-    
-    return generate_link($str);
-}
-
-function is_admin()
-{
-    global $_CLASS;
-    return ($_CLASS['core_user']->data['session_admin']) ? true : false;
-}
-
-function is_user()
-{
-    global $_CLASS;
-    return ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false;
-}
-
-/// REMOVE THIS
-/// IT WOULD CASE MORE SPEED PROBLEMS THAN SOLVE
 function session_users()
 {
 	global $_CLASS, $config;
@@ -807,6 +736,83 @@ function session_users()
 	$_CLASS['core_db']->sql_freeresult($result);
 	return $loaded;
 }
+
+function strip_slashes($str)
+{
+	return (STRIP) ? stripslashes($str) : $str ;
+}
+
+function theme_select($default = false)
+{
+	global $site_file_root, $_CLASS;
+	
+	$themetmp = array();
+	$default = ($default) ? $default : $_CLASS['core_display']->theme;
+	
+	$theme = '';
+	$handle = opendir($site_file_root.'themes');
+	while ($file = readdir($handle))
+	{
+		if (!strpos('.',$file))
+		{
+			if (file_exists($site_file_root."themes/$file/index.php"))
+			{
+				$themetmp[] = array('file' => $file, 'template'=> true);
+			}
+		} 
+	}
+	
+	closedir($handle);
+	
+	$count = count($themetmp);
+	
+	for ($i=0; $i < $count; $i++)
+	{
+		if ($themetmp[$i]['file'] == $default)
+		{
+			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['file'].'</option>';
+		} else {
+			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['file'].'</option>';
+		}
+	}
+	
+	return $theme;
+}
+
+// fix me, add preg replace,
+function trim_text($text, $replacement = ' ')
+{
+	$text = str_replace("\r\n", $replacement, $text);
+	$text = str_replace("\n", $replacement, $text);
+	return trim($text);
+}
+
+function url_redirect($url = false)
+{
+    global $db, $cache, $mainindex;
+
+	script_close();
+	
+	$url = ($url) ? $url : generate_link(array('full' => true));
+	$url = str_replace('&amp;', '&', $url);
+	
+	// Redirect via an HTML form for PITA webservers
+	if (preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
+	{
+		header('Refresh: 0; URL=' . $url);
+		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($user->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
+		exit;
+	}
+
+	header('Location: ' . $url);
+	
+    exit;
+}
+
+
+/////////////////////
+/// To be removed ///
+/////////////////////
 
 function send_mail(&$mailer_message, $message, $html='', $subject='', $to='', $to_name='', $from='', $from_name='' )
 {

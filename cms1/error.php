@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -49,7 +51,9 @@ require($site_file_root.'includes/smarty/Smarty.class.php');
 
 $_CLASS['template'] =& new Smarty();
 
-$_CLASS['template']->assign('MESSAGE_TEXT',  (empty($error[$_GET['error']]) ? $error['404'] : $error[$_GET['error']]));
+header(empty($error[$_GET['error']]['lang']) ? $error['404']['lang'] : $error[$_GET['error']]['lang']);
+
+$_CLASS['template']->assign('MESSAGE_TEXT',  (empty($error[$_GET['error']]['lang']) ? $error['404']['lang'] : $error[$_GET['error']]['lang']));
 		
 $_CLASS['template']->display('error.html');
 	

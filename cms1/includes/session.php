@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -29,7 +31,7 @@ class session
 	var $new_data = false;
 	var $new_session = false;
 	var $session_save = false;
-	var $need_url_id = false;
+	var $need_url_id = true;
 
 
 	function startup()
@@ -119,7 +121,14 @@ class session
 						$this->session_save = true;
 					}
 					
-					$this->data['session_data'] = unserialize($this->data['session_data']);
+					if ($this->data['session_data'])
+					{
+						$this->data['session_data'] = unserialize($this->data['session_data']);
+					}
+					else
+					{
+						$this->data['session_data'] = array();
+					}
 					
 					$this->is_user = ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER)) ? true : false;
 					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS) ? true : false;
@@ -147,6 +156,12 @@ class session
 			$this->load = check_load_status();
 		}
 
+		if ($_CORE_CONFIG['user']['only_registered'])
+		{
+			$this->need_url_id = false;
+			login_box(array('full_screen'	=> true));
+		}
+		
 		if (isset($session_data['login_code']) && isset($session_data['user_id']))
 		{
 			return $this->create(array('user_id' => $session_data['user_id'], 'user_password' => $session_data['login_code'], 'auto_log' => true));
@@ -172,7 +187,9 @@ class session
 		$session_data = array_merge($session_data, array_filter($data));
 		$session_data['user_id'] = (int) $session_data['user_id'];
 		$session_data['is_bot'] = false;
-		
+		$session_data['old_session_id'] = !empty($this->data['session_id']) ? $this->data['session_id'] : false;
+		$session_data['old_id'] 		= !empty($this->data['user_id']) ? $this->data['user_id'] : false;
+
 		$bots_array = get_bots();
 
 		foreach ($bots_array as $bot)
@@ -282,6 +299,7 @@ class session
 		
 		if (($auth !== true || !$this->data['session_time']) && $config['active_sessions'])
 		{
+// wonder if this can be done sooner ?
 			// Limit sessions in 1 minute period
 			$sql = 'SELECT COUNT(*) AS sessions
 				FROM ' . SESSIONS_TABLE . '
@@ -310,7 +328,11 @@ class session
 			// reset and add some basics
 			$session_data += array('user_name' => false, 'user_id' => false, 'user_password' => false, 'auto_log' => false);
 			$this->data['session_time'] = $this->data['session_id'] = 0;
-
+		}
+		
+		if ($session_data['old_session_id'] && $session_data['old_session_id'] != $this->data['session_id'])
+		{
+			$this->destroy($session_data['old_session_id'], $session_data['old_id'], true);
 		}
 		
 		$this->is_user = (!$session_data['is_bot'] && ($auth === true)) ? true : false;
@@ -337,14 +359,13 @@ class session
 		
 		if ($this->data['session_id'])
 		{
-// if this is a user should we update the user:last_visit time considering it's like a new session
 			$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
 				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
 			
-			$_CLASS['core_db']->sql_query($sql);
-			
-		} else {	
-	
+			$_CLASS['core_db']->sql_query($sql);	
+		}
+		else
+		{	
 // maybe make a loop here incase, just incase the session_id already exsits
 			$sql_array['session_id'] = (string) md5(unique_id());
 
@@ -353,7 +374,6 @@ class session
 			$this->new_session = true;
 		}
 		
-// need to make sure that false values are also stored
 		$this->data = array_merge($this->data, $sql_array);
 		unset($sql_array);
 		
@@ -383,27 +403,38 @@ class session
 	}
 
 	// Destroy a session
-	function destroy()
+	function destroy($session_id = false, $id = false,  $return = false)
 	{
 		global $_CLASS;
 
-		$this->set_cookie('data', '', $this->time - 31536000);
-		$this->set_cookie('sid', '', $this->time - 31536000);
-
-		// Delete existing session, update last visit info first!
-		$sql = 'UPDATE ' . USERS_TABLE . '
-			SET user_lastvisit = ' . $this->data['session_time'] . '
-			WHERE user_id = ' . $this->data['user_id'];
-		$_CLASS['core_db']->sql_query($sql);
-
+		if (!$session_id || !$id)
+		{
+			$session_id = $this->data['session_id'];
+			$id = $this->data['user_id'];
+			
+			$this->set_cookie('data', '', $this->time - 31536000);
+			$this->set_cookie('sid', '', $this->time - 31536000);
+		}
+		
+		if ($this->data['session_time'])
+		{
+			$sql = 'UPDATE ' . USERS_TABLE . '
+				SET user_lastvisit = ' . $this->data['session_time'] . '
+				WHERE user_id = ' . $id;
+			$_CLASS['core_db']->sql_query($sql);
+		}
+		
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'
-				AND session_user_id = " . $this->data['user_id'];
+			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id) . "'
+				AND session_user_id = " . $id;
 		$_CLASS['core_db']->sql_query($sql);
+
+		if ($return)
+		{
+			return;
+		}
 
 		// Reset some basic data immediately
-		$this->data['user_id'] = ANONYMOUS;
-
 		$sql = 'SELECT *
 			FROM ' . USERS_TABLE . '
 			WHERE user_id = ' . ANONYMOUS;
@@ -413,10 +444,8 @@ class session
 		$_CLASS['core_db']->sql_freeresult($result);
 
 		$this->data['session_id'] = '';
-		$this->need_url_id = $this->data['session_time'] = $this->data['session_admin'] = 0;
-		// Trigger EVENT_END_SESSION
-
-		return true;
+		$this->data['session_time'] = $this->data['session_admin'] = 0;
+		$this->need_url_id = $this->is_user = $this->is_bot 	= $this->is_admin = false;
 	}
 	
 	function auth($data)

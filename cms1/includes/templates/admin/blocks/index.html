@@ -12,12 +12,16 @@
 			<th align="center"><b>{$L_LANGUAGE}</b></th>
 		</tr>
 		 <tr>
-			<td class="row3" align="center" colspan="7">
-				[ <a href="{ $N_BLOCK_FILE }">{ $L_BLOCK_REGULAR }</a> | <a href="{ $N_BLOCK_HTML }">{ $L_BLOCK_HTML }</a> | <a href="{ $N_BLOCK_FEED }">{ $L_BLOCK_FEED }</a> ]
-			</td>
-		</tr>
+			<td class="row1" align="center" colspan="7">
+			<table border="0" class="tablebg" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
 		<tr>
-			<td class="row1" colspan="7">
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_FILE }'"><a href="{ $N_BLOCK_FILE }">{ $L_BLOCK_REGULAR }</a></td>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_FEED }'"><a href="{ $N_BLOCK_FEED }">{ $L_BLOCK_FEED }</a></td>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_HTML }'"><a href="{ $N_BLOCK_HTML }">{ $L_BLOCK_HTML }</a></td>
+		  </tr>
+  </tbody>
+</table>			
 			</td>
 		</tr>
 		{ if isset($left_admin_blocks) }

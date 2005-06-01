@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -21,11 +23,11 @@ set_magic_quotes_runtime(0);
 error_reporting(E_ALL);
 //error_reporting(0);
 
-if (ini_get('register_globals'))
+if (@ini_get('register_globals'))
 {
-	foreach ($_REQUEST as $variable => $value)
+	foreach ($_REQUEST as $var_name => $value)
 	{
-		unset($$variable);
+		unset($$var_name);
 	}
 	unset($variable, $value);
 }
@@ -55,6 +57,7 @@ require($site_file_root.'includes/session.php');
 $_CLASS['core_error_handler'] =& new core_error_handler;
 $_CLASS['core_error_handler']->start();
 //$_CLASS['core_error_handler']->stop();
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 $mod = get_variable('mod', 'REQUEST', false);
 $file = get_variable('file', 'REQUEST', 'index');
@@ -95,7 +98,7 @@ $_CLASS['core_user'] =& new user();
 $_CLASS['core_user']->startup();
 $_CLASS['core_user']->start();
 
-if (is_admin() && $_CORE_CONFIG['global']['error'])
+if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['global']['error'])
 {
 	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['global']['error'];	
 }
@@ -114,7 +117,52 @@ require_once($site_file_root.'includes/display/banners.php');
 require_once($site_file_root.'includes/display/blocks.php');
 require_once($site_file_root.'includes/display/display.php');
 
-loadclass(false, 'core_display');
+$themeprev = get_variable('prevtheme', 'REQUEST', false);
+$theme = $_CLASS['core_user']->get_data('theme');
+
+if ($themeprev && ($themeprev != $theme) && check_theme($themeprev))
+{
+	$theme = $themeprev;
+	
+	if (!get_variable('prevtemp', 'REQUEST', false))
+	{
+		$_CLASS['core_user']->set_data('theme', $theme);
+	}
+}
+elseif (!$theme || !check_theme($theme))
+{
+	$theme = ($_CLASS['core_user']->data['theme']) ? $_CLASS['core_user']->data['theme'] : $_CORE_CONFIG['global']['default_theme'];     
+
+	if (!check_theme($theme))
+	{
+		if (check_theme($_CORE_CONFIG['global']['default_theme']))
+		{
+			$theme = $_CORE_CONFIG['global']['default_theme'];
+		}
+		else
+		{
+			// We need a theme ..
+			$handle = opendir('themes');
+			
+			while ($file = readdir($handle))
+			{
+				if (!strpos('.',$file) && check_theme($file))
+				{
+					$theme = $file;
+					break;
+				}
+			}
+			closedir($handle);
+		}
+	}
+}
+
+require($site_file_root.'themes/'.$theme.'/index.php');
+
+//loadclass(false, 'core_display');
+loadclass(false, 'core_display', 'theme_display');
 loadclass(false, 'core_blocks');
+
+$_CLASS['core_display']->theme = $theme;
 
 ?>

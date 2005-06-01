@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -12,7 +14,8 @@
 //**************************************************************//
 
 /* to do
-RSS system
+RSS system 
+	Clean up, add blocks template and caching
 options interface
 add bottom messages
 */
@@ -313,7 +316,7 @@ class core_blocks
 		global $site_file_root, $_CLASS;
 		
 		loadclass($site_file_root.'includes/core_rss.php', 'core_rss');
-		$status = $_CLASS['core_rss']->get_rss($this->block['opt_rss_url'], $this->block['content']);
+		$status = $_CLASS['core_rss']->get_rss($this->block['opt_rss_url'], unserialize($this->block['content']));
 		
 		if (!$status)
 		{
@@ -323,10 +326,9 @@ class core_blocks
 		
 		if (!$_CLASS['core_rss']->rss_expire)
 		{
-			$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET content="'.$_CLASS['core_db']->sql_escape($_CLASS['core_rss']->get_rss_data_raw($this->block['opt_rss_expire'])).'" WHERE id='.$this->block['id']);
+			$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET content="'.$_CLASS['core_db']->sql_escape(serialize($_CLASS['core_rss']->get_rss_data_raw($this->block['opt_rss_expire']))).'" WHERE id='.$this->block['id']);
 			$_CLASS['core_cache']->destroy('blocks');
 		}
-
 //block_rss/file
 		
 		$this->content = '<center>';

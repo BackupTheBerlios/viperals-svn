@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -19,94 +21,8 @@ class core_display
 	var $message = '';
 	var $theme = false;
 	var $homepage = false;
-	var $_CORE_MODULEs = array();
-	
-	function core_display()
-	{
-		global $_CLASS, $site_file_root, $_CORE_CONFIG, $SID;
-		
-		//make sure to add a test for https, bla bla bla
-		$this->siteurl = 'http://'.getenv('HTTP_HOST').$_CORE_CONFIG['server']['path'];
-		$this->copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
-		
-		$this->themeprev = get_variable('prevtheme', 'REQUEST', false);
-		$this->theme = $_CLASS['core_user']->get_data('theme');
-		
-		if ($this->themeprev && ($this->themeprev != $this->theme) && $this->check_theme($this->themeprev))
-		{
-			$this->theme = $this->themeprev;
-			define('THEMEPLATE', $this->temp);
-			
-			if (!get_variable('prevtemp', 'REQUEST', false))
-			{
-				$_CLASS['core_user']->set_data('theme', $this->theme);
-			}
-		}
-		elseif ($this->theme && $this->check_theme($this->theme))
-		{
-			define('THEMEPLATE', $this->temp);
-		}
-		else
-		{
-           	$this->theme = ($_CLASS['core_user']->data['theme']) ? $_CLASS['core_user']->data['theme'] : $_CORE_CONFIG['global']['default_theme'];     
-	
-			if ($this->check_theme($this->theme))
-			{
-				define('THEMEPLATE', $this->temp);
-				
-			} elseif ($this->check_theme($_CORE_CONFIG['global']['default_theme'])) {
-				
-				$this->theme = $_CORE_CONFIG['global']['default_theme'];
-				define('THEMEPLATE', $this->temp);
-				
-			} else {
-			
-				// We need a theme ..
-				$handle = opendir('themes');
-				
-				while ($list = readdir($handle))
-				{
-					if (!ereg('[.]', $list) && $this->check_theme($list))
-					{
-						$this->theme = $list;
-						define('THEMEPLATE', $this->temp);
-						break;
-					}
-				}
-				
-				closedir($handle);
-			}
-		}
-    	
-		if (THEMEPLATE)
-		{
-			require($site_file_root.'themes/'.$this->theme.'/index.php');
-		} else {
-			require($site_file_root.'themes/'.$this->theme.'/theme.php');
-		}
-	}
-	
-	// maybe make this a function.
-	function check_theme($theme)
-	{
-		global $site_file_root;
-		
-		if (is_dir($site_file_root.'themes/'.$theme))
-		{
-			
-			if (file_exists($site_file_root.'themes/'.$theme.'/index.php'))
-			{
-				$this->temp = true;
-				return '1';
-			}
-			elseif (file_exists($site_file_root.'themes/'.$theme.'/theme.php'))
-			{
-				$this->temp = false;
-				return '2';
-			}
-		}
-		return false;
-	}
+	var $modules = array();
+	var $copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
 	
 	function add_module($module)
 	{
@@ -139,6 +55,25 @@ class core_display
 	
 	function display_head($title = false)
 	{
+		$this->display_header($title);
+	}
+	
+	function headers()
+	{
+		global $_CLASS;
+
+		header('Content-Type: text/html; charset='.$_CLASS['core_user']->lang['ENCODING']);
+		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
+		
+		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
+		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
+		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
+		header('Expires: 0');
+		header('Pragma: no-cache');
+	}
+	
+	function display_header($title = false)
+	{
 		global $_CLASS, $_CORE_CONFIG, $_CORE_MODULE;
 		
 		if ($this->displayed['header'])
@@ -158,17 +93,9 @@ class core_display
 			$_CORE_MODULE['title'] = $title;
 		}
 		
-		header('Content-Type: text/html; charset='.$_CLASS['core_user']->lang['ENCODING']);
-		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
+		$this->headers();
 		
-		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
-		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
-		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
-		header('Expires: 0');
-		header('Pragma: no-cache');
-		
-
-		if (is_user() && $_CLASS['core_user']->data['user_new_privmsg'] && $_CLASS['core_user']->optionget('popuppm'))
+		if ($_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_new_privmsg'] && $_CLASS['core_user']->optionget('popuppm'))
 		{
 			if (!$_CLASS['core_user']->data['user_last_privmsg'] || ($_CLASS['core_user']->data['user_last_privmsg'] > $_CLASS['core_user']->data['session_time']))
 			{
@@ -190,7 +117,7 @@ class core_display
 			$this->header['regular'] .= '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
 		}
 		
-		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.$this->siteurl.'backend.php?feed=rdf" />';
+		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'backend.php?feed=rdf" />';
 		
 		if ($_CORE_CONFIG['global']['block_frames'])
 		{
@@ -205,7 +132,7 @@ class core_display
 		$_CLASS['core_template']->assign(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
 			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.$_CORE_MODULE['title'],
-			'SITE_BASE'			=>	$this->siteurl,
+			'SITE_BASE'			=>	generate_base_url(),
 			'SITE_CHARSET'		=>	$_CLASS['core_user']->lang['ENCODING'],
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
 			'SITE_URL'			=>	$_CORE_CONFIG['global']['site_url'],
@@ -216,19 +143,6 @@ class core_display
 			)
 		);
 		
-		if (!THEMEPLATE)
-		{
-				
-			$_CLASS['core_template']->display('head.html');
-			themeheader();
-			
-			if ($this->message)
-			{
-				echo '<div style="text-align: center; font-size: 16px; color: #FF0000">'.$this->message.'</div>';
-			}
-			
-		}
-		
 		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_TOP);
 		
 		if ($this->homepage)
@@ -236,10 +150,7 @@ class core_display
 			$_CLASS['core_blocks']->display(BLOCK_TOP);
 		}
 		
-		if (THEMEPLATE)
-		{
-			Themeheader();
-		}
+		$this->theme_header();
 		
 		if (!empty($_CLASS['editor']) && is_object($_CLASS['editor']))
 		{
@@ -286,9 +197,9 @@ class core_display
 		
 		if ($this->displayed['header'])
 		{
-			themefooter();
+			$this->theme_footer();
+// maybe add to templete file, maybe !
 			echo '</body></html>';
-
 		}
 		
 		script_close($save);
@@ -328,13 +239,18 @@ class core_display
 		
 		$footer = $this->copyright.'<br />';
 		
-		if ($_CORE_CONFIG['global']['foot1']) {
+		if ($_CORE_CONFIG['global']['foot1'])
+		{
 			$footer .= $_CORE_CONFIG['global']['foot1'] . '<br />';
 		}
-		if ($_CORE_CONFIG['global']['foot2']) {
+		
+		if ($_CORE_CONFIG['global']['foot2'])
+		{
 			$footer .= $_CORE_CONFIG['global']['foot2']. '<br />';
 		}
-		if ($_CORE_CONFIG['global']['foot3']) {
+		
+		if ($_CORE_CONFIG['global']['foot3'])
+		{
 			$footer .= $_CORE_CONFIG['global']['foot3'] . '<br />';
 		}
 				

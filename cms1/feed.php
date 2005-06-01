@@ -3,15 +3,15 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-// Add last-modified
-
 define('VIPERAL', 'MINILOAD');
 
 //echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
@@ -24,20 +24,18 @@ header('Content-Type: text/xml');
 
 $result = $_CLASS['core_db']->sql_query('SELECT id, title, time, intro, poster_name FROM '.$prefix.'_news ORDER BY id DESC LIMIT 10');
 
-$_CLASS['core_template']->assign(array(
-		'SITE_NAME' => $_CORE_CONFIG['global']['site_name'],
-		'SITE_URL' 	=> $_CORE_CONFIG['global']['site_url'],
-		'SLOGAN' 	=> $_CORE_CONFIG['global']['slogan'],
-		'LANG'		=> 'en-us',
-		'TIME'		=> gmdate('M d Y H:i:s', time()) .' GMT'
-	));
-		
+$last_post_time = 0;
+	
 while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
-
+	if ($row['time'] > $last_post_time)
+	{
+		$last_post_time = $row['time'];
+	}
+	
 	$_CLASS['core_template']->assign_vars_array('items', array(
-		'TITLE' 		=> htmlentities($row['title'], ENT_QUOTES),
-		'LINK' 			=> getlink('News&amp;mode=view&amp;id='.$row['id'], true, true, false),
+		'TITLE' 		=> htmlspecialchars($row['title'], ENT_QUOTES),
+		'LINK' 			=> generate_link('News&amp;mode=view&amp;id='.$row['id'], true, true, false),
 //htmlentities causes problems with some chars.
 		'DESCRIPTION' 	=> htmlspecialchars(strip_tags($row['intro']), ENT_QUOTES),
 		'TIME'			=> gmdate('M d Y H:i:s', $row['time']) .' GMT',
@@ -46,6 +44,16 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 }
 
 $_CLASS['core_db']->sql_freeresult($result);
+
+$_CLASS['core_template']->assign(array(
+		'SITE_NAME' 	=> $_CORE_CONFIG['global']['site_name'],
+		'SITE_URL' 		=> $_CORE_CONFIG['global']['site_url'],
+		'SLOGAN' 		=> $_CORE_CONFIG['global']['slogan'],
+		'LANG'			=> 'en-us',
+		'LAST_MODIFIED'	=> gmdate('M d Y H:i:s', $last_post_time) .' GMT',
+		'TIME'			=> gmdate('M d Y H:i:s', time()) .' GMT'
+	));
+
 
 $feed = get_variable('feed', 'GET', false);
 
