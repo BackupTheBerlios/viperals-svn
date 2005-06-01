@@ -14,8 +14,6 @@
 //**************************************************************//
 
 /* to do
-RSS system 
-	Clean up, add blocks template and caching
 options interface
 add bottom messages
 */
@@ -30,6 +28,7 @@ class core_blocks
 	
 	function check_side($side)
 	{
+// expand this for center blocks
 		static $side_check = array();
 		
 		if (!empty($side_check[$side]))
@@ -125,6 +124,8 @@ class core_blocks
 		static $expire_updated = false;
 		global $_CLASS;
 		
+		$this->content = '';
+		
 		foreach($this->blocks_array[$position] as $this->block)
 		{
 			//auth check and language check here.
@@ -132,7 +133,6 @@ class core_blocks
 			{
 				continue;
 			}*/
-			$this->content = '';
 			
 			if ($this->block['expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['expires']))
 			{
@@ -149,12 +149,24 @@ class core_blocks
 				continue;
 			}
 			
+			if ($this->block['modules'])
+			{
+				$this->block['modules'] = unserialize($this->block['modules']);
+				
+// Homepage needs it's own value
+				if (!in_array($_CORE_MODULE['title'], $this->block['modules']))
+				{
+					continue;
+				}
+			}
+			
 			if ($this->block['options'])
 			{
-				@eval('$this->block += '.$this->block['options'].';');
+				$this->block['options'] = unserialize($this->block['options']);
 			}
 			
 			$this->display_blocks();
+			$this->content = '';
 		}
 		
 		unset($this->blocks_array[$position]);
@@ -314,36 +326,71 @@ class core_blocks
 	function block_feed()
 	{
 		global $site_file_root, $_CLASS;
-		
-		loadclass($site_file_root.'includes/core_rss.php', 'core_rss');
-		$status = $_CLASS['core_rss']->get_rss($this->block['opt_rss_url'], unserialize($this->block['content']));
-		
-		if (!$status)
+// think about disabling the block automatically if there's url problems
+// update core_rss file
+
+		if ($this->block['content'] && $this->block['options']['rss_expires'] > time())
 		{
-//admin only message here
+			$this->content = $this->block['content'];
+			
+			if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
+			{
+				$this->block_side();
+			} else {
+				$this->block_center();
+			}
+			
 			return;
 		}
 		
-		if (!$_CLASS['core_rss']->rss_expire)
+		if ($this->block['file'] && file_exists($site_file_root.'blocks/rss/'.$this->block['file']))
 		{
-			$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET content="'.$_CLASS['core_db']->sql_escape(serialize($_CLASS['core_rss']->get_rss_data_raw($this->block['opt_rss_expire']))).'" WHERE id='.$this->block['id']);
+			include($site_file_root.'blocks/rss/'.$this->block['file']);
+			
+			if (!$this->content)
+			{
+				return;
+			}
+		}
+		else
+		{
+			loadclass($site_file_root.'includes/core_rss.php', 'core_rss');
+			$_CLASS['core_rss']->item_tags = array('title', 'link');
+				
+			if (!$_CLASS['core_rss']->get_rss($this->block['options']['rss_url']))
+			{
+	//admin only message here
+				return;
+			}
+			
+			$this->content = '<center>';
+			
+			while ($data = $_CLASS['core_rss']->get_rss_data())
+			{
+				$this->content .= '<strong><big>&middot;</big></strong> <a href="'.$data['link'].'" target="new">'.$data['title'].'</a><br />';
+			}
+			
+			if (!empty($_CLASS['core_rss']->rss_info['link']))
+			{
+				$this->content .= '<br /><a href="'.$_CLASS['core_rss']->rss_info['link'].'" target="_blank"><b>Read More</b></a>';
+			}
+			
+			$this->content .= '</center>';
+		}
+		
+		
+		if ($this->block['options']['rss_rate'])
+		{
+			$this->block['options']['rss_expires'] = time() + $this->block['options']['rss_rate'];
+			
+			$sql = 'UPDATE '.BLOCKS_TABLE."
+				SET content='".$_CLASS['core_db']->sql_escape($this->content)."'
+				, options='".$_CLASS['core_db']->sql_escape(serialize($this->block['options']))."' 
+					WHERE id=".$this->block['id'];
+				
+			$_CLASS['core_db']->sql_query($sql);
 			$_CLASS['core_cache']->destroy('blocks');
 		}
-//block_rss/file
-		
-		$this->content = '<center>';
-		
-		while ($data = $_CLASS['core_rss']->get_rss_data())
-		{
-			$this->content .= '<strong><big>&middot;</big></strong> <a href="'.$data['link'].'" target="new">'.$data['title'].'</a><br />';
-		}
-		
-		if (!empty($_CLASS['core_rss']->rss_info['link']))
-		{
-			$this->content .= '<br /><a href="'.$_CLASS['core_rss']->rss_info['link'].'" target="_blank"><b>Read More</b></a>';
-		}
-		
-		$this->content .= '</center>';
 		
 		$this->block_side();
 	}
