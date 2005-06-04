@@ -11,7 +11,7 @@ var text_name = 'message';
 
 // Define the bbCode tags
 bbcode = new Array();
-bbtags = new Array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[quote]','[/quote]','[code]','[/code]','[list]','[/list]','[list=]','[/list]','[img]','[/img]','[url]','[/url]');
+bbtags = new Array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[quote]','[/quote]','[code]','[/code]','[list]','[/list]','[list=]','[/list]','[img]','[/img]','[url]','[/url]','[php]','[/php]');
 imageTag = false;
 
 // Helpline messages
@@ -28,7 +28,9 @@ a_help = "{$L_BBCODE_A_HELP}";
 s_help = "{$L_BBCODE_S_HELP}";
 f_help = "{$L_BBCODE_F_HELP}";
 e_help = "{$L_BBCODE_E_HELP}";
-{ literal }
+z_help = "{$L_BBCODE_Z_HELP}";
+
+{literal}
 function checkForm()
 {
 	if (document.post.message.value.length < 2) {{/literal}
@@ -42,12 +44,14 @@ function checkForm()
 
 //-->
 </script>
-<script language="javascript" type="text/javascript" src="includes/javascript/bbcode.js"></script>
+<script language="javascript" type="text/javascript" src="java/editor.js"></script>
+
 { /literal }
 { if $S_FORUM_RULES }
 <div class="forumrules">
 	{ if $U_FORUM_RULES }
-		<a href="{$U_FORUM_RULES}">{$L_FORUM_RULES}</a>
+		<h3 style="color:red">{ $L_FORUM_RULES }</h3><br />
+		<a href="{ $U_FORUM_RULES }"><b>{ $L_FORUM_RULES_LINK }</b></a>
 	{ else }
 		<h3 style="color:red">{$L_FORUM_RULES}</h3><br />
 		{$FORUM_RULES}
@@ -57,7 +61,7 @@ function checkForm()
 <br clear="all" />
 { /if }
 
-	<form action="{$S_POST_ACTION}" method="post" name="post"{$S_FORM_ENCTYPE}>
+	<form action="{$S_POST_ACTION}" method="post" name="post" {$S_FORM_ENCTYPE}>
 
 { if $S_DRAFT_LOADED }
 	<table class="tablebg" width="100%" cellspacing="1">
@@ -103,9 +107,61 @@ function checkForm()
 
 	<br clear="all" />
 { /if }
+<table class="tablebg" cellspacing="1">
+	<tr>
+		<th colspan="3"><b>{$L_PM_TO}</b></th>
+	</tr><tr class="row1">
+{ if $S_ALLOW_MASS_PM }
+<td valign="top">
+	<table class="tablebg" cellspacing="0">
+		<tr>
+			<td class="row1"><b class="genmed">{ $L_USERNAMES }:</b></td>
+		</tr>
+		<tr>
+			<td class="row2">
+				<textarea name="username_list" rows="3" cols="22"></textarea><br />
+				<ul class="nav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
+					<li>&#187; <a href="{ $U_SEARCH_USER }" onclick="window.open('{ $U_SEARCH_USER }', '_phpbbsearch', 'HEIGHT=500,resizable=yes,scrollbars=yes,WIDTH=740');return false">{ $L_FIND_USERNAME }</a></li>
+				</ul>
+			</td>
+		</tr></table>
+	</td>
+{ else }
+<td valign="top">
+	<table class="tablebg" cellspacing="0">
+		<tr class="row1">
+			<td ><b class="genmed">{ $L_USERNAME}:</b></td>
+		</tr>
+		<tr>
+			<td class="row2">
+			<input class="post" type="text" name="username" size="20" maxlength="40" value="" />&nbsp;<input class="post" type="submit" name="add_to" value="{$L_ADD}" />
+			</td>
+		</tr>
+	</table>
+</td>
+{ /if }
 
+{ if $S_GROUP_OPTIONS }
+<td valign="top">
+	<table class="tablebg" cellspacing="0">
+		<tr>
+			<td class="row1"><b class="genmed">{$L_USERGROUPS}:</b></td>
+		</tr>
+		<tr>
+			<td class="row2"><select name="group_list[]" multiple="true" size="5" style="width:150px">{$S_GROUP_OPTIONS}</select></td>
 
-{ if $S_POST_REVIEW }{ include file='modules/Control_Panel/ucp_posting_review.html' }{ /if }
+		</tr></table>
+	</td>
+{ /if }
+	</tr>
+			<tr>
+			<td colspan="3" align="left" class="row1">
+			<div style="float:left">&nbsp;<input class="post" type="submit" name="add_bcc" value="{$L_ADD_BCC}" />&nbsp;</div><div style="float:left">&nbsp;<input class="post" type="submit" name="add_to" value="{$L_ADD_TO}" />&nbsp;</div>
+		</td>
+</table>
+
+<br clear="all" />
+
 { if $S_DISPLAY_PREVIEW }{ include file='modules/Control_Panel/ucp_posting_preview.html' }{ /if }
 
 <table class="tablebg" width="100%" cellspacing="1">
@@ -139,7 +195,7 @@ function checkForm()
 	{ /if }
 
 		<tr>
-			<td class="row1"><b class="genmed">{$L_TO}:</b></td>
+			<td class="row1" ><b class="genmed">{$L_TO}:</b></td>
 			<td class="row2">
 			{section name=to_recipientloop loop=$to_recipient}
 				<span class="genmed">
@@ -169,15 +225,15 @@ function checkForm()
 	<tr>
 		<td class="row1" valign="top"><b class="genmed">{$L_MESSAGE_BODY}:</b><br /><span class="gensmall">{$L_MESSAGE_BODY_EXPLAIN}</span><br /><br /><table width="80%" cellspacing="5" cellpadding="0" border="0" align="center">
 			<tr>
-				<td class="gensmall" align="center"><b>{$L_EMOTICONS}</b></td>
+				<td class="gensmall" align="center"><b>{$L_SMILIES}</b></td>
 			</tr>
 			<tr>
-				<td align="center">{section name=emoticonloop loop=$emoticon}<a href="javascript:emoticon('{$emoticon[emoticonloop].SMILEY_CODE}')"><img src="{$emoticon[emoticonloop].SMILEY_IMG}" width="{$emoticon[emoticonloop].SMILEY_WIDTH}" height="{$emoticon[emoticonloop].SMILEY_HEIGHT}" border="0" alt="{$emoticon[emoticonloop].SMILEY_DESC}" title="{$emoticon[emoticonloop].SMILEY_DESC}" onclick="emoticon('{$emoticon[emoticonloop].SMILEY_CODE}');return false" hspace="2" vspace="2" /></a> { /section }</td>
+				<td align="center">{section name=smiley_loop loop=$smiley}<a href="javascript:smiley('{ $smiley[smiley_loop].SMILEY_CODE }')"><img src="{ $smiley[smiley_loop].SMILEY_IMG }" width="{ $smiley[smiley_loop].SMILEY_WIDTH }" height="{ $smiley[smiley_loop].SMILEY_HEIGHT }" border="0" alt="{ $smiley[smiley_loop].SMILEY_DESC }" title="{ $smiley[smiley_loop].SMILEY_DESC }" onclick="smiley('{ $smiley[smiley_loop].SMILEY_CODE }');return false" hspace="2" vspace="2" /></a> { /section }</td>
 			</tr>
 
-			{ if $S_SHOW_EMOTICON_LINK }
+			{ if $S_SHOW_SMILEY_LINK }
 				<tr>
-					<td align="center"><a class="nav" href="{$U_MORE_SMILIES}" onclick="window.open('{$U_MORE_SMILIES}', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{$L_MORE_EMOTICONS}</a></td>
+					<td align="center"><a class="nav" href="{$U_MORE_SMILIES}" onclick="window.open('{$U_MORE_SMILIES}', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{$L_MORE_SMILIES}</a></td>
 				</tr>
 			{ /if }
 
@@ -189,6 +245,7 @@ function checkForm()
 				<td><input type="button" class="btnbbcode" accesskey="u" name="addbbcode4" value=" u " style="text-decoration: underline; width: 30px" onclick="bbstyle(4)" onmouseover="helpline('u')" /></td>
 				<td><input type="button" class="btnbbcode" accesskey="q" name="addbbcode6" value="Quote" style="width: 50px" onclick="bbstyle(6)" onmouseover="helpline('q')" /></td>
 				<td><input type="button" class="btnbbcode" accesskey="c" name="addbbcode8" value="Code" style="width: 40px" onclick="bbstyle(8)" onmouseover="helpline('c')" /></td>
+				<td><input type="button" class="btnbbcode" accesskey="z" name="addbbcode18" value="php" style="width: 40px" onclick="bbstyle(18)" onmouseover="helpline('z')" /></td>
 				<td><input type="button" class="btnbbcode" accesskey="l" name="addbbcode10" value="List" style="width: 40px" onclick="bbstyle(10)" onmouseover="helpline('l')" /></td>
 				<td><input type="button" class="btnbbcode" accesskey="o" name="addbbcode12" value="List=" style="width: 40px" onclick="bbstyle(12)" onmouseover="helpline('o')" /></td>
 				<td><input type="button" class="btnbbcode" accesskey="p" name="addbbcode14" value="Img" style="width: 40px"  onclick="bbstyle(14)" onmouseover="helpline('p')" /></td>
@@ -209,19 +266,12 @@ function checkForm()
 				</table></td>
 			</tr>
 			<tr>
-				<td colspan="9" width="450"><input type="text" name="helpbox" size="45" maxlength="100" class="helpline" value="{$L_STYLES_TIP}" /></td>
+				<td colspan="9" width="450"><input type="text" name="helpbox" style="width:100%" maxlength="100" class="helpline" value="{$L_STYLES_TIP}" /></td>
 				<td class="genmed" align="center">{$L_FONT_COLOR}</td>
 			</tr>
 			<tr>
 				<td colspan="9"><textarea name="message" id="message" rows="15" cols="76" tabindex="3" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{$MESSAGE}</textarea></td>
-				
-				<script type="text/javascript">
-		var config = new HTMLArea.Config();
-		config.width = '580';
-		config.height = '300';
-		config.toolbar = [[ "fontname", "space","fontsize", "space","bold", "italic", "underline","strikethrough", "separator","justifyleft", "justifycenter", "justifyright", "separator" ],[ "outdent", "indent", "separator","forecolor", "hilitecolor", "textindicator", "separator","inserthorizontalrule", "createlink", "insertimage", "htmlmode","separator"] ];
-		HTMLArea.replace("message", config)</script>
-		
+					
 				<td width="100%" align="center" valign="top"><table cellspacing="0" cellpadding="0" border="0">
 					<tr>
 						<td bgcolor="black"><script language="javascript" type="text/javascript"><!--
@@ -318,11 +368,5 @@ function checkForm()
 	</tr>
 </table>
 
-{ if $S_DISPLAY_REVIEW }<br clear="all" />{ include file='modules/Control_Panel/ucp_posting_topic_review.html' }{ /if }
-
-{ if $S_PRIVMSGS }
-	</form>
-
-	{ include file='modules/Control_Panel/ucp_footer.html' }
-
-{ /if }
+</form>
+{ include file='modules/Control_Panel/ucp_footer.html' }

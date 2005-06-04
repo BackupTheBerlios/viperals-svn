@@ -21,6 +21,16 @@ if (extension_loaded('zlib'))
 	ob_start('ob_gzhandler');
 }
 
+// what's an empty sting '' or ' ' ?
+if ((bool) ini_get('register_globals'))
+{
+	foreach ($_REQUEST as $var_name => $value)
+	{
+		unset($$var_name);
+	}
+	unset($variable, $value);
+}
+
 //echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
 $site_file_root = 'C:/apachefriends/xampp/cms/';
 $lang = 'en';
@@ -51,7 +61,7 @@ require($site_file_root.'includes/smarty/Smarty.class.php');
 
 $_CLASS['template'] =& new Smarty();
 
-header(empty($error[$_GET['error']]['lang']) ? $error['404']['lang'] : $error[$_GET['error']]['lang']);
+header(empty($error[$_GET['error']]['header']) ? $error['404']['header'] : $error[$_GET['error']]['header']);
 
 $_CLASS['template']->assign('MESSAGE_TEXT',  (empty($error[$_GET['error']]['lang']) ? $error['404']['lang'] : $error[$_GET['error']]['lang']));
 		

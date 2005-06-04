@@ -29,8 +29,7 @@
 
 function mcp_topic_view($id, $mode, $action, $url)
 {
-	global $phpEx, $config, $site_file_root;
-	global $_CLASS, $db;
+	global $config, $site_file_root, $_CLASS;
 
 	$_CLASS['core_template']->assign(array(
 		'L_SPLIT_TOPIC'				=> $_CLASS['core_user']->lang['SPLIT_TOPIC'],
@@ -115,7 +114,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 	}
 
 	// Jumpbox, sort selects and that kind of things
-	make_jumpbox(getlink($url . '&amp;mode=forum_view', $topic_info['forum_id'], false, 'm_'));
+	make_jumpbox($url . '&amp;mode=forum_view', $topic_info['forum_id'], false, 'm_');
 	$where_sql = ($action == 'reports') ? 'WHERE post_reported = 1 AND ' : 'WHERE';
 	mcp_sorting('viewtopic', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $topic_info['forum_id'], $topic_id, $where_sql);
 
@@ -134,11 +133,11 @@ function mcp_topic_view($id, $mode, $action, $url)
 			p.topic_id = {$topic_id}
 			AND p.poster_id = u.user_id
 		ORDER BY $sort_order_sql";
-	$result = $db->sql_query_limit($sql, $posts_per_page, $start);
+	$result = $_CLASS['core_db']->sql_query_limit($sql, $posts_per_page, $start);
 
 	$rowset = array();
 	$bbcode_bitfield = 0;
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$rowset[] = $row;
 		$bbcode_bitfield |= $row['bbcode_bitfield'];
@@ -146,7 +145,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 
 	if ($bbcode_bitfield)
 	{
-		require_once($site_file_root.'includes/forums/bbcode.' . $phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.php');
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
 
@@ -195,8 +194,8 @@ function mcp_topic_view($id, $mode, $action, $url)
 			'S_POST_REPORTED'	=> ($row['post_reported']) ? true : false,
 			'S_POST_UNAPPROVED'	=> ($row['post_approved']) ? false : true,
 						
-			'U_POST_DETAILS'	=> getlink("$url&amp;p={$row['post_id']}&amp;mode=post_details"),
-			'U_MCP_APPROVE'		=> getlink('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false))
+			'U_POST_DETAILS'	=> generate_link("$url&amp;p={$row['post_id']}&amp;mode=post_details"),
+			'U_MCP_APPROVE'		=> generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id']))
 		);
 
 		unset($rowset[$i]);
@@ -207,7 +206,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 
 	if ($_CLASS['auth']->acl_get('m_split', $topic_info['forum_id']))
 	{
-		require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
+		require_once($site_file_root.'includes/forums/functions_posting.php');
 		$s_topic_icons = posting_gen_topic_icons('', $icon_id);
 
 		// Has the user selected a topic for merge?
@@ -234,10 +233,10 @@ function mcp_topic_view($id, $mode, $action, $url)
 
 	$_CLASS['core_template']->assign(array(
 		'TOPIC_TITLE'		=> $topic_info['topic_title'],
-		'U_VIEWTOPIC'		=> getlink('Forums&amp;file=viewtopic&amp;f=' . $topic_info['forum_id'] . '&amp;t=' . $topic_info['topic_id']),
+		'U_VIEWTOPIC'		=> generate_link('Forums&amp;file=viewtopic&amp;f=' . $topic_info['forum_id'] . '&amp;t=' . $topic_info['topic_id']),
 
 		'TO_TOPIC_ID'		=> $to_topic_id,
-		'TO_TOPIC_INFO'		=> ($to_topic_id) ? sprintf($_CLASS['core_user']->lang['YOU_SELECTED_TOPIC'], $to_topic_id, '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_topic_info['forum_id'] . '&amp;t=' . $to_topic_id) . '" target="_new">' . $to_topic_info['topic_title'] . '</a>') : '',
+		'TO_TOPIC_INFO'		=> ($to_topic_id) ? sprintf($_CLASS['core_user']->lang['YOU_SELECTED_TOPIC'], $to_topic_id, '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $to_topic_info['forum_id'] . '&amp;t=' . $to_topic_id) . '" target="_new">' . $to_topic_info['topic_title'] . '</a>') : '',
 
 		'SPLIT_SUBJECT'		=> $subject,
 		'POSTS_PER_PAGE'	=> $posts_per_page,
@@ -246,7 +245,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 		'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED', false, true),
 		'UNAPPROVED_IMG'	=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED', false, true),
 
-		'S_MCP_ACTION'		=> getlink("$url&amp;mode=$mode&amp;action=$action&amp;start=$start", false, false),
+		'S_MCP_ACTION'		=> generate_link("$url&amp;mode=$mode&amp;action=$action&amp;start=$start"),
 		'S_FORUM_SELECT'	=> '<select name="to_forum_id">' . (($to_forum_id) ? make_forum_select($to_forum_id) : make_forum_select($topic_info['forum_id'])) . '</select>',
 		'S_CAN_SPLIT'		=> ($_CLASS['auth']->acl_get('m_split', $topic_info['forum_id']) && $action != 'merge') ? true : false,
 		'S_CAN_MERGE'		=> ($_CLASS['auth']->acl_get('m_merge', $topic_info['forum_id']) && $action != 'split') ? true : false,
@@ -258,8 +257,8 @@ function mcp_topic_view($id, $mode, $action, $url)
 		'S_SHOW_TOPIC_ICONS'=> $s_topic_icons,
 		'S_TOPIC_ICON'		=> $icon_id,
 
-		'RETURN_TOPIC'		=> sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f={$topic_info['forum_id']}&amp;t={$topic_info['topic_id']}&amp;start=$start.").'">', '</a>'),
-		'RETURN_FORUM'		=> sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink("Forums&amp;file=viewforum&amp;f={$topic_info['forum_id']}&amp;start=$start").'">', '</a>'),
+		'RETURN_TOPIC'		=> sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f={$topic_info['forum_id']}&amp;t={$topic_info['topic_id']}&amp;start=$start.").'">', '</a>'),
+		'RETURN_FORUM'		=> sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link("Forums&amp;file=viewforum&amp;f={$topic_info['forum_id']}&amp;start=$start").'">', '</a>'),
 
 		'PAGE_NUMBER'		=> on_page($total, $posts_per_page, $start),
 		'PAGINATION'		=> (!$posts_per_page) ? '' : generate_pagination('Forums&amp;file=mcp&amp;t=' . $topic_info['topic_id'] . "&amp;mode=$mode&amp;action=$action&amp;to_topic_id=$to_topic_id&amp;posts_per_page=$posts_per_page&amp;st=$sort_days&amp;sk=$sort_key&amp;sd=$sort_dir", $total, $posts_per_page, $start),
@@ -269,7 +268,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 
 function split_topic($mode, $topic_id, $to_forum_id, $subject)
 {
-	global $db, $_CLASS ;
+	global $_CLASS ;
 
 	$post_id_list   = request_var('post_id_list', array(0));
 	$start			= request_var('start', 0);
@@ -365,11 +364,11 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 						$limit_time_sql
 					ORDER BY $sort_order_sql";
 			}
-			$result = $db->sql_query_limit($sql, 0, $start);
+			$result = $_CLASS['core_db']->sql_query_limit($sql, 0, $start);
 
 			$store = false;
 			$post_id_list = array();
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				// If splitted from selected post (split_beyond), we split the unapproved items too.
 				if (!$row['post_approved'] && !$_CLASS['auth']->acl_get('m_approve', $row['forum_id']))
@@ -404,29 +403,29 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 			'topic_approved'=> 1
 		);
 	
-		$sql = 'INSERT INTO ' . TOPICS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary);
-		$db->sql_query($sql);
+		$sql = 'INSERT INTO ' . TOPICS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
+		$_CLASS['core_db']->sql_query($sql);
 
-		$to_topic_id = $db->sql_nextid();
+		$to_topic_id = $_CLASS['core_db']->sql_nextid();
 		move_posts($post_id_list, $to_topic_id);
 
 		// Change topic title of first post
 		$sql = 'UPDATE ' . POSTS_TABLE . " 
-			SET post_subject = '" . $db->sql_escape($subject) . "'
+			SET post_subject = '" . $_CLASS['core_db']->sql_escape($subject) . "'
 			WHERE post_id = {$post_id_list[0]}";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 		
 		$success_msg = 'TOPIC_SPLIT_SUCCESS';
 
 		// Link back to both topics
-		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $post_info['forum_id'] . '&amp;t=' . $post_info['topic_id']) . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
+		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $post_info['forum_id'] . '&amp;t=' . $post_info['topic_id']) . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
 	}
 	else
 	{
 		confirm_box(false, ($mode == 'split_all') ? 'SPLIT_TOPIC_ALL' : 'SPLIT_TOPIC_BEYOND', $s_hidden_fields);
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -439,7 +438,7 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 	}
 	else
 	{
-		$_CLASS['core_display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
+		$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
 		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }
@@ -447,7 +446,7 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 // Merge selected posts into selected topic
 function merge_posts($topic_id, $to_topic_id)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	if (!$to_topic_id)
 	{
@@ -508,18 +507,18 @@ function merge_posts($topic_id, $to_topic_id)
 
 		if (sizeof($topic_data))
 		{
-			$return_link .= sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $forum_id . '&amp;t=' . $topic_id) . '">', '</a>');
+			$return_link .= sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $forum_id . '&amp;t=' . $topic_id) . '">', '</a>');
 		}
 
 		// Link to the new topic
-		$return_link .= (($return_link) ? '<br /><br />' : '') . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.getlink('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
+		$return_link .= (($return_link) ? '<br /><br />' : '') . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
 	}
 	else
 	{
 		confirm_box(false, 'MERGE_POSTS', $s_hidden_fields);
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -532,7 +531,7 @@ function merge_posts($topic_id, $to_topic_id)
 	}
 	else
 	{
-		$_CLASS['core_display']->meta_refresh(3, getlink("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
+		$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;f=$to_forum_id&amp;t=$to_topic_id"));
 		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}
 }

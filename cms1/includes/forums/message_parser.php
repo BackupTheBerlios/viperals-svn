@@ -42,7 +42,7 @@ if (!function_exists('stripos'))
 	}
 }
 
-require_once($site_file_root.'includes/forums/bbcode.' . $phpEx);
+require_once($site_file_root.'includes/forums/bbcode.php');
 
 // BBCODE_FIRSTPASS
 //
@@ -113,9 +113,9 @@ class bbcode_firstpass extends bbcode
 			'i'			=>	array('bbcode_id' => 2, 'regexp' => array('#\[i\](.*?)\[/i\]#ise' => "\$this->bbcode_italic('\$1')")),
 			'url'		=>	array('bbcode_id' => 3, 'regexp' => array('#\[url(=(.*))?\](.*)\[/url\]#ie' => "\$this->validate_url('\$2', '\$3')")),
 			'img'		=>	array('bbcode_id' => 4, 'regexp' => array('#\[img\](https?://)([a-z0-9\-\.,\?!%\*_:;~\\&$@/=\+]+)\[/img\]#ie' => "\$this->bbcode_img('\$1\$2')")),
-			'size'		=>	array('bbcode_id' => 5, 'regexp' => array('#\[size=([\-\+]?[1-2]?[0-9])\](.*?)\[/size\]#is' => "\$this->bbcode_size('\$1', '\$2')")),
-			'color'		=>	array('bbcode_id' => 6, 'regexp' => array('!\[color=(#[0-9A-F]{6}|[a-z\-]+)\](.*?)\[/color\]!is' => "\$this->bbcode_color('\$1', '\$2')")),
-			'u'			=>	array('bbcode_id' => 7, 'regexp' => array('#\[u\](.*?)\[/u\]#is' => "\$this->bbcode_underline('\$1')")),
+			'size'		=>	array('bbcode_id' => 5, 'regexp' => array('#\[size=([\-\+]?[1-2]?[0-9])\](.*?)\[/size\]#ise' => "\$this->bbcode_size('\$1', '\$2')")),
+			'color'		=>	array('bbcode_id' => 6, 'regexp' => array('!\[color=(#[0-9A-F]{6}|[a-z\-]+)\](.*?)\[/color\]!ise' => "\$this->bbcode_color('\$1', '\$2')")),
+			'u'			=>	array('bbcode_id' => 7, 'regexp' => array('#\[u\](.*?)\[/u\]#ise' => "\$this->bbcode_underline('\$1')")),
 			'list'		=>	array('bbcode_id' => 9, 'regexp' => array('#\[list(=[a-z|0-9|(?:disc|circle|square))]+)?\].*\[/list\]#ise' => "\$this->bbcode_parse_list('\$0')")),
 			'email'		=>	array('bbcode_id' => 10, 'regexp' => array('#\[email=?(.*?)?\](.*?)\[/email\]#ise' => "\$this->validate_email('\$1', '\$2')")),
 			'flash'		=>	array('bbcode_id' => 11, 'regexp' => array('#\[flash=([0-9]+),([0-9]+)\](.*?)\[/flash\]#ie' => "\$this->bbcode_flash('\$1', '\$2', '\$3')"))
@@ -125,14 +125,14 @@ class bbcode_firstpass extends bbcode
 		
 		if (!is_array($rowset))
 		{
-			global $db;
+			global $_CLASS;
 			$rowset = array();
 
 			$sql = 'SELECT bbcode_id, bbcode_tag, first_pass_match, first_pass_replace
 				FROM ' . BBCODES_TABLE;
 
-			$result = $db->sql_query($sql);
-			while ($row = $db->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->sql_query($sql);
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$rowset[] = $row;
 			}
@@ -168,7 +168,7 @@ class bbcode_firstpass extends bbcode
 			return '';
 		}
 		
-		return '[size' . $stx . ':' . $this->bbcode_uid . ']' . $in . '[/size:' . $this->bbcode_uid . ']';
+		return '[size=' . $stx . ':' . $this->bbcode_uid . ']' . $in . '[/size:' . $this->bbcode_uid . ']';
 	}
 
 	function bbcode_color($stx, $in)
@@ -711,7 +711,7 @@ class parse_message extends bbcode_firstpass
 	// Parse Message : public
 	function parse($allow_html, $allow_bbcode, $allow_magic_url, $allow_smilies, $allow_img_bbcode = true, $allow_flash_bbcode = true, $allow_quote_bbcode = true, $update_this_message = true, $mode = 'post')
 	{
-		global $config, $db, $_CLASS;
+		global $config, $_CLASS;
 		
 		$mode = ($mode != 'post') ? 'sig' : 'post';
 
@@ -932,9 +932,8 @@ class parse_message extends bbcode_firstpass
 	// Parse Smilies
 	function smilies($max_smilies = 0)
 	{
-		global $db, $_CLASS;
-		static $match;
-		static $replace;
+		global $_CLASS;
+		static $match, $replace;
 		
 		// NOTE: There is a memory leak in this block somewhere :\
 		// See if the static arrays have already been filled on an earlier invocation
@@ -959,9 +958,9 @@ class parse_message extends bbcode_firstpass
 						ORDER BY LENGTH(code) DESC';
 					break;
 			}
-			$result = $db->sql_query($sql, 600);
+			$result = $_CLASS['core_db']->sql_query($sql, 600);
 
-			if ($row = $db->sql_fetchrow($result))
+			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$match = $replace = array();
 
@@ -971,13 +970,13 @@ class parse_message extends bbcode_firstpass
 					$match[] = '#(?<=^|[\n ]|\.)' . preg_quote($row['code'], '#') . '#';
 					$replace[] = '<!-- s' . $row['code'] . ' --><img src="{SMILIES_PATH}/' . $row['smiley_url'] . '" border="0" alt="' . $row['emotion'] . '" title="' . $row['emotion'] . '" /><!-- s' . $row['code'] . ' -->';
 				}
-				while ($row = $db->sql_fetchrow($result));
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 			}
 			else
 			{
 				$match = $replace = array();
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 		}
 			
 		if (sizeof($match))
@@ -1307,7 +1306,7 @@ class fulltext_search
 
 	function add($mode, $post_id, &$message, &$subject)
 	{
-		global $config, $db;
+		global $config, $_CLASS;
 
 		// Is the fulltext indexer disabled? If yes then we need not 
 		// carry on ... it's okay ... I know when I'm not wanted boo hoo
@@ -1332,15 +1331,15 @@ class fulltext_search
 				FROM ' . SEARCH_WORD_TABLE . ' w, ' . SEARCH_MATCH_TABLE . " m
 				WHERE m.post_id = $post_id 
 					AND w.word_id = m.word_id";
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
 			$cur_words = array();
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$which = ($row['title_match']) ? 'title' : 'post';
 				$cur_words[$which][$row['word_text']] = $row['word_id'];
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			$words['add']['post'] = array_diff($split_text, array_keys($cur_words['post']));
 			$words['add']['title'] = array_diff($split_title, array_keys($cur_words['title']));
@@ -1369,14 +1368,14 @@ class fulltext_search
 			$sql = 'SELECT word_id, word_text
 				FROM ' . SEARCH_WORD_TABLE . '
 				WHERE word_text IN (' . implode(', ', preg_replace('#^(.*)$#', '\'$1\'', $unique_add_words)) . ")";
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
 			$word_ids = array();
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$word_ids[$row['word_text']] = $row['word_id'];
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			$new_words = array_diff($unique_add_words, array_keys($word_ids));
 			unset($unique_add_words);
@@ -1388,7 +1387,7 @@ class fulltext_search
 					case 'mysql':
 						$sql = 'INSERT INTO ' . SEARCH_WORD_TABLE . ' (word_text)
 							VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\'$1\')',  $new_words));
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 						break;
 
 					case 'mysql4':
@@ -1396,7 +1395,7 @@ class fulltext_search
 					case 'mssql':
 					case 'sqlite':
 						$sql = 'INSERT INTO ' . SEARCH_WORD_TABLE . ' (word_text) ' . implode(' UNION ALL ', preg_replace('#^(.*)$#', "SELECT '\$1'",  $new_words));
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 						break;
 
 					default:
@@ -1404,7 +1403,7 @@ class fulltext_search
 						{
 							$sql = 'INSERT INTO ' . SEARCH_WORD_TABLE . " (word_text)
 								VALUES ('$word')";
-							$db->sql_query($sql);
+							$_CLASS['core_db']->sql_query($sql);
 						}
 						break;
 				}
@@ -1428,7 +1427,7 @@ class fulltext_search
 					WHERE word_id IN (' . implode(', ', $sql_in) . ') 
 						AND post_id = ' . intval($post_id) . " 
 						AND title_match = $title_match";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 				unset($sql_in);
 			}
 		}
@@ -1443,7 +1442,7 @@ class fulltext_search
 					SELECT $post_id, word_id, $title_match 
 					FROM " . SEARCH_WORD_TABLE . ' 
 					WHERE word_text IN (' . implode(', ', preg_replace('#^(.*)$#', '\'$1\'', $word_ary)) . ')';
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 
@@ -1460,7 +1459,7 @@ class fulltext_search
 	// words no longer referenced in the match table, etc.
 	function search_tidy()
 	{
-		global $db, $config;
+		global $_CLASS, $config;
 
 		// Is the fulltext indexer disabled? If yes then we need not 
 		// carry on ... it's okay ... I know when I'm not wanted boo hoo
@@ -1472,10 +1471,10 @@ class fulltext_search
 		// Remove common (> 60% of posts ) words
 		$sql = 'SELECT SUM(forum_posts) AS total_posts 
 			FROM ' . FORUMS_TABLE;
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		$row = $db->sql_fetchrow($result);
-		$db->sql_freeresult($result);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		if ($row['total_posts'] >= 100)
 		{
@@ -1483,30 +1482,30 @@ class fulltext_search
 				FROM ' . SEARCH_MATCH_TABLE . '
 				GROUP BY word_id
 				HAVING COUNT(word_id) > ' . floor($row['total_posts'] * 0.6);
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			if ($row = $db->sql_fetchrow($result))
+			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$sql_in = array();
 				do
 				{
 					$sql_in[] = $row['word_id'];
 				}
-				while ($row = $db->sql_fetchrow($result));
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 				$sql_in = implode(', ', $sql_in);
 
 				$sql = 'UPDATE ' . SEARCH_WORD_TABLE . "
 					SET word_common = 1
 					WHERE word_id IN ($sql_in)";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 
 				$sql = 'DELETE FROM ' . SEARCH_MATCH_TABLE . "
 					WHERE word_id IN ($sql_in)";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 				unset($sql_in);
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 		}
 
 		// Remove words with no matches ... this is a potentially nasty query
@@ -1515,23 +1514,23 @@ class fulltext_search
 			LEFT JOIN ' . SEARCH_MATCH_TABLE . ' m ON w.word_id = m.word_id
 				WHERE w.word_common = 0 AND m.word_id IS NULL
 			GROUP BY m.word_id';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$sql_in = array();
 			do
 			{
 				$sql_in[] = $row['word_id'];
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 			$sql = 'DELETE FROM ' . SEARCH_WORD_TABLE . '
 				WHERE word_id IN (' . implode(', ', $sql_in) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 			unset($sql_in);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		set_config('search_last_gc', time());
 	}

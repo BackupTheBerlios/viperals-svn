@@ -5,7 +5,7 @@
 //
 // FILENAME  : ucp.php [ English ]
 // STARTED   : Sat Dec 16, 2000
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : Â© 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 

@@ -27,8 +27,8 @@ if (!defined('VIPERAL')) {
     header('location: ../../');
     die();
 }
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 

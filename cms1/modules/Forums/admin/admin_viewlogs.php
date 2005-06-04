@@ -23,7 +23,7 @@ $forum_id	= request_var('f', 0);
 $start		= request_var('start', 0);
 $deletemark = (isset($_POST['delmarked'])) ? true : false;
 $deleteall	= (isset($_POST['delall'])) ? true : false;
-$marked		= request_var('mark', 0);
+$marked		= request_var('mark', array('' => ''));
 
 // Sort keys
 $sort_days	= request_var('st', 0);
@@ -33,10 +33,7 @@ $sort_dir	= request_var('sd', 'd');
 // Define some vars depending on which logs we're looking at
 $log_type = ($mode == 'admin') ? LOG_ADMIN : (($mode == 'mod') ? LOG_MOD : LOG_CRITICAL);
 
-if ($log_type == LOG_MOD)
-{
-	$_CLASS['core_user']->add_lang('mcp');
-}
+$_CLASS['core_user']->add_lang('mcp');
 
 // Delete entries if requested and able
 if (($deletemark || $deleteall) && $_CLASS['auth']->acl_get('a_clearlogs'))
@@ -56,7 +53,7 @@ if (($deletemark || $deleteall) && $_CLASS['auth']->acl_get('a_clearlogs'))
 	$sql = 'DELETE FROM ' . LOG_TABLE . "
 		WHERE log_type = $log_type 
 			$where_sql";
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	add_log('admin', 'LOG_' . strtoupper($mode) . '_CLEAR');
 }
@@ -85,7 +82,7 @@ adm_page_header($l_title);
 
 <p><?php echo $l_title_explain; ?></p>
 
-<form name="list" method="post" action="<?php echo generate_link('Forums&amp;file=admin_viewlogs&amp;mode='.$mode, true); ?>">
+<form name="list" method="post" action="<?php echo generate_link('Forums&amp;file=admin_viewlogs&amp;mode='.$mode, array('admin' => true)); ?>">
 <?php
 
 // Define forum list if we're looking @ mod logs
@@ -104,7 +101,22 @@ if ($mode == 'mod')
 
 }
 
+//
+// Grab log data
+//
+$log_data = array();
+$log_count = 0;
+view_log($mode, $log_data, $log_count, $config['topics_per_page'], $start, $forum_id, 0, 0, $sql_where, $sql_sort);
+
 ?>
+<table width="100%" cellspacing="2" cellpadding="2" border="0" align="center">
+<tr>
+	<td align="left" valign="top">&nbsp;<span class="nav"><?php echo on_page($log_count, $config['topics_per_page'], $start); ?></span></td>
+	<td align="right" valign="top" nowrap="nowrap">
+		<span class="nav"><?php	echo generate_pagination("admin_viewlogs&amp;mode=$mode&amp;$u_sort_param", $log_count, $config['topics_per_page'], $start, true); ?></span>
+	</td>
+</tr>
+</table>
 
 <table class="tablebg" width="100%" cellpadding="4" cellspacing="1" border="0">
 	<tr>
@@ -118,13 +130,6 @@ if ($mode == 'mod')
 		<th nowrap="nowrap"><?php echo $_CLASS['core_user']->lang['MARK']; ?></th>
 	</tr>
 <?php
-
-//
-// Grab log data
-//
-$log_data = array();
-$log_count = 0;
-view_log($mode, $log_data, $log_count, $config['topics_per_page'], $start, $forum_id, 0, 0, $sql_where, $sql_sort);
 
 if ($log_count)
 {
@@ -199,7 +204,7 @@ else
 
 	}
 
-	echo generate_pagination("Forums&amp;file=admin_viewlogs&amp;mode=$mode&amp;$u_sort_param", $log_count, $config['topics_per_page'], $start); 
+	echo generate_pagination("Forums&amp;file=admin_viewlogs&amp;mode=$mode&amp;$u_sort_param", $log_count, $config['topics_per_page'], $start, true);
 	
 ?></span></td>
 	</tr>

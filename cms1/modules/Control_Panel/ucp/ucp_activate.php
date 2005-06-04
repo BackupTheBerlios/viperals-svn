@@ -15,7 +15,7 @@ class ucp_activate extends module
 {
 	function ucp_activate($id, $mode)
 	{
-		global $config, $_CORE_CONFIG, $_CLASS, $site_file_root, $phpEx;
+		global $config, $_CORE_CONFIG, $_CLASS, $site_file_root;
 
 		//$user_id = request_var('u', 0);
 		$user_id = get_variable('u', 'REQUEST', 0, 'integer')
@@ -64,13 +64,13 @@ class ucp_activate extends module
 		{
 			// Now we need to demote the user from the inactive group and add him to the registered group
 
-			include_once($site_file_root.'includes/forums/functions_user.' . $phpEx);
+			include_once($site_file_root.'includes/forums/functions_user.php');
 			user_active_flip($row['user_id'], $row['user_type'], '', $row['username']);
 		}
 		
 		if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN && !$update_password)
 		{
-			include_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+			include_once($site_file_root.'includes/forums/functions_messenger.php');
 
 			$messenger = new messenger();
 
@@ -107,7 +107,7 @@ class ucp_activate extends module
 			set_config('num_users', $config['num_users'] + 1, TRUE);
 		}
 
-		$_CLASS['core_display']->meta_refresh(3, getlink());
+		$_CLASS['core_display']->meta_refresh(3, generate_link());
 		trigger_error($_CLASS['core_user']->lang[$message]);
 	}
 }

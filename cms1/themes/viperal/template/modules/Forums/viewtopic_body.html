@@ -105,7 +105,8 @@
 						</tr>
 						{ /if }
 					</table>
-				{$S_HIDDEN_FIELDS}</form></td>
+				{* {$S_HIDDEN_FIELDS} *}
+				</form></td>
 			</tr>
 			{ /if }
 			<tr>
@@ -128,7 +129,7 @@
 				<td width="100%" height="25"><table width="100%" cellspacing="0">
 					<tr>
 						{ if $postrow[postrowloop].POST_ICON_IMG }
-						<td>{$postrow[postrowloop].POST_ICON_IMG}</td>
+						<td><img src="{ $T_ICONS_PATH }{$postrow[postrowloop].POST_ICON_IMG}" width="{$postrow[postrowloop].POST_ICON_IMG_WIDTH}" height="{$postrow[postrowloop].POST_ICON_IMG_HEIGHT}" alt="" title="" /></td>
 						{ /if }
 						<td class="gensmall" width="100%"><div style="float:left">&nbsp;<b>{$L_POST_SUBJECT}:</b> {$postrow[postrowloop].POST_SUBJECT}</div><div style="float:right"><a href="{$postrow[postrowloop].U_MINI_POST}">{$postrow[postrowloop].MINI_POST_IMG}</a><b>{$L_POSTED}:</b> {$postrow[postrowloop].POST_DATE}&nbsp;</div></td>
 					</tr>
@@ -145,11 +146,6 @@
 					<div align="center">
 					
 					<table cellspacing="4" width="140px" align="center">
-						{ if $postrow[postrowloop].KARMA_IMG }
-						<tr>
-							<td><div style="text-align: center;">{$postrow[postrowloop].KARMA_IMG}</div></td>
-						</tr>
-						{ /if }
 						{ if $postrow[postrowloop].ONLINE_IMG }
 						<tr>
 							<td><div style="text-align: center;">{$postrow[postrowloop].ONLINE_IMG}</div></td>
@@ -176,7 +172,16 @@
 					{ if $postrow[postrowloop].POSTER_POSTS }<br /><b>{$L_JOINED}:</b> {$postrow[postrowloop].POSTER_JOINED}{ /if }
 					{ if $postrow[postrowloop].POSTER_POSTS }<br /><b>{$L_POSTS}:</b> {$postrow[postrowloop].POSTER_POSTS}{ /if }
 					{ if $postrow[postrowloop].POSTER_FROM }<br /><b>{$L_LOCATION}:</b> {$postrow[postrowloop].POSTER_FROM}{ /if }
-					{ if $postrow[postrowloop].S_PROFILE_FIELD_1 }<br /><b>{$postrow[postrowloop].PROFILE_FIELD_1_NAME}:</b> {$postrow[postrowloop].PROFILE_FIELD_1_VALUE}{ /if }
+					{ if isset($postrow[postrowloop].S_PROFILE_FIELD_1) }
+					<!-- Use a construct like this to include admin defined profile fields. Replace FIELD1 with the name of your field. -->
+					<br /><b>{$postrow[postrowloop].PROFILE_FIELD1_NAME}:</b> {$postrow[postrowloop].PROFILE_FIELD1_VALUE}
+					{ /if }
+					{* 
+					need to think of a way of doing it
+					<!-- BEGIN custom_fields -->
+					<br /><b>{postrow.custom_fields.PROFILE_FIELD_NAME}:</b> {postrow.custom_fields.PROFILE_FIELD_VALUE}
+					<!-- END custom_fields --> 
+					*}
 					</span>
 
 					</div>
@@ -244,9 +249,6 @@
 
 							<table width="100%" cellspacing="0">
 								<tr valign="middle">
-									{ if $postrow[postrowloop].S_CAN_RATE }
-									<td class="gensmall"><b>{$L_RATE}:</b> <a style="color:green" href="{$postrow[postrowloop].U_RATE_GOOD}">{$L_RATE_GOOD}</a> / <a style="color:red" href="{$postrow[postrowloop].U_RATE_BAD}">{$L_RATE_BAD}</a></td>
-									{ /if }
 									<td class="gensmall" align="right">{ if $postrow[postrowloop].U_REPORT }<a href="{$postrow[postrowloop].U_REPORT}">{$REPORT_IMG}</a> { /if }
 									{ if $postrow[postrowloop].U_INFO }<a href="{$postrow[postrowloop].U_INFO}">{$INFO_IMG}</a> { /if }
 									{ if $postrow[postrowloop].U_DELETE }<a href="{$postrow[postrowloop].U_DELETE}">{$DELETE_IMG}</a> { /if }</td>

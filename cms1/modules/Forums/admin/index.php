@@ -15,6 +15,7 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	header('Location: ../../');
 	die; 
 }
+$phpEx = 'php';
 
 // Some often used variables
 $safe_mode	= (@ini_get('safe_mode') || @strtolower(ini_get('safe_mode')) == 'on') ? true : false;
@@ -28,9 +29,9 @@ $data = array(
 
 $_CLASS['core_blocks']->add_block($data);
 
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+require_once($site_file_root.'includes/forums/functions_admin.php');
 
 $_CLASS['core_user']->add_lang('admin', 'Forums');
 //$_CLASS['core_user']->add_img(0, 'Forums');
@@ -45,10 +46,9 @@ require($site_file_root.'modules/'.$mod.'/admin/'.$file.'.php');
 // Functions
 function adm_page_header($sub_title, $meta = '', $table_html = true)
 {
-	global $config, $db, $_CLASS, $phpEx;
+	global $config, $db, $_CLASS;
 
-	define('HEADER_INC', true);
-	require('header.php');
+	$_CLASS['core_display']->display_head();
 	OpenTable();
 
 	if ($table_html)
@@ -69,7 +69,7 @@ function adm_page_header($sub_title, $meta = '', $table_html = true)
 
 function adm_page_footer($copyright_html = true)
 {
-	global $cache, $config, $db, $phpEx;
+	global $cache, $config, $_CLASS;
 
 ?>
 
@@ -88,33 +88,16 @@ function adm_page_footer($copyright_html = true)
 <br clear="all" />
 <?php
 	CloseTable();
-	require('footer.php');
+	$_CLASS['core_display']->display_footer();
 
 	}
 }
 
 function adm_page_message($title, $message, $show_header = false, $show_prev_info = true)
 {
-	global $phpEx, $SID, $_CLASS, $_SERVER, $_ENV;
-
-	if ($show_header)
-	{
+	global $_CLASS, $_SERVER, $_ENV;
 
 ?>
-
-<table width="100%" cellspacing="0" cellpadding="0" border="0">
-	<tr>
-		<td><a href="<?php echo "../index.$phpEx$SID"; ?>"><img src="images/header_left.jpg" width="200" height="60" alt="phpBB Logo" title="phpBB Logo" border="0"/></a></td>
-		<td width="100%" background="images/header_bg.jpg" height="60" align="right" nowrap="nowrap"><span class="maintitle"><?php echo $_CLASS['core_user']->lang['ADMIN_TITLE']; ?></span> &nbsp; &nbsp; &nbsp;</td>
-	</tr>
-</table>
-
-<?php
-
-	}
-
-?>
-
 <br /><br />
 
 <table class="tablebg" width="80%" cellspacing="1" cellpadding="4" border="0" align="center">
@@ -134,7 +117,7 @@ function adm_page_message($title, $message, $show_header = false, $show_prev_inf
 
 function adm_page_confirm($title, $message)
 {
-	global $phpEx, $SID, $_CLASS;
+	global $_CLASS;
 
 	// Grab data from GET and POST arrays ... note this is _not_
 	// validated! Everything is typed as string to ensure no
@@ -201,6 +184,7 @@ function adm_page_confirm($title, $message)
 	adm_page_footer();
 
 }
+
 function build_cfg_template($tpl_type, $config_key, $options = '')
 {
 	global $new, $_CLASS;

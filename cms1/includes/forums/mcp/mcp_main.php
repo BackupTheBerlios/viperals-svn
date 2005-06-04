@@ -27,7 +27,7 @@ class mcp_main extends module
 {
 	function mcp_main($id, $mode, $url)
 	{
-		global $phpEx, $_CLASS, $site_file_root, $db;
+		global $_CLASS, $site_file_root, $db;
 		
 		$action = request_var('action', '');
 		$quickmod = request_var('quickmod', '');
@@ -135,7 +135,7 @@ class mcp_main extends module
 				break;
 
 			case 'front':
-				require($site_file_root.'includes/forums/mcp/mcp_front.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_front.php');
 
 				mcp_front_view($id, $mode, $action, $url);
 
@@ -143,7 +143,7 @@ class mcp_main extends module
 				break;
 
 			case 'forum_view':
-				require($site_file_root.'includes/forums/mcp/mcp_forum.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_forum.php');
 				
 				$_CLASS['core_user']->add_lang('viewforum');
 
@@ -165,7 +165,7 @@ class mcp_main extends module
 				break;
 
 			case 'topic_view':
-				require($site_file_root.'includes/forums/mcp/mcp_topic.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_topic.php');
 				
 				mcp_topic_view($id, $mode, $action, $url);
 				
@@ -173,7 +173,7 @@ class mcp_main extends module
 				break;
 				
 			case 'post_details':
-				require($site_file_root.'includes/forums/mcp/mcp_post.' . $phpEx);
+				require($site_file_root.'includes/forums/mcp/mcp_post.php');
 				
 				mcp_post_details($id, $mode, $action, $url);
 				
@@ -264,7 +264,7 @@ function lock_unlock($mode, $ids)
 		confirm_box(false, strtoupper($mode) . '_' . $l_prefix . ((sizeof($ids) == 1) ? '' : 'S'), $s_hidden_fields);
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -368,7 +368,7 @@ function change_topic_type($mode, $topic_ids)
 		confirm_box(false, $l_new_type, $s_hidden_fields);
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -519,7 +519,7 @@ function mcp_move_topic($topic_ids)
 		confirm_box(false, 'MOVE_TOPIC' . ((sizeof($topic_ids) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_move.html');
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -533,7 +533,7 @@ function mcp_move_topic($topic_ids)
 	else
 	{
 		$_CLASS['core_display']->meta_refresh(3, $redirect);
-		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>'));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>'));
 	}
 }
 
@@ -577,7 +577,7 @@ function mcp_delete_topic($topic_ids)
 		confirm_box(false, (sizeof($topic_ids) == 1) ? 'DELETE_TOPIC' : 'DELETE_TOPICS', $s_hidden_fields);
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -590,8 +590,8 @@ function mcp_delete_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['core_display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
-		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(3, generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
 
@@ -651,9 +651,9 @@ function mcp_delete_post($post_ids)
 		$return_link = array();
 		if ($affected_topics == 1 && !$deleted_topics && $topic_id)
 		{
-			$return_link[] = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
+			$return_link[] = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
 		}
-		$return_link[] = sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f='.$forum_id).'">', '</a>');
+		$return_link[] = sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id).'">', '</a>');
 
 		if (sizeof($post_ids) == 1)
 		{
@@ -686,7 +686,7 @@ function mcp_delete_post($post_ids)
 		confirm_box(false, (sizeof($post_ids) == 1) ? 'DELETE_POST' : 'DELETE_POSTS', $s_hidden_fields);
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -924,7 +924,7 @@ function mcp_fork_topic($topic_ids)
 		confirm_box(false, 'FORK_TOPIC' . ((sizeof($topic_ids) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_move.html');
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -937,12 +937,12 @@ function mcp_fork_topic($topic_ids)
 	}
 	else
 	{
-		$_CLASS['core_display']->meta_refresh(3, getlink('Forums&amp;file=viewforum&amp;f='.$forum_id));
-		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>');
+		$_CLASS['core_display']->meta_refresh(3, generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id));
+		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>');
 
 		if ($forum_id != $to_forum_id)
 		{
-			$return_link .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>');
+			$return_link .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>');
 		}
 
 		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);

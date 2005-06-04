@@ -1,45 +1,27 @@
 <?php
-/***************************************************************************
- *                              admin_board.php
- *                            -------------------
- *   begin                : Thursday, Jul 12, 2001
- *   copyright            : (C) 2001 The phpBB Group
- *   email                : support@phpbb.com
- *
- *   $Id: admin_phpinfo.php,v 1.5 2003/09/07 16:52:50 psotfx Exp $
- *
- ***************************************************************************/
+/** 
+*
+* @package acp
+* @version $Id: admin_phpinfo.php,v 1.6 2005/04/09 12:26:30 acydburn Exp $
+* @copyright (c) 2005 phpBB Group 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*
+*/
 
-/***************************************************************************
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- ***************************************************************************/
-
-if (!empty($setmodules))
-{
-	$module['GENERAL']['PHP_INFO'] = ($auth->acl_get('a_server')) ? basename(__FILE__) . $SID : '';
-	return;
-}
-
-define('IN_PHPBB', 1);
-// Load default header
-$phpbb_root_path = '../';
-$phpEx = substr(strrchr(__FILE__, '.'), 1);
-require('pagestart.' . $phpEx);
-
+/**
+*/
 
 // Check permissions
-if (!$auth->acl_get('a_server'))
+if (!$_CLASS['auth']->acl_get('a_server'))
 {
-	trigger_error($user->lang['NO_ADMIN']);
+	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 }
 
 ob_start(); 
-phpinfo(INFO_GENERAL | INFO_CONFIGURATION | INFO_MODULES | INFO_VARIABLES); 
+phpinfo(INFO_GENERAL | INFO_CONFIGURATION);
+//Make a seperat option to display the others
+//phpinfo(INFO_GENERAL | INFO_CONFIGURATION | INFO_MODULES | INFO_VARIABLES); 
+
 $phpinfo = ob_get_contents(); 
 ob_end_clean(); 
 
@@ -54,7 +36,7 @@ preg_match_all('#<body[^>]*>(.*)</body>#siU', $phpinfo, $output);
 switch ($layout)
 {
 	case 'old':
-		$output = preg_replace('#<table#', '<table class="bg"', $output[1][0]);
+		$output = preg_replace('#<table#', '<table class="tablebg"', $output[1][0]);
 		$output = preg_replace('# bgcolor="\#(\w){6}"#', '', $output);
 		$output = preg_replace('#(\w),(\w)#', '\1, \2', $output);
 		$output = preg_replace('#border="0" cellpadding="3" cellspacing="1" width="600"#', 'border="0" cellspacing="1" cellpadding="4" width="95%"', $output);
@@ -69,7 +51,7 @@ switch ($layout)
 		$output = preg_replace('#<h2 align="center">#i', '<h2>', $output);
 		break;
 	case 'new':
-		$output = preg_replace('#<table#', '<table class="bg" align="center"', $output[1][0]);
+		$output = preg_replace('#<table#', '<table class="tablebg" align="center"', $output[1][0]);
 		$output = preg_replace('#(\w),(\w)#', '\1, \2', $output);
 		$output = preg_replace('#border="0" cellpadding="3" width="600"#', 'border="0" cellspacing="1" cellpadding="4" width="95%"', $output);
 		$output = preg_replace('#<tr class="v"><td>(.*?<a .*?</a>)(.*?)</td></tr>#s', '<tr class="row1"><td><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td>\2</td><td>\1</td></tr></table></td></tr>', $output);
@@ -83,10 +65,10 @@ switch ($layout)
 		break;
 }
 
-adm_page_header($user->lang['PHP_INFO']);
+adm_page_header($_CLASS['core_user']->lang['PHP_INFO']);
 
-echo '<h1>' . $user->lang['PHP_INFO'] . '</h1>';
-echo '<p>' . $user->lang['PHP_INFO_EXPLAIN'] . '</p>';
+echo '<h1>' . $_CLASS['core_user']->lang['PHP_INFO'] . '</h1>';
+echo '<p>' . $_CLASS['core_user']->lang['PHP_INFO_EXPLAIN'] . '</p>';
 echo $output; 
 
 adm_page_footer();

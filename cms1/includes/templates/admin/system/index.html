@@ -71,6 +71,81 @@
 		<td class="row1" width="50%" valign="top"><b>{ $L_MAINTENANCE_TEXT }: </b></td>
 		<td class="row2"><br /><textarea name="maintenance_text" rows="5" cols="40">{ $MAINTENANCE_MSG }</textarea></td>
 	</tr>
+<tr>
+		<th colspan="2">Server Settings</th>
+	</tr>
+
+	<tr>
+		<td class="row1" width="50%"><b>Domain Name: </b><br><span class="gensmall">The domain name this board runs from</span></td>
+		<td class="row2"><input class="post" size="40" maxlength="255" name="site_domain" value="{ $SITE_DOMAIN }" type="text"></td>
+	</tr>
+
+
+	<tr>
+		<td class="row1" width="50%"><b>Server Port: </b><br><span class="gensmall">The port your server is running on, usually 80, only change if different</span></td>
+		<td class="row2"><input class="post" size="5" maxlength="5" name="site_port" value="{ $SITE_PORT }" type="text"></td>
+	</tr>
+
+
+	<tr>
+		<td class="row1" width="50%"><b>Script path: </b><br><span class="gensmall">The path where phpBB2 is located relative to the domain name</span></td>
+
+		<td class="row2"><input class="post" maxlength="255" name="site_path" value="{ $SITE_PATH }" type="text"></td>
+	</tr>
+
+
+	<tr>
+		<td class="row1" width="50%"><b>Session IP validation: </b><br><span class="gensmall">Determines how much of the users IP is used to validate a session; All compares the complete address, A.B.C the first x.x.x, A.B the first x.x, None disables checking.</span></td>
+		<td class="row2"><input name="ip_check" value="4" { if $IP_CHECK eq 4 } checked="checked" { /if }type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" { if $IP_CHECK eq 3 } checked="checked" { /if } type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" { if $IP_CHECK eq 2 } checked="checked" { /if } type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" { if $IP_CHECK eq 0 } checked="checked" { /if } type="radio"> None&nbsp;&nbsp;</td>
+
+	</tr>
+	<tr>
+		<td class="row1" width="50%"><b>Validate browser: </b><br><span class="gensmall">Enables browser validation for each session inproving security.</span></td>
+		<td class="row2"><input name="browser_check" value="1" { if $BROWSER_CHECK } checked="checked" { /if }type="radio">Yes&nbsp;&nbsp;<input name="browser_check" value="0" { if !$BROWSER_CHECK } checked="checked" { /if } type="radio">No</td>
+	</tr>
+	<tr>
+		<td class="row1" width="50%"><b>Limit system load: </b><br><span class="gensmall">If the 1 minute system load exceeds this value the board will go offline, 1.0 equals ~100% utilisation of one processor. This only functions on UNIX based servers.</span></td>
+		<td class="row2"><input class="post" size="4" maxlength="4" name="limit_load" value="{ $LIMIT_LOAD }" type="text"></td>
+	</tr>
+	<tr>
+		<td class="row1" width="50%"><b>Limit sessions: </b><br><span class="gensmall">If the number of sessions exceeds this value within a one minute period the board will go offline. Set to 0 for unlimited sessions.</span></td>
+
+		<td class="row2"><input class="post" size="4" maxlength="4" name="limit_sessions" value="{ $LIMIT_SESSIONS }" type="text"></td>
+	</tr>
+	<tr>
+		<td class="row1" width="50%"><b>Session length: </b><br><span class="gensmall">Sessions will expire after this time, in seconds.</span></td>
+		<td class="row2"><input class="post" size="5" maxlength="5" name="session_length" value="{ $SESSION_LENGTH }" type="text"></td>
+	</tr>
+	<tr>
+		<th colspan="2">{ $L_COOKIE_SETTINGS }</th>
+	</tr>
+	<tr>
+		<td colspan="2" class="row1">{ $L_COOKIE_SETTINGS_EXPLAIN }</td>
+	</tr>
+	<tr>
+		<td class="row1" width="50%"><b>{ $L_COOKIE_DOMAIN }: </b></td>
+		<td class="row2"><input class="post" maxlength="255" name="cookie_domain" value="{ $COOKIE_DOMAIN }" type="text"></td>
+	</tr>
+
+
+	<tr>
+		<td class="row1" width="50%"><b>{ $L_COOKIE_NAME }: </b></td>
+		<td class="row2"><input class="post" maxlength="16" name="cookie_name" value="{ $COOKIE_NAME }" type="text"></td>
+	</tr>
+
+
+	<tr>
+		<td class="row1" width="50%"><b>{ $L_COOKIE_PATH }: </b></td>
+
+		<td class="row2"><input class="post" maxlength="255" name="cookie_path" value="{ $COOKIE_PATH }" type="text"></td>
+	</tr>
+
+
+	<tr>
+		<td class="row1" width="50%"><b>{ $L_COOKIE_SECURE }: </b><br><span class="gensmall">{ $L_COOKIE_SECURE_EXPLAIN }</span></td>
+		<td class="row2"><input name="cookie_secure" value="0" { if !$COOKIE_SECURE } checked="checked" { /if } type="radio">Disabled&nbsp;&nbsp;<input name="cookie_secure" value="1" { if $COOKIE_SECURE } checked="checked" { /if } type="radio">Enabled</td>
+	</tr>
+
 { elseif $A_OPTION eq 'wysiwyg' }
 	<tr>
 		<th colspan="2">{ $L_WYSIWYG_EDITOR }</th>

@@ -18,22 +18,11 @@ $submit = (isset($_POST['submit'])) ? true : false;
 
 // Set config vars
 $display_vars = array(
-	'cookie' => array(
-		'auth'	=> 'a_cookies',
-		'title'	=> 'COOKIE_SETTINGS',
-		'vars'	=> array(
-			'cookie_domain'	=> array('lang' => 'COOKIE_DOMAIN',	'type' => 'text::255', 'explain' => false),
-			'cookie_name'	=> array('lang' => 'COOKIE_NAME',	'type' => 'text::16', 'explain' => false),
-			'cookie_path'	=> array('lang'	=> 'COOKIE_PATH',	'type' => 'text::255', 'explain' => false),
-			'cookie_secure'	=> array('lang' => 'COOKIE_SECURE',	'type' => 'radio:disabled_enabled', 'explain' => true)
-		)
-	),
 	'avatar' => array(
 		'auth'	=> 'a_board',
 		'title'	=> 'AVATAR_SETTINGS',
 		'vars'	=> array(
 			'avatar_min_height' => false, 'avatar_min_width' => false, 'avatar_max_height' => false, 'avatar_max_width' => false,
-
 			'allow_avatar_local'	=> array('lang' => 'ALLOW_LOCAL',	'type' => 'radio:yes_no', 'explain' => false),
 			'allow_avatar_remote'	=> array('lang' => 'ALLOW_REMOTE',	'type' => 'radio:yes_no', 'explain' => true),
 			'allow_avatar_upload'	=> array('lang' => 'ALLOW_UPLOAD',	'type' => 'radio:yes_no', 'explain' => false),
@@ -67,9 +56,6 @@ $display_vars = array(
 		'auth'	=> 'a_server',
 		'title'	=> 'SERVER_SETTINGS',
 		'vars'	=> array(
-			'limit_load'		=> array('lang' => 'LIMIT_LOAD',		'type' => 'text:4:4', 'explain' => true),
-			'session_length'	=> array('lang' => 'SESSION_LENGTH',	'type' => 'text:5:5', 'explain' => true),
-			'active_sessions'	=> array('lang' => 'LIMIT_SESSIONS',	'type' => 'text:4:4', 'explain' => true),
 			'load_db_track'		=> array('lang' => 'YES_POST_MARKING',	'type' => 'radio:yes_no', 'explain' => true),
 			'load_db_lastread'	=> array('lang' => 'YES_READ_MARKING',	'type' => 'radio:yes_no', 'explain' => true),
 			'load_online'		=> array('lang' => 'YES_ONLINE',		'type' => 'radio:yes_no', 'explain' => true),
@@ -91,8 +77,6 @@ $display_vars = array(
 		'auth'	=> 'a_defaults',
 		'title'	=> 'BOARD_DEFAULTS',
 		'vars'	=> array(
-			//'default_style'			=> array('lang' => 'DEFAULT_STYLE',			'type' => 'select', 'options' => 'style_select(\'{VALUE}\', true)', 'explain' => false),
-			//'override_user_style'	=> array('lang' => 'OVERRIDE_STYLE',		'type' => 'radio:yes_no', 'explain' => true),
 			'default_lang'			=> array('lang' => 'DEFAULT_LANGUAGE',		'type' => 'select', 'options' => 'language_select(\'{VALUE}\')', 'explain' => false),
 			'default_dateformat'	=> array('lang' => 'DEFAULT_DATE_FORMAT',	'type' => 'text::255', 'explain' => true),
 			'board_timezone'		=> array('lang' => 'SYSTEM_TIMEZONE',		'type' => 'select', 'options' => 'tz_select(\'{VALUE}\')', 'explain' => false),
@@ -143,12 +127,6 @@ $display_vars = array(
 		'auth'	=> 'a_server',
 		'title'	=> 'SERVER_SETTINGS',
 		'vars'	=> array(
-			'server_name'		=> array('lang' => 'SERVER_NAME',	'type' => 'text:40:255', 'explain' => true),
-			'server_port'		=> array('lang' => 'SERVER_PORT',	'type' => 'text:5:5', 'explain' => true),
-			'script_path'		=> array('lang' => 'SCRIPT_PATH',	'type' => 'text::255', 'explain' => true),
-			'ip_check'			=> array('lang' => 'IP_VALID',		'type' => 'custom', 'options' => 'select_ip_check(\'{VALUE}\')', 'explain' => true),
-			'browser_check'		=> array('lang' => 'BROWSER_VALID',	'type' => 'radio:yes_no', 'explain' => true),
-			//'gzip_compress'		=> array('lang' => 'ENABLE_GZIP',	'type' => 'radio:yes_no', 'explain' => false),
 			'smilies_path'		=> array('lang' => 'SMILIES_PATH',	'type' => 'text:20:255', 'explain' => true),
 			'icons_path'		=> array('lang' => 'ICONS_PATH',	'type' => 'text:20:255', 'explain' => true),
 			'upload_icons_path'	=> array('lang' => 'UPLOAD_ICONS_PATH', 'type' => 'text:20:255', 'explain' => true),
@@ -160,22 +138,6 @@ $display_vars = array(
 		'title'	=> 'BOARD_SETTINGS',
 		'vars'	=> array(
 			'board_disable_msg'	=> false, 'max_name_chars' => false, 'max_pass_chars' => false, 'bump_type' => false,
-			
-			//'sitename'			=> array('lang' => 'SITE_NAME',			'type' => 'text:40:255', 'explain' => false),
-			//'site_desc'			=> array('lang' => 'SITE_DESC',			'type' => 'text:40:255', 'explain' => false),
-			//'board_disable'		=> array('lang' => 'DISABLE_BOARD',		'type' => 'custom', 'options' => 'board_disable(\'{VALUE}\')', 'explain' => true),
-			//'require_activation'=> array('lang' => 'ACC_ACTIVATION',	'type' => 'custom', 'options' => 'select_acc_activation(\'{VALUE}\')', 'explain' => true),
-			//'coppa_enable'		=> array('lang' => 'ENABLE_COPPA',		'type' => 'radio:yes_no', 'explain' => true),
-			//'coppa_fax'			=> array('lang' => 'COPPA_FAX',			'type' => 'text:25:100', 'explain' => false),
-			//'coppa_mail'		=> array('lang' => 'COPPA_MAIL',		'type' => 'textarea:5:40', 'explain' => true),
-			//'enable_confirm'	=> array('lang' => 'VISUAL_CONFIRM',	'type' => 'radio:yes_no', 'explain' => true),
-			//'max_reg_attempts'	=> array('lang' => 'REG_LIMIT',			'type' => 'text:4:4', 'explain' => true),
-			//'min_name_chars'	=> array('lang' => 'USERNAME_LENGTH',	'type' => 'custom', 'options' => 'username_length(\'{VALUE}\')', 'explain' => true),
-			//'allow_name_chars'	=> array('lang' => 'USERNAME_CHARS',	'type' => 'select', 'options' => 'select_username_chars(\'{VALUE}\')', 'explain' => true),
-			//'min_pass_chars'	=> array('lang' => 'PASSWORD_LENGTH',	'type' => 'custom', 'options' => 'password_length(\'{VALUE}\')', 'explain' => true),
-			//'pass_complex'		=> array('lang' => 'PASSWORD_TYPE',		'type' => 'select', 'options' => 'select_password_chars(\'{VALUE}\')', 'explain' => true),
-			//'chg_passforce'		=> array('lang' => 'FORCE_PASS_CHANGE',	'type' => 'text:3:3', 'explain' => true),
-			//'allow_emailreuse'	=> array('lang' => 'ALLOW_EMAIL_REUSE',	'type' => 'radio:yes_no', 'explain' => true),
 			'edit_time'			=> array('lang' => 'EDIT_TIME',			'type' => 'text:3:3', 'explain' => true),
 			'display_last_edited' => array('lang' => 'DISPLAY_LAST_EDITED', 'type' => 'radio:yes_no', 'explain' => true),
 			'flood_interval'	=> array('lang' => 'FLOOD_INTERVAL',	'type' => 'text:3:4', 'explain' => true),
@@ -218,7 +180,7 @@ if (isset($display_vars['lang']))
 }
 
 $new = $config;
-$cfg_array = (isset($_REQUEST['config'])) ? request_var('config', '') : $new;
+$cfg_array = (isset($_REQUEST['config'])) ? request_var('config', array('' => '')) : $new;
 
 // We go through the display_vars to make sure no one is trying to set variables he/she is not allowed to...
 foreach ($display_vars['vars'] as $config_name => $null)
@@ -257,7 +219,7 @@ adm_page_header($_CLASS['core_user']->lang[$display_vars['title']]);
 
 <p><?php echo $_CLASS['core_user']->lang[$display_vars['title'] . '_EXPLAIN']; ?></p>
 
-<form action="<?php echo adminlink('forums&amp;file=admin_board&amp;mode='.$mode); ?>" method="post"><table class="tablebg" width="95%" cellspacing="1" cellpadding="4" border="0" align="center">
+<form action="<?php echo generate_link('forums&amp;file=admin_board&amp;mode='.$mode, array('admin' => true)); ?>" method="post"><table class="tablebg" width="95%" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr>
 		<th colspan="2"><?php echo $_CLASS['core_user']->lang[$display_vars['title']]; ?></th>
 	</tr>
@@ -292,9 +254,9 @@ if ($mode == 'auth')
 	$dp = opendir($site_file_root.'includes/auth');
 	while ($file = readdir($dp))
 	{
-		if (preg_match('#^auth_(.*?)\.' . $phpEx . '$#', $file))
+		if (preg_match('#^auth_(.*?)\.php$#', $file))
 		{
-			$auth_plugins[] = preg_replace('#^auth_(.*?)\.' . $phpEx . '$#', '\1', $file);
+			$auth_plugins[] = preg_replace('#^auth_(.*?)\.php$#', '\1', $file);
 		}
 	}
 
@@ -302,9 +264,9 @@ if ($mode == 'auth')
 
 	foreach ($auth_plugins as $method)
 	{
-		if ($method && file_exists($site_file_root.'includes/auth/auth_' . $method . '.' . $phpEx))
+		if ($method && file_exists($site_file_root.'includes/auth/auth_' . $method . '.php'))
 		{
-			include_once($site_file_root.'includes/auth/auth_' . $method . '.' . $phpEx);
+			include_once($site_file_root.'includes/auth/auth_' . $method . '.php');
 
 			$method = 'admin_' . $method;
 			if (function_exists($method))
@@ -338,16 +300,16 @@ adm_page_footer();
 
 function select_auth_method($selected_method)
 {
-	global $new, $phpEx, $site_file_root;
+	global $new, $site_file_root;
 
 	$auth_plugins = array();
 
 	$dp = opendir($site_file_root.'includes/auth');
 	while ($file = readdir($dp))
 	{
-		if (preg_match('#^auth_(.*?)\.' . $phpEx . '$#', $file))
+		if (preg_match('#^auth_(.*?)\.php$#', $file))
 		{
-			$auth_plugins[] = preg_replace('#^auth_(.*?)\.' . $phpEx . '$#', '\1', $file);
+			$auth_plugins[] = preg_replace('#^auth_(.*?)\.php$#', '\1', $file);
 		}
 	}
 

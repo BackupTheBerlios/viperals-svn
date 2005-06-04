@@ -28,8 +28,7 @@ class mcp_queue extends module
 
 	function mcp_queue($id, $mode, $url)
 	{
-		global $db, $_CLASS, $site_file_root;
-		global $config, $phpEx;
+		global $_CLASS, $site_file_root, $config;
 
 		$_CLASS['core_template']->assign(array(
 			'L_SELECT'						=> $_CLASS['core_user']->lang['FORUM'],
@@ -58,8 +57,8 @@ class mcp_queue extends module
 		{
 			case 'approve':
 			case 'disapprove':
-				require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
-				require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
+				require_once($site_file_root.'includes/forums/functions_messenger.php');
+				require_once($site_file_root.'includes/forums/functions_posting.php');
 
 				$post_id_list = request_var('post_id_list', array(0));
 
@@ -82,7 +81,7 @@ class mcp_queue extends module
 			case 'approve_details':
 				
 				$_CLASS['core_user']->add_lang('posting');
-				require_once($site_file_root.'includes/forums/functions_posting.' . $phpEx);
+				require_once($site_file_root.'includes/forums/functions_posting.php');
 
 				$post_id = request_var('p', 0);
 				$topic_id = request_var('t', 0);
@@ -117,7 +116,7 @@ class mcp_queue extends module
 				$message = $post_info['post_text'];
 				if ($post_info['bbcode_bitfield'])
 				{
-					require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
+					require_once($site_file_root.'includes/forums/bbcode.php');
 					$bbcode = new bbcode($post_info['bbcode_bitfield']);
 					$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 				}
@@ -125,7 +124,7 @@ class mcp_queue extends module
 
 				$_CLASS['core_template']->assign(array(
 					'S_MCP_QUEUE'			=> true,
-					'S_APPROVE_ACTION'		=> getlink("Forums&amp;file=mcp&amp;i=queue&amp;p=$post_id&amp;f=$forum_id"),
+					'S_APPROVE_ACTION'		=> generate_link("Forums&amp;file=mcp&amp;i=queue&amp;p=$post_id&amp;f=$forum_id"),
 					
 					'S_CAN_VIEWIP'			=> $_CLASS['auth']->acl_get('m_ip', $post_info['forum_id']),
 					'S_POST_REPORTED'		=> $post_info['post_reported'],
@@ -134,10 +133,10 @@ class mcp_queue extends module
 //					'S_USER_NOTES'			=> ($post_info['user_notes']) ? true : false,
 					'S_USER_WARNINGS'		=> ($post_info['user_warnings']) ? true : false,
 
-					'U_VIEW_PROFILE'		=> getlink('Members_List&amp;mode=viewprofile&amp;u=' . $post_info['user_id']),
-					'U_MCP_USERNOTES'		=> getlink('Forums&amp;file=mcp&amp;i=notes&amp;mode=user_notes&amp;u=' . $post_info['user_id']),
-					'U_MCP_WARNINGS'		=> getlink('Forums&amp;file=mcp&amp;i=warnings&amp;mode=view_user&amp;u=' . $post_info['user_id']),
-					'U_EDIT'				=> ($_CLASS['auth']->acl_get('m_edit', $post_info['forum_id'])) ? getlink("Forums&amp;file=posting&amp;mode=edit&amp;f={$post_info['forum_id']}&amp;p={$post_info['post_id']}") : '',
+					'U_VIEW_PROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $post_info['user_id']),
+					'U_MCP_USERNOTES'		=> generate_link('Forums&amp;file=mcp&amp;i=notes&amp;mode=user_notes&amp;u=' . $post_info['user_id']),
+					'U_MCP_WARNINGS'		=> generate_link('Forums&amp;file=mcp&amp;i=warnings&amp;mode=view_user&amp;u=' . $post_info['user_id']),
+					'U_EDIT'				=> ($_CLASS['auth']->acl_get('m_edit', $post_info['forum_id'])) ? generate_link("Forums&amp;file=posting&amp;mode=edit&amp;f={$post_info['forum_id']}&amp;p={$post_info['post_id']}") : '',
 
 					'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', $_CLASS['core_user']->lang['POST_REPORTED']),
 					'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', $_CLASS['core_user']->lang['POST_UNAPPROVED']),
@@ -178,9 +177,9 @@ class mcp_queue extends module
 					$sql = 'SELECT SUM(forum_topics) as sum_forum_topics 
 						FROM ' . FORUMS_TABLE . "
 						WHERE forum_id IN ($forum_list)";
-					$result = $db->sql_query($sql);
-					$forum_info['forum_topics'] = (int) $db->sql_fetchfield('sum_forum_topics', 0, $result);
-					$db->sql_freeresult($result);
+					$result = $_CLASS['core_db']->sql_query($sql);
+					$forum_info['forum_topics'] = (int) $_CLASS['core_db']->sql_fetchfield('sum_forum_topics', 0, $result);
+					$_CLASS['core_db']->sql_freeresult($result);
 
 				}
 				else
@@ -216,11 +215,11 @@ class mcp_queue extends module
 							AND t.topic_id = p.topic_id
 							AND t.topic_first_post_id <> p.post_id
 						ORDER BY $sort_order_sql";
-					$result = $db->sql_query_limit($sql, $config['topics_per_page'], $start);
+					$result = $_CLASS['core_db']->sql_query_limit($sql, $config['topics_per_page'], $start);
 
 					$i = 0;
 					$post_ids = array();
-					while ($row = $db->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 					{
 						$post_ids[] = $row['post_id'];
 						$row_num[$row['post_id']] = $i++;
@@ -235,13 +234,13 @@ class mcp_queue extends module
 								AND f.forum_id = p.forum_id
 								AND u.user_id = p.poster_id";
 
-						$result = $db->sql_query($sql);
+						$result = $_CLASS['core_db']->sql_query($sql);
 						$post_data = $rowset = array();
-						while ($row = $db->sql_fetchrow($result))
+						while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 						{
 							$post_data[$row['post_id']] = $row;
 						}
-						$db->sql_freeresult($result);
+						$_CLASS['core_db']->sql_freeresult($result);
 
 						foreach ($post_ids as $post_id)
 						{
@@ -262,14 +261,14 @@ class mcp_queue extends module
 							AND t.forum_id IN ($forum_list)
 							AND f.forum_id = t.forum_id
 						ORDER BY $sort_order_sql";
-					$result = $db->sql_query_limit($sql, $config['topics_per_page'], $start);
+					$result = $_CLASS['core_db']->sql_query_limit($sql, $config['topics_per_page'], $start);
 
 					$rowset = array();
-					while ($row = $db->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 					{
 						$rowset[] = $row;
 					}
-					$db->sql_freeresult($result);
+					$_CLASS['core_db']->sql_freeresult($result);
 				}
 
 				foreach ($rowset as $row)
@@ -286,12 +285,12 @@ class mcp_queue extends module
 					$s_checkbox = '<input type="checkbox" name="post_id_list[]" value="' . $row['post_id'] . '" />';
 
 					$_CLASS['core_template']->assign_vars_array('postrow', array(
-						'U_VIEWFORUM'	=> getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']),
+						'U_VIEWFORUM'	=> generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']),
 						// Q: Why accessing the topic by a post_id instead of its topic_id?
 						// A: To prevent the post from being hidden because of wrong encoding or different charset
-						'U_VIEWTOPIC'	=> getlink('Forums&amp;file=viewtopic&amp;f=' . $row['forum_id'] . '&amp;p=' . $row['post_id'] . (($mode == 'unapproved_posts') ? '#' . $row['post_id'] : '')),
-						'U_VIEW_DETAILS'=> getlink("Forums&amp;file=mcp&amp;i=queue&amp;start=$start&amp;mode=approve_details&amp;f={$forum_id}&amp;p={$row['post_id']}"),
-						'U_VIEWPROFILE'	=> ($row['poster_id'] != ANONYMOUS) ? getlink("Members_List&amp;mode=viewprofile&amp;u={$row['poster_id']}") : '',
+						'U_VIEWTOPIC'	=> generate_link('Forums&amp;file=viewtopic&amp;f=' . $row['forum_id'] . '&amp;p=' . $row['post_id'] . (($mode == 'unapproved_posts') ? '#' . $row['post_id'] : '')),
+						'U_VIEW_DETAILS'=> generate_link("Forums&amp;file=mcp&amp;i=queue&amp;start=$start&amp;mode=approve_details&amp;f={$forum_id}&amp;p={$row['post_id']}"),
+						'U_VIEWPROFILE'	=> ($row['poster_id'] != ANONYMOUS) ? generate_link("Members_List&amp;mode=viewprofile&amp;u={$row['poster_id']}") : '',
 
 						'FORUM_NAME'	=> $row['forum_name'],
 						'TOPIC_TITLE'	=> $row['topic_title'],
@@ -337,7 +336,7 @@ class mcp_queue extends module
 // Approve Post/Topic
 function approve_post($post_id_list)
 {
-	global $db, $_CLASS, $_CORE_CONFIG, $config;
+	global $_CLASS, $_CORE_CONFIG, $config;
 
 	if (!($forum_id = check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_approve')))
 	{
@@ -407,7 +406,7 @@ function approve_post($post_id_list)
 			$sql = 'UPDATE ' . TOPICS_TABLE . '
 				SET topic_approved = 1
 				WHERE topic_id IN (' . implode(', ', $topic_approve_sql) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 
 		if (sizeof($post_approve_sql))
@@ -415,7 +414,7 @@ function approve_post($post_id_list)
 			$sql = 'UPDATE ' . POSTS_TABLE . '
 				SET post_approved = 1
 				WHERE post_id IN (' . implode(', ', $post_approve_sql) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 
 		if (sizeof($topic_replies_sql))
@@ -425,7 +424,7 @@ function approve_post($post_id_list)
 				$sql = 'UPDATE ' . TOPICS_TABLE . "
 					SET topic_replies = topic_replies + $num_replies
 					WHERE topic_id = $topic_id";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 
@@ -438,7 +437,7 @@ function approve_post($post_id_list)
 			$sql .= ($forum_posts) ? "forum_posts = forum_posts + $forum_posts" : '';
 			$sql .= " WHERE forum_id = $forum_id";
 
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 		
 		if ($total_topics)
@@ -485,8 +484,8 @@ function approve_post($post_id_list)
 					'POST_SUBJECT'	=> censor_text($post_data['post_subject']),
 					'TOPIC_TITLE'	=> censor_text($post_data['topic_title']),
 
-					'U_VIEW_TOPIC'	=> getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&t={$post_data['topic_id']}&e=0"),
-					'U_VIEW_POST'	=> getlink("Forums&amp;file=viewtopic7amp;f=$forum_id&t={$post_data['topic_id']}&p=$post_id&e=$post_id"))
+					'U_VIEW_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&t={$post_data['topic_id']}&e=0"),
+					'U_VIEW_POST'	=> generate_link("Forums&amp;file=viewtopic7amp;f=$forum_id&t={$post_data['topic_id']}&p=$post_id&e=$post_id"))
 				);
 
 				$messenger->send($post_data['user_notify_type']);
@@ -532,7 +531,7 @@ function approve_post($post_id_list)
 		confirm_box(false, 'APPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_approve.html');
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -546,14 +545,14 @@ function approve_post($post_id_list)
 	else
 	{
 		$_CLASS['core_display']->meta_refresh(3, $redirect);
-		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
 
 // Disapprove Post/Topic
 function disapprove_post($post_id_list)
 {
-	global $db, $_CLASS, $_CORE_CONFIG, $config;
+	global $_CLASS, $_CORE_CONFIG, $config;
 
 	if (!($forum_id = check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_approve')))
 	{
@@ -579,9 +578,9 @@ function disapprove_post($post_id_list)
 		$sql = 'SELECT reason_name 
 			FROM ' . REASONS_TABLE . " 
 			WHERE reason_id = $reason_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if (!($row = $db->sql_fetchrow($result)) || (!$reason && $row['reason_name'] == 'other'))
+		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)) || (!$reason && $row['reason_name'] == 'other'))
 		{
 			$additional_msg = 'Please give an appropiate reason for disapproval';
 			unset($_POST['confirm']);
@@ -592,7 +591,7 @@ function disapprove_post($post_id_list)
 			$disapprove_reason .= ($reason) ? "\n\n" . $_REQUEST['reason'] : '';
 			unset($reason);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	if (confirm_box(true))
@@ -637,7 +636,7 @@ function disapprove_post($post_id_list)
 			$sql = 'UPDATE ' . FORUMS_TABLE . "
 				SET forum_topics_real = forum_topics_real - $forum_topics_real
 				WHERE forum_id = $forum_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 
 		if (sizeof($topic_replies_real_sql))
@@ -647,7 +646,7 @@ function disapprove_post($post_id_list)
 				$sql = 'UPDATE ' . TOPICS_TABLE . "
 					SET topic_replies_real = topic_replies_real - $num_replies
 					WHERE topic_id = $topic_id";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 
@@ -714,9 +713,9 @@ function disapprove_post($post_id_list)
 		$sql = 'SELECT * 
 			FROM ' . REASONS_TABLE . ' 
 			ORDER BY reason_priority ASC';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$row['reason_name'] = strtoupper($row['reason_name']);
 
@@ -731,7 +730,7 @@ function disapprove_post($post_id_list)
 				'S_SELECTED'	=>	($row['reason_id'] == $reason_id) ? true : false)
 			);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$_CLASS['core_template']->assign(array(
 			'S_NOTIFY_POSTER'	=> true,
@@ -743,7 +742,7 @@ function disapprove_post($post_id_list)
 		confirm_box(false, 'DISAPPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_approve.html');
 	}
 
-	$redirect = request_var('redirect', getlink('Forums'));
+	$redirect = request_var('redirect', generate_link('Forums'));
 
 	/*if (strpos($redirect, '?') === false)
 	{
@@ -756,8 +755,8 @@ function disapprove_post($post_id_list)
 	}
 	else
 	{
-		$_CLASS['core_display']->meta_refresh(3, getlink("Forums&amp;file=viewforum&amp;f=$forum_id"));
-		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=viewforum&amp;f=$forum_id"));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
 	}
 }
 

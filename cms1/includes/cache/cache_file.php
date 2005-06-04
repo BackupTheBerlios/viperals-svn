@@ -345,7 +345,7 @@ class cache
 
 	function sql_save($query, &$query_result, $ttl)
 	{
-		global $db;
+		global $_CLASS;
 
 		// Remove extra spaces and tabs
 		$query = preg_replace('/[\n\r\s\t]+/', ' ', $query);
@@ -358,13 +358,13 @@ class cache
 			$query_id = 'Cache id #' . sizeof($this->sql_rowset);
 			$this->sql_rowset[$query_id] = array();
 
-			while ($row = $db->sql_fetchrow($query_result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($query_result))
 			{
 				$this->sql_rowset[$query_id][] = $row;
 
 				$lines[] = "unserialize('" . str_replace("'", "\\'", str_replace('\\', '\\\\', serialize($row))) . "')";
 			}
-			$db->sql_freeresult($query_result);
+			$_CLASS['core_db']->sql_freeresult($query_result);
 
 			fwrite($fp, "<?php\n\n/*\n$query\n*/\n\n\$expired = (time() > " . (time() + $ttl) . ") ? TRUE : FALSE;\nif (\$expired) { return; }\n\n\$this->sql_rowset[\$query_id] = array(" . implode(',', $lines) . ') ?>');
 			@flock($fp, LOCK_UN);

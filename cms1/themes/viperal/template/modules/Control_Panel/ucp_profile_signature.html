@@ -41,7 +41,7 @@ function checkForm()
 
 //-->
 </script>
-<script language="javascript" type="text/javascript" src="includes/javascript/bbcode.js"></script>
+<script language="javascript" type="text/javascript" src="java/editor.js"></script>
 { /literal }
 
 <table class="tablebg" width="100%" cellspacing="1">
@@ -51,12 +51,12 @@ function checkForm()
 
 	{ if $ERROR }
 	<tr>
-		<td class="row3" colspan="2" align="center"><span class="error">{$ERROR}</span></td>
+		<td class="row3" colspan="2" align="center"><span class="genmed error">{$ERROR}</span></td>
 	</tr>
 	{ /if }
 
 	<tr> 
-		<td class="row1" width="35%"><b class="genmed">{$L_SIGNATURE}: </b><br /><span class="gensmall">{$L_SIGNATURE_EXPLAIN}</span></td>
+		<td class="row1" width="35%" valign="top"><b class="genmed">{$L_SIGNATURE}: </b><br /><span class="gensmall">{$L_SIGNATURE_EXPLAIN}</span></td>
 		<td class="row2"><table cellspacing="0" cellpadding="2" border="0">
 			<tr align="center" valign="middle">
 				<td><input class="btnbbcode" type="button" accesskey="b" name="addbbcode0" value=" B " style="font-weight:bold; width: 30px" onclick="bbstyle(0)" onmouseover="helpline('b')" /></td>
@@ -84,17 +84,17 @@ function checkForm()
 				</table></td>
 			</tr>
 			<tr>
-				<td colspan="9"><input class="helpline" type="text" name="helpbox" size="45" maxlength="100" value="{$L_STYLES_TIP}" /></td>
+				<td colspan="9"><input class="helpline" type="text" name="helpbox" size="45" maxlength="100" style="width:100%" value="{$L_STYLES_TIP}" /></td>
 			</tr>
 			<tr>
-				<td colspan="9"><textarea class="post" name="signature" rows="6" cols="60" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{$SIGNATURE}</textarea></td>
+				<td colspan="9"><textarea class="post" name="signature" rows="10" cols="70" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{$SIGNATURE}</textarea></td>
 			</tr>
 			<tr>
-				<td colspan="9"><table cellspacing="0" cellpadding="0" border="0">
+				<td colspan="9"><table cellspacing="0" cellpadding="0" border="0" width="100%">
 					<tr>
 						<td bgcolor="black"><script language="javascript" type="text/javascript"><!--
 
-						colorPalette('h', 14, 5)
+						colorPalette('h', 17, 5)
 
 						//--></script></td>
 					</tr>

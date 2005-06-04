@@ -17,16 +17,11 @@
 					<tr>
 						<td class="gen" align="center">{ if $USER_COLOR }<b style="color: #{$USER_COLOR}">{ else }<b>{ /if }{$USERNAME}</b></td>
 					</tr>
-					<tr>
-						<td align="center">{$KARMA_IMG}</td>
-					</tr>
-					{* doesn;t look good hopefully image is enought
 					{ if $RANK_TITLE }
 					<tr>
 						<td class="postdetails" align="center">{$RANK_TITLE}</td>
 					</tr>
 					{ /if }
-					*}
 					{ if $RANK_IMG }
 					<tr>
 						<td align="center">{$RANK_IMG}</td>
@@ -42,7 +37,7 @@
 					</tr>
 					{ if $S_USER_LOGGED_IN }
 					<tr>
-						<td class="genmed" align="center">[ <a href="{$U_ADD_FRIEND}">{$L_ADD_FRIEND}</a> ]</td>
+						<td class="genmed" align="center">[ <a href="{$U_ADD_FRIEND}">{$L_ADD_FRIEND}</a> | <a href="{$U_ADD_FOE}">{$L_ADD_FOE}</a> ]</td>
 					</tr>
 					{ /if }
 				</table></td>
@@ -123,12 +118,12 @@
 						<td class="gen" align="right" nowrap="nowrap">{$L_USERGROUPS}: </td>
 						<td><select name="g">{$S_GROUP_OPTIONS}</select> <input class="btnlite" type="submit" name="submit" value="{$L_GO}" /></td>
 					</tr>
-					{ if $LOCATION }
+					{* { if $LOCATION }
 					<tr> 
 						<td class="gen" align="right" nowrap="nowrap">{$L_LOCATION}: </td>
 						<td><b class="genmed">{$LOCATION}</b></td>
 					</tr>
-					{ /if }
+					{ /if } *}
 					{ if $OCCUPATION }
 					<tr> 
 						<td class="gen" align="right" nowrap="nowrap">{$L_OCCUPATION}: </td>
@@ -147,12 +142,19 @@
 						<td><b><a class="genmed" href="{$U_WWW}" target="_userwww">{$U_WWW}</a></b></td>
 					</tr>
 					{ /if }
-					{ if $S_PROFILE_FIELD_1 }
+				{*	{ if $S_PROFILE_FIELD1 }
+					<!-- Use a construct like this to include admin defined profile fields. Replace FIELD1 with the name of your field. -->
 					<tr>
-						<td class="gen" align="right" nowrap="nowrap">{$PROFILE_FIELD_1_NAME}: </td>
-						<td><b class="genmed">{$PROFILE_FIELD_1_VALUE}</b></td>
+						<td class="gen" align="right" nowrap="nowrap">{$PROFILE_FIELD1_NAME}: </td>
+						<td><b class="genmed">{$PROFILE_FIELD1_VALUE}</b></td>
 					</tr>
-					{ /if }
+					{ /if } *}
+					{* <!-- BEGIN custom_fields -->
+					<tr>
+						<td class="gen" align="right" nowrap="nowrap">{custom_fields.PROFILE_FIELD_NAME}: </td>
+						<td><b class="genmed">{custom_fields.PROFILE_FIELD_VALUE}</b></td>
+					</tr>
+					<!-- END custom_fields --> *}
 				</table></td>
 			</tr>
 			{ if $SIGNATURE}

@@ -15,16 +15,16 @@ class ucp_register extends module
 {
 	function ucp_register($id, $mode)
 	{
-		global $site_file_root, $config, $db, $_CLASS, $site_file_root, $SID, $_CORE_CONFIG, $mainindex, $phpEx;
+		global $site_file_root, $config, $_CLASS, $_CORE_CONFIG;
 		
-		$_CLASS['core_template']->assign('S_UCP_ACTION', getlink('Control_Panel&amp;mode=register'));
+		$_CLASS['core_template']->assign('S_UCP_ACTION', generate_link('Control_Panel&amp;mode=register'));
 		
 		if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_DISABLE)
 		{
 			trigger_error($_CLASS['core_user']->lang['UCP_REGISTER_DISABLE']);
 		}
 
-		require($site_file_root.'includes/forums/functions_profile_fields.' . $phpEx);
+		require($site_file_root.'includes/forums/functions_profile_fields.php');
 
 		// Do not alter this first one to use request_var!
 		$confirm_id = request_var('confirm_id', '');
@@ -32,7 +32,7 @@ class ucp_register extends module
 		$agreed		= (!empty($_POST['agreed'])) ? 1 : 0;
 		$submit		= (isset($_POST['submit'])) ? true : false;
 		$change_lang = request_var('change_lang', '');
-		$change_lang = (file_exists($site_file_root.'language/' . $change_lang . "/common.$phpEx")) ? $change_lang : '';
+		$change_lang = (file_exists($site_file_root.'language/' . $change_lang . '/common.php')) ? $change_lang : '';
 
 		if ($change_lang)
 		{
@@ -61,12 +61,12 @@ class ucp_register extends module
 					'L_COPPA_NO'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_BEFORE'], $coppa_birthday),
 					'L_COPPA_YES'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_ON_AFTER'], $coppa_birthday),
 
-					'U_COPPA_NO'		=> getlink('Control_Panel&amp;mode=register&amp;coppa=0'), 
-					'U_COPPA_YES'		=> getlink('Control_Panel&amp;mode=register&amp;coppa=1'), 
+					'U_COPPA_NO'		=> generate_link('Control_Panel&amp;mode=register&amp;coppa=0'), 
+					'U_COPPA_YES'		=> generate_link('Control_Panel&amp;mode=register&amp;coppa=1'), 
 					'L_REGISTRATION'	=> $_CLASS['core_user']->lang['REGISTRATION'],
 
 					'S_SHOW_COPPA'		=> true, 
-					'S_REGISTER_ACTION'	=> getlink('Control_Panel&amp;mode=register'))
+					'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register'))
 				);
 			}
 			else
@@ -74,7 +74,7 @@ class ucp_register extends module
 				$_CLASS['core_template']->assign(array(
 					'L_REGISTRATION'	=> $_CLASS['core_user']->lang['REGISTRATION'],
 					'S_SHOW_COPPA'		=> false, 
-					'S_REGISTER_ACTION'	=> getlink('Control_Panel&amp;mode=register'))
+					'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register'))
 				);
 			}
 			
@@ -156,11 +156,11 @@ class ucp_register extends module
 				{
 					$sql = 'SELECT code 
 						FROM ' . CONFIRM_TABLE . " 
-						WHERE confirm_id = '" . $db->sql_escape($confirm_id) . "' 
-							AND session_id = '" . $db->sql_escape($_CLASS['core_user']->session_id) . "'";
-					$result = $db->sql_query($sql);
+						WHERE confirm_id = '" . $_CLASS['core_db']->sql_escape($confirm_id) . "' 
+							AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
+					$result = $_CLASS['core_db']->sql_query($sql);
 		
-					if ($row = $db->sql_fetchrow($result))
+					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 					{
 						if ($row['code'] != $confirm_code)
 						{
@@ -170,9 +170,9 @@ class ucp_register extends module
 						else
 						{
 							$sql = 'DELETE FROM ' . CONFIRM_TABLE . " 
-								WHERE confirm_id = '" . $db->sql_escape($confirm_id) . "' 
-									AND session_id = '" . $db->sql_escape($_CLASS['core_user']->session_id) . "'";
-							$db->sql_query($sql);
+								WHERE confirm_id = '" . $_CLASS['core_db']->sql_escape($confirm_id) . "' 
+									AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
+							$_CLASS['core_db']->sql_query($sql);
 						}
 					}
 					else
@@ -180,7 +180,7 @@ class ucp_register extends module
 						$error[] = $_CLASS['core_user']->lang['CONFIRM_CODE_WRONG'];
 						$wrong_confirm = true;
 					}
-					$db->sql_freeresult($result);
+					$_CLASS['core_db']->sql_freeresult($result);
 				}
 			}
 
@@ -210,13 +210,13 @@ class ucp_register extends module
 					FROM ' . GROUPS_TABLE . " 
 					WHERE group_name = '$group_name'
 						AND group_type = " . GROUP_SPECIAL;
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
-				if (!($row = $db->sql_fetchrow($result)))
+				if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 				{
 					trigger_error($_CLASS['core_user']->lang['NO_GROUP']);
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				$group_id = $row['group_id'];
 
@@ -237,7 +237,7 @@ class ucp_register extends module
 				}
 		
 				// Begin transaction ... should this screw up we can rollback
-				$db->sql_transaction();
+				$_CLASS['core_db']->sql_transaction();
 		
 				$sql_ary = array(
 					'username'			=> $username, 
@@ -254,28 +254,28 @@ class ucp_register extends module
 					'user_regdate'		=> time(),
 				);
 
-				$sql = 'INSERT INTO ' . USERS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary);
-				$db->sql_query($sql);
+				$sql = 'INSERT INTO ' . USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
+				$_CLASS['core_db']->sql_query($sql);
 				
-				$user_id = $db->sql_nextid();
+				$user_id = $_CLASS['core_db']->sql_nextid();
 		
 				// Insert Custom Profile Fields
 				if (sizeof($cp_data))
 				{
 					$cp_data['user_id'] = (int) $user_id;
-					$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $cp->build_insert_sql_array($cp_data));
-					$db->sql_query($sql);
+					$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $cp->build_insert_sql_array($cp_data));
+					$_CLASS['core_db']->sql_query($sql);
 				}
 
 				// Place into appropriate group, either REGISTERED(_COPPA) or INACTIVE(_COPPA) depending on config
-				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $db->sql_build_array('INSERT', array(
+				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 					'user_id'		=> (int) $user_id,
 					'group_id'		=> (int) $group_id,
 					'user_pending'	=> 0)
 				);
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 
-				$db->sql_transaction('commit');
+				$_CLASS['core_db']->sql_transaction('commit');
 
 				if ($coppa && $_CORE_CONFIG['email']['email_enable'])
 				{
@@ -300,7 +300,7 @@ class ucp_register extends module
 
 				if ($_CORE_CONFIG['email']['email_enable'])
 				{
-					require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+					require_once($site_file_root.'includes/forums/functions_messenger.php');
 
 					$messenger = new messenger(false);
 
@@ -320,8 +320,8 @@ class ucp_register extends module
 						'USERNAME'		=> $username,
 						'PASSWORD'		=> $password_confirm,
 						'EMAIL_SIG'		=> str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']),
-						'U_ACTIVATE'	=> getlink("Control_Panel&amp;mode=activate&u=$user_id&k=$user_actkey", false, true, false))
-					);
+						'U_ACTIVATE'	=> generate_link("Control_Panel&amp;mode=activate&u=$user_id&k=$user_actkey", array('sid' => false, 'full' => true))
+					));
 
 					if ($coppa)
 					{
@@ -344,9 +344,9 @@ class ucp_register extends module
 						$sql = 'SELECT user_id, username, user_email, user_lang, user_jabber, user_notify_type
 							FROM ' . USERS_TABLE . ' 
 							WHERE user_id IN (' . implode(', ', $admin_ary[0]['a_user']) .')';
-						$result = $db->sql_query($sql);
+						$result = $_CLASS['core_db']->sql_query($sql);
 
-						while ($row = $db->sql_fetchrow($result))
+						while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 						{
 							$messenger->template('admin_activate', $row['user_lang']);
 							$messenger->replyto($config['board_contact']);
@@ -356,12 +356,12 @@ class ucp_register extends module
 							$messenger->assign_vars(array(
 								'USERNAME'		=> $username,
 								'EMAIL_SIG'		=> str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']),
-								'U_ACTIVATE'	=> getlink("Control_Panel&amp;mode=activate&u=$user_id&k=$user_actkey", false, true, false))
-							);
+								'U_ACTIVATE'	=> generate_link("Control_Panel&amp;mode=activate&u=$user_id&k=$user_actkey", array('sid' => false, 'full' => true))
+							));
 
 							$messenger->send($row['user_notify_type']);
 						}
-						$db->sql_freeresult($result);
+						$_CLASS['core_db']->sql_freeresult($result);
 					}
 				}
 
@@ -373,7 +373,7 @@ class ucp_register extends module
 				}
 				unset($data);
 
-				$message = $message . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="'.$mainindex.'">', '</a>');
+				$message = $message . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="'. generate_link() .'">', '</a>');
 				trigger_error($message);
 			}
 		}
@@ -382,6 +382,7 @@ class ucp_register extends module
 		$s_hidden_fields .= '<input type="hidden" name="change_lang" value="0" />';
 		
 		$confirm_image = '';
+		
 		// Visual Confirmation - Show images
 		if ($_CORE_CONFIG['user']['enable_confirm'])
 		{
@@ -389,49 +390,49 @@ class ucp_register extends module
 			{
 				$sql = 'SELECT session_id 
 					FROM ' . SESSIONS_TABLE; 
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 	
-				if ($row = $db->sql_fetchrow($result))
+				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					$sql_in = array();
 					do
 					{
-						$sql_in[] = "'" . $db->sql_escape($row['session_id']) . "'";
+						$sql_in[] = "'" . $_CLASS['core_db']->sql_escape($row['session_id']) . "'";
 					}
-					while ($row = $db->sql_fetchrow($result));
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 				
 					$sql = 'DELETE FROM ' .  CONFIRM_TABLE . ' 
 						WHERE session_id NOT IN (' . implode(', ', $sql_in) . ')';
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 	
 				$sql = 'SELECT COUNT(session_id) AS attempts 
 					FROM ' . CONFIRM_TABLE . " 
-					WHERE session_id = '" . $db->sql_escape($_CLASS['core_user']->session_id) . "'";
-				$result = $db->sql_query($sql);
+					WHERE session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
+				$result = $_CLASS['core_db']->sql_query($sql);
 	
-				if ($row = $db->sql_fetchrow($result))
+				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					if ($_CORE_CONFIG['user']['max_reg_attempts'] && $row['attempts'] >= $_CORE_CONFIG['user']['max_reg_attempts'])
 					{
 						trigger_error($_CLASS['core_user']->lang['TOO_MANY_REGISTERS']);
 					}
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 	
 				$code = gen_rand_string(6);
 				$confirm_id = md5(uniqid($_CLASS['core_user']->ip));
 	
-				$sql = 'INSERT INTO ' . CONFIRM_TABLE . ' ' . $db->sql_build_array('INSERT', array(
+				$sql = 'INSERT INTO ' . CONFIRM_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 					'confirm_id'	=> (string) $confirm_id,
-					'session_id'	=> (string) $_CLASS['core_user']->session_id,
+					'session_id'	=> (string) $_CLASS['core_user']->data['session_id'],
 					'code'			=> (string) $code)
 				);
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 			
-			$confirm_image = (@extension_loaded('zlib')) ? '<img src="'.getlink('Control_Panel&amp;mode=confirm&amp;id='.$confirm_id, false, false, false).'" alt="" title="" />' : '<img src="'.getlink("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=1").' alt="" title="" /><img src="'.getlink("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=2").' alt="" title="" /><img src="'.getlink("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=3").' alt="" title="" /><img src="'.getlink("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=4").' alt="" title="" /><img src="'.getlink("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=5").' alt="" title="" /><img src="'.getlink("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=6").' alt="" title="" />';
+			$confirm_image = (@extension_loaded('zlib')) ? '<img src="'.generate_link('Control_Panel&amp;mode=confirm&amp;id='.$confirm_id).'" alt="" title="" />' : '<img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=1").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=2").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=3").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=4").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=5").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=6").' alt="" title="" />';
 			$s_hidden_fields .= '<input type="hidden" name="confirm_id" value="' . $confirm_id . '" />';
 		}
 
@@ -486,7 +487,7 @@ class ucp_register extends module
 			'S_CONFIRM_CODE'	=> ($_CORE_CONFIG['user']['enable_confirm']) ? true : false,
 			'S_COPPA'			=> $coppa, 
 			'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
-			'S_UCP_ACTION'		=> getlink("Control_Panel&amp;mode=register"))
+			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;mode=register"))
 		);
 		
 		$_CLASS['core_user']->profile_fields = array();

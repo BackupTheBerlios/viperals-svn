@@ -1,12 +1,10 @@
 <div class="newsblock">
 	<div class="title" onclick="blockswitch2('{$NEWS_ID}');" style="cursor:pointer">{$NEWS_TITLE}
-		{ if $IS_ADMIN }[ {$NEWS_REMAIN} | {$NEWS_EDITLINK} ]{ /if }
 		</div>
-		<div class="content" { if $news[newsloop].COLLAPSE }style="display: none"{ /if } id="pe{$NEWS_ID}">{if $NEWS_FULL_STORY }{ $NEWS_FULL_STORY }{ else }{ $NEWS_INTRO }{ /if }
+		<div class="content">{if $NEWS_FULL_STORY }{ $NEWS_FULL_STORY }{ else }{ $NEWS_INTRO }{ /if }
 		<br /><br />
 
 		<hr />
-		
 		 <div style="text-align: left; margin-left: 60%">Posted: {$NEWS_TIME}<br/>
 		 { if $NEWS_POSTER_LINK }By: <a href="{ $NEWS_POSTER_LINK }">{$NEWS_POSTER} </a>{ else }By: {$NEWS_POSTER} { /if }</div></div>
 		<br />

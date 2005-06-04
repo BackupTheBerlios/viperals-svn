@@ -22,9 +22,9 @@ require($site_file_root.'core.php');
 if (!$mod)
 {
 	$_CLASS['core_display']->homepage = true;
-	
-} else {
-
+}
+else
+{
 	$path = "modules/$mod/".(($file) ? $file : 'index').'.php';
 }
 
@@ -54,11 +54,11 @@ if ($_CLASS['core_display']->homepage)
 	$_CORE_MODULE = $_CLASS['core_display']->get_module();
 	$path = 'modules/'.$_CORE_MODULE['name'].'/index.php';
 
-} else {
-
+}
+else
+{
 	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE name='".$_CLASS['core_db']->sql_escape($mod)."'");
 	$_CORE_MODULE = $_CLASS['core_db']->sql_fetchrow($result);
-
 }
 
 $_CLASS['core_db']->sql_freeresult($result);
@@ -74,12 +74,16 @@ if (!$_CORE_MODULE || !file_exists($path))
 		{
 			// display message inline
 			trigger_error('_NO_HOMEPAGE_ADMIN', E_USER_NOTICE);
-		} else {
+		}
+		else
+		{
 			// Maybe someone wants only messages and/or blocks !
 			$_CLASS['core_display']->display_head();
 			$_CLASS['core_display']->display_footer();
 		}
-	} else {
+	}
+	else
+	{
 		// Uncomment below for an embedded error
 		// $_CLASS['core_display']->display_head();
 		trigger_error('_PAGE_NOT_FOUND', E_USER_ERROR);
@@ -93,10 +97,10 @@ if (!$_CORE_MODULE['active'])
 }
 
 //Need to add a way off getting a text auth message for ( only when there is one group auth or registered user )
-//if (!$_CLASS['core_display']->homepage && !$_CLASS['core_auth']->auth($_CORE_MODULE['auth']))
-//{
-//	trigger_error('Not Auth!');
-//}
+if (!$_CLASS['core_display']->homepage && !$_CLASS['core_auth']->auth($_CORE_MODULE['auth']))
+{
+	trigger_error('Not Auth!');
+}
 
 /*
 if ($_CORE_MODULE['editor'] && $MAIN_CFG['global']['wysiwyg'] && $_CLASS['core_user']->data['wysiwyg'])

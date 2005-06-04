@@ -17,28 +17,28 @@ if (!defined('VIPERAL'))
     die();
 }
 
-global $prefix, $_CLASS, $bgcolor1, $bgcolor2, $MAIN_CFG;
+global $prefix, $_CLASS, $bgcolor1, $bgcolor2, $_CORE_CONFIG;
 
-$this->content = '<div style="width: 100%; height: '.$MAIN_CFG['Shoutblock']['height'].'px; overflow: auto;">';
+$this->content = '<div style="width: 100%; height: '.$_CORE_CONFIG['quick_message']['height'].'px; overflow: auto;">';
 
 $bgcolor = '';
 
-$result = $_CLASS['db']->sql_query('select * from '.$prefix.'_shoutblock order by time DESC LIMIT 10');
+$result = $_CLASS['core_db']->sql_query('select * from '.$prefix.'_quick_message order by time DESC LIMIT 10');
 
-while ($row = $_CLASS['db']->sql_fetchrow($result)) {
+while ($row = $_CLASS['core_db']->sql_fetchrow($result)) {
 
 	$bgcolor = ($bgcolor == $bgcolor1) ? $bgcolor2 : $bgcolor1;
 	
-	$wordsarray = explode(' ',$row['shout']);
-	$row['shout'] = '';
+	$wordsarray = explode(' ',$row['message']);
+	$row['message'] = '';
 
     foreach($wordsarray as $words)
     {
 		if (substr($words, 0,4) != '[url')
 		{
-			$row['shout'] .= ' '.wordwrap($words, 18, "\n", 1);
+			$row['message'] .= ' '.wordwrap($words, 18, "\n", 1);
 		} else {
-			$row['shout'] .= $words;
+			$row['message'] .= $words;
 		}
     }
 	
@@ -48,47 +48,45 @@ while ($row = $_CLASS['db']->sql_fetchrow($result)) {
 	{
 		if ($row['user_id']) 
 		{
-			$this->content .= '<a href="'.getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'"><b>' . $row['user_name'] . ': </b></a>
+			$this->content .= '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'"><b>' . $row['user_name'] . ': </b></a>
 			';
 		}  else {
 			$this->content .= '<b>' . $row['user_name'] . ': </b>
 			'; 
 		}
 	} else {
-		$this->content .= '<b>' . $_CLASS['user']->lang['ANONYMOUS'] . ': </b>
+		$this->content .= '<b>' . $_CLASS['core_user']->lang['ANONYMOUS'] . ': </b>
 		';
 	}
 	
 	if ($row['user_id'])
 	{
-		$row['shout'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['shout']);
+		$row['message'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['message']);
 	}
 	
-	$this->content .= $row['shout'].'<br />'.(($MAIN_CFG['Shoutblock']['time']) ? $_CLASS['user']->format_date($row['time']) : '').'</div>';
+	$this->content .= $row['message'].'<br />'.(($_CORE_CONFIG['quick_message']['time']) ? $_CLASS['core_user']->format_date($row['time']) : '').'</div>';
 }
 
-$_CLASS['db']->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
 $this->content .= '</div>';
 
-$this->content .= '<form name="post" method="post" action="'.getlink('Shoutblock&amp;mode=shout').'" enctype="multipart/form-data">'
-				.'		<div align="center"><a href="'.getlink('Shoutblock').'">Shout History</a><br />';
-if (!is_user()) 
+$this->content .= '<form name="post" method="post" action="'.generate_link('Quick_Message&amp;mode=add').'" enctype="multipart/form-data">'
+				.'		<div align="center"><a href="'.generate_link('Quick_Message').'">Message History</a><br />';
+if (!$_CLASS['core_user']->is_user) 
 {
-	if ( !$MAIN_CFG['Shoutblock']['allow_anonymous'] )
+	if ( !$_CORE_CONFIG['quick_message']['allow_anonymous'] )
 	{
-		$this->content .= 'Only Registered Users can Shout<br /><a href="'.getlink('Control_Panel&amp;mode=register').'">[ Register&nbsp;|&nbsp;</a><a href="'.getlink('Control_Panel').'">Login ]</a><br /></div>
+		$this->content .= 'Only registered users can post<br /><a href="'.generate_link('Control_Panel&amp;mode=register').'">[ Register&nbsp;|&nbsp;</a><a href="'.generate_link('Control_Panel').'">Login ]</a><br /></div>
 		';
 		return;
-	} elseif ( $MAIN_CFG['Shoutblock']['allow_anonymous'] == '2') {
+	} elseif ( $_CORE_CONFIG['quick_message']['allow_anonymous'] == '2') {
 		$this->content .= 'Name: <br /><input class="post" type="text" style="width:90%;" name="user_name" size="10" maxlength="10" /><br />';
 	}
 }
 
-//maxlength="'.$MAIN_CFG['Shoutblock']['maxlength'].'"
-
-$this->content .= 'Message <br/> <textarea name="shout" style="width:90%;" rows="3"></textarea><br /><br />
-			<input class="btnlite" type="submit" name="submit" value="Shout" />
+$this->content .= 'Message <br/> <textarea name="message" style="width:90%;" rows="3"></textarea><br /><br />
+			<input class="btnlite" type="submit" name="submit" value="Post" />
 		</div></form>
 		';
 

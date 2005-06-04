@@ -23,7 +23,8 @@ set_magic_quotes_runtime(0);
 error_reporting(E_ALL);
 //error_reporting(0);
 
-if (@ini_get('register_globals'))
+// what's an empty sting '' or ' ' ?
+if ((bool) ini_get('register_globals'))
 {
 	foreach ($_REQUEST as $var_name => $value)
 	{
@@ -57,7 +58,6 @@ require($site_file_root.'includes/session.php');
 $_CLASS['core_error_handler'] =& new core_error_handler;
 $_CLASS['core_error_handler']->start();
 //$_CLASS['core_error_handler']->stop();
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 $mod = get_variable('mod', 'REQUEST', false);
 $file = get_variable('file', 'REQUEST', 'index');
@@ -75,7 +75,7 @@ unset($sitedb);
 
 $_CLASS['core_cache'] =& new cache();
 
-// maybe add to script_close()
+// maybe add to register_shutdown_function()
 If ($_CORE_CONFIG['server']['optimize_rate'] && ($_CORE_CONFIG['server']['optimize_last'] + $_CORE_CONFIG['server']['optimize_rate']) < time())
 {
 	set_core_config('server', 'optimize_last', time());
@@ -83,7 +83,7 @@ If ($_CORE_CONFIG['server']['optimize_rate'] && ($_CORE_CONFIG['server']['optimi
 	//optimize_cache();
 }
 
-if (VIPERAL == 'MINILOAD')
+if (VIPERAL == 'FEED')
 {
 	if (check_maintance_status(true) === true || check_load_status(true) === true)
 	{
@@ -93,10 +93,10 @@ if (VIPERAL == 'MINILOAD')
 	return;
 }
 
+loadclass($site_file_root.'includes/auth/auth.php', 'core_auth');
 $_CLASS['core_user'] =& new user();
 
 $_CLASS['core_user']->startup();
-$_CLASS['core_user']->start();
 
 if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['global']['error'])
 {
@@ -107,7 +107,7 @@ else
 	$_CORE_CONFIG['global']['error'] = ERROR_NONE;
 	$_CLASS['core_error_handler']->report = ERROR_NONE;
 }
-
+	
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here
@@ -118,7 +118,7 @@ require_once($site_file_root.'includes/display/blocks.php');
 require_once($site_file_root.'includes/display/display.php');
 
 $themeprev = get_variable('prevtheme', 'REQUEST', false);
-$theme = $_CLASS['core_user']->get_data('theme');
+$theme = $_CLASS['core_user']->get_data('user_theme');
 
 if ($themeprev && ($themeprev != $theme) && check_theme($themeprev))
 {
@@ -126,12 +126,12 @@ if ($themeprev && ($themeprev != $theme) && check_theme($themeprev))
 	
 	if (!get_variable('prevtemp', 'REQUEST', false))
 	{
-		$_CLASS['core_user']->set_data('theme', $theme);
+		$_CLASS['core_user']->set_data('user_theme', $theme);
 	}
 }
 elseif (!$theme || !check_theme($theme))
 {
-	$theme = ($_CLASS['core_user']->data['theme']) ? $_CLASS['core_user']->data['theme'] : $_CORE_CONFIG['global']['default_theme'];     
+	$theme = ($_CLASS['core_user']->data['user_theme']) ? $_CLASS['core_user']->data['user_theme'] : $_CORE_CONFIG['global']['default_theme'];     
 
 	if (!check_theme($theme))
 	{
@@ -159,7 +159,6 @@ elseif (!$theme || !check_theme($theme))
 
 require($site_file_root.'themes/'.$theme.'/index.php');
 
-//loadclass(false, 'core_display');
 loadclass(false, 'core_display', 'theme_display');
 loadclass(false, 'core_blocks');
 

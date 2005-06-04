@@ -29,8 +29,8 @@
 
 function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 {
-	global $phpEx, $config;
-	global $_CLASS, $db;
+	global $config, $_CLASS;
+	
 	$_CLASS['core_template']->assign(array(
 		'L_DISPLAY_TOPICS'			=> $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
 		'L_SORT_BY'					=> $_CLASS['core_user']->lang['SORT_BY'],
@@ -88,7 +88,7 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 		}
 	}
 
-	make_jumpbox(getlink($url . "&amp;action=$action&amp;mode=$mode", $forum_id . (($action == 'merge_select') ? $selected_ids : ''), false, false), false, 'm_');
+	make_jumpbox(generate_link($url . "&amp;action=$action&amp;mode=$mode", $forum_id . (($action == 'merge_select') ? $selected_ids : '')), false, 'm_');
 
 	$topics_per_page = ($forum_info['forum_topics_per_page']) ? $forum_info['forum_topics_per_page'] : $config['topics_per_page'];
 
@@ -109,8 +109,8 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 		'S_CAN_SYNC'			=> $_CLASS['auth']->acl_get('m_', $forum_id),
 		'S_CAN_APPROVE'			=> $_CLASS['auth']->acl_get('m_approve', $forum_id),
 
-		'U_VIEW_FORUM'			=> getlink('Forums&amp;file=viewforum&amp;f=' . $forum_id),
-		'S_MCP_ACTION'			=> getlink($url . "&amp;action=$action&amp;mode=$mode&amp;start=$start" . (($action == 'merge_select') ? $selected_ids : ''), false, false),
+		'U_VIEW_FORUM'			=> generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id),
+		'S_MCP_ACTION'			=> generate_link($url . "&amp;action=$action&amp;mode=$mode&amp;start=$start" . (($action == 'merge_select') ? $selected_ids : '')),
 
 		'PAGINATION'			=> generate_pagination($url . "&amp;action=$action&amp;mode=$mode" . (($action == 'merge_select') ? $selected_ids : ''), $forum_topics, $topics_per_page, $start),
 		'PAGE_NUMBER'			=> on_page($forum_topics, $topics_per_page, $start),
@@ -130,13 +130,13 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 			AND t.topic_type IN (" . POST_ANNOUNCE . ", " . POST_GLOBAL . ")
 			$limit_time_sql
 		ORDER BY $sort_order_sql";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$topic_rows[] = $row;
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$sql = 'SELECT t.*
 		FROM ' . TOPICS_TABLE . " t
@@ -145,13 +145,13 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 			AND t.topic_type IN (' . POST_NORMAL . ', ' . POST_STICKY . ")
 			$limit_time_sql
 		ORDER BY t.topic_type DESC, $sort_order_sql";
-	$result = $db->sql_query_limit($sql, $topics_per_page, $start);
+	$result = $_CLASS['core_db']->sql_query_limit($sql, $topics_per_page, $start);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$topic_rows[] = $row;
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	foreach ($topic_rows as $row)
 	{
@@ -216,12 +216,12 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 		$topic_title = censor_text($row['topic_title']);
 			
 		$_CLASS['core_template']->assign_vars_array('topicrow', array(
-			'U_VIEW_TOPIC'		=> getlink("Forums&amp;file=mcp&amp;f=$forum_id&amp;t={$row['topic_id']}&amp;mode=topic_view", false, false),
+			'U_VIEW_TOPIC'		=> generate_link("Forums&amp;file=mcp&amp;f=$forum_id&amp;t={$row['topic_id']}&amp;mode=topic_view"),
 
 			'S_SELECT_TOPIC'	=> ($action == 'merge_select' && $row['topic_id'] != $topic_id) ? true : false,
-			'U_SELECT_TOPIC'	=> getlink($url . '&amp;mode=topic_view&amp;action=merge&amp;to_topic_id=' . $row['topic_id'] . $selected_ids, false, false),
-			'U_MCP_QUEUE'		=> getlink($url . '&amp;i=queue&amp;mode=approve_details&amp;t=' . $row['topic_id'], false, false),
-			'U_MCP_REPORT'		=> getlink("Forums&amp;file=mcp&amp;i=main&amp;mode=topic_view&amp;t={$row['topic_id']}&amp;action=reports", false, false),
+			'U_SELECT_TOPIC'	=> generate_link($url . '&amp;mode=topic_view&amp;action=merge&amp;to_topic_id=' . $row['topic_id'] . $selected_ids),
+			'U_MCP_QUEUE'		=> generate_link($url . '&amp;i=queue&amp;mode=approve_details&amp;t=' . $row['topic_id'], false, false),
+			'U_MCP_REPORT'		=> generate_link("Forums&amp;file=mcp&amp;i=main&amp;mode=topic_view&amp;t={$row['topic_id']}&amp;action=reports"),
 
 			'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $row['forum_id']) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 			'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
@@ -246,7 +246,7 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 
 function mcp_resync_topics($topic_ids)
 {
-	global $db, $phpEx, $_CLASS;
+	global $_CLASS;
 
 	if (!($forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', 'm_')))
 	{
@@ -267,10 +267,10 @@ function mcp_resync_topics($topic_ids)
 	$sql = 'SELECT topic_id, forum_id, topic_title
 		FROM ' . TOPICS_TABLE . '
 		WHERE topic_id IN (' . implode(', ', $topic_ids) . ')';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	// Log this action
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		add_log('mod', $row['forum_id'], $row['topic_id'], 'LOG_TOPIC_RESYNC', $row['topic_title']);
 	}

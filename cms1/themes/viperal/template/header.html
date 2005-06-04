@@ -10,34 +10,13 @@
 {$HEADER_REGULAR}
 {$HEADER_JS}
 <script type="text/javascript" src="/themes/viperal/blockscript.js"></script>
-
-<!--[if IE]>{ literal }
-<style>
-	.menu {
-		position:absolute;
-	}
-	.bodymain {
-	height:1500px;
-	}
-	.ThemeOfficeSubMenu
-	{
-		position:	absolute;
-	}
-	.ThemeOfficeMainItem
-	{
-	background-color: transparent;
-	}
-</style>
-<![endif]-->
-
-{ /literal }
 </head>
 <body>
 {$HEADER_BODY}
 
 <a name="Top"></a>
 
-<div class="menu"><div id="myMenuID" ></div></div>
+<div class="menu"></div>
 
 <div id="header">
 	<a href="{$THEME_MAININDEX}"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{$THEME_SITENAME}" /></a>
@@ -56,7 +35,9 @@
 		<div class="messageblock">
 	
 		{section name=messageblockloop loop=$messageblock}
-			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}{ if $messageblock[messageblockloop].EDIT }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }{$messageblock[messageblockloop].EDIT} ]{ /if }</div>
+			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}
+			{ if $messageblock[messageblockloop].EDIT_LINK }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }
+			<a href="{$messageblock[messageblockloop].EDIT_LINK}" >{$messageblock[messageblockloop].L_EDIT}</a> ]{ /if }</div>
 			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].ID}">{$messageblock[messageblockloop].CONTENT}</div>
 		<br />
 		{/section}

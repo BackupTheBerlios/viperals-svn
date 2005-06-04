@@ -14,12 +14,12 @@
 // Do we have general permissions?
 if (!$_CLASS['auth']->acl_get('a_bbcode'))
 {
-	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
+	trigger_error('NO_ADMIN');
 }
 
 // Set up general vars
-$mode = (!empty($_REQUEST['mode'])) ? $_REQUEST['mode'] : '';
-$bbcode_id = (!empty($_REQUEST['bbcode'])) ? intval($_REQUEST['bbcode']) : 0;
+$mode = request_var('mode', '');
+$bbcode_id = request_var('bbcode', 0);
 
 // Set up mode-specific vars
 switch ($mode)
@@ -32,11 +32,12 @@ switch ($mode)
 		$sql = 'SELECT bbcode_match, bbcode_tpl
 			FROM ' . BBCODES_TABLE . '
 			WHERE bbcode_id = ' . $bbcode_id;
-		$result = $db->sql_query($sql);
-		if (!$row = $db->sql_fetchrow($result))
+		$result = $_CLASS['core_db']->sql_query($sql);
+		if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			trigger_error('BBCODE_NOT_EXIST');
 		}
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$bbcode_match = $row['bbcode_match'];
 		$bbcode_tpl = htmlspecialchars($row['bbcode_tpl']);
@@ -46,11 +47,12 @@ switch ($mode)
 		$sql = 'SELECT bbcode_id
 			FROM ' . BBCODES_TABLE . '
 			WHERE bbcode_id = ' . $bbcode_id;
-		$result = $db->sql_query($sql);
-		if (!$row = $db->sql_fetchrow($result))
+		$result = $_CLASS['core_db']->sql_query($sql);
+		if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			trigger_error('BBCODE_NOT_EXIST');
 		}
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		// No break here
 
@@ -73,10 +75,10 @@ switch ($mode)
 
 <p><?php echo $_CLASS['core_user']->lang['BBCODES_EXPLAIN'] ?></p>
 
-<form method="post" action="<?php echo adminlink('forums&amp;file=admin_bbcodes&amp;mode=' . (($mode == 'add') ? 'create' : 'modify') . (($bbcode_id) ? "&amp;bbcode=$bbcode_id" : '')); ?>">
+<form method="post" action="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=' . (($mode == 'add') ? 'create' : 'modify') . (($bbcode_id) ? "&amp;bbcode=$bbcode_id" : ''), array('admin' => true)); ?>">
 <table cellspacing="1" cellpadding="0" border="0" align="center" width="90%">
 	<tr>
-		<td><table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th colspan="2"><?php echo $_CLASS['core_user']->lang['BBCODE_USAGE'] ?></th>
 			</tr>
@@ -95,7 +97,7 @@ switch ($mode)
 
 <table cellspacing="1" cellpadding="0" border="0" align="center" width="90%">
 	<tr>
-		<td><table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th colspan="2"><?php echo $_CLASS['core_user']->lang['HTML_REPLACEMENT'] ?></th>
 			</tr>
@@ -117,7 +119,7 @@ switch ($mode)
 
 <table cellspacing="1" cellpadding="0" border="0" align="center" width="90%">
 	<tr>
-		<td><table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th colspan="2"><?php echo $_CLASS['core_user']->lang['TOKENS'] ?></th>
 			</tr>
@@ -167,7 +169,7 @@ switch ($mode)
 
 		if ($mode == 'create')
 		{
-			// TODO: look for SQL incompatibilities
+			/* TODO: look for SQL incompatibilities
 			// NOTE: I'm sure there was another simpler (and obvious) way of finding a suitable bbcode_id
 			$sql = 'SELECT b1.bbcode_id
 				FROM ' . BBCODES_TABLE . ' b1, ' . BBCODES_TABLE . ' b2
@@ -175,9 +177,18 @@ switch ($mode)
 				GROUP BY b1.bbcode_id
 				HAVING MIN(b2.bbcode_id) > b1.bbcode_id + 1
 				ORDER BY b1.bbcode_id ASC';
-			$result = $db->sql_query_limit($sql, 1);
-
-			 if ($row = $db->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
+			*/
+			
+			$sql = 'SELECT MAX(bbcode_id) as bbcode_id
+				FROM ' . BBCODES_TABLE;
+			$result = $_CLASS['core_db']->sql_query($sql);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
+			
+			if ($row)
 			{
 				 $bbcode_id = $row['bbcode_id'] + 1;
 			}
@@ -185,8 +196,9 @@ switch ($mode)
 			{
 				$sql = 'SELECT MIN(bbcode_id) AS min_id, MAX(bbcode_id) AS max_id
 					FROM ' . BBCODES_TABLE;
-				$result = $db->sql_query($sql);
-				$row = $db->sql_fetchrow($result);
+				$result = $_CLASS['core_db']->sql_query($sql);
+				$row = $_CLASS['core_db']->sql_fetchrow($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				if (empty($row['min_id']) || $row['min_id'] >= NUM_CORE_BBCODES)
 				{
@@ -205,13 +217,13 @@ switch ($mode)
 
 			$sql_ary['bbcode_id'] = (int) $bbcode_id;
 
-			$db->sql_query('INSERT INTO ' . BBCODES_TABLE . $db->sql_build_array('INSERT', $sql_ary));
+			$_CLASS['core_db']->sql_query('INSERT INTO ' . BBCODES_TABLE . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 			$lang = 'BBCODE_ADDED';
 			$log_action = 'LOG_BBCODE_ADD';
 		}
 		else
 		{
-			$db->sql_query('UPDATE ' . BBCODES_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . ' WHERE bbcode_id = ' . $bbcode_id);
+			$_CLASS['core_db']->sql_query('UPDATE ' . BBCODES_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' WHERE bbcode_id = ' . $bbcode_id);
 			$lang = 'BBCODE_EDITED';
 			$log_action = 'LOG_BBCODE_EDIT';
 		}
@@ -225,13 +237,16 @@ switch ($mode)
 		$sql = 'SELECT bbcode_tag
 			FROM ' . BBCODES_TABLE . "
 			WHERE bbcode_id = $bbcode_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 		
-		if ($row = $db->sql_fetchrow($result))
+		if ($row)
 		{
-			$db->sql_query('DELETE FROM ' . BBCODES_TABLE . " WHERE bbcode_id = $bbcode_id");
+			$_CLASS['core_db']->sql_query('DELETE FROM ' . BBCODES_TABLE . " WHERE bbcode_id = $bbcode_id");
 			add_log('admin', 'LOG_BBCODE_DELETE', $row['bbcode_tag']);
 		}
+		
 
 		// No break here
 
@@ -246,9 +261,9 @@ switch ($mode)
 <p><?php echo $_CLASS['core_user']->lang['BBCODES_EXPLAIN'] ?></p>
 
 
-<form method="post" action="<?php echo adminlink('forums&amp;file=admin_bbcodes&amp;mode=add'); ?>"><table cellspacing="1" cellpadding="0" border="0" align="center">
+<form method="post" action="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=add', array('admin' => true)); ?>"><table cellspacing="1" cellpadding="0" border="0" align="center">
 	<tr>
-		<td><table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th><?php echo $_CLASS['core_user']->lang['BBCODE_TAG'] ?></th>
 				<th><?php echo $_CLASS['core_user']->lang['ACTION'] ?></th>
@@ -257,20 +272,20 @@ switch ($mode)
 		$sql = 'SELECT *
 			FROM ' . BBCODES_TABLE . '
 			ORDER BY bbcode_id';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
 		$row_class = '';
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$row_class = ($row_class == 'row1') ? 'row2' : 'row1';
 ?>
 			<tr>
 				<td class="<?php echo $row_class ?>" align="center"><?php echo $row['bbcode_tag'] ?></td>
-				<td class="<?php echo $row_class ?>" align="center"><a href="<?php echo adminlink('forums&amp;file=admin_bbcodes&amp;mode=edit&amp;bbcode='.$row['bbcode_id']); ?>"><?php echo $_CLASS['core_user']->lang['EDIT'] ?></a> | <a href="<?php echo adminlink('forums&amp;file=admin_bbcodes&amp;mode=delete&amp;bbcode='.$row['bbcode_id']) ?>"><?php echo $_CLASS['core_user']->lang['DELETE'] ?></a></td>
+				<td class="<?php echo $row_class ?>" align="center"><a href="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=edit&amp;bbcode='.$row['bbcode_id'], array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['EDIT'] ?></a> | <a href="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=delete&amp;bbcode='.$row['bbcode_id'], array('admin' => true)) ?>"><?php echo $_CLASS['core_user']->lang['DELETE'] ?></a></td>
 			</tr>
 <?php
 		}
-
+		$_CLASS['core_db']->sql_freeresult($result);
 ?>
 
 			<tr>
@@ -303,7 +318,7 @@ function build_regexp($msg_bbcode, $msg_html)
 
 	$tokens = array(
 		'URL'	 => array(
-			'!([a-z0-9]+://)?(.*?[^ \t\n\r<"]*)!ise'	=>	"(('\$1') ? '\$1\$2' : 'http://\$2')"
+			'!([a-z0-9]+://)?([^?].*?[^ \t\n\r<"]*)!ie'		=>	"(('\$1') ? '\$1\$2' : 'http://\$2')"
 		),
 		'LOCAL_URL'	 => array(
 			'!([^:]+/[^ \t\n\r<"]*)!'	=>	'$1'

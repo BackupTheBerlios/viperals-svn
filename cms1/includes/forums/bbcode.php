@@ -216,19 +216,18 @@ class bbcode
 
 		if ($sql)
 		{
-			global $db;
 			$rowset = array();
 
 			$sql = 'SELECT *
 				FROM ' . BBCODES_TABLE . "
 				WHERE bbcode_id IN ($sql)";
 
-			$result = $db->sql_query($sql);
-			while ($row = $db->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->sql_query($sql);
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$rowset[$row['bbcode_id']] = $row;
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 		}
 
 		foreach ($bbcode_ids as $bbcode_id)

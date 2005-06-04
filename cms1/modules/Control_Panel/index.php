@@ -35,8 +35,8 @@ if (!defined('VIPERAL')) {
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['core_user']->add_lang();
 $_CLASS['core_user']->add_img(0, 'Forums');
@@ -52,7 +52,7 @@ if ($mode == 'login' || $mode == 'logout')
 	define('IN_LOGIN', true);
 }
 
-require($site_file_root.'includes/forums/functions_user.'.$phpEx);
+require($site_file_root.'includes/forums/functions_user.php');
 
 //define the undefineds
 $_CLASS['core_template']->assign(array(
@@ -124,7 +124,7 @@ class module
 			$_CLASS['core_template']->assign_vars_array($module_type . '_section', array(
 				'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
 				'S_SELECTED'	=> $selected, 
-				'U_TITLE'		=> getlink($module_url . '&amp;i=' . $row['module_id']))
+				'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $row['module_id']))
 			);
 
 			if ($selected)
@@ -170,7 +170,7 @@ class module
 						$_CLASS['core_template']->assign_vars_array("{$module_type}_subsection", array(
 							'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : $module_lang,
 							'S_SELECTED'	=> $selected, 
-							'U_TITLE'		=> getlink($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title)
+							'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title)
 						));
 
 						if ($selected)
@@ -201,7 +201,7 @@ class module
 
 	function load($type = false, $name = false, $mode = false, $run = true)
 	{
-		global $phpbb_root_path, $phpEx;
+		global $phpbb_root_path;
 
 		if ($type)
 		{
@@ -215,7 +215,7 @@ class module
 
 		if (!class_exists($this->type . '_' . $this->name))
 		{
-			require_once("{$this->type}/{$this->type}_{$this->name}.$phpEx");
+			require_once("{$this->type}/{$this->type}_{$this->name}.php");
 
 			if ($run)
 			{
@@ -316,17 +316,12 @@ switch ($mode)
 
 	case 'login':
 	
-		if ($_CLASS['core_user']->is_user)
+		if ($_CLASS['core_user']->is_user || $_CLASS['core_user']->is_bot)
 		{
-			redirect($mainindex);
+			redirect(generate_link());
 		}
-		if ($_CLASS['core_user']->is_bot)
-		{
-//error no access
-			redirect($mainindex);
-		}
-		
-		login_box(getlink());
+
+		login_box();
 
 		break;
 
@@ -336,9 +331,9 @@ switch ($mode)
 			$_CLASS['core_user']->destroy();
 		}
 
-		$_CLASS['core_display']->meta_refresh(3, getlink('',false,false,false));
+		$_CLASS['core_display']->meta_refresh(3, generate_link());
 
-		$message = $_CLASS['core_user']->lang['LOGOUT_REDIRECT'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . getlink() . '">', '</a> ');
+		$message = $_CLASS['core_user']->lang['LOGOUT_REDIRECT'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . generate_link() . '">', '</a> ');
 		trigger_error($message);
 		break;
 		
@@ -368,7 +363,7 @@ switch ($mode)
 			// We destroy the session here, the user will be logged out nevertheless
 			$_CLASS['core_user']->destroy();
 
-			$_CLASS['core_display']->meta_refresh(3, getlink('',false,false,false));
+			$_CLASS['core_display']->meta_refresh(3, generate_link());
 
 			$message = $_CLASS['core_user']->lang['COOKIES_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'], '<a href="'.$mainindex.'">', '</a>');
 			trigger_error($message);
@@ -413,7 +408,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	$which = (time() - $update_time < $row['online_time']) ? 'online' : 'offline';
 
 	$_CLASS['core_template']->assign_vars_array("friends_{$which}", array(
-		'U_PROFILE'	=> getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
+		'U_PROFILE'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 		
 		'USER_ID'	=> $row['user_id'],
 		'USERNAME'	=> $row['username'])
@@ -445,7 +440,7 @@ if ($mode == 'compose' && request_var('action', '') != 'edit')
 		'S_SHOW_PM_BOX'		=> true,
 		'S_ALLOW_MASS_PM'	=> ($config['allow_mass_pm']),
 		'S_GROUP_OPTIONS'	=> ($config['allow_mass_pm']) ? $group_options : '',
-		'U_SEARCH_USER'		=> getlink('Members_List&amp;mode=searchuser&amp;form=post&amp;field=username_list'),
+		'U_SEARCH_USER'		=> generate_link('Members_List&amp;mode=searchuser&amp;form=post&amp;field=username_list'),
 		'L_FIND_USERNAME'	=> $_CLASS['core_user']->lang['FIND_USERNAME'])
 
 	);

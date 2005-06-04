@@ -12,10 +12,12 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+//print_r(apache_request_headers());
 
 /* to do
 options interface
 add bottom messages
+look at rss again :-|
 */
 
 class core_blocks
@@ -92,7 +94,7 @@ class core_blocks
 //remove $this->blocks_loaded
 		$this->blocks_loaded = true;
 				
-		$option_array = array('title','position', 'content', 'file' , 'time' ,'expires', 'id',	'auth',	'type', 'options');
+		$option_array = array('title','position', 'content', 'file' , 'modules', 'time' ,'expires', 'id',	'auth',	'type', 'options');
 		
 		foreach($option_array as $option)
 		{
@@ -128,12 +130,12 @@ class core_blocks
 		
 		foreach($this->blocks_array[$position] as $this->block)
 		{
-			//auth check and language check here.
-			/*if (!$_CLASS['core_user']->admin_auth('blocks') && !$_CLASS['core_user']->auth($this->block['auth']))
+			if ($this->block['auth'] && !$_CLASS['core_auth']->admin_auth('blocks') && !$_CLASS['core_auth']->auth($this->block['auth']))
 			{
 				continue;
-			}*/
+			}
 			
+//language check here.
 			if ($this->block['expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['expires']))
 			{
 				$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires > 0 AND expires <='.$_CLASS['core_user']->time);
@@ -152,7 +154,6 @@ class core_blocks
 			if ($this->block['modules'])
 			{
 				$this->block['modules'] = unserialize($this->block['modules']);
-				
 // Homepage needs it's own value
 				if (!in_array($_CORE_MODULE['title'], $this->block['modules']))
 				{
@@ -224,23 +225,26 @@ class core_blocks
 			
 			if (!$this->content && !$this->template)
 			{
-				//if ($_CLASS['core_user']->admin_auth('blocks'))
-				//{
-				//	$this->content = ($this->info) ? $this->info : $_CLASS['core_user']->lang['BLOCK_ERROR2'];
-				//} else {
+				if ($_CLASS['core_auth']->admin_auth('blocks'))
+				{
+					$this->content = '<center><strong>'.(($this->info) ? $this->info : $_CLASS['core_user']->lang['BLOCK_ERROR2']).'</strong></center>';
+				}
+				else
+				{
 					return;
-				//}
+				}
 			}
-
-		} else {
-		
-			//if ($_CLASS['core_user']->admin_auth('blocks'))
-		//	{
-			//	$this->content = $_CLASS['core_user']->lang['BLOCK_ERROR1'];
-		//	} else {
+		}
+		else
+		{
+			if ($_CLASS['core_auth']->admin_auth('blocks'))
+			{
+				$this->content = '<center><strong>'.$_CLASS['core_user']->lang['BLOCK_ERROR1'].'</strong></center>';
+			}
+			else
+			{
 				return;
-		//	}
-			
+			}		
 		}
 
 		/*
@@ -271,15 +275,17 @@ class core_blocks
 			return;
 		}
 		
-		/*if ($_CLASS['core_user']->admin_auth('messages'))
+		if ($_CLASS['core_auth']->admin_auth('messages'))
 		{
 			$expires = ($this->block['expires']) ? $_CLASS['core_user']->lang['EXPIRES'].' '.$_CLASS['core_user']->format_date($this->block['expires']) : false;
 			$edit_link = generate_link('messages&amp;mode=edit&amp;id='.$this->block['id'], array('admin' => true));
 		
-		} else {*/
+		}
+		else
+		{
 		
 			$edit_link = $expires = false;
-		//}
+		}
 		
 		$_CLASS['core_template']->assign_vars_array('messageblock', array(
 				//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
@@ -328,7 +334,6 @@ class core_blocks
 		global $site_file_root, $_CLASS;
 // think about disabling the block automatically if there's url problems
 // update core_rss file
-
 		if ($this->block['content'] && $this->block['options']['rss_expires'] > time())
 		{
 			$this->content = $this->block['content'];
@@ -367,7 +372,7 @@ class core_blocks
 			
 			while ($data = $_CLASS['core_rss']->get_rss_data())
 			{
-				$this->content .= '<strong><big>&middot;</big></strong> <a href="'.$data['link'].'" target="new">'.$data['title'].'</a><br />';
+				$this->content .= '<a href="'.$data['link'].'" target="new">'.$data['title'].'</a><hr width="30%"/>';
 			}
 			
 			if (!empty($_CLASS['core_rss']->rss_info['link']))
@@ -392,7 +397,12 @@ class core_blocks
 			$_CLASS['core_cache']->destroy('blocks');
 		}
 		
-		$this->block_side();
+		if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
+		{
+			$this->block_side();
+		} else {
+			$this->block_center();
+		}
 	}
 	
 	function block_center()

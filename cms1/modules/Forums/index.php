@@ -27,14 +27,14 @@ if (!defined('VIPERAL')) {
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->add_img();
 
-require($site_file_root.'includes/forums/functions_display.' . $phpEx);
+require($site_file_root.'includes/forums/functions_display.php');
 display_forums('', $config['load_moderators']);
 
 // Set some stats, get posts count from forums data if we... hum... retrieve all forums data
@@ -51,15 +51,16 @@ $l_total_topic_s = ($total_topics == 0) ? 'TOTAL_TOPICS_ZERO' : 'TOTAL_TOPICS_OT
 // Grab group details for legend display
 $sql = 'SELECT group_id, group_name, group_colour, group_type
 	FROM ' . GROUPS_TABLE . ' 
-	WHERE group_legend = 1';
-$result = $db->sql_query($sql);
+	WHERE group_legend = 1
+		AND group_type <> ' . GROUP_HIDDEN;
+$result = $_CLASS['core_db']->sql_query($sql);
 
 $legend = '';
-while ($row = $db->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
-$db->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
 
 // Generate birthday list if required ...
@@ -71,9 +72,9 @@ if ($config['load_birthdays'])
 		FROM ' . USERS_TABLE . " 
 		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now['mday'], $now['mon']) . "%'
 			AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$user_colour = ($row['user_colour']) ? ' style="color:#' . $row['user_colour'] .'"' : '';
 		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
@@ -83,7 +84,7 @@ if ($config['load_birthdays'])
 			$birthday_list .= ' (' . ($now['year'] - $age) . ')';
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 }
 
 /// lets assign those language that are needed///

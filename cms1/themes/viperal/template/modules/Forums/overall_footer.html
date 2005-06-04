@@ -1,4 +1,4 @@
-<!--
+{*
 	We request you retain the full copyright notice below including the link to www.phpbb.com.
 	This not only gives respect to the large amount of time given freely by the developers
 	but also helps build interest, traffic and use of phpBB2. If you (honestly) cannot retain
@@ -7,14 +7,11 @@
 	forums may be affected.
 
 	The phpBB Group : 2003
-// -->
+*}
+{* { $RUN_CRON_TASK } *}
+<br /><div style="text-align: center;" class="copyright">
+{ if $U_ACP }<span class="gensmall">[ <a href="{ $U_ACP }">{ $L_ACP }</a> ]</span><br /><br />{ /if }
+Powered by <a href="http://www.phpbb.com/" target="_phpbb">phpBB</a> &copy; 2002, 2005 phpBB Group
+<br />{$TRANSLATION_INFO}</div>
 
-<div id="wrapfooter">
-
-{* { if $U_ACP }<span class="gensmall">[ <a href="{$U_ACP}">{$L_ACP}</a> ]</span><br /><br />{ /if } *}
-
-<br /><span class="copyright">Powered by <a href="http://www.phpbb.com/" target="_phpbb">phpBB</a> {$PHPBB_VERSION} &copy; 2002, 2003 phpBB Group
-<br />{$TRANSLATION_INFO}</span>
-
-</div>
 {php} CloseTable(); {/php}

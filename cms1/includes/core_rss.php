@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -11,16 +13,10 @@
 //																//
 //**************************************************************//
 // Add channel support, rss_data[channel][item][item_branch]
-//$rss = new core_rss;
-//$rss->get_rss('http://rss.cpgnuke.com/news.php');
-//Yes yes i still love you :-)
-//print_r($rss->rss_data);
-//print_r($rss->rss_info);
-
+// currect channel info
 
 class core_rss
 {
-
 	var $rss_data = array();
 	var $rss_expire;
 	var $rss_other_data;
@@ -37,7 +33,7 @@ class core_rss
 		if ($data_Value)
 		{
 			@eval('$data_Value='.$data_Value.';');
-			
+
 			if (is_array($data_Value) && ($data_Value['expire'] == 0 || $data_Value['expire'] > time()))
 			{
 				
@@ -56,16 +52,16 @@ class core_rss
 		{
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	function get_rss_data_raw($expire = 0)
 	{
 		global $_CLASS;
 		
 		$expire = time() + $expire;
-		return $_CLASS['core_cache']->format_array(array('data' => $this->rss_data, 'expire' => $expire, 'rss_other_data' => $this->rss_other_data));
+		return array('data' => $this->rss_data, 'expire' => $expire, 'rss_other_data' => $this->rss_other_data);
 	}
 	
 	function get_rss_data($line = false)
@@ -81,9 +77,13 @@ class core_rss
 		return array_shift($this->rss_data);
 	}
 	
+	
+	
 	function get_rss_array($url, $items_limit = 10, $loop = 1)
 	{
-		if ($loop == 5)
+// add support for other schemes "ftp https"
+		// return on 3rd try, if any
+		if ($loop == 3)
 		{
 			return false;
 		}
@@ -91,87 +91,94 @@ class core_rss
 		$loop++;
 		$this->items_limit = $items_limit - 1;
 		
-		$parsed_url = array('host' => '', 'path' => '/', 'port' => 80, 'query' => '');
+		$parsed_url = array('host' => '', 'path' => '/', 'port' => 80, 'query' => '', 'user' => false, 'pass' => false);
 		$parsed_url = array_merge($parsed_url, parse_url($url));
 
 		if (!$parsed_url['host'])
 		{
 			return false;
 		}
-		
-		
+
 		if ($this->fp = fsockopen($parsed_url['host'], $parsed_url['port'], $errno, $errstr, 15))
 		{
-			fputs($this->fp, 'GET '.$parsed_url['path'].$parsed_url['query']." HTTP/1.0\r\n");
-			fputs($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
+			fwrite($this->fp, 'GET '.$parsed_url['path'].$parsed_url['query']." HTTP/1.0\r\n");
+			fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
 			
-			/*if (extension_loaded('zlib'))
+			if (extension_loaded('zlib'))
 			{
-				fputs($this->fp, "Accept-Encoding: gzip;q=0.9\r\n");
-			}*/
-		
-			fputs($this->fp, "HOST: $parsed_url[host]\r\n\r\n");
+				fwrite($this->fp, "Accept-Encoding: gzip;\r\n");
+			}
 			
-			$data = rtrim(fgets($this->fp, 300));
-			
-			preg_match('#.* ([0-9]+) (.*)#i', $data, $head);
-			// 301 = Moved Permanently, 302 = Found, 307 = Temporary Redirect
-			if ($head[1] == 301 || $head[1] == 307)
+			if (!empty($parsed_url['user']))
 			{
+				fwrite($this->fp, 'Authorization: BASIC '.base64_encode($parsed_url['user'].':'.$parsed_url['pass'])."\r\n");
+			}
 			
-				while (!empty($data))
+			if ($this->send_cookie && is_array($this->send_cookie))
+			{
+				$cookie = '';
+				// wonder if this really works :-)
+				foreach ($this->send_cookie as $name => $value)
 				{
-					$data = rtrim(fgets($this->fp, 300)); // read lines
-					if (ereg('Location: ', $data))
+					$cookie .= "$name=$value;\r\n";
+				}
+				fwrite($this->fp, "Cookie: $cookie");
+			}
+
+			fwrite($this->fp, 'HOST: '.$parsed_url['host']."\r\n\r\n");
+
+			$data = strtolower(trim(fgets($this->fp, 300)));
+
+			if (strpos($data, '200') === false)
+			{
+				if (strpos($data, '301') === true || strpos($data, '301') === true)
+				{
+					while (!empty($data))
 					{
-						$new_url = trim(eregi_replace('Location: ', '', $data));
-						
-						$this->Close_connection();
-					
-						if ($new_url != $url)
+						$data = strtolower(trim(fgets($this->fp, 300)));
+						// needs some work
+						if (strpos('location:', $data) == true)
 						{
-							return $this->get_rss_array($new_url, $items_limit, $loop);
-						}
+							$new_url = trim(eregi_replace('location:', '', $data));
+							
+							$this->Close_connection();
 						
-						return false;
+							if ($new_url != $url)
+							{
+								return $this->get_rss_array($new_url, $items_limit, $loop);
+							}
+							return false;
+						}
 					}
 				}
-				
-				$this->Close_connection();
-				
-				return false;
-				
-			} elseif ($head[1] != 200) {
-			
+
 				$this->Close_connection();
 				return false;
 			}
-			
-			$file['utf8'] = $compressed = false;
+
+			$compressed = false;
 		
-			// Get Headers
 			while (!empty($data))
 			{
-				$data = strtolower(rtrim(fgets($this->fp, 300))); // read lines
+				//echo $data.'<br/>';
+				$data = strtolower(trim(fgets($this->fp, 300)));
 				
-				// May need a better way than this
-				if (strpos($data, 'content-type:') !== false && strpos($data, 'text/xml') === false)
+				if (strpos($data, 'content-type') !== false && strpos($data, 'xml') === false)
 				{
-					$this->Close_connection();					
+					$this->Close_connection();
+					$this->error = 'Document type is invalid';
 					return false;
 				}
 				
-				if (strpos($data, 'last-modified:') !== false)
+				if (strpos($data, 'last-modified') !== false)
 				{
-					// Check the last mod. date, so maybe we can just update the db update time.
-					// echo trim(eregi_replace('Last-Modified: ', '', $data));
+					//
 				}
-					//	if (eregi('Content-Encoding: gzip', $data) || eregi('Content-Encoding: x-gzip', $data))
-		
-				/*if (strpos($data, 'content-encoding:') !== false && strpos($data, 'gzip') !== false)
+
+				if (strpos($data, 'content-encoding') !== false && strpos($data, 'gzip') !== false)
 				{
 					$compressed = true;
-				}*/
+				}
 			}
 	
 			$this->rss_parser = xml_parser_create();
@@ -187,42 +194,44 @@ class core_rss
 			$this->rss_expire = 0;
 			$this->rss_info = array();
 		
+			$data = '';
+
 			while(!feof($this->fp))
 			{
-				//$data = fread($this->fp, 1024);
-				if ($this->item > $this->items_limit)
+				$data .= fread($this->fp, 1024);
+				
+				/*if ($this->item > $this->items_limit)
 				{
 					break;
-				}
-				
-				$status = xml_parse($this->rss_parser, fread($this->fp, 1024), false);
-				
-				if (!$status)
-				{
-					$this->Close_connection();
-					return false;
-					/*&$errorcode = xml_get_error_code( $this->parser );
-					if ( $errorcode != XML_ERROR_NONE )
-					{
-						$xml_error = xml_error_string( $errorcode );
-						$error_line = xml_get_current_line_number($this->parser);
-						$error_col = xml_get_current_column_number($this->parser);
-						$errormsg = "$xml_error at line $error_line, column $error_col";
-	
-						$this->error( $errormsg );
-					}*/
-				}
+				}*/
+				//$status = xml_parse($this->rss_parser, fread($this->fp, 1024), false);
 			}
 			
-			/*if ($compressed)
+			if ($compressed)
 			{
-				$data = gzinflate(substr($data,10,-4));
-			}*/
+				$data = gzinflate(substr($data,10));
+			}
 
+			$status = xml_parse($this->rss_parser, $data, true);
+			
+			if (!$status)
+			{
+				$error_code = xml_get_error_code($this->parser);
+				
+				if ($error_code != XML_ERROR_NONE) // XML_ERROR_NO_MEMORY
+				{
+					$error_string = xml_error_string($error_code);
+					$error_line = xml_get_current_line_number($this->parser);
+					$error_col = xml_get_current_column_number($this->parser);
+
+					$this->error = "$error_string at line $error_line, column $error_col";
+				}
+			}
+				
 			xml_parser_free($this->rss_parser);
 			
 			$this->Close_connection();
-			return true;
+			return ($this->error) false : true;
 		}
 	}
 		
@@ -322,7 +331,7 @@ class core_rss
 	
 	function Close_connection()
 	{
-			fputs($this->fp,"Connection: close\r\n\r\n");
+			fwrite($this->fp, "Connection: close\r\n\r\n");
 			fclose($this->fp);
 	}
 }

@@ -24,7 +24,7 @@ $this->content = '
 		<select name="prevtheme">
 '.theme_select().'
 		</select>
-		<br /><br /><input class="btnlite" name="" value="Select" type="submit" />
+		<br /><br /><input class="btnlite" value="Select" type="submit" />
 	</form>
 </div>
 ';

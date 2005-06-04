@@ -15,7 +15,7 @@ class ucp_main extends module
 {
 	function ucp_main($id, $mode)
 	{
-		global $config, $_CLASS, $phpEx, $site_file_root, $_CORE_CONFIG;
+		global $config, $_CLASS, $site_file_root, $_CORE_CONFIG;
 
 		$_CLASS['core_template']->assign(array(
 			'ERROR' => false,
@@ -136,7 +136,7 @@ class ucp_main extends module
 						$unread_topic = false;
 					}
 
-					$newest_post_img = ($unread_topic) ? '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
+					$newest_post_img = ($unread_topic) ? '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 					$folder_img = ($unread_topic) ? $folder_new : $folder;
 					$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
 
@@ -146,11 +146,11 @@ class ucp_main extends module
 						$folder_img .= '_posted';
 					}
 
-					$view_topic_url = getlink("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id");
+					$view_topic_url = generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id");
 
-					$last_post_img = '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
+					$last_post_img = '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
 
-					$last_post_author = ($row['topic_last_poster_id'] == ANONYMOUS) ? (($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] . ' ' : $_CLASS['core_user']->lang['GUEST'] . ' ') : '<a href="'.getlink('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) . '">' . $row['topic_last_poster_name'] . '</a>';
+					$last_post_author = ($row['topic_last_poster_id'] == ANONYMOUS) ? (($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] . ' ' : $_CLASS['core_user']->lang['GUEST'] . ' ') : '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) . '">' . $row['topic_last_poster_name'] . '</a>';
 
 					$_CLASS['core_template']->assign_vars_array('topicrow', array(
 						'FORUM_ID' 			=> $forum_id,
@@ -261,7 +261,6 @@ class ucp_main extends module
 
 				$_CLASS['core_template']->assign(array(
 					'USER_COLOR'		=> (!empty($_CLASS['core_user']->data['user_colour'])) ? $_CLASS['core_user']->data['user_colour'] : '', 
-					'KARMA'				=> ($config['enable_karma']) ? $_CLASS['core_user']->lang['KARMA'][$_CLASS['core_user']->data['user_karma']] : '', 
 					'JOINED'			=> $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
 					'VISITED'			=> (empty($last_visit)) ? ' - ' : $_CLASS['core_user']->format_date($last_visit, $_CLASS['core_user']->lang['DATE_FORMAT']),
 					'POSTS'				=> ($_CLASS['core_user']->data['user_posts']) ? $_CLASS['core_user']->data['user_posts'] : 0,
@@ -277,22 +276,20 @@ class ucp_main extends module
 					'OCCUPATION'	=> (!empty($row['user_occ'])) ? $row['user_occ'] : '',
 					'INTERESTS'		=> (!empty($row['user_interests'])) ? $row['user_interests'] : '',
 
-					'KARMA_IMG'			=> ($config['enable_karma']) ? $_CLASS['core_user']->img('karma_center', $_CLASS['core_user']->lang['KARMA'][$_CLASS['core_user']->data['user_karma']], false, (int) $_CLASS['core_user']->data['user_karma']) : '', 
 					'L_YOUR_WARNINGS'	=> $_CLASS['core_user']->lang['YOUR_WARNINGS'],
-					'L_YOUR_KARMA'		=> $_CLASS['core_user']->lang['YOUR_KARMA'],
 
 //					'S_GROUP_OPTIONS'	=> $group_options, 
 
-					'U_SEARCH_USER'		=> ($_CLASS['auth']->acl_get('u_search')) ? getlink('Forums&amp;file=search&amp;search_author=' . urlencode($_CLASS['core_user']->data['username']) . "&amp;show_results=posts") : '',  
-					'U_ACTIVE_FORUM'	=> getlink('Forums&amp;file=viewforum&amp;f='.$active_f_id),
-					'U_ACTIVE_TOPIC'	=> getlink('Forums&amp;file=viewtopic&amp;t='.$active_t_id))
+					'U_SEARCH_USER'		=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($_CLASS['core_user']->data['username']) . "&amp;show_results=posts") : '',  
+					'U_ACTIVE_FORUM'	=> generate_link('Forums&amp;file=viewforum&amp;f='.$active_f_id),
+					'U_ACTIVE_TOPIC'	=> generate_link('Forums&amp;file=viewtopic&amp;t='.$active_t_id))
 				);
 
 				break;
 
 			case 'subscribed':
 
-				require($site_file_root.'includes/forums/functions_display.' . $phpEx);
+				require($site_file_root.'includes/forums/functions_display.php');
 				//$_CLASS['core_user']->add_lang('viewforum');
 
 				$unwatch = (isset($_POST['unwatch'])) ? true : false;
@@ -325,9 +322,9 @@ class ucp_main extends module
 							$l_unwatch .= '_TOPICS';
 						}
 
-						$message = $_CLASS['core_user']->lang['UNWATCHED' . $l_unwatch] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel&amp;i=$id&amp;mode=subscribed").'">', '</a>');
+						$message = $_CLASS['core_user']->lang['UNWATCHED' . $l_unwatch] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'. generate_link("Control_Panel&amp;i=$id&amp;mode=subscribed").'">', '</a>');
 						
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&amp;i=$id&amp;mode=subscribed"));
+						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=subscribed"));
 						trigger_error($message);
 					}
 				}
@@ -391,9 +388,9 @@ class ucp_main extends module
 						$last_post_time = $_CLASS['core_user']->format_date($row['forum_last_post_time']);
 
 						$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'];
-						$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
+						$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
 
-						$last_post_url = getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['forum_last_post_id'] . '#' . $row['forum_last_post_id']);
+						$last_post_url = generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['forum_last_post_id'] . '#' . $row['forum_last_post_id']);
 					}
 					else
 					{
@@ -410,7 +407,7 @@ class ucp_main extends module
 						
 						'U_LAST_POST_AUTHOR'=> $last_poster_url, 
 						'U_LAST_POST'		=> $last_post_url, 
-						'U_VIEWFORUM'		=> getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']))
+						'U_VIEWFORUM'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']))
 					);
 				}
 				$_CLASS['core_db']->sql_freeresult($result);
@@ -456,7 +453,7 @@ class ucp_main extends module
 					
 					if ($config['load_db_lastread'])
 					{
-						$mark_time_topic = (is_user()) ? $row['mark_time'] : 0;
+						$mark_time_topic = $row['mark_time'];
 						$mark_time_forum = $row['forum_mark_time'];
 					}
 					else
@@ -479,8 +476,7 @@ class ucp_main extends module
 					// Get folder img, topic status/type related informations
 					$folder_img = $folder_alt = $topic_type = '';
 					$unread_topic = topic_status($row, $replies, $mark_time_topic, $mark_time_forum, $folder_img, $folder_alt, $topic_type);
-					
-					$newest_post_img = ($unread_topic) ? '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread", false, false, false).'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
+					$newest_post_img = ($unread_topic) ? '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread".(($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : '').'#unread', array('sid' => false)).'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 					$view_topic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id";
 
@@ -508,9 +504,9 @@ class ucp_main extends module
 						'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false,
 						'S_UNREAD_TOPIC'		=> $unread_topic,
 
-						'U_LAST_POST'		=> getlink($view_topic_url .  '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false, false, false),
-						'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
-						'U_VIEW_TOPIC'		=> getlink($view_topic_url))
+						'U_LAST_POST'		=> generate_link($view_topic_url .  '&amp;p=' . $row['topic_last_post_id'] . (($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : ''). '#' . $row['topic_last_post_id']),
+						'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+						'U_VIEW_TOPIC'		=> generate_link($view_topic_url))
 					);
 					
 				}
@@ -528,7 +524,7 @@ class ucp_main extends module
 					$_CLASS['core_template']->assign('S_NO_DISPLAY_BOOKMARKS' , false);
 				}
 				
-				require($site_file_root.'includes/forums/functions_display.' . $phpEx);
+				require($site_file_root.'includes/forums/functions_display.php');
 				//$_CLASS['core_user']->add_lang('viewforum');
 
 				$move_up = request_var('move_up', 0);
@@ -559,7 +555,7 @@ class ucp_main extends module
 				{
 					$s_hidden_fields = '<input type="hidden" name="unbookmark" value="1" />';
 					$topics = (isset($_POST['t'])) ? array_map('intval', array_keys($_POST['t'])) : array();
-					$url = getlink('Control_Panel&amp;i=main&amp;mode=bookmarks');
+					$url = generate_link('Control_Panel&amp;i=main&amp;mode=bookmarks');
 					
 					if (empty($topics))
 					{
@@ -627,8 +623,8 @@ class ucp_main extends module
 					$folder_img = $folder_alt = $topic_type = '';
 					$unread_topic = topic_status($row, $replies, time(), time(), $folder_img, $folder_alt, $topic_type);
 
-					$view_topic_url = getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id");
-//					$last_post_img = '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
+					$view_topic_url = generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id");
+//					$last_post_img = '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
 
 					$_CLASS['core_template']->assign_vars_array('forummarks', array(
 						'FORUM_ID' 			=> $forum_id,
@@ -651,9 +647,9 @@ class ucp_main extends module
 						'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', '') : '',
 
 						'U_VIEW_TOPIC'		=> $view_topic_url,
-						'U_VIEW_FORUM'		=> getlink('Forums&amp;file=viewforum&amp;f='.$forum_id),
-						'U_MOVE_UP'			=> ($row['order_id'] != 1) ? getlink("Control_Panel&amp;i=main&amp;mode=bookmarks&amp;move_up={$row['order_id']}") : '',
-						'U_MOVE_DOWN'		=> ($row['order_id'] != $max_order_id) ? getlink("Control_Panel&amp;i=main&amp;mode=bookmarks&amp;move_down={$row['order_id']}") : '')
+						'U_VIEW_FORUM'		=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id),
+						'U_MOVE_UP'			=> ($row['order_id'] != 1) ? generate_link("Control_Panel&amp;i=main&amp;mode=bookmarks&amp;move_up={$row['order_id']}") : '',
+						'U_MOVE_DOWN'		=> ($row['order_id'] != $max_order_id) ? generate_link("Control_Panel&amp;i=main&amp;mode=bookmarks&amp;move_down={$row['order_id']}") : '')
 					);
 				}
 				
@@ -691,9 +687,9 @@ class ucp_main extends module
 								AND user_id = " .$_CLASS['core_user']->data['user_id'];
 						$_CLASS['core_db']->sql_query($sql);
 
-						$message = $_CLASS['core_user']->lang['DRAFTS_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$message = $_CLASS['core_user']->lang['DRAFTS_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&amp;i=$id&amp;mode=$mode"));
+						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
 						trigger_error($message);
 					}
 				}
@@ -717,9 +713,9 @@ class ucp_main extends module
 								AND user_id = " . $_CLASS['core_user']->data['user_id'];
 						$_CLASS['core_db']->sql_query($sql);
 
-						$message = $_CLASS['core_user']->lang['DRAFT_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$message = $_CLASS['core_user']->lang['DRAFT_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&amp;i=$id&amp;mode=$mode"));
+						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
 						trigger_error($message);
 					}
 					else
@@ -785,23 +781,23 @@ class ucp_main extends module
 					if ($pm_drafts)
 					{
 						$link_pm = true;
-						$insert_url = getlink("Control_Panel&amp;i=$id&amp;mode=compose&amp;d=" . $draft['draft_id']);
+						$insert_url = generate_link("Control_Panel&amp;i=$id&amp;mode=compose&amp;d=" . $draft['draft_id']);
 					}
 					else if (isset($topic_rows[$draft['topic_id']]) && $_CLASS['auth']->acl_get('f_read', $topic_rows[$draft['topic_id']]['forum_id']))
 					{
 						$link_topic = true;
-						$view_url = getlink('Forums&amp;file=viewtopic&amp;f=' . $topic_rows[$draft['topic_id']]['forum_id'] . "&amp;t=" . $draft['topic_id']);
+						$view_url = generate_link('Forums&amp;file=viewtopic&amp;f=' . $topic_rows[$draft['topic_id']]['forum_id'] . "&amp;t=" . $draft['topic_id']);
 						$title = $topic_rows[$draft['topic_id']]['topic_title'];
 
-						$insert_url = getlink('Forums&amp;file=posting&amp;f=' . $topic_rows[$draft['topic_id']]['forum_id'] . '&amp;t=' . $draft['topic_id'] . '&amp;mode=reply&amp;d=' . $draft['draft_id']);
+						$insert_url = generate_link('Forums&amp;file=posting&amp;f=' . $topic_rows[$draft['topic_id']]['forum_id'] . '&amp;t=' . $draft['topic_id'] . '&amp;mode=reply&amp;d=' . $draft['draft_id']);
 					}
 					else if ($_CLASS['auth']->acl_get('f_read', $draft['forum_id']))
 					{
 						$link_forum = true;
-						$view_url = getlink('Forums&amp;file=viewforum&amp;f=' . $draft['forum_id']);
+						$view_url = generate_link('Forums&amp;file=viewforum&amp;f=' . $draft['forum_id']);
 						$title = $draft['forum_name'];
 
-						$insert_url = getlink('Forums&amp;file=posting&amp;f=' . $draft['forum_id'] . '&amp;mode=post&amp;d=' . $draft['draft_id']);
+						$insert_url = generate_link('Forums&amp;file=posting&amp;f=' . $draft['forum_id'] . '&amp;mode=post&amp;d=' . $draft['draft_id']);
 					}
 						
 					$template_row = array(
@@ -829,7 +825,7 @@ class ucp_main extends module
 						'L_CLOSE_TAGS'		=> $_CLASS['core_user']->lang['CLOSE_TAGS'],
 
 						'U_VIEW'			=> $view_url,
-						'U_VIEW_EDIT'		=> getlink("Control_Panel&amp;i=$id&amp;mode=$mode&amp;edit=" . $draft['draft_id']),
+						'U_VIEW_EDIT'		=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode&amp;edit=" . $draft['draft_id']),
 						'U_INSERT'			=> $insert_url,
 
 						'S_LINK_TOPIC'		=> $link_topic,
@@ -857,7 +853,7 @@ class ucp_main extends module
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_MAIN_' . strtoupper($mode)],
 			'S_DISPLAY_MARK_ALL'		=> ($mode == 'watched' || ($mode == 'drafts' && !isset($_GET['edit']))) ? true : false, 
 			'S_HIDDEN_FIELDS'			=> (isset($s_hidden_fields)) ? $s_hidden_fields : '',
-			'S_UCP_ACTION'				=> getlink("Control_Panel&amp;i=$id&amp;mode=$mode"),
+			'S_UCP_ACTION'				=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"),
 			'L_UCP' 					=> $_CLASS['core_user']->lang['UCP'],
 			'L_UCP_WELCOME' 			=> $_CLASS['core_user']->lang['UCP_WELCOME'],
 			'L_IMPORTANT_NEWS'	 		=> $_CLASS['core_user']->lang['IMPORTANT_NEWS'],

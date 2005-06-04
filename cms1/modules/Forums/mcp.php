@@ -30,9 +30,9 @@ if (!defined('VIPERAL'))
 }
 
 
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+require_once($site_file_root.'includes/forums/functions_admin.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
@@ -184,7 +184,7 @@ class module
 
 	function load($type = false, $name = false, $mode = false, $run = true)
 	{
-		global $phpEx, $site_file_root;
+		global $site_file_root;
 
 		if ($type)
 		{
@@ -198,7 +198,7 @@ class module
 
 		if (!class_exists($this->type . '_' . $this->name))
 		{
-			require($site_file_root."includes/forums/{$this->type}/{$this->type}_{$this->name}.$phpEx");
+			require($site_file_root."includes/forums/{$this->type}/{$this->type}_{$this->name}.php");
 
 			if ($run)
 			{
@@ -316,14 +316,14 @@ $_CLASS['core_user']->add_img();
 $_CLASS['core_user']->add_lang('mcp');
 
 // Only Moderators can go beyond this point
-if (!$_CLASS['core_user']->data['is_registered'])
+if (!$_CLASS['core_user']->is_user)
 {
-	if ($_CLASS['core_user']->data['is_bot'])
+	if ($_CLASS['core_user']->is_bot)
 	{
 		redirect(generate_link('Forums'));
 	}
 	
-	login_box('', $_CLASS['core_user']->lang['LOGIN_EXPLAIN_MCP']);
+	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_EXPLAIN_MCP']));
 }
 
 $mcp = new module();
@@ -429,7 +429,7 @@ if (!$quickmod)
 	}
 	
 	// Instantiate module system and generate list of available modules
-	$mcp->create('mcp', 'Forums&amp;file=mcp'.$SID, $post_id, $topic_id, $forum_id, $module, $mode);
+	$mcp->create('mcp', 'Forums&amp;file=mcp', $post_id, $topic_id, $forum_id, $module, $mode);
 
 	// Load and execute the relevant module
 	$mcp->load('mcp', false, $mode);

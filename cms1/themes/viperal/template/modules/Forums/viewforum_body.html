@@ -5,9 +5,10 @@
 	{ if $S_FORUM_RULES }
 	<div class="forumrules">
 		{ if $U_FORUM_RULES }
-			<a href="{$U_FORUM_RULES}">{$L_FORUM_RULES}</a>
+			<h3 style="color:red">{ $L_FORUM_RULES }</h3><br />
+			<a href="{ $U_FORUM_RULES }"><b>{ $L_FORUM_RULES_LINK }</b></a>
 		{ else }
-			<h3 style="color:red">{$L_FORUM_RULES}</h3><br />
+			<h3 style="color:red">{ $L_FORUM_RULES }</h3><br />
 			{$FORUM_RULES}
 		{ /if }
 	</div>
@@ -37,7 +38,7 @@
 		<tr>
 			<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
 			{ if $S_TOPIC_ICONS }
-			<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_ICON_IMG}</td>
+			<td class="row1" width="25" align="center"><img src="{ $T_ICONS_PATH }{ $topicrow[topicrowloop].TOPIC_ICON_IMG }" width="{ $topicrow[topicrowloop].TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow[topicrowloop].TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /></td>
 			{ /if }
 			<td class="row1">
 				{ if $topicrow[topicrowloop].S_TOPIC_UNAPPROVED }
@@ -160,7 +161,7 @@
 			<tr>
 				<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
 				{ if $S_TOPIC_ICONS }
-				<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_ICON_IMG}</td>
+				<td class="row1" width="25" align="center"><img src="{ $T_ICONS_PATH }{ $topicrow[topicrowloop].TOPIC_ICON_IMG }" width="{ $topicrow[topicrowloop].TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow[topicrowloop].TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /></td>
 				{ /if }
 				<td class="row1">
 					{ if $topicrow[topicrowloop].S_TOPIC_UNAPPROVED }

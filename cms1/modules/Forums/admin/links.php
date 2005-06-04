@@ -18,23 +18,28 @@ $module['USER']['BOTS'] 					= ($_CLASS['auth']->acl_get('a_server')) ? generate
 $module['USER']['MANAGE_USERS']				= ($_CLASS['auth']->acl_gets('a_user', 'a_useradd', 'a_userdel')) ? generate_link('Forums&amp;file=admin_users', array('admin' => true)) : '';
 $module['USER']['RANKS']					= ($_CLASS['auth']->acl_get('a_ranks')) ? generate_link('Forums&amp;file=admin_ranks', array('admin' => true)) : '';
 $module['USER']['GROUP_MANAGE'] 			= ($_CLASS['auth']->acl_get('a_group')) ? generate_link('Forums&amp;file=admin_groups&amp;mode=manage', array('admin' => true)) : '';
+$module['USER']['DISALLOW']					= ($_CLASS['auth']->acl_get('a_names')) ? generate_link('Forums&amp;file=admin_disallow', array('admin' => true)) : '';
 
 $module['FORUM']['MANAGE']					= ($_CLASS['auth']->acl_gets('a_forum', 'a_forumadd', 'a_forumdel')) ? generate_link('Forums&amp;file=admin_forums', array('admin' => true)) : false;
+$module['FORUM']['PRUNE']   				= ($_CLASS['auth']->acl_get('a_prune')) ? generate_link('Forums&amp;file=admin_prune&amp;mode=forums', array('admin' => true)) : false;
 
 $module['GENERAL']['AUTH_SETTINGS']			= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_board&amp;mode=auth', array('admin' => true)) : '';
 $module['GENERAL']['AVATAR_SETTINGS']		= ($_CLASS['auth']->acl_get('a_board')) ? generate_link('Forums&amp;file=admin_board&amp;mode=avatar', array('admin' => true)) : '';
 $module['GENERAL']['BOARD_DEFAULTS']		= ($_CLASS['auth']->acl_get('a_defaults')) ? generate_link('Forums&amp;file=admin_board&amp;mode=default', array('admin' => true)) : '';
 $module['GENERAL']['BOARD_SETTINGS']		= ($_CLASS['auth']->acl_get('a_board')) ? generate_link('Forums&amp;file=admin_board&amp;mode=setting', array('admin' => true)) : '';
-$module['GENERAL']['COOKIE_SETTINGS']		= ($_CLASS['auth']->acl_get('a_cookies')) ? generate_link('Forums&amp;file=admin_board&amp;mode=cookie', array('admin' => true)) : '';
 $module['GENERAL']['EMAIL_SETTINGS']		= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_board&amp;mode=email', array('admin' => true)) : '';
 $module['GENERAL']['LOAD_SETTINGS']			= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_board&amp;mode=load', array('admin' => true)) : '';
 $module['GENERAL']['SERVER_SETTINGS']		= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_board&amp;mode=server', array('admin' => true)) : '';
 $module['GENERAL']['MESSAGE_SETTINGS']		= ($_CLASS['auth']->acl_get('a_defaults')) ? generate_link('Forums&amp;file=admin_board&amp;mode=message', array('admin' => true)) : '';
 $module['GENERAL']['ATTACHMENT_SETTINGS'] 	= ($_CLASS['auth']->acl_get('a_attach')) ? generate_link('Forums&amp;file=admin_attachments&amp;mode=attach', array('admin' => true)) : '';
+$module['GENERAL']['IM'] 					= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_jabber', array('admin' => true)) : '';
+$module['GENERAL']['PHP_INFO'] 				= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_phpinfo', array('admin' => true)) : '';
+$module['GENERAL']['MASS_EMAIL']			= ($_CLASS['auth']->acl_get('a_email')) ? generate_link('Forums&amp;file=admin_email', array('admin' => true)) : '';
 
 $module['POST']['ATTACHMENTS'] 				= ($_CLASS['auth']->acl_get('a_attach')) ? generate_link('Forums&amp;file=admin_attachments&amp;mode=ext_groups', array('admin' => true)) : '';
-$module['POST']['BBCODES']					= ($_CLASS['auth']->acl_get('a_bbcode')) ? generate_link('Forums&amp;file=admin_bbcodes', array('admin' => true)) : false;
-
+$module['POST']['BBCODES']					= ($_CLASS['auth']->acl_get('a_bbcode')) ? generate_link('Forums&amp;file=admin_bbcodes', array('admin' => true)) : '';
+$module['POST']['SMILIES']					= ($_CLASS['auth']->acl_get('a_icons')) ? generate_link('Forums&amp;file=admin_icons&amp;mode=smilies', array('admin' => true)) : '';
+$module['POST']['ICONS']					= ($_CLASS['auth']->acl_get('a_icons')) ? generate_link('Forums&amp;file=admin_icons&amp;mode=icons', array('admin' => true)) : '';
 
 $module['PERM']['PERMISSIONS']				= ($_CLASS['auth']->acl_get('a_auth')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=forum', array('admin' => true)) : '';
 $module['PERM']['MODERATORS'] 				= ($_CLASS['auth']->acl_get('a_authmods')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=mod', array('admin' => true)) : '';

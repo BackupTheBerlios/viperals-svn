@@ -11,14 +11,13 @@
 //
 // -------------------------------------------------------------
 
-// Load default header
-include('includes/forums/functions_user.'.$phpEx);
-
 // Do we have ban permissions?
 if (!$auth->acl_get('a_ban'))
 {
 	trigger_error($user->lang['NO_ADMIN']);
 }
+
+include('includes/forums/functions_user.'.$phpEx);
 
 // Mode setting
 $mode		= request_var('mode', '');

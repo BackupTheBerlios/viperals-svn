@@ -36,7 +36,7 @@ function recommend($sender_name, $sender_email, $receiver_name='', $receiver_ema
 		'IP'					=> $_CLASS['core_user']->ip,
 		'ERROR' 				=> $error,
 		'MESSAGE' 				=> $message,
-		'ACTION' 				=> getlink($_CORE_MODULE['name']),
+		'ACTION' 				=> generate_link($_CORE_MODULE['name']),
 		'RECEIVER_EMAIL' 		=> $receiver_email,
 		'RECEIVER_NAME' 		=> $receiver_name,
 		'SENDER_EMAIL' 			=> $sender_email,
@@ -55,7 +55,7 @@ function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_e
 	global $_CLASS, $_CORE_CONFIG;
 	
 	$mail_message = '<center>Hi '.$receiver_name.' <br /><br /> '.$sender_name.' has recommended you look at this site.'
-				.'<br /><br /><a href="'.$_CORE_CONFIG['global']['siteurl'].'">'.$_CORE_CONFIG['global']['sitename'].' - '.$_CORE_CONFIG['global']['siteurl'].'</a>';
+				.'<br /><br /><a href="'.$_CORE_CONFIG['global']['site_url'].'">'.$_CORE_CONFIG['global']['site_name'].' - '.$_CORE_CONFIG['global']['siteurl'].'</a>';
 	
 	if ($message)
 	{
@@ -83,7 +83,7 @@ function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_e
 	
 		$message = $_CLASS['core_user']->lang['MESSAGE_PROBLEM'];
 			
-		if (is_admin())
+		if ($_CLASS['core_user']->is_admin)
 		{
 			$message .= '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
 		}
@@ -133,7 +133,7 @@ if (isset($_POST['recommend']) || isset($_POST['preview']))
 	
 } else {
 
-	if (is_user())
+	if ($_CLASS['core_user']->is_user)
 	{
 		$sender_name = $_CLASS['core_user']->data['username'];
 		$sender_email = $_CLASS['core_user']->data['user_email'];

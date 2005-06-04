@@ -4,7 +4,7 @@
 { literal }
 <script language="javascript" type="text/javascript">
 <!--
-function emoticon(text) {
+function smiley(text) {
 	text = ' ' + text + ' ';
 
 	if (opener.document.forms['post'].message.createTextRange && opener.document.forms['post'].message.caretPos) {
@@ -23,11 +23,12 @@ function emoticon(text) {
 	<tr>
 		<td><table class="tablebg" width="95%" cellspacing="1" cellpadding="4" border="0">
 			<tr>
-				<th height="28">{$L_EMOTICONS}</th>
+				<th height="28">{L_SMILIES}</th>
 			</tr>
 			<tr>
 				<td class="row1" align="center" valign="middle">
-				{section name=emoticonloop loop=$emoticon} <a href="javascript:emoticon('{$emoticon[emoticonloop].SMILEY_CODE}')"><img src="{$emoticon[emoticonloop].SMILEY_IMG}" width="{$emoticon[emoticonloop].SMILEY_WIDTH}" height="{$emoticon[emoticonloop].SMILEY_HEIGHT}" border="0" alt="{$emoticon[emoticonloop].SMILEY_DESC}" title="{$emoticon[emoticonloop].SMILEY_DESC}" hspace="2" vspace="2" onclick="emoticon('{$emoticon[emoticonloop].SMILEY_CODE}');return false" /></a> { /section }<br /><a class="nav" href="javascript:window.close();">{$L_CLOSE_WINDOW}</a></td>
+				{section name=smiley_loop loop=$smiley} <a href="javascript:smiley('{$smiley[smiley_loop].SMILEY_CODE}')"><img src="{$smiley[smiley_loop].SMILEY_IMG}" width="{$smiley[smiley_loop].SMILEY_WIDTH}" height="{$smiley[smiley_loop].SMILEY_HEIGHT}" border="0" alt="{$smiley[smiley_loop].SMILEY_DESC}" title="{$smiley[smiley_loop].SMILEY_DESC}" hspace="2" vspace="2" onclick="smiley('{$smiley[smiley_loop].SMILEY_CODE}');return false" /></a> { /section }<br /><a class="nav" href="javascript:window.close();">{ $L_CLOSE_WINDOW }</a>
+				</td>
 			</tr>
 		</table></td>
 	</tr>

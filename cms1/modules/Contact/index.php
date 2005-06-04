@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal©	)								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -19,7 +21,7 @@ if (!defined('VIPERAL'))
 
 $_CLASS['core_user']->add_lang();
 
-$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['FEEDBACK_TITLE']);
+$_CLASS['core_display']->display_header($_CLASS['core_user']->lang['FEEDBACK_TITLE']);
 
 function feedback($sender_name, $sender_email, $message='', $error = false)
 {
@@ -49,20 +51,20 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 	global $_CLASS, $_CORE_CONFIG;
 
         $mail_message = '<br />' .$message . '<br /><br />
-        <center>Message Sent from '. $_CORE_CONFIG['global']['siteurl'] .'<br>
+        <center>Message Sent from '. $_CORE_CONFIG['global']['site_url'] .'<br>
         '. $_CLASS['core_user']->lang['SENT_BY'] . ': ' . $sender_name . '<br />
         '. $_CLASS['core_user']->lang['SENDER_EMAIL'] . ': '. $sender_email . '<br />
         '.	$_CLASS['core_user']->lang['WITH_IP'] . $_CLASS['core_user']->ip . '<br /></center>';
         
         if (!$preview)
         {
-			if (is_admin() && $send_to ) {
+			if ($_CLASS['core_user']->is_admin && $send_to ) {
 				$to = $send_to;
 			} else {
 				$to = $_CORE_CONFIG['global']['admin_mail'];        
 			}
 		
-			$subject = $_CORE_CONFIG['global']['sitename'] . $_CLASS['core_user']->lang['FEEDBACK'];
+			$subject = $_CORE_CONFIG['global']['site_name'] . $_CLASS['core_user']->lang['FEEDBACK'];
           
 			if (send_mail($mailer_message, $mail_message, true, $subject, $to,  $to_name='', $sender_email, $sender_name))
 			{

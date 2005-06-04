@@ -1,40 +1,20 @@
 <?php
-// -------------------------------------------------------------
-//
-// $Id: admin_icons.php,v 1.11 2003/10/19 15:26:14 acydburn Exp $
-//
-// FILENAME  : admin_icons.php 
-// STARTED   : Thu Mar 13, 2003
-// COPYRIGHT : © 2001, 2003 phpBB Group
-// WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
-// 
-// -------------------------------------------------------------
+/** 
+*
+* @package acp
+* @version $Id: admin_icons.php,v 1.14 2005/04/30 14:12:20 acydburn Exp $
+* @copyright (c) 2005 phpBB Group 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*
+*/
 
-if (!empty($setmodules))
-{
-	if (!$auth->acl_get('a_icons'))
-	{
-		return;
-	}
-
-	$filename = basename(__FILE__);
-	$module['POST']['SMILE'] = "$filename$SID&amp;mode=emoticons";
-	$module['POST']['ICONS'] = "$filename$SID&amp;mode=icons";
-
-	return;
-}
-
-define('IN_PHPBB', 1);
-// Include files
-$phpbb_root_path = './../';
-$phpEx = substr(strrchr(__FILE__, '.'), 1);
-require('pagestart.' . $phpEx);
+/**
+*/
 
 // Do we have general permissions?
-if (!$auth->acl_get('a_icons'))
+if (!$_CLASS['auth']->acl_get('a_icons'))
 {
-	trigger_error($user->lang['NO_ADMIN']);
+	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 }
 
 // Grab some basic parameters
@@ -47,10 +27,10 @@ $id = request_var('id', 0);
 // What are we working on?
 switch ($mode)
 {
-	case 'emoticons':
+	case 'smilies':
 		$table = SMILIES_TABLE;
-		$lang = 'SMILE';
-		$fields = 'smile';
+		$lang = 'SMILIES';
+		$fields = 'smiley';
 		$img_path = $config['smilies_path'];
 		break;
 
@@ -70,13 +50,13 @@ $notice = '';
 // Grab file list of paks and images
 if ($action == 'edit' || $action == 'add' || $action == 'import')
 {
-	$imglist = filelist($phpbb_root_path . $img_path, '');
+	$imglist = filelist($img_path, '');
 	
 	foreach ($imglist as $path => $img_ary)
 	{
 		foreach ($img_ary as $img)
 		{
-			$img_size = @getimagesize($phpbb_root_path . $img_path . '/' . $path . $img);
+			$img_size = @getimagesize($img_path . '/' . $path . $img);
 
 			$_images[$path.$img]['file'] = $path.$img;
 			$_images[$path.$img]['width'] = $img_size[0];
@@ -85,10 +65,10 @@ if ($action == 'edit' || $action == 'add' || $action == 'import')
 	}
 	unset($imglist);
 
-	$dir = @opendir($phpbb_root_path . $img_path);
+	$dir = @opendir($img_path);
 	while ($file = @readdir($dir))
 	{
-		if (is_file($phpbb_root_path . $img_path . '/' . $file) && preg_match('#\.pak$#i', $file))
+		if (is_file($img_path . '/' . $file) && preg_match('#\.pak$#i', $file))
 		{
 			$_paks[] = $file;
 		}
@@ -96,6 +76,7 @@ if ($action == 'edit' || $action == 'add' || $action == 'import')
 	@closedir($dir);
 }
 
+$data = array();
 
 // What shall we do today? Oops, I believe that's trademarked ...
 switch ($action)
@@ -111,9 +92,9 @@ switch ($action)
 		$sql = "SELECT * 
 			FROM $table 
 			ORDER BY {$fields}_order " . (($id || $action == 'add') ? 'DESC' : 'ASC');
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			do
 			{
@@ -141,58 +122,58 @@ switch ($action)
 						$after = FALSE;
 					}
 
-					$after_txt = ($mode == 'emoticons') ? $row['code'] : $row['icons_url'];
-					$order_list = '<option value="' . ($row[$fields . '_order']) . '"' . $selected . '>' . sprintf($user->lang['AFTER_' . $lang], ' -&gt; ' . htmlspecialchars($after_txt)) . '</option>' . $order_list;
+					$after_txt = ($mode == 'smilies') ? $row['code'] : $row['icons_url'];
+					$order_list = '<option value="' . ($row[$fields . '_order']) . '"' . $selected . '>' . sprintf($_CLASS['core_user']->lang['AFTER_' . $lang], ' -&gt; ' . htmlspecialchars($after_txt)) . '</option>' . $order_list;
 				}
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
-		$order_list = '<option value="1"' . ((!isset($after)) ? ' selected="selected"' : '') . '>' . $user->lang['FIRST'] . '</option>' . $order_list;
+		$order_list = '<option value="1"' . ((!isset($after)) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['FIRST'] . '</option>' . $order_list;
 
 		if ($action == 'add')
 		{
 			$data = $_images;
 		}
 
-		$colspan = (($mode == 'emoticons') ? '7' : '5');
+		$colspan = (($mode == 'smilies') ? '7' : '5');
 		$colspan += ($id) ? 1 : 0;
 		$colspan += ($action == 'add') ? 2 : 0;
 
-		adm_page_header($user->lang[$lang]);
+		adm_page_header($_CLASS['core_user']->lang[$lang]);
 
 ?>
 
-<h1><?php echo $user->lang[$lang]; ?></h1>
+<h1><?php echo $_CLASS['core_user']->lang[$lang]; ?></h1>
 
-<p><?php echo $user->lang[$lang .'_EXPLAIN']; ?></p>
+<p><?php echo $_CLASS['core_user']->lang[$lang .'_EXPLAIN']; ?></p>
 
-<form method="post" action="admin_icons.<?php echo $phpEx . $SID . "&amp;mode=$mode&amp;action=" . (($action == 'add') ? 'create' : 'modify'); ?>">
-<table class="bg" cellspacing="1" cellpadding="4" border="0" align="center">
+<form method="post" action="<?php echo generate_link("Forums&amp;file=admin_icons&amp;mode=$mode&amp;action=" . (($action == 'add') ? 'create' : 'modify'), array('admin' => true)); ?>">
+<table class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 <tr>
-	<th colspan="<?php echo $colspan; ?>"><?php echo $user->lang[$lang . '_CONFIG'] ?></th>
+	<th colspan="<?php echo $colspan; ?>"><?php echo $_CLASS['core_user']->lang[$lang . '_CONFIG'] ?></th>
 </tr>
 <tr>
-	<td class="cat"><?php echo $user->lang[$lang . '_URL'] ?></td>
-	<td class="cat"><?php echo $user->lang[$lang . '_LOCATION'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_URL'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_LOCATION'] ?></td>
 <?php
-	if ($mode == 'emoticons')
+	if ($mode == 'smilies')
 	{
 ?>
-	<td class="cat"><?php echo $user->lang[$lang . '_CODE'] ?></td>
-	<td class="cat"><?php echo $user->lang[$lang . '_EMOTION'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_CODE'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_EMOTION'] ?></td>
 <?php
 	}
 ?>
-	<td class="cat"><?php echo $user->lang[$lang . '_WIDTH'] ?></td>
-	<td class="cat"><?php echo $user->lang[$lang . '_HEIGHT'] ?></td>
-	<td class="cat"><?php echo $user->lang['DISPLAY_ON_POSTING'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_WIDTH'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_HEIGHT'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang['DISPLAY_ON_POSTING'] ?></td>
 <?php
 	if ($id || $action == 'add')
 	{
 ?>
-	<td class="cat"><?php echo $user->lang[$lang . '_ORDER'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang[$lang . '_ORDER'] ?></td>
 <?php
 	}
 ?>
@@ -200,28 +181,29 @@ switch ($action)
 	if ($action == 'add')
 	{
 ?>
-	<td class="cat"><?php echo $user->lang['ADD'] ?></td>
+	<td class="cat"><?php echo $_CLASS['core_user']->lang['ADD'] ?></td>
 <?php
 	}
 ?>
 </tr>
 <?php
 	$row = 0;
+	
 	foreach ($data as $img => $img_row)
 	{
 		$row_class = (($row % 2) == 0) ? 'row1' : 'row2';
 ?>
 <tr>
-	<td align="center" class="<?php echo $row_class; ?>"><img src="<?php echo $phpbb_root_path . $img_path . '/' . $img ?>" border="0" alt="" title="" /><input type="hidden" name="image[<?php echo $img; ?>]" value="1" /></td>
+	<td align="center" class="<?php echo $row_class; ?>"><img src="<?php echo $img_path . '/' . $img ?>" border="0" alt="" title="" /><input type="hidden" name="image[<?php echo $img; ?>]" value="1" /></td>
 	<td valign="top" class="<?php echo $row_class; ?>">[<?php echo $img; ?>]</td>
 <?php
 
-	if ($mode == 'emoticons')
+	if ($mode == 'smilies')
 	{
 
 ?>
 		<td class="<?php echo $row_class; ?>"><input class="post" type="text" name="code[<?php echo $img; ?>]" value="<?php echo (!empty($img_row['code'])) ? $img_row['code'] : '' ?>" size="10" /></td>
-		<td class="<?php echo $row_class; ?>"><input class="post" type="text" name="emotion[<?php echo $img; ?>]" value="<?php echo (!empty($img_row['emoticon'])) ? $img_row['emoticon'] : '' ?>" size="10" /></td>
+		<td class="<?php echo $row_class; ?>"><input class="post" type="text" name="emotion[<?php echo $img; ?>]" value="<?php echo (!empty($img_row['emotion'])) ? $img_row['emotion'] : '' ?>" size="10" /></td>
 <?php
 
 	}
@@ -260,7 +242,7 @@ switch ($action)
 	<td class="cat" colspan="<?php echo $colspan; ?>" align="center"><?php 
 			
 	
-?><input class="btnmain" type="submit" value="<?php echo $user->lang['SUBMIT'] ?>" /></td>
+?><input class="btnmain" type="submit" value="<?php echo $_CLASS['core_user']->lang['SUBMIT'] ?>" /></td>
 	</tr>
 </table></form>
 <?php
@@ -286,7 +268,7 @@ switch ($action)
 
 		foreach ($images as $image)
 		{
-			if (($mode == 'emoticons' && ($image_emotion[$image] == '' || $image_code[$image] == '')) ||
+			if (($mode == 'smilies' && ($image_emotion[$image] == '' || $image_code[$image] == '')) ||
 				($action == 'create' && !isset($image_add[$image])))
 			{
 			}
@@ -294,7 +276,7 @@ switch ($action)
 			{
 				if ($image_width[$image] == 0 || $image_height[$image] == 0)
 				{
-					$img_size = @getimagesize($phpbb_root_path . $img_path . '/' . $image);
+					$img_size = @getimagesize($img_path . '/' . $image);
 					$image_width[$image] = $img_size[0];
 					$image_height[$image] = $img_size[1];
 				}
@@ -306,10 +288,10 @@ switch ($action)
 					'display_on_posting'=>	(isset($image_display_on_posting[$image])) ? 1 : 0,
 				);
 
-				if ($mode == 'emoticons')
+				if ($mode == 'smilies')
 				{
 					$img_sql = array_merge($img_sql, array(
-						'emoticon'	=>	$image_emotion[$image],
+						'emotion'	=>	$image_emotion[$image],
 						'code'		=>	$image_code[$image])
 					);
 				}
@@ -324,14 +306,14 @@ switch ($action)
 				if ($action == 'modify')
 				{
 					$sql = "UPDATE $table
-						SET " . $db->sql_build_array('UPDATE', $img_sql) . " 
+						SET " . $_CLASS['core_db']->sql_build_array('UPDATE', $img_sql) . " 
 						WHERE {$fields}_id = " . $image_id[$image];
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 				else
 				{
-					$sql = "INSERT INTO $table " . $db->sql_build_array('INSERT', $img_sql);
-					$db->sql_query($sql);
+					$sql = "INSERT INTO $table " . $_CLASS['core_db']->sql_build_array('INSERT', $img_sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 
 				$update = FALSE;
@@ -340,10 +322,10 @@ switch ($action)
 				{
 					$update = TRUE;
 
-					$result = $db->sql_query("SELECT {$fields}_order 
+					$result = $_CLASS['core_db']->sql_query("SELECT {$fields}_order 
 						FROM $table
 						WHERE {$fields}_id = " . $image_id[$image]);
-					$order_old = $db->sql_fetchfield($fields . '_order', 0, $result);
+					$order_old = $_CLASS['core_db']->sql_fetchfield($fields . '_order', 0, $result);
 
 					if ($order_old == $image_order[$image])
 					{
@@ -368,21 +350,21 @@ switch ($action)
 					$sql = "UPDATE $table
 						SET {$fields}_order = {$fields}_order $sign 1
 						WHERE $where";
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 			
 			}
 		}
 		
-		$cache->destroy('icons');
+		$_CLASS['core_cache']->destroy('icons');
 
 		if ($action == 'modify')
 		{
-			trigger_error($user->lang[$lang . '_EDITED']);
+			trigger_error($_CLASS['core_user']->lang[$lang . '_EDITED']);
 		}
 		else
 		{
-			trigger_error($user->lang[$lang . '_ADDED']);
+			trigger_error($_CLASS['core_user']->lang[$lang . '_ADDED']);
 		}
 
 		break;
@@ -399,18 +381,18 @@ switch ($action)
 			// The user has already selected a smilies_pak file
 			if ($current == 'delete')
 			{
-				$db->sql_query("TRUNCATE $table");
+				$_CLASS['core_db']->sql_query("TRUNCATE $table");
 
 				switch ($mode)
 				{
-					case 'emoticons':
+					case 'smilies':
 						break;
 
 					case 'icons':
 						// Reset all icon_ids
-						$db->sql_query('UPDATE ' . TOPICS_TABLE . ' 
+						$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . ' 
 							SET icon_id = 0');
-						$db->sql_query('UPDATE ' . POSTS_TABLE . ' 
+						$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . ' 
 							SET icon_id = 0');
 						break;
 				}
@@ -419,18 +401,18 @@ switch ($action)
 			{
 				$cur_img = array();
 
-				$field_sql = ($mode == 'emoticons') ? 'code' : 'icons_url';
-				$result = $db->sql_query("SELECT $field_sql FROM $table");
+				$field_sql = ($mode == 'smilies') ? 'code' : 'icons_url';
+				$result = $_CLASS['core_db']->sql_query("SELECT $field_sql FROM $table");
 
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					++$order;
 					$cur_img[$row[$field_sql]] = 1;
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 			}
 
-			if (!($pak_ary = @file($phpbb_root_path . $img_path . '/' . $pak)))
+			if (!($pak_ary = @file($img_path . '/' . $pak)))
 			{
 				trigger_error('Could not read pak file', E_USER_ERROR);
 			}
@@ -441,9 +423,9 @@ switch ($action)
 				if (preg_match_all("#'(.*?)', #", $pak_entry, $data))
 				{
 					if ((sizeof($data[1]) != 3 && $mode == 'icons') || 
-						(sizeof($data[1]) != 5 && $mode == 'emoticons'))
+						(sizeof($data[1]) != 5 && $mode == 'smilies'))
 					{
-						trigger_error($user->lang['WRONG_PAK_TYPE']);
+						trigger_error($_CLASS['core_user']->lang['WRONG_PAK_TYPE']);
 					}
 
 					$img = stripslashes($data[1][0]);
@@ -456,24 +438,24 @@ switch ($action)
 					}
 
 					if ($current == 'replace' && 
-						(($mode == 'emoticons' && !empty($cur_img[$code])) || 
+						(($mode == 'smilies' && !empty($cur_img[$code])) || 
 						($mode == 'icons' && !empty($cur_img[$img]))))
 					{
-						$replace_sql = ($mode == 'emoticons') ? $code : $img;
+						$replace_sql = ($mode == 'smilies') ? $code : $img;
 						$sql = array(
 							$fields . '_url'	=>	$img,
 							$fields . '_height'	=>	(int) $height,
 							$fields . '_width'	=>	(int) $width,
 						);
-						if ($mode == 'emoticons')
+						if ($mode == 'smilies')
 						{
 							$sql = array_merge($sql, array(
-								'emoticon'	=>	$emotion
+								'emotion'	=>	$emotion
 							));
 						}
 
-						$db->sql_query("UPDATE $table SET " . $db->sql_build_array('UPDATE', $sql) . " 
-							WHERE $field_sql = '" . $db->sql_escape($replace_sql) . "'");
+						$_CLASS['core_db']->sql_query("UPDATE $table SET " . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . " 
+							WHERE $field_sql = '" . $_CLASS['core_db']->sql_escape($replace_sql) . "'");
 					}
 					else
 					{
@@ -486,21 +468,21 @@ switch ($action)
 							$fields . '_order'	=>	(int) $order,
 						);
 
-						if ($mode == 'emoticons')
+						if ($mode == 'smilies')
 						{
 							$sql = array_merge($sql, array(
 								'code'		=>	$code,
-								'emoticon'	=>	$emotion
+								'emotion'	=>	$emotion
 							));
 						}
-						$db->sql_query("INSERT INTO $table " . $db->sql_build_array('INSERT', $sql));
+						$_CLASS['core_db']->sql_query("INSERT INTO $table " . $_CLASS['core_db']->sql_build_array('INSERT', $sql));
 					}
 
 				}
 			}
 
-			$cache->destroy('icons');
-			trigger_error($user->lang[$lang . '_IMPORT_SUCCESS']);
+			$_CLASS['core_cache']->destroy('icons');
+			trigger_error($_CLASS['core_user']->lang[$lang . '_IMPORT_SUCCESS']);
 		}
 		else
 		{
@@ -511,17 +493,17 @@ switch ($action)
 				$pak_options .= '<option value="' . $pak . '">' . htmlspecialchars($pak) . '</option>';
 			}
 
-			adm_page_header($user->lang[$lang]);
+			adm_page_header($_CLASS['core_user']->lang[$lang]);
 
 ?>
-<h1><?php echo $user->lang[$lang] ?></h1>
+<h1><?php echo $_CLASS['core_user']->lang[$lang] ?></h1>
 
-<p><?php echo $user->lang[$lang .'_EXPLAIN'] ?></p>
+<p><?php echo $_CLASS['core_user']->lang[$lang .'_EXPLAIN'] ?></p>
 
-<form method="post" action="admin_icons.<?php echo $phpEx . $SID . '&amp;mode=' . $mode . '&amp;action=import'; ?>">
-<table class="bg" cellspacing="1" cellpadding="4" border="0" align="center">
+<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_icons&amp;mode=' . $mode . '&amp;action=import', array('admin' => true)); ?>">
+<table class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 <tr>
-	<th colspan="2"><?php echo $user->lang[$lang . '_IMPORT'] ?></th>
+	<th colspan="2"><?php echo $_CLASS['core_user']->lang[$lang . '_IMPORT'] ?></th>
 </tr>
 <?php
 
@@ -530,7 +512,7 @@ switch ($action)
 
 ?>
 <tr>
-	<td class="row1" colspan="2"><?php echo $user->lang['NO_' . $lang . '_PAK']; ?></td>
+	<td class="row1" colspan="2"><?php echo $_CLASS['core_user']->lang['NO_' . $lang . '_PAK']; ?></td>
 </tr>
 <?php
 
@@ -540,15 +522,15 @@ switch ($action)
 
 ?>
 <tr>
-	<td class="row2"><?php echo $user->lang['SELECT_PACKAGE'] ?></td>
+	<td class="row2"><?php echo $_CLASS['core_user']->lang['SELECT_PACKAGE'] ?></td>
 	<td class="row1"><select name="pak"><?php echo $pak_options ?></select></td>
 </tr>
 <tr>
-	<td class="row2"><?php echo $user->lang['CURRENT_' . $lang] ?><br /><span class="gensmall"><?php echo $user->lang['CURRENT_' . $lang . '_EXPLAIN'] ?></span></td>
-	<td class="row1"><input type="radio" name="current" value="keep" checked="checked" /> <?php echo $user->lang['KEEP_ALL'] ?>&nbsp; &nbsp;<input type="radio" name="current" value="replace" /> <?php echo $user->lang['REPLACE_MATCHES'] ?>&nbsp; &nbsp;<input type="radio" name="current" value="delete" /> <?php echo $user->lang['DELETE_ALL'] ?>&nbsp;</td>
+	<td class="row2"><?php echo $_CLASS['core_user']->lang['CURRENT_' . $lang] ?><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['CURRENT_' . $lang . '_EXPLAIN'] ?></span></td>
+	<td class="row1"><input type="radio" name="current" value="keep" checked="checked" /> <?php echo $_CLASS['core_user']->lang['KEEP_ALL'] ?>&nbsp; &nbsp;<input type="radio" name="current" value="replace" /> <?php echo $_CLASS['core_user']->lang['REPLACE_MATCHES'] ?>&nbsp; &nbsp;<input type="radio" name="current" value="delete" /> <?php echo $_CLASS['core_user']->lang['DELETE_ALL'] ?>&nbsp;</td>
 	</tr>
 <tr>
-	<td class="cat" colspan="2" align="center"><input class="btnmain" name="import" type="submit" value="<?php echo $user->lang['IMPORT_' . $lang] ?>" /></td>
+	<td class="cat" colspan="2" align="center"><input class="btnmain" name="import" type="submit" value="<?php echo $_CLASS['core_user']->lang['IMPORT_' . $lang] ?>" /></td>
 </tr>
 <?php
 
@@ -564,8 +546,8 @@ switch ($action)
 
 	case 'export':
 
-		adm_page_header($user->lang['EXPORT_' . $lang]);
-		trigger_error(sprintf($user->lang['EXPORT_' . $lang . '_EXPLAIN'], '<a href="admin_icons.' . $phpEx . $SID . '&amp;mode=' . $mode . '&amp;action=send">', '</a>'));
+		adm_page_header($_CLASS['core_user']->lang['EXPORT_' . $lang]);
+		trigger_error(sprintf($_CLASS['core_user']->lang['EXPORT_' . $lang . '_EXPLAIN'], '<a href="'.generate_link('Forums&amp;file=admin_icons&amp;mode=' . $mode . '&amp;action=send', array('admin' => true)).'">', '</a>'));
 		break;
 
 	case 'send':
@@ -573,26 +555,26 @@ switch ($action)
 		$sql = "SELECT * 
 			FROM $table
 			ORDER BY {$fields}_order";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
 		$pak = '';
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$pak .= "'" . addslashes($row[$fields . '_url']) . "', ";
 			$pak .= "'" . addslashes($row[$fields . '_height']) . "', ";
 			$pak .= "'" . addslashes($row[$fields . '_width']) . "', ";
-			if ($mode == 'emoticons')
+			if ($mode == 'smilies')
 			{
-				$pak .= "'" . addslashes($row['emoticon']) . "', ";
+				$pak .= "'" . addslashes($row['emotion']) . "', ";
 				$pak .= "'" . addslashes($row['code']) . "', ";
 			}
 			$pak .= "\n";
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		if ($pak != '')
 		{
-			$db->sql_close();
+			$_CLASS['core_db']->sql_close();
 
 			header('Content-Type: text/x-delimtext; name="' . $fields . '.pak"');
 			header('Content-disposition: attachment; filename=' . $fields . '.pak"');
@@ -601,32 +583,32 @@ switch ($action)
 		}
 		else
 		{
-			trigger_error($user->lang['NO_' . $fields . '_EXPORT']);
+			trigger_error($_CLASS['core_user']->lang['NO_' . $fields . '_EXPORT']);
 		}
 		break;
 
 	case 'delete':
 
-		$db->sql_query("DELETE FROM $table 
+		$_CLASS['core_db']->sql_query("DELETE FROM $table 
 			WHERE {$fields}_id = $id");
 
 		switch ($mode)
 		{
-			case 'emoticons':
+			case 'smilies':
 				break;
 
 			case 'icons':
 				// Reset appropriate icon_ids
-				$db->sql_query('UPDATE ' . TOPICS_TABLE . " 
+				$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . " 
 					SET icon_id = 0 
 					WHERE icon_id = $id");
-				$db->sql_query('UPDATE ' . POSTS_TABLE . " 
+				$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . " 
 					SET icon_id = 0 
 					WHERE icon_id = $id");
 				break;
 		}
 
-		$notice = $user->lang[$lang . '_DELETED'];
+		$notice = $_CLASS['core_user']->lang[$lang . '_DELETED'];
 
 	case 'move_up':
 	case 'move_down':
@@ -639,9 +621,9 @@ switch ($action)
 			$sql = 'UPDATE ' . $table . '
 				SET ' . $fields . "_order = $order_total - " . $fields . '_order
 				WHERE ' . $fields . "_order IN ($image_order, " . (($action == 'move_up') ? $image_order - 1 : $image_order + 1) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
-			$cache->destroy('icons');
+			$_CLASS['core_cache']->destroy('icons');
 
 		}
 		// No break; here, display the smilies admin back
@@ -652,9 +634,9 @@ switch ($action)
 		$sql = "SELECT {$fields}_id AS order_id, {$fields}_order AS fields_order
 			FROM $table
 			ORDER BY {$fields}_order";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$order = 0;
 			do
@@ -662,23 +644,23 @@ switch ($action)
 				++$order;
 				if ($row['fields_order'] != $order)
 				{
-					$db->sql_query("UPDATE $table
+					$_CLASS['core_db']->sql_query("UPDATE $table
 						SET {$fields}_order = $order
 						WHERE {$fields}_id = " . $row['order_id']);
 				}
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		// Output the page
-		adm_page_header($user->lang[$lang]);
+		adm_page_header($_CLASS['core_user']->lang[$lang]);
 
 ?>
 
-<h1><?php echo $user->lang[$lang]; ?></h1>
+<h1><?php echo $_CLASS['core_user']->lang[$lang]; ?></h1>
 
-<p><?php echo $user->lang[$lang .'_EXPLAIN']; ?></p>
+<p><?php echo $_CLASS['core_user']->lang[$lang .'_EXPLAIN']; ?></p>
 
 <?php
 
@@ -693,27 +675,27 @@ switch ($action)
 
 ?>
 
-<form method="post" action="admin_icons.<?php echo $phpEx . $SID . '&amp;mode=' . $mode ?>">
+<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_icons&amp;mode=' . $mode, array('admin' => true)); ?>">
 <table cellspacing="1" cellpadding="0" border="0" align="center">
 <tr>
-	<td align="right"> &nbsp;&nbsp; <a href="admin_icons.<?php echo $phpEx . $SID . '&amp;mode=' . $mode . '&amp;action=import'; ?>"><?php echo $user->lang['IMPORT_' . $lang]; ?></a> | <a href="admin_icons.<?php echo $phpEx . $SID . '&amp;mode=' . $mode . '&amp;action=export'; ?>"><?php echo $user->lang['EXPORT_' . $lang]; ?></a></td>
+	<td align="right"> &nbsp;&nbsp; <a href="<?php echo generate_link('Forums&amp;file=admin_icons&amp;mode=' . $mode . '&amp;action=import', array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['IMPORT_' . $lang]; ?></a> | <a href="<?php echo generate_link('Forums&amp;file=admin_icons&amp;mode=' . $mode . '&amp;action=export', array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['EXPORT_' . $lang]; ?></a></td>
 </tr>
 <tr>
 	<td>
-		<table class="bg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 		<tr>
-			<th><?php echo $user->lang[$lang]; ?></th>
+			<th><?php echo $_CLASS['core_user']->lang[$lang]; ?></th>
 <?php
-			if ($mode == 'emoticons')
+			if ($mode == 'smilies')
 			{
 ?>
-				<th><?php echo $user->lang['CODE']; ?></th>
-				<th><?php echo $user->lang['EMOTION']; ?></th>
+				<th><?php echo $_CLASS['core_user']->lang['CODE']; ?></th>
+				<th><?php echo $_CLASS['core_user']->lang['EMOTION']; ?></th>
 <?php
 			}
 ?>
-			<th><?php echo $user->lang['ACTION']; ?></th>
-			<th><?php echo $user->lang['REORDER']; ?></th>
+			<th><?php echo $_CLASS['core_user']->lang['ACTION']; ?></th>
+			<th><?php echo $_CLASS['core_user']->lang['REORDER']; ?></th>
 		</tr>
 <?php
 		$spacer = FALSE;
@@ -721,46 +703,48 @@ switch ($action)
 		$sql = "SELECT * 
 			FROM $table
 			ORDER BY display_on_posting DESC, {$fields}_order ASC";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		
+		$row_class = 'row1';
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			if (!$spacer && !$row['display_on_posting'])
 			{
 				$spacer = TRUE;
 ?>
 		<tr>
-			<td class="row3" colspan="<?php echo ($mode == 'emoticons') ? 5 : 3; ?>" align="center"><?php echo $user->lang[$lang . '_NOT_DISPLAYED'] ?></td>
+			<td class="row3" colspan="<?php echo ($mode == 'smilies') ? 5 : 3; ?>" align="center"><?php echo $_CLASS['core_user']->lang[$lang . '_NOT_DISPLAYED'] ?></td>
 		</tr>
 <?php
 			}
 
 			$row_class = ($row_class != 'row1') ? 'row1' : 'row2';
-			$alt_text = ($mode == 'emoticon') ? htmlspecialchars($row['code']) : '';
+			$alt_text = ($mode == 'smilies') ? htmlspecialchars($row['code']) : '';
 ?>
 		<tr>
-			<td class="<?php echo $row_class; ?>" align="center"><img src="<?php echo $phpbb_root_path . $img_path . '/' . $row[$fields . '_url']; ?>" width="<?php echo $row[$fields . '_width']; ?>" height="<?php echo $row[$fields . '_height']; ?>" alt="<?php echo $alt_text; ?>" title="<?php echo $alt_text; ?>" /></td>
+			<td class="<?php echo $row_class; ?>" align="center"><img src="<?php echo $img_path . '/' . $row[$fields . '_url']; ?>" width="<?php echo $row[$fields . '_width']; ?>" height="<?php echo $row[$fields . '_height']; ?>" alt="<?php echo $alt_text; ?>" title="<?php echo $alt_text; ?>" /></td>
 <?php
 
-			if ($mode == 'emoticons')
+			if ($mode == 'smilies')
 			{
 ?>
 				<td class="<?php echo $row_class; ?>" align="center"><?php echo htmlspecialchars($row['code']); ?></td>
-				<td class="<?php echo $row_class; ?>" align="center"><?php echo $row['emoticon']; ?></td>
+				<td class="<?php echo $row_class; ?>" align="center"><?php echo $row['emotion']; ?></td>
 <?php
 			}
 ?>
-			<td class="<?php echo $row_class; ?>" align="center"><a href="<?php echo "admin_icons.$phpEx$SID&amp;mode=$mode&amp;action=edit&amp;id=" . $row[$fields . '_id']; ?>"><?php echo $user->lang['EDIT']; ?></a> | <a href="<?php echo "admin_icons.$phpEx$SID&amp;mode=$mode&amp;action=delete&amp;id=" . $row[$fields . '_id']; ?>"><?php echo $user->lang['DELETE']; ?></a></td>
-			<td class="<?php echo $row_class; ?>" align="center"><a href="<?php echo "admin_icons.$phpEx$SID&amp;mode=$mode&amp;action=move_up&amp;order=" . $row[$fields . '_order']; ?>"><?php echo $user->lang['MOVE_UP']; ?></a> <br /> <a href="<?php echo "admin_icons.$phpEx$SID&amp;mode=$mode&amp;action=move_down&amp;order=" . $row[$fields . '_order']; ?>"><?php echo $user->lang['MOVE_DOWN']; ?></a></td>
+			<td class="<?php echo $row_class; ?>" align="center"><a href="<?php echo generate_link("Forums&amp;file=admin_icons&amp;mode=$mode&amp;action=edit&amp;id=" . $row[$fields . '_id'], array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['EDIT']; ?></a> | <a href="<?php echo generate_link("Forums&amp;file=admin_icons&amp;mode=$mode&amp;action=delete&amp;id=" . $row[$fields . '_id'], array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['DELETE']; ?></a></td>
+			<td class="<?php echo $row_class; ?>" align="center"><a href="<?php echo generate_link("Forums&amp;file=admin_icons&amp;mode=$mode&amp;action=move_up&amp;order=" . $row[$fields . '_order'], array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['MOVE_UP']; ?></a> <br /> <a href="<?php echo generate_link("Forums&amp;file=admin_icons&amp;mode=$mode&amp;action=move_down&amp;order=" . $row[$fields . '_order'], array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['MOVE_DOWN']; ?></a></td>
 		</tr>
 <?php
 
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 ?>
 		<tr>
-			<td class="cat" colspan="<?php echo ($mode == 'emoticons') ? 5 : 3; ?>" align="center"><input type="submit" name="add" value="<?php echo $user->lang['ADD_' . $lang]; ?>" class="btnmain" />&nbsp;<input type="submit" name="edit" value="<?php echo $user->lang['EDIT_' . $lang]; ?>" class="btnmain" /></td>
+			<td class="cat" colspan="<?php echo ($mode == 'smilies') ? 5 : 3; ?>" align="center"><input type="submit" name="add" value="<?php echo $_CLASS['core_user']->lang['ADD_' . $lang]; ?>" class="btnmain" />&nbsp;<input type="submit" name="edit" value="<?php echo $_CLASS['core_user']->lang['EDIT_' . $lang]; ?>" class="btnmain" /></td>
 		</tr>
 		</table>
 	</td>

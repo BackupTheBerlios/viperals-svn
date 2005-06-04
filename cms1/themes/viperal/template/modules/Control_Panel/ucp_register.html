@@ -1,6 +1,16 @@
 {php} OpenTable(); {/php}
-
-<form method="post" action="{$S_UCP_ACTION}"><table width="80%" cellspacing="2" cellpadding="2" border="0" align="center">
+{ literal }
+<script language="Javascript" type="text/javascript">
+<!--
+	function change_language(lang_iso)
+	{
+		document.forms['register'].change_lang.value = lang_iso;
+		document.forms['register'].submit.click();
+	}
+//-->
+</script>
+{ /literal }
+<form name="register" method="post" action="{ $S_UCP_ACTION }"><table width="80%" cellspacing="2" cellpadding="2" border="0" align="center">
 <table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr> 
 		<th colspan="2" height="28" valign="middle">{$L_REGISTRATION}</th>
@@ -40,20 +50,20 @@
 	</tr>
 	<tr> 
 		<td class="row1"><b class="genmed">{$L_LANGUAGE}: </b></td>
-		<td class="row2"><select name="lang">{$S_LANG_OPTIONS}</select></td>
+		<td class="row2"><select name="lang" onchange="javascript:change_language(this.value);">{ $S_LANG_OPTIONS }</select></td>
 	</tr>
 	<tr> 
 		<td class="row1"><b class="genmed">{$L_TIMEZONE}: </b></td>
 		<td class="row2"><select name="tz">{$S_TZ_OPTIONS}</select></td>
 	</tr>
-
+{*
 	{section name=profile_fieldsloop loop=$profile_fields}
 	<tr> 
 		<td class="row1" width="35%"><b class="genmed">{$profile_fields[profile_fieldsloop].LANG_NAME}: </b>{ if $profile_fields[profile_fieldsloop].LANG_EXPLAIN }<br /><span class="gensmall">{$profile_fields[profile_fieldsloop].LANG_EXPLAIN}</span>{ /if }</td>
 		<td class="row2">{$profile_fields[profile_fieldsloop].FIELD}{ if $profile_fields[profile_fieldsloop].ERROR }<br /><span class="gensmall" style="color:red">{$profile_fields[profile_fieldsloop].ERROR}</span>{ /if }</td>
 	</tr>
 	{ /section }
-
+*}
 	{ if $S_CONFIRM_CODE }
 	<tr> 
 		<th colspan="2" height="28" valign="middle">{$L_CONFIRMATION}</th>

@@ -11,14 +11,14 @@
 // 
 // -------------------------------------------------------------
 
-require($site_file_root.'includes/forums/functions_posting.' . $phpEx);
-
-$_CLASS['core_user']->add_lang(array('posting', 'viewtopic'), 'Forums');
-
 if (!$_CLASS['auth']->acl_get('a_attach'))
 {
 	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 }
+
+require($site_file_root.'includes/forums/functions_posting.php');
+
+$_CLASS['core_user']->add_lang(array('posting', 'viewtopic'), 'Forums');
 
 $mode = request_var('mode', '');
 $submit = (isset($_POST['submit'])) ? true : false;
@@ -49,7 +49,6 @@ switch ($mode)
 
 if ($mode == 'attach')
 {
-
 	$config_sizes = array('max_filesize' => 'size', 'attachment_quota' => 'quota_size', 'max_filesize_pm' => 'pm_size');
 	foreach ($config_sizes as $cfg_key => $var)
 	{
@@ -59,9 +58,9 @@ if ($mode == 'attach')
 	// Pull all config data
 	$sql = 'SELECT *
 		FROM ' . CONFIG_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$config_name = $row['config_name'];
 		$config_value = $row['config_value'];
@@ -106,7 +105,7 @@ if ($mode == 'attach')
 		add_log('admin', 'LOG_' . strtoupper($mode) . '_CONFIG');
 
 		// Check Settings
-		test_upload($error, $new['upload_dir'], false);
+		test_upload($error, $new['upload_path'], false);
 
 		if (!sizeof($error))
 		{
@@ -135,20 +134,20 @@ if ($submit && $mode == 'extensions')
 	$sql = 'SELECT *
 		FROM ' . EXTENSIONS_TABLE . '
 		ORDER BY extension_id';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($row['group_id'] != $extensions[$row['extension_id']]['group_id'])
 		{
 			$sql = 'UPDATE ' . EXTENSIONS_TABLE . ' 
 				SET group_id = ' . (int) $extensions[$row['extension_id']]['group_id'] . '
 				WHERE extension_id = ' . $row['extension_id'];
-			$db->sql_query($sql);	
+			$_CLASS['core_db']->sql_query($sql);	
 			add_log('admin', 'LOG_ATTACH_EXT_UPDATE', $row['extension']);
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	// Delete Extension ?
 	$extension_id_list = (isset($_POST['extension_id_list'])) ? array_map('intval', $_POST['extension_id_list']) : array();
@@ -158,19 +157,19 @@ if ($submit && $mode == 'extensions')
 		$sql = 'SELECT extension 
 			FROM ' . EXTENSIONS_TABLE . '
 			WHERE extension_id IN (' . implode(', ', $extension_id_list) . ')';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 		
 		$extension_list = '';
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$extension_list .= ($extension_list == '') ? $row['extension'] : ', ' . $row['extension'];
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$sql = 'DELETE 
 			FROM ' . EXTENSIONS_TABLE . '
 			WHERE extension_id IN (' . implode(', ', $extension_id_list) . ')';
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		add_log('admin', 'LOG_ATTACH_EXT_DEL', $extension_list);
 	}
@@ -186,14 +185,14 @@ if ($submit && $mode == 'extensions')
 		{
 			$sql = 'SELECT extension_id
 				FROM ' . EXTENSIONS_TABLE . "
-				WHERE extension = '" . $db->sql_escape($add_extension) . "'";
-			$result = $db->sql_query($sql);
+				WHERE extension = '" . $_CLASS['core_db']->sql_escape($add_extension) . "'";
+			$result = $_CLASS['core_db']->sql_query($sql);
 			
-			if ($row = $db->sql_fetchrow($result))
+			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$error[] = sprintf($_CLASS['core_user']->lang['EXTENSION_EXIST'], $add_extension);
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			if (!sizeof($error))
 			{
@@ -202,7 +201,7 @@ if ($submit && $mode == 'extensions')
 					'extension'	=>	$add_extension
 				);
 				
-				$db->sql_query('INSERT INTO ' . EXTENSIONS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary));
+				$_CLASS['core_db']->sql_query('INSERT INTO ' . EXTENSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 				add_log('admin', 'LOG_ATTACH_EXT_ADD', $add_extension);
 			}
 		}
@@ -212,6 +211,7 @@ if ($submit && $mode == 'extensions')
 	{
 		$notify[] = $_CLASS['core_user']->lang['EXTENSIONS_UPDATED'];
 	}
+	$_CLASS['core_cache']->destroy('extensions');
 }
 
 
@@ -234,9 +234,9 @@ if ($submit && $mode == 'ext_groups')
 	{
 		$sql = 'SELECT * FROM ' . EXTENSION_GROUPS_TABLE . "
 			WHERE group_id = $group_id";
-		$result = $db->sql_query($sql);
-		$ext_row = $db->sql_fetchrow($result);
-		$db->sql_freeresult($result);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$ext_row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	else
 	{
@@ -256,13 +256,13 @@ if ($submit && $mode == 'ext_groups')
 	{
 		$sql = 'SELECT group_id 
 			FROM ' . EXTENSION_GROUPS_TABLE . "
-			WHERE LOWER(group_name) = '" . strtolower($new_group_name) . "'";
-		$result = $db->sql_query($sql);
-		if ($db->sql_fetchrow($result))
+			WHERE LOWER(group_name) = '" . $_CLASS['core_db']->sql_escape(strtolower($new_group_name)) . "'";
+		$result = $_CLASS['core_db']->sql_query($sql);
+		if ($_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$error[] = sprintf($_CLASS['core_user']->lang['EXTENSION_GROUP_EXIST'], $new_group_name);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	if (!sizeof($error))
@@ -271,8 +271,8 @@ if ($submit && $mode == 'ext_groups')
 		$upload_icon	= request_var('upload_icon', 'no_image');
 		$size_select	= request_var('size_select', 'b');
 		$forum_select	= request_var('forum_select', false);
-		$allowed_forums	= isset($_REQUEST['allowed_forums']) ? array_map('intval', array_values($_REQUEST['allowed_forums'])) : array();
-		$allow_in_pm	= isset($_REQUEST['allow_in_pm']) ? true : false;
+		$allowed_forums	= isset($_POST['allowed_forums']) ? array_map('intval', array_values($_POST['allowed_forums'])) : array();
+		$allow_in_pm	= isset($_POST['allow_in_pm']) ? true : false;
 		$max_filesize	= request_var('max_filesize', 0);
 		$max_filesize	= ($size_select == 'kb') ? round($max_filesize * 1024) : (($size_select == 'mb') ? round($max_filesize * 1048576) : $max_filesize);
 
@@ -289,7 +289,7 @@ if ($submit && $mode == 'ext_groups')
 		$group_ary = array(
 			'group_name'	=> $group_name,
 			'cat_id'		=> request_var('special_category', ATTACHMENT_CATEGORY_NONE),
-			'allow_group'	=> (isset($_REQUEST['allow_group'])) ? 1 : 0,
+			'allow_group'	=> (isset($_POST['allow_group'])) ? 1 : 0,
 			'download_mode'	=> request_var('download_mode', INLINE_LINK),
 			'upload_icon'	=> ($upload_icon == 'no_image') ? '' : $upload_icon,
 			'max_filesize'	=> $max_filesize,
@@ -298,14 +298,14 @@ if ($submit && $mode == 'ext_groups')
 		);
 
 		$sql = ($action == 'add') ? 'INSERT INTO ' . EXTENSION_GROUPS_TABLE . ' ' : 'UPDATE ' . EXTENSION_GROUPS_TABLE . ' SET ';
-		$sql .= $db->sql_build_array((($action == 'add') ? 'INSERT' : 'UPDATE'), $group_ary);
+		$sql .= $_CLASS['core_db']->sql_build_array((($action == 'add') ? 'INSERT' : 'UPDATE'), $group_ary);
 		$sql .= ($action == 'edit') ? " WHERE group_id = $group_id" : '';
 
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 		
 		if ($action == 'add')
 		{
-			$group_id = $db->sql_nextid();
+			$group_id = $_CLASS['core_db']->sql_nextid();
 		}
 
 		add_log('admin', 'LOG_ATTACH_EXTGROUP_' . strtoupper($action), $group_name);
@@ -318,7 +318,7 @@ if ($submit && $mode == 'ext_groups')
 		$sql = 'UPDATE ' . EXTENSIONS_TABLE . "
 			SET group_id = 0
 			WHERE group_id = $group_id";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 	}
 
 	if (sizeof($extension_list))
@@ -326,7 +326,7 @@ if ($submit && $mode == 'ext_groups')
 		$sql = 'UPDATE ' . EXTENSIONS_TABLE . " 
 			SET group_id = $group_id
 			WHERE extension_id IN (" . implode(', ', $extension_list) . ")";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 	}
 
 	rewrite_extensions();
@@ -347,14 +347,14 @@ if ($submit && $mode == 'ext_groups')
 
 if ($submit && $mode == 'orphan')
 {
-	$delete_files = array_keys(request_var('delete', ''));
-	$add_files = (isset($_REQUEST['add'])) ? array_keys(request_var('add', '')) : array();
+	$delete_files = (isset($_POST['delete'])) ? array_keys(request_var('delete', array('' => 0))) : array();
+	$add_files = (isset($_POST['add'])) ? array_keys(request_var('add', array('' => 0))) : array();
 	$post_ids = request_var('post_id', 0);
 
 	foreach ($delete_files as $delete)
 	{
-		phpbb_unlink($config['upload_dir'] . '/' . $delete);
-		phpbb_unlink($config['upload_dir'] . '/thumb_' . $delete);
+		phpbb_unlink($delete);
+		phpbb_unlink($delete, 'thumbnail');
 	}
 
 	if (sizeof($delete_files))
@@ -378,26 +378,26 @@ if ($submit && $mode == 'orphan')
 ?>
 	<h2><?php echo $_CLASS['core_user']->lang['UPLOADING_FILES']; ?></h2>
 <?php
-		require($site_file_root.'includes/forums/message_parser.' . $phpEx);
+		require($site_file_root.'includes/forums/message_parser.php');
 		$message_parser = new parse_message();
 
 		$sql = 'SELECT forum_id, forum_name
 			FROM ' . FORUMS_TABLE;
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 		
 		$forum_names = array();
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$forum_names[$row['forum_id']] = $row['forum_name'];
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$sql = 'SELECT forum_id, topic_id, post_id 
 			FROM ' . POSTS_TABLE . '
 			WHERE post_id IN (' . implode(', ', array_keys($upload_list)) . ')';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			echo sprintf($_CLASS['core_user']->lang['UPLOADING_FILE_TO'], $upload_list[$row['post_id']], $row['post_id']) . '<br />';
 			if (!$_CLASS['auth']->acl_gets('f_attach', 'u_attach', $row['forum_id']))
@@ -406,7 +406,7 @@ if ($submit && $mode == 'orphan')
 			}
 			else
 			{
-				upload_file($row['post_id'], $row['topic_id'], $row['forum_id'], $config['upload_dir'], $upload_list[$row['post_id']]);
+				upload_file($row['post_id'], $row['topic_id'], $row['forum_id'], $config['upload_path'], $upload_list[$row['post_id']]);
 			}
 		}
 		unset($message_parser);
@@ -445,7 +445,7 @@ foreach ($modes as $_mode)
 }
 $s_select_mode .= '</select>';
 ?>
-<form name="attachments" method="post" action="<?php echo adminlink("forums&amp;file=admin_attachments$SID&amp;mode=$mode"); ?>">
+<form name="attachments" method="post" action="<?php echo generate_link("forums&amp;file=admin_attachments&amp;mode=$mode", array('admin' => true)); ?>">
 <?php
 if ($mode != 'attach')
 {
@@ -482,14 +482,14 @@ if ($mode == 'attach')
 		FROM ' . EXTENSION_GROUPS_TABLE . '
 		WHERE cat_id > 0
 		ORDER BY cat_id';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$s_assigned_groups = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$s_assigned_groups[$row['cat_id']][] = $row['group_name'];
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$display_inlined_yes = ($new['img_display_inlined']) ? 'checked="checked"' : '';
 	$display_inlined_no = (!$new['img_display_inlined']) ? 'checked="checked"' : '';
@@ -514,7 +514,7 @@ if ($mode == 'attach')
 	</tr>
 	<tr>
 		<td class="row1" width="40%"><b><?php echo $_CLASS['core_user']->lang['UPLOAD_DIR']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['UPLOAD_DIR_EXPLAIN']; ?></span></td>
-		<td class="row2"><input type="text" size="25" maxlength="100" name="upload_dir" class="post" value="<?php echo $new['upload_dir'] ?>" /></td>
+		<td class="row2"><input type="text" size="25" maxlength="100" name="upload_path" class="post" value="<?php echo $new['upload_path'] ?>" /></td>
 	</tr>
 	<tr>
 		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['DISPLAY_ORDER']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['DISPLAY_ORDER_EXPLAIN']; ?></span></td>
@@ -563,9 +563,10 @@ if ($mode == 'attach')
 		<td class="row2"><input type="radio" name="img_display_inlined" value="1" <?php echo $display_inlined_yes ?> /> <?php echo $_CLASS['core_user']->lang['YES']; ?>&nbsp;&nbsp;<input type="radio" name="img_display_inlined" value="0" <?php echo $display_inlined_no ?> /> <?php echo $_CLASS['core_user']->lang['NO']; ?></td>
 	</tr>
 <?php
+	$supported_types = get_supported_image_types();
 	
 	// Check Thumbnail Support
-	if (!$new['img_imagick'] && !count(get_supported_image_types()))
+	if (!$new['img_imagick'] && (!isset($supported_types['format']) || !sizeof($supported_types['format'])))
 	{
 		$new['img_create_thumbnail'] = '0';
 	}
@@ -588,7 +589,7 @@ if ($mode == 'attach')
 ?>
 	<tr>
 		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['IMAGICK_PATH']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['IMAGICK_PATH_EXPLAIN']; ?></span></td>
-		<td class="row2"><input type="text" size="20" maxlength="200" name="img_imagick" value="<?php echo $new['img_imagick']; ?>" class="post" />&nbsp;&nbsp;<span class="gensmall">[ <a href="<?php echo adminlink("forums&amp;file=admin_attachments$SID&amp;mode=$mode&amp;action=imgmagick"); ?>"><?php echo $_CLASS['core_user']->lang['SEARCH_IMAGICK']; ?></a> ]</span></td>
+		<td class="row2"><input type="text" size="20" maxlength="200" name="img_imagick" value="<?php echo $new['img_imagick']; ?>" class="post" />&nbsp;&nbsp;<span class="gensmall">[ <a href="<?php echo generate_link("forums&amp;file=admin_attachments&amp;mode=$mode&amp;action=imgmagick", array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['SEARCH_IMAGICK']; ?></a> ]</span></td>
 	</tr>
 	<tr>
 		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['MAX_IMAGE_SIZE']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['MAX_IMAGE_SIZE_EXPLAIN']; ?></span></td>
@@ -608,12 +609,12 @@ if ($mode == 'attach')
 		
 	$sql = 'SELECT *
 		FROM ' . SITELIST_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$defined_ips = '';
 	$ips = array();
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$value = ($row['site_ip']) ? $row['site_ip'] : $row['site_hostname'];
 		if ($value)
@@ -622,7 +623,7 @@ if ($mode == 'attach')
 			$ips[$row['site_id']] = $value;
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	if (!$new['secure_downloads'])
 	{
@@ -705,10 +706,10 @@ if ($mode == 'ext_groups')
 
 	$action = request_var('action', 'show');
 	$group_id = request_var('g', 0);
-	$action = (isset($_REQUEST['add'])) ? 'add' : $action;
+	$action = (isset($_POST['add'])) ? 'add' : $action;
 	$action = (($action == 'add' || $action == 'edit') && $submit && !sizeof($error)) ? 'show' : $action;
 
-	if (isset($_REQUEST['select_mode']))
+	if (isset($_POST['select_mode']))
 	{
 		$action = 'show';
 	}
@@ -727,19 +728,20 @@ if ($mode == 'ext_groups')
 			$sql = 'SELECT group_name 
 				FROM ' . EXTENSION_GROUPS_TABLE . "
 				WHERE group_id = $group_id";
-			$result = $db->sql_query($sql);
-			$group_name = $db->sql_fetchfield('group_name', 0, $result);
-		
+			$result = $_CLASS['core_db']->sql_query($sql);
+			$group_name = $_CLASS['core_db']->sql_fetchfield('group_name', 0, $result);
+			$_CLASS['core_db']->sql_freeresult($result);
+			
 			$sql = 'DELETE 
 				FROM ' . EXTENSION_GROUPS_TABLE . " 
 				WHERE group_id = $group_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			// Set corresponding Extensions to a pending Group
 			$sql = 'UPDATE ' . EXTENSIONS_TABLE . "
 				SET group_id = 0
 				WHERE group_id = $group_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 	
 			add_log('admin', 'LOG_ATTACH_EXTGROUP_DEL', $group_name);
 
@@ -764,9 +766,9 @@ if ($mode == 'ext_groups')
 
 			$sql = 'SELECT * FROM ' . EXTENSION_GROUPS_TABLE . "
 				WHERE group_id = $group_id";
-			$result = $db->sql_query($sql);
-			extract($db->sql_fetchrow($result));
-			$db->sql_freeresult($result);
+			$result = $_CLASS['core_db']->sql_query($sql);
+			extract($_CLASS['core_db']->sql_fetchrow($result));
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			$forum_ids = (!$allowed_forums) ? array() : unserialize(trim($allowed_forums));
 
@@ -789,9 +791,9 @@ if ($mode == 'ext_groups')
 			$sql = 'SELECT * FROM ' . EXTENSIONS_TABLE . "
 				WHERE group_id = $group_id OR group_id = 0
 				ORDER BY extension";
-			$result = $db->sql_query($sql);
-			$extensions = $db->sql_fetchrowset($result);
-			$db->sql_freeresult($result);
+			$result = $_CLASS['core_db']->sql_query($sql);
+			$extensions = $_CLASS['core_db']->sql_fetchrowset($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			$img_path = $config['upload_icons_path'];
 
@@ -942,7 +944,7 @@ if ($mode == 'ext_groups')
 								}
 							}
 					?></div></td></tr>
-					<tr><td class="row1">&nbsp;</td><td class="row1"><br />[ <a href="<?php echo adminlink('forums&amp;file=admin_attachments'.$SID . '&amp;mode=extensions'); ?>"><?php echo $_CLASS['core_user']->lang['GO_TO_EXTENSIONS']; ?></a> ]</td></tr></table>
+					<tr><td class="row1">&nbsp;</td><td class="row1"><br />[ <a href="<?php echo generate_link('forums&amp;file=admin_attachments&amp;mode=extensions', array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['GO_TO_EXTENSIONS']; ?></a> ]</td></tr></table>
 				</td>
 				<td class="row2"><select name="extensions[]" onChange="show_extensions(this);" multiple="true" size="8" style="width:100px">
 <?php
@@ -962,12 +964,12 @@ if ($mode == 'ext_groups')
 				$sql = 'SELECT forum_id, forum_name, parent_id, forum_type, left_id, right_id
 					FROM ' . FORUMS_TABLE . '
 					ORDER BY left_id ASC';
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
 				$right = $cat_right = $padding_inc = 0;
 				$padding = $forum_list = $holding = '';
 				$padding_store = array('0' => '');
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					if ($row['forum_type'] == FORUM_CAT && ($row['left_id'] + 1 == $row['right_id']))
 					{
@@ -1012,7 +1014,7 @@ if ($mode == 'ext_groups')
 						$holding = '';
 					}
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 				unset($padding_store);
 ?>
 				</select></td>
@@ -1037,7 +1039,7 @@ if ($mode == 'ext_groups')
 				SET allow_group = ' . (($action == 'activate') ? '1' : '0') . "
 				WHERE group_id = $group_id";
 
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			rewrite_extensions();
 
@@ -1046,7 +1048,7 @@ if ($mode == 'ext_groups')
 	$sql = 'SELECT *
 		FROM ' . EXTENSION_GROUPS_TABLE . '
 		ORDER BY allow_group DESC, group_name';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 ?>
 
@@ -1061,7 +1063,7 @@ if ($mode == 'ext_groups')
 
 	$row_class = 'row2';
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$row_class = ($row_class == 'row1') ? 'row2' : 'row1';
 		
@@ -1081,16 +1083,16 @@ if ($mode == 'ext_groups')
 ?>
 
 	<tr>
-		<td class="<?php echo $row_class; ?>"><a href="<?php echo adminlink("forums&amp;file=admin_attachments$SID&amp;mode=$mode&amp;action=edit&amp;g={$row['group_id']}"); ?>"><?php echo $row['group_name']; ?></a></td>
+		<td class="<?php echo $row_class; ?>"><a href="<?php echo generate_link("forums&amp;file=admin_attachments&amp;mode=$mode&amp;action=edit&amp;g={$row['group_id']}", array('admin' => true)); ?>"><?php echo $row['group_name']; ?></a></td>
 		<td class="<?php echo $row_class; ?>"><b><?php echo $cat_lang[$row['cat_id']]; ?></b></td>
-		<td class="<?php echo $row_class; ?>"><a href="<?php echo adminlink("forums&amp;file=admin_attachments$SID&amp;mode=$mode&amp;action=$act_deact&amp;g={$row['group_id']}"); ?>"><?php echo $_CLASS['core_user']->lang[strtoupper($act_deact)]; ?></a></td>
-		<td class="<?php echo $row_class; ?>"><a href="<?php echo adminlink("forums&amp;file=admin_attachments$SID&amp;mode=$mode&amp;action=edit&amp;g={$row['group_id']}"); ?>"><?php echo $_CLASS['core_user']->lang['EDIT']; ?></a></td>
-		<td class="<?php echo $row_class; ?>"><a href="<?php echo adminlink("forums&amp;file=admin_attachments$SID&amp;mode=$mode&amp;action=delete&amp;g={$row['group_id']}"); ?>"><?php echo $_CLASS['core_user']->lang['DELETE']; ?></a></td>
+		<td class="<?php echo $row_class; ?>"><a href="<?php echo generate_link("forums&amp;file=admin_attachments&amp;mode=$mode&amp;action=$act_deact&amp;g={$row['group_id']}", array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang[strtoupper($act_deact)]; ?></a></td>
+		<td class="<?php echo $row_class; ?>"><a href="<?php echo generate_link("forums&amp;file=admin_attachments&amp;mode=$mode&amp;action=edit&amp;g={$row['group_id']}", array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['EDIT']; ?></a></td>
+		<td class="<?php echo $row_class; ?>"><a href="<?php echo generate_link("forums&amp;file=admin_attachments&amp;mode=$mode&amp;action=delete&amp;g={$row['group_id']}", array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['DELETE']; ?></a></td>
 	</tr>
 
 <?php
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 ?>
 	<td class="cat" colspan="5" align="right"><?php echo $_CLASS['core_user']->lang['CREATE_GROUP']; ?>: <input class="post" type="text" name="group_name" maxlength="30" /> <input class="btnmain" type="submit" name="add" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" /></td>
@@ -1114,7 +1116,7 @@ if ($mode == 'extensions')
 		<th>&nbsp;<?php echo $_CLASS['core_user']->lang['ADD_EXTENSION']; ?>&nbsp;</th>
 	</tr>
 	<tr>
-		<td class="row1" align="center" valign="middle"><input type="text" size="20" maxlength="100" name="add_extension" class="post" value="<?php echo $add_extension; ?>" /></td>
+		<td class="row1" align="center" valign="middle"><input type="text" size="20" maxlength="100" name="add_extension" class="post" value="<?php echo (isset($add_extension)) ? $add_extension : ''; ?>" /></td>
 		<td class="row2" align="center" valign="middle"><?php echo (($submit) ? group_select('add_group_select', $add_extension_group) : group_select('add_group_select')) ?></td>
 		<td class="row1" align="center" valign="middle"><input type="checkbox" name="add_extension_check" /></td>
 	</tr>
@@ -1131,9 +1133,9 @@ if ($mode == 'extensions')
 	$sql = 'SELECT * 
 		FROM ' . EXTENSIONS_TABLE . ' 
 		ORDER BY group_id, extension';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	if ($row = $db->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$old_group_id = $row['group_id'];
 		do
@@ -1143,7 +1145,7 @@ if ($mode == 'extensions')
 			{
 ?>
 	<tr>
-		<td class="spacer" colspan="2" height="1"><img src="../images/spacer.gif" alt="" width="1" height="1" /></td>
+		<td class="spacer" colspan="3" height="1"></td>
 	</tr>
 <?php
 				$old_group_id = $current_group_id;
@@ -1157,7 +1159,7 @@ if ($mode == 'extensions')
 	</tr>
 <?
 		}
-		while ($row = $db->sql_fetchrow($result));
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 	}
 ?>
 	<tr>
@@ -1172,10 +1174,10 @@ if ($mode == 'orphan')
 {
 	$attach_filelist = array();
 
-	$dir = @opendir($config['upload_dir']);
+	$dir = @opendir($config['upload_path']);
 	while ($file = @readdir($dir))
 	{
-		if (is_file($config['upload_dir'] . '/' . $file) && filesize($config['upload_dir'] . '/' . $file) && $file{0} != '.' && $file != 'index.htm' && !preg_match('#^thumb\_#', $file))
+		if (is_file($config['upload_path'] . '/' . $file) && filesize($config['upload_path'] . '/' . $file) && $file{0} != '.' && $file != 'index.htm' && !preg_match('#^thumb\_#', $file))
 		{
 			$attach_filelist[$file] = $file;
 		}
@@ -1203,13 +1205,13 @@ function marklist(match, name, status)
 <?php
 	$sql = 'SELECT physical_filename 
 		FROM ' . ATTACHMENTS_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		unset($attach_filelist[$row['physical_filename']]);
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 ?>
 
@@ -1227,12 +1229,12 @@ function marklist(match, name, status)
 	foreach ($attach_filelist as $file)
 	{
 		$row_class = (++$i % 2 == 0) ? 'row2' : 'row1';
-		$filesize = @filesize($config['upload_dir'] . '/' . $file);
+		$filesize = @filesize($config['upload_path'] . '/' . $file);
 		$size_lang = ($filesize >= 1048576) ? $_CLASS['core_user']->lang['MB'] : ( ($filesize >= 1024) ? $_CLASS['core_user']->lang['KB'] : $_CLASS['core_user']->lang['BYTES'] );
 		$filesize = ($filesize >= 1048576) ? round((round($filesize / 1048576 * 100) / 100), 2) : (($filesize >= 1024) ? round((round($filesize / 1024 * 100) / 100), 2) : $filesize);
 ?>
 		<tr>
-			<td class="<?php echo $row_class; ?>"><a href="<?php echo $config['upload_dir'] . '/' . $file; ?>" class="gen" target="file"><?php echo $file; ?></a></td>
+			<td class="<?php echo $row_class; ?>"><a href="<?php echo $config['upload_path'] . '/' . $file; ?>" class="gen" target="file"><?php echo $file; ?></a></td>
 			<td class="<?php echo $row_class; ?>"><?php echo $filesize . ' ' . $size_lang; ?></td>
 			<td class="<?php echo $row_class; ?>"><b class="gen">ID: </b><input type="text" name="post_id[<?php echo $file; ?>]" class="post" size="7" maxlength="10" value="<?php echo (!empty($post_ids[$file])) ? $post_ids[$file] : ''; ?>" /></td>
 			<td class="<?php echo $row_class; ?>"><input type="checkbox" name="add[<?php echo $file; ?>]" /></td>
@@ -1262,9 +1264,9 @@ function marklist(match, name, status)
 adm_page_footer();
 
 // Build Select for category items
-function category_select($select_name, $group_id = FALSE)
+function category_select($select_name, $group_id = false)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	$types = array(
 		ATTACHMENT_CATEGORY_NONE => $_CLASS['core_user']->lang['NONE'],
@@ -1277,11 +1279,11 @@ function category_select($select_name, $group_id = FALSE)
 	{
 		$sql = 'SELECT cat_id
 			FROM ' . EXTENSION_GROUPS_TABLE . '
-			WHERE group_id = ' . intval($group_id);
-		$result = $db->sql_query($sql);
+			WHERE group_id = ' . (int) $group_id;
+		$result = $_CLASS['core_db']->sql_query($sql);
 		
-		$cat_type = (!($row = $db->sql_fetchrow($result))) ? ATTACHMENT_CATEGORY_NONE : $row['cat_id'];
-		$db->sql_freeresult($result);
+		$cat_type = (!($row = $_CLASS['core_db']->sql_fetchrow($result))) ? ATTACHMENT_CATEGORY_NONE : $row['cat_id'];
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	else
 	{
@@ -1298,35 +1300,35 @@ function category_select($select_name, $group_id = FALSE)
 
 	$group_select .= '</select>';
 
-	return($group_select);
+	return $group_select;
 }
 
 // Extension group select
-function group_select($select_name, $default_group = '-1')
+function group_select($select_name, $default_group = false)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 		
 	$group_select = '<select name="' . $select_name . '">';
 
 	$sql = 'SELECT group_id, group_name
 		FROM ' . EXTENSION_GROUPS_TABLE . '
 		ORDER BY group_name';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$group_name = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$group_name[] = $row;
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$row['group_id'] = 0;
 	$row['group_name'] = $_CLASS['core_user']->lang['NOT_ASSIGNED'];
 	$group_name[] = $row;
 	
-	for ($i = 0; $i < count($group_name); $i++)
+	for ($i = 0; $i < sizeof($group_name); $i++)
 	{
-		if ($default_group == '-1')
+		if ($default_group === false)
 		{
 			$selected = ($i == 0) ? ' selected="selected"' : '';
 		}
@@ -1346,7 +1348,7 @@ function group_select($select_name, $default_group = '-1')
 // Build select for download modes
 function download_select($select_name, $group_id = false)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 		
 	$types = array(
 		INLINE_LINK => $_CLASS['core_user']->lang['MODE_INLINE'],
@@ -1357,12 +1359,12 @@ function download_select($select_name, $group_id = false)
 	{
 		$sql = "SELECT download_mode
 			FROM " . EXTENSION_GROUPS_TABLE . "
-			WHERE group_id = " . intval($group_id);
-		$result = $db->sql_query($sql);
+			WHERE group_id = " . (int) $group_id;
+		$result = $_CLASS['core_db']->sql_query($sql);
 		
-		$download_mode = (!($row = $db->sql_fetchrow($result))) ? INLINE_LINK : $row['download_mode'];
+		$download_mode = (!($row = $_CLASS['core_db']->sql_fetchrow($result))) ? INLINE_LINK : $row['download_mode'];
 
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	else
 	{
@@ -1379,20 +1381,20 @@ function download_select($select_name, $group_id = false)
 
 	$group_select .= '</select>';
 
-	return($group_select);
+	return $group_select;
 }
 
 // Upload already uploaded file... huh? are you kidding?
 function upload_file($post_id, $topic_id, $forum_id, $upload_dir, $filename)
 {
-	global $message_parser, $db, $_CLASS;
+	global $message_parser, $_CLASS;
 
 	$message_parser->attachment_data = array();
 
 	$message_parser->filename_data['filecomment'] = '';
 	$message_parser->filename_data['filename'] = $upload_dir . '/' . $filename;
 
-	$filedata = upload_attachment($forum_id, $filename, true, $upload_dir . '/' . $filename);
+	$filedata = upload_attachment('local', $forum_id, true, $upload_dir . '/' . basename($filename));
 
 	if ($filedata['post_attach'] && !sizeof($filedata['error']))
 	{
@@ -1401,8 +1403,8 @@ function upload_file($post_id, $topic_id, $forum_id, $upload_dir, $filename)
 			'poster_id'			=> $_CLASS['core_user']->data['user_id'],
 			'topic_id'			=> $topic_id,
 			'in_message'		=> 0,
-			'physical_filename'	=> $filedata['destination_filename'],
-			'real_filename'		=> $filedata['filename'],
+			'physical_filename'	=> $filedata['physical_filename'],
+			'real_filename'		=> $filedata['real_filename'],
 			'comment'			=> $message_parser->filename_data['filecomment'],
 			'extension'			=> $filedata['extension'],
 			'mimetype'			=> $filedata['mimetype'],
@@ -1417,22 +1419,22 @@ function upload_file($post_id, $topic_id, $forum_id, $upload_dir, $filename)
 		// Submit Attachment
 		$attach_sql = $message_parser->attachment_data;
 
-		$db->sql_transaction();
+		$_CLASS['core_db']->sql_transaction();
 
-		$sql = 'INSERT INTO ' . ATTACHMENTS_TABLE . ' ' . $db->sql_build_array('INSERT', $attach_sql);
-		$db->sql_query($sql);
+		$sql = 'INSERT INTO ' . ATTACHMENTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		$sql = 'UPDATE ' . POSTS_TABLE . "
 			SET post_attachment = 1
 			WHERE post_id = $post_id";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		$sql = 'UPDATE ' . TOPICS_TABLE . "
 			SET topic_attachment = 1
 			WHERE topic_id = $topic_id";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
-		$db->sql_transaction('commit');
+		$_CLASS['core_db']->sql_transaction('commit');
 
 		add_log('admin', sprintf($_CLASS['core_user']->lang['LOG_ATTACH_FILEUPLOAD'], $post_id, $filename));
 		echo '<span style="color:green">' . $_CLASS['core_user']->lang['SUCCESSFULLY_UPLOADED'] . '</span><br /><br />';
@@ -1456,7 +1458,7 @@ function search_imagemagick()
 
 		foreach ($locations as $location)
 		{
-			if (file_exists($location . 'convert' . $exe) && @is_readable($location . 'convert' . $exe) && @filesize($location . 'convert' . $exe) > 10000)
+			if (@is_readable($location . 'mogrify' . $exe) && @filesize($location . 'mogrify' . $exe) > 3000)
 			{
 				$imagick = str_replace('\\', '/', $location);
 				continue;
@@ -1476,10 +1478,6 @@ function test_upload(&$error, $upload_dir, $create_directory = false)
 {
 	global $_CLASS;
 
-	// Adjust the Upload Directory. Relative or absolute, this is the question here.
-	$real_upload_dir = $upload_dir;
-	//$upload_dir = ($upload_dir{0} == '/' || ($upload_dir{0} != '/' && $upload_dir{1} == ':')) ? $upload_dir : $phpbb_root_path . $upload_dir;
-
 	// Does the target directory exist, is it a directory and writeable.
 	if ($create_directory)
 	{
@@ -1492,26 +1490,26 @@ function test_upload(&$error, $upload_dir, $create_directory = false)
 
 	if (!file_exists($upload_dir))
 	{
-		$error[] = sprintf($_CLASS['core_user']->lang['NO_UPLOAD_DIR'], $real_upload_dir);
+		$error[] = sprintf($_CLASS['core_user']->lang['NO_UPLOAD_DIR'], $upload_dir);
 		return;
 	}
 	
 	if (!is_dir($upload_dir))
 	{
-		$error[] = sprintf($_CLASS['core_user']->lang['UPLOAD_NOT_DIR'], $real_upload_dir);
+		$error[] = sprintf($_CLASS['core_user']->lang['UPLOAD_NOT_DIR'], $upload_dir);
 		return;
 	}
 	
 	if (!is_writable($upload_dir))
 	{
-		$error[] = sprintf($_CLASS['core_user']->lang['NO_WRITE_UPLOAD'], $real_upload_dir);
+		$error[] = sprintf($_CLASS['core_user']->lang['NO_WRITE_UPLOAD'], $upload_dir);
 		return;
 	}
 }
 
 function perform_site_list()
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	if (isset($_REQUEST['securesubmit']))
 	{
@@ -1601,9 +1599,9 @@ function perform_site_list()
 		$sql = 'SELECT site_ip, site_hostname
 			FROM ' . SITELIST_TABLE . "
 			WHERE ip_exclude = $ip_exclude";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$iplist_tmp = array();
 			$hostlist_tmp = array();
@@ -1619,7 +1617,7 @@ function perform_site_list()
 				}
 				break;
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 			$iplist = array_unique(array_diff($iplist, $iplist_tmp));
 			$hostlist = array_unique(array_diff($hostlist, $hostlist_tmp));
@@ -1633,7 +1631,7 @@ function perform_site_list()
 			{
 				$sql = 'INSERT INTO ' . SITELIST_TABLE . " (site_ip, ip_exclude)
 					VALUES ($ip_entry, $ip_exclude)";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 
@@ -1643,7 +1641,7 @@ function perform_site_list()
 			{
 				$sql = 'INSERT INTO ' . SITELIST_TABLE . " (site_hostname, ip_exclude)
 					VALUES ($host_entry, $ip_exclude)";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 		
@@ -1668,16 +1666,16 @@ function perform_site_list()
 			$sql = 'SELECT site_ip, site_hostname
 				FROM ' . SITELIST_TABLE . "
 				WHERE site_id IN ($unip_sql)";
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$l_unip_list .= (($l_unip_list != '') ? ', ' : '') . (($row['site_ip']) ? $row['site_ip'] : $row['site_hostname']);
 			}
 
 			$sql = 'DELETE FROM ' . SITELIST_TABLE . "
 				WHERE site_id IN ($unip_sql)";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			add_log('admin', 'LOG_DOWNLOAD_REMOVE_IP', $l_unip_list);
 		}
@@ -1689,16 +1687,16 @@ function perform_site_list()
 // Re-Write extensions cache file
 function rewrite_extensions()
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	$sql = 'SELECT e.extension, g.*
 		FROM ' . EXTENSIONS_TABLE . ' e, ' . EXTENSION_GROUPS_TABLE . ' g
 		WHERE e.group_id = g.group_id
 			AND g.allow_group = 1';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$extensions = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$extension = $row['extension'];
 
@@ -1717,7 +1715,7 @@ function rewrite_extensions()
 		// Store allowed extensions forum wise
 		$extensions['_allowed_'][$extension] = (!sizeof($allowed_forums)) ? 0 : $allowed_forums;
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$_CLASS['core_cache']->destroy('extensions');
 	$_CLASS['core_cache']->put('extensions', $extensions);

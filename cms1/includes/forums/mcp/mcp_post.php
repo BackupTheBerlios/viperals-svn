@@ -25,8 +25,7 @@
 
 function mcp_post_details($id, $mode, $action, $url)
 {
-	global $phpEx, $config;
-	global $_CLASS, $db;
+	global $config, $_CLASS;
 	
 	$_CLASS['core_user']->add_lang('posting');
 
@@ -102,12 +101,12 @@ function mcp_post_details($id, $mode, $action, $url)
 
 				$sql = 'SELECT user_id, username
 					FROM ' . USERS_TABLE . "
-					WHERE username LIKE '" . $db->sql_escape($username) . "'
+					WHERE username LIKE '" . $_CLASS['core_db']->sql_escape($username) . "'
 						AND user_type NOT IN (" . USER_INACTIVE . ', ' . USER_IGNORE . ')
 						AND user_id <> ' . $post_info['user_id'];
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					$users_ary[strtolower($row['username'])] = $row;
 				}
@@ -140,7 +139,7 @@ function mcp_post_details($id, $mode, $action, $url)
 				$sql = 'UPDATE ' . POSTS_TABLE . "
 					SET poster_id = $new_user
 					WHERE post_id = $post_id";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 
 				if ($post_info['topic_last_post_id'] == $post_info['post_id'] || $post_info['forum_last_post_id'] == $post_info['post_id'])
 				{
@@ -186,12 +185,12 @@ function mcp_post_details($id, $mode, $action, $url)
 				$sql = 'DELETE FROM ' . LOG_TABLE . '
 					WHERE log_type = ' . LOG_USERS . " 
 						$where_sql";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 
 				add_log('admin', 'LOG_USERS_CLEAR');
 
 				$msg = ($deletemark) ? 'MARKED_DELETED' : 'ALL_DELETED';
-				$redirect = getlink("$url&amp;i=$id&amp;mode=post_details", false, false);
+				$redirect = generate_link("$url&amp;i=$id&amp;mode=post_details");
 				$_CLASS['core_display']->meta_refresh(2, $redirect);
 				trigger_error($_CLASS['core_user']->lang[$msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 			}
@@ -201,7 +200,7 @@ function mcp_post_details($id, $mode, $action, $url)
 				add_log('admin', 'LOG_USER_FEEDBACK', $post_info['username']);
 				add_log('user', $post_info['user_id'], 'LOG_USER_GENERAL', $usernote);
 
-				$redirect = getlink("$url&amp;i=$id&amp;mode=post_details", false, false);
+				$redirect = generate_link("$url&amp;i=$id&amp;mode=post_details");
 				$_CLASS['core_display']->meta_refresh(2, $redirect);
 				trigger_error($_CLASS['core_user']->lang['USER_FEEDBACK_ADDED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>'));
 			}
@@ -219,16 +218,16 @@ function mcp_post_details($id, $mode, $action, $url)
 	if ($post_info['bbcode_bitfield'])
 	{
 		global $site_file_root;
-		require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.php');
 		$bbcode = new bbcode($post_info['bbcode_bitfield']);
 		$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 	}
 	$message = smiley_text($message);
 
 	$_CLASS['core_template']->assign(array(
-		'U_MCP_ACTION'			=> getlink($url.'&amp;i=main&amp;quickmod=1', false, false), // Use this for mode paramaters
-		'U_POST_ACTION'			=> getlink("$url&amp;i=$id&amp;mode=post_details", false, false), // Use this for action parameters
-		'U_APPROVE_ACTION'		=> getlink('Forums&amp;file=mcp&amp;i=queue&amp;p='.$post_id, false, false),
+		'U_MCP_ACTION'			=> generate_link($url.'&amp;i=main&amp;quickmod=1'), // Use this for mode paramaters
+		'U_POST_ACTION'			=> generate_link("$url&amp;i=$id&amp;mode=post_details"), // Use this for action parameters
+		'U_APPROVE_ACTION'		=> generate_link('Forums&amp;file=mcp&amp;i=queue&amp;p='.$post_id),
 
 		'S_CAN_VIEWIP'			=> $_CLASS['auth']->acl_get('m_ip', $post_info['forum_id']),
 		'S_CAN_CHGPOSTER'		=> $_CLASS['auth']->acl_get('m_', $post_info['forum_id']),
@@ -242,13 +241,13 @@ function mcp_post_details($id, $mode, $action, $url)
 		'S_SHOW_USER_NOTES'		=> true,
 		'S_CLEAR_ALLOWED'		=> ($_CLASS['auth']->acl_get('a_clearlogs')) ? true : false,
 
-		'U_VIEW_PROFILE'		=> getlink('Members_List&amp;mode=viewprofile&amp;u=' . $post_info['user_id']),
-//		'U_MCP_USERNOTES'		=> getlink('Forums&amp;file=mcp&amp;i=notes&amp;mode=user_notes&amp;u=' . $post_info['user_id'], false, false),
-//		'U_MCP_WARNINGS'		=> getlink('Forums&amp;file=mcp&amp;i=warnings&amp;mode=view_user&amp;u=' . $post_info['user_id'], false, false),
-		'U_EDIT'				=> ($_CLASS['auth']->acl_get('m_edit', $post_info['forum_id'])) ? getlink("Forums&amp;file=posting&amp;mode=edit&amp;f={$post_info['forum_id']}&amp;p={$post_info['post_id']}", false, false) : '',
+		'U_VIEW_PROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $post_info['user_id']),
+//		'U_MCP_USERNOTES'		=> generate_link('Forums&amp;file=mcp&amp;i=notes&amp;mode=user_notes&amp;u=' . $post_info['user_id']),
+//		'U_MCP_WARNINGS'		=> generate_link('Forums&amp;file=mcp&amp;i=warnings&amp;mode=view_user&amp;u=' . $post_info['user_id']),
+		'U_EDIT'				=> ($_CLASS['auth']->acl_get('m_edit', $post_info['forum_id'])) ? generate_link("Forums&amp;file=posting&amp;mode=edit&amp;f={$post_info['forum_id']}&amp;p={$post_info['post_id']}") : '',
 
-		'RETURN_TOPIC'			=> sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.getlink("Forums&amp;file=viewtopic&amp;p=$post_id#$post_id", false, false).'">', '</a>'),
-		'RETURN_FORUM'			=> sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.getlink("Forums&amp;file=viewforum&amp;f={$post_info['forum_id']}&amp;start={$start}", false, false).'">', '</a>'),
+		'RETURN_TOPIC'			=> sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;p=$post_id#$post_id").'">', '</a>'),
+		'RETURN_FORUM'			=> sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link("Forums&amp;file=viewforum&amp;f={$post_info['forum_id']}&amp;start={$start}").'">', '</a>'),
 		'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', $_CLASS['core_user']->lang['POST_REPORTED']),
 		'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', $_CLASS['core_user']->lang['POST_UNAPPROVED']),
 		'EDIT_IMG'				=> $_CLASS['core_user']->img('btn_edit', $_CLASS['core_user']->lang['EDIT_POST']),
@@ -291,9 +290,9 @@ function mcp_post_details($id, $mode, $action, $url)
 				AND r.reason_id = re.reason_id
 				AND u.user_id = r.user_id
 			ORDER BY r.report_time DESC";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$_CLASS['core_template']->assign('S_SHOW_REPORTS', true);
 
@@ -304,15 +303,15 @@ function mcp_post_details($id, $mode, $action, $url)
 					'REASON_TITLE'	=> $_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_name'])],
 					'REASON_DESC'	=> $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_name'])],
 					'REPORTER'		=> ($row['user_id'] != ANONYMOUS) ? $row['username'] : $_CLASS['core_user']->lang['GUEST'],
-					'U_REPORTER'	=> ($row['user_id'] != ANONYMOUS) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : '',
+					'U_REPORTER'	=> ($row['user_id'] != ANONYMOUS) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : '',
 					'USER_NOTIFY'	=> ($row['user_notify']) ? true : false,
 					'REPORT_TIME'	=> $_CLASS['core_user']->format_date($row['report_time']),
 					'REPORT_TEXT'	=> str_replace("\n", '<br />', trim($row['report_text'])))
 				);
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	
 	// Get IP
@@ -323,7 +322,7 @@ function mcp_post_details($id, $mode, $action, $url)
 		if ($rdns_ip_num != 'all')
 		{
 			$_CLASS['core_template']->assign(array(
-				'U_LOOKUP_ALL'	=> getlink($url.'&amp;i=main&amp;mode=post_details&amp;rdns=all', false, false))
+				'U_LOOKUP_ALL'	=> generate_link($url.'&amp;i=main&amp;mode=post_details&amp;rdns=all'))
 			);
 		}
 
@@ -335,9 +334,9 @@ function mcp_post_details($id, $mode, $action, $url)
 				AND p.poster_id <> {$post_info['user_id']}
 			GROUP BY u.user_id
 			ORDER BY postings DESC";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			// Fill the user select list with users who have posted
 			// under this IP
@@ -351,11 +350,11 @@ function mcp_post_details($id, $mode, $action, $url)
 				'NUM_POSTS'		=> $row['postings'],	
 				'L_POST_S'		=> ($row['postings'] == 1) ? $_CLASS['core_user']->lang['POST'] : $_CLASS['core_user']->lang['POSTS'],
 
-				'U_PROFILE'		=> ($row['user_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
-				'U_SEARCHPOSTS' => getlink('Forums&amp;file=search&amp;search_author=' . urlencode($row['username']) . '&amp;showresults=topics', false, false))
+				'U_PROFILE'		=> ($row['user_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
+				'U_SEARCHPOSTS' => generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($row['username']) . '&amp;showresults=topics'))
 			);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		// Get other IP's this user has posted under
 		$sql = 'SELECT poster_ip, COUNT(*) AS postings
@@ -363,9 +362,9 @@ function mcp_post_details($id, $mode, $action, $url)
 			WHERE poster_id = ' . $post_info['poster_id'] . '
 			GROUP BY poster_ip
 			ORDER BY postings DESC';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$hostname = (($rdns_ip_num == $row['poster_ip'] || $rdns_ip_num == 'all') && $row['poster_ip']) ? @gethostbyaddr($row['poster_ip']) : '';
 
@@ -375,11 +374,11 @@ function mcp_post_details($id, $mode, $action, $url)
 				'NUM_POSTS'		=> $row['postings'],	
 				'L_POST_S'		=> ($row['postings'] == 1) ? $_CLASS['core_user']->lang['POST'] : $_CLASS['core_user']->lang['POSTS'],
 
-				'U_LOOKUP_IP'	=> ($rdns_ip_num == $row['poster_ip'] || $rdns_ip_num == 'all') ? '' : getlink("$url&amp;i=$id&amp;mode=post_details&amp;rdns={$row['poster_ip']}#ip", false, false),
-				'U_WHOIS'		=> getlink("Forums&amp;file=mcp&amp;i=$id&amp;mode=whois&amp;ip={$row['poster_ip']}", false, false))
+				'U_LOOKUP_IP'	=> ($rdns_ip_num == $row['poster_ip'] || $rdns_ip_num == 'all') ? '' : generate_link("$url&amp;i=$id&amp;mode=post_details&amp;rdns={$row['poster_ip']}#ip"),
+				'U_WHOIS'		=> generate_link("Forums&amp;file=mcp&amp;i=$id&amp;mode=whois&amp;ip={$row['poster_ip']}"))
 			);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		// If we were not searching for a specific username fill
 		// the user_select box with users who have posted under

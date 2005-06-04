@@ -36,31 +36,31 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 				$sql = 'SELECT username 
 					FROM ' . USERS_TABLE . "
 					WHERE user_id IN ($mark)";
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 				
 				$user_affected = array();
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					$user_affected[] = $row['username'];
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				if ($action == 'activate')
 				{
 					$sql = 'UPDATE ' . USERS_TABLE . ' SET user_type = ' . USER_NORMAL . " WHERE user_id IN ($mark)";
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 				else if ($action == 'delete')
 				{
 					$sql = 'DELETE FROM ' . USER_GROUP_TABLE . " WHERE user_id IN ($mark)";
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 					$sql = 'DELETE FROM ' . USERS_TABLE . " WHERE user_id IN ($mark)";
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 
 				if ($action != 'delete')
 				{
-					set_config('num_users', $config['num_users'] + $db->sql_affectedrows(), true);
+					set_config('num_users', $config['num_users'] + $_CLASS['core_db']->sql_affectedrows(), true);
 				}
 
 				add_log('admin', 'LOG_INDEX_' . strtoupper($action), implode(', ', $user_affected));
@@ -80,16 +80,15 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 				$sql = 'SELECT user_id, username, user_email, user_lang, user_jabber, user_notify_type, user_regdate, user_actkey
 					FROM ' . USERS_TABLE . " 
 					WHERE user_id IN ($mark)";
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
-				if ($row = $db->sql_fetchrow($result))
+				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					// Send the messages
-					require_once('includes/forums/functions_messenger.'.$phpEx);
+					require_once($site_file_root.'includes/forums/functions_messenger.php');
 
 					$messenger = new messenger();
 
-					$board_url = generate_board_url() . "/ucp.$phpEx?mode=activate";
 					$sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
 
 					$usernames = array();
@@ -104,17 +103,17 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 						$messenger->assign_vars(array(
 							'EMAIL_SIG'		=> $sig,
 							'USERNAME'		=> $row['username'],
-							'SITENAME'		=> $config['sitename'],
+							'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 							'REGISTER_DATE'	=> $_CLASS['core_user']->format_date($row['user_regdate']), 
 							
-							'U_ACTIVATE'	=> "$board_url&mode=activate&u=" . $row['user_id'] . '&k=' . $row['user_actkey'])
+							'U_ACTIVATE'	=> generate_link('Control_Panel&mode=activate&u=' . $row['user_id'] . '&k=' . $row['user_actkey'], array('full' => true)))
 						);
 
 						$messenger->send($row['user_notify_type']);
 
 						$usernames[] = $row['username'];
 					}
-					while ($row = $db->sql_fetchrow($result));
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 					$messenger->save_queue();
 					
@@ -123,7 +122,7 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 					add_log('admin', 'LOG_INDEX_REMIND', implode(', ', $usernames));
 					unset($usernames);
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 				break;
 		}
 	}
@@ -150,43 +149,43 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 			$sql = 'SELECT COUNT(post_id) AS stat 
 				FROM ' . POSTS_TABLE . '
 				WHERE post_approved = 1';
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 			set_config('num_posts', (int) $row['stat'], true);
 
 			$sql = 'SELECT COUNT(topic_id) AS stat
 				FROM ' . TOPICS_TABLE . '
 				WHERE topic_approved = 1';
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 			set_config('num_topics', (int) $row['stat'], true);
 
 			$sql = 'SELECT COUNT(user_id) AS stat
 				FROM ' . USERS_TABLE . '
 				WHERE user_type IN (' . USER_NORMAL . ',' . USER_FOUNDER . ')';
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 			set_config('num_users', (int) $row['stat'], true);
 
 			$sql = 'SELECT COUNT(attach_id) as stat
 				FROM ' . ATTACHMENTS_TABLE;
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			set_config('num_files', (int) $db->sql_fetchfield('stat', 0, $result), true);
-			$db->sql_freeresult($result);
+			set_config('num_files', (int) $_CLASS['core_db']->sql_fetchfield('stat', 0, $result), true);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			$sql = 'SELECT SUM(filesize) as stat
 				FROM ' . ATTACHMENTS_TABLE;
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			set_config('upload_dir_size', (int) $db->sql_fetchfield('stat', 0, $result), true);
-			$db->sql_freeresult($result);
+			set_config('upload_dir_size', (int) $_CLASS['core_db']->sql_fetchfield('stat', 0, $result), true);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			add_log('admin', 'LOG_RESYNC_STATS');
 			break;
@@ -210,7 +209,7 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 			
 			if (!sizeof($forum_ary))
 			{
-				$db->sql_query('UPDATE ' . USERS_TABLE . ' SET user_posts = 0');
+				$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . ' SET user_posts = 0');
 			}
 			else
 			{
@@ -219,13 +218,13 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 					WHERE poster_id <> ' . ANONYMOUS . '
 						AND forum_id IN (' . implode(', ', $forum_ary) . ')
 					GROUP BY poster_id';
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
-					$db->sql_query('UPDATE ' . USERS_TABLE . " SET user_posts = {$row['num_posts']} WHERE user_id = {$row['poster_id']}");
+					$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . " SET user_posts = {$row['num_posts']} WHERE user_id = {$row['poster_id']}");
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 			}
 
 			add_log('admin', 'LOG_RESYNC_POSTCOUNTS');
@@ -308,22 +307,24 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 	// in phpMyAdmin 2.2.0
 	if (preg_match('#^mysql#', SQL_LAYER))
 	{
-		$result = $db->sql_query('SELECT VERSION() AS mysql_version');
+		$result = $_CLASS['core_db']->sql_query('SELECT VERSION() AS mysql_version');
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$version = $row['mysql_version'];
 
 			if (preg_match('#^(3\.23|4\.)#', $version))
 			{
+				require($site_file_root.'config.php');
+				
 				$db_name = (preg_match('#^(3\.23\.[6-9])|(3\.23\.[1-9][1-9])|(4\.)#', $version)) ? '`'.$sitedb['dbname'].'`' : $sitedb['dbname'];
 
 				$sql = "SHOW TABLE STATUS
 					FROM " . $db_name;
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
 				$dbsize = 0;
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					if ((isset($row['Type']) && $row['Type'] != 'MRG_MyISAM') || (isset($row['Engine']) && $row['Engine'] == 'MyISAM'))
 					{
@@ -356,9 +357,9 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 	{
 		$sql = 'SELECT ((SUM(size) * 8.0) * 1024.0) as dbsize
 			FROM sysfiles';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		$dbsize = ($row = $db->sql_fetchrow($result)) ? intval($row['dbsize']) : $_CLASS['core_user']->lang['NOT_AVAILABLE'];
+		$dbsize = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? intval($row['dbsize']) : $_CLASS['core_user']->lang['NOT_AVAILABLE'];
 	}
 	else
 	{
@@ -392,7 +393,7 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 
 <h1><?php echo $_CLASS['core_user']->lang['FORUM_STATS']; ?></h1>
 
-<form name="statistics" method="post" action="<?php echo adminlink('forums'); ?>"><table class="tablebg" width="100%" cellpadding="4" cellspacing="1" border="0">
+<form name="statistics" method="post" action="<?php echo generate_link('forums', array('admin' => true)); ?>"><table class="tablebg" width="100%" cellpadding="4" cellspacing="1" border="0">
 	<tr>
 		<th width="25%" nowrap="nowrap" height="25"><?php echo $_CLASS['core_user']->lang['STATISTIC']; ?></th>
 		<th width="25%"><?php echo $_CLASS['core_user']->lang['VALUE']; ?></th>
@@ -495,9 +496,9 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 			FROM ' . USERS_TABLE . ' 
 			WHERE user_type = ' . USER_INACTIVE . ' 
 			ORDER BY user_regdate ASC';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			do
 			{
@@ -512,7 +513,7 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 <?php
 
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 ?>
 	<tr>

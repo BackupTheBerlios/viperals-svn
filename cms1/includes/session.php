@@ -19,6 +19,15 @@
 // WWW       : http://www.phpbb.com/
 //
 // -------------------------------------------------------------
+// session_url will alway contain the users last url. This is in {module}{queries} format
+
+/*
+To do
+	Complete only registered site feather
+	Clean up
+	Banning system
+	Clean up again :-)
+*/
 
 class session
 {
@@ -38,20 +47,27 @@ class session
 	{
 		global $_CLASS, $_CORE_CONFIG, $SID, $mod;
 		
-// make sure all $SID is removed first XSS problems
-		$SID = false;
-		
 		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 		$this->browser = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'];
 		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
 		$this->page = $mod;
 
-		if (($pos = strpos($this->url, 'sid')) !== false)
+		if ($pos = strpos($this->url, 'index.php?mod=') !== false)
 		{
-			$this->url = substr($this->url, 0, $pos-1);
+			$pos = $pos + strlen('index.php?mod='); 
+			$this->url = substr($this->url, $pos);
+			
+			if (($pos = strpos($this->url, 'sid')) !== false)
+			{
+				$this->url = substr($this->url, 0, $pos-1);
+			}
 		}
-		
+		else
+		{
+			$this->url = '';
+		}
+
 		if (!isset($_COOKIE))
 		{
 			$_COOKIE = array();
@@ -107,11 +123,11 @@ class session
 			if (isset($this->data['user_id']))
 			{
 				// Validate IP length according to admin ... has no effect on IPv6
-				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $_CORE_CONFIG['user']['ip_check']));
-				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $_CORE_CONFIG['user']['ip_check']));
+				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $_CORE_CONFIG['server']['ip_check']));
+				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $_CORE_CONFIG['server']['ip_check']));
 
-				$s_browser = ($_CORE_CONFIG['user']['browser_check']) ? $this->data['session_browser'] : '';
-				$u_browser = ($_CORE_CONFIG['user']['browser_check']) ? $this->browser : '';
+				$s_browser = ($_CORE_CONFIG['server']['browser_check']) ? $this->data['session_browser'] : '';
+				$u_browser = ($_CORE_CONFIG['server']['browser_check']) ? $this->browser : '';
 
 				if ($u_ip == $s_ip && $s_browser == $u_browser)
 				{
@@ -132,8 +148,7 @@ class session
 					
 					$this->is_user = ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER)) ? true : false;
 					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS) ? true : false;
-/// Amin logging should have 3 option "user is admin" / "USer is not admin" / "Never checked"
-					$this->is_admin = ($this->data['session_admin']) ? true : false;
+					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN) ? true : false;
 
 					check_maintance_status();
 					
@@ -141,6 +156,14 @@ class session
 					{
 						$this->load = check_load_status();
 					}
+					
+					if ($_CORE_CONFIG['global']['only_registered'] && !$this->is_user)
+					{
+						$this->need_url_id = false;
+						login_box(array('full_screen'	=> true));
+					}
+					
+					$this->user_setup();
 					
 					return true;
 				}
@@ -156,7 +179,7 @@ class session
 			$this->load = check_load_status();
 		}
 
-		if ($_CORE_CONFIG['user']['only_registered'])
+		if ($_CORE_CONFIG['global']['only_registered'])
 		{
 			$this->need_url_id = false;
 			login_box(array('full_screen'	=> true));
@@ -173,7 +196,7 @@ class session
 	// Create a new session
 	function create($data = array())
 	{
-		global $_CLASS, $config;
+		global $_CLASS, $_CORE_CONFIG, $config;
 		
 		$session_data = array(
 			'user_name'			=> false,
@@ -182,30 +205,33 @@ class session
 			'admin_login'		=> false,
 			'auth_error_return'	=> false,
 			'auto_log'			=> false,
+			'view_online'		=> true,
 		);
 		
 		$session_data = array_merge($session_data, array_filter($data));
-		$session_data['user_id'] = (int) $session_data['user_id'];
-		$session_data['is_bot'] = false;
+		
+		$session_data['user_id']	= (int) $session_data['user_id'];
+		$session_data['is_bot']		= false;
+		
 		$session_data['old_session_id'] = !empty($this->data['session_id']) ? $this->data['session_id'] : false;
 		$session_data['old_id'] 		= !empty($this->data['user_id']) ? $this->data['user_id'] : false;
 
 		$bots_array = get_bots();
-
+// maybe make a check bot status funtion so it be reused
 		foreach ($bots_array as $bot)
 		{
-			if ($bot['bot_agent'] && preg_match('#' . preg_quote($bot['bot_agent'], '#') . '#i', $this->browser))
+			if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $this->browser))
 			{
 				$session_data['is_bot'] = true;
 			}
 			
-			if ($bot['bot_ip'] && (!$bot['bot_agent'] || $session_data['is_bot']))
+			if ($bot['user_ip'] && (!$bot['user_agent'] || $session_data['is_bot']))
 			{
 				$session_data['is_bot'] = false;
 				
-				foreach (explode(',', $bot['bot_ip']) as $bot_ip)
+				foreach (explode(',', $bot['user_ip']) as $bot_ip)
 				{
-					if (($bot_ip == $this->ip) || (strpos($this->ip, $bot_ip) === 0))
+					if (strpos($this->ip, $bot_ip) === 0)
 					{
 						$session_data['is_bot'] = true;
 					}
@@ -214,11 +240,19 @@ class session
 			
 			if ($session_data['is_bot'])
 			{
+				if ($bot['user_type'] == USER_BOT_INACTIVE)
+				{
+					// How would affect indexing, they should just try back later
+					header("HTTP/1.0 503 Service Unavailable");
+					script_close(false);
+					die;
+				}
+				
 				$session_data['user_id'] = $bot['user_id'];
 				break;
 			}
 		}
-		
+
 		$auth = false;
 
 		if ($session_data['user_password'] && ($session_data['user_name'] || $session_data['user_id']))
@@ -236,7 +270,9 @@ class session
 			if ($session_data['user_id']) 
 			{
 				$where_sql =  'u.user_id = '.$session_data['user_id'];
-			} else {
+			}
+			else
+			{
 				$where_sql =  "u.username = '".$_CLASS['core_db']->sql_escape($session_data['user_name'])."'";
 			}
 			
@@ -250,57 +286,20 @@ class session
 			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
 			
-			/*
-			If you want users to log in more than once, need to check brower && ip
-			Use regular for bots. May only be usefull for developers.
-			
-			if (!$session_data['is_bot'])
+			if ($this->data['session_id'] && !$session_data['is_bot'])
 			{
-				if ($session_data['user_id']) 
+				if ($this->browser != $this->data['session_browser'] || $this->ip != $this->data['session_ip'])
 				{
-					$where_sql =  'user_id = '.$session_data['user_id'];
-				} else {
-					$where_sql =  "username = '".$_CLASS['core_db']->sql_escape($session_data['user_name'])."'";
+// clear data here
+// need to make a single non changing array so we can reset these thing without ot much coding
 				}
-			
-				$sql = 'SELECT * FROM '. USERS_TABLE . '
-						WHERE '.$where_sql;
-						
-				$result = $_CLASS['core_db']->sql_query($sql);
-				$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-				$_CLASS['core_db']->sql_freeresult($result);
-				
-				// Look at database.sessions indexs
-				$sql = 'SELECT * FROM ' . SESSIONS_TABLE . "
-						WHERE session_ip = '".$_CLASS['core_db']->sql_escape($this->ip)."'
-							 AND session_browser = '".$_CLASS['core_db']->sql_escape($this->browser)."'";
-						//ORDER BY session_time DESC";
-	
-				$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-				
-				if ($sessions_dump = $_CLASS['core_db']->sql_fetchrow($result))
-				{
-					$this->data += $sessions_dump;
-				}
-				else
-				{
-					$this->data['session_time'] = $this->data['session_id'] = 0;
-				}
-				
-				$_CLASS['core_db']->sql_freeresult($result);
-				unset($sessions_dump);
-			{
-			else 
-			{
-				regular fetch here
 			}
-			*/
 		} 
 		
-		if (($auth !== true || !$this->data['session_time']) && $config['active_sessions'])
+		//if we disable ofsite posting this should work
+		if ($_CORE_CONFIG['server']['limit_sessions'] && $auth !== true)
 		{
-// wonder if this can be done sooner ?
-			// Limit sessions in 1 minute period
+// We want andmins to log in, don't we !
 			$sql = 'SELECT COUNT(*) AS sessions
 				FROM ' . SESSIONS_TABLE . '
 				WHERE session_time >= ' . ($this->time - 60);
@@ -309,12 +308,14 @@ class session
 			$row = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
 
-			if (intval($row['sessions']) > intval($config['active_sessions']))
+			if (intval($row['sessions']) > intval($_CORE_CONFIG['server']['limit_sessions']))
 			{
-				trigger_error('BOARD_UNAVAILABLE');
+				echo $row['sessions'];
+				$this->user_setup();
+				trigger_error('BOARD_UNAVAILABLE', E_USER_ERROR);
 			}
 		}
-		
+
 		if ($auth !== true)
 		{
 			$sql = 'SELECT *
@@ -336,12 +337,23 @@ class session
 		}
 		
 		$this->is_user = (!$session_data['is_bot'] && ($auth === true)) ? true : false;
-/// Amin logging should have 3 option "user is admin" / "USer is not admin" / "Never checked"
-		$this->is_admin = ($this->is_user && $session_data['admin_login']) ? true : false;
+
+		if ($session_data['admin_login'])
+		{
+			// ($this->is_user) you never know if someone would modify so you only need to log in once for both :-)
+			$session_admin = ($this->is_user && $_CLASS['core_auth']->admin_power()) ? ADMIN_IS_ADMIN : ADMIN_NOT_ADMIN;
+		}
+		else
+		{
+			$session_admin = ADMIN_NOT_LOGGED;
+		}
+		
+		$this->is_admin = ($session_admin == ADMIN_IS_ADMIN) ? true : false;
 		$this->is_bot = ($session_data['is_bot']) ? true : false;
 		
 		$this->data['session_last_visit'] = ($this->data['session_time']) ? $this->data['session_time'] : (($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : time());
-	
+		$view_online = (!$this->data['user_allow_viewonline']) ? 0 : (($session_data['view_online']) ? 1 : 0);
+		
 		$sql_array = array(
 			'session_user_id'		=> (int) $this->data['user_id'],
 			'session_start'			=> (int) $this->time,
@@ -352,8 +364,8 @@ class session
 			'session_url'			=> (string) $this->url,
 			'session_ip'			=> (string) $this->ip,
 			'session_user_type'		=> (string) $this->data['user_type'],
-			'session_admin'			=> (int) $this->is_admin,
-			'session_viewonline'	=> (int) true,	// ADD
+			'session_admin'			=> (int) $session_admin,
+			'session_viewonline'	=> (int) $view_online,
 		);
 		
 		
@@ -382,23 +394,27 @@ class session
 			$this->gc($this->time);
 		}
 
-		if ($session_data['auto_log'] && $this->is_user)
+		if (!$this->is_bot)
 		{
-			$cookie_data['login_code'] = $session_data['user_password'];
-			$cookie_data['user_id'] = $this->data['user_id'];
+			if ($session_data['auto_log'] && $this->is_user)
+			{
+				$cookie_data['login_code'] = $session_data['user_password'];
+				$cookie_data['user_id'] = $this->data['user_id'];
+				
+				$this->set_cookie('data', serialize($cookie_data), $this->time + 31536000);
+			}
+			elseif ($this->new_session)
+			{
+				$this->set_cookie('data', '', 0);
+			}
 			
-			$this->set_cookie('data', serialize($cookie_data), $this->time + 31536000);
-		}
-		elseif ($this->new_session)
-		{
-			$this->set_cookie('data', '', 0);
+			$this->set_cookie('sid', $this->data['session_id'], 0);
 		}
 		
-		$this->set_cookie('sid', $this->data['session_id'], 0);
-
-		$this->need_url_id = true;
+		$this->need_url_id = ($this->is_bot) ? false : true;
 		$this->data['sessions'] = array();
-	
+		$this->user_setup();
+
 		return true;
 	}
 
@@ -481,7 +497,7 @@ class session
 				// Firstly, delete guest sessions
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 					WHERE session_user_id = ' . ANONYMOUS . '
-						AND session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']);
+						AND session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 				$_CLASS['core_db']->sql_query($sql);
 
 				// Keep only the most recent session for each user
@@ -501,13 +517,13 @@ class session
 				// Update last visit time
 				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
 					SET u.user_lastvisit = s.session_time, u.user_lastpage = s.session_page
-					WHERE s.session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']) . '
+					WHERE s.session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
 						AND u.user_id = s.session_user_id';
 				$_CLASS['core_db']->sql_query($sql);
 
 				// Delete everything else now
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']);
+					WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 				$_CLASS['core_db']->sql_query($sql);
 
 				set_config('session_last_gc', $time);
@@ -518,7 +534,7 @@ class session
 				// Get expired sessions, only most recent for each user
 				$sql = 'SELECT session_user_id, session_page, MAX(session_time) AS recent_time
 					FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $_CORE_CONFIG['user']['session_length']) . '
+					WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
 					GROUP BY session_user_id, session_page';
 				$result = $_CLASS['core_db']->sql_query_limit($sql, 5);
 
@@ -547,7 +563,7 @@ class session
 					// Delete expired sessions
 					$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
 						WHERE session_user_id IN ($del_user_id)
-							AND session_time < " . ($time - $_CORE_CONFIG['user']['session_length']);
+							AND session_time < " . ($time - $_CORE_CONFIG['server']['session_length']);
 					$_CLASS['core_db']->sql_query($sql);
 				}
 
@@ -599,34 +615,37 @@ class session
 	function save()
 	{
 		global $_CLASS;
-		
+
 		if (!$this->new_data && !$this->session_save)
 		{
 			return;
 		}
-		
+
 		$sql_array = array(
 			'session_time'			=> (int) $this->time,
 			'session_page'			=> (string) $this->page,
 			'session_url'			=> (string) $this->url,
 			'session_data'			=> (string) serialize($this->data['session_data']),
 		);
-		
+
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
 				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
 		
 		$_CLASS['core_db']->sql_query($sql);
-		
+
 		$this->new_data = $this->session_save = false;
 	}
 	
 	function set_cookie($name, $cookiedata, $cookietime)
 	{
 		global $_CORE_CONFIG;
+
 		if ($this->server_local)
 		{
 			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path']);
-		} else {
+		}
+		else
+		{
 			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
 		}
 	}
@@ -648,7 +667,7 @@ class user extends session
 	var $keyoptions = array('viewimg' => 0, 'viewflash' => 1, 'viewsmilies' => 2, 'viewsigs' => 3, 'viewavatars' => 4, 'viewcensors' => 5, 'attachsig' => 6, 'html' => 7, 'bbcode' => 8, 'smilies' => 9, 'popuppm' => 10, 'report_pm_notify' => 11);
 	var $keyvalues = array();
 
-	function start()
+	function user_setup()
 	{
 		global $_CLASS, $_CORE_CONFIG, $site_file_root;
 
@@ -716,8 +735,8 @@ class user extends session
 
 		$img_file = ($img_file) ? "$img_file.php" : 'index.php';
 
-		if (!$img_file || !ereg('/', $img_file)) {
-		
+		if (!$img_file || !ereg('/', $img_file))
+		{
 			global $_CORE_MODULE, $_CLASS;
 			
 			$module = ($module) ? $module : $_CORE_MODULE['name'];
@@ -726,20 +745,20 @@ class user extends session
 			if (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/'.$module."/images/$lang$img_file"))
 			{
 				include($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/'.$module."/images/$lang$img_file");
-			} else {
+			}
+			else
+			{
 				include($site_file_root.'modules/'.$module."/images/$lang.$img_file");
 			}
-			
-		} else {
-		
+		}
+		else
+		{
 			include($img_file.'.php');
-			
 		}
 	}
 	
 	function get_lang($lang)
 	{
-	
 		if (isset($this->lang[$lang]))
 		{
 			return $this->lang[$lang];
@@ -781,7 +800,6 @@ class user extends session
 			$height = ($height) ? ' height="' . $height . '"' : '';
 			
 			$imgs[$img . $suffix] = $imgsrc . $width . $height;
-			
 		}
 		
 		$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
@@ -798,7 +816,6 @@ class user extends session
 		{
 			foreach ($langfile as $key => $lang_file)
 			{
-				//$key = (string) $key;
 				$this->add_lang($lang_file, $module);
 			}
 			

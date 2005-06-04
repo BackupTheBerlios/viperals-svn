@@ -56,7 +56,7 @@ class auth
 			$this->acl_clear_prefetch();
 			$this->acl_cache($userdata);
 		}
-		else if (!trim($userdata['user_permissions']))
+		elseif (!trim($userdata['user_permissions']))
 		{
 			$this->acl_cache($userdata);
 		}
@@ -317,11 +317,11 @@ class auth
 	
 	function acl_group_raw_data($group_id = false, $opts = false, $forum_id = false)
 	{
-		global $db;
+		global $_CLASS;
 
 		$sql_group = ($group_id) ? ((!is_array($group_id)) ? "group_id = $group_id" : 'group_id IN (' . implode(', ', $group_id) . ')') : '';
 		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
-		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$db->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
+		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
 
 		$hold_ary = array();
 
@@ -333,13 +333,13 @@ class auth
 				$sql_forum
 				$sql_opts
 			ORDER BY a.forum_id, ao.auth_option";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		return $hold_ary;
 	}

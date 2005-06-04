@@ -1,65 +1,45 @@
 <?php
-/***************************************************************************
- *                            admin_disallow.php
- *                            -------------------
- *   begin                : Tuesday, Oct 05, 2001
- *   copyright            : (C) 2001 The phpBB Group
- *   email                : support@phpbb.com
- *
- *   $Id: admin_disallow.php,v 1.5 2004/05/02 13:05:36 acydburn Exp $
- *
- ***************************************************************************/
+/** 
+*
+* @package acp
+* @version $Id: admin_disallow.php,v 1.6 2005/04/09 12:26:28 acydburn Exp $
+* @copyright (c) 2005 phpBB Group 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*
+*/
 
-/***************************************************************************
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- ***************************************************************************/
-
-if (!empty($setmodules))
-{
-	if (!$auth->acl_get('a_names'))
-	{
-		return;
-	}
-
-	$module['USER']['DISALLOW'] = basename(__FILE__) . $SID;
-
-	return;
-}
-
-define('IN_PHPBB', 1);
-// Include files
-$phpbb_root_path = '../';
-$phpEx = substr(strrchr(__FILE__, '.'), 1);
-require('pagestart.' . $phpEx);
-require($phpbb_root_path . 'includes/functions_user.'.$phpEx);
+/**
+*/
 
 // Check permissions
-if (!$auth->acl_get('a_names'))
+if (!$_CLASS['auth']->acl_get('a_names'))
 {
-	trigger_error($user->lang['NO_ADMIN']);
+	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 }
+
+require($site_file_root . 'includes/forums/functions_user.php');
 
 if (isset($_POST['disallow']))
 {
 	$disallowed_user = (isset($_REQUEST['disallowed_user'])) ? htmlspecialchars($_REQUEST['disallowed_user']) : '';
 	$disallowed_user = str_replace('*', '%', $disallowed_user);
 
+	if (!$disallowed_user)
+	{
+		trigger_error('No_VALUE');
+	}
+	
 	if (validate_username($disallowed_user))
 	{
-		$message = $user->lang['Disallowed_already'];
+		$message = $_CLASS['core_user']->lang['Disallowed_already'];
 	}
 	else
 	{
 		$sql = 'INSERT INTO ' . DISALLOW_TABLE . " (disallow_username)
-			VALUES('" . $db->sql_escape(stripslashes($disallowed_user)) . "')";
-		$result = $db->sql_query($sql);
+			VALUES('" . $_CLASS['core_db']->sql_escape(stripslashes($disallowed_user)) . "')";
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		$message = $user->lang['Disallow_successful'];
+		$message = $_CLASS['core_user']->lang['Disallow_successful'];
 	}
 
 	add_log('admin', 'log_disallow_add', str_replace('%', '*', $disallowed_user));
@@ -72,62 +52,62 @@ else if (isset($_POST['allow']))
 
 	if (empty($disallowed_id))
 	{
-		trigger_error($user->lang['No_user_selected']);
+		trigger_error($_CLASS['core_user']->lang['No_user_selected']);
 	}
 
 	$sql = 'DELETE FROM ' . DISALLOW_TABLE . "
 		WHERE disallow_id = $disallowed_id";
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	add_log('admin', 'log_disallow_delete');
 
-	trigger_error($user->lang['Disallowed_deleted']);
+	trigger_error($_CLASS['core_user']->lang['Disallowed_deleted']);
 }
 
 // Grab the current list of disallowed usernames...
 $sql = 'SELECT *
 	FROM ' . DISALLOW_TABLE;
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
 
 $disallow_select = '';
-if ($row = $db->sql_fetchrow($result))
+if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 	do
 	{
 		$disallow_select .= '<option value="' . $row['disallow_id'] . '">' . str_replace('%', '*', $row['disallow_username']) . '</option>';
 	}
-	while ($row = $db->sql_fetchrow($result));
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 }
 
 // Output page
-adm_page_header($user->lang['DISALLOW']);
+adm_page_header($_CLASS['core_user']->lang['DISALLOW']);
 
 ?>
 
-<h1><?php echo $user->lang['DISALLOW']; ?></h1>
+<h1><?php echo $_CLASS['core_user']->lang['DISALLOW']; ?></h1>
 
-<p><?php echo $user->lang['Disallow_explain']; ?></p>
+<p><?php echo $_CLASS['core_user']->lang['Disallow_explain']; ?></p>
 
-<form method="post" action="<?php echo "admin_disallow.$phpEx$SID"; ?>"><table class="bg" width="80%" cellspacing="1" cellpadding="4" border="0" align="center">
+<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_disallow', array('admin' => true)); ?>"><table class="tablebg" width="80%" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr>
-		<th colspan="2"><?php echo $user->lang['Add_disallow_title']; ?></th>
+		<th colspan="2"><?php echo $_CLASS['core_user']->lang['Add_disallow_title']; ?></th>
 	</tr>
 	<tr>
-		<td class="row1"><?php echo $user->lang['USERNAME']; ?><br /><span class="gensmall"><?php echo $user->lang['Add_disallow_explain']; ?></span></td>
+		<td class="row1"><?php echo $_CLASS['core_user']->lang['USERNAME']; ?><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['Add_disallow_explain']; ?></span></td>
 		<td class="row2"><input class="post" type="text" name="disallowed_user" size="30" />&nbsp;</td>
 	</tr>
 	<tr>
-		<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="disallow" value="<?php echo $user->lang['SUBMIT']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="<?php echo $user->lang['RESET']; ?>" />
+		<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="disallow" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" />
 	</tr>
 </table>
 
-<h1><?php echo $user->lang['Delete_disallow_title']; ?></h1>
+<h1><?php echo $_CLASS['core_user']->lang['Delete_disallow_title']; ?></h1>
 
-<p><?php echo $user->lang['Delete_disallow_explain']; ?></p>
+<p><?php echo $_CLASS['core_user']->lang['Delete_disallow_explain']; ?></p>
 
-<table class="bg" width="80%" cellspacing="1" cellpadding="4" border="0" align="center">
+<table class="tablebg" width="80%" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr>
-		<th colspan="2"><?php echo $user->lang['Delete_disallow_title']; ?></th>
+		<th colspan="2"><?php echo $_CLASS['core_user']->lang['Delete_disallow_title']; ?></th>
 	</tr>
 <?php
 
@@ -136,11 +116,11 @@ adm_page_header($user->lang['DISALLOW']);
 
 ?>
 	<tr>
-		<td class="row1"><?php echo $user->lang['USERNAME']; ?></td>
+		<td class="row1"><?php echo $_CLASS['core_user']->lang['USERNAME']; ?></td>
 		<td class="row2"><select class="post" name="disallowed_id"><?php echo $disallow_select; ?></select></td>
 	</tr>
 	<tr>
-		<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="allow" value="<?php echo $user->lang['SUBMIT']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="<?php echo $user->lang['RESET']; ?>" />
+		<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="allow" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" />
 	</tr>
 <?php
 
@@ -150,7 +130,7 @@ adm_page_header($user->lang['DISALLOW']);
 
 ?>
 	<tr>
-		<td class="row1" colspan="2" align="center"><?php echo $user->lang['No_disallowed']; ?></td>
+		<td class="row1" colspan="2" align="center"><?php echo $_CLASS['core_user']->lang['No_disallowed']; ?></td>
 	</tr>
 <?php
 

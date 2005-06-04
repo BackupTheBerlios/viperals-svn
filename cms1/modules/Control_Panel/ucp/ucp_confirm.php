@@ -22,8 +22,8 @@ class ucp_confirm extends module
 {
 	function ucp_confirm($id, $mode)
 	{
-		global $config, $_CLASS, $phpEx;
-
+		global $config, $_CLASS;
+		
 		// Do we have an id? No, then just exit
 		$confirm_id = request_var('id', '');
 

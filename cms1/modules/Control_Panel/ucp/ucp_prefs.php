@@ -15,7 +15,7 @@ class ucp_prefs extends module
 {
 	function ucp_prefs($id, $mode)
 	{
-		global $config, $db, $_CLASS, $SID, $_CORE_CONFIG;
+		global $config, $_CLASS, $SID, $_CORE_CONFIG;
 
 		$submit = (isset($_POST['submit'])) ? true : false;
 		$error = $data = array();
@@ -77,21 +77,21 @@ class ucp_prefs extends module
 							'user_dateformat'		=> $dateformat,
 							'user_lang'				=> $lang,
 							'user_timezone'			=> $tz,
-							'theme'					=> $theme,
+							'user_theme'			=> $theme,
 						);
 
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 						
 						if ($theme != $_CLASS['core_display']->theme)
 						{
 							$_CLASS['core_user']->kill_data('theme');
 						}
 						
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
+						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 						trigger_error($message);
 					}
 					// Replace "error" strings with their real, localised form
@@ -126,7 +126,7 @@ class ucp_prefs extends module
 				$notifymethod = (isset($notifymethod)) ? $notifymethod : $_CLASS['core_user']->data['user_notify_type'];
 				$dateformat = (isset($dateformat)) ? $dateformat : $_CLASS['core_user']->data['user_dateformat'];
 				$lang = (isset($lang)) ? $lang : $_CLASS['core_user']->data['user_lang'];
-				$theme = (isset($theme)) ? $theme : $_CLASS['core_user']->data['theme'];
+				$theme = (isset($theme)) ? $theme : $_CLASS['core_user']->data['user_theme'];
 				$tz = (isset($tz)) ? $tz : $_CLASS['core_user']->data['user_timezone'];
 
 				$_CLASS['core_template']->assign(array( 
@@ -247,12 +247,12 @@ class ucp_prefs extends module
 						);
 
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
+						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
 						trigger_error($message);
 					}
 					// Replace "error" strings with their real, localised form
@@ -411,12 +411,12 @@ class ucp_prefs extends module
 						);
 
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
+						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 						trigger_error($message);
 					}
 					// Replace "error" strings with their real, localised form
@@ -472,7 +472,7 @@ class ucp_prefs extends module
 			'L_RESET'			=> $_CLASS['core_user']->lang['RESET'],
 			'L_THEME'			=> $_CLASS['core_user']->lang['THEME'],
 			'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
-			'S_UCP_ACTION'		=> getlink("Control_Panel&amp;i=$id&amp;mode=$mode"))
+			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"))
 		);
 
 		$this->display($_CLASS['core_user']->lang['UCP_PROFILE'], 'ucp_prefs_' . $mode . '.html');

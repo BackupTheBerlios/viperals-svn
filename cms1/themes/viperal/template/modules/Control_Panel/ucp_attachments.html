@@ -28,16 +28,28 @@ function marklist(form_name, status)
 		<th nowrap="nowrap" width="5%"><a class="th" href="{$U_SORT_DOWNLOADS}">{$L_DOWNLOADS}</a></th>
 		<th width="2%" nowrap="nowrap">{$L_DELETE}</th>
 	</tr>
-
+	{ if $TOTAL_ATTACHMENTS }
+	<tr>
+		<td class="row3" colspan="6">
+			<table width="100%" cellspacing="1">
+			<tr>
+				<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{ $PAGE_NUMBER }<br /></td>
+				<td class="gensmall" nowrap="nowrap">&nbsp;[ { $TOTAL_ATTACHMENTS } ]&nbsp;</td>
+				<td class="gensmall" width="100%" align="right" nowrap="nowrap">{ if $PAGINATION }<b><a href="javascript:jumpto();">{ $L_GOTO_PAGE }</a> { if $PREVIOUS_PAGE }<a href="{ $PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;&nbsp;{ /if }{ $PAGINATION }{ if $NEXT_PAGE }&nbsp;&nbsp;<a href="{ $NEXT_PAGE }">{ $L_NEXT }</a>{ /if }</b>{ /if }</td>
+			</tr>
+			</table>
+		</td>
+	</tr>
+	{ /if }
 	{section name=attachrowloop loop=$attachrow}
 	
 		{ if $smarty.section.attachrowloop.rownum is even }<tr class="row2">{ else }<tr class="row1">{ /if }
 
-		<td class="gen" style="padding: 4px;" align="center" width="2%">&nbsp;{$attachrow[attachrowloop].ROW_NUMBER}&nbsp;</td>
-		<td style="padding: 4px;"><a class="gen" href="{$attachrow[attachrowloop].U_VIEW_ATTACHMENT}" target="file">{$attachrow[attachrowloop].FILENAME}</a><br /><span class="gensmall">{ if $attachrow[attachrowloop].S_IN_MESSAGE }{$L_PM}: { else }{$L_TOPIC}: { /if }<a href="{$attachrow[attachrowloop].U_VIEW_TOPIC}">{$attachrow[attachrowloop].TOPIC_TITLE}</a></span></td>
+		<td class="genmed" style="padding: 4px;" align="center" width="2%">&nbsp;{ $attachrow[attachrowloop].ROW_NUMBER }&nbsp;</td>
+		<td style="padding: 4px;"><a class="gen" href="{$attachrow[attachrowloop].U_VIEW_ATTACHMENT}" target="file">{$attachrow[attachrowloop].FILENAME}</a><br /><span class="gensmall">{ if $attachrow[attachrowloop].S_IN_MESSAGE }<b>{ $L_PM }: </b>{ else }<b>{ $L_TOPIC }: </b>{ /if }<a href="{$attachrow[attachrowloop].U_VIEW_TOPIC}">{$attachrow[attachrowloop].TOPIC_TITLE}</a></span></td>
 		<td class="gensmall" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">&nbsp;{$attachrow[attachrowloop].POST_TIME}&nbsp;</td>
-		<td class="gen" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{$attachrow[attachrowloop].SIZE}</td>
-		<td class="gen" style="padding: 4px;" align="center">{$attachrow[attachrowloop].DOWNLOAD_COUNT}</td>
+		<td class="genmed" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{ $attachrow[attachrowloop].SIZE }</td>
+		<td class="genmed" style="padding: 4px;" align="center">{ $attachrow[attachrowloop].DOWNLOAD_COUNT }</td>
 		<td style="padding: 4px;" align="center" valign="middle"><input type="checkbox" name="attachment[{$attachrow[attachrowloop].ATTACH_ID}]" value="1" /></td>
 	</tr>
 	{ /section }
@@ -47,7 +59,7 @@ function marklist(form_name, status)
 	</tr>
 </table>
 
-<div class="nav" style="float:left">{$PAGE_NUMBER}</div><div style="float:right"><b class="gensmall"><a href="javascript:marklist('ucp', true);">{$L_MARK_ALL}</a> :: <a  href="javascript:marklist('ucp', false);">{$L_UNMARK_ALL}</a></b>{ if $PAGINATION }><b><a href="javascript:jumpto();">{$L_GOTO_PAGE}</a> { if $PREVIOUS_PAGE }<a href="{$PREVIOUS_PAGE}">{$L_PREVIOUS}</a>&nbsp;&nbsp;{ /if }{$PAGINATION}{ if $NEXT_PAGE }&nbsp;&nbsp;<a href="{$NEXT_PAGE}">{$L_NEXT}</a>{ /if }</b>{ /if }</div>
+<div style="float:right"><b class="gensmall"><a href="javascript:marklist('ucp', true);">{ $L_MARK_ALL }</a> :: <a  href="javascript:marklist('ucp', false);">{ $L_UNMARK_ALL }</a></b></div>
 { else }
 
 <table class="tablebg" width="100%" cellspacing="1">

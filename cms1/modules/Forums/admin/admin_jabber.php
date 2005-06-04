@@ -1,42 +1,18 @@
 <?php
-// -------------------------------------------------------------
-//
-// $Id: admin_jabber.php,v 1.8 2004/02/03 14:03:04 psotfx Exp $
-//
-// FILENAME  : admin_jabber.php 
-// STARTED   : Sat Feb 13, 2001
-// COPYRIGHT : © 2001, 2003 phpBB Group
-// WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
-// 
-// -------------------------------------------------------------
-
-// TODO
-// Check/enter/update transport info
-
-if (!empty($setmodules))
-{
-	if (!$auth->acl_get('a_server'))
-	{
-		return;
-	}
-
-	$module['GENERAL']['IM'] = basename(__FILE__) . $SID;
-
-	return;
-}
-
-define('IN_PHPBB', 1);
-// Include files
-$phpbb_root_path = '../';
-$phpEx = substr(strrchr(__FILE__, '.'), 1);
-require('pagestart.' . $phpEx);
-include($phpbb_root_path . 'includes/functions_jabber.'.$phpEx);
+/** 
+*
+* @package acp
+* @version $Id: admin_jabber.php,v 1.9 2005/04/09 12:26:30 acydburn Exp $
+* @copyright (c) 2005 phpBB Group 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*
+* @todo Check/enter/update transport info
+*/
 
 // Do we have general permissions?
-if (!$auth->acl_get('a_server'))
+if (!$_CLASS['auth']->acl_get('a_server'))
 {
-	trigger_error($user->lang['NO_ADMIN']);
+	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 }
 
 // Grab some basic parameters
@@ -48,6 +24,8 @@ $jab_port		= request_var('jab_port', $config['jab_port']);
 $jab_username	= request_var('jab_username', $config['jab_username']);
 $jab_password	= request_var('jab_password', $config['jab_password']);
 $jab_resource	= request_var('jab_resource', $config['jab_resource']);
+
+include($site_file_root.'includes/forums/functions_jabber.php');
 
 $jabber = new jabber();
 $error = array();
@@ -65,60 +43,59 @@ if ($jab_enable)
 {
 	if ($jab_host != $config['jab_host'] || $jab_username != $config['jab_username'])
 	{
-		if (!$jabber->Connect())
+		if (!$jabber->connect())
 		{
 			trigger_error('Could not connect to Jabber server', E_USER_ERROR);
 		}
-
 		// First we'll try to authorise using this account, if that fails we'll
 		// try to create it.
-		if (!($result = $jabber->SendAuth()))
+		if (!($result = $jabber->send_auth()))
 		{
-			if (($result = $jabber->AccountRegistration($config['board_email'], $config['sitename'])) <> 2)
+			if (($result = $jabber->account_registration($config['board_email'], $_CORE_CONFIG['global']['site_name'])) <> 2)
 			{
-
-				$error[] = ($result == 1) ? $user->lang['ERR_JAB_USERNAME'] : sprintf($user->lang['ERR_JAB_REGISTER'], $result);
+				$error[] = ($result == 1) ? $_CLASS['core_user']->lang['ERR_JAB_USERNAME'] : sprintf($_CLASS['core_user']->lang['ERR_JAB_REGISTER'], $result);
 			}
 			else
 			{
-				$message = $user->lang['JAB_REGISTERED'];
+				$message = $_CLASS['core_user']->lang['JAB_REGISTERED'];
 				$log = 'JAB_REGISTER';
 			}
 		}
 		else
 		{
-			$message = $user->lang['JAB_CHANGED'];
+			$message = $_CLASS['core_user']->lang['JAB_CHANGED'];
 			$log = 'JAB_CHANGED';
 		}
 
 		sleep(1);
-		$jabber->Disconnect();
+		$jabber->disconnect();
 	}
 	else if ($jab_password != $config['jab_password'])
-	{
-		if (!$jabber->Connect())
+	{echo 'test';
+		
+		if (!$jabber->connect())
 		{
 			trigger_error('Could not connect to Jabber server', E_USER_ERROR);
 		}
 
-		if (!$jabber->SendAuth())
+		if (!$jabber->send_auth())
 		{
 			trigger_error('Could not authorise on Jabber server', E_USER_ERROR);
 		}
-		$jabber->SendPresence(NULL, NULL, 'online');
+		$jabber->send_presence(NULL, NULL, 'online');
 
-		if (($result = $jabber->ChangePassword($jab_password))  <> 2)
+		if (($result = $jabber->change_password($jab_password))  <> 2)
 		{
-			$error[] = ($result == 1) ? $user->lang['ERR_JAB_PASSCHG'] : sprintf($user->lang['ERR_JAB_PASSFAIL'], $result);
+			$error[] = ($result == 1) ? $_CLASS['core_user']->lang['ERR_JAB_PASSCHG'] : sprintf($_CLASS['core_user']->lang['ERR_JAB_PASSFAIL'], $result);
 		}
 		else
 		{
-			$message = $user->lang['JAB_PASS_CHANGED'];
+			$message = $_CLASS['core_user']->lang['JAB_PASS_CHANGED'];
 			$log = 'JAB_PASSCHG';
 		}
 
 		sleep(1);
-		$jabber->Disconnect();
+		$jabber->disconnect();
 	}
 }
 
@@ -126,9 +103,9 @@ if ($jab_enable)
 $sql = 'SELECT *
 	FROM ' . CONFIG_TABLE . "
 	WHERE config_name LIKE 'jab_%'";
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
 
-while ($row = $db->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 	$config_name = $row['config_name'];
 	$config_value = $row['config_value'];
@@ -151,19 +128,19 @@ if ($submit && !sizeof($error))
 
 
 // Output the page
-adm_page_header($user->lang['IM']);
+adm_page_header($_CLASS['core_user']->lang['IM']);
 
 $jab_enable_yes		= ($new['jab_enable']) ? 'checked="checked"' : '';
 $jab_enable_no		= (!$new['jab_enable']) ? 'checked="checked"' : '';
 
 ?>
-<h1><?php echo $user->lang['IM']; ?></h1>
+<h1><?php echo $_CLASS['core_user']->lang['IM']; ?></h1>
 
-<p><?php echo $user->lang['IM_EXPLAIN']; ?></p>
+<p><?php echo $_CLASS['core_user']->lang['IM_EXPLAIN']; ?></p>
 
-<form method="post" action="<?php echo "admin_jabber.$phpEx$SID"; ?>"><table class="bg" width="95%" cellspacing="1" cellpadding="4" border="0" align="center">
+<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_jabber', array('admin' => true)); ?>"><table class="tablebg" width="95%" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr>
-		<th colspan="2"><?php echo $user->lang['IM']; ?></th>
+		<th colspan="2"><?php echo $_CLASS['core_user']->lang['IM']; ?></th>
 	</tr>
 <?php
 
@@ -180,31 +157,31 @@ $jab_enable_no		= (!$new['jab_enable']) ? 'checked="checked"' : '';
 
 ?>
 	<tr>
-		<td class="row1" width="40%"><b><?php echo $user->lang['JAB_ENABLE']; ?>: </b><br /><span class="gensmall"><?php echo $user->lang['JAB_ENABLE_EXPLAIN']; ?></span></td>
-		<td class="row2"><input type="radio" name="jab_enable" value="1"<?php echo $jab_enable_yes; ?> /><?php echo $user->lang['ENABLED']; ?>&nbsp; &nbsp;<input type="radio" name="jab_enable" value="0"<?php echo $jab_enable_no; ?> /><?php echo $user->lang['DISABLED']; ?></td>
+		<td class="row1" width="40%"><b><?php echo $_CLASS['core_user']->lang['JAB_ENABLE']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['JAB_ENABLE_EXPLAIN']; ?></span></td>
+		<td class="row2"><input type="radio" name="jab_enable" value="1"<?php echo $jab_enable_yes; ?> /><?php echo $_CLASS['core_user']->lang['ENABLED']; ?>&nbsp; &nbsp;<input type="radio" name="jab_enable" value="0"<?php echo $jab_enable_no; ?> /><?php echo $_CLASS['core_user']->lang['DISABLED']; ?></td>
 	</tr>
 	<tr>
-		<td class="row1" width="40%"><b><?php echo $user->lang['JAB_SERVER']; ?>: </b><br /><span class="gensmall"><?php echo sprintf($user->lang['JAB_SERVER_EXPLAIN'], '<a href="http://www.jabber.org/user/publicservers.php" target="_blank">', '</a>'); ?></span></td>
+		<td class="row1" width="40%"><b><?php echo $_CLASS['core_user']->lang['JAB_SERVER']; ?>: </b><br /><span class="gensmall"><?php echo sprintf($_CLASS['core_user']->lang['JAB_SERVER_EXPLAIN'], '<a href="http://www.jabber.org/user/publicservers.php" target="_blank">', '</a>'); ?></span></td>
 		<td class="row2"><input class="post" type="text" name="jab_host" value="<?php echo $new['jab_host']; ?>" /></td>
 	</tr>
 	<tr>
-		<td class="row1" width="40%"><b><?php echo $user->lang['JAB_PORT']; ?>: </b><br /><span class="gensmall"><?php echo $user->lang['JAB_PORT_EXPLAIN']; ?></span></td>
+		<td class="row1" width="40%"><b><?php echo $_CLASS['core_user']->lang['JAB_PORT']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['JAB_PORT_EXPLAIN']; ?></span></td>
 		<td class="row2"><input class="post" type="text" name="jab_port" value="<?php echo $new['jab_port']; ?>" /></td>
 	</tr>
 	<tr>
-		<td class="row1"><b><?php echo $user->lang['JAB_USERNAME']; ?>: </b><br /><span class="gensmall"><?php echo $user->lang['JAB_USERNAME_EXPLAIN']; ?></span></td>
+		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['JAB_USERNAME']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['JAB_USERNAME_EXPLAIN']; ?></span></td>
 		<td class="row2"><input class="post" type="text" name="jab_username" value="<?php echo $new['jab_username']; ?>" /></td>
 	</tr>
 	<tr>
-		<td class="row1"><b><?php echo $user->lang['JAB_PASSWORD']; ?>: </b></td>
+		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['JAB_PASSWORD']; ?>: </b></td>
 		<td class="row2"><input class="post" type="text" name="jab_password" value="<?php echo $new['jab_password']; ?>" /></td>
 	</tr>
 	<tr>
-		<td class="row1"><b><?php echo $user->lang['JAB_RESOURCE']; ?>: </b><br /><span class="gensmall"><?php echo $user->lang['JAB_RESOURCE_EXPLAIN']; ?></span></td>
+		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['JAB_RESOURCE']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['JAB_RESOURCE_EXPLAIN']; ?></span></td>
 		<td class="row2"><input class="post" type="text" name="jab_resource" value="<?php echo $new['jab_resource']; ?>" /></td>
 	</tr>
 	<tr>
-		<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="submit" value="<?php echo $user->lang['SUBMIT']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="<?php echo $user->lang['RESET']; ?>" /></td>
+		<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="submit" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" /></td>
 	</tr>
 </table></form>
 

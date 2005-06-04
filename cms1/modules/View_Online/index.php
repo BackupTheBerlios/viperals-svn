@@ -17,8 +17,8 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 // Get and set some variables
@@ -38,15 +38,15 @@ $order_by = $sort_key_sql[$sort_key] . ' ' . (($sort_dir == 'a') ? 'ASC' : 'DESC
 // Whois requested
 if ($mode == 'whois')
 {
-	require($site_file_root.'includes/forums/functions_user.'.$phpEx);
+	require($site_file_root.'includes/forums/functions_user.php');
 
 	$sql = 'SELECT u.user_id, u.username, u.user_type, s.session_ip
 	FROM ' . USERS_TABLE . ' u, ' . SESSIONS_TABLE . " s
-	WHERE s.session_id = '" . $db->sql_escape($session_id) . "'
+	WHERE s.session_id = '" . $_CLASS['core_db']->sql_escape($session_id) . "'
 		AND	u.user_id = s.session_user_id";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	if ($row = $db->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$whois = user_ipwhois($row['session_ip']);
 
@@ -58,12 +58,12 @@ if ($mode == 'whois')
 			'WHOIS'   => trim($whois))
 		);
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['WHO_IS_ONLINE']);
 	
 	page_header();
-	make_jumpbox('viewforum.'.$phpEx);
+	make_jumpbox('viewforum.php');
 		
 	$_CLASS['core_template']->display('modules/View_Online/viewonline_whois.html');
 
@@ -74,13 +74,13 @@ if ($mode == 'whois')
 $sql = 'SELECT forum_id, forum_name, parent_id, forum_type, left_id, right_id
 	FROM ' . FORUMS_TABLE . '
 	ORDER BY left_id ASC';
-$result = $db->sql_query($sql, 600);
+$result = $_CLASS['core_db']->sql_query($sql, 600);
 
-while ($row = $db->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 	$forum_data[$row['forum_id']] = $row['forum_name'];
 }
-$db->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
 $guest_counter = 0;
 // Get number of online guests (if we do not display them)
@@ -90,9 +90,9 @@ if (!$show_guests)
 		WHERE session_user_id = ' . ANONYMOUS . '
 			AND session_time >= ' . (time() - ($config['load_online_time'] * 60));
 			
-	$result = $db->sql_query($sql);
-	$guest_counter = (int) $db->sql_fetchfield('num_guests', 0, $result);
-	$db->sql_freeresult($result);
+	$result = $_CLASS['core_db']->sql_query($sql);
+	$guest_counter = (int) $_CLASS['core_db']->sql_fetchfield('num_guests', 0, $result);
+	$_CLASS['core_db']->sql_freeresult($result);
 }
 
 // Get user list
@@ -102,12 +102,12 @@ $sql = 'SELECT u.user_id, u.username, u.user_type, u.user_allow_viewonline, u.us
 		AND s.session_time >= ' . (time() - ($config['load_online_time'] * 60)) .
 		((!$show_guests) ? ' AND s.session_user_id <> ' . ANONYMOUS : '') . '
 	ORDER BY ' . $order_by;
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
 
 $prev_id = $prev_ip = $user_list = array();
 $logged_visible_online = $logged_hidden_online = $counter = 0;
 
-while ($row = $db->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 	if ($row['user_id'] != ANONYMOUS && !isset($prev_id[$row['user_id']]))
 	{
@@ -163,12 +163,12 @@ while ($row = $db->sql_fetchrow($result))
 				if (eregi($adminindex, $row['session_url']))
 				{
 					$location = 'Admin Menu';
-					//$location_url = $mainindex.$sid;
-					$location_url = (is_admin()) ? $row['session_url'] : $mainindex.'?'.$SID;
-					break;
-				} else {
+					$location_url = ($_CLASS['core_user']->is_admin) ? $row['session_url'].(($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : '') : generate_link();
+				}
+				else
+				{
 					$location = ($row['session_page']) ? $row['session_page'] : 'Home';
-					$location_url = ($row['session_page']) ? $row['session_url'] : $mainindex.'?'.$SID;
+					$location_url = ($row['session_page']) ? $row['session_url'].(($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : '') : generate_link();
 				}
 				
 		/*} else {
@@ -252,7 +252,6 @@ while ($row = $db->sql_fetchrow($result))
 			}
 		}*/
 		$location = eregi_replace('_',' ', $location);
-        $location_url = eregi_replace('{sidhere}',$SID, $location_url);
 		$location_url = htmlentities(html_entity_decode($location_url));
 		
 		$_CLASS['core_template']->assign_vars_array('user_row', array(
@@ -261,16 +260,16 @@ while ($row = $db->sql_fetchrow($result))
 			'FORUM_LOCATION'=> $location, 
 			'USER_IP'		=> ($_CLASS['auth']->acl_get('a_')) ? (($mode == 'lookup' && $session_id == $row['session_id']) ? gethostbyaddr($row['session_ip']) : $row['session_ip']) : '', 
 
-			'U_USER_PROFILE'	=> (($row['user_type'] == USER_NORMAL || $row['user_type'] == USER_FOUNDER) && $row['user_id'] != ANONYMOUS) ? getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : '',
-			'U_USER_IP'			=> getlink('View_Online' . (($mode != 'lookup' || $row['session_id'] != $session_id) ? '&amp;s=' . $row['session_id'] : '') . "&amp;mode=lookup&amp;sg=$show_guests&amp;start=$start&amp;sk=$sort_key&amp;sd=$sort_dir"),
-			'U_WHOIS'			=> getlink('View_Online&amp;mode=whois&amp;s=' . $row['session_id']),
+			'U_USER_PROFILE'	=> (($row['user_type'] == USER_NORMAL || $row['user_type'] == USER_FOUNDER) && $row['user_id'] != ANONYMOUS) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : '',
+			'U_USER_IP'			=> generate_link('View_Online' . (($mode != 'lookup' || $row['session_id'] != $session_id) ? '&amp;s=' . $row['session_id'] : '') . "&amp;mode=lookup&amp;sg=$show_guests&amp;start=$start&amp;sk=$sort_key&amp;sd=$sort_dir"),
+			'U_WHOIS'			=> generate_link('View_Online&amp;mode=whois&amp;s=' . $row['session_id']),
 			'U_FORUM_LOCATION'	=> $location_url,
 			'S_GUEST'			=> ($row['user_id'] == ANONYMOUS) ? true : false,
 			'S_USER_TYPE'		=> $row['user_type'])
 		);
 }
 
-$db->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 unset($prev_id, $prev_ip);
 
 
@@ -307,14 +306,14 @@ $sql = 'SELECT group_id, group_name, group_colour, group_type
 	FROM ' . GROUPS_TABLE . '
 	WHERE group_legend = 1';
 
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
 
 $legend = '';
-while ($row = $db->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
-	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="' . getlink('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
+	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="' . generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
-$db->sql_freeresult($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
 // Send data to template
 $_CLASS['core_template']->assign(array(
@@ -333,11 +332,11 @@ $_CLASS['core_template']->assign(array(
 	'L_WHOIS'				=> $_CLASS['core_user']->lang['WHOIS'],
 	'L_LEGEND'				=> $_CLASS['core_user']->lang['LEGEND'],
 
-	'U_SORT_USERNAME'		=> getlink('View_Online&amp;sk=a&amp;sd=' . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a')),
-	'U_SORT_UPDATED'		=> getlink('View_Online&amp;sk=b&amp;sd=' . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a')),
-	'U_SORT_LOCATION'		=> getlink('View_Online&amp;sk=c&amp;sd=' . (($sort_key == 'c' && $sort_dir == 'a') ? 'd' : 'a')),
+	'U_SORT_USERNAME'		=> generate_link('View_Online&amp;sk=a&amp;sd=' . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a')),
+	'U_SORT_UPDATED'		=> generate_link('View_Online&amp;sk=b&amp;sd=' . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a')),
+	'U_SORT_LOCATION'		=> generate_link('View_Online&amp;sk=c&amp;sd=' . (($sort_key == 'c' && $sort_dir == 'a') ? 'd' : 'a')),
 
-	'U_SWITCH_GUEST_DISPLAY'=> getlink('View_Online&amp;sg=' . ((int) !$show_guests)),
+	'U_SWITCH_GUEST_DISPLAY'=> generate_link('View_Online&amp;sg=' . ((int) !$show_guests)),
 	'L_SWITCH_GUEST_DISPLAY'=> ($show_guests) ? $_CLASS['core_user']->lang['HIDE_GUESTS'] : $_CLASS['core_user']->lang['DISPLAY_GUESTS'],
 	'S_SWITCH_GUEST_DISPLAY'=> ($config['load_online_guests']) ? true : false)
 	
@@ -351,7 +350,7 @@ $config['load_online'] = false;
 
 page_header();
 
-make_jumpbox('viewforum.'.$phpEx);
+make_jumpbox('viewforum.php');
 
 $_CLASS['core_template']->display('modules/View_Online/viewonline_body.html');
 

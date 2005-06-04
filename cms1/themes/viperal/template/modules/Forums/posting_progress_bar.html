@@ -22,27 +22,16 @@
 </script>
 {/literal}
 
-{ if $T_STYLESHEET_LINK }
-	<link rel="stylesheet" href="{$T_STYLESHEET_LINK}" type="text/css" />
-{ else }
-	<style type="text/css">
-	<!--
-	{$T_THEME_DATA}
-	//-->
-	</style>
-{ /if }
-
-<table width="100%" border="0" cellspacing="0" cellpadding="10">
+<link rel="stylesheet" href="themes/Dark_Viperal/style/style.css" type="text/css" />
+{php} OpenTable(); {/php}
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
 <tr>
 	<td>
-		<table width="100%" border="0" cellspacing="1" cellpadding="4">
-		<tr> 
-			<td valign="top" class="row1" align="center"><br /><span class="gen">{$L_UPLOAD_IN_PROGRESS}</span><br /><br /><div style="align:center">{$PROGRESS_BAR}</div><br /><br /><span class="genmed"><a href="javascript:window.close();">{$L_CLOSE_WINDOW}</a></span><br /><br /></td>
-		</tr>
-		</table>
+		<td valign="top" class="row1" align="center"><br /><span class="gen">{$L_UPLOAD_IN_PROGRESS}</span><br /><br /><div style="align:center">{$PROGRESS_BAR}</div><br /><br /><span class="genmed"><a href="javascript:window.close();">{$L_CLOSE_WINDOW}</a></span><br /><br /></td>
 	</td>
 </tr>
 </table>
+{php} CloseTable(); {/php}
 
 <script language="javascript" type="text/javascript">
 <!-- 

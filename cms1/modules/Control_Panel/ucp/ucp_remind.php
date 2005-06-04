@@ -14,7 +14,7 @@ class ucp_remind extends module
 {
 	function ucp_remind($id, $mode)
 	{
-		global $config, $_CLASS, $site_file_root, $phpEx;
+		global $config, $_CLASS, $site_file_root;
 		
 		$_CLASS['core_template']->assign('S_HIDDEN_FIELDS', false);
 
@@ -56,7 +56,7 @@ class ucp_remind extends module
 				WHERE user_id = " . $row['user_id'];
 			$_CLASS['core_db']->sql_query($sql);
 
-			include_once($site_file_root. 'includes/forums/functions_messenger.'.$phpEx);
+			include_once($site_file_root. 'includes/forums/functions_messenger.php');
 
 			$messenger = new messenger();
 

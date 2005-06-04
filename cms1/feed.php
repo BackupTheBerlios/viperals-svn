@@ -12,7 +12,7 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-define('VIPERAL', 'MINILOAD');
+define('VIPERAL', 'FEED');
 
 //echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
 $site_file_root = 'C:/apachefriends/xampp/cms/';
@@ -35,7 +35,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	
 	$_CLASS['core_template']->assign_vars_array('items', array(
 		'TITLE' 		=> htmlspecialchars($row['title'], ENT_QUOTES),
-		'LINK' 			=> generate_link('News&amp;mode=view&amp;id='.$row['id'], true, true, false),
+		'LINK' 			=> generate_link('News&amp;mode=view&amp;id='.$row['id'], array('full' => true)),
 //htmlentities causes problems with some chars.
 		'DESCRIPTION' 	=> htmlspecialchars(strip_tags($row['intro']), ENT_QUOTES),
 		'TIME'			=> gmdate('M d Y H:i:s', $row['time']) .' GMT',

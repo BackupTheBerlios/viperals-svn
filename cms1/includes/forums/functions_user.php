@@ -31,7 +31,7 @@
 // success else the error string
 function user_get_id_name(&$user_id_ary, &$username_ary)
 {
-	global $db;
+	global $_CLASS;
 
 	// Are both arrays already filled? Yep, return else
 	// are neither array filled? 
@@ -51,7 +51,7 @@ function user_get_id_name(&$user_id_ary, &$username_ary)
 		$$which_ary = array($$which_ary);
 	}
 
-	$sql_in = ($which_ary == 'user_id_ary') ? array_map('intval', $$which_ary) : preg_replace('#^[\s]*(.*?)[\s]*$#e', "\"'\" . \$db->sql_escape('\\1') . \"'\"", $$which_ary);
+	$sql_in = ($which_ary == 'user_id_ary') ? array_map('intval', $$which_ary) : preg_replace('#^[\s]*(.*?)[\s]*$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $$which_ary);
 	unset($$which_ary);
 
 	// Grab the user id/username records
@@ -59,9 +59,9 @@ function user_get_id_name(&$user_id_ary, &$username_ary)
 	$sql = 'SELECT user_id, username 
 		FROM ' . USERS_TABLE . " 
 		WHERE $sql_where IN (" . implode(', ', $sql_in) . ')';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	if (!($row = $db->sql_fetchrow($result)))
+	if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 	{
 		return 'NO_USERS';
 	}
@@ -72,8 +72,8 @@ function user_get_id_name(&$user_id_ary, &$username_ary)
 		$username_ary[$row['user_id']] = $row['username'];
 		$user_id_ary[] = $row['user_id'];
 	}
-	while ($row = $db->sql_fetchrow($result));
-	$db->sql_freeresult($result);
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	return false;
 }
@@ -81,7 +81,7 @@ function user_get_id_name(&$user_id_ary, &$username_ary)
 // Updates a username across all relevant tables/fields
 function user_update_name($old_name, $new_name)
 {
-	global $config, $db;
+	global $config, $_CLASS;
 
 	$update_ary = array(
 		FORUMS_TABLE	=> array('forum_last_poster_name'), 
@@ -97,7 +97,7 @@ function user_update_name($old_name, $new_name)
 			$sql = "UPDATE $table 
 				SET $field = '$new_name' 
 				WHERE $field = '$old_name'";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 	}
 
@@ -109,9 +109,9 @@ function user_update_name($old_name, $new_name)
 
 function user_delete($mode, $user_id)
 {
-	global $config, $db, $_CLASS;
-
-	$db->sql_transaction();
+	global $config, $_CLASS;
+	
+	$_CLASS['core_db']->sql_transaction();
 
 	switch ($mode)
 	{
@@ -119,64 +119,65 @@ function user_delete($mode, $user_id)
 			$sql = 'UPDATE ' . FORUMS_TABLE . '
 				SET forum_last_poster_id = ' . ANONYMOUS . " 
 				WHERE forum_last_poster_id = $user_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			$sql = 'UPDATE ' . POSTS_TABLE . '
 				SET poster_id = ' . ANONYMOUS . " 
 				WHERE poster_id = $user_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			$sql = 'UPDATE ' . TOPICS_TABLE . '
 				SET topic_poster = ' . ANONYMOUS . "
 				WHERE topic_poster = $user_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			$sql = 'UPDATE ' . TOPICS_TABLE . '
 				SET topic_last_poster_id = ' . ANONYMOUS . "
 				WHERE topic_last_poster_id = $user_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 			break;
 
 		case 'remove':
 
 			if (!function_exists('delete_posts'))
 			{
-				global $phpEx;
-				include('includes/phpBB2/functions_admin.'.$phpEx);
+				global $site_file_root;
+
+				include($site_file_root.'includes/forums/functions_admin.php');
 			}
 
 			$sql = 'SELECT topic_id, COUNT(post_id) AS total_posts 
 				FROM ' . POSTS_TABLE . " 
 				WHERE poster_id = $user_id
 				GROUP BY topic_id";
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$topic_id_ary[$row['topic_id']] = $row['total_posts'];
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			$sql = 'SELECT topic_id, topic_replies, topic_replies_real 
 				FROM ' . TOPICS_TABLE . ' 
 				WHERE topic_id IN (' . implode(', ', array_keys($topic_id_ary)) . ')';
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
 			$del_topic_ary = array();
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				if (max($row['topic_replies'], $row['topic_replies_real']) + 1 == $topic_id_ary[$row['topic_id']])
 				{
 					$del_topic_ary[] = $row['topic_id'];
 				}
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			if (sizeof($del_topic_ary))
 			{
 				$sql = 'DELETE FROM ' . TOPICS_TABLE . ' 
 					WHERE topic_id IN (' . implode(', ', $del_topic_ary) . ')';
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 
 			// Delete posts, attachments, etc.
@@ -191,7 +192,7 @@ function user_delete($mode, $user_id)
 	{
 		$sql = "DELETE FROM $table 
 			WHERE user_id = $user_id";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 	}
 
 	// Reset newest user info if appropriate
@@ -202,19 +203,19 @@ function user_delete($mode, $user_id)
 			WHERE user_type IN (' . USER_NORMAL . ', ' . USER_FOUNDER . ')
 			ORDER BY user_id DESC
 			LIMIT 1';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			set_config('newest_user_id', $row['user_id']);
 			set_config('newest_username', $row['username']);
 		}
-		$db->freeresult($result);
+		$_CLASS['core_db']->freeresult($result);
 	}
 
 	set_config('num_users', $config['num_users'] - 1, TRUE);
 
-	$db->sql_transaction('commit');
+	$_CLASS['core_db']->sql_transaction('commit');
 
 	return false;
 }
@@ -223,33 +224,33 @@ function user_delete($mode, $user_id)
 // group membership updates
 function user_active_flip($user_id, $user_type, $user_actkey = false, $username = false)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	$sql = 'SELECT group_id, group_name 
 		FROM ' . GROUPS_TABLE . " 
 		WHERE group_name IN ('REGISTERED', 'REGISTERED_COPPA', 'INACTIVE', 'INACTIVE_COPPA')";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$group_id_ary = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$group_id_ary[$row['group_name']] = $row['group_id'];
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$sql = 'SELECT group_id 
 		FROM ' . USER_GROUP_TABLE . " 
 		WHERE user_id = $user_id";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($group_name = array_search($row['group_id'], $group_id_ary))
 		{
 			break;
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$current_group = ($user_type == USER_NORMAL) ? 'REGISTERED' : 'INACTIVE';
 	$switch_group = ($user_type == USER_NORMAL) ? 'INACTIVE' : 'REGISTERED';
@@ -260,7 +261,7 @@ function user_active_flip($user_id, $user_type, $user_actkey = false, $username 
 		SET group_id = $new_group_id 
 		WHERE user_id = $user_id
 			AND group_id = " . $group_id_ary[$group_name];
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	$sql_ary = array(
 		'user_type'		=> ($user_type == USER_NORMAL) ? USER_INACTIVE : USER_NORMAL
@@ -276,16 +277,17 @@ function user_active_flip($user_id, $user_type, $user_actkey = false, $username 
 		$sql_ary['user_actkey'] = $user_actkey;
 	}
 
-	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . "
 		WHERE user_id = $user_id";
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	$_CLASS['auth']->acl_clear_prefetch($user_id);
 
 	if (!function_exists('add_log'))
 	{
-		global $phpEx;
-		include('includes/phpBB2/functions_admin.'.$phpEx);
+		global $site_file_root;
+
+		include($site_file_root.'includes/forums/functions_admin.php');
 	}
 
 	if (!$username)
@@ -293,10 +295,10 @@ function user_active_flip($user_id, $user_type, $user_actkey = false, $username 
 		$sql = 'SELECT username
 			FROM ' . USERS_TABLE . " 
 			WHERE user_id = $user_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 		
-		extract($db->sql_fetchrow($result));
-		$db->sql_freeresult($result);
+		extract($_CLASS['core_db']->sql_fetchrow($result));
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	$log = ($user_type == USER_NORMAL) ? 'LOG_USER_INACTIVE' : 'LOG_USER_ACTIVE';
@@ -307,13 +309,13 @@ function user_active_flip($user_id, $user_type, $user_actkey = false, $username 
 
 function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reason)
 {
-	global $db;
+	global $_CLASS;
 
 	// Delete stale bans
 	$sql = "DELETE FROM " . BANLIST_TABLE . "
 		WHERE ban_end < " . time() . "
 			AND ban_end <> 0";
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	$ban_list = (!is_array($ban)) ? array_unique(explode("\n", $ban)) : $ban;
 	$ban_list_log = implode(', ', $ban_list);
@@ -353,15 +355,15 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 				$sql = 'SELECT user_id
 					FROM ' . USERS_TABLE . '
 					WHERE username IN (' . implode(', ', array_diff(preg_replace('#^[\s]*(.*?)[\s]*$#', "'\\1'", $ban_list), array("''"))) . ')';
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
-				if ($row = $db->sql_fetchrow($result))
+				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					do
 					{
 						$banlist[] = $row['user_id'];
 					}
-					while ($row = $db->sql_fetchrow($result));
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 				}
 			}
 			break;
@@ -468,9 +470,9 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 		FROM " . BANLIST_TABLE . "
 		WHERE $type <> '' 
 			AND ban_exclude = $ban_exclude";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	if ($row = $db->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$banlist_tmp = array();
 		do
@@ -490,7 +492,7 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 					break;
 			}
 		}
-		while ($row = $db->sql_fetchrow($result));
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 		$banlist = array_unique(array_diff($banlist, $banlist_tmp));
 		unset($banlist_tmp);
@@ -517,7 +519,7 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 				default:
 					$sql = 'INSERT INTO ' . BANLIST_TABLE . " ($type, ban_start, ban_end, ban_exclude, ban_reason)
 						VALUES ($ban_entry, $current_time, $ban_end, $ban_exclude, '$ban_reason')";
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 
@@ -525,7 +527,7 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 		{
 			$sql = 'INSERT INTO ' . BANLIST_TABLE . " ($type, ban_start, ban_end, ban_exclude, ban_reason)
 				VALUES $sql";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 
 		if (!$ban_exclude)
@@ -545,16 +547,16 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 					$sql = 'SELECT user_id
 						FROM ' . USERS_TABLE . '
 						WHERE user_email IN (' . implode(', ', $banlist) . ')';
-					$result = $db->sql_query($sql);
+					$result = $_CLASS['core_db']->sql_query($sql);
 
 					$sql_in = array();
-					if ($row = $db->sql_fetchrow($result))
+					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 					{
 						do
 						{
 							$sql_in[] = $row['user_id'];
 						}
-						while ($row = $db->sql_fetchrow($result));
+						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 						$sql = 'WHERE session_user_id IN (' . str_replace('*', '%', implode(', ', $sql_in)) . ")";
 					}
@@ -565,14 +567,15 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 			{
 				$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
 					$sql";
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
 
 		if (!function_exists('add_log'))
 		{
-			global $phpEx;
-			include('includes/phpBB2/functions_admin.'.$phpEx);
+			global $site_file_root;
+
+			include($site_file_root.'includes/forums/functions_admin.php');
 		}
 
 		// Update log
@@ -585,13 +588,13 @@ function user_ban($mode, $ban, $ban_len, $ban_len_other, $ban_exclude, $ban_reas
 
 function user_unban($mode, $ban)
 {
-	global $db;
+	global $_CLASS;
 
 	// Delete stale bans
 	$sql = "DELETE FROM " . BANLIST_TABLE . "
 		WHERE ban_end < " . time() . "
 			AND ban_end <> 0";
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	$unban_sql = implode(', ', $ban);
 
@@ -620,21 +623,22 @@ function user_unban($mode, $ban)
 					WHERE ban_id IN ($unban_sql)";
 				break;
 		}
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$l_unban_list .= (($l_unban_list != '') ? ', ' : '') . $row['unban_info'];
 		}
 
 		$sql = 'DELETE FROM ' . BANLIST_TABLE . "
 			WHERE ban_id IN ($unban_sql)";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		if (!function_exists('add_log'))
 		{
-			global $phpEx;
-			include('includes/phpBB2/functions_admin.'.$phpEx);
+			global $site_file_root;
+
+			include($site_file_root.'includes/forums/functions_admin.php');
 		}
 
 		add_log('admin', 'LOG_UNBAN_' . strtoupper($mode), $l_unban_list);
@@ -775,7 +779,7 @@ function validate_match($string, $optional = false, $match)
 // Used for registering, changing names, and posting anonymously with a username
 function validate_username($username)
 {
-	global $_CORE_CONFIG, $db, $_CLASS;
+	global $_CORE_CONFIG, $_CLASS;
 
 	if (strtolower($_CLASS['core_user']->data['username']) == strtolower($username))
 	{
@@ -789,51 +793,51 @@ function validate_username($username)
 
 	$sql = 'SELECT username
 		FROM ' . USERS_TABLE . "
-		WHERE LOWER(username) = '" . strtolower($db->sql_escape($username)) . "'";
-	$result = $db->sql_query($sql);
+		WHERE LOWER(username) = '" . strtolower($_CLASS['core_db']->sql_escape($username)) . "'";
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	if ($row = $db->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		return 'USERNAME_TAKEN';
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$sql = 'SELECT group_name
 		FROM ' . GROUPS_TABLE . "
-		WHERE LOWER(group_name) = '" . strtolower($db->sql_escape($username)) . "'";
-	$result = $db->sql_query($sql);
+		WHERE LOWER(group_name) = '" . strtolower($_CLASS['core_db']->sql_escape($username)) . "'";
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	if ($row = $db->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		return 'USERNAME_TAKEN';
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$sql = 'SELECT disallow_username
 		FROM ' . DISALLOW_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if (preg_match('#' . str_replace('*', '.*?', preg_quote($row['disallow_username'], '#')) . '#i', $username))
 		{
 			return 'USERNAME_DISALLOWED';
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$sql = 'SELECT word
 		FROM  ' . WORDS_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if (preg_match('#(' . str_replace('\*', '.*?', preg_quote($row['word'], '#')) . ')#i', $username))
 		{
 			return 'USERNAME_DISALLOWED';
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	return false;
 }
@@ -846,7 +850,7 @@ function validate_username($username)
 // Check to see if email address is banned or already present in the DB
 function validate_email($email)
 {
-	global $_CORE_CONFIG, $db, $_CLASS;
+	global $_CORE_CONFIG, $_CLASS;
 
 	if (strtolower($_CLASS['core_user']->data['user_email']) == strtolower($email))
 	{
@@ -860,29 +864,29 @@ function validate_email($email)
 
 	$sql = 'SELECT ban_email
 		FROM ' . BANLIST_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if (preg_match('#^' . str_replace('*', '.*?', $row['ban_email']) . '$#i', $email))
 		{
 			return 'EMAIL_BANNED';
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	if (!$_CORE_CONFIG['user']['allow_emailreuse'])
 	{
 		$sql = 'SELECT user_email_hash
 			FROM ' . USERS_TABLE . "
 			WHERE user_email_hash = " . crc32(strtolower($email)) . strlen($email);
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			return 'EMAIL_TAKEN';
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	return false;
@@ -906,7 +910,7 @@ function avatar_delete($id)
 
 function avatar_remote($data, &$error)
 {
-	global $config, $db, $_CLASS;
+	global $config, $_CLASS;
 
 	if (!preg_match('#^(http|https|ftp)://#i', $data['remotelink']))
 	{
@@ -945,7 +949,7 @@ function avatar_remote($data, &$error)
 
 function avatar_upload($data, &$error)
 {
-	global $site_file_root, $config, $db, $_CLASS;
+	global $site_file_root, $config, $_CLASS;
 
 	// Init upload class
 	include_once($site_file_root.'includes/forums/functions_upload.php');
@@ -1033,7 +1037,7 @@ function avatar_gallery($category, &$error)
 // parameters such as rank, etc. if they are changed
 function group_create($group_id, $type, $name, $desc)
 {
-	global $config, $db, $_CLASS, $file_upload;
+	global $config, $_CLASS, $file_upload;
 
 	$error = array();
 
@@ -1088,8 +1092,8 @@ function group_create($group_id, $type, $name, $desc)
 			$i++;
 		}
 		
-		$sql = ($group_id) ? 'UPDATE ' . GROUPS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "	WHERE group_id = $group_id" : 'INSERT INTO ' . GROUPS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary);
-		$db->sql_query($sql);
+		$sql = ($group_id) ? 'UPDATE ' . GROUPS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . "	WHERE group_id = $group_id" : 'INSERT INTO ' . GROUPS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
+		$_CLASS['core_db']->sql_query($sql);
 
 		$sql_ary = array();
 		foreach ($attribute_ary as $attribute => $type)
@@ -1102,15 +1106,16 @@ function group_create($group_id, $type, $name, $desc)
 
 		if (sizeof($sql_ary))
 		{
-			$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+			$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . "
 				WHERE group_id = $group_id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 
 		if (!function_exists('add_log'))
 		{
-			global $phpEx;
-			include('includes/phpBB2/functions_admin.'.$phpEx);
+			global $site_file_root;
+
+			include($site_file_root.'includes/forums/functions_admin.php');
 		}
 
 		$log = ($group_id) ? 'LOG_GROUP_UPDATED' : 'LOG_GROUP_CREATED';
@@ -1122,20 +1127,20 @@ function group_create($group_id, $type, $name, $desc)
 
 function group_delete($group_id, $group_name = false)
 {
-	global $db;
+	global $_CLASS;
 
 	if (!$group_name)
 	{
 		$sql = 'SELECT group_name
 			FROM ' . GROUPS_TABLE . " 
 			WHERE group_id = $group_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if (!extract($db->sql_fetchrow($result)))
+		if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
 		{
 			trigger_error("Could not obtain name of group $group_id", E_USER_ERROR);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	$start = 0;
@@ -1150,9 +1155,9 @@ function group_delete($group_id, $group_name = false)
 			WHERE ug.group_id = $group_id
 				AND u.user_id = ug.user_id 
 			LIMIT $start, 200";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			do
 			{
@@ -1161,7 +1166,7 @@ function group_delete($group_id, $group_name = false)
 
 				$start++;
 			}
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
 			group_user_del($group_id, $user_id_ary, $username_ary, $group_name);
 		}
@@ -1169,19 +1174,20 @@ function group_delete($group_id, $group_name = false)
 		{
 			$start = 0;
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	while ($start);
 	
 	// Delete group
 	$sql = 'DELETE FROM ' . GROUPS_TABLE . " 
 		WHERE group_id = $group_id";
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 
 	if (!function_exists('add_log'))
 	{
-		global $phpEx;
-		include('includes/phpBB2/functions_admin.'.$phpEx);
+		global $site_file_root;
+
+		include($site_file_root.'includes/forums/functions_admin.php');
 	}
 
 	add_log('admin', 'LOG_GROUP_DELETE', $group_name);
@@ -1191,7 +1197,7 @@ function group_delete($group_id, $group_name = false)
 
 function group_user_add($group_id, $user_id_ary = false, $username_ary = false, $group_name = false, $default = false, $leader = 0)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	// We need both username and user_id info
 	user_get_id_name($user_id_ary, $username_ary);
@@ -1201,10 +1207,10 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 		FROM ' . USER_GROUP_TABLE . '   
 		WHERE user_id IN (' . implode(', ', $user_id_ary) . ") 
 			AND group_id = $group_id";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$add_id_ary = $update_id_ary = array();
-	if ($row = $db->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		do
 		{
@@ -1215,9 +1221,9 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 				$update_id_ary[] = $row['user_id'];
 			}
 		}
-		while ($row = $db->sql_fetchrow($result));
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	// Do all the users exist in this group?
 	$add_id_ary = array_diff($user_id_ary, $add_id_ary);
@@ -1237,7 +1243,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 			case 'mysql':
 				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . " (user_id, group_id, group_leader) 
 					VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', "(\\1, $group_id, $leader)",  $add_id_ary));
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 				break;
 			
 			case 'mysql4':
@@ -1246,7 +1252,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 			case 'sqlite':
 				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . " (user_id, group_id, group_leader) 
 					" . implode(' UNION ALL ', preg_replace('#^([0-9]+)$#', "(\\1, $group_id, $leader)",  $add_id_ary));
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 				break;
 
 			default:
@@ -1254,7 +1260,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 				{
 					$sql = 'INSERT INTO ' . USER_GROUP_TABLE . " (user_id, group_id, group_leader)
 						VALUES ($user_id, $group_id, $leader)";
-					$db->sql_query($sql);
+					$_CLASS['core_db']->sql_query($sql);
 				}
 				break;
 		}
@@ -1267,7 +1273,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 			SET group_leader = 1 
 			WHERE user_id IN (' . implode(', ', $update_id_ary) . ")
 				AND group_id = $group_id";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 
 		foreach ($update_id_ary as $id)
 		{
@@ -1306,9 +1312,9 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 			$sql = 'SELECT group_colour, group_rank, group_avatar, group_avatar_type, group_avatar_width, group_avatar_height  
 				FROM ' . GROUPS_TABLE . " 
 				WHERE group_id = $group_id";
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			if (!extract($db->sql_fetchrow($result)))
+			if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
 			{
 				trigger_error("Could not obtain group attributes for group_id $group_id", E_USER_ERROR);
 			}
@@ -1339,7 +1345,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 						$sql_set .= ", $field = " . (double) $$attribute;
 						break;
 					case 'string':
-						$sql_set .= ", $field = '" . (string) $db->sql_escape($$attribute) . "'";
+						$sql_set .= ", $field = '" . (string) $_CLASS['core_db']->sql_escape($$attribute) . "'";
 						break;
 				}
 			}
@@ -1348,7 +1354,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 		$sql = 'UPDATE ' . USERS_TABLE . "
 			SET group_id = $group_id$sql_set  
 			WHERE user_id IN (" . implode(', ', $user_id_ary) . ')';
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 	}
 
 	// Clear permissions cache of relevant users
@@ -1359,9 +1365,9 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 		$sql = 'SELECT group_name
 			FROM ' . GROUPS_TABLE . " 
 			WHERE group_id = $group_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if (!extract($db->sql_fetchrow($result)))
+		if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
 		{
 			trigger_error("Could not obtain name of group $group_id", E_USER_ERROR);
 		}
@@ -1369,8 +1375,9 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 
 	if (!function_exists('add_log'))
 	{
-		global $phpEx;
-		include('includes/phpBB2/functions_admin.'.$phpEx);
+		global $site_file_root;
+
+		include($site_file_root.'includes/forums/functions_admin.php');
 	}
 
 	$log = ($leader) ? 'LOG_MODS_ADDED' : 'LOG_USERS_ADDED';
@@ -1388,7 +1395,7 @@ function group_user_add($group_id, $user_id_ary = false, $username_ary = false, 
 // to. The selection is made based on a reasonable priority system
 function group_user_del($group_id, $user_id_ary = false, $username_ary = false, $group_name = false)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	$group_order = array('ADMINISTRATORS', 'SUPER_MODERATORS', 'REGISTERED_COPPA', 'REGISTERED', 'BOTS', 'GUESTS');
 
@@ -1400,10 +1407,10 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 	$sql = 'SELECT * 
 		FROM ' . GROUPS_TABLE . ' 
 		WHERE group_name IN (' . implode(', ', preg_replace('#^(.*)$#', "'\\1'", $group_order)) . ')';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$group_order_id = $special_group_data = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$group_order_id[$row['group_name']] = $row['group_id'];
 
@@ -1414,7 +1421,7 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 		$special_group_data[$row['group_id']]['group_avatar_width']		= $row['group_avatar_width'];
 		$special_group_data[$row['group_id']]['group_avatar_height']	= $row['group_avatar_height'];
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	// What special group memberships exist for these users?
 	$sql = 'SELECT g.group_id, g.group_name, ug.user_id 
@@ -1424,17 +1431,17 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 			AND g.group_id <> $group_id 
 			AND g.group_type = " . GROUP_SPECIAL . '
 		ORDER BY ug.user_id, g.group_id';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$temp_ary = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if (!isset($temp_ary[$row['user_id']]) || array_search($row['group_name'], $group_order) < $temp_ary[$row['user_id']])
 		{
 			$temp_ary[$row['user_id']] = $row['group_id'];
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$sql_where_ary = array();
 	foreach ($temp_ary as $uid => $gid)
@@ -1461,7 +1468,7 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 						$sql_set .= ", $field = " . (double) $value;
 						break;
 					case 'string':
-						$sql_set .= ", $field = '" . $db->sql_escape($value) . "'";
+						$sql_set .= ", $field = '" . $_CLASS['core_db']->sql_escape($value) . "'";
 						break;
 				}
 			}
@@ -1470,7 +1477,7 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 			$sql = 'UPDATE ' . USERS_TABLE . " 
 				SET group_id = $gid$sql_set 
 				WHERE user_id IN (" . implode(', ', $sql_where_ary[$gid]) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 	}
 	unset($special_group_data);
@@ -1478,7 +1485,7 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 	$sql = 'DELETE FROM ' . USER_GROUP_TABLE . " 
 		WHERE group_id = $group_id
 			AND user_id IN (" . implode(', ', $user_id_ary) . ')';
-	$db->sql_query($sql);
+	$_CLASS['core_db']->sql_query($sql);
 	unset($default_ary);
 
 	// Clear permissions cache of relevant users
@@ -1489,9 +1496,9 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 		$sql = 'SELECT group_name
 			FROM ' . GROUPS_TABLE . " 
 			WHERE group_id = $group_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if (!extract($db->sql_fetchrow($result)))
+		if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
 		{
 			trigger_error("Could not obtain name of group $group_id", E_USER_ERROR);
 		}
@@ -1499,8 +1506,9 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 
 	if (!function_exists('add_log'))
 	{
-		global $phpEx;
-		include('includes/phpBB2/functions_admin.'.$phpEx);
+		global $site_file_root;
+
+		include($site_file_root.'includes/forums/functions_admin.php');
 	}
 
 	$log = 'LOG_GROUP_REMOVE';
@@ -1516,7 +1524,7 @@ function group_user_del($group_id, $user_id_ary = false, $username_ary = false, 
 // This is used to promote (to leader), demote or set as default a member/s
 function group_user_attributes($action, $group_id, $user_id_ary = false, $username_ary = false, $group_name = false)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	// We need both username and user_id info
 	user_get_id_name($user_id_ary, $username_ary);
@@ -1529,7 +1537,7 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 				SET group_leader = ' . (($action == 'promote') ? 1 : 0) . "  
 				WHERE group_id = $group_id
 					AND user_id IN (" . implode(', ', $user_id_ary) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			$log = ($action == 'promote') ? 'LOG_GROUP_PROMOTED' : 'LOG_GROUP_DEMOTED';
 			break;
@@ -1539,7 +1547,7 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 				SET user_pending = 0 
 				WHERE group_id = $group_id 
 					AND user_id IN (" . implode(', ', $user_id_ary) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			$log = 'LOG_GROUP_APPROVE';
 			break;
@@ -1568,13 +1576,13 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 				$sql = 'SELECT group_colour, group_rank, group_avatar, group_avatar_type, group_avatar_width, group_avatar_height 
 					FROM ' . GROUPS_TABLE . " 
 					WHERE group_id = $group_id";
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
-				if (!extract($db->sql_fetchrow($result)))
+				if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
 				{
 					return 'NO_GROUP';
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				if (!$group_avatar_width)
 				{
@@ -1605,7 +1613,7 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 							$sql_set .= ", $field = " . (double) $$attribute;
 							break;
 						case 'string':
-							$sql_set .= ", $field = '" . (string) $db->sql_escape($$attribute) . "'";
+							$sql_set .= ", $field = '" . (string) $_CLASS['core_db']->sql_escape($$attribute) . "'";
 							break;
 					}
 				}
@@ -1614,7 +1622,7 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 			$sql = 'UPDATE ' . USERS_TABLE . "
 				SET group_id = $group_id$sql_set  
 				WHERE user_id IN (" . implode(', ', $user_id_ary) . ')';
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 
 			$log = 'LOG_GROUP_DEFAULTS';
 			break;
@@ -1622,8 +1630,9 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 
 	if (!function_exists('add_log'))
 	{
-		global  $phpEx;
-		include('includes/phpBB2/functions_admin.'.$phpEx);
+		global $site_file_root;
+
+		include($site_file_root.'includes/forums/functions_admin.php');
 	}
 
 	// Clear permissions cache of relevant users
@@ -1634,9 +1643,9 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 		$sql = 'SELECT group_name
 			FROM ' . GROUPS_TABLE . " 
 			WHERE group_id = $group_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if (!extract($db->sql_fetchrow($result)))
+		if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
 		{
 			trigger_error("Could not obtain name of group $group_id", E_USER_ERROR);
 		}
@@ -1654,7 +1663,7 @@ function group_user_attributes($action, $group_id, $user_id_ary = false, $userna
 // which the specified users are members
 function group_memberships($group_id = false, $user_id_ary = false)
 {
-	global $db;
+	global $_CLASS;
 
 	if (!$group_id && !$user_id_ary)
 	{

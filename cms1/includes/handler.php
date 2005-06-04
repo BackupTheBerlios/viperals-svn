@@ -172,7 +172,7 @@ class core_error_handler
 				
 				$_CLASS['core_display']->display_head($this->error_setting['title']);
 
-				if (defined('IN_ADMIN') && !empty($user->data['session_admin']))
+				if (defined('IN_ADMIN') && !empty($_CLASS['core_user']->data['session_admin']))
 				{
 					// this is phpbb 2.1.2 remove it
 					adm_page_message($msg_title, $msg_text, false);

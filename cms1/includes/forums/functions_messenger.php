@@ -113,7 +113,7 @@ class messenger
 
 	function template($template_file, $template_lang = '')
 	{
-		global $config;
+		global $config, $site_file_root;
 		// temp //
 		$template_lang = 'en';
 		// temp //
@@ -129,10 +129,10 @@ class messenger
 
 		if (empty($this->tpl_msg[$template_lang . $template_file]))
 		{
-			$tpl_file = "modules/Forums/language/$template_lang/email/$template_file.txt";
+			$tpl_file = $site_file_root."modules/Forums/language/$template_lang/email/$template_file.txt";
 			if (!file_exists($tpl_file))
 			{
-				$tpl_file = "modules/Forums/language/en/email/$template_file.txt";
+				$tpl_file = $site_file_root."modules/Forums/language/en/email/$template_file.txt";
 
 				if (!file_exists($tpl_file))
 				{
@@ -237,19 +237,26 @@ class messenger
 
 	function error($type, $msg)
 	{
-		global $_CLASS, $site_file_root, $phpEx;
+		global $_CLASS, $site_file_root;
 
 		// Session doesn't exist, create it
 		$_CLASS['core_user']->start();
 
-		require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
+		require_once($site_file_root.'includes/forums/functions_admin.php');
 		add_log('critical', 'LOG_' . $type . '_ERROR', $msg);
 	}
 
 	//
 	// Messenger methods
 	//
-
+	function save_queue()
+	{
+		if ($this->use_queue)
+		{
+			$this->queue->save();
+		}
+	}
+	
 	function msg_email()
 	{
 		global $config, $_CLASS;
@@ -347,7 +354,7 @@ class messenger
 
 	function msg_jabber()
 	{
-		global $config, $db, $site_file_root, $_CLASS, $phpEx;
+		global $config, $site_file_root, $_CLASS;
 
 		if (empty($config['jab_enable']) || empty($config['jab_host']) || empty($config['jab_username']) || empty($config['jab_password']))
 		{
@@ -374,7 +381,7 @@ class messenger
 
 		if (!$use_queue)
 		{
-			require_once($site_file_root.'includes/forums/functions_jabber.'.$phpEx);
+			require_once($site_file_root.'includes/forums/functions_jabber.php');
 			$this->jabber = new jabber;
 
 			$this->jabber->server	= $config['jab_host'];
@@ -427,10 +434,10 @@ class queue
 
 	function queue()
 	{
-		global $phpEx, $site_file_root;
+		global $site_file_root;
 
 		$this->data = array();
-		$this->cache_file = $site_file_root."cache/queue.$phpEx";
+		$this->cache_file = $site_file_root . 'cache/queue.php';
 	}
 	
 	function init($object, $package_size)
@@ -448,7 +455,7 @@ class queue
 	// Using lock file...
 	function process()
 	{
-		global $db, $site_file_root, $config, $phpEx;
+		global $site_file_root, $config;
 
 		set_config('last_queue_run', time(), true);
 
@@ -494,7 +501,7 @@ class queue
 						continue 2;
 					}
 
-					require_once($site_file_root.'includes/forums/functions_jabber.'.$phpEx);
+					require_once($site_file_root.'includes/forums/functions_jabber.php');
 					$this->jabber = new jabber;
 
 					$this->jabber->server	= $config['jab_host'];

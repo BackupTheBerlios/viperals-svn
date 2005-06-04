@@ -15,7 +15,7 @@ class ucp_groups extends module
 {
 	function ucp_groups($id, $mode)
 	{
-		global $config, $db, $_CLASS, $SID, $phpEx;
+		global $config, $_CLASS, $SID;
 
 		$_CLASS['core_user']->add_lang('groups');
 
@@ -32,11 +32,11 @@ class ucp_groups extends module
 					WHERE ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 						AND g.group_id = ug.group_id
 					ORDER BY g.group_type DESC, g.group_name';
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
 				$group_id_ary = array();
 				$leader_count = $member_count = $pending_count = 0;
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					$block = ($row['group_leader']) ? 'leader' : (($row['user_pending']) ? 'pending' : 'member');
 
@@ -46,7 +46,7 @@ class ucp_groups extends module
 						'GROUP_DESC'	=> ($row['group_type'] <> GROUP_SPECIAL) ? $row['group_description'] : $_CLASS['core_user']->lang['GROUP_IS_SPECIAL'],
 						'GROUP_SPECIAL'	=> ($row['group_type'] <> GROUP_SPECIAL) ? false : true,
 
-						'U_VIEW_GROUP'	=> getlink('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
+						'U_VIEW_GROUP'	=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
 
 						'S_GROUP_DEFAULT'	=> ($row['group_id'] == $_CLASS['core_user']->data['group_id']) ? true : false,
 						'S_ROW_COUNT'		=> ${$block . '_count'}++,)
@@ -54,7 +54,7 @@ class ucp_groups extends module
 
 					$group_id_ary[] = $row['group_id'];
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				// Hide hidden groups unless user is an admin with group privileges
 				$sql_and = ($_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel')) ? '<> ' . GROUP_SPECIAL : 'NOT IN (' . GROUP_SPECIAL . ', ' . GROUP_HIDDEN . ')';
@@ -63,10 +63,10 @@ class ucp_groups extends module
 					WHERE group_id NOT IN (' . implode(', ', $group_id_ary) . ")
 						AND group_type $sql_and
 					ORDER BY group_type DESC, group_name";
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
 				$nonmember_count = 0;
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 
 					$_CLASS['core_template']->assign_vars_array('nonmember', array(
@@ -76,12 +76,12 @@ class ucp_groups extends module
 						'GROUP_SPECIAL'	=> ($row['group_type'] <> GROUP_SPECIAL) ? false : true,
 						'GROUP_CLOSED'	=> ($row['group_type'] <> GROUP_CLOSED || $_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel')) ? false : true,
 
-						'U_VIEW_GROUP'	=> getlink('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
+						'U_VIEW_GROUP'	=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
 
 						'S_ROW_COUNT'	=> $nonmember_count++,)
 					);
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				$_CLASS['core_template']->assign(array(
 					'S_CHANGE_DEFAULT'	=> ($_CLASS['auth']->acl_get('u_chggrp')) ? true : false,

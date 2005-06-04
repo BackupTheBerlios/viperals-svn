@@ -15,7 +15,7 @@ class ucp_zebra extends module
 {
 	function ucp_zebra($id, $mode)
 	{
-		global $config, $db, $_CLASS, $SID, $phpbb_root_path, $phpEx;
+		global $_CLASS;
 		
 		$_CLASS['core_template']->assign(array(
 			'S_PRIVMSGS'	=> false,
@@ -30,7 +30,7 @@ class ucp_zebra extends module
 		if ($submit)
 		{
 			$var_ary = array(
-				'usernames'	=> 0,
+				'usernames'	=> array(0),
 				'add'		=> '', 
 			);
 
@@ -44,6 +44,7 @@ class ucp_zebra extends module
 			);
 
 			$error = validate_data($data, $var_ary);
+			
 			extract($data);
 			unset($data);
 
@@ -59,10 +60,10 @@ class ucp_zebra extends module
 					FROM ' . ZEBRA_TABLE . ' z, ' . USERS_TABLE . ' u 
 					WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 						AND u.user_id = z.zebra_id";
-				$result = $db->sql_query($sql);
+				$result = $_CLASS['core_db']->sql_query($sql);
 
 				$friends = $foes = array();
-				while ($row = $db->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
 					if ($row['friend'])
 					{
@@ -73,31 +74,31 @@ class ucp_zebra extends module
 						$foes[] = $row['username'];
 					}
 				}
-				$db->sql_freeresult($result);
+				$_CLASS['core_db']->sql_freeresult($result);
 
 				$add = array_diff($add, $friends, $foes, array($_CLASS['core_user']->data['username']));
 				unset($friends);
 				unset($foes);
 
-				$add = implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$db->sql_escape('\\1') . \"'\"", $add));
+				$add = implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $add));
 
 				if ($add)
 				{
 					$sql = 'SELECT user_id    
 						FROM ' . USERS_TABLE . ' 
 						WHERE username IN (' . $add . ')';
-					$result = $db->sql_query($sql);
+					$result = $_CLASS['core_db']->sql_query($sql);
 
-					if ($row = $db->sql_fetchrow($result))
+					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 					{
 						$user_id_ary = array();
 						do
 						{
 							$user_id_ary[] = $row['user_id'];
 						}
-						while ($row = $db->sql_fetchrow($result));
+						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
-						// Remove users from foe list if they are admins or moderators
+// Remove users from foe list if they are admins or moderators
 						if ($mode == 'foes')
 						{
 							$perms = array();
@@ -123,7 +124,7 @@ class ucp_zebra extends module
 								case 'mysql':
 									$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
 										VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-									$db->sql_query($sql);
+									$_CLASS['core_db']->sql_query($sql);
 									break;
 
 								case 'mysql4':
@@ -131,7 +132,7 @@ class ucp_zebra extends module
 								case 'sqlite':
 									$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
 										" . implode(' UNION ALL ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-									$db->sql_query($sql);
+									$_CLASS['core_db']->sql_query($sql);
 									break;
 
 								default:
@@ -139,7 +140,7 @@ class ucp_zebra extends module
 									{
 										$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode)
 											VALUES (" . $_CLASS['core_user']->data['user_id'] . ", $zebra_id, 1)";
-										$db->sql_query($sql);
+										$_CLASS['core_db']->sql_query($sql);
 									}
 									break;
 							}
@@ -155,7 +156,7 @@ class ucp_zebra extends module
 						$error[] = 'USER_NOT_FOUND';
 					}
 					
-					$db->sql_freeresult($result);
+					$_CLASS['core_db']->sql_freeresult($result);
 				}
 			}
 			else if ($usernames && !sizeof($error))
@@ -166,13 +167,13 @@ class ucp_zebra extends module
 				$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
 						AND zebra_id IN (' . implode(', ', $usernames) . ')';
-				$db->sql_query($sql);
+				$_CLASS['core_db']->sql_query($sql);
 			}
 			
 			if (!sizeof($error))
 			{
-				$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode"));
-				$message = $_CLASS['core_user']->lang[strtoupper($mode) . '_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
+				$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
+				$message = $_CLASS['core_user']->lang[strtoupper($mode) . '_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 				trigger_error($message);
 			}
 			else
@@ -187,14 +188,14 @@ class ucp_zebra extends module
 			WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 				AND $sql_and 
 				AND u.user_id = z.zebra_id";
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
 		$s_username_options = '';
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$s_username_options .= '<option value="' . $row['zebra_id'] . '">' . $row['username'] . '</option>';
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$_CLASS['core_template']->assign(array( 
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
@@ -216,11 +217,11 @@ class ucp_zebra extends module
 			'L_FRIENDS_EXPLAIN'			=> $_CLASS['core_user']->lang['FRIENDS_EXPLAIN'],
 			
 
-			'U_SEARCH_USER'		=> getlink("Members_List$SID&amp;mode=searchuser&amp;form=ucp&amp;field=add"), 
+			'U_SEARCH_USER'		=> generate_link('Members_List&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 
 
 			'S_USERNAME_OPTIONS'	=> $s_username_options,
 			'S_HIDDEN_FIELDS'		=> $s_hidden_fields,
-			'S_UCP_ACTION'			=> getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode"))
+			'S_UCP_ACTION'			=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"))
 		);
 
 		$this->display($_CLASS['core_user']->lang['UCP_ZEBRA'], 'ucp_zebra_' . $mode . '.html');

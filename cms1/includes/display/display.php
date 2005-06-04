@@ -29,10 +29,10 @@ class core_display
 		global $_CLASS;
 		
 		//authization check here
-		//if (!$_CLASS['core_user']->admin_auth('modules') && !$_CLASS['core_user']->auth($module['auth']))
-		//{
-		//	return;
-		//}
+		if (!$_CLASS['core_auth']->admin_auth('modules') && !$_CLASS['core_auth']->auth($module['auth']))
+		{
+			return;
+		}
 		
 		//first module control the sides.
 		if (!empty($this->modules))
@@ -66,7 +66,7 @@ class core_display
 		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
 		
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
-		header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
+		//header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
 		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
 		header('Expires: 0');
 		header('Pragma: no-cache');
@@ -103,7 +103,6 @@ class core_display
 
 				if (!$_CLASS['core_user']->data['user_last_privmsg'] || $_CLASS['core_user']->data['user_last_privmsg'] > $_CLASS['core_user']->data['session_last_visit'])
 				{
-// Maybe just make just user_new_privmsg or set time to 0 
 					$sql = 'UPDATE ' . USERS_TABLE . ' SET user_last_privmsg = ' . $_CLASS['core_user']->data['session_time'] . ' WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 					$_CLASS['core_db']->sql_query($sql);
 				}
@@ -167,8 +166,6 @@ class core_display
 			return;
 		}
 		
-		// phpnuke compatiblity for like print view, popup, etc.
-		// All new modules should use script_close function.  It a must for the next major release..
 		if (!$this->displayed['header'])
 		{
 			script_close($save);
@@ -266,7 +263,7 @@ class core_display
 
 function hideblock($id) 
 {
-    // based from cpgnuke www.cpgnuke.com
+    // From cpgnuke - http://dragonflycms.org/
     static $hiddenblocks = false;
     
     if (!$hiddenblocks) 

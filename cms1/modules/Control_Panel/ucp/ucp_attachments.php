@@ -19,7 +19,7 @@ class ucp_attachments extends module
 {
 	function ucp_attachments($id, $mode)
 	{
-		global $_CLASS, $config, $phpEx, $site_file_root;
+		global $_CLASS, $config, $site_file_root;
 
 		$start	= request_var('start', 0);
 		$delete = (isset($_POST['delete'])) ? true : false;
@@ -36,10 +36,10 @@ class ucp_attachments extends module
 
 			if (confirm_box(true))
 			{
-				require($site_file_root.'includes/forums/functions_admin.' . $phpEx);
+				require($site_file_root.'includes/forums/functions_admin.php');
 				delete_attachments('attach', $delete_ids);
 
-				$refresh_url = getlink("Control_Panel&amp;i=$id");
+				$refresh_url = generate_link('Control_Panel&amp;i='.$id);
 				$_CLASS['core_display']->meta_refresh(3, $refresh_url);
 				$message = ((sizeof($delete_ids) == 1) ? $_CLASS['core_user']->lang['ATTACHMENT_DELETED'] : $_CLASS['core_user']->lang['ATTACHMENTS_DELETED']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="' . $refresh_url . '">', '</a>');
 				trigger_error($message);
@@ -101,11 +101,11 @@ class ucp_attachments extends module
 			{
 				if ($row['in_message'])
 				{
-					$view_topic = getlink("Control_Panel&amp;i=pm&amp;p={$row['post_msg_id']}");
+					$view_topic = generate_link('Control_Panel&amp;i=pm&amp;p='.$row['post_msg_id']);
 				}
 				else
 				{
-					$view_topic = getlink("Forums&amp;file=viewtopic&amp;t=" . $row['topic_id'] . '&amp;p=' . $row['post_msg_id'] . '#' . $row['post_msg_id']);
+					$view_topic = generate_link("Forums&amp;file=viewtopic&amp;t={$row['topic_id']}&amp;p={$row['post_msg_id']}#{$row['post_msg_id']}");
 				}
 
 				$_CLASS['core_template']->assign_vars_array('attachrow', array(
@@ -124,7 +124,7 @@ class ucp_attachments extends module
 				
 					'S_IN_MESSAGE'		=> $row['in_message'],
 
-					'U_VIEW_ATTACHMENT'	=> getlink('Forums&amp;file=download&amp;id=' . $row['attach_id']),
+					'U_VIEW_ATTACHMENT'	=> generate_link('Forums&amp;file=download&amp;id=' . $row['attach_id']),
 					'U_VIEW_TOPIC'		=> $view_topic)
 				);
 
@@ -154,17 +154,17 @@ class ucp_attachments extends module
 			'L_UNMARK_ALL'			=> $_CLASS['core_user']->lang['UNMARK_ALL'],
 			'L_UCP_NO_ATTACHMENTS'	=> $_CLASS['core_user']->lang['UCP_NO_ATTACHMENTS'],
 			
-			'U_SORT_FILENAME'		=> getlink("Control_Panel&amp;i=$id&amp;sk=a&amp;sd=" . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a')), 
-			'U_SORT_FILE_COMMENT'	=> getlink("Control_Panel&amp;i=$id&amp;sk=b&amp;sd=" . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a')), 
-			'U_SORT_EXTENSION'		=> getlink("Control_Panel&amp;i=$id&amp;sk=c&amp;sd=" . (($sort_key == 'c' && $sort_dir == 'a') ? 'd' : 'a')), 
-			'U_SORT_FILESIZE'		=> getlink("Control_Panel&amp;i=$id&amp;sk=d&amp;sd=" . (($sort_key == 'd' && $sort_dir == 'a') ? 'd' : 'a')), 
-			'U_SORT_DOWNLOADS'		=> getlink("Control_Panel&amp;i=$id&amp;sk=e&amp;sd=" . (($sort_key == 'e' && $sort_dir == 'a') ? 'd' : 'a')), 
-			'U_SORT_POST_TIME'		=> getlink("Control_Panel&amp;i=$id&amp;sk=f&amp;sd=" . (($sort_key == 'f' && $sort_dir == 'a') ? 'd' : 'a')), 
-			'U_SORT_TOPIC_TITLE'	=> getlink("Control_Panel&amp;i=$id&amp;sk=g&amp;sd=" . (($sort_key == 'f' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_FILENAME'		=> generate_link("Control_Panel&amp;i=$id&amp;sk=a&amp;sd=" . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_FILE_COMMENT'	=> generate_link("Control_Panel&amp;i=$id&amp;sk=b&amp;sd=" . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_EXTENSION'		=> generate_link("Control_Panel&amp;i=$id&amp;sk=c&amp;sd=" . (($sort_key == 'c' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_FILESIZE'		=> generate_link("Control_Panel&amp;i=$id&amp;sk=d&amp;sd=" . (($sort_key == 'd' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_DOWNLOADS'		=> generate_link("Control_Panel&amp;i=$id&amp;sk=e&amp;sd=" . (($sort_key == 'e' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_POST_TIME'		=> generate_link("Control_Panel&amp;i=$id&amp;sk=f&amp;sd=" . (($sort_key == 'f' && $sort_dir == 'a') ? 'd' : 'a')), 
+			'U_SORT_TOPIC_TITLE'	=> generate_link("Control_Panel&amp;i=$id&amp;sk=g&amp;sd=" . (($sort_key == 'f' && $sort_dir == 'a') ? 'd' : 'a')), 
 
 			'S_DISPLAY_MARK_ALL'	=> ($num_attachments) ? true : false,
 			'S_DISPLAY_PAGINATION'	=> ($num_attachments) ? true : false,
-			'S_UCP_ACTION'			=> getlink("Control_Panel&amp;i=$id"),
+			'S_UCP_ACTION'			=> generate_link('Control_Panel&amp;i='.$id),
 			'S_SORT_OPTIONS' 		=> $s_sort_key,
 			'S_ORDER_SELECT'		=> $s_sort_dir)
 		);

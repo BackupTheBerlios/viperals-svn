@@ -27,7 +27,7 @@ if (!$_CLASS['auth']->acl_get('a_group'))
 $mode		= request_var('mode', '');
 $action		= (isset($_POST['add'])) ? 'add' : ((isset($_POST['addusers'])) ? 'addusers' : request_var('action', ''));
 $group_id	= request_var('g', 0);
-$mark_ary	= request_var('mark', 0);
+$mark_ary   = request_var('mark', array(0));
 $name_ary	= request_var('usernames', '');
 $leader		= request_var('leader', 0);
 $default	= request_var('default', 0);

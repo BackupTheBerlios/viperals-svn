@@ -39,11 +39,10 @@ $_CLASS['auth']->acl($_CLASS['core_user']->data);
 $forum_id	= request_var('f', 0);
 $topic_id	= request_var('t', 0);
 $post_id	= request_var('p', 0);
-$voted_id	= request_var('vote_id', 0);;
+$voted_id	= request_var('vote_id', array(0));;
 
 $start		= request_var('start', 0);
 $view		= request_var('view', '');
-$rate		= get_variable('rate', 'GET', false);
 
 $sort_days	= request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
 $sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
@@ -58,133 +57,6 @@ if (!$topic_id && !$post_id)
 {
 	trigger_error('NO_TOPIC');
 }
-
-// add to database
-$config['karma_time'] = 2592000; //2592000
-
-if ($rate)
-{
-	if (!$post_id)
-	{
-		trigger_error('Sorry the request post was not found');
-	}
-	$karma_time = ($config['karma_time']) ? time() - $config['karma_time'] : 0;
-	
-	$sql = 'SELECT forum_id, poster_id , post_time, post_approved, post_edit_time
-		FROM ' . POSTS_TABLE . ' WHERE post_approved=1 AND post_id = '.$post_id;
-		
-	$result = $_CLASS['core_db']->sql_query($sql);
-
-	$row = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
-	
-	if (!$row)
-	{
-		trigger_error('Sorry the request post was not found');
-	}
-	
-	if (!$_CLASS['auth']->acl_get('f_rate', $row['forum_id']) || !$row['post_approved'] || $row['poster_id'] == $_CLASS['core_user']->data['user_id'] || $row['poster_id'] == ANONYMOUS || !$config['enable_karma'])
-	{
-		trigger_error('Sorry you can not rate this posts');
-	}
-	
-	$time = ($row['post_edit_time']) ? $row['post_edit_time'] : $row['post_time'];
-
-	if ($karma_time && $time < $karma_time)
-	{
-		trigger_error('Sorry you can\'t rate posts over '.round($config['karma_time'] / 86400).' days form original post or last edit');
-	}
-	
-	// Grab existing rating for this post, if it exists
-	$sql = 'SELECT * FROM ' . RATINGS_TABLE . ' 
-		WHERE rater_id = ' . $_CLASS['core_user']->data['user_id'] . "
-			AND post_id = $post_id";
-
-	$result = $_CLASS['core_db']->sql_query($sql);
-	$updated = ($updated = $_CLASS['core_db']->sql_fetchrow($result)) ? true : false;
-	$_CLASS['core_db']->sql_freeresult($result);
-
-	switch ($rate)
-	{
-		case 'good':
-			$rate = 1;
-			break;
-		case 'bad':
-			$rate = -1;
-			break;
-	}
-	
-	// Insert rating if appropriate
-	$sql = (!$updated) ? 'INSERT INTO ' . RATINGS_TABLE . ' (user_id, post_id, rating, rater_id, rating_time) VALUES (' . $row['poster_id'] . ", $post_id, $rate, ".$_CLASS['core_user']->data['user_id'].",  $time  )" : 'UPDATE ' . RATINGS_TABLE . " SET rating = $rate, rating_time = " . $time . " WHERE post_id = $post_id AND user_id = " . $row['poster_id'];
-	$_CLASS['core_db']->sql_query($sql);
-	
-	// delete old ratings
-	if ($karma_time)
-	{
-		$sql = 'DELETE FROM ' . RATINGS_TABLE . ' 
-				WHERE rating_time < '.$karma_time;
-				
-		$_CLASS['core_db']->sql_query($sql);
-	}
-	
-	// Rating sum and count since first post
-	$sql = 'SELECT post_id, rating FROM ' . RATINGS_TABLE.' WHERE user_id = '.$row['poster_id'];
-	$result = $_CLASS['core_db']->sql_query($sql);
-	
-	While ($sum = $_CLASS['core_db']->sql_fetchrow($result))
-	{
-		if (empty($sumtmp[$sum['post_id']]))
-		{
-			$sumtmp[$sum['post_id']] = $sum['rating'];
-			$totaltmp[$sum['post_id']] = 1;
-
-		} else {
-			$sumtmp[$sum['post_id']] = $sumtmp[$sum['post_id']] + $sum['rating'];
-			$totaltmp[$sum['post_id']] ++;
-		}
-	}
-	
-	$_CLASS['core_db']->sql_freeresult($result);
-	
-	$sum = 0;
-	
-	foreach($sumtmp as $key => $value)
-	{
-		$sum = $sum + ($value / $totaltmp[$key]);
-	}
-	
-	$sql = 'SELECT COUNT(*) as posts
-	FROM ' . POSTS_TABLE . ' WHERE post_approved=1
-	AND poster_id = '.$row['poster_id'].(($karma_time) ? ' AND post_time > '.$karma_time : '');
-
-	$result = $_CLASS['core_db']->sql_query($sql);
-	$posts = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
-
-	$karma = round($sum / $posts['posts'] * 5);
-	
-	$sql = 'UPDATE ' . USERS_TABLE . "
-		SET user_karma = $karma 
-		WHERE user_id = ".$row['poster_id'];
-
-	$_CLASS['core_db']->sql_query($sql);
-	
-	$_CLASS['core_user']->add_lang('viewtopic');
-	
-	$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id");
-	
-	$message = ($updated) ? $_CLASS['core_user']->lang['RATING_UPDATED'] : $_CLASS['core_user']->lang['RATING_ADDED'];
-	$message = $message . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_POST'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;p=$post_id")."#$post_id\">", '</a>');
-	
-	trigger_error($message);
-	
-}
-
-$_CLASS['core_template']->assign(array(
-	'S_FORUM_RULES' 			=> false,
-	'S_HIDDEN_FIELDS' 			=> false,
-	'S_TOPIC_ACTION' 			=> '')
-);
 
 // Find topic id if user requested a newer or older topic
 $unread_post_id = 0;
@@ -209,14 +81,7 @@ if ($view && !$post_id)
 
 	if ($view == 'unread')
 	{
-		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
-		{
-			$topic_last_read = get_topic_last_read($topic_id, $forum_id);
-		}
-		else
-		{
-			$topic_last_read = 0;
-		}
+		$topic_last_read = get_topic_last_read($topic_id, $forum_id);
 
 		$sql = 'SELECT p.post_id, p.topic_id, p.forum_id
 			FROM (' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . " t)
@@ -310,7 +175,7 @@ else
 $extra_fields = (!$post_id)  ? '' : ', COUNT(p2.post_id) AS prev_posts';
 $order_sql = (!$post_id) ? '' : 'GROUP BY p.post_id, t.topic_id, t.topic_title, t.topic_status, t.topic_replies, t.topic_time, t.topic_type, t.poll_max_options, t.poll_start, t.poll_length, t.poll_title, f.forum_name, f.forum_desc, f.forum_parents, f.parent_id, f.left_id, f.right_id, f.forum_status, f.forum_id, f.forum_style, f.forum_password ORDER BY p.post_id ASC';
 
-if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+if ($_CLASS['core_user']->is_user)
 {
 	$extra_fields .= ', tw.notify_status' . (($config['allow_bookmarks']) ? ', bm.order_id as bookmarked' : '');
 	$join_sql_table .= ' LEFT JOIN ' . TOPICS_WATCH_TABLE . ' tw ON (tw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
@@ -349,13 +214,9 @@ extract($topic_data);
 $topic_replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $topic_replies_real : $topic_replies;
 unset($topic_replies_real);
 
-if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS && !isset($topic_last_read))
+if (!isset($topic_last_read))
 {
 	$topic_last_read = get_topic_last_read($topic_id, $forum_id);
-}
-else
-{
-	$topic_last_read = 0;
 }
 
 // Check sticky/announcement time limit
@@ -385,7 +246,7 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 		trigger_error($_CLASS['core_user']->lang['SORRY_AUTH_READ']);
 	}
 
-	login_box('', $_CLASS['core_user']->lang['LOGIN_VIEWFORUM']);
+	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_VIEWFORUM']));
 }
 
 // Forum is passworded ... check whether access has been granted to this
@@ -400,14 +261,17 @@ if (isset($_GET['e']))
 {
 	$jump_to = request_var('e', 0);
 
+	/* I don't see the point in this
 	$redirect_url = "Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id";
+	
 	if ($_CLASS['core_user']->data['user_id'] == ANONYMOUS)
 	{
-		login_box(generate_link($redirect_url . "&p=$post_id&e=$jump_to"), $_CLASS['core_user']->lang['LOGIN_NOTIFY_TOPIC']);
-	}
+		login_box(array('redirect' => generate_link($redirect_url . "&p=$post_id&e=$jump_to"), 'explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_TOPIC']));
+	}*/
 	
 	if ($jump_to > 0)
 	{
+		$redirect_url = "Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id";
 		// We direct the already logged in user to the correct post...
 		redirect(generate_link($redirect_url . ((!$post_id) ? "&p=$jump_to" : "&p=$post_id")). "#$jump_to");
 	}
@@ -475,13 +339,13 @@ $viewtopic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;
 // Are we watching this topic?
 $s_watching_topic = $s_watching_topic_img = array();
 $s_watching_topic['link'] = $s_watching_topic['title'] = '';
-if ($_CORE_CONFIG['email']['email_enable'] && $config['allow_topic_notify'] && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+if ($_CORE_CONFIG['email']['email_enable'] && $config['allow_topic_notify'] && $_CLASS['core_user']->is_user)
 {
 	watch_topic_forum('topic', $s_watching_topic, $s_watching_topic_img, $_CLASS['core_user']->data['user_id'], $topic_id, $notify_status, $start);
 }
 
 // Bookmarks
-if ($config['allow_bookmarks'] && $_CLASS['core_user']->data['user_id'] != ANONYMOUS && request_var('bookmark', 0))
+if ($config['allow_bookmarks'] && $_CLASS['core_user']->is_user && request_var('bookmark', 0))
 {
 	if (!$bookmarked)
 	{
@@ -534,8 +398,6 @@ if ($topic_attachment)
 	obtain_attach_extensions($extensions);
 }
 
-// Forum rules listing
-$s_forum_rules = '';
 gen_forum_auth_level('topic', $forum_id);
 
 // Quick mod tools
@@ -604,8 +466,6 @@ $_CLASS['core_template']->assign(array(
 	'REPORT_IMG'		=> $_CLASS['core_user']->img('btn_report', 'REPORT_POST'),
 	'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED'),
 	'UNAPPROVED_IMG'	=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED'),
-	'KARMA_LEFT_IMG'        => $_CLASS['core_user']->img('karma_left', ''),
-	'KARMA_RIGHT_IMG'       => $_CLASS['core_user']->img('karma_right', ''),
 	
 	'S_SELECT_SORT_DIR' 	=> $s_sort_dir,
 	'S_SELECT_SORT_KEY' 	=> $s_sort_key,
@@ -630,8 +490,8 @@ $_CLASS['core_template']->assign(array(
 	'U_WATCH_TOPIC' 		=> $s_watching_topic['link'], 
 	'L_WATCH_TOPIC' 		=> $s_watching_topic['title'], 
 
-	'U_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->data['user_id'] != ANONYMOUS && $config['allow_bookmarks']) ? generate_link($viewtopic_url . '&amp;bookmark=1', false) : '',
-	'L_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->data['user_id'] != ANONYMOUS && $config['allow_bookmarks'] && $bookmarked) ? $_CLASS['core_user']->lang['BOOKMARK_TOPIC_REMOVE'] : $_CLASS['core_user']->lang['BOOKMARK_TOPIC'],
+	'U_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks']) ? generate_link($viewtopic_url . '&amp;bookmark=1', false) : '',
+	'L_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks'] && $bookmarked) ? $_CLASS['core_user']->lang['BOOKMARK_TOPIC_REMOVE'] : $_CLASS['core_user']->lang['BOOKMARK_TOPIC'],
 	
 	'U_POST_NEW_TOPIC' 		=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
 	'U_POST_REPLY_TOPIC' 	=> generate_link("Forums&amp;file=posting&amp;mode=reply&amp;f=$forum_id&amp;t=$topic_id"),
@@ -657,7 +517,7 @@ if (!empty($poll_start))
 	$_CLASS['core_db']->sql_freeresult($result);
 
 	$cur_voted_id = array();
-	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+	if ($_CLASS['core_user']->is_user)
 	{
 		$sql = 'SELECT poll_option_id
 			FROM ' . POLL_VOTES_TABLE . '
@@ -714,7 +574,7 @@ if (!empty($poll_start))
 					AND topic_id = $topic_id";
 			$_CLASS['core_db']->sql_query($sql);
 
-			if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+			if ($_CLASS['core_user']->is_user)
 			{
 				$sql = 'INSERT INTO  ' . POLL_VOTES_TABLE . " (topic_id, poll_option_id, vote_user_id, vote_user_ip) 
 					VALUES ($topic_id, $option, " . $_CLASS['core_user']->data['user_id'] . ", '".$_CLASS['core_user']->ip."')";
@@ -732,7 +592,7 @@ if (!empty($poll_start))
 						AND topic_id = $topic_id";
 				$_CLASS['core_db']->sql_query($sql);
 
-				if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+				if ($_CLASS['core_user']->is_user)
 				{
 					$sql = 'DELETE FROM ' . POLL_VOTES_TABLE . " 
 						WHERE topic_id = $topic_id
@@ -768,7 +628,7 @@ if (!empty($poll_start))
 
 	if ($poll_info[0]['bbcode_bitfield'])
 	{
-		require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.php');
 		$poll_bbcode = new bbcode();
 		
 		$size = sizeof($poll_info);
@@ -821,6 +681,10 @@ if (!empty($poll_start))
 	);
 
 	unset($poll_info, $voted_id);
+}
+else
+{
+	$_CLASS['core_template']->assign('S_HAS_POLL', false); 
 }
 
 // If the user is trying to reach the second half of the topic, fetch it starting from the end
@@ -877,7 +741,7 @@ if (empty($post_list))
 	trigger_error($_CLASS['core_user']->lang['NO_TOPIC']);
 }
 
-$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_karma, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_regdate, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, z.friend, z.foe, p.*
+$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_regdate, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, z.friend, z.foe, p.*
 	FROM (' . POSTS_TABLE . ' p
 	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id)), ' . USERS_TABLE . ' u
 	WHERE p.post_id IN (' . implode(', ', $post_list) . ')
@@ -891,24 +755,13 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	$poster_id = $row['poster_id'];
 	$poster	= ($poster_id == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST']) : $row['username'];
 
-	if ($view != 'show' || $post_id != $row['post_id'])
+	if (!$view || $view != 'show' || $post_id != $row['post_id'])
 	{
-		if (!$row['friend'] && $row['user_karma'] < $_CLASS['core_user']->data['user_min_karma'])
-		{
-			$rowset[$row['post_id']] = array(
-				'below_karma'	=> true,
-				'post_id'		=> $row['post_id'], 
-				'poster'		=> $poster,
-				'user_karma'	=> $row['user_karma']
-			);
-
-			continue;
-		}
-		elseif ($row['foe'])
+		if ($row['foe'])
 		{
 			$rowset[$row['post_id']] = array(
 				'foe'		=> true,
-				'post_id'	=> $row['post_id'], 
+				'post_id'	=> $row['post_id'],
 				'poster'	=> $poster,
 			);
 
@@ -921,31 +774,15 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		if ($view != 'encoding' && $post_id != $row['post_id'])
 		{
 			$rowset[$row['post_id']] = array(
-				'do_post_encoding'	=> true,
-				'post_encoding'		=> $row['post_encoding'],
+				'no_display'	=> true,
+				'post_encoding'	=> $row['post_encoding'],
 				'post_id'	=> $row['post_id'], 
 				'poster'	=> $poster,
+				'post_time'	=> $row['post_time'],
 			);
 			continue;
 		}
 	}
-	
-	/*elseif ($row['post_encoding'] != $_CLASS['core_user']->lang['ENCODING'])
-	{
-		if ($view == 'encoding' && $post_id == $row['post_id'])
-		{
-			$force_encoding = $row['post_encoding'];
-		}
-		else
-		{
-			$_CLASS['core_template']->assign_vars_array('postrow', array(
-				'S_IGNORE_POST'	=> true, 
-				'L_IGNORE_POST'	=> sprintf($_CLASS['core_user']->lang['POST_ENCODING'], $row['poster'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;p=' . $row['post_id'] . '&amp;view=encoding') . '#' . $row['post_id'] . '">', '</a>'))
-			);
-
-			continue;
-		}
-	}*/
 	
 	// Does post have an attachment? If so, add it to the list
 	if ($row['post_attachment'] && $config['allow_attachments'])
@@ -1003,8 +840,6 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				'joined'		=> '',
 				'posts'			=> '',
 				'from'			=> '',
-				'karma'                 => 0,
-				'karma_img'             => '',
 				'sig'					=> '',
 				'sig_bbcode_uid'		=> '',
 				'sig_bbcode_bitfield'	=> '',
@@ -1044,8 +879,6 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				'joined'		=> $_CLASS['core_user']->format_date($row['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
 				'posts'			=> (!empty($row['user_posts'])) ? $row['user_posts'] : '',
 				'from'			=> (!empty($row['user_from'])) ? $row['user_from'] : '',
-				'karma'			=> ($config['enable_karma']) ? $row['user_karma'] : 0, 
-				'karma_img'		=> ($config['enable_karma']) ? $_CLASS['core_user']->img('karma_center', $_CLASS['core_user']->lang['KARMA'][$row['user_karma']], false, (int) $row['user_karma']) : '',
 				'sig'					=> $user_sig,
 				'sig_bbcode_uid'		=> (!empty($row['user_sig_bbcode_uid'])) ? $row['user_sig_bbcode_uid']  : '',
 				'sig_bbcode_bitfield'	=> (!empty($row['user_sig_bbcode_bitfield'])) ? $row['user_sig_bbcode_bitfield']  : '',
@@ -1135,7 +968,7 @@ $_CLASS['core_db']->sql_freeresult($result);
 // Load custom profile fields
 if ($config['load_cpf_viewtopic'])
 {
-	require_once($site_file_root.'includes/forums/functions_profile_fields.' . $phpEx);
+	require_once($site_file_root.'includes/forums/functions_profile_fields.php');
 	$cp = new custom_profile();
 	// Grab all profile fields from users in id cache for later use - similar to the poster cache
 	$profile_fields_cache = $cp->generate_profile_fields_template('grab', $id_cache);
@@ -1164,7 +997,7 @@ if (sizeof($attach_list))
 {
 	if ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id))
 	{
-		include($site_file_root.'includes/forums/functions_display.' . $phpEx);
+		include($site_file_root.'includes/forums/functions_display.php');
 
 		$sql = 'SELECT * 
 			FROM ' . ATTACHMENTS_TABLE . '
@@ -1234,7 +1067,7 @@ if (sizeof($attach_list))
 // Instantiate BBCode if need be
 if ($bbcode_bitfield)
 {
-	require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
+	require_once($site_file_root.'includes/forums/bbcode.php');
 	$bbcode = new bbcode($bbcode_bitfield);
 }
 
@@ -1250,23 +1083,12 @@ $_CLASS['core_template']->assign(array(
 for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 {
 	$row =& $rowset[$post_list[$i]];
-	$poster_id = $row['user_id'];
 	$force_encoding = '';
 
 	// Three situations can prevent a post being display:
-	// i)   The posters karma is below the minimum of the user ... not in 2.2.x
-	// ii)  The poster is on the users ignore list
-	// iii) The post was made in a codepage different from the users
-	if (!empty($row['below_karma']))
-	{
-		$_CLASS['core_template']->assign_vars_array('postrow', array(
-			'S_IGNORE_POST' => true, 
-			'L_IGNORE_POST' => sprintf($_CLASS['core_user']->lang['POST_BELOW_KARMA'], $row['poster'], $row['user_karma'], '<a href="'.generate_link("forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['post_id'] . '&amp;view=show') . '#' . $row['post_id']. '">', '</a>'))
-		);
-
-		continue;
-	}
-	elseif (!empty($row['foe']))
+	// i)  The poster is on the users ignore list
+	// ii) The post was made in an encoding different from the users
+	if (!empty($row['foe']))
 	{
 		$_CLASS['core_template']->assign_vars_array('postrow', array(
 			'S_IGNORE_POST' => true, 
@@ -1277,8 +1099,9 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	}
 	elseif ($row['post_encoding'] != $_CLASS['core_user']->lang['ENCODING'])
 	{
-		if (empty($row['do_post_encoding']))
+		if (!isset($row['no_display']))
 		{
+// try to rencode maybe ?
 			$force_encoding = $row['post_encoding'];
 		}
 		else
@@ -1291,6 +1114,8 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 			continue;
 		}
 	}
+
+	$poster_id = $row['user_id'];
 
 	// End signature parsing, only if needed
 	if ($user_cache[$poster_id]['sig'] && empty($user_cache[$poster_id]['sig_parsed']))
@@ -1412,11 +1237,11 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	
 	$can_rate = false;
 	
-	if ($config['enable_karma'] && (!$config['karma_time'] || (($row['post_edit_time']) ? $row['post_edit_time'] : $row['post_time']) > (time() - $config['karma_time'])))
+	if (empty($row['icon_id']) || empty($icons[$row['icon_id']]))
 	{
-		$can_rate = ($_CLASS['auth']->acl_get('f_rate', $forum_id) && $row['post_approved'] && $poster_id != $_CLASS['core_user']->data['user_id'] && $poster_id != ANONYMOUS) ? true : false;
+		$icons[$row['icon_id']] = array('img' => '' , 'width' => '', 'height' => '');
 	}
-	
+
 	$postrow = array(
 		'POSTER_NAME' 	=> $row['poster'],
 		'POSTER_RANK' 	=> $user_cache[$poster_id]['rank_title'],
@@ -1425,7 +1250,6 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'POSTER_POSTS' 	=> $user_cache[$poster_id]['posts'],
 		'POSTER_FROM' 	=> $user_cache[$poster_id]['from'],
 		'POSTER_AVATAR' => $user_cache[$poster_id]['avatar'],
-		'POSTER_KARMA'	=> $user_cache[$poster_id]['karma'],
 		
 		'POST_DATE' 	=> $_CLASS['core_user']->format_date($row['post_time']),
 		'POST_SUBJECT' 	=> $row['post_subject'],
@@ -1435,13 +1259,12 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'EDIT_REASON'	=> $row['post_edit_reason'],
 		'BUMPED_MESSAGE'=> $l_bumped_by,
 
-		'MINI_POST_IMG' => ($_CLASS['core_user']->data['user_id'] != ANONYMOUS && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? $_CLASS['core_user']->img('icon_post_new', 'NEW_POST') : $_CLASS['core_user']->img('icon_post', 'POST'),
-		'POST_ICON_IMG'	=> (!empty($row['icon_id'])) ? $icons[$row['icon_id']]['img'] : '',
-		'POST_ICON_IMG_WIDTH'   => (!empty($row['icon_id'])) ? $icons[$row['icon_id']]['width'] : '',
-		'POST_ICON_IMG_HEIGHT'  => (!empty($row['icon_id'])) ? $icons[$row['icon_id']]['height'] : '',
+		'MINI_POST_IMG' => ($_CLASS['core_user']->is_user && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? $_CLASS['core_user']->img('icon_post_new', 'NEW_POST') : $_CLASS['core_user']->img('icon_post', 'POST'),
+		'POST_ICON_IMG'			=> $icons[$row['icon_id']]['img'],
+		'POST_ICON_IMG_WIDTH'   => $icons[$row['icon_id']]['width'],
+		'POST_ICON_IMG_HEIGHT'  => $icons[$row['icon_id']]['height'],
 		
 		'ICQ_STATUS_IMG'	=> $user_cache[$poster_id]['icq_status_img'],
-		'KARMA_IMG'			=> $user_cache[$poster_id]['karma_img'],
 
 		'ONLINE_IMG'		=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($user_cache[$poster_id]['online']) ? $_CLASS['core_user']->img('btn_online', 'ONLINE') : $_CLASS['core_user']->img('btn_offline', 'OFFLINE')), 
 
@@ -1471,14 +1294,14 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'U_NEXT_POST_ID'	=> ($i < $i_total && isset($rowset[$i + 1])) ? $rowset[$i + 1]['post_id'] : '', 
 		'U_PREV_POST_ID'	=> $prev_post_id, 
 		'POST_ID'           => $row['post_id'],
-		'S_CAN_RATE'		=> $can_rate, 
-
+		'S_IGNORE_POST' 	=> false, 
+		
 		'S_HAS_ATTACHMENTS' => (!empty($attachments[$row['post_id']])) ? TRUE : FALSE,
 		'S_POST_UNAPPROVED'	=> ($row['post_approved']) ? FALSE : TRUE,
 		'S_POST_REPORTED'	=> ($row['post_reported'] && $_CLASS['auth']->acl_get('m_', $forum_id)) ? TRUE : FALSE,
 		'S_DISPLAY_NOTICE'	=> ($display_notice && $row['post_attachment']) ? true : false, 
 		'S_FRIEND'			=> ($row['friend']) ? true : false,
-		'S_UNREAD_POST'		=> ($_CLASS['core_user']->data['user_id'] != ANONYMOUS && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? true : false,
+		'S_UNREAD_POST'		=> ($_CLASS['core_user']->is_user && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? true : false,
 		'S_FIRST_UNREAD'	=> ($unread_post_id == $row['post_id']) ? true : false,
 		'S_CUSTOM_FIELDS'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false
 	);
@@ -1621,7 +1444,12 @@ function get_topic_last_read($topic_id, $forum_id)
 
 	$topic_last_read = 0;
 
-	if ($config['load_db_lastread'])
+	if ($_CLASS['core_user']->is_bot)
+	{
+		return $topic_last_read;
+	}
+	
+	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 	{
 		$sql = 'SELECT mark_time
 			FROM ' . TOPICS_TRACK_TABLE . '

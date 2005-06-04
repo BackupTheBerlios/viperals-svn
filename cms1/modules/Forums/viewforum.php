@@ -28,9 +28,9 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
-require($site_file_root.'includes/forums/functions_display.' . $phpEx);
+require_once($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
+require($site_file_root.'includes/forums/functions_display.php');
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
@@ -49,13 +49,8 @@ if (!$forum_id)
 	trigger_error('NO_FORUM');
 }
 
-$_CLASS['core_template']->assign(array(
-	'S_FORUM_RULES' 			=> false,
-	'S_TOPIC_ACTION' 			=> '')
-);
-
 // Grab appropriate forum data
-if ($_CLASS['core_user']->data['user_id'] == ANONYMOUS)
+if (!$_CLASS['core_user']->is_user)
 {
 	$sql = 'SELECT *
 		FROM ' . FORUMS_TABLE . '
@@ -90,7 +85,7 @@ if (!($forum_data = $_CLASS['core_db']->sql_fetchrow($result)))
 }
 $_CLASS['core_db']->sql_freeresult($result);
 
-if ($_CLASS['core_user']->data['user_id'] == ANONYMOUS && $config['load_db_lastread'])
+if (!$_CLASS['core_user']->is_user && $config['load_db_lastread'])
 {
 	$forum_data['mark_time'] = 0;
 }
@@ -123,7 +118,7 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 		trigger_error($_CLASS['core_user']->lang['SORRY_AUTH_READ']);
 	}
 
-	login_box('', $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']);
+	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']));
 }
 
 // Forum is passworded ... check whether access has been granted to this
@@ -133,11 +128,13 @@ if ($forum_data['forum_password'])
 	login_forum_box($forum_data);
 }
 
+/* I don't see the point in this
 // Redirect to login upon emailed notification links
 if (isset($_GET['e']) && $_CLASS['core_user']->data['user_id'] == ANONYMOUS)
 {
-	login_box('', $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']);
+	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']));
 }
+*/
 
 // Build navigation links
 generate_forum_nav($forum_data);
@@ -164,11 +161,8 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Handle marking posts
 	if ($mark_read == 'topics')
 	{
-		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
-		{
-			markread('mark', $forum_id);
-		}
-
+		markread('mark', $forum_id);
+		
 		$_CLASS['core_display']->meta_refresh(3, generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id));
 
 		$message = $_CLASS['core_user']->lang['TOPICS_MARKED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="' . generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id) . '">', '</a> ');
@@ -184,7 +178,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Do the forum Prune thang - cron type job ...
 	if ($forum_data['prune_next'] < time() && $forum_data['enable_prune'])
 	{
-		require_once($site_file_root.'includes/forums/functions_admin.'.$phpEx);
+		require_once($site_file_root.'includes/forums/functions_admin.php');
 
 		if ($forum_data['prune_days'])
 		{
@@ -205,7 +199,6 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 		watch_topic_forum('forum', $s_watching_forum, $s_watching_forum_img, $_CLASS['core_user']->data['user_id'], $forum_id, $notify_status);
 	}
 
-	$s_forum_rules = '';
 	gen_forum_auth_level('forum', $forum_id);
 
 	// Topic ordering options
@@ -305,11 +298,11 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Grab all topic data
 	$rowset = $announcement_list = $topic_list = array();
 
-	$sql_from = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . TOPICS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t ';
+	$sql_from = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . TOPICS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t ';
 
 
 	$sql_approved = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1';
-	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? ', tt.mark_type, tt.mark_time' : '';
+	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? ', tt.mark_type, tt.mark_time' : '';
 
 	if ($forum_data['forum_type'] == FORUM_POST)
 	{
@@ -393,7 +386,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 
 			if ($config['load_db_lastread'])
 			{
-				$mark_time_topic = ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $row['mark_time'] : 0;
+				$mark_time_topic = ($_CLASS['core_user']->is_user) ? $row['mark_time'] : 0;
 			}
 			else
 			{
@@ -456,7 +449,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
 
 				'U_LAST_POST'       => generate_link($view_topic_url . $SID . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false, false, false),	
-				'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+				'U_LAST_POST_AUTHOR'=> ($_CLASS['core_user']->is_user && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 				'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
 				'U_MCP_REPORT'		=> generate_link("Forums&amp;file=mcp&amp;mode=reports&amp;t=$topic_id"),
 				'U_MCP_QUEUE'       => generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
@@ -471,15 +464,30 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			}
 		}
 	}
+	else
+	{
+// update smarty
+//$_CLASS['core_template']->assign_vars_array('topicrow', array());
+	}
 
 	// This is rather a fudge but it's the best I can think of without requiring information
 	// on all topics (as we do in 2.0.x). It looks for unread or new topics, if it doesn't find
 	// any it updates the forum last read cookie. This requires that the user visit the forum
 	// after reading a topic
-	if ($forum_data['forum_type'] == FORUM_POST && is_user() && count($topic_list) && $mark_forum_read)
+	if ($forum_data['forum_type'] == FORUM_POST && count($topic_list) && $mark_forum_read)
 	{
 		markread('mark', $forum_id);
 	}
+}
+else
+{
+	$_CLASS['core_template']->assign(array(
+		'S_IS_POSTABLE'			=> false,
+		'S_DISPLAY_ACTIVE'		=> false,
+		'S_DISPLAY_SEARCHBOX'	=> false,
+		'TOTAL_TOPICS'			=> false
+	));
+
 }
 /// lets assign those language that are needed///
 $_CLASS['core_template']->assign(array(

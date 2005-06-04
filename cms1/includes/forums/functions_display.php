@@ -25,7 +25,7 @@
 
 function display_forums($root_data = '', $display_moderators = TRUE)
 {
-	global $config, $db, $SID, $_CLASS, $_CORE_CONFIG, $forum_moderators;
+	global $config, $SID, $_CLASS, $_CORE_CONFIG, $forum_moderators;
 
 	// Get posted/get info
 	$mark_read = request_var('mark', '');
@@ -71,12 +71,12 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 		FROM $sql_from 
 		$sql_where
 		ORDER BY f.left_id";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$branch_root_id = $root_data['forum_id'];
 	$forum_ids		= array($root_data['forum_id']);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($mark_read == 'forums' && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 		{
@@ -173,14 +173,14 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 			$forum_unread[$parent_id] = true;
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	// Handle marking posts
 	if ($mark_read == 'forums')
 	{
 		markread('mark', $forum_id_ary);
 
-		$redirect = getlink('Forums');
+		$redirect = generate_link('Forums');
 		$_CLASS['core_display']->meta_refresh(3, $redirect);
 
 		$message = (strpos($redirect, 'viewforum') !== false) ? 'RETURN_FORUM' : 'RETURN_INDEX';
@@ -218,7 +218,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 				'FORUM_ID'			=>	$hold['forum_id'],
 				'FORUM_NAME'		=>	$hold['forum_name'],
 				'FORUM_DESC'		=>	$hold['forum_desc'],
-				'U_VIEWFORUM'		=>	getlink('Forums&amp;file=viewforum&amp;f=' . $hold['forum_id']))
+				'U_VIEWFORUM'		=>	generate_link('Forums&amp;file=viewforum&amp;f=' . $hold['forum_id']))
 			);
 			unset($hold);
 		}
@@ -247,7 +247,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 					$links = array();
 					foreach ($alist as $subforum_id => $subforum_name)
 					{
-						$links[] = '<a href="' .getlink('Forums&amp;file=viewforum&amp;f='.$subforum_id).'">' . $subforum_name . '</a>';
+						$links[] = '<a href="' .generate_link('Forums&amp;file=viewforum&amp;f='.$subforum_id).'">' . $subforum_name . '</a>';
 					}
 					$subforums_list = implode(', ', $links);
 
@@ -290,9 +290,9 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 			$last_post_time = $_CLASS['core_user']->format_date($row['forum_last_post_time']);
 
 			$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'];
-			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
+			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
 			
-			$last_post_url = getlink('Forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].$SID.'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
+			$last_post_url = generate_link('Forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].$SID.'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
 		}
 		else
 		{
@@ -335,12 +335,12 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 			
 			'U_LAST_POSTER'		=> $last_poster_url, 
 			'U_LAST_POST'		=> $last_post_url, 
-			'U_VIEWFORUM'		=> ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : $row['forum_link'])
+			'U_VIEWFORUM'		=> ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : $row['forum_link'])
 		);
 	}
 
 	$_CLASS['core_template']->assign(array(
-		'U_MARK_FORUMS'		=> getlink('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
+		'U_MARK_FORUMS'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
 
 		'S_HAS_SUBFORUM'	=>	($visible_forums) ? true : false,
 
@@ -354,7 +354,7 @@ function topic_topic_author(&$topic_row)
 {
 	global $_CLASS;
 
-	$topic_author = ($topic_row['topic_poster'] != ANONYMOUS) ? '<a href="'.getlink('Members_List&amp;mode=viewprofile&amp;u=' . $topic_row['topic_poster']) . '">' : '';
+	$topic_author = ($topic_row['topic_poster'] != ANONYMOUS) ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $topic_row['topic_poster']) . '">' : '';
 	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? $topic_row['topic_first_poster_name'] : (($topic_row['topic_first_poster_name'] != '') ? $topic_row['topic_first_poster_name'] : $_CLASS['core_user']->lang['GUEST']);
 	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? '</a>' : '';
 
@@ -373,7 +373,7 @@ function topic_generate_pagination($replies, $url)
 		$times = 1;
 		for ($j = 0; $j < $replies + 1; $j += $config['posts_per_page'])
 		{
-			$pagination .= '<a href="'.getlink($url.'&amp;start='.$j).'">'.$times.'</a>';
+			$pagination .= '<a href="'.generate_link($url.'&amp;start='.$j).'">'.$times.'</a>';
 			if ($times == 1 && $total_pages > 4)
 			{
 				$pagination .= ' ... ';
@@ -448,7 +448,7 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 			}
 		}
 		
-		if (is_user())
+		if ($_CLASS['core_user']->is_user)
 		{
 			$unread_topic = $new_votes = true;
 
@@ -643,7 +643,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 					$thumb_source = $thumbnail_filename;
 
 					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
-					$download_link = (!$force_physical) ? getlink('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
+					$download_link = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
 
 					$additional_array['VAR'][] = '{THUMB_IMG}';
 					$additional_array['VAL'][] = $thumb_source;
@@ -690,7 +690,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 */
 				default:
 					$l_downloaded_viewed = $_CLASS['core_user']->lang['DOWNLOADED'];
-					$download_link = (!$force_physical) ? getlink('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
+					$download_link = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
 					break;
 			}
 

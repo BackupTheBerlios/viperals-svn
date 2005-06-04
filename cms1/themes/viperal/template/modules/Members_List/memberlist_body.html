@@ -36,9 +36,9 @@
 			{section name=memberrowloop loop=$memberrow}
 
 			{ if $smarty.section.memberrowloop.rownum is even }
-			<tr class="row2">
+			<tr class="row2" height="25px">
 			{ else }
-			<tr class="row1">
+			<tr class="row1" height="25px">
 			{ /if }
 
 				<td class="gen" align="center">&nbsp;{ $memberrow[memberrowloop].ROW_NUMBER }&nbsp;</td>
@@ -49,6 +49,10 @@
 				{ if $memberrow[memberrowloop].U_PM }<td class="gen" align="center">&nbsp;<a href="{$memberrow[memberrowloop].U_PM}">{$PM_IMG}</a>&nbsp;</td>{ /if }
 				<td class="gen" align="center">&nbsp;{ if $memberrow[memberrowloop].U_EMAIL }<a href="{$memberrow[memberrowloop].U_EMAIL}">{$EMAIL_IMG}</a>{ /if }&nbsp;</td>
 				<td class="gen" align="center">&nbsp;{ if $memberrow[memberrowloop].U_WWW }<a href="{$memberrow[memberrowloop].U_WWW}" target="_blank">{$WWW_IMG}</a>{ /if }&nbsp;</td>
+				{*{ if $memberrow[memberrowloop].S_PROFILE_FIELD1 }
+				<!-- Use a construct like this to include admin defined profile fields. Replace FIELD1 with the name of your field. -->
+				<td class="gen" align="center">&nbsp;{$memberrow[memberrowloop].PROFILE_FIELD1_VALUE}</td>
+				{ /if }*}
 				{ if $S_SEARCH_USER }<td align="center"><input type="checkbox" name="user" value="{$memberrow[memberrowloop].USERNAME}" /></td>{ /if }
 
 			</tr>
@@ -79,4 +83,4 @@
 
 	<br clear="all" />
 
-{ include file='forums/overall_footer.html' }
+{ include file='modules/Members_List/memberlist_footer.html' }

@@ -47,7 +47,8 @@ class ucp_pm extends module
 {
 	function ucp_pm($id, $mode)
 	{
-		global $_CLASS, $phpEx, $site_file_root, $config;
+		global $_CLASS, $site_file_root, $config;
+
 		$action = '';
 		
 		if ($_CLASS['core_user']->data['user_id'] == ANONYMOUS)
@@ -87,7 +88,7 @@ class ucp_pm extends module
 			$mode = 'view_messages';
 		}
 
-		require($site_file_root.'includes/forums/functions_privmsgs.' . $phpEx);
+		require($site_file_root.'includes/forums/functions_privmsgs.php');
 		
 		$tpl_file = 'ucp_pm_' . $mode . '.html';
 		switch ($mode)
@@ -95,7 +96,7 @@ class ucp_pm extends module
 			// New private messages popup
 			case 'popup':
 			
-				$indox_link = getlink('Control_Panel&amp;i=pm&amp;folder=inbox');
+				$indox_link = generate_link('Control_Panel&amp;i=pm&amp;folder=inbox');
 				
 				if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 				{
@@ -133,7 +134,7 @@ class ucp_pm extends module
 					trigger_error('NO_AUTH_SEND_MESSAGE');
 				}
 
-				require('ucp_pm_compose.'.$phpEx);
+				require('ucp_pm_compose.php');
 				compose_pm($id, $mode, $action);
 			
 				$tpl_file = 'ucp_posting_body.html';
@@ -151,14 +152,14 @@ class ucp_pm extends module
 				
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 
-				require('ucp_pm_options.'.$phpEx);
+				require('ucp_pm_options.php');
 				message_options($id, $mode, $global_privmsgs_rules, $global_rule_conditions);
 				break;
 
 			case 'drafts':
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 			
-				require('ucp_main.'.$phpEx);
+				require('ucp_main.php');
 				$module = new ucp_main($id, $mode);
 				unset($module);
 				exit;
@@ -324,18 +325,18 @@ class ucp_pm extends module
 					'CUR_FOLDER_ID'				=> $folder_id,
 					'CUR_FOLDER_NAME'			=> $folder_status['folder_name'],
 					'NUM_NOT_MOVED'				=> $num_not_moved,
-					'RELEASE_MESSAGE_INFO'		=> sprintf($_CLASS['core_user']->lang['RELEASE_MESSAGES'], '<a href="' . getlink($url . '&amp;folder=' . $folder_id . '&amp;release=1').'">', '</a>'),
+					'RELEASE_MESSAGE_INFO'		=> sprintf($_CLASS['core_user']->lang['RELEASE_MESSAGES'], '<a href="' . generate_link($url . '&amp;folder=' . $folder_id . '&amp;release=1').'">', '</a>'),
 					'NOT_MOVED_MESSAGES'		=> ($num_not_moved == 1) ? $_CLASS['core_user']->lang['NOT_MOVED_MESSAGE'] : sprintf($_CLASS['core_user']->lang['NOT_MOVED_MESSAGES'], $num_not_moved),
 
 					'S_FOLDER_OPTIONS'			=> $s_folder_options,
 					'S_TO_FOLDER_OPTIONS'		=> $s_to_folder_options,
-					'S_FOLDER_ACTION'			=> getlink($url.'&amp;mode=view_messages&amp;action=view_folder'),
-					'S_PM_ACTION'				=> getlink("$url&amp;mode=$mode&amp;action=$action"),
+					'S_FOLDER_ACTION'			=> generate_link($url.'&amp;mode=view_messages&amp;action=view_folder'),
+					'S_PM_ACTION'				=> generate_link("$url&amp;mode=$mode&amp;action=$action"),
 					
-					'U_INBOX'					=> getlink($url.'&amp;folder=inbox'),
-					'U_OUTBOX'					=> getlink($url.'&amp;folder=outbox'),
-					'U_SENTBOX'					=> getlink($url.'&amp;folder=sentbox'),
-					'U_CREATE_FOLDER'			=> getlink($url.'&amp;mode=options'),
+					'U_INBOX'					=> generate_link($url.'&amp;folder=inbox'),
+					'U_OUTBOX'					=> generate_link($url.'&amp;folder=outbox'),
+					'U_SENTBOX'					=> generate_link($url.'&amp;folder=sentbox'),
+					'U_CREATE_FOLDER'			=> generate_link($url.'&amp;mode=options'),
 					
 					'S_IN_INBOX'				=> ($folder_id == PRIVMSGS_INBOX) ? true : false,
 					'S_IN_OUTBOX'				=> ($folder_id == PRIVMSGS_OUTBOX) ? true : false,
@@ -352,7 +353,7 @@ class ucp_pm extends module
 
 				if ($mode == 'unread' || $action == 'view_folder')
 				{
-					require('ucp_pm_viewfolder.'.$phpEx);
+					require('ucp_pm_viewfolder.php');
 					view_folder($id, $mode, $folder_id, $folder, (($mode == 'unread') ? 'unread' : 'folder'));
 
 					$tpl_file = 'ucp_pm_viewfolder.html';
@@ -369,7 +370,7 @@ class ucp_pm extends module
 						trigger_error('NO_MESSAGE');
 					}
 					
-					require('ucp_pm_viewmessage.'.$phpEx);
+					require('ucp_pm_viewmessage.php');
 					view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row);
 
 					$tpl_file = ($view == 'print') ? 'ucp_pm_viewmessage_print.html' : 'ucp_pm_viewmessage.html';
@@ -383,7 +384,7 @@ class ucp_pm extends module
 
 		$_CLASS['core_template']->assign(array( 
 			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PM_' . strtoupper($mode)],
-			'S_UCP_ACTION'      => getlink("Control_Panel&amp;i=$id&amp;mode=$mode" . ((isset($action)) ? "&amp;action=$action" : '')))
+			'S_UCP_ACTION'      => generate_link("Control_Panel&amp;i=$id&amp;mode=$mode" . ((isset($action)) ? "&amp;action=$action" : '')))
 		);
 		
 		if (((isset($view)) && $view == 'print') || ($mode == 'popup'))

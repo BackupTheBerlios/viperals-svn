@@ -26,8 +26,7 @@
 // Fill smiley templates (or just the variables) with smileys, either in a window or inline
 function generate_smilies($mode, $forum_id)
 {
-	global $SID, $_CLASS, $db, $config;
-	global $phpEx;
+	global $_CLASS, $config;
 
 	if ($mode == 'window')
 	{
@@ -36,9 +35,9 @@ function generate_smilies($mode, $forum_id)
 			$sql = 'SELECT forum_style
 				FROM ' . FORUMS_TABLE . "
 				WHERE forum_id = $forum_id";
-			$result = $db->sql_query_limit($sql, 1);
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
+			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 		
 			$_CLASS['core_user']->setup('posting', (int) $row['forum_style']);
 		}
@@ -59,13 +58,13 @@ function generate_smilies($mode, $forum_id)
 		$sql = 'SELECT smiley_id
 			FROM ' . SMILIES_TABLE . '
 			WHERE display_on_posting = 0';
-		$result = $db->sql_query_limit($sql, 1, 0, 3600);
+		$result = $_CLASS['core_db']->sql_query_limit($sql, 1, 0, 3600);
 
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$display_link = true;
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	$sql = 'SELECT *
@@ -73,9 +72,9 @@ function generate_smilies($mode, $forum_id)
 		(($mode == 'inline') ? ' WHERE display_on_posting = 1 ' : '') . '
 		GROUP BY smiley_url
 		ORDER BY smiley_order';
-	$result = $db->sql_query($sql, 3600);
+	$result = $_CLASS['core_db']->sql_query($sql, 3600);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$_CLASS['core_template']->assign_vars_array('smiley', array(
 			'SMILEY_CODE' 	=> $row['code'],
@@ -85,12 +84,13 @@ function generate_smilies($mode, $forum_id)
 			'SMILEY_DESC'   => $row['emotion'])
 		);
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
-	if ($mode == 'inline' && $display_link)
+	if ($mode == 'inline')
 	{
 		$_CLASS['core_template']->assign(array(
-			'S_SHOW_SMILEY_LINK' 	=> true,
+			'S_SHOW_SMILEY_LINK' 	=> ($display_link) ? true : false,
+			'L_MORE_SMILIES'		=> $_CLASS['core_user']->lang['MORE_SMILIES'],
 			'U_MORE_SMILIES' 		=> generate_link('Forums&amp;file=posting&amp;mode=smilies&amp;f='.$forum_id))
 		);
 	}
@@ -105,7 +105,7 @@ function generate_smilies($mode, $forum_id)
 // Update Last Post Informations
 function update_last_post_information($type, $id)
 {
-	global $db;
+	global $_CLASS;
 
 	$update_sql = array();
 
@@ -116,8 +116,8 @@ function update_last_post_information($type, $id)
 			AND t.topic_approved = 1
 			AND p.{$type}_id = $id";
 			
-	$result = $db->sql_query($sql);
-	$row = $db->sql_fetchrow($result);
+	$result = $_CLASS['core_db']->sql_query($sql);
+	$row = $_CLASS['core_db']->sql_fetchrow($result);
 
 	if ((int) $row['last_post_id'])
 	{
@@ -125,14 +125,14 @@ function update_last_post_information($type, $id)
 			FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 			WHERE p.poster_id = u.user_id
 				AND p.post_id = ' . $row['last_post_id'];
-		$result = $db->sql_query($sql);
-		$row = $db->sql_fetchrow($result);
-		$db->sql_freeresult($result);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
 		$update_sql[] = $type . '_last_post_id = ' . (int) $row['post_id'];
 		$update_sql[] =	$type . '_last_post_time = ' . (int) $row['post_time'];
 		$update_sql[] = $type . '_last_poster_id = ' . (int) $row['poster_id'];
-		$update_sql[] = "{$type}_last_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $db->sql_escape($row['post_username']) : $db->sql_escape($row['username'])) . "'";
+		$update_sql[] = "{$type}_last_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->sql_escape($row['post_username']) : $_CLASS['core_db']->sql_escape($row['username'])) . "'";
 	}
 	else if ($type == 'forum')
 	{
@@ -147,7 +147,7 @@ function update_last_post_information($type, $id)
 
 function upload_attachment($form_name, $forum_id, $local = false, $local_storage = '', $is_message = false)
 {
-	global $_CLASS, $site_file_root, $config, $db;
+	global $_CLASS, $site_file_root, $config;
 
 	$filedata = array();
 	$filedata['error'] = array();
@@ -588,7 +588,7 @@ function posting_gen_topic_types($forum_id, $cur_topic_type = POST_NORMAL)
 
 function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 {
-	global $_CLASS, $config, $SID, $phpEx;
+	global $_CLASS, $config;
 		
 	$_CLASS['core_template']->assign(array(
 		'S_SHOW_ATTACH_BOX'	=> true)
@@ -639,7 +639,7 @@ function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 // Load Drafts
 function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 {
-	global $db, $phpEx, $SID, $_CLASS;
+	global $_CLASS;
 
 	// Only those fitting into this forum...
 	if ($forum_id || $topic_id)
@@ -660,11 +660,11 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 				AND topic_id = 0
 			ORDER BY save_time DESC';
 	}
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$draftrows = $topic_ids = array();
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if ($row['topic_id'])
 		{
@@ -672,26 +672,29 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 		}
 		$draftrows[] = $row;
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 				
 	if (sizeof($topic_ids))
 	{
 		$sql = 'SELECT topic_id, forum_id, topic_title
 			FROM ' . TOPICS_TABLE . '
 			WHERE topic_id IN (' . implode(',', array_unique($topic_ids)) . ')';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$topic_rows[$row['topic_id']] = $row;
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	unset($topic_ids);
 	
 	if (sizeof($draftrows))
 	{
-		$_CLASS['core_template']->assign('S_SHOW_DRAFTS', true);
+		$_CLASS['core_template']->assign(array(
+				'S_SHOW_DRAFTS' => true,
+				'L_FORUM'		=> $_CLASS['core_user']->lang['FORUM']
+			));
 
 		foreach ($draftrows as $draft)
 		{
@@ -724,24 +727,25 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 				'DRAFT_ID'		=> $draft['draft_id'],
 				'DATE'			=> $_CLASS['core_user']->format_date($draft['save_time']),
 				'DRAFT_SUBJECT'	=> $draft['draft_subject'],
-
 				'TITLE'			=> $title,
 				'U_VIEW'		=> $view_url,
 				'U_INSERT'		=> $insert_url,
-
 				'S_LINK_PM'		=> $link_pm,
 				'S_LINK_TOPIC'	=> $link_topic,
 				'S_LINK_FORUM'	=> $link_forum)
 			);
 		}
 	}
+	else
+	{
+		$_CLASS['core_template']->assign('S_SHOW_DRAFTS', false);
+	}
 }
 
 // Topic Review
 function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id = 0, $show_quote_button = true)
 {
-	global $_CLASS, $db, $bbcode, $site_file_root;
-	global $config, $phpEx, $SID;
+	global $_CLASS, $bbcode, $site_file_root, $config;
 
 	// Go ahead and pull all data for this topic
 	$sql = 'SELECT u.username, u.user_id, p.post_id, p.post_username, p.post_subject, p.post_text, p.enable_smilies, p.bbcode_uid, p.bbcode_bitfield, p.post_time
@@ -751,9 +755,9 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 			" . ((!$_CLASS['auth']->acl_get('m_approve', $forum_id)) ? 'AND p.post_approved = 1' : '') . '
 			' . (($mode == 'post_review') ? " AND p.post_id > $cur_post_id" : '') . '
 		ORDER BY p.post_time DESC';
-	$result = $db->sql_query_limit($sql, $config['posts_per_page']);
+	$result = $_CLASS['core_db']->sql_query_limit($sql, $config['posts_per_page']);
 
-	if (!$row = $db->sql_fetchrow($result))
+	if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		return false;
 	}
@@ -764,13 +768,13 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 		$rowset[] = $row;
 		$bbcode_bitfield |= $row['bbcode_bitfield'];
 	}
-	while ($row = $db->sql_fetchrow($result));
-	$db->sql_freeresult($result);
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	// Instantiate BBCode class
 	if (!isset($bbcode) && $bbcode_bitfield)
 	{
-		require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
+		require_once($site_file_root.'includes/forums/bbcode.php');
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
 
@@ -825,7 +829,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 // User Notification
 function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id, $topic_id, $post_id)
 {
-	global $db, $config, $phpEx, $_CORE_CONFIG, $_CLASS, $site_file_root;
+	global $config, $_CORE_CONFIG, $_CLASS, $site_file_root;
 
 	$topic_notification = ($mode == 'reply' || $mode == 'quote');
 	$forum_notification = ($mode == 'post');
@@ -841,17 +845,17 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 	// Get banned User ID's
 	$sql = 'SELECT ban_userid 
 		FROM ' . BANLIST_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$sql_ignore_users = ANONYMOUS . ', ' . $_CLASS['core_user']->data['user_id'];
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		if (isset($row['ban_userid']))
 		{
 			$sql_ignore_users .= ', ' . $row['ban_userid'];
 		}
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$notify_rows = array();
 
@@ -863,9 +867,9 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 			AND w.notify_status = 0
 			AND u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')
 			AND u.user_id = w.user_id';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$notify_rows[$row['user_id']] = array(
 			'user_id'		=> $row['user_id'],
@@ -879,7 +883,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 			'allowed'		=> false
 		);
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 	
 	// forum notification is sent to those not receiving post notification
 	if ($topic_notification)
@@ -896,9 +900,9 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 				AND fw.notify_status = 0
 				AND u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')
 				AND u.user_id = fw.user_id';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$notify_rows[$row['user_id']] = array(
 				'user_id'		=> $row['user_id'],
@@ -912,7 +916,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 				'allowed'		=> false
 			);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	if (!sizeof($notify_rows))
@@ -951,7 +955,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 	// Now, we are able to really send out notifications
 	if (sizeof($msg_users))
 	{
-		require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+		require_once($site_file_root.'includes/forums/functions_messenger.php');
 		$messenger = new messenger();
 
 		$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
@@ -986,11 +990,11 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 					'TOPIC_TITLE'	=> $topic_title,  
 					'FORUM_NAME'	=> $forum_name,
 
-					'U_FORUM'				=> getlink("Forums&amp;file=viewtopic&f=$forum_id&e=0", true, true, false),
-					'U_TOPIC'				=> getlink("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&e=0", true, true, false),
-					'U_NEWEST_POST'			=> getlink("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&p=$post_id&e=$post_id", true, true, false),
-					'U_STOP_WATCHING_TOPIC' => getlink("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&unwatch=topic", true, true, false),
-					'U_STOP_WATCHING_FORUM' => getlink("Forums&amp;file=viewforum&f=$forum_id&unwatch=forum", true, true, false), 
+					'U_FORUM'				=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&e=0", array('sid' => false, 'full' => true)),
+					'U_TOPIC'				=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&e=0", array('sid' => false, 'full' => true)),
+					'U_NEWEST_POST'			=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&p=$post_id&e=$post_id", array('sid' => false, 'full' => true)),
+					'U_STOP_WATCHING_TOPIC' => generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&unwatch=topic", array('sid' => false, 'full' => true)),
+					'U_STOP_WATCHING_FORUM' => generate_link("Forums&amp;file=viewforum&f=$forum_id&unwatch=forum", array('sid' => false, 'full' => true)), 
 				));
 
 				$messenger->send($addr['method']);
@@ -1006,11 +1010,11 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 	}
 
 	// Handle the DB updates
-	$db->sql_transaction();
+	$_CLASS['core_db']->sql_transaction();
 
 	if (isset($update_notification['topic']) && sizeof($update_notification['topic']))
 	{
-		$db->sql_query('UPDATE ' . TOPICS_WATCH_TABLE . "
+		$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_WATCH_TABLE . "
 			SET notify_status = 1
 			WHERE topic_id = $topic_id
 				AND user_id IN (" . implode(', ', $update_notification['topic']) . ")");
@@ -1018,7 +1022,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 
 	if (isset($update_notification['forum']) && sizeof($update_notification['forum']))
 	{
-		$db->sql_query('UPDATE ' . FORUMS_WATCH_TABLE . "
+		$_CLASS['core_db']->sql_query('UPDATE ' . FORUMS_WATCH_TABLE . "
 			SET notify_status = 1
 			WHERE forum_id = $forum_id
 				AND user_id IN (" . implode(', ', $update_notification['forum']) . ")");
@@ -1027,19 +1031,19 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 	// Now delete the user_ids not authorized to receive notifications on this topic/forum
 	if (isset($delete_ids['topic']) && sizeof($delete_ids['topic']))
 	{
-		$db->sql_query('DELETE FROM ' . TOPICS_WATCH_TABLE . "
+		$_CLASS['core_db']->sql_query('DELETE FROM ' . TOPICS_WATCH_TABLE . "
 			WHERE topic_id = $topic_id
 				AND user_id IN (" . implode(', ', $delete_ids['topic']) . ")");
 	}
 
 	if (isset($delete_ids['forum']) && sizeof($delete_ids['forum']))
 	{
-		$db->sql_query('DELETE FROM ' . FORUMS_WATCH_TABLE . "
+		$_CLASS['core_db']->sql_query('DELETE FROM ' . FORUMS_WATCH_TABLE . "
 			WHERE forum_id = $forum_id
 				AND user_id IN (" . implode(', ', $delete_ids['forum']) . ")");
 	}
 
-	$db->sql_transaction('commit');
+	$_CLASS['core_db']->sql_transaction('commit');
 }
 
 ?>

@@ -10,6 +10,7 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+$_CORE_CONFIG['quick_message']['delete_time'] = 18000;
 
 if (!defined('VIPERAL'))
 {
@@ -40,13 +41,18 @@ function add_message()
 		return show_messages();
 	}
 	
+	if ($_CLASS['core_user']->is_bot)
+	{
+		url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+	}
+	
 	global $_CLASS, $prefix, $_CORE_CONFIG;
 		
 	$_CLASS['core_user']->add_lang();
 	$_CORE_CONFIG['quick_message']['lastpost_check'] = 300;
 
-	$user_id = $_CLASS['core_user']->data['user_id'];
-	$user_name = (is_user()) ? $_CLASS['core_user']->data['username'] : get_username();
+	$user_id = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_id'] : '';
+	$user_name = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['username'] : get_username();
 	
     if(!$message = get_variable('message', 'POST', false))
     {
@@ -67,7 +73,7 @@ function add_message()
    
 	$message 	= htmlentities($message, ENT_QUOTES, 'UTF-8');
 	$user_name 	= htmlentities($user_name, ENT_QUOTES, 'UTF-8');
-   
+
     $result = $_CLASS['core_db']->sql_query('SELECT COUNT(*) as count FROM '.$prefix."_quick_message WHERE message='".$_CLASS['core_db']->sql_escape($message)."' AND time >= '".(time() - $_CORE_CONFIG['quick_message']['lastpost_check'])."' LIMIT 1");
 	$count = $_CLASS['core_db']->sql_fetchrow($result);
     $_CLASS['core_db']->sql_freeresult($result);
@@ -89,7 +95,7 @@ function add_message()
 		
 	$_CLASS['core_db']->sql_query($sql);
 	
-	url_redirect($_CLASS['core_user']->data['session_url']);
+	url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
 	exit;
 }
 
@@ -101,26 +107,13 @@ function show_messages($all = false)
 	$_CLASS['core_user']->add_lang();
 	$_CLASS['core_user']->add_img(false, 'Forums');
 
-	$_CORE_CONFIG['quick_message']['simplemode'] = true;
-	
 	$start = ($all) ? '' : get_variable('start', 'GET', '', 'integer');
-	
 	$limit = ($all) ? '' : $_CORE_CONFIG['quick_message']['number'];
 	
-	if ($_CORE_CONFIG['quick_message']['simplemode'])
-	{
-		$sql = 'SELECT s.*, u.user_karma FROM '.$prefix.'_quick_message s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
-
-	} else {
-
-		$sql = 'SELECT u.user_colour, u.user_karma,u.user_regdate, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, s.*
-			FROM '.$prefix.'_quick_message s 
-			LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id)
-			order by time DESC';
-	}
+	//$sql = 'SELECT * FROM '.$prefix.'_quick_message ORDER BY time DESC';
+	$sql = 'SELECT s.*, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height FROM '.$prefix.'_quick_message s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
 	
 	$result = $_CLASS['core_db']->sql_query_limit($sql, $limit, $start);
-	
 	$error = (!$row = $_CLASS['core_db']->sql_fetchrow($result)) ? $_CLASS['core_user']->lang['NO_POSTS'] : false;
 
 	$_CLASS['core_template']->assign(array(
@@ -136,10 +129,7 @@ function show_messages($all = false)
 	{
 		$_CLASS['core_display']->display_head();
 		 
-		if ($_CORE_CONFIG['quick_message']['simplemode'])
-		{
-			$_CLASS['core_template']->display('modules/Quick_Message/index.html');	
-		}
+		$_CLASS['core_template']->display('modules/Quick_Message/index.html');	
 		
 		$_CLASS['core_display']->display_footer();
 	}
@@ -149,15 +139,25 @@ function show_messages($all = false)
 		if ($row['user_name'])
 		{
 			$user_name = $row['user_name'];
-			$userlink = ($row['user_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : false;
-		
-		} else {
-		
+			$userlink = ($row['user_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : false;
+		}
+		else
+		{
 			$user_name = $_CLASS['core_user']->lang['ANONYMOUS'];
 			$userlink = false;
 		}
-
-		if (!$_CORE_CONFIG['quick_message']['simplemode'] && $row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
+		
+		$delete_link = '';
+		
+		if ($row['time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
+		{
+			if (($row['user_id'] && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['user_id'] && $row['ip'] == $_CLASS['core_user']->ip))
+			{
+				$delete_link = generate_link('quick_message&amp;mode=delete&amp;id='.$row['id']);
+			}
+		}
+		
+		if ($row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
 		{
 			$avatar_img = '';
 			
@@ -188,13 +188,12 @@ function show_messages($all = false)
 		$_CLASS['core_template']->assign_vars_array('quick_message', array(
 			'USER_NAME'		=> $user_name,
 			'USER_LINK'		=> $userlink,
-			'DELETE_LINK'	=> ($row['time'] > ($_CLASS['core_user']->time - 18000)) ? generate_link('quick_message&amp;mode=delete&amp;id='.$row['id']) : '',
+			'DELETE_LINK'	=> $delete_link,
 			'MESSAGE'		=> trim_text($row['message'], '<br />'),
 			'TIME'			=> $_CLASS['core_user']->format_date($row['time']),
-			'KARMA_IMG'		=> ($row['user_id'] && $config['enable_karma']) ? $_CLASS['core_user']->img('karma_center', $_CLASS['core_user']->lang['KARMA'][$row['user_karma']], false, (int) $row['user_karma']) : '',
 			'POSTER_AVATAR' => $avatar,
 			//'ONLINE_IMG'	=> ($row['user_id']) ? $_CLASS['core_user']->img('btn_online', 'ONLINE') : '', 
-			'U_PROFILE' 	=> ($row['user_id']) ? getlink('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,
+			'U_PROFILE' 	=> ($row['user_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,
 		));
 		
 	}
@@ -204,8 +203,6 @@ function show_messages($all = false)
 	$row = $_CLASS['core_db']->sql_fetchrow($result);
 	$_CLASS['core_db']->sql_freeresult($result);	
 
-	$_CLASS['core_user']->img['pagination_sep'] = ' | ';
-	
 	$_CLASS['core_template']->assign(array(
 		'Q_MESSAGE_PAGINATION'	=> generate_pagination('quick_message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
 		'Q_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
@@ -214,10 +211,7 @@ function show_messages($all = false)
 	
 	$_CLASS['core_display']->display_head();
 	 
-	if ($_CORE_CONFIG['quick_message']['simplemode'])
-	{
-		$_CLASS['core_template']->display('modules/Quick_Message/index.html');	
-	}
+	$_CLASS['core_template']->display('modules/Quick_Message/index.html');	
 	
 	$_CLASS['core_display']->display_footer();
 }
@@ -229,7 +223,7 @@ function delete_message()
 	
 	$id = (int) get_variable('id', 'GET');
 	
-	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.$prefix.'_quick_message WHERE id='.$id);
+	$result = $_CLASS['core_db']->sql_query('SELECT user_id, time, ip FROM '.$prefix.'_quick_message WHERE id='.$id);
 	$row = $_CLASS['core_db']->sql_fetchrow($result);
 	$_CLASS['core_db']->sql_freeresult($result);
 	
@@ -238,21 +232,19 @@ function delete_message()
 		trigger_error('MESSAGE_NOT_FOUND');
 	}
 	
-	if ($row['time'] < ($_CLASS['core_user']->time - 18000))
-	{
+	$return = true;
 	
-	}
-	
-	if ($row['id'] != ANONYMOUS)
+	if ($row['time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
 	{
-		if ($row['user_id'] != $_CLASS['core_user']->data['user_id'])
+		if (($row['user_id'] && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['user_id'] && $row['ip'] == $_CLASS['core_user']->ip))
 		{
-			trigger_error('NOT_USER_MESSAGE');
+			$return = false;
 		}
 	}
-	elseif ($_CLASS['core_user']->ip != $row['ip'])
+	
+	if ($return)
 	{
-		trigger_error('NOT_USER_MESSAGE');
+		trigger_error('MESSAGE_NOT_DELETABLE');
 	}
 	
 	$sql = 'DELETE FROM '.$prefix.'_quick_message WHERE id='.$id;

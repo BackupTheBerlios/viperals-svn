@@ -32,7 +32,7 @@ class custom_profile
 	// Build language options cache, useful for viewtopic display
 	function build_cache()
 	{
-		global $db, $_CLASS;
+		global $_CLASS;
 
 		$this->profile_cache = array();
 
@@ -45,19 +45,19 @@ class custom_profile
 				AND l.field_id = f.field_id 
 			GROUP BY f.field_id
 			ORDER BY f.field_order';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$this->profile_cache[$row['field_ident']] = $row;
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	// Get language entries for options and store them here for later use
 	function get_option_lang($field_id, $lang_id, $field_type, $preview)
 	{
-		global $db;
+		global $_CLASS;
 
 		if ($preview)
 		{
@@ -76,20 +76,20 @@ class custom_profile
 					AND lang_id = $lang_id
 					AND field_type = $field_type
 				ORDER BY option_id";
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$this->options_lang[$field_id][$lang_id][$row['option_id']] = $row['value'];
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 		}
 	}
 
 	// Functions performing operations on register/profile/profile admin
 	function submit_cp_field($mode, $lang_id, &$cp_data, &$cp_error)
 	{
-		global $db, $_CLASS;
+		global $_CLASS;
 
 		$sql = 'SELECT l.*, f.*
 			FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . " f 
@@ -100,9 +100,9 @@ class custom_profile
 				AND l.field_id = f.field_id 
 			GROUP BY f.field_id
 			ORDER BY f.field_order';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 					
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$cp_data[$row['field_ident']] = $this->get_profile_field($row);
 
@@ -161,14 +161,14 @@ class custom_profile
 				$cp_error[] = $error;
 			}
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	
 	// Assign fields to template, mode can be profile (for profile change) or register (for registration)
 //	function generate_profile_fields($mode, $lang_id, $cp_error)
 	function generate_profile_fields($mode, $lang_id)
 	{
-		global $db, $_CLASS;
+		global $_CLASS;
 
 		$sql = 'SELECT l.*, f.*
 			FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . " f 
@@ -179,9 +179,9 @@ class custom_profile
 				AND l.field_id = f.field_id 
 			GROUP BY f.field_id
 			ORDER BY f.field_order';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$_CLASS['core_template']->assign_vars_array('profile_fields', array(
 				'LANG_NAME' => $row['lang_name'],
@@ -190,14 +190,14 @@ class custom_profile
 //				'ERROR' => $error)
 			);
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	// Assign fields to template, used for viewprofile, viewtopic and memberlist (if load setting is enabled)
 	// This is directly connected to the user -> mode == grab is to grab the user specific fields, mode == show is for assigning the row to the template
 	function generate_profile_fields_template($mode, $user_id = 0, $profile_row = false)
 	{
-		global $db;
+		global $_CLASS;
 
 		if ($mode == 'grab')
 		{
@@ -219,9 +219,9 @@ class custom_profile
 			$sql = 'SELECT *
 				FROM ' . PROFILE_DATA_TABLE . '
 				WHERE user_id IN (' . implode(', ', array_map('intval', $user_id)) . ')';
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			if (!($row = $db->sql_fetchrow($result)))
+			if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 			{
 				return array();
 			}
@@ -246,9 +246,9 @@ class custom_profile
 					}
 				}
 			} 
-			while ($row = $db->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 			
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
 			return $user_fields;
 
@@ -626,7 +626,7 @@ class custom_profile
 	// Build Array for user insertion into custom profile fields table
 	function build_insert_sql_array($cp_data)
 	{
-		global $db, $_CLASS;
+		global $_CLASS;
 
 		$sql = 'SELECT f.field_type, f.field_ident, f.field_default_value, l.lang_default_value
 			FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . ' f 
@@ -636,9 +636,9 @@ class custom_profile
 				' . (($_CLASS['auth']->acl_gets('a_', 'm_')) ? '' : ' AND f.field_hide = 0') . '
 				AND l.field_id = f.field_id 
 			GROUP BY f.field_id';
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $db->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			if ($row['field_default_value'] == 'now' && $row['field_type'] == FIELD_DATE)
 			{
@@ -647,7 +647,7 @@ class custom_profile
 			}
 			$cp_data[$row['field_ident']] = (in_array($row['field_type'], array(FIELD_TEXT, FIELD_STRING))) ? $row['lang_default_value'] : $row['field_default_value'];
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 		
 		return $cp_data;
 	}

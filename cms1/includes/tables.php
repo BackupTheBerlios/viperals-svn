@@ -11,7 +11,6 @@
 //																//
 //**************************************************************//
 // Well this needs some works
-
 if (!defined('VIPERAL'))
 {
     Header('Location: /');
@@ -35,6 +34,11 @@ define('USER_INACTIVE', 1);
 define('USER_IGNORE', 2);
 define('USER_FOUNDER', 3);
 define('USER_BOT', 4);
+define('USER_BOT_INACTIVE', 5);
+
+define('ADMIN_NOT_LOGGED', 0);
+define('ADMIN_NOT_ADMIN', 1);
+define('ADMIN_IS_ADMIN', 2);
 
 //Error reporting tyoe
 define('ERROR_NONE', 0);
@@ -171,6 +175,7 @@ define('BOTS_TABLE', $prefix.'_bb2bots');
 define('CACHE_TABLE', $prefix.'_bb2cache');
 define('CONFIG_TABLE', $prefix.'_bb2config');
 define('CORE_CONFIG_TABLE', $prefix.'_core_config');
+define('CORE_MODULES_TABLE', $prefix.'_modules');
 define('CONFIRM_TABLE', $prefix.'_bb2confirm');
 define('PROFILE_FIELDS_TABLE', $prefix.'_bb2profile_fields');
 define('PROFILE_LANG_TABLE', $prefix.'_bb2profile_lang');

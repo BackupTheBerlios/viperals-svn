@@ -28,8 +28,8 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->add_lang('mcp');
@@ -72,9 +72,11 @@ else
 			AND t.msg_id = p.msg_id';
 }
 
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
+$report_data = $_CLASS['core_db']->sql_fetchrow($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
-if (!($report_data = $db->sql_fetchrow($result)))
+if (!$report_data)
 {
 	$message = ($report_post) ? $_CLASS['core_user']->lang['POST_NOT_EXIST'] : $_CLASS['core_user']->lang['PM_NOT_EXIST'];
 	trigger_error($message);
@@ -110,9 +112,11 @@ $sql = 'SELECT *
 	FROM ' . REPORTS_TABLE . '
 	WHERE ' . (($report_post) ? "post_id = $id" : "msg_id = $id") . '
 		AND user_id = ' . $_CLASS['core_user']->data['user_id'];
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
+$row = $_CLASS['core_db']->sql_fetchrow($result);
+$_CLASS['core_db']->sql_freeresult($result);
 
-if ($row = $db->sql_fetchrow($result))
+if ($row)
 {
 	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 	{
@@ -140,16 +144,17 @@ else
 // Has the report been confirmed?
 if (isset($_POST['submit']) && $reason_id)
 {
-	$sql = 'SELECT reason_name 
+	$sql = 'SELECT reason_name, reason_description
 		FROM ' . REASONS_TABLE . " 
 		WHERE reason_id = $reason_id";
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
+	$row = $_CLASS['core_db']->sql_fetchrow($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
-	if (!($row = $db->sql_fetchrow($result)) || (!$report_text && $row['reason_name'] == 'other'))
+	if (!$row || (!$report_text && $row['reason_name'] == 'other'))
 	{
 		trigger_error('EMPTY_REPORT');
 	}
-	$db->sql_freeresult($result);
 
 	$reason_desc = (!empty($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']])) ? $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][$row['reason_name']] : $row['reason_description'];
 	
@@ -166,16 +171,16 @@ if (isset($_POST['submit']) && $reason_id)
 	if ($report_id)
 	{
 		$sql = 'UPDATE ' . REPORTS_TABLE . '
-			SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 			WHERE report_id = ' . $report_id;
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 	}
 	else
 	{
 		$sql = 'INSERT INTO ' . REPORTS_TABLE . ' ' . 
-			$db->sql_build_array('INSERT', $sql_ary);
-		$db->sql_query($sql);
-		$report_id = $db->sql_nextid();
+			$_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
+		$_CLASS['core_db']->sql_query($sql);
+		$report_id = $_CLASS['core_db']->sql_nextid();
 	}
 
 	if ($report_post)
@@ -185,7 +190,7 @@ if (isset($_POST['submit']) && $reason_id)
 			$sql = 'UPDATE ' . POSTS_TABLE . ' 
 				SET post_reported = 1 
 				WHERE post_id = ' . $id;
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 
 		if (!$report_data['topic_reported'])
@@ -193,7 +198,7 @@ if (isset($_POST['submit']) && $reason_id)
 			$sql = 'UPDATE ' . TOPICS_TABLE . ' 
 				SET topic_reported = 1 
 				WHERE topic_id = ' . $report_data['topic_id'];
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 	}
 	else
@@ -203,7 +208,7 @@ if (isset($_POST['submit']) && $reason_id)
 			$sql = 'UPDATE ' . PRIVMSGS_TABLE . " 
 				SET message_reported = 1 
 				WHERE msg_id = $id";
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 		}
 	}
 
@@ -222,7 +227,7 @@ if (isset($_POST['submit']) && $reason_id)
 	{
 		foreach ($notify_user as $user_id)
 		{
-			$db->sql_query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $db->sql_build_array('INSERT', array(
+			$_CLASS['core_db']->sql_query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 				'msg_id'	=> (int) $id,
 				'user_id'	=> (int) $user_id,
 				'author_id'	=> (int) $report_data['author_id'],
@@ -237,17 +242,17 @@ if (isset($_POST['submit']) && $reason_id)
 		$sql = 'UPDATE ' . USERS_TABLE . ' 
 			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1
 			WHERE user_id IN (' . implode(', ', $notify_user) . ')';
-		$db->sql_query($sql);
+		$_CLASS['core_db']->sql_query($sql);
 	}
 
 	// How to notify them?
 	$sql = 'SELECT user_id, username, user_options, user_lang, user_email, user_notify_type, user_jabber 
 		FROM ' . USERS_TABLE . '
 		WHERE user_id IN (' . implode(', ', $notify_user) . ')';
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 
 	$notify_user = array();
-	while ($row = $db->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
 		$notify_user[$row['user_id']] = array(
 			'name'	=> $row['username'],
@@ -259,7 +264,7 @@ if (isset($_POST['submit']) && $reason_id)
 			'pm'	=> $_CLASS['core_user']->optionget('report_pm_notify', $row['user_options'])
 		);
 	}
-	$db->sql_freeresult($result);
+	$_CLASS['core_db']->sql_freeresult($result);
 
 	$report_data = array(
 		'id'		=> $id,
@@ -268,7 +273,7 @@ if (isset($_POST['submit']) && $reason_id)
 		'reason'	=> $reason_desc,
 		'text'		=> $report_text,
 		'subject'	=> ($report_post) ? $report_data['post_subject'] : $report_data['message_subject'],
-		'view_post'	=> ($report_post) ? "viewtopic.$phpEx?f={$report_data['forum_id']}&t={$report_data['topic_id']}&p=$id&e=$id" : ''
+		'view_post'	=> ($report_post) ? generate_link("Forums&amp;file=viewtopic&amp;f={$report_data['forum_id']}&t={$report_data['topic_id']}&p=$id&e=$id") : ''
 	);
 
 	report_notification($notify_user, $report_post, $report_data);
@@ -283,9 +288,9 @@ if (isset($_POST['submit']) && $reason_id)
 $sql = 'SELECT * 
 	FROM ' . REASONS_TABLE . ' 
 	ORDER BY reason_priority ASC';
-$result = $db->sql_query($sql);
+$result = $_CLASS['core_db']->sql_query($sql);
 
-while ($row = $db->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 {
 	$row['reason_name'] = strtoupper($row['reason_name']);
 
@@ -300,6 +305,7 @@ while ($row = $db->sql_fetchrow($result))
 		'S_SELECTED'    =>	($row['reason_id'] == $reason_id) ? true : false)
 	);
 }
+$_CLASS['core_db']->sql_freeresult($result);
 
 $u_report = ($report_post) ? "p=$id" : "pm=$id";
 
@@ -341,15 +347,15 @@ $_CLASS['core_display']->display_footer();
 
 function report_notification($notify_user, $report_post, $report_data)
 {
-	global $config, $phpEx, $site_file_root;
+	global $config, $site_file_root;
 
-	require_once($site_file_root.'includes/forums/functions_messenger.' . $phpEx);
-	require_once($site_file_root.'includes/forums/functions_privmsgs.' . $phpEx);
+	require_once($site_file_root.'includes/forums/functions_messenger.php');
+	require_once($site_file_root.'includes/forums/functions_privmsgs.php');
 	$messenger = new messenger();
 
 	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
 	$email_template = ($report_post) ? 'new_report_post' : 'new_report_pm';
-	$view_report_url = ($report_post) ? "mcp.$phpEx?i=queue&r=" . $report_data['report_id'] : "ucp.$phpEx?i=pm&p=" . $report_data['id'] . "&r=" . $report_data['report_id'];
+	$view_report_url = ($report_post) ? generate_link('Forums&amp;file=mcp&amp;i=queue&r=' . $report_data['report_id'], array('full' => true, 'sid' => false)) : generate_link('Forums&amp;file=mcp&amp;i=pm&p='. $report_data['id'] . '&r=' . $report_data['report_id'], array('full' => true, 'sid' => false));
 
 	foreach ($notify_user as $user_id => $notify_row)
 	{
@@ -372,7 +378,7 @@ function report_notification($notify_user, $report_post, $report_data)
 				'REPORT_REASON'	=> $report_data['reason'],
 				'REPORT_TEXT'	=> $report_data['text'],
 
-				'U_VIEW_REPORT'	=> generate_board_url() . '/' . $view_report_url,
+				'U_VIEW_REPORT'	=> $view_report_url,
 				'U_VIEW_POST'	=> generate_board_url() . '/' . $report_data['view_post'])
 			);
 

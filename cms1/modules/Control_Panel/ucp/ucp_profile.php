@@ -15,7 +15,7 @@ class ucp_profile extends module
 {
 	function ucp_profile($id, $mode)
 	{
-		global $config, $db, $_CLASS, $site_file_root, $SID, $_CORE_CONFIG, $phpEx;
+		global $config, $_CLASS, $site_file_root, $_CORE_CONFIG;
 		$_CLASS['core_template']->assign(array(
 			'S_PRIVMSGS'		=>  false,
 			'profile_fields'	=>  false)
@@ -31,6 +31,7 @@ class ucp_profile extends module
 		$delete		= (!empty($_POST['delete'])) ? true : false;
 		$error = $data = array();
 		$s_hidden_fields = '';
+		$module_link = generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
 		
 		switch ($mode)
 		{
@@ -96,7 +97,7 @@ class ucp_profile extends module
 
 						if ($_CORE_CONFIG['email']['email_enable'] && $email != $_CLASS['core_user']->data['user_email'] && ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN))
 						{
-							require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+							require_once($site_file_root.'includes/forums/functions_messenger.php');
 
 							$server_url = generate_board_url();
 
@@ -123,7 +124,7 @@ class ucp_profile extends module
 								'SITENAME'		=> $_CORE_CONFIG['global']['sitename'],
 								'USERNAME'		=> $username,
 								'EMAIL_SIG'		=> str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']),
-								'U_ACTIVATE'    => getlink("Control_Panel&amp;mode=activate&u={$_CLASS['core_user']->data['user_id']}&k=$user_actkey"))
+								'U_ACTIVATE'    => generate_link("Control_Panel&amp;mode=activate&u={$_CLASS['core_user']->data['user_id']}&k=$user_actkey", array('full' => true)))
 							);
 
 							$messenger->send(NOTIFY_EMAIL);
@@ -136,9 +137,9 @@ class ucp_profile extends module
 								$sql = 'SELECT user_id, username, user_email, user_lang, user_jabber, user_notify_type
 									FROM ' . USERS_TABLE . ' 
 									WHERE user_id IN (' . implode(', ', $admin_ary[0]['a_user']) .')';
-								$result = $db->sql_query($sql);
+								$result = $_CLASS['core_db']->sql_query($sql);
 
-								while ($row = $db->sql_fetchrow($result))
+								while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 								{
 									$messenger->template('admin_activate', $row['user_lang']);
 									$messenger->replyto($config['board_contact']);
@@ -148,12 +149,12 @@ class ucp_profile extends module
 									$messenger->assign_vars(array(
 										'USERNAME'		=> $username,
 										'EMAIL_SIG'		=> str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']),
-										'U_ACTIVATE'    => getlink("Control_Panel&amp;mode=activate&u={$_CLASS['core_user']->data['user_id']}&k=$user_actkey"))
+										'U_ACTIVATE'    => generate_link("Control_Panel&amp;mode=activate&u={$_CLASS['core_user']->data['user_id']}&k=$user_actkey", array('full' => true)))
 									);
 
 									$messenger->send($row['user_notify_type']);
 								}
-								$db->sql_freeresult($result);
+								$_CLASS['core_db']->sql_freeresult($result);
 							}
 
 							$messenger->save_queue();
@@ -165,9 +166,9 @@ class ucp_profile extends module
 						}
 
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $db->sql_build_array('UPDATE', $sql_ary) . ' 
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 
 						// Need to update config, forum, topic, posting, messages, etc.
 						if ($username != $_CLASS['core_user']->data['username'] && $_CLASS['auth']->acl_get('u_chgname') && $_CORE_CONFIG['user']['allow_namechange'])
@@ -175,8 +176,8 @@ class ucp_profile extends module
 							user_update_name($_CLASS['core_user']->data['username'], $username);
 						}
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$_CLASS['core_display']->meta_refresh(3, $module_link);
+						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'">', '</a>');
 						
 						trigger_error($message);
 					}
@@ -220,10 +221,10 @@ class ucp_profile extends module
 
 			case 'profile_info':
 
-				include($site_file_root.'includes/forums/functions_profile_fields.' . $phpEx);
-				include($site_file_root.'includes/forums/message_parser.'.$phpEx);
+				include($site_file_root.'includes/forums/functions_profile_fields.php');
+				include($site_file_root.'includes/forums/message_parser.php');
 				// TODO: The posting file is included because $message_parser->decode_message() relies on decode_message() in the posting functions.
-				include($site_file_root.'includes/forums/functions_posting.'.$phpEx);
+				include($site_file_root.'includes/forums/functions_posting.php');
 				 
 				$cp = new custom_profile();
 
@@ -300,33 +301,33 @@ class ucp_profile extends module
 						);
 
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$db->sql_query($sql);
+						$_CLASS['core_db']->sql_query($sql);
 
 						// Update Custom Fields
 						if (sizeof($cp_data))
 						{
 							$sql = 'UPDATE ' . PROFILE_DATA_TABLE . ' 
-								SET ' . $db->sql_build_array('UPDATE', $cp_data) . '
+								SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $cp_data) . '
 								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-							$db->sql_query($sql);
+							$_CLASS['core_db']->sql_query($sql);
 
-							if (!$db->sql_affectedrows())
+							if (!$_CLASS['core_db']->sql_affectedrows())
 							{
 								$cp_data['user_id'] = (int) $_CLASS['core_user']->data['user_id'];
 
-								$db->return_on_error = true;
+								$_CLASS['core_db']->return_on_error = true;
 
-								$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $cp_data);
-								$db->sql_query($sql);
+								$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $cp_data);
+								$_CLASS['core_db']->sql_query($sql);
 
-								$db->return_on_error = false;
+								$_CLASS['core_db']->return_on_error = false;
 							}
 						}
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$_CLASS['core_display']->meta_refresh(3, $module_link);
+						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'">', '</a>');
 						trigger_error($message);
 					}
 					// Replace "error" strings with their real, localised form
@@ -394,7 +395,7 @@ class ucp_profile extends module
 					trigger_error('NO_AUTH_SIGNATURE');
 				}
 				
-				require($site_file_root.'includes/forums/functions_posting.'.$phpEx);
+				require($site_file_root.'includes/forums/functions_posting.php');
 				
 				$enable_html	= ($config['allow_sig_html']) ? request_var('enable_html', false) : false;
 				$enable_bbcode	= ($config['allow_sig_bbcode']) ? request_var('enable_bbcode', $_CLASS['core_user']->optionget('bbcode')) : false;
@@ -404,7 +405,7 @@ class ucp_profile extends module
 				
 				if ($submit || $preview)
 				{
-					require_once($site_file_root.'includes/forums/message_parser.'.$phpEx);
+					require_once($site_file_root.'includes/forums/message_parser.php');
 					
 					if (!sizeof($error))
 					{
@@ -427,11 +428,11 @@ class ucp_profile extends module
 							);
 	
 							$sql = 'UPDATE ' . USERS_TABLE . ' 
-								SET ' . $db->sql_build_array('UPDATE', $sql_ary) . ' 
+								SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
 								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-							$db->sql_query($sql);
+							$_CLASS['core_db']->sql_query($sql);
 	
-							$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'\>', '</a>');
+							$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'\>', '</a>');
 							trigger_error($message);
 						}
 					}
@@ -460,7 +461,7 @@ class ucp_profile extends module
 					'S_MAGIC_URL_CHECKED' 	=> (!$enable_urls) ? 'checked="checked"' : '',
 
 					'HTML_STATUS'			=> ($config['allow_sig_html']) ? $_CLASS['core_user']->lang['HTML_IS_ON'] : $_CLASS['core_user']->lang['HTML_IS_OFF'],
-					'BBCODE_STATUS'			=> ($config['allow_sig_bbcode']) ? sprintf($_CLASS['core_user']->lang['BBCODE_IS_ON'], '<a href="' . "faq.$phpEx$SID&amp;mode=bbcode" . '" target="_phpbbcode">', '</a>') : sprintf($_CLASS['core_user']->lang['BBCODE_IS_OFF'], '<a href="' . "faq.$phpEx$SID&amp;mode=bbcode" . '" target="_phpbbcode">', '</a>'),
+					'BBCODE_STATUS'			=> ($config['allow_sig_bbcode']) ? sprintf($_CLASS['core_user']->lang['BBCODE_IS_ON'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>') : sprintf($_CLASS['core_user']->lang['BBCODE_IS_OFF'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>'),
 					'SMILIES_STATUS'		=> ($config['allow_sig_smilies']) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
 					'IMG_STATUS'			=> ($config['allow_sig_img']) ? $_CLASS['core_user']->lang['IMAGES_ARE_ON'] : $_CLASS['core_user']->lang['IMAGES_ARE_OFF'],
 					'FLASH_STATUS'			=> ($config['allow_sig_flash']) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
@@ -587,9 +588,9 @@ class ucp_profile extends module
 							);
 
 							$sql = 'UPDATE ' . USERS_TABLE . ' 
-								SET ' . $db->sql_build_array('UPDATE', $sql_ary) . ' 
+								SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
 								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-							$db->sql_query($sql);
+							$_CLASS['core_db']->sql_query($sql);
 
 							// Delete old avatar if present
 							if ($_CLASS['core_user']->data['user_avatar'] && $filename != $_CLASS['core_user']->data['user_avatar'] && $_CLASS['core_user']->data['user_avatar_type'] != AVATAR_GALLERY)
@@ -598,8 +599,8 @@ class ucp_profile extends module
 							}
 						}
 
-						$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$_CLASS['core_display']->meta_refresh(3, $module_link);
+						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'">', '</a>');
 						trigger_error($message);
 					}
 
@@ -741,7 +742,7 @@ class ucp_profile extends module
 			'L_RESET'					=> $_CLASS['core_user']->lang['RESET'],
 		
 			'S_HIDDEN_FIELDS'			=> $s_hidden_fields,
-			'S_UCP_ACTION'				=> getlink("Control_Panel$SID&amp;i=$id&amp;mode=$mode"))
+			'S_UCP_ACTION'				=> $module_link)
 		);
 
 		$this->display($_CLASS['core_user']->lang['UCP_PROFILE'], 'ucp_profile_' . $mode . '.html');

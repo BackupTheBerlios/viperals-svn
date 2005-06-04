@@ -29,7 +29,11 @@
 	
 	<tr valign="middle">
 		<td class="row1" width="25" align="center">{ $searchresults[searchresultsloop].TOPIC_FOLDER_IMG }</td>
-		<td class="row1" width="25" align="center">{ $searchresults[searchresultsloop].TOPIC_ICON_IMG }</td>
+		<td class="row1" width="25" align="center">
+		{ if $searchresults[searchresultsloop].TOPIC_ICON_IMG} }
+			<img src="{ $T_ICONS_PATH }{ $searchresults[searchresultsloop].TOPIC_ICON_IMG }" width="{ $searchresults[searchresultsloop].TOPIC_ICON_IMG_WIDTH }" height="{$searchresults[searchresultsloop].TOPIC_ICON_IMG_HEIGHT}" alt="" title="" />
+		{ /if }
+		</td>
 		<td class="row1">
 			{ if $searchresults[searchresultsloop].S_TOPIC_UNAPPROVED }
 				<a href="{ $topicrow.U_MCP_QUEUE}">{ $UNAPPROVED_IMG }</a>&nbsp;

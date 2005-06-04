@@ -148,14 +148,12 @@ function get_bots()
 {
 	global $_CLASS;
 
-/// Bot is not going to be saved in a bot table anymore, it will be saved in user_type
 	if (($bots = $_CLASS['core_cache']->get('bots')) === false)
 	{
 		$bots = array();
 		
-		$sql = 'SELECT user_id, bot_agent, bot_ip
-			FROM ' . BOTS_TABLE . '
-			WHERE bot_active = 1';
+		$sql = 'SELECT user_id, username, user_agent, user_ip
+			FROM ' . USERS_TABLE . ' WHERE user_type IN (' . USER_BOT . ', ' . USER_BOT_INACTIVE . ')';
 		$result = $_CLASS['core_db']->sql_query($sql);
 			
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
@@ -235,7 +233,7 @@ function generate_base_url()
 		
 		$base = ($_CORE_CONFIG['server']['cookie_secure']) ? 'https://' : 'http://' ;
 		$base .= trim((isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_CORE_CONFIG['server']['site_domain']));
-		$base .= (($_CORE_CONFIG['server']['site_port'] <> 80) ? ':' . trim($_CORE_CONFIG['server']['site_port']) : '') . $_CORE_CONFIG['server']['site_path'];
+		$base .= (($_CORE_CONFIG['server']['site_port'] != 80) ? ':' . trim($_CORE_CONFIG['server']['site_port']) : '') . $_CORE_CONFIG['server']['site_path'];
 	}
 	
 	return $base;
@@ -243,13 +241,13 @@ function generate_base_url()
 
 function generate_link($link = false, $link_options = false)
 {
-	global $_CLASS, $_CORE_MODULE, $mainindex, $adminindex;
+	global $_CLASS, $_CORE_MODULE;
 	
 	$options = array(
-		'admin' => false,
-		'full' => false,
-		'sid' => true,
-//'force_sid' => false  {maybe add}
+		'admin'		=> false,
+		'full'		=> false,
+		'sid'		=> true,
+		'force_sid' => false
 	);
 
 	if (is_array($link_options))
@@ -257,15 +255,13 @@ function generate_link($link = false, $link_options = false)
 		$options = array_merge($options, $link_options);
 	} 	
 	
-	$file = ($options['admin']) ? $adminindex : $mainindex;
-	
-	//$_CLASS['core_user']->need_url_id = true;
+	$file = ($options['admin']) ? 'admin.php' : 'index.php';
 	
 	if (!$link)
 	{
 		$link = $file;
 		
-		if ($_CLASS['core_user']->need_url_id && $options['sid'])
+		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
 		{
 			$link .= '?sid='.$_CLASS['core_user']->data['session_id'];
 		}
@@ -280,7 +276,7 @@ function generate_link($link = false, $link_options = false)
 		$link = $file.'?mod='.$link;
 		
 		// somtimes it ok to repeat strpos($link, '?') !== false is to much :-)
-		if ($_CLASS['core_user']->need_url_id && $options['sid'])
+		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
 		{
 			$link .= '&amp;sid='.$_CLASS['core_user']->data['session_id'];
 		}
@@ -302,7 +298,7 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 	//$seperator = $_CLASS['core_user']->img['pagination_sep'];
 	$seperator = ' | ';
 
-	$admin_link = (VIPERAL == 'Admin') ? true : false;
+	$admin_link = (VIPERAL == 'Admin') ? array('admin' => true) : '';
 	
 	$total_pages = ceil($num_items/$per_page);
 
@@ -447,16 +443,15 @@ function login_box($login_options = false)
 			
 			if ($login_array['redirect'])
 			{
-				$login_array['redirect'] = (strpos($login_array['redirect'], '?') !== false) ? $login_array['redirect'].'&amp;' : $login_array['redirect'].'?';
+				$login_array['redirect'] .= (strpos($login_array['redirect'], '?') !== false) ? '&amp;' : '?';
 				$login_array['redirect'] .= 'sid='.$_CLASS['core_user']->data['session_id'];
 			} else {
 				$login_array['redirect'] = generate_link();
 			}
 
 			$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
-
 			$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
-			trigger_error($message);
+			trigger_error($message); die;	
 		}
 
 		if ($login_array['admin_login'])
@@ -586,7 +581,7 @@ function script_close($save = true)
 	{
 		return;
 	}
-	
+
 	define('SCRIPT_CLOSED', true);
 
 	$closed = true;
@@ -710,7 +705,7 @@ function session_users()
 	}
 	
 	$loaded = array();
-	
+
 	$sql = 'SELECT s.*, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
 				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
 					WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
@@ -787,11 +782,11 @@ function trim_text($text, $replacement = ' ')
 	return trim($text);
 }
 
-function url_redirect($url = false)
+function url_redirect($url = false, $save = true)
 {
-    global $db, $cache, $mainindex;
+    global $cache;
 
-	script_close();
+	script_close($save);
 	
 	$url = ($url) ? $url : generate_link(array('full' => true));
 	$url = str_replace('&amp;', '&', $url);

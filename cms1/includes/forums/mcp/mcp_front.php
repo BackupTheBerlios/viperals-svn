@@ -32,7 +32,7 @@
 
 function mcp_front_view($id, $mode, $action, $url)
 {
-	global $_CLASS, $db;
+	global $_CLASS;
 
 	$_CLASS['core_template']->assign(array(
 		'L_FORUM'						=> $_CLASS['core_user']->lang['FORUM'],
@@ -77,8 +77,8 @@ function mcp_front_view($id, $mode, $action, $url)
 			FROM ' . POSTS_TABLE . '
 			WHERE forum_id IN (0, ' . implode(', ', $forum_list) . ')
 				AND post_approved = 0';
-		$result = $db->sql_query($sql);
-		$row = $db->sql_fetchrow($result);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
 		$total = $row['total'];
 
 		if ($total)
@@ -86,21 +86,21 @@ function mcp_front_view($id, $mode, $action, $url)
 			$sql = 'SELECT forum_id, forum_name
 				FROM ' . FORUMS_TABLE . '
 				WHERE forum_id IN (' . implode(', ', $forum_list) . ')';
-			$result = $db->sql_query_limit($sql);
+			$result = $_CLASS['core_db']->sql_query_limit($sql);
 			
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$forum_names[$row['forum_id']] = $row['forum_name'];
 			}
-			$db->sql_freeresult($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 			
 			$sql = 'SELECT post_id
 				FROM ' . POSTS_TABLE . '
 				WHERE forum_id IN (0, ' . implode(', ', $forum_list) . ')
 					AND post_approved = 0
 				ORDER BY post_id DESC';
-			$result = $db->sql_query_limit($sql, 5);
-			while ($row = $db->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->sql_query_limit($sql, 5);
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$post_list[] = $row['post_id'];
 			}
@@ -111,17 +111,17 @@ function mcp_front_view($id, $mode, $action, $url)
 					AND t.topic_id = p.topic_id
 					AND p.poster_id = u.user_id
 				ORDER BY p.post_id DESC';
-			$result = $db->sql_query($sql);
+			$result = $_CLASS['core_db']->sql_query($sql);
 
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$_CLASS['core_template']->assign_vars_array('unapproved', array(
-					'U_POST_DETAILS'=> getlink($url . '&amp;p=' . $row['post_id'] . '&amp;mode=post_details', false, false),
-					'U_MCP_FORUM'	=> ($row['forum_id']) ? getlink($url . '&amp;f=' . $row['forum_id'] . '&amp;mode=forum_view', false, false) : '',
-					'U_MCP_TOPIC'	=> getlink($url . '&amp;t=' . $row['topic_id'] . '&amp;mode=topic_view', false, false),
-					'U_FORUM'		=> ($row['forum_id']) ? getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'], false, false) : '',
-					'U_TOPIC'		=> getlink('Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . '&amp;t=' . $row['topic_id'], false, false),
-					'U_AUTHOR'		=> ($row['poster_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id'], false, false),
+					'U_POST_DETAILS'=> generate_link($url . '&amp;p=' . $row['post_id'] . '&amp;mode=post_details'),
+					'U_MCP_FORUM'	=> ($row['forum_id']) ? generate_link($url . '&amp;f=' . $row['forum_id'] . '&amp;mode=forum_view') : '',
+					'U_MCP_TOPIC'	=> generate_link($url . '&amp;t=' . $row['topic_id'] . '&amp;mode=topic_view'),
+					'U_FORUM'		=> ($row['forum_id']) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : '',
+					'U_TOPIC'		=> generate_link('Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . '&amp;t=' . $row['topic_id']),
+					'U_AUTHOR'		=> ($row['poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']),
 
 					'FORUM_NAME'	=> ($row['forum_id']) ? $forum_names[$row['forum_id']] : $_CLASS['core_user']->lang['GLOBAL_ANNOUNCEMENT'],
 					'TOPIC_TITLE'	=> $row['topic_title'],
@@ -158,8 +158,8 @@ function mcp_front_view($id, $mode, $action, $url)
 			FROM ' . REPORTS_TABLE . ' r, ' . POSTS_TABLE . ' p
 			WHERE r.post_id = p.post_id
 				AND p.forum_id IN (0, ' . implode(', ', $forum_list) . ')';
-		$result = $db->sql_query($sql);
-		$row = $db->sql_fetchrow($result);
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
 		$total = $row['total'];
 
 		if ($total)
@@ -173,17 +173,17 @@ function mcp_front_view($id, $mode, $action, $url)
 					AND r.user_id = u.user_id
 					AND p.forum_id IN (0, ' . implode(', ', $forum_list) . ')
 				ORDER BY p.post_id DESC';
-			$result = $db->sql_query_limit($sql, 5);
+			$result = $_CLASS['core_db']->sql_query_limit($sql, 5);
 
-			while ($row = $db->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$_CLASS['core_template']->assign_vars_array('report', array(
-					'U_POST_DETAILS'=> getlink($url . '&amp;p=' . $row['post_id'] . '&amp;mode=post_details', false, false),
-					'U_MCP_FORUM'	=> ($row['forum_id']) ? getlink($url . '&amp;f=' . $row['forum_id'] . '&amp;mode=forum_view', false, false) : '',
-					'U_MCP_TOPIC'	=> getlink($url . '&amp;t=' . $row['topic_id'] . '&amp;mode=topic_view', false, false),
-					'U_FORUM'		=> ($row['forum_id']) ? getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'], false, false) : '',
-					'U_TOPIC'		=> getlink('Forums&amp;file=viewtopic&amp;f=' . $row['forum_id'] . '&amp;t=' . $row['topic_id'], false, false),
-					'U_REPORTER'	=> ($row['user_id'] == ANONYMOUS) ? '' : getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id'], false, false),
+					'U_POST_DETAILS'=> generate_link($url . '&amp;p=' . $row['post_id'] . '&amp;mode=post_details'),
+					'U_MCP_FORUM'	=> ($row['forum_id']) ? generate_link($url . '&amp;f=' . $row['forum_id'] . '&amp;mode=forum_view') : '',
+					'U_MCP_TOPIC'	=> generate_link($url . '&amp;t=' . $row['topic_id'] . '&amp;mode=topic_view'),
+					'U_FORUM'		=> ($row['forum_id']) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : '',
+					'U_TOPIC'		=> generate_link('Forums&amp;file=viewtopic&amp;f=' . $row['forum_id'] . '&amp;t=' . $row['topic_id']),
+					'U_REPORTER'	=> ($row['user_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 
 					'FORUM_NAME'	=> ($row['forum_id']) ? $row['forum_name'] : $_CLASS['core_user']->lang['POST_GLOBAL'],
 					'TOPIC_TITLE'	=> $row['topic_title'],
@@ -240,8 +240,8 @@ function mcp_front_view($id, $mode, $action, $url)
 		'S_HAS_LOGS'	=> (!empty($log)) ? true : false)
 	);
 
-	$_CLASS['core_template']->assign('S_MCP_ACTION', getlink($url, false, false));
-	make_jumpbox(getlink($url . '&amp;mode=forum_view', false, false), 0, false, 'm_');
+	$_CLASS['core_template']->assign('S_MCP_ACTION', generate_link($url));
+	make_jumpbox(generate_link($url . '&amp;mode=forum_view'), 0, false, 'm_');
 }
 
 ?>

@@ -15,11 +15,11 @@
 
 function compose_pm($id, $mode, $action)
 {
-	global $db, $_CLASS, $phpEx, $site_file_root, $config;
+	global $_CLASS, $site_file_root, $config;
 	
-	require($site_file_root.'includes/forums/functions_admin.'.$phpEx);
-	require($site_file_root.'includes/forums/functions_posting.'.$phpEx);
-	require($site_file_root.'includes/forums/message_parser.'.$phpEx);
+	require($site_file_root.'includes/forums/functions_admin.php');
+	require($site_file_root.'includes/forums/functions_posting.php');
+	require($site_file_root.'includes/forums/message_parser.php');
 
 	if (!$action)
 	{
@@ -80,7 +80,7 @@ function compose_pm($id, $mode, $action)
 	// Was cancel pressed? If so then redirect to the appropriate page
 	if ($cancel || ($current_time - $lastclick < 2 && $submit))
 	{
-		$redirect = getlink("Control_Panel&amp;i=$id&amp;mode=view_messages&amp;action=view_message" . (($msg_id) ? "&amp;p=$msg_id" : ''));
+		$redirect = generate_link("Control_Panel&amp;i=$id&amp;mode=view_messages&amp;action=view_message" . (($msg_id) ? "&amp;p=$msg_id" : ''));
 		redirect($redirect);
 	}
 
@@ -184,15 +184,15 @@ function compose_pm($id, $mode, $action)
 
 	if ($sql)
 	{
-		$result = $db->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
 
-		if (!($row = $db->sql_fetchrow($result)))
+		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 		{
 			trigger_error('NO_MESSAGE');
 		}
 
 		extract($row);
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 		
 		$msg_id = (int) $msg_id;
 		$enable_urls = $enable_magic_url;
@@ -271,7 +271,7 @@ function compose_pm($id, $mode, $action)
 			delete_pm($_CLASS['core_user']->data['user_id'], $msg_id, $folder_id);
 						
 			// TODO - jump to next message in "history"?
-			$meta_info = getlink("Control_Panel&amp;i=pm&amp;folder=$folder_id");
+			$meta_info = generate_link('Control_Panel&amp;i=pm&amp;folder='.$folder_id);
 			$message = $_CLASS['core_user']->lang['MESSAGE_DELETED'];
 
 			meta_refresh(3, $meta_info);
@@ -280,7 +280,6 @@ function compose_pm($id, $mode, $action)
 		}
 		else
 		{
-			// "{$phpbb_root_path}ucp.$phpEx$SID&amp;i=pm&amp;mode=compose"
 			confirm_box(false, 'DELETE_MESSAGE', $s_hidden_fields);
 		}
 	}
@@ -304,11 +303,11 @@ function compose_pm($id, $mode, $action)
 			WHERE post_msg_id = $msg_id
 				AND in_message = 1
 				ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
-		$result = $db->sql_query($sql);
+		$result = $_CLASS['core_db']->sql_query($sql);
 
-		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $db->sql_fetchrowset($result));
+		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->sql_fetchrowset($result));
 		
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	
 	if (!in_array($action, array('quote', 'edit', 'delete', 'forward')))
@@ -329,13 +328,13 @@ function compose_pm($id, $mode, $action)
 			WHERE (forum_id = 0 AND topic_id = 0)
 				AND user_id = ' . $_CLASS['core_user']->data['user_id'] . 
 				(($draft_id) ? " AND draft_id <> $draft_id" : '');
-		$result = $db->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
 
-		if ($db->sql_fetchrow($result))
+		if ($_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$drafts = true;
 		}
-		$db->sql_freeresult($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	if ($action == 'edit' || $action == 'forward')
@@ -358,18 +357,18 @@ function compose_pm($id, $mode, $action)
 
 		if ($subject && $message)
 		{
-			$sql = 'INSERT INTO ' . DRAFTS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
+			$sql = 'INSERT INTO ' . DRAFTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 				'user_id'	=> $_CLASS['core_user']->data['user_id'],
 				'topic_id'	=> 0,
 				'forum_id'	=> 0,
 				'save_time'	=> $current_time,
 				'draft_subject' => $subject,
 				'draft_message' => $message));
-			$db->sql_query($sql);
+			$_CLASS['core_db']->sql_query($sql);
 	
-			$_CLASS['core_display']->meta_refresh(3, getlink("Control_Panel&i=pm&mode=$mode"));
+			$_CLASS['core_display']->meta_refresh(3, generate_link('Control_Panel&i=pm&mode='.$mode));
 
-			$message = $_CLASS['core_user']->lang['DRAFT_SAVED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.getlink("Control_Panel&amp;i=pm&amp;mode=$mode").'">', '</a>');
+			$message = $_CLASS['core_user']->lang['DRAFT_SAVED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link('Control_Panel&amp;i=pm&amp;mode='.$mode).'">', '</a>');
 
 			trigger_error($message);
 		}
@@ -387,9 +386,9 @@ function compose_pm($id, $mode, $action)
 				AND topic_id = 0
 				AND forum_id = 0
 				AND user_id = " . $_CLASS['core_user']->data['user_id'];
-		$result = $db->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
 	
-		if ($row = $db->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$_REQUEST['subject'] = $row['draft_subject'];
 			$_POST['message'] = $row['draft_message'];
@@ -513,8 +512,8 @@ function compose_pm($id, $mode, $action)
 			// ((!$message_subject) ? $subject : $message_subject)
 			$msg_id = submit_pm($action, $subject, $pm_data, $update_message);
 
-			$return_message_url = getlink('Control_Panel&amp;i=pm&amp;mode=view_messages&amp;action=view_message&amp;p=' . $msg_id);
-			$return_folder_url = getlink('Control_Panel&amp;i=pm&amp;folder=outbox');
+			$return_message_url = generate_link('Control_Panel&amp;i=pm&amp;mode=view_messages&amp;action=view_message&amp;p=' . $msg_id);
+			$return_folder_url = generate_link('Control_Panel&amp;i=pm&amp;folder=outbox');
 			$_CLASS['core_display']->meta_refresh(3, $return_message_url);
 
 			$message = $_CLASS['core_user']->lang['MESSAGE_STORED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['VIEW_MESSAGE'], '<a href="' . $return_message_url . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['CLICK_RETURN_FOLDER'], '<a href="' . $return_folder_url . '">', '</a>', $_CLASS['core_user']->lang['PM_OUTBOX']);
@@ -553,7 +552,7 @@ function compose_pm($id, $mode, $action)
 		// Attachment Preview
 		if (sizeof($message_parser->attachment_data))
 		{
-			require($site_file_root.'includes/forums/functions_display.' . $phpEx);
+			require($site_file_root.'includes/forums/functions_display.php');
 			$extensions = $update_count = array();
 					
 			$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
@@ -604,7 +603,7 @@ function compose_pm($id, $mode, $action)
 		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_FROM'], $quote_username);
 		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_TO'], implode(', ', $fwd_to_field['to']));
 
-		$message_parser->message = implode("\n", $forward_text) . "\n\n[quote=\"[url=" . getlink("Members_List&mode=viewprofile&u={$author_id}]{$quote_username}")."[/url]\"]\n" . censor_text(trim($message_parser->message)) . "\n[/quote]";
+		$message_parser->message = implode("\n", $forward_text) . "\n\n[quote=\"[url=" . generate_link("Members_List&mode=viewprofile&u={$author_id}]{$quote_username}")."[/url]\"]\n" . censor_text(trim($message_parser->message)) . "\n[/quote]";
 		$message_subject = ((!preg_match('/^Fwd:/', $message_subject)) ? 'Fwd: ' : '') . censor_text($message_subject);
 	}
 
@@ -636,14 +635,14 @@ function compose_pm($id, $mode, $action)
 		$result = array();
 		if (isset($address_list['u']) && sizeof($address_list['u']))
 		{
-			$result['u'] = $db->sql_query('SELECT user_id as id, username as name, user_colour as colour 
+			$result['u'] = $_CLASS['core_db']->sql_query('SELECT user_id as id, username as name, user_colour as colour 
 				FROM ' . USERS_TABLE . ' 
 				WHERE user_id IN (' . implode(', ', array_map('intval', array_keys($address_list['u']))) . ')');
 		}
 		
 		if (isset($address_list['g']) && sizeof($address_list['g']))
 		{
-			$result['g'] = $db->sql_query('SELECT group_id as id, group_name as name, group_colour as colour 
+			$result['g'] = $_CLASS['core_db']->sql_query('SELECT group_id as id, group_name as name, group_colour as colour 
 				FROM ' . GROUPS_TABLE . ' 
 				WHERE group_receive_pm = 1 AND group_id IN (' . implode(', ', array_map('intval', array_keys($address_list['g']))) . ')');
 		}
@@ -653,11 +652,11 @@ function compose_pm($id, $mode, $action)
 		{
 			if (isset($result[$type]) && $result[$type])
 			{
-				while ($row = $db->sql_fetchrow($result[$type]))
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result[$type]))
 				{
 					${$type}[$row['id']] = array('name' => $row['name'], 'colour' => $row['colour']);
 				}
-				$db->sql_freeresult($result[$type]);
+				$_CLASS['core_db']->sql_freeresult($result[$type]);
 			}
 		}
 
@@ -683,7 +682,7 @@ function compose_pm($id, $mode, $action)
 					'IS_USER'	=> ($type == 'u'),
 					'COLOUR'	=> (${$type}[$id]['colour']) ? ${$type}[$id]['colour'] : '',
 					'UG_ID'		=> $id,
-					'U_VIEW'	=> ($type == 'u') ? getlink('Members_List&amp;mode=viewprofile&amp;u=' . $id) : getlink('Members_List&amp;mode=group&amp;g=' . $id),
+					'U_VIEW'	=> ($type == 'u') ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $id) : generate_link('Members_List&amp;mode=group&amp;g=' . $id),
 					'TYPE'		=> $type)
 				);
 			}
@@ -808,7 +807,7 @@ function compose_pm($id, $mode, $action)
 		'SUBJECT'				=> (isset($message_subject)) ? $message_subject : '',
 		'MESSAGE'				=> $message_text,
 		'HTML_STATUS'			=> ($html_status) ? $_CLASS['core_user']->lang['HTML_IS_ON'] : $_CLASS['core_user']->lang['HTML_IS_OFF'],
-		'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($_CLASS['core_user']->lang['BBCODE_IS_ON'], '<a href="' . getlink('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>') : sprintf($_CLASS['core_user']->lang['BBCODE_IS_OFF'], '<a href="' . getlink('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>'),
+		'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($_CLASS['core_user']->lang['BBCODE_IS_ON'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>') : sprintf($_CLASS['core_user']->lang['BBCODE_IS_OFF'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>'),
 		'IMG_STATUS'			=> ($img_status) ? $_CLASS['core_user']->lang['IMAGES_ARE_ON'] : $_CLASS['core_user']->lang['IMAGES_ARE_OFF'],
 		'FLASH_STATUS'			=> ($flash_status) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
 		'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
@@ -830,7 +829,7 @@ function compose_pm($id, $mode, $action)
 		'S_HAS_DRAFTS'			=> ($_CLASS['auth']->acl_get('u_savedrafts') && $drafts),
 		'S_FORM_ENCTYPE'		=> $form_enctype,
 
-		'S_POST_ACTION' 		=> getlink($s_action),
+		'S_POST_ACTION' 		=> generate_link($s_action),
 		'S_HIDDEN_ADDRESS_FIELD'=> $s_hidden_address_field,
 		'S_HIDDEN_FIELDS'		=> $s_hidden_fields)
 	);
