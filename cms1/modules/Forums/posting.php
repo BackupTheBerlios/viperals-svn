@@ -282,7 +282,7 @@ else
 	$notify_set = 0;
 }
 
-if (!$_CLASS['auth']->acl_get('f_' . $mode, $forum_id) && $forum_type == FORUM_POST)
+if (!$_CLASS['auth']->acl_get('f_' . $mode, $forum_id) && !$_CLASS['auth']->acl_get('m_'. $mode, $forum_id) && $forum_type == FORUM_POST)
 {
 	if ($_CLASS['core_user']->is_user)
 	{
@@ -330,7 +330,7 @@ if ($mode == 'edit')
 
 // should we alow ip no user deletion ?
 // Delete triggered ?
-if ($mode == 'delete' && (($poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id) || $_CLASS['auth']->acl_get('m_delete', $forum_id)))
+if ($mode == 'delete' && ($_CLASS['auth']->acl_get('m_delete', $forum_id) || ($poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id)))
 {
 	$s_hidden_fields = '<input type="hidden" name="p" value="' . $post_id . '" /><input type="hidden" name="f" value="' . $forum_id . '" /><input type="hidden" name="mode" value="delete" />';
 
