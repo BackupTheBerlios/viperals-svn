@@ -23,13 +23,24 @@ class core_rss
 	var $feed_type = false;
 	var $item_tags = array('title', 'link', 'description', 'author');
 	var $channel_tags = array('title', 'link', 'description', 'author');
+	var $send_cookie = false;
+	var $error = '';
 
-	function get_rss($url = false, $data_Value = false, $items_limit = 10)
+	function setup($channel, $item_tags = false, $channel_tags = false)
 	{
+		$this->feed_type = 0;
 		$this->rss_data = array();
+		$this->rss_other_data = '';
 		$this->rss_expire = 0;
 		$this->rss_info = array();
-
+		$this->send_cookie = false;
+		
+		$this->item_tags = (is_array($item_tags)) ? $item_tags : array('title', 'link', 'description', 'author');
+		$this->channel_tags = (is_array($channel_tags)) ? $channel_tags : array('title', 'link', 'description', 'author');
+	}
+	
+	function get_rss($url = false, $items_limit = 10, $data_Value = false)
+	{
 		if ($data_Value)
 		{
 			@eval('$data_Value='.$data_Value.';');
@@ -77,8 +88,6 @@ class core_rss
 		return array_shift($this->rss_data);
 	}
 	
-	
-	
 	function get_rss_array($url, $items_limit = 10, $loop = 1)
 	{
 // add support for other schemes "ftp https"
@@ -93,146 +102,153 @@ class core_rss
 		
 		$parsed_url = array('host' => '', 'path' => '/', 'port' => 80, 'query' => '', 'user' => false, 'pass' => false);
 		$parsed_url = array_merge($parsed_url, parse_url($url));
-
+		
 		if (!$parsed_url['host'])
 		{
+			$this->error = 'Host name error';
 			return false;
 		}
 
-		if ($this->fp = fsockopen($parsed_url['host'], $parsed_url['port'], $errno, $errstr, 15))
+		if (!($this->fp = fsockopen($parsed_url['host'], $parsed_url['port'], $errno, $errstr, 15)))
 		{
-			fwrite($this->fp, 'GET '.$parsed_url['path'].$parsed_url['query']." HTTP/1.0\r\n");
-			fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
-			
-			if (extension_loaded('zlib'))
+			$this->error = "Can't connection";
+			return false;
+		}
+
+// Make sure ? doesn't case a problem if there isn't any query
+		fwrite($this->fp, 'GET '.$parsed_url['path'].'?'.$parsed_url['query']." HTTP/1.0\r\n");
+		fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
+		
+		if (extension_loaded('zlib'))
+		{
+			fwrite($this->fp, "Accept-Encoding: gzip;\r\n");
+		}
+		
+		if (!empty($parsed_url['user']))
+		{
+			fwrite($this->fp, 'Authorization: BASIC '.base64_encode($parsed_url['user'].':'.$parsed_url['pass'])."\r\n");
+		}
+		
+		if ($this->send_cookie && is_array($this->send_cookie))
+		{
+			$cookie = '';
+			// wonder if this really works :-)
+			foreach ($this->send_cookie as $name => $value)
 			{
-				fwrite($this->fp, "Accept-Encoding: gzip;\r\n");
+				$cookie .= "$name=$value;\r\n";
 			}
-			
-			if (!empty($parsed_url['user']))
+			fwrite($this->fp, "Cookie: $cookie");
+		}
+
+		fwrite($this->fp, 'HOST: '.$parsed_url['host']."\r\n\r\n");
+
+		$data = strtolower(trim(fgets($this->fp, 300)));
+
+		if (strpos($data, '200') === false)
+		{
+			echo $data;
+
+			if (strpos($data, '301') === true || strpos($data, '301') === true)
 			{
-				fwrite($this->fp, 'Authorization: BASIC '.base64_encode($parsed_url['user'].':'.$parsed_url['pass'])."\r\n");
-			}
-			
-			if ($this->send_cookie && is_array($this->send_cookie))
-			{
-				$cookie = '';
-				// wonder if this really works :-)
-				foreach ($this->send_cookie as $name => $value)
+				while (!empty($data))
 				{
-					$cookie .= "$name=$value;\r\n";
-				}
-				fwrite($this->fp, "Cookie: $cookie");
-			}
-
-			fwrite($this->fp, 'HOST: '.$parsed_url['host']."\r\n\r\n");
-
-			$data = strtolower(trim(fgets($this->fp, 300)));
-
-			if (strpos($data, '200') === false)
-			{
-				if (strpos($data, '301') === true || strpos($data, '301') === true)
-				{
-					while (!empty($data))
+					$data = strtolower(trim(fgets($this->fp, 300)));
+					// needs some work
+					if (strpos('location:', $data) == true)
 					{
-						$data = strtolower(trim(fgets($this->fp, 300)));
-						// needs some work
-						if (strpos('location:', $data) == true)
-						{
-							$new_url = trim(eregi_replace('location:', '', $data));
-							
-							$this->Close_connection();
+						$new_url = trim(eregi_replace('location:', '', $data));
 						
-							if ($new_url != $url)
-							{
-								return $this->get_rss_array($new_url, $items_limit, $loop);
-							}
-							return false;
+						$this->Close_connection();
+					
+						if ($new_url != $url)
+						{
+							return $this->get_rss_array($new_url, $items_limit, $loop);
 						}
+						return false;
 					}
 				}
-
-				$this->Close_connection();
-				return false;
 			}
-
-			$compressed = false;
-		
-			while (!empty($data))
-			{
-				//echo $data.'<br/>';
-				$data = strtolower(trim(fgets($this->fp, 300)));
-				
-				if (strpos($data, 'content-type') !== false && strpos($data, 'xml') === false)
-				{
-					$this->Close_connection();
-					$this->error = 'Document type is invalid';
-					return false;
-				}
-				
-				if (strpos($data, 'last-modified') !== false)
-				{
-					//
-				}
-
-				if (strpos($data, 'content-encoding') !== false && strpos($data, 'gzip') !== false)
-				{
-					$compressed = true;
-				}
-			}
-	
-			$this->rss_parser = xml_parser_create();
-			xml_set_object( $this->rss_parser, $this );
-			xml_set_element_handler($this->rss_parser, 'tag_open', 'tag_close');
-			xml_set_character_data_handler($this->rss_parser, 'cdata');
-
-			$this->feed_type = false;
-			$this->item = 0;
-			$this->itemopen = false;
-			$this->title_type = false;
-			$this->rss_data = array();
-			$this->rss_expire = 0;
-			$this->rss_info = array();
-		
-			$data = '';
-
-			while(!feof($this->fp))
-			{
-				$data .= fread($this->fp, 1024);
-				
-				/*if ($this->item > $this->items_limit)
-				{
-					break;
-				}*/
-				//$status = xml_parse($this->rss_parser, fread($this->fp, 1024), false);
-			}
-			
-			if ($compressed)
-			{
-				$data = gzinflate(substr($data,10));
-			}
-
-			$status = xml_parse($this->rss_parser, $data, true);
-			
-			if (!$status)
-			{
-				$error_code = xml_get_error_code($this->parser);
-				
-				if ($error_code != XML_ERROR_NONE) // XML_ERROR_NO_MEMORY
-				{
-					$error_string = xml_error_string($error_code);
-					$error_line = xml_get_current_line_number($this->parser);
-					$error_col = xml_get_current_column_number($this->parser);
-
-					$this->error = "$error_string at line $error_line, column $error_col";
-				}
-			}
-				
-			xml_parser_free($this->rss_parser);
 			
 			$this->Close_connection();
-			return ($this->error) false : true;
+			return false;
 		}
+
+		$compressed = false;
+	
+		while (!empty($data))
+		{
+			//echo $data.'<br/>';
+			$data = strtolower(trim(fgets($this->fp, 300)));
+			
+			if (strpos($data, 'content-type') !== false && strpos($data, 'xml') === false)
+			{
+				$this->Close_connection();
+				$this->error = 'Document type is invalid';
+				return false;
+			}
+			
+			if (strpos($data, 'last-modified') !== false)
+			{
+				//
+			}
+
+			if (strpos($data, 'content-encoding') !== false && strpos($data, 'gzip') !== false)
+			{
+				$compressed = true;
+			}
+		}
+
+		$this->rss_parser = xml_parser_create();
+		xml_set_object( $this->rss_parser, $this );
+		xml_set_element_handler($this->rss_parser, 'tag_open', 'tag_close');
+		xml_set_character_data_handler($this->rss_parser, 'cdata');
+
+		$this->feed_type = false;
+		$this->item = 0;
+		$this->itemopen = false;
+		$this->title_type = false;
+		$this->rss_data = array();
+		$this->rss_expire = 0;
+		$this->rss_info = array();
+	
+		$data = '';
+
+		while(!feof($this->fp))
+		{
+			$data .= fread($this->fp, 1024);
+			
+			/*if ($this->item > $this->items_limit)
+			{
+				break;
+			}*/
+			//$status = xml_parse($this->rss_parser, fread($this->fp, 1024), false);
+		}
+		
+		if ($compressed)
+		{
+			$data = gzinflate(substr($data,10));
+		}
+
+		$status = xml_parse($this->rss_parser, $data, true);
+		
+		if (!$status)
+		{
+			$error_code = xml_get_error_code($this->parser);
+			
+			if ($error_code != XML_ERROR_NONE) // XML_ERROR_NO_MEMORY
+			{
+				$error_string = xml_error_string($error_code);
+				$error_line = xml_get_current_line_number($this->parser);
+				$error_col = xml_get_current_column_number($this->parser);
+
+				$this->error = "$error_string at line $error_line, column $error_col";
+			}
+		}
+			
+		xml_parser_free($this->rss_parser);
+		
+		$this->Close_connection();
+		return ($this->error) ? false : true;
 	}
 		
 	function tag_open($parser, $element, $attrs)
