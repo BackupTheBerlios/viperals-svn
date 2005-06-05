@@ -335,44 +335,58 @@ switch ($submit)
 	case 'presetsave':
 
 		$holding_ary = array();
-		foreach ($auth_settings as $option => $setting)
+		foreach ($auth_settings as $auth_submode => $auth_setting)
 		{
-			switch ($setting)
+			foreach ($auth_setting as $option => $setting)
 			{
-				case ACL_YES:
-					$holding_ary['yes'][] = $option;
-					break;
-
-				case ACL_NO:
-					$holding_ary['no'][] = $option;
-					break;
-
-				case ACL_UNSET:
-					$holding_ary['unset'][] = $option;
-					break;
+				switch ($setting)
+				{
+					case ACL_YES:
+						$holding_ary['yes'][] = $option;
+						break;
+	
+					case ACL_NO:
+						$holding_ary['no'][] = $option;
+						break;
+	
+					case ACL_UNSET:
+						$holding_ary['unset'][] = $option;
+						break;
+						
+					/*
+					used in Moderators permissions
+					need to ingnore conversion to javescript
+						along with another setting so it's goes to unset if it regular permissions
+					case '*':
+						$holding_ary['ignore'][] = $option;
+						break;*/
+				}
 			}
 		}
+
 		unset($option);
 		unset($setting);
 
 		$sql = array(
 			'preset_user_id'=> intval($_CLASS['core_user']->data['user_id']),
 			'preset_type'	=> $sql_option_mode,
-			'preset_data'	=> $_CLASS['core_db']->sql_escape(serialize($holding_ary))
+			'preset_data'	=> serialize($holding_ary)
 		);
 
 		if (!empty($_POST['presetname']))
-		{
-			$sql['preset_name'] = $_CLASS['core_db']->sql_escape($_POST['presetname']);
+		{	
+			$sql['preset_name'] = htmlspecialchars($_POST['presetname'], ENT_QUOTES);
 		}
 		
-		if (!empty($_POST['presetname']) || $_POST['presetoption'] != -1)
+		if (!empty($sql['preset_name']) || $_POST['presetoption'] != -1)
 		{
 			$sql = ($_POST['presetoption'] == -1) ? 'INSERT INTO ' . ACL_PRESETS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql) : 'UPDATE ' . ACL_PRESETS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . ' WHERE preset_id =' . intval($_POST['presetoption']);
 			$_CLASS['core_db']->sql_query($sql);
 
 			add_log('admin', 'LOG_ACL_PRESET_ADD', $sql['preset_name']);
 		}
+		unset($sql);
+
 		break;
 
 	case 'presetdel':
@@ -739,12 +753,12 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 
 	// Now we'll build a list of preset options ...
 	$preset_options = $preset_js = $preset_update_options = '';
-	$holding = array();
-	$holding['allow'] = $holding['deny'] = $holding['inherit'] = '';
 
 	// Do we have a parent forum? If so offer option to inherit from that
 	if ($forum_data['parent_id'] != 0)
 	{
+		$holding['yes'] = $holding['no'] = $holding['unset'] = '';
+
 		switch ($ug_type)
 		{
 			case 'group':
@@ -764,26 +778,28 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 				switch ($row['auth_setting'])
 				{
 					case ACL_YES:
-						$holding['allow'] .= $row['auth_option'] . ', ';
+						$holding['yes'] .= $row['auth_option'] . ', ';
 						break;
 
 					case ACL_NO:
-						$holding['deny'] .= $row['auth_option'] . ', ';
+						$holding['no'] .= $row['auth_option'] . ', ';
 						break;
 
 					case ACL_UNSET:
-						$holding['inherit'] .= $row['auth_option'] . ', ';
+						$holding['unset'] .= $row['auth_option'] . ', ';
 						break;
 				}
 			}
 			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
-
+			//echo ($holding['allow'] = substr($holding['allow'], 0, 3));
 			$preset_options .= '<option value="preset_0">' . $_CLASS['core_user']->lang['INHERIT_PARENT'] . '</option>';
 			$preset_js .= "\tpresets['preset_0'] = new Array();" . "\n";
-			$preset_js .= "\tpresets['preset_0'] = new preset_obj('" . $holding['allow'] . "', '" . $holding['deny'] . "', '" . $holding['inherit'] . "');\n";
+			$preset_js .= "\tpresets['preset_0'] = new preset_obj('" . $holding['yes'] . "', '" . $holding['no'] . "', '" . $holding['unset'] . "');\n";
 		}
 		$_CLASS['core_db']->sql_freeresult($result);
 	}
+
+	$holding['yes'] = $holding['no'] = $holding['unset'] = '';
 
 	// Look for custom presets
 	$sql = "SELECT preset_id, preset_name, preset_data  
@@ -800,7 +816,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 			$preset_options .= '<option value="preset_' . $row['preset_id'] . '">' . $row['preset_name'] . '</option>';
 
 			$preset_data = unserialize($row['preset_data']);
-			
+
 			foreach ($preset_data as $preset_type => $preset_type_ary)
 			{
 				$holding[$preset_type] = '';
@@ -811,7 +827,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 			}
 
 			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new Array();" . "\n";
-			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new preset_obj('" . $holding['allow'] . "', '" . $holding['deny'] . "', '" . $holding['inherit'] . "');\n";
+			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new preset_obj('" . $holding['yes'] . "', '" . $holding['no'] . "', '" . $holding['unset'] . "');\n";
 		}
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 	}
