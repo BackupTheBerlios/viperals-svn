@@ -13,7 +13,6 @@
 
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
     die();
 }
 
@@ -168,7 +167,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				else
 				{
 					$location = ($row['session_page']) ? $row['session_page'] : 'Home';
-					$location_url = ($row['session_page']) ? $row['session_url'].(($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : '') : generate_link();
+					$location_url = generate_link($row['session_url']);
 				}
 				
 		/*} else {
@@ -350,7 +349,7 @@ $config['load_online'] = false;
 
 page_header();
 
-make_jumpbox('viewforum.php');
+//make_jumpbox('viewforum.php');
 
 $_CLASS['core_template']->display('modules/View_Online/viewonline_body.html');
 

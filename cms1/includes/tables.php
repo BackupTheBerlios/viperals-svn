@@ -55,7 +55,6 @@ define('BLOCK_BOTTOM', 5);
 define('BLOCK_MESSAGE_TOP', 6);
 define('BLOCK_MESSAGE_BOTTOM', 7);
 
-
 define('BLOCKTYPE_FILE',0);
 define('BLOCKTYPE_FEED',1);
 define('BLOCKTYPE_HTML',2);
@@ -63,16 +62,9 @@ define('BLOCKTYPE_SYSTEM',3);
 define('BLOCKTYPE_MESSAGE', 4);
 define('BLOCKTYPE_MESSAGE_GLOBAL', 5);
 
+define('MODULE_SYSTEM', 0);
+define('MODULE_NORMAL', 1);
 
-/*
-// Blocks
-define('RIGHT', 0);
-define('CENTERUP', 1);
-define('CENTERDOWN', 2);
-define('LEFT', 3);
-*/
-
-// ACL
 define('ACL_NO', 0);
 define('ACL_YES', 1);
 define('ACL_UNSET', -1);

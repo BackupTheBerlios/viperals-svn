@@ -57,7 +57,7 @@ if ($_CLASS['core_display']->homepage)
 }
 else
 {
-	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE name='".$_CLASS['core_db']->sql_escape($mod)."'");
+	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE type='.MODULE_NORMAL." AND name='".$_CLASS['core_db']->sql_escape($mod)."'");
 	$_CORE_MODULE = $_CLASS['core_db']->sql_fetchrow($result);
 }
 
@@ -70,7 +70,7 @@ if (!$_CORE_MODULE || !file_exists($path))
 
 	if ($_CLASS['core_display']->homepage) 
 	{
-		if ($_CLASS['core_user']->admin_auth('modules'))
+		if ($_CLASS['core_auth']->admin_auth('modules'))
 		{
 			// display message inline
 			trigger_error('_NO_HOMEPAGE_ADMIN', E_USER_NOTICE);
@@ -92,11 +92,14 @@ if (!$_CORE_MODULE || !file_exists($path))
 
 if (!$_CORE_MODULE['active'])
 {
-	$_CORE_MODULE['sides'] = BLOCK_ALL;
-	trigger_error('_MODULE_UNACTIVE');
+	if (!$_CLASS['core_auth']->admin_auth('modules'))
+	{
+		$_CORE_MODULE['sides'] = BLOCK_ALL;
+		trigger_error('_MODULE_UNACTIVE');
+	}
+	$_CLASS['core_display']->message = "<b>This Modules Isn't Active</b><br />";
 }
 
-//Need to add a way off getting a text auth message for ( only when there is one group auth or registered user )
 if (!$_CLASS['core_display']->homepage && !$_CLASS['core_auth']->auth($_CORE_MODULE['auth']))
 {
 	trigger_error('Not Auth!');
@@ -112,11 +115,6 @@ if ($_CORE_MODULE['editor'] && $MAIN_CFG['global']['wysiwyg'] && $_CLASS['core_u
 //loadclass($site_file_root.'includes/core_editor.php', 'core_editor');
 //$_CLASS['core_editor']->setup();
 	
-if ($_CORE_MODULE['compatiblity'])
-{
-	require($site_file_root.'includes/compatiblity/index.php');
-}
-
 require($path);
 
 ?>

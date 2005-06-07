@@ -91,9 +91,6 @@ class core_blocks
 	
 	function add_block($data, $position = false)
 	{
-//remove $this->blocks_loaded
-		$this->blocks_loaded = true;
-				
 		$option_array = array('title','position', 'content', 'file' , 'modules', 'time' ,'expires', 'id',	'auth',	'type', 'options');
 		
 		foreach($option_array as $option)
@@ -104,8 +101,10 @@ class core_blocks
 		$this->blocks_array[$data['position']][] = $data_perpared;
 	}
 	
-	function display($position)
+	function display($position, $template_name = false)
 	{
+		//$this->template_name = $template_name;
+
 		if ($position == BLOCK_LEFT || $position == BLOCK_RIGHT)
 		{
 			$position = $this->check_side($position);
@@ -155,7 +154,7 @@ class core_blocks
 			{
 				$this->block['modules'] = unserialize($this->block['modules']);
 // Homepage needs it's own value
-				if (!in_array($_CORE_MODULE['title'], $this->block['modules']))
+				if (!in_array($_CORE_MODULE['title'], $this->block['modules']['show'] || in_array($_CORE_MODULE['title'], $this->block['modules']['hide'])))
 				{
 					continue;
 				}
@@ -287,7 +286,9 @@ class core_blocks
 			$edit_link = $expires = false;
 		}
 		
-		$_CLASS['core_template']->assign_vars_array('messageblock', array(
+		$postion = ($this->block['position'] == BLOCK_MESSAGE_TOP) ? 'top' : 'bottom';
+		
+		$_CLASS['core_template']->assign_vars_array('message_block_'.$postion, array(
 				//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
 				'TITLE'		=> $this->block['title'],
 				'CONTENT'	=> $this->block['content'],
@@ -304,9 +305,9 @@ class core_blocks
 	{
 		global $_CLASS;
 		
-		$this->block['position'] = ($this->block['position'] == BLOCK_RIGHT) ? 'right' : 'left';
+		$position = ($this->block['position'] == BLOCK_RIGHT) ? 'right' : 'left';
 		
-		$_CLASS['core_template']->assign_vars_array($this->block['position'].'block', array(
+		$_CLASS['core_template']->assign_vars_array('block_'.$position, array(
 			//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
 			'TITLE'		=> $this->block['title'],
 			'CONTENT'	=> $this->content,
@@ -409,15 +410,14 @@ class core_blocks
 	{
 		global $_CLASS;
 		
-		$this->block['position'] = ($this->block['position'] == BLOCK_TOP) ? 'center' : 'bottom';
+		$position = ($this->block['position'] == BLOCK_TOP) ? 'center' : 'bottom';
 		
-		$_CLASS['core_template']->assign_vars_array($this->block['position'].'block', array(
+		$_CLASS['core_template']->assign_vars_array('block_'.$position , array(
 			//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
 			'TITLE'   => $this->block['title'],
 			'CONTENT' => $this->content,
 			'TEMPLATE' => $this->template
-			)
-		);
+		));
 	}
 }
 

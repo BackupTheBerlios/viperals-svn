@@ -15,7 +15,6 @@
 
 if (!defined('VIPERAL'))
 {
-	header('location: /');
     die;
 }
 
@@ -107,6 +106,9 @@ else
 	$_CORE_CONFIG['global']['error'] = ERROR_NONE;
 	$_CLASS['core_error_handler']->report = ERROR_NONE;
 }
+
+$_CORE_CONFIG['global']['error'] = ERROR_NONE;
+$_CLASS['core_error_handler']->report = ERROR_NONE;
 	
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
@@ -143,6 +145,7 @@ elseif (!$theme || !check_theme($theme))
 		{
 			// We need a theme ..
 			$handle = opendir('themes');
+			$theme = false;
 			
 			while ($file = readdir($handle))
 			{
@@ -153,6 +156,11 @@ elseif (!$theme || !check_theme($theme))
 				}
 			}
 			closedir($handle);
+			
+			if (!$theme)
+			{
+				trigger_error('Something here');
+			}
 		}
 	}
 }

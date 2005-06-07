@@ -98,7 +98,7 @@ class ucp_zebra extends module
 						}
 						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
-// Remove users from foe list if they are admins or moderators
+						// Remove users from foe list if they are admins or moderators
 						if ($mode == 'foes')
 						{
 							$perms = array();

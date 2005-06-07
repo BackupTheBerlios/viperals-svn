@@ -53,9 +53,9 @@ class session
 		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
 		$this->page = $mod;
 
-		if ($pos = strpos($this->url, 'index.php?mod=') !== false)
+		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
 		{
-			$pos = $pos + strlen('index.php?mod='); 
+			$pos = $pos + strlen(INDEX_PAGE.'?mod='); 
 			$this->url = substr($this->url, $pos);
 			
 			if (($pos = strpos($this->url, 'sid')) !== false)
@@ -365,6 +365,7 @@ class session
 			'session_ip'			=> (string) $this->ip,
 			'session_user_type'		=> (string) $this->data['user_type'],
 			'session_admin'			=> (int) $session_admin,
+			'session_auth'			=> (int) serialize($_CLASS['core_auth']->auth_dump()),
 			'session_viewonline'	=> (int) $view_online,
 		);
 		
@@ -461,7 +462,7 @@ class session
 
 		$this->data['session_id'] = '';
 		$this->data['session_time'] = $this->data['session_admin'] = 0;
-		$this->need_url_id = $this->is_user = $this->is_bot 	= $this->is_admin = false;
+		$this->need_url_id = $this->is_user = $this->is_bot = $this->is_admin = false;
 	}
 	
 	function auth($data)
@@ -740,15 +741,15 @@ class user extends session
 			global $_CORE_MODULE, $_CLASS;
 			
 			$module = ($module) ? $module : $_CORE_MODULE['name'];
-			$lang = ($lang) ? $this->lang_name.'/' : '';
-			
-			if (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/'.$module."/images/$lang$img_file"))
+			$lang = ($lang) ? $lang : $this->lang_name;
+
+			if (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme."/images/modules/$module/$img_file"))
 			{
-				include($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/'.$module."/images/$lang$img_file");
+				include($site_file_root.'themes/'.$_CLASS['core_display']->theme."/images/modules/$module/$img_file");
 			}
 			else
 			{
-				include($site_file_root.'modules/'.$module."/images/$lang.$img_file");
+				include($site_file_root.'modules/'.$module."/images/$img_file");
 			}
 		}
 		else

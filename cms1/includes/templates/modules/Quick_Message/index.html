@@ -1,4 +1,4 @@
-{php} OpenTable(); {/php}
+{ $A_TABLE_OPEN }
 
 <table class="tablebg" width="100%" cellspacing="1px">
 	<tbody>
@@ -29,7 +29,7 @@
 			<td class="row1" rowspan="2" style="padding: 5px;" align="center" valign="top">
 				{ if $quick_message[quick_message_loop].USER_LINK } 
 					<a href="{ $quick_message[quick_message_loop].USER_LINK } "><b> { $quick_message[quick_message_loop].USER_NAME } </b></a><br /><br />
-					{ $quick_message[quick_message_loop].KARMA_IMG }
+					{ $quick_message[quick_message_loop].POSTER_AVATAR }
 				{ else }
 					<b> { $quick_message[quick_message_loop].USER_NAME } </b>
 				{ /if }
@@ -38,7 +38,7 @@
 			{ if $quick_message[quick_message_loop].DELETE_LINK }
 				<td class="row1">
 			{ else }
-				<td class="row1" colspan="2">
+				<td class="row1" style="height: 10px;" colspan="2">
 			{ /if }
 				<span class="gensmall">{ $quick_message[quick_message_loop].TIME }</span>
 			</td>
@@ -49,7 +49,7 @@
 			{ /if }
 		</tr>
 		<tr>
-			<td class="row1" style="padding: 2px;" colspan="2">
+			<td class="row1" valign="top" style="padding: 5px;" colspan="2">
 				{ $quick_message[quick_message_loop].MESSAGE }
 			</td>
 		</tr>
@@ -74,4 +74,4 @@
 	</tbody>
 </table>
 
-{php} CloseTable(); {/php}
+{ $A_TABLE_CLOSE }

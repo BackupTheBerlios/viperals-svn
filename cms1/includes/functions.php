@@ -31,9 +31,9 @@ function check_load_status($return = false)
 	
 	$load_status = 0;
 	
-	if (@file_exists('/proc/loadavg'))
+	if (file_exists('/proc/loadavg'))
 	{
-		if ($load = @file('/proc/loadavg'))
+		if ($load = file('/proc/loadavg'))
 		{
 			list($load_status) = explode(' ', $load[0]);
 
@@ -68,7 +68,7 @@ function check_maintance_status($return = false)
 	
 	if ($_CORE_CONFIG['maintenance']['active'])
 	{
-		if ($_CORE_CONFIG['maintenance']['time'] < time())
+		if ($_CORE_CONFIG['maintenance']['start'] < time())
 		{
 			if (VIPERAL == 'Admin' || (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin))
 			{
@@ -83,7 +83,7 @@ function check_maintance_status($return = false)
 			trigger_error($_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
 		}
 		
-		return $_CORE_CONFIG['maintenance']['time'];
+		return $_CORE_CONFIG['maintenance']['start'];
 	}
 	
 	return $maintance_status = false;
@@ -255,7 +255,7 @@ function generate_link($link = false, $link_options = false)
 		$options = array_merge($options, $link_options);
 	} 	
 	
-	$file = ($options['admin']) ? 'admin.php' : 'index.php';
+	$file = ($options['admin']) ? ADMIN_PAGE : INDEX_PAGE;
 	
 	if (!$link)
 	{
@@ -791,16 +791,13 @@ function url_redirect($url = false, $save = true)
 	$url = ($url) ? $url : generate_link(array('full' => true));
 	$url = str_replace('&amp;', '&', $url);
 	
-	// Redirect via an HTML form for PITA webservers
-	if (preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
+	if (preg_match('/IIS|Microsoft|WebSTAR|Xitami/', getenv('SERVER_SOFTWARE')))
 	{
 		header('Refresh: 0; URL=' . $url);
-		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($user->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
 		exit;
 	}
 
 	header('Location: ' . $url);
-	
     exit;
 }
 

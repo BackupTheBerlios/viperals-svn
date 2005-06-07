@@ -30,8 +30,8 @@
 // * Permissions?
 //    * List permissions granted to this user (in UCP and ACP UCP)
 
-if (!defined('VIPERAL')) {
-    header('location: ../../../');
+if (!defined('VIPERAL'))
+{
     die();
 }
 
@@ -92,7 +92,7 @@ class module
 	// Private methods, should not be overwritten
 	function create($module_type, $module_url, $selected_mod = false, $selected_submod = false)
 	{
-		global $_CLASS, $config, $mainindex;
+		global $_CLASS, $config;
 
 		$sql = 'SELECT module_id, module_title, module_filename, module_subs, module_acl
 			FROM ' . MODULES_TABLE . "
@@ -286,7 +286,7 @@ switch ($mode)
 	case 'activate':
 		$ucp->load('ucp', 'activate');
 		$ucp->module->ucp_activate();
-		redirect($mainindex);
+			url_redirect(generate_link());
 		break;
 		
 	case 'resend_act':
@@ -302,7 +302,7 @@ switch ($mode)
 	case 'register':
 		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS || isset($_REQUEST['not_agreed']))
 		{
-			redirect($mainindex);
+			url_redirect(generate_link());
 		}
 
 		$ucp->load('ucp', 'register');
@@ -318,7 +318,7 @@ switch ($mode)
 	
 		if ($_CLASS['core_user']->is_user || $_CLASS['core_user']->is_bot)
 		{
-			redirect(generate_link());
+			url_redirect(generate_link());
 		}
 
 		login_box();
@@ -365,7 +365,7 @@ switch ($mode)
 
 			$_CLASS['core_display']->meta_refresh(3, generate_link());
 
-			$message = $_CLASS['core_user']->lang['COOKIES_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'], '<a href="'.$mainindex.'">', '</a>');
+			$message = $_CLASS['core_user']->lang['COOKIES_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'], '<a href="'.generate_link().'">', '</a>');
 			trigger_error($message);
 
 		}
@@ -373,7 +373,8 @@ switch ($mode)
 		{
 			confirm_box(false, 'DELETE_COOKIES', '');
 		}
-		redirect($mainindex);
+		
+		url_redirect(generate_link());
 		break;
 }
 
@@ -384,7 +385,7 @@ if (!$_CLASS['core_user']->is_user)
 	if ($_CLASS['core_user']->is_bot)
 	{
 //error no access
-		redirect($mainindex);
+		url_redirect(generate_link());
 	}
 	
 	login_box('', $_CLASS['core_user']->lang['LOGIN_EXPLAIN_UCP']);

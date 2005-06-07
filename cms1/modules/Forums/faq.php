@@ -23,10 +23,11 @@
 // 
 // -------------------------------------------------------------
 
-if (!defined('VIPERAL')) {
-    header('location: ../../');
+if (!defined('VIPERAL'))
+{
     die();
 }
+
 require_once($site_file_root.'includes/forums/functions.php');
 loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 
@@ -38,29 +39,15 @@ $mode = request_var('mode', '');
 switch ($mode)
 {
 	case 'bbcode':
-		$l_title = $_CLASS['core_user']->lang['BBCODE_GUIDE'];
 		$_CLASS['core_user']->add_lang('help_bbcode','Forums');
+		$l_title = '';
+		//$l_title = $_CLASS['core_user']->lang['BBCODE_GUIDE'];
 		$link = '&amp;mode=bbcode';
 		break;
 
 	default:
 		$l_title = $_CLASS['core_user']->lang['FAQ'];
 		$link = '';
-		
-		/*Add languae check
-		$_CLASS['core_template']->caching = true;
-		
-		if($_CLASS['core_template']->is_cached('modules/Forums/faq_body.html')) {
-
-			require('header.php');
-			
-			$_CLASS['core_template']->display('modules/Forums/faq_body.html');
-			$_CLASS['core_template']->caching = false;
-
-			require('footer.php');
-
-			return;
-		}*/
 		
 		$_CLASS['core_user']->add_lang('help_faq','Forums');
 		

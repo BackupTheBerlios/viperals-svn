@@ -335,37 +335,26 @@ switch ($submit)
 	case 'presetsave':
 
 		$holding_ary = array();
-		foreach ($auth_settings as $auth_submode => $auth_setting)
+	
+		$auth_setting = $auth_settings[(!empty($submode) ? $submode : $mode)];
+
+		foreach ($auth_setting as $option => $setting)
 		{
-			foreach ($auth_setting as $option => $setting)
+			switch ($setting)
 			{
-				switch ($setting)
-				{
-					case ACL_YES:
-						$holding_ary['yes'][] = $option;
-						break;
-	
-					case ACL_NO:
-						$holding_ary['no'][] = $option;
-						break;
-	
-					case ACL_UNSET:
-						$holding_ary['unset'][] = $option;
-						break;
-						
-					/*
-					used in Moderators permissions
-					need to ingnore conversion to javescript
-						along with another setting so it's goes to unset if it regular permissions
-					case '*':
-						$holding_ary['ignore'][] = $option;
-						break;*/
-				}
+				case ACL_YES:
+					$holding_ary['yes'][] = $option;
+					break;
+
+				case ACL_NO:
+					$holding_ary['no'][] = $option;
+					break;
+
+				case ACL_UNSET:
+					$holding_ary['unset'][] = $option;
+					break;
 			}
 		}
-
-		unset($option);
-		unset($setting);
 
 		$sql = array(
 			'preset_user_id'=> intval($_CLASS['core_user']->data['user_id']),
@@ -385,11 +374,12 @@ switch ($submit)
 
 			add_log('admin', 'LOG_ACL_PRESET_ADD', $sql['preset_name']);
 		}
-		unset($sql);
+		unset($sql, $option, $setting, $auth_setting);
 
 		break;
 
 	case 'presetdel':
+
 		if (!empty($_POST['presetoption']))
 		{
 			$sql = "SELECT preset_name 

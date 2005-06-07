@@ -13,7 +13,7 @@
 //																//
 //**************************************************************//
 // Add channel support, rss_data[channel][item][item_branch]
-// currect channel info
+// add atom support seems to be kind of popular
 
 class core_rss
 {
@@ -26,7 +26,7 @@ class core_rss
 	var $send_cookie = false;
 	var $error = '';
 
-	function setup($channel, $item_tags = false, $channel_tags = false)
+	function setup($channel = false, $item_tags = false, $channel_tags = false)
 	{
 		$this->feed_type = 0;
 		$this->rss_data = array();
@@ -153,7 +153,7 @@ class core_rss
 				while (!empty($data))
 				{
 					$data = strtolower(trim(fgets($this->fp, 300)));
-					// needs some work
+
 					if (strpos('location:', $data) == true)
 					{
 						$new_url = trim(eregi_replace('location:', '', $data));
@@ -177,7 +177,6 @@ class core_rss
 	
 		while (!empty($data))
 		{
-			//echo $data.'<br/>';
 			$data = strtolower(trim(fgets($this->fp, 300)));
 			
 			if (strpos($data, 'content-type') !== false && strpos($data, 'xml') === false)
@@ -205,7 +204,7 @@ class core_rss
 
 		$this->feed_type = false;
 		$this->item = 0;
-		$this->itemopen = false;
+		$this->item_open = false;
 		$this->title_type = false;
 		$this->rss_data = array();
 		$this->rss_expire = 0;
@@ -216,18 +215,14 @@ class core_rss
 		while(!feof($this->fp))
 		{
 			$data .= fread($this->fp, 1024);
-			
-			/*if ($this->item > $this->items_limit)
-			{
-				break;
-			}*/
-			//$status = xml_parse($this->rss_parser, fread($this->fp, 1024), false);
 		}
 		
 		if ($compressed)
 		{
 			$data = gzinflate(substr($data,10));
 		}
+		
+		//$data = str_replace('â', '', $data);
 
 		$status = xml_parse($this->rss_parser, $data, true);
 		
@@ -263,7 +258,8 @@ class core_rss
 		
 		if (strpos($element, ':'))
 		{
-			list($element) = explode(':', $element, 2);
+			$elements = explode(':', $element, 2);
+			$element = $elements[0];
 		}
 			
 		if (!$this->feed_type)
@@ -278,6 +274,10 @@ class core_rss
 					$this->feed_type = 'RSS';
 					break;
 				
+				Case 'feed':
+					$this->feed_type = 'ATOM';
+					break;
+
 				default:
 					$this->Close_connection();
 					die('unhandled type');
@@ -286,26 +286,31 @@ class core_rss
 			$attrs = array_change_key_case($attrs, CASE_LOWER);
 			
 			$this->rss_info['format'] = $element;
-			$this->rss_info['version'] = $attrs['version'];
-			
-			return;
-		}
-		if ($element == 'item')
-		{
-			$this->itemopen = true;
+			$this->rss_info['version'] = (isset($attrs['version'])) ? $attrs['version'] : '';
 			return;
 		}
 		
-		if ($this->itemopen)
+		if ($element == 'item' || $element == 'entry')
+		{
+			$this->item_open = true;
+			return;
+		}
+		elseif ($element == 'channel' || $element == 'feed')
+		{
+			$this->channel_open = true;
+			return;
+		}
+		
+		if ($this->item_open)
 		{
 			if (in_array($element, $this->item_tags))
 			{
 				$this->title_type = $element;
-				//echo $this->title_type.'<br />';
-			} else {
-				$this->title_type = false;
 			}
-		} else  {
+			return;
+		}
+		else
+		{
 			$this->title_type = $element;
 		}
 	}
@@ -314,40 +319,45 @@ class core_rss
 	{
 		if ($this->title_type)
 		{
-			// Look into whys of romoving unwanted code.
-			// No html/jave/etc code should run with when the rss is parsed
-			$cdata = htmlspecialchars(html_entity_decode($cdata));
+			// have some problems here
+			$cdata = htmlspecialchars(html_entity_decode($cdata, ENT_QUOTES), ENT_QUOTES);
 
-			if ($this->itemopen)
+			if ($this->item_open)
 			{
-				$this->rss_data[$this->item][$this->title_type] = $cdata;
-			} else {
-				$this->rss_info[$this->title_type] = $cdata;
+				$this->rss_data[$this->item][$this->title_type] .= $cdata;
 			}
-			
-			// We can do "if (trim($cdata))", but this is better
-			$this->title_type = false;
+			elseif ($this->channel_open)
+			{
+				$this->rss_info[$this->title_type] .= $cdata;
+			}
 		}
 	}
 	
 	function tag_close($parser, $element)
 	{
 		$element = strtolower($element);
+		
 		if (strpos( $element, ':' ))
 		{
 			list($element) = explode(':', $element, 2);
 		}
 			
-		if ($element == 'item')
+		if ($element == 'item' || $element == 'entry')
 		{
-			$this->itemopen = false;
+			$this->item_open = false;
 			$this->item++;
 		}
+		elseif ($element == 'channel' || $element == 'feed')
+		{
+			$this->channel_open = false;
+		}
+		
+		$this->title_type = false;
 	}
 	
 	function Close_connection()
 	{
-			fwrite($this->fp, "Connection: close\r\n\r\n");
-			fclose($this->fp);
+		fwrite($this->fp, "Connection: close\r\n\r\n");
+		fclose($this->fp);
 	}
 }

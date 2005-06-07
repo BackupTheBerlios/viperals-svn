@@ -1,0 +1,46 @@
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<td class="cat" colspan="5" align="right"><a class="nav" href="{$U_MARK_FORUMS}">{$L_MARK_FORUMS_READ}</a>&nbsp;</td>
+	</tr>
+	<tr>
+		<th colspan="2" nowrap="nowrap">&nbsp;{$L_FORUM}&nbsp;</th>
+		<th width="50" nowrap="nowrap">&nbsp;{$L_TOPICS}&nbsp;</th>
+		<th width="50" nowrap="nowrap">&nbsp;{$L_POSTS}&nbsp;</th>
+		<th nowrap="nowrap">&nbsp;{$L_LAST_POST}&nbsp;</th>
+	</tr>
+	{section name=forumrowloop loop=$forumrow}
+	{ if $forumrow[forumrowloop].S_IS_CAT }
+	<tr>
+		<td class="cat" colspan="2"><a class="cattitle" href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a></td>
+		<td class="catdiv" colspan="3" align="right">&nbsp;</td>
+	</tr>
+	{ elseif $forumrow[forumrowloop].S_IS_LINK }
+	<tr>
+		<td class="row1" width="50" height="50" align="center" valign="middle">{$forumrow[forumrowloop].FORUM_FOLDER_IMG}</td>
+		<td class="row1" height="50"><a class="forumlink" href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a><br />
+			<table cellspacing="5" cellpadding="0" border="0">
+				<tr>
+					<td><span class="gensmall">{$forumrow[forumrowloop].FORUM_DESC}</span></td>
+				</tr>
+			</table></td>
+		<td class="row2" colspan="3" align="center" valign="middle" height="50">{ if $forumrow[forumrowloop].CLICKS }<span class="gensmall">{$L_REDIRECTS}: {$forumrow[forumrowloop].CLICKS}</span>{ /if }</td>
+	</tr>
+	{ else }
+	<tr>
+		<td class="row1" width="50" height="50" align="center" valign="middle">{$forumrow[forumrowloop].FORUM_FOLDER_IMG}</td>
+		<td class="row1" width="100%" height="50" valign="top"><a class="forumlink"  href="{$forumrow[forumrowloop].U_VIEWFORUM}">{$forumrow[forumrowloop].FORUM_NAME}</a><br />
+			<table cellspacing="5" cellpadding="0" border="0">
+				<tr>
+					<td><span class="gensmall">{$forumrow[forumrowloop].FORUM_DESC}</span></td>
+				</tr>
+			</table><span class="gensmall">{ if $forumrow[forumrowloop].MODERATORS }<b>{$forumrow[forumrowloop].L_MODERATOR_STR}:</b> {$forumrow[forumrowloop].MODERATORS}<br />{ /if }{ if $forumrow[forumrowloop].SUBFORUMS }<br /><b>{$forumrow[forumrowloop].L_SUBFORUM_STR}</b> {$forumrow[forumrowloop].SUBFORUMS}{ /if }</span></td>
+		<td class="row2" align="center" valign="middle" height="50"><span class="gensmall">{$forumrow[forumrowloop].TOPICS}</span></td>
+		<td class="row2" align="center" valign="middle" height="50"><span class="gensmall">{$forumrow[forumrowloop].POSTS}</span></td>
+		<td class="row2" align="center" valign="middle" height="50" nowrap="nowrap"><span class="gensmall">{ if $forumrow[forumrowloop].LAST_POST_TIME }{$forumrow[forumrowloop].LAST_POST_TIME}<br />{ if $forumrow[forumrowloop].U_LAST_POSTER }<a href="{$forumrow[forumrowloop].U_LAST_POSTER}">{$forumrow[forumrowloop].LAST_POSTER}</a>
+		{ else }{$forumrow[forumrowloop].LAST_POSTER}[forumrowloop] { /if }<a href="{$forumrow[forumrowloop].U_LAST_POST}">{$forumrow[forumrowloop].LAST_POST_IMG}</a>{ else }{$L_NO_POSTS}{ /if }</span></td>
+	</tr>
+	{ /if }
+	{ /section }
+</table>
+
+<br clear="all" />

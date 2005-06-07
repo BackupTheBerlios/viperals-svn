@@ -421,15 +421,6 @@ switch ($mode)
 	</tr>
 <?php
 
-/*if ($forum_type == FORUM_POST || $forum_type == FORUM_CAT)
-		{
-	<tr>
-		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['FORUM_STYLE'] ?>: </b></td>
-		<td class="row2"><select name="forum_style"><option value="0"><?php echo $_CLASS['core_user']->lang['DEFAULT_STYLE'] ?></option><?php echo $styles_list ?></select></td>
-	</tr>
-
-		}*/
-
 		if ($forum_type == FORUM_POST)
 		{
 
@@ -877,7 +868,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	</tr>
 </table></form>
 
-<form method="get" action="<?php echo generate_link('Forums&amp;file=admin_forums', array('admin' => true)) ?>"><table width="100%" cellpadding="1" cellspacing="1" border="0">
+<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_forums', array('admin' => true)) ?>"><table width="100%" cellpadding="1" cellspacing="1" border="0">
 	<tr>
 		<td align="right"><?php echo $_CLASS['core_user']->lang['SELECT_FORUM']; ?>: <select name="parent_id" onchange="if(this.options[this.selectedIndex].value != -1){ this.form.submit(); }"><?php echo $forum_box; ?></select> <input class="btnlite" type="submit" value="<?php echo $_CLASS['core_user']->lang['GO']; ?>" /><input type="hidden" name="sid" value="<?php echo $_CLASS['core_user']->session_id; ?>" /></td>
 	</tr>

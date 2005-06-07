@@ -25,7 +25,6 @@ class ucp_prefs extends module
 		{
 			case 'personal':
 
-
 				if ($submit)
 				{
 					$var_ary = array(
@@ -196,7 +195,6 @@ class ucp_prefs extends module
 						'post_sk'	=> (string) 't',
 						'post_sd'	=> (string) 'a',
 						'post_st'	=> 0,
-						'minkarma'	=> (int) -5, 
 
 						'images'	=> true, 
 						'flash'		=> false, 
@@ -243,7 +241,6 @@ class ucp_prefs extends module
 
 							'user_topic_show_days'	=> $topic_st,
 							'user_post_show_days'	=> $post_st,
-							'user_min_karma'	=> $minkarma, 
 						);
 
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
@@ -309,14 +306,6 @@ class ucp_prefs extends module
 					${'s_sort_' . $sort_option . '_dir'} .= '</select>';
 				}
 				
-				$s_min_karma_options = '';
-				$minkarma = (isset($minkarma)) ? $minkarma : $_CLASS['core_user']->data['user_min_karma'];
-				for ($i = -5; $i < 6; $i++)
-				{
-					$selected = ($i == $minkarma) ? ' selected="selected"' : '';
-					$s_min_karma_options .= "<option value=\"$i\"$selected>$i</option>";
-				}
-
 				$images = (isset($images)) ? $images : $_CLASS['core_user']->optionget('viewimg');
 				$images_yes = ($images) ? ' checked="checked"' : '';
 				$images_no = (!$images) ? ' checked="checked"' : '';
@@ -347,12 +336,10 @@ class ucp_prefs extends module
 					'L_DISABLE_CENSORS'		=> $_CLASS['core_user']->lang['DISABLE_CENSORS'],
 					'L_VIEW_TOPICS_DAYS'	=> $_CLASS['core_user']->lang['VIEW_TOPICS_DAYS'],
 					'L_VIEW_TOPICS_KEY'		=> $_CLASS['core_user']->lang['VIEW_TOPICS_KEY'],
-					'L_MINIMUM_KARMA'			=> $_CLASS['core_user']->lang['MINIMUM_KARMA'],
-					'L_MINIMUM_KARMA_EXPLAIN'	=> $_CLASS['core_user']->lang['MINIMUM_KARMA_EXPLAIN'],
 					'L_VIEW_TOPICS_DIR'		=> $_CLASS['core_user']->lang['VIEW_TOPICS_DIR'],
 					
-					'L_VIEW_POSTS_DAYS'			=> $_CLASS['core_user']->lang['VIEW_POSTS_DAYS'],
-					'L_VIEW_POSTS_KEY'	=> $_CLASS['core_user']->lang['VIEW_POSTS_KEY'],
+					'L_VIEW_POSTS_DAYS'		=> $_CLASS['core_user']->lang['VIEW_POSTS_DAYS'],
+					'L_VIEW_POSTS_KEY'		=> $_CLASS['core_user']->lang['VIEW_POSTS_KEY'],
 					'L_VIEW_POSTS_DIR'		=> $_CLASS['core_user']->lang['VIEW_POSTS_DIR'],
 					
 					'VIEW_IMAGES_YES'		=> $images_yes, 
@@ -368,7 +355,6 @@ class ucp_prefs extends module
 					'DISABLE_CENSORS_YES'	=> $wordcensor_yes, 
 					'DISABLE_CENSORS_NO'	=> $wordcensor_no,
 
-					'S_MIN_KARMA_OPTIONS'	=> $s_min_karma_options, 
 					'S_CHANGE_CENSORS'		=> ($_CLASS['auth']->acl_get('u_chgcensors')) ? true : false, 
 
 					'S_TOPIC_SORT_DAYS'		=> $s_limit_topic_days,

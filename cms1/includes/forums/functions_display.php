@@ -23,9 +23,9 @@
 // 
 // -------------------------------------------------------------
 
-function display_forums($root_data = '', $display_moderators = TRUE)
+function display_forums($root_data = '', $display_moderators = true)
 {
-	global $config, $SID, $_CLASS, $_CORE_CONFIG, $forum_moderators;
+	global $config, $_CLASS, $_CORE_CONFIG;
 
 	// Get posted/get info
 	$mark_read = request_var('mark', '');
@@ -292,7 +292,7 @@ function display_forums($root_data = '', $display_moderators = TRUE)
 			$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'];
 			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
 			
-			$last_post_url = generate_link('Forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].$SID.'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
+			$last_post_url = generate_link('Forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
 		}
 		else
 		{

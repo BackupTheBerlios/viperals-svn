@@ -150,13 +150,6 @@ $display_vars = array(
 			'max_post_smilies'	=> array('lang' => 'SMILIES_LIMIT',		'type' => 'text:4:4', 'explain' => true),
 			'max_quote_depth'	=> array('lang' => 'QUOTE_DEPTH_LIMIT',	'type' => 'text:4:4', 'explain' => true)
 		)
-	),
-	'auth' => array(
-		'auth'	=> 'a_server',
-		'title'	=> 'AUTH_SETTINGS',
-		'vars'	=> array(
-			'auth_method'	=> array('lang' => 'AUTH_METHOD',	'type' => 'select', 'options' => 'select_auth_method(\'{VALUE}\')', 'explain' => false)
-		)
 	)
 );
 

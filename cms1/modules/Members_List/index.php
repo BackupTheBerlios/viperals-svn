@@ -24,12 +24,12 @@
 // -------------------------------------------------------------
 
 
-if (!defined('VIPERAL')) {
-    header('location: ../../');
+if (!defined('VIPERAL'))
+{
     die();
 }
-require_once($site_file_root.'includes/forums/functions.'.$phpEx);
-loadclass($site_file_root.'includes/forums/auth.'.$phpEx, 'auth');
+require_once($site_file_root.'includes/forums/functions.php');
+loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['core_user']->add_lang();
 $_CLASS['core_user']->add_img(0, 'Forums');
@@ -38,8 +38,8 @@ $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_template']->assign(array(
 	'S_SEARCH_USER' => false,
-	'S_SHOW_GROUP' => false)
-);
+	'S_SHOW_GROUP' => false
+	));
 
 // Grab data
 $form = false;
@@ -132,14 +132,14 @@ switch ($mode)
 				$lang = 'JABBER';
 				$sql_field = 'user_jabber';
 				$s_select = (@extension_loaded('xml')) ? 'S_SEND_JABBER' : 'S_NO_SEND_JABBER';
-				$s_action = getlink("Members_List&amp;mode=contact&amp;action=$action&amp;u=$user_id");
+				$s_action = generate_link("Members_List&amp;mode=contact&amp;action=$action&amp;u=$user_id");
 				break;
 
 			default:
 				$lang = 'JABBER';
 				$sql_field = 'user_jabber';
 				$s_select = (@extension_loaded('xml')) ? 'S_SEND_JABBER' : 'S_NO_SEND_JABBER';
-				$s_action = getlink("Members_List&amp;mode=contact&amp;action=$action&amp;u=$user_id");
+				$s_action = generate_link("Members_List&amp;mode=contact&amp;action=$action&amp;u=$user_id");
 				break;
 		}
 
@@ -167,7 +167,7 @@ switch ($mode)
 				if ($submit && @extension_loaded('xml'))
 				{
 					// Add class loader
-					require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+					require_once($site_file_root.'includes/forums/functions_messenger.php');
 
 					$subject = sprintf($_CLASS['core_user']->lang['IM_JABBER_SUBJECT'], $_CLASS['core_user']->data['username'], $config['server_name']);
 					$message = $_POST['message'];
@@ -234,7 +234,7 @@ switch ($mode)
 		}
 
 		// We left join on the session table to see if the user is currently online
-		$sql = 'SELECT username, user_id, user_type, group_id, user_colour, user_permissions, user_karma, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_lastvisit
+		$sql = 'SELECT username, user_id, user_type, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_lastvisit
 			FROM ' . USERS_TABLE . "
 			WHERE user_id = $user_id
 				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
@@ -380,7 +380,7 @@ switch ($mode)
 		if ($member['user_sig_bbcode_bitfield'] && $member['user_sig'])
 		{
 			// Add class loader
-			require_once($site_file_root.'includes/forums/bbcode.'.$phpEx);
+			require_once($site_file_root.'includes/forums/bbcode.php');
 			$bbcode = new bbcode();
 			$bbcode->bbcode_second_pass($member['user_sig'], $member['user_sig_bbcode_uid'], $member['user_sig_bbcode_bitfield']);
 		}
@@ -413,7 +413,7 @@ switch ($mode)
 		$profile_fields = array();
 		if ($config['load_cpf_viewprofile'])
 		{
-			require_once($site_file_root.'includes/forums/functions_profile_fields.' . $phpEx);
+			require_once($site_file_root.'includes/forums/functions_profile_fields.php');
 			$cp = new custom_profile();
 			$profile_fields = $cp->generate_profile_fields_template('grab', $user_id);
 
@@ -445,14 +445,14 @@ switch ($mode)
 			'JABBER_IMG'	=> $_CLASS['core_user']->img('btn_jabber', $_CLASS['core_user']->lang['JABBER']),
 			'SEARCH_IMG'	=> $_CLASS['core_user']->img('btn_search', $_CLASS['core_user']->lang['SEARCH']),
 
-			'S_PROFILE_ACTION'	=> getlink('Members_List&amp;mode=group'),
+			'S_PROFILE_ACTION'	=> generate_link('Members_List&amp;mode=group'),
 			'S_GROUP_OPTIONS'	=> $group_options,
 			'S_CUSTOM_FIELDS'	=> (isset($profile_fields['row']) && sizeof($profile_fields['row'])) ? true : false,
 			
-			'U_ADD_FRIEND'		=> getlink('Control_Panel&amp;i=zebra&amp;add=' . urlencode($member['username'])),
-			'U_ADD_FOE'			=> getlink('Control_Panel&amp;i=zebra&amp;mode=foes&amp;add=' . urlencode($member['username'])),
-			'U_ACTIVE_FORUM'	=> getlink('Forums&amp;file=viewforum&amp;f='.$active_f_id),
-			'U_ACTIVE_TOPIC'	=> getlink('Forums&amp;file=viewtopic&amp;t='.$active_t_id),
+			'U_ADD_FRIEND'		=> generate_link('Control_Panel&amp;i=zebra&amp;add=' . urlencode($member['username'])),
+			'U_ADD_FOE'			=> generate_link('Control_Panel&amp;i=zebra&amp;mode=foes&amp;add=' . urlencode($member['username'])),
+			'U_ACTIVE_FORUM'	=> generate_link('Forums&amp;file=viewforum&amp;f='.$active_f_id),
+			'U_ACTIVE_TOPIC'	=> generate_link('Forums&amp;file=viewtopic&amp;t='.$active_t_id),
 			
 			'L_VIEWING_PROFILE' 	=> sprintf($_CLASS['core_user']->lang['VIEWING_PROFILE'], $member['username']),
 			'L_USER_PRESENCE' 		=> $_CLASS['core_user']->lang['USER_PRESENCE'],
@@ -621,7 +621,7 @@ switch ($mode)
 				$result = $_CLASS['core_db']->sql_query($sql);
 
 				// Add class loader
-				require_once($site_file_root.'includes/forums/functions_messenger.'.$phpEx);
+				require_once($site_file_root.'includes/forums/functions_messenger.php');
 
 				$email_tpl	= (!$topic_id) ? 'profile_send_email' : 'email_notify';
 				$email_lang = (!$topic_id) ? $row['user_lang'] : $email_lang;
@@ -658,14 +658,14 @@ switch ($mode)
 					'MESSAGE'		=> $message,
 					'TOPIC_NAME'	=> ($topic_id) ? strtr($row['topic_title'], array_flip(get_html_translation_table(HTML_ENTITIES))) : '',
 
-					'U_TOPIC'	=> ($topic_id) ? getlink('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'] . "&t=$topic_id", true, true, false) : '')
+					'U_TOPIC'	=> ($topic_id) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'] . "&t=$topic_id", true, true, false) : '')
 				);
 
 				$messenger->send($row['user_notify_type']);
 				$messenger->save_queue();
 
-				$_CLASS['core_display']->meta_refresh(3, getlink());
-				$message = (!$topic_id) ? sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="' . getlink() . '">', '</a>') : sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'],  '<a href="'.getlink("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id']) . '">', '</a>');
+				$_CLASS['core_display']->meta_refresh(3, generate_link());
+				$message = (!$topic_id) ? sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="' . generate_link() . '">', '</a>') : sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'],  '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id']) . '">', '</a>');
 				trigger_error($_CLASS['core_user']->lang['EMAIL_SENT'] . '<br /><br />' . $message);
 			}
 		}
@@ -677,7 +677,7 @@ switch ($mode)
 				'NAME'			=> htmlspecialchars($name),
 				'TOPIC_TITLE'	=> $row['topic_title'],
 
-				'U_TOPIC'	=> getlink("Forums&amp;file=viewtopic&amp;f={$row['forum_id']}&amp;t=$topic_id"),
+				'U_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;f={$row['forum_id']}&amp;t=$topic_id"),
 				'S_LANG_OPTIONS'=> ($topic_id) ? language_select($email_lang) : '')
 			);
 		}
@@ -687,7 +687,7 @@ switch ($mode)
 
 			'L_EMAIL_BODY_EXPLAIN'	=> (!$topic_id) ? $_CLASS['core_user']->lang['EMAIL_BODY_EXPLAIN'] : $_CLASS['core_user']->lang['EMAIL_TOPIC_EXPLAIN'],
 
-			'S_POST_ACTION' => (!$topic_id) ? getlink('Members_List&amp;mode=email&amp;u='.$user_id) : getlink("Members_List&amp;mode=email&amp;f=$forum_id&amp;t=$topic_id"),
+			'S_POST_ACTION' => (!$topic_id) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id) : generate_link("Members_List&amp;mode=email&amp;f=$forum_id&amp;t=$topic_id"),
 			'S_SEND_USER'	=> (!$topic_id) ? true : false,
 			'L_EMPTY_MESSAGE_EMAIL' => $_CLASS['core_user']->lang['EMPTY_MESSAGE_EMAIL'],
 			'L_EMPTY_SUBJECT_EMAIL' => $_CLASS['core_user']->lang['EMPTY_SUBJECT_EMAIL'],
@@ -789,7 +789,7 @@ switch ($mode)
 			$sql_where .= ($aim) ? " AND u.user_aim LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($aim)) ."' " : '';
 			$sql_where .= ($yahoo) ? " AND u.user_yim LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($yahoo)) ."' " : '';
 			$sql_where .= ($msn) ? " AND u.user_msnm LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($msn)) ."' " : '';
-			$sql_where .= ($jabber) ? " AND u.user_jabber LIKE '" . str_replace('*', '%', $db->sql_escape($jabber)) . "' " : '';
+			$sql_where .= ($jabber) ? " AND u.user_jabber LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($jabber)) . "' " : '';
 			$sql_where .= (is_numeric($count)) ? ' AND u.user_posts ' . $find_key_match[$count_select] . ' ' . (int) $count . ' ' : '';
 			$sql_where .= (sizeof($joined) > 1) ? " AND u.user_regdate " . $find_key_match[$joined_select] . ' ' . gmmktime(0, 0, 0, intval($joined[1]), intval($joined[2]), intval($joined[0])) : '';
 			$sql_where .= (sizeof($active) > 1) ? " AND u.user_lastvisit " . $find_key_match[$active_select] . ' ' . gmmktime(0, 0, 0, $active[1], intval($active[2]), intval($active[0])) : '';
@@ -890,7 +890,7 @@ switch ($mode)
 				'AVATAR_IMG'	=> $avatar_img,
 				'RANK_IMG'		=> $rank_img,
 
-				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $group_receive_pm && $config['allow_mass_pm']) ? getlink('Control_Panel&amp;i=pm&amp;mode=compose&amp;g='.$group_id) : '')
+				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $group_receive_pm && $config['allow_mass_pm']) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;g='.$group_id) : '')
 			);
 
 			$sql_from = ', ' . USER_GROUP_TABLE . ' ug ';
@@ -972,7 +972,7 @@ switch ($mode)
 //				'S_USERNAME_OPTIONS'	=> $username_list,
 				'S_JOINED_TIME_OPTIONS' => $s_find_join_time,
 				'S_ACTIVE_TIME_OPTIONS' => $s_find_active_time,
-				'S_SEARCH_ACTION' 		=> getlink("Members_List&amp;mode=searchuser&amp;form=$form&amp;field=$field"))
+				'S_SEARCH_ACTION' 		=> generate_link("Members_List&amp;mode=searchuser&amp;form=$form&amp;field=$field"))
 			);
 		}
 
@@ -991,7 +991,7 @@ switch ($mode)
 		$_CLASS['core_db']->sql_freeresult($result);
 		
 		// Do the SQL thang
-		$sql = 'SELECT u.username, u.user_id, u.user_karma, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_lastvisit
+		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_lastvisit
 			FROM ' . USERS_TABLE . " u$sql_from
 			WHERE u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ")
 				$sql_where
@@ -1009,7 +1009,7 @@ switch ($mode)
 		// Load custom profile fields
 		if ($config['load_cpf_memberlist'])
 		{
-			include($site_file_root. 'includes/forums/functions_profile_fields.' . $phpEx);
+			include($site_file_root. 'includes/forums/functions_profile_fields.php');
 			$cp = new custom_profile();
 			// Grab all profile fields from users in id cache for later use - similar to the poster cache
 			$profile_fields_cache = $cp->generate_profile_fields_template('grab', array_keys($id_cache));
@@ -1028,7 +1028,7 @@ switch ($mode)
 			$memberrow = array_merge(show_profile($row), array(
 				'ROW_NUMBER'		=> $i + ($start + 1),
 				'S_CUSTOM_PROFILE'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false,
-				'U_VIEWPROFILE'		=> getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']))
+				'U_VIEWPROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']))
 			);
 
 			if (isset($cp_row['row']) && sizeof($cp_row['row']))
@@ -1090,41 +1090,37 @@ switch ($mode)
 		'L_GROUP_DESC'			=> $_CLASS['core_user']->lang['GROUP_DESC'],
 		'L_GROUP_INFORMATION'	=> $_CLASS['core_user']->lang['GROUP_INFORMATION'],
 		
-		'U_FIND_MEMBER'		=> (!empty($config['load_search']) || $_CLASS['auth']->acl_get('a_')) ? getlink('Members_List&amp;mode=searchuser') : '',
-		'U_SORT_USERNAME'	=> getlink($pagination_url . '&amp;sk=a&amp;sd=' . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_FROM'		=> getlink($pagination_url . '&amp;sk=b&amp;sd=' . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_JOINED'		=> getlink($pagination_url . '&amp;sk=c&amp;sd=' . (($sort_key == 'c' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_POSTS'		=> getlink($pagination_url . '&amp;sk=d&amp;sd=' . (($sort_key == 'd' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_EMAIL'		=> getlink($pagination_url . '&amp;sk=e&amp;sd=' . (($sort_key == 'e' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_WEBSITE'	=> getlink($pagination_url . '&amp;sk=f&amp;sd=' . (($sort_key == 'f' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_ICQ'		=> getlink($pagination_url . '&amp;sk=g&amp;sd=' . (($sort_key == 'g' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_AIM'		=> getlink($pagination_url . '&amp;sk=h&amp;sd=' . (($sort_key == 'h' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_MSN'		=> getlink($pagination_url . '&amp;sk=i&amp;sd=' . (($sort_key == 'i' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_YIM'		=> getlink($pagination_url . '&amp;sk=j&amp;sd=' . (($sort_key == 'j' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_ACTIVE'		=> getlink($pagination_url . '&amp;sk=k&amp;sd=' . (($sort_key == 'k' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
-		'U_SORT_RANK'		=> getlink($pagination_url . '&amp;sk=l&amp;sd=' . (($sort_key == 'l' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_FIND_MEMBER'		=> (!empty($config['load_search']) || $_CLASS['auth']->acl_get('a_')) ? generate_link('Members_List&amp;mode=searchuser') : '',
+		'U_SORT_USERNAME'	=> generate_link($pagination_url . '&amp;sk=a&amp;sd=' . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_FROM'		=> generate_link($pagination_url . '&amp;sk=b&amp;sd=' . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_JOINED'		=> generate_link($pagination_url . '&amp;sk=c&amp;sd=' . (($sort_key == 'c' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_POSTS'		=> generate_link($pagination_url . '&amp;sk=d&amp;sd=' . (($sort_key == 'd' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_EMAIL'		=> generate_link($pagination_url . '&amp;sk=e&amp;sd=' . (($sort_key == 'e' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_WEBSITE'	=> generate_link($pagination_url . '&amp;sk=f&amp;sd=' . (($sort_key == 'f' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_ICQ'		=> generate_link($pagination_url . '&amp;sk=g&amp;sd=' . (($sort_key == 'g' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_AIM'		=> generate_link($pagination_url . '&amp;sk=h&amp;sd=' . (($sort_key == 'h' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_MSN'		=> generate_link($pagination_url . '&amp;sk=i&amp;sd=' . (($sort_key == 'i' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_YIM'		=> generate_link($pagination_url . '&amp;sk=j&amp;sd=' . (($sort_key == 'j' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_ACTIVE'		=> generate_link($pagination_url . '&amp;sk=k&amp;sd=' . (($sort_key == 'k' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
+		'U_SORT_RANK'		=> generate_link($pagination_url . '&amp;sk=l&amp;sd=' . (($sort_key == 'l' && $sort_dir == 'a') ? 'd' : 'a'), false, false),
 
 		'S_SHOW_GROUP'		=> ($mode == 'group') ? true : false,
 		'S_MODE_SELECT'		=> $s_sort_key,
 		'S_ORDER_SELECT'	=> $s_sort_dir,
-		'S_MODE_ACTION'		=> getlink('Members_List&amp;mode=searchuser' . (($form) ? "&amp;form=$form" : '')))
+		'S_MODE_ACTION'		=> generate_link('Members_List&amp;mode=searchuser' . (($form) ? "&amp;form=$form" : '')))
 	);
 }
 
 
 // Output the page
-if (!$form) {
-
+if (!$form)
+{
 	$_CLASS['core_display']->display_head($page_title);
 	
 	page_header();
 	
-	OpenTable();
-	
-	//make_jumpbox(getlink("Forums&amp;file=viewforum"));
 	$_CLASS['core_template']->display('modules/Members_List/'.$template_html);
 
-	CloseTable();
 	$_CLASS['core_display']->display_footer();
 
 } else {
@@ -1184,27 +1180,25 @@ function show_profile($data)
 		'USERNAME'		=> $username,
 		'USER_COLOR'	=> (!empty($data['user_colour'])) ? $data['user_colour'] : '',
 		'RANK_TITLE'	=> $rank_title,
-		'KARMA'			=> ($config['enable_karma']) ? $_CLASS['core_user']->lang['KARMA'][$data['user_karma']] : '',  
 
 		'JOINED'		=> $_CLASS['core_user']->format_date($data['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
 		'VISITED'		=> (empty($last_visit)) ? ' - ' : $_CLASS['core_user']->format_date($last_visit, $_CLASS['core_user']->lang['DATE_FORMAT']),
 		'POSTS'			=> ($data['user_posts']) ? $data['user_posts'] : 0,
 
-		'KARMA_IMG'		=>	($config['enable_karma']) ? $_CLASS['core_user']->img('karma_center', $_CLASS['core_user']->lang['KARMA'][$data['user_karma']], false, (int) $data['user_karma']) : '',  
 		'ONLINE_IMG'	=> (intval($data['session_time']) >= time() - ($config['load_online_time'] * 60)) ? $_CLASS['core_user']->img('btn_online', $_CLASS['core_user']->lang['USER_ONLINE']) : $_CLASS['core_user']->img('btn_offline', $_CLASS['core_user']->lang['USER_ONLINE']),
 		'RANK_IMG'		=> $rank_img,
 		'ICQ_STATUS_IMG'=> (!empty($data['user_icq'])) ? '<img src="http://web.icq.com/whitepages/online?icq=' . $data['user_icq'] . '&amp;img=5" width="18" height="18" border="0" />' : '',
 		
-		'U_PROFILE'		=> getlink('Members_List&amp;mode=viewprofile&amp;u='.$user_id),
-		'U_SEARCH_USER'	=> ($_CLASS['auth']->acl_get('u_search')) ? getlink('Forums&amp;file=search&amp;search_author=' . urlencode($username) . '&amp;show_results=posts') : '',
-		'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? getlink('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$user_id) : '',
+		'U_PROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$user_id),
+		'U_SEARCH_USER'	=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($username) . '&amp;show_results=posts') : '',
+		'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$user_id) : '',
 		'U_EMAIL'		=> $email,
 		'U_WWW'			=> (!empty($data['user_website'])) ? $data['user_website'] : '',
-		'U_ICQ'			=> ($data['user_icq']) ? getlink('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$user_id) : '',
-		'U_AIM'			=> ($data['user_aim']) ? getlink('Members_List&amp;mode=contact&amp;action=aim&amp;u='.$user_id) : '',
+		'U_ICQ'			=> ($data['user_icq']) ? generate_link('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$user_id) : '',
+		'U_AIM'			=> ($data['user_aim']) ? generate_link('Members_List&amp;mode=contact&amp;action=aim&amp;u='.$user_id) : '',
 		'U_YIM'			=> ($data['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . $data['user_yim'] . '&.src=pg' : '',
-		'U_MSN'			=> ($data['user_msnm']) ? getlink('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$user_id) : '',
-		'U_JABBER'		=> ($data['user_jabber']) ? getlink('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$user_id) : '',
+		'U_MSN'			=> ($data['user_msnm']) ? generate_link('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$user_id) : '',
+		'U_JABBER'		=> ($data['user_jabber']) ? generate_link('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$user_id) : '',
 
 		'S_ONLINE'		=> (intval($data['session_time']) >= time() - 300) ? true : false
 	);

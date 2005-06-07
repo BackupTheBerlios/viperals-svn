@@ -1,0 +1,74 @@
+{ include file='modules/Forums/overall_header.html }
+
+<a name="Top"></a>
+<div id="pagecontent">
+
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th>{$L_FAQ_TITLE}</th>
+		</tr>
+		<tr>
+			<td class="row1">
+				{section name=faq_block_linkloop loop=$faq_block_link}
+				<span class="gen"><b>{$faq_block_link[faq_block_linkloop].BLOCK_TITLE}</b></span><br />
+					{section name=faq_row_linkloop loop=$faq_row_link}
+						{ if $faq_row_link[faq_row_linkloop].FAQ_SECTION eq $smarty.section.faq_block_linkloop.index }
+							<span class="gen"><a class="postlink" href="{$faq_row_link[faq_row_linkloop].U_FAQ_LINK}">{$faq_row_link[faq_row_linkloop].FAQ_LINK}</a></span><br />
+						{ /if }
+						{ /section }
+					<br />
+				{ /section }
+			</td>
+		</tr>
+		<tr>
+			<td class="cat">&nbsp;</td>
+		</tr>
+	</table>
+
+	<br clear="all" />
+
+	{section name=faq_blockloop loop=$faq_block}
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr> 
+			<td class="cat" align="center"><h4>{$faq_block[faq_blockloop].BLOCK_TITLE}</h4></td>
+		</tr>
+		{section name=faq_rowloop loop=$faq_row}
+		{ if $faq_row[faq_rowloop].FAQ_SECTION eq $smarty.section.faq_blockloop.index }
+		<tr>
+			{ if $smarty.section.faq_rowloop.index is even }
+			<td class="row1" valign="top">
+			{else }
+			<td class="row2" valign="top">
+			{ /if }
+				<p class="postbody"><a name="{$faq_row[faq_rowloop].U_FAQ_ID}"></a><b>&#187; {$faq_row[faq_rowloop].FAQ_QUESTION}</b></p>
+
+				<p class="postbody">{$faq_row[faq_rowloop].FAQ_ANSWER}</p>
+				
+				<p class="gensmall"><a href="{$S_BACK_TO_TOP}">{$L_BACK_TO_TOP}</a></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" height="1"><img src="themes/viperal/template/modules/Forums/images/spacer.gif" alt="" width="1" height="1" /></td>
+		</tr>
+		{ /if }
+		{ /section }
+	</table>
+
+	<br clear="all" />
+	{ /section }
+</div>
+
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+	<tr>
+		<td class="row1">
+			<p class="breadcrumbs"><a href="{$U_INDEX}">{$L_INDEX}</a>{section name=navlinksloop loop=$navlinks} &#187; <a href="{$navlinks[navlinksloop].U_VIEW_FORUM}">{$navlinks[navlinksloop].FORUM_NAME}</a>{/section}</p>
+			<p class="datetime">{$S_TIMEZONE}</p>
+		</td>
+	</tr>
+</table>
+
+<br clear="all" />
+
+<div align="right">{ include file='modules/Forums/jumpbox.html' }</div>
+
+{ include file='modules/Forums/overall_footer.html' }

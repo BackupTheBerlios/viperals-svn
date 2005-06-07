@@ -15,7 +15,6 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	header('Location: ../../');
 	die; 
 }
-$phpEx = 'php';
 
 // Some often used variables
 $safe_mode	= (@ini_get('safe_mode') || @strtolower(ini_get('safe_mode')) == 'on') ? true : false;
@@ -34,12 +33,19 @@ require_once($site_file_root.'includes/forums/functions.php');
 require_once($site_file_root.'includes/forums/functions_admin.php');
 
 $_CLASS['core_user']->add_lang('admin', 'Forums');
-//$_CLASS['core_user']->add_img(0, 'Forums');
+//$_CLASS['core_user']->add_img(false, 'Forums');
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
-$file = get_variable('file', 'GET', 'main');
+$file = get_variable('file', 'REQUEST', 'main');
 
-require($site_file_root.'modules/'.$mod.'/admin/'.$file.'.php');
+if (file_exists($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/'.$file.'.php'))
+{
+	require($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/'.$file.'.php');
+}
+else
+{
+	require($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/main.php');
+}
 
 
 // -----------------------------
@@ -49,7 +55,7 @@ function adm_page_header($sub_title, $meta = '', $table_html = true)
 	global $config, $db, $_CLASS;
 
 	$_CLASS['core_display']->display_head();
-	OpenTable();
+	$_CLASS['core_display']->table_open;
 
 	if ($table_html)
 	{
@@ -87,7 +93,7 @@ function adm_page_footer($copyright_html = true)
 
 <br clear="all" />
 <?php
-	CloseTable();
+	$_CLASS['core_display']->table_close;
 	$_CLASS['core_display']->display_footer();
 
 	}

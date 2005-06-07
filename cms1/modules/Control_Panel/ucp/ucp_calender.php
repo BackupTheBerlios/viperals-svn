@@ -26,31 +26,51 @@ class ucp_calender extends module
 		
 		$_CLASS['calender']->set_date($day, $month, $year);
 		
+		if ($_GET['mode'] == 'details')
+		{
+			$mode = 'details';
+		}
+		
 		switch ($mode)
 		{
 			case 'day_view':
 				$_CLASS['calender']->month_view($link);
 				$_CLASS['calender']->day_view($link);
-				$_CLASS['calender']->get_events_day();
+				$_CLASS['calender']->get_events_day($link);
 
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_day.html');
 				break;
-			
-			case 'month_view':
-				$_CLASS['calender']->get_events_month();
-				$_CLASS['calender']->month_view($link);
-
-				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_main.html');
-				break;
-			
+				
 			case 'add_event':
 				$_CLASS['calender']->add_event($link);
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_add.html');
 				break;
 				
+			case 'details':
+			
+				$id = get_variable('id', 'GET', false, 'integer');
+				$data = false;
+				$data = $_CLASS['calender']->get_events_details($id);
+				
+				$_CLASS['core_template']->assign(array(
+					'CAL_TITLE'			=> $data['title'],
+					'CAL_DESCRIPTION'	=> $data['description'],
+					'CAL_START_TIME'	=> $_CLASS['core_user']->format_date($data['start_time']),
+					'CAL_END_TIME'		=> $_CLASS['core_user']->format_date($data['end_time']),
+				));
+			
+				$_CLASS['core_template']->display('modules/Control_Panel/ucp_calender_details.html');
+				$_CLASS['core_display']->display_footer();
+
+				break;
+			
+			case 'month_view':
 			default:
+				$_CLASS['calender']->get_events_month($link);
 				$_CLASS['calender']->month_view($link);
+
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_main.html');
+				break;	
 		}
 	}
 	

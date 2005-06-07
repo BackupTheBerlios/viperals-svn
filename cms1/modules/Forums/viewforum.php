@@ -517,6 +517,7 @@ $_CLASS['core_template']->assign(array(
 	'L_MOVED_TOPIC'			=> $_CLASS['core_user']->lang['MOVED_TOPIC'],
 	'L_DISPLAY_TOPICS'		=> $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
 	'L_JUMP_TO'				=> $_CLASS['core_user']->lang['JUMP_TO'],
+	'L_NO_POSTS'			=> $_CLASS['core_user']->lang['NO_POSTS'],
 	'L_MCP'					=> $_CLASS['core_user']->lang['MCP'],
 	'L_MARK_TOPICS_READ'	=> $_CLASS['core_user']->lang['MARK_TOPICS_READ'],
 	'L_FORUM_RULES'			=> $_CLASS['core_user']->lang['FORUM_RULES'],

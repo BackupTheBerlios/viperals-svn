@@ -123,7 +123,7 @@ class core_display
 			$this->header['js'] .= '<script type="text/javascript">if (self != top) top.location.replace(self.location)</script>';
 		}
 		
-		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['time'] < time())
+		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['start'] < time())
 		{
 			$this->message = '<b>System is in maintenance mode</b><br />';
 		}
@@ -192,6 +192,8 @@ class core_display
 			$_CLASS['core_blocks']->display(BLOCK_BOTTOM);
 		}
 		
+		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_BOTTOM);
+
 		if ($this->displayed['header'])
 		{
 			$this->theme_footer();

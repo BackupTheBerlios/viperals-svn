@@ -1022,43 +1022,35 @@ function obtain_bots(&$bots)
 }
 
 // Build Confirm box
+// something is wrong with $check in this function
 function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_body.html')
 {
 	global $_CLASS, $SID;
 
-	if (isset($_POST['cancel']))
+	if ($check)
 	{
-		return false;
-	}
-	
-	$confirm = false;
-	if (isset($_POST['confirm']))
-	{
-		// language frontier
-		if ($_POST['confirm'] == $_CLASS['core_user']->lang['YES'])
-		{
-			$confirm = true;
-		}
-	}
-
-	if ($check && $confirm)
-	{
-		$confirm_key = request_var('confirm_key', '');
-		
-		if (!$confirm_key || !$_CLASS['core_user']->data['user_last_confirm_key'] || $confirm_key != $_CLASS['core_user']->data['user_last_confirm_key'])
+		if (isset($_POST['cancel']))
 		{
 			return false;
 		}
-		
-		// Reset user_last_confirm_key
-		$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = ''
-			WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
-		$_CLASS['core_db']->sql_query($sql);
-		
-		return true;
-	}
-	else if ($check)
-	{
+	
+		if (isset($_POST['confirm']) && $_POST['confirm'] == $_CLASS['core_user']->lang['YES'])
+		{
+			$confirm_key = request_var('confirm_key', '');
+
+			if (!$confirm_key || !$_CLASS['core_user']->data['user_last_confirm_key'] || $confirm_key != $_CLASS['core_user']->data['user_last_confirm_key'])
+			{
+				return false;
+			}
+			
+			// Reset user_last_confirm_key
+			$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = ''
+				WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
+			$_CLASS['core_db']->sql_query($sql);
+			
+			return true;
+		}
+
 		return false;
 	}
 	
@@ -1067,10 +1059,8 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 	// generate activation key
 	$confirm_key = gen_rand_string(10);
 
-	// If activation key already exist, we better do not re-use the key (something very strange is going on...)
 	if (request_var('confirm_key', ''))
 	{
-		// This should not occur, therefore we cancel the operation to safe the user
 		return false;
 	}
 
@@ -1079,7 +1069,7 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 		'MESSAGE_TEXT'		=> $_CLASS['core_user']->lang[$title . '_CONFIRM'],
 		'L_NO'	 			=> $_CLASS['core_user']->lang['NO'],
 		'YES_VALUE'			=> $_CLASS['core_user']->lang['YES'],
-		'S_CONFIRM_ACTION'  => $_CLASS['core_user']->url . ((strpos($_CLASS['core_user']->url, '?') !== false) ? '&' : '?') . 'confirm_key=' . $confirm_key. $SID,
+		'S_CONFIRM_ACTION'  => generate_link($_CLASS['core_user']->url.'&amp;confirm_key=' . $confirm_key),
 		'S_HIDDEN_FIELDS'	=> $hidden . $s_hidden_fields)
 	);
 	
@@ -1090,11 +1080,9 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 	
 	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang[$title]);
 	
-	page_header();
 	$_CLASS['core_template']->display('modules/Forums/'.$html_body);
 
-	$_CLASS['core_display']->display_footer();
-	
+	$_CLASS['core_display']->display_footer();	
 }
 
 // Generate forum login box

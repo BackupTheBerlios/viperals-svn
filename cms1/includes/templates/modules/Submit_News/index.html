@@ -1,10 +1,12 @@
 { if $ERROR }
-	{php} OpenTable(); {/php}
-		<div align="center"><font color="#990000">{ $ERROR }</font></div>
-	{php} CloseTable(); {/php}
+	{ $A_TABLE_OPEN }
+	<div align="center">
+		<font color="#990000">{ $ERROR }</font>
+	</div>
+	{ $A_TABLE_CLOSE }
 { /if }
 
-{php} OpenTable(); {/php}
+{ $A_TABLE_OPEN }
 
 <form method="post" action="{ $ACTION }" >
 	{ if !$LOGIN }
@@ -46,4 +48,4 @@
 
 </form>
 
-{php} CloseTable(); {/php}
+{ $A_TABLE_CLOSE }
