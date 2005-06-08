@@ -23,7 +23,13 @@ $module['USER']['DISALLOW']					= ($_CLASS['auth']->acl_get('a_names')) ? genera
 $module['FORUM']['MANAGE']					= ($_CLASS['auth']->acl_gets('a_forum', 'a_forumadd', 'a_forumdel')) ? generate_link('Forums&amp;file=admin_forums', array('admin' => true)) : false;
 $module['FORUM']['PRUNE']   				= ($_CLASS['auth']->acl_get('a_prune')) ? generate_link('Forums&amp;file=admin_prune&amp;mode=forums', array('admin' => true)) : false;
 
-$module['GENERAL']['AUTH_SETTINGS']			= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_board&amp;mode=auth', array('admin' => true)) : '';
+$module['PERM']['PERMISSIONS']				= ($_CLASS['auth']->acl_get('a_auth')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=forum', array('admin' => true)) : '';
+$module['PERM']['MODERATORS'] 				= ($_CLASS['auth']->acl_get('a_authmods')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=mod', array('admin' => true)) : '';
+$module['PERM']['SUPER_MODERATORS']			= ($_CLASS['auth']->acl_get('a_authmods')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=supermod', array('admin' => true)) : '';
+$module['PERM']['ADMINISTRATORS']			= ($_CLASS['auth']->acl_get('a_authadmins')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=admin', array('admin' => true)) : '';
+$module['PERM']['USER_PERMS']				= ($_CLASS['auth']->acl_get('a_authusers')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=user', array('admin' => true)) : '';
+$module['PERM']['GROUP_PERMS']				= ($_CLASS['auth']->acl_get('a_authgroups')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=group', array('admin' => true)) : '';
+
 $module['GENERAL']['AVATAR_SETTINGS']		= ($_CLASS['auth']->acl_get('a_board')) ? generate_link('Forums&amp;file=admin_board&amp;mode=avatar', array('admin' => true)) : '';
 $module['GENERAL']['BOARD_DEFAULTS']		= ($_CLASS['auth']->acl_get('a_defaults')) ? generate_link('Forums&amp;file=admin_board&amp;mode=default', array('admin' => true)) : '';
 $module['GENERAL']['BOARD_SETTINGS']		= ($_CLASS['auth']->acl_get('a_board')) ? generate_link('Forums&amp;file=admin_board&amp;mode=setting', array('admin' => true)) : '';
@@ -40,12 +46,5 @@ $module['POST']['ATTACHMENTS'] 				= ($_CLASS['auth']->acl_get('a_attach')) ? ge
 $module['POST']['BBCODES']					= ($_CLASS['auth']->acl_get('a_bbcode')) ? generate_link('Forums&amp;file=admin_bbcodes', array('admin' => true)) : '';
 $module['POST']['SMILIES']					= ($_CLASS['auth']->acl_get('a_icons')) ? generate_link('Forums&amp;file=admin_icons&amp;mode=smilies', array('admin' => true)) : '';
 $module['POST']['ICONS']					= ($_CLASS['auth']->acl_get('a_icons')) ? generate_link('Forums&amp;file=admin_icons&amp;mode=icons', array('admin' => true)) : '';
-
-$module['PERM']['PERMISSIONS']				= ($_CLASS['auth']->acl_get('a_auth')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=forum', array('admin' => true)) : '';
-$module['PERM']['MODERATORS'] 				= ($_CLASS['auth']->acl_get('a_authmods')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=mod', array('admin' => true)) : '';
-$module['PERM']['SUPER_MODERATORS']			= ($_CLASS['auth']->acl_get('a_authmods')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=supermod', array('admin' => true)) : '';
-$module['PERM']['ADMINISTRATORS']			= ($_CLASS['auth']->acl_get('a_authadmins')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=admin', array('admin' => true)) : '';
-$module['PERM']['USER_PERMS']				= ($_CLASS['auth']->acl_get('a_authusers')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=user', array('admin' => true)) : '';
-$module['PERM']['GROUP_PERMS']				= ($_CLASS['auth']->acl_get('a_authgroups')) ? generate_link('Forums&amp;file=admin_permissions&amp;mode=group', array('admin' => true)) : '';
 
 ?>

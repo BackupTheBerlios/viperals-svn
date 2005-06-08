@@ -1380,6 +1380,7 @@ function delete_forum_content($forum_id)
 
 	switch (SQL_LAYER)
 	{
+// Needs updating and testing
 		case 'mysql4':
 		case 'mysqli':
 			// Select then delete all attachments
@@ -1401,13 +1402,13 @@ function delete_forum_content($forum_id)
 
 			// Delete everything else and thank MySQL for offering multi-table deletion
 			$tables_ary = array(
-				SEARCH_MATCH_TABLE	=>	'wm.post_id',
-				RATINGS_TABLE				=>	'ra.post_id',
-				REPORTS_TABLE				=>	're.post_id',
-				TOPICS_WATCH_TABLE		=>	'tw.topic_id',
-				TOPICS_TRACK_TABLE		=>	'tt.topic_id',
-				POLL_OPTIONS_TABLE		=>	'po.post_id',
-				POLL_VOTES_TABLE			=>	'pv.post_id'
+				BOOKMARKS_TABLE 	=> 'bm.topic_id',
+				SEARCH_MATCH_TABLE	=> 'wm.post_id',
+				REPORTS_TABLE		=> 're.post_id',
+				TOPICS_WATCH_TABLE	=> 'tw.topic_id',
+				TOPICS_TRACK_TABLE	=> 'tt.topic_id',
+				POLL_OPTIONS_TABLE	=> 'po.post_id',
+				POLL_VOTES_TABLE	=> 'pv.post_id'
 			);
 
 			$sql = 'DELETE QUICK FROM ' . POSTS_TABLE;
@@ -1469,11 +1470,11 @@ function delete_forum_content($forum_id)
 			$tables_ary = array(
 				'post_id'	=>	array(
 					SEARCH_MATCH_TABLE,
-					RATINGS_TABLE,
 					REPORTS_TABLE,
 				),
 				
 				'topic_id'	=>	array(
+					BOOKMARKS_TABLE,
 					TOPICS_WATCH_TABLE,
 					TOPICS_TRACK_TABLE,
 					POLL_OPTIONS_TABLE,
@@ -1500,7 +1501,6 @@ function delete_forum_content($forum_id)
 
 					if (count($ids))
 					{
-						$start += count($ids);
 						$id_list = implode(',', $ids);
 
 						foreach ($tables as $table)
@@ -1508,12 +1508,24 @@ function delete_forum_content($forum_id)
 							$_CLASS['core_db']->sql_query("DELETE FROM $table WHERE $field IN ($id_list)");
 						}
 					}
+
+					if (count($ids) == 500)
+					{
+						$start += count($ids);
+					}
+					else
+					{
+						$start = false;
+					}
 				}
-				while ($row);
+ // not sure how this works with transactions
+				while ($start);
+				//while ($row);
 			}
 			unset($ids, $id_list);
 
-			$table_ary = array(FORUMS_ACCESS_TABLE, TOPICS_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, ACL_GROUPS_TABLE, ACL_USERS_TABLE, MODERATOR_TABLE, LOG_TABLE);
+			$table_ary = array(POSTS_TABLE, FORUMS_ACCESS_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, TOPICS_TABLE, ACL_GROUPS_TABLE, ACL_USERS_TABLE, MODERATOR_TABLE, LOG_TABLE);
+
 			foreach ($table_ary as $table)
 			{
 				$_CLASS['core_db']->sql_query("DELETE FROM $table WHERE forum_id = $forum_id");
@@ -1523,7 +1535,7 @@ function delete_forum_content($forum_id)
 			switch (SQL_LAYER)
 			{
 				case 'mysql':
-					$sql = 'OPTIMIZE TABLE ' . POSTS_TABLE . ', ' . ATTACHMENTS_TABLE . ', ' . implode(', ', $tables_ary['post_id']) . ', ' . implode(', ', $tables_ary['topic_id']) . ', ' . implode(', ', $table_ary);
+					$sql = 'OPTIMIZE TABLE ' . ATTACHMENTS_TABLE . ', ' . implode(', ', $tables_ary['post_id']) . ', ' . implode(', ', $tables_ary['topic_id']) . ', ' . implode(', ', $table_ary);
 
 					$_CLASS['core_db']->sql_query($sql);
 				break;

@@ -7,25 +7,7 @@ order allow,deny
 allow from all
 </LimitExcept>
 
-<IfModule mod_rewrite.c>
-RewriteEngine On
-#RewriteCond %{HTTP_HOST} !^www.wowbeyond.com$ [NC]
-#RewriteRule ^(.*)$ http://www.wowbeyond.com/$1 [R,L]
-
-RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7&$8&$9 [L]
-RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7&$8 [L]
-RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6&$7 [L]
-RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5&$6 [L]
-RewriteRule ^(.*)/(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4&$5 [L]
-RewriteRule ^(.*)/(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3&$4 [L]
-RewriteRule ^(.*)/(.*)/(.*)\.html index.php?name=$1&file=$2&$3 [L]
-RewriteRule ^(.*)/(.*)\.html index.php?name=$1&file=$2 [L]
-
-RewriteRule ^index\.html$  index.php [L]
-RewriteRule ^(.*)\.html$ index.php?name=$1 [L]
-</IfModule>
-
-ErrorDocument 403 /core.php?error=403
-ErrorDocument 404 /core.php?error=404
+ErrorDocument 403 /error.php?error=403
+ErrorDocument 404 /error.php?error=404
 
 Options -Indexes

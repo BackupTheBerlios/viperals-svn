@@ -201,7 +201,7 @@ class module
 
 	function load($type = false, $name = false, $mode = false, $run = true)
 	{
-		global $phpbb_root_path;
+		global $site_file_root;
 
 		if ($type)
 		{
@@ -215,7 +215,7 @@ class module
 
 		if (!class_exists($this->type . '_' . $this->name))
 		{
-			require_once("{$this->type}/{$this->type}_{$this->name}.php");
+			require_once($site_file_root."modules/Control_Panel/{$this->type}/{$this->type}_{$this->name}.php");
 
 			if ($run)
 			{

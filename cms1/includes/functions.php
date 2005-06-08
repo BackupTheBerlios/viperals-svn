@@ -153,7 +153,7 @@ function get_bots()
 		$bots = array();
 		
 		$sql = 'SELECT user_id, username, user_agent, user_ip
-			FROM ' . USERS_TABLE . ' WHERE user_type IN (' . USER_BOT . ', ' . USER_BOT_INACTIVE . ')';
+			FROM ' . USERS_TABLE . ' WHERE user_type IN (' . USER_BOT_ACTIVE . ', ' . USER_BOT_INACTIVE . ')';
 		$result = $_CLASS['core_db']->sql_query($sql);
 			
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
@@ -430,6 +430,8 @@ function login_box($login_options = false)
 			'auth_error_return'	=> true,
 		 );
 		
+		$login_array['redirect'] = get_variable('redirect', 'POST', false);	
+		$login_array['redirect'] = generate_link($login_array['redirect']);
 		$result = false;
 
 		if ($data['user_name'] && $data['user_password'] && ($result = $_CLASS['core_user']->create($data)) === true)
@@ -439,15 +441,6 @@ function login_box($login_options = false)
 // log
 			}
 			
-			$login_array['redirect'] = get_variable('redirect', 'POST', false);
-			
-			if ($login_array['redirect'])
-			{
-				$login_array['redirect'] .= (strpos($login_array['redirect'], '?') !== false) ? '&amp;' : '?';
-				$login_array['redirect'] .= 'sid='.$_CLASS['core_user']->data['session_id'];
-			} else {
-				$login_array['redirect'] = generate_link();
-			}
 
 			$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
 			$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');

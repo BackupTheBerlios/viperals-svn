@@ -82,7 +82,7 @@ class session
 		if (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']))
 		{
 			// session id in url > cookie
-			if (!$session_data['session_id'] || ($session_data['session_id'] && (trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']) === $session_data['session_id'])))
+			if (!$session_data['session_id'] || (trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']) === $session_data['session_id']))
 			{
 				$session_data['session_id'] = trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']);
 				$this->need_url_id = (defined('NEED_SID')) ? true : false;
@@ -107,7 +107,7 @@ class session
 			}
 		}
 
-		if (!empty($session_data['session_id']))
+		if ($session_data['session_id'])
 		{
 			$sql = 'SELECT u.*, s.*
 				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
@@ -242,7 +242,7 @@ class session
 			{
 				if ($bot['user_type'] == USER_BOT_INACTIVE)
 				{
-					// How would affect indexing, they should just try back later
+					// How would this affect indexing ?
 					header("HTTP/1.0 503 Service Unavailable");
 					script_close(false);
 					die;
@@ -263,6 +263,7 @@ class session
 			{
 				return $auth;
 			}
+			// error here if loggin is from a cookie
 		}
 
 		if ($auth === true)
@@ -340,7 +341,6 @@ class session
 
 		if ($session_data['admin_login'])
 		{
-			// ($this->is_user) you never know if someone would modify so you only need to log in once for both :-)
 			$session_admin = ($this->is_user && $_CLASS['core_auth']->admin_power()) ? ADMIN_IS_ADMIN : ADMIN_NOT_ADMIN;
 		}
 		else

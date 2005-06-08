@@ -134,7 +134,7 @@ class ucp_pm extends module
 					trigger_error('NO_AUTH_SEND_MESSAGE');
 				}
 
-				require('ucp_pm_compose.php');
+				require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_compose.php');
 				compose_pm($id, $mode, $action);
 			
 				$tpl_file = 'ucp_posting_body.html';
@@ -152,14 +152,14 @@ class ucp_pm extends module
 				
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 
-				require('ucp_pm_options.php');
+				require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_options.php');
 				message_options($id, $mode, $global_privmsgs_rules, $global_rule_conditions);
 				break;
 
 			case 'drafts':
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 			
-				require('ucp_main.php');
+				require($site_file_root.'modules/Control_Panel/ucp/ucp_main.php');
 				$module = new ucp_main($id, $mode);
 				unset($module);
 				exit;
@@ -353,7 +353,7 @@ class ucp_pm extends module
 
 				if ($mode == 'unread' || $action == 'view_folder')
 				{
-					require('ucp_pm_viewfolder.php');
+					require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_viewfolder.php');
 					view_folder($id, $mode, $folder_id, $folder, (($mode == 'unread') ? 'unread' : 'folder'));
 
 					$tpl_file = 'ucp_pm_viewfolder.html';
@@ -370,7 +370,7 @@ class ucp_pm extends module
 						trigger_error('NO_MESSAGE');
 					}
 					
-					require('ucp_pm_viewmessage.php');
+					require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_viewmessage.php');
 					view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row);
 
 					$tpl_file = ($view == 'print') ? 'ucp_pm_viewmessage_print.html' : 'ucp_pm_viewmessage.html';

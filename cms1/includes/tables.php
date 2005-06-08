@@ -33,7 +33,7 @@ define('USER_NORMAL', 0);
 define('USER_INACTIVE', 1);
 define('USER_IGNORE', 2);
 define('USER_FOUNDER', 3);
-define('USER_BOT', 4);
+define('USER_BOT_ACTIVE', 4);
 define('USER_BOT_INACTIVE', 5);
 
 define('ADMIN_NOT_LOGGED', 0);
@@ -182,7 +182,6 @@ define('FORUMS_ACCESS_TABLE', $prefix.'_bb2forum_access');
 define('FORUMS_TRACK_TABLE', $prefix.'_bb2forums_marking');
 define('FORUMS_WATCH_TABLE', $prefix.'_bb2forums_watch');
 define('GROUPS_TABLE', $prefix.'_bb2groups');
-define('GROUPS_MODERATOR_TABLE', $prefix.'_bb2groups_moderator');
 define('ICONS_TABLE', $prefix.'_bb2icons');
 define('LANG_TABLE', $prefix.'_bb2lang');
 define('LOG_TABLE', $prefix.'_bb2log');

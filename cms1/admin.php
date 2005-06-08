@@ -16,6 +16,7 @@
 define('VIPERAL', 'Admin');
 //define('NEED_SID', true);
 
+//echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
 $site_file_root = 'C:/apachefriends/xampp/cms/';
 
 require($site_file_root.'core.php');
@@ -41,7 +42,8 @@ if ($_CLASS['core_user']->data['session_admin'] == ADMIN_NOT_LOGGED)
 
 if (!$_CLASS['core_user']->is_admin)
 {
-	trigger_error($_CLASS['core_user']->lang['NOT_ADMIN']);
+	trigger_error('NOT_ADMIN');
+	die;
 }
 
 $mod = get_variable('mod', 'REQUEST', false);

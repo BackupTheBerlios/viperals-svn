@@ -88,6 +88,7 @@ class module
 
 			// Get the localised lang string if available, or make up our own otherwise
 			$module_lang = strtoupper($module_type) . '_' . $row['module_title'];
+
 			$_CLASS['core_template']->assign_vars_array($module_type . '_section', array(
 				'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
 				'S_SELECTED'	=> $selected, 
@@ -105,14 +106,15 @@ class module
 					$submodules_ary = explode("\n", $row['module_subs']);
 					foreach ($submodules_ary as $submodule)
 					{
-						if (!trim($submodule))
+						$submodule = trim($submodule);
+						if (!$submodule)
 						{
 							continue;
 						}
 
-						$submodule = explode(',', trim($submodule));
+						$submodule = explode(',', $submodule);
 						$submodule_title = array_shift($submodule);
-
+						//print_r( $submodule);
 						$is_auth = true;
 						foreach ($submodule as $auth_option)
 						{
@@ -147,7 +149,6 @@ class module
 						$module_lang = strtoupper($module_type . '_' . $module_name . '_' . $submodule_title);
 
 						$_CLASS['core_template']->assign_vars_array("{$module_type}_subsection", array(
-							'SECTION'	    => $j,
 							'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
 							'S_SELECTED'	=> $selected,
 							'ADD_ITEM'		=> $this->add_menu_item($row['module_filename'], $submodule_title),
@@ -174,7 +175,7 @@ class module
 		}
 
 		$this->type = $module_type;
-		$this->id = $module_id;
+		$this->id	= $module_id;
 		$this->name = $module_name;
 		$this->url = 'Forums&amp;file=mcp';
 		$this->url .= ($post_id) ? "&amp;p=$post_id" : '';
