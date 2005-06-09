@@ -10,6 +10,7 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+// Add output caching remove smarties html caching
 
 class cache
 {
@@ -25,6 +26,8 @@ class cache
 	
 	function format_array($array, $tab = false)
 	{
+		// based from phpBB www.phpbb.com
+
 		$tab = ($tab) ? $tab : chr(9);
 		$lines = array();
 		$new_line = chr(10);
@@ -77,23 +80,6 @@ class cache
 	{
 
 	}
-
-	function sql_exists($query_id)
-	{
-		return isset($this->sql_rowset[$query_id]);
-	}
-
-	function sql_fetchrow($query_id)
-	{
-		return array_shift($this->sql_rowset[$query_id]);
-	}
-
-	function sql_freeresult($query_id)
-	{
-		unset($this->sql_rowset[$query_id]);
-	}
 }
-
-//set_config('cache_last_gc', time(), true);
 
 ?>

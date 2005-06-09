@@ -13,30 +13,33 @@
 
 class cache_file extends cache
 {
+	var $cache_dir;
+	var $expires;
+
 	function cache_file()
 	{
 		global $site_file_root;
 
 		$this->cache_dir = $site_file_root.'cache/';
+
+		if (!is_writable($this->cache_dir))
+		{
+			//error here
+		}
 	}
-	
+
 	function load($name)
 	{
-		if (file_exists($this->cache_dir . "data_$name.php"))
+		if (file_exists($this->cache_dir . "cache_$name.php"))
 		{
-			require($this->cache_dir . "data_$name.php");
-			
-			if (empty($this->vars[$name]))
-			{
-				return false;
-			}
-			
-			if (time() > $this->var_expires[$name])
+			require($this->cache_dir . "cache_$name.php");
+
+			if (empty($this->vars[$name]) || time() > $this->expires[$name])
 			{
 				$this->destroy($name);
-				return false;
+				return $this->vars[$name] = false;
 			}
-			
+
 			return $this->vars[$name];
 		}
 		else
@@ -49,10 +52,11 @@ class cache_file extends cache
 	{
 		$new_line = chr(10);
 		$protection_code = "if (!defined('VIPERAL')) { die('Hello'); }$new_line";
+		$expires = time() + $ttl;
 
-		$data = '<?php '.$protection_code.' $this->vars[\''.$name.'\']=' . $this->format_array($value) . ";\n\$this->var_expires['$name'] = " . (time() + $ttl) . ' ?>';
-	
-		if ($fp = @fopen($this->cache_dir . "data_$name.php", 'wb'))
+		$data = "<?php $protection_code \$this->vars['$name'] = ".$this->format_array($value)."; \n\$this->expires['$name'] = $expires;  ?>";
+
+		if ($fp = @fopen($this->cache_dir . "cache_$name.php", 'wb'))
 		{
 			@flock($fp, LOCK_EX);
 			fwrite($fp, $data);
@@ -61,41 +65,47 @@ class cache_file extends cache
 		}
 
 		$this->vars[$name] = $value;
+		$this->expires[$name] = $expires;
 	}
 	
-	// All cached file are loaded and not removed, memory problem here
 	function gc()
 	{
 		$dir = opendir($this->cache_dir);
-		
-		while ($name = readdir($dir))
+
+		while ($file = readdir($dir))
 		{
-			if (strpos($name, 'data_') === 0)
+			if (strpos($file, 'cache_') === 0)
 			{
-				$var_name = preg_replace(array('/data_/', '/.php/'), '', $entry);
-				
-				if (empty($this->var_expires[$var_name]))
+				$name = preg_replace(array('/cache_/', '/.php/'), '', $file);
+				$unset = false;
+
+				if (empty($this->expires[$name]))
 				{
-					include($this->cache_dir . $entry);
+					include($this->cache_dir . $name);
+					$unset = true;
 				}
 				
-				if (time() > $this->var_expires[$var_name])
+				if (time() > $this->expires[$name])
 				{
-					unlink($this->cache_dir . $entry);
-					unset($this->var_expires[$var_name]);
+					unlink($this->cache_dir . $file);
+					$this->remove($name);
 				}
+
+				($unset) ? $this->remove($name) : '';
 			}
 		}
-		
+
 		closedir($dir);
 	}
 
-	function destroy($name)
+	function destroy($name, $table = '')
 	{
-		unlink($this->cache_dir . "data_$name.php");
-		$this->remove($name);
+		if (file_exists($this->cache_dir . 'cache_' . $name . ".php"))
+		{
+			unlink($this->cache_dir . "cache_$name.php");
+			$this->remove($name);
+		}
 	}
-
 }
 
 ?>

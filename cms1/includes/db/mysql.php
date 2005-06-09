@@ -50,6 +50,7 @@ class sql_db
 		
 		$error = ($error) ? $error : '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 		trigger_error($error, E_USER_ERROR);
+
 		die;
 	}
 
@@ -129,37 +130,21 @@ class sql_db
 		}
 		//print_r($caller_info);
 
-		$this->query_result = ($cache_ttl && !empty($_CLASS['core_cache'])) ? $_CLASS['core_cache']->sql_load($query) : false;
-
-		if (!$this->query_result)
+		$this->num_queries++;
+		$this->sql_report('start', $query);
+		
+		if (($this->query_result = @mysql_query($query, $this->db_connect_id)) === false)
 		{
-			$this->num_queries++;
-			$this->sql_report('start', $query);
-			
-			if (($this->query_result = @mysql_query($query, $this->db_connect_id)) === false)
-			{
-				$this->sql_error($query);
-			}
-
-			$this->sql_report('stop', $query);
-
-			if ($cache_ttl && method_exists($_CLASS['core_cache'], 'sql_save'))
-			{
-				$this->open_queries[(int) $this->query_result] = $this->query_result;
-				
-				$_CLASS['core_cache']->sql_save($query, $this->query_result, $cache_ttl);
-				// mysql_free_result called within sql_save()
-			}
-			else if (strpos($query, 'SELECT') !== false && $this->query_result)
-			{
-				$this->open_queries[(int) $this->query_result] = $this->query_result;
-			}
+			$this->sql_error($query);
 		}
-		else
+
+		$this->sql_report('stop', $query);
+
+		if (strpos($query, 'SELECT') !== false && $this->query_result)
 		{
-			$this->sql_report('start', $query);
-			$this->sql_report('fromcache', $query);
+			$this->open_queries[(int) $this->query_result] = $this->query_result;
 		}
+
 
 		return ($this->query_result) ? $this->query_result : false;
 	}
@@ -196,6 +181,7 @@ class sql_db
 
 		$fields = array();
 		$values = array();
+
 		if ($query == 'INSERT')
 		{
 			foreach ($assoc_ary as $key => $var)
@@ -254,7 +240,6 @@ class sql_db
 
 	function sql_fetchrow($query_id = false)
 	{
-		//global $_CLASS, $_CORE_MODULE;
 		global $_CLASS;
 		
 		if (!$query_id)
@@ -262,19 +247,7 @@ class sql_db
 			return false;
 		}
 
-		if (!empty($_CLASS['core_cache']) && $_CLASS['core_cache']->sql_exists($query_id))
-		{
-			return $_CLASS['core_cache']->sql_fetchrow($query_id);
-		}
-		
-       /* if ($_CORE_MODULE['compatiblity'])
-        {
-			//Have to get both associative and number indices
-			//Not as fast as only the associative indeces MYSQL_ASSOC
-			return mysql_fetch_array($query_id);
-        }*/
-		
-		return mysql_fetch_assoc($query_id);
+		return @mysql_fetch_assoc($query_id);
 	}
 
 	function sql_fetchrowset($query_id = false)
@@ -353,22 +326,14 @@ class sql_db
 			return false;
 		}
 		
-		/*$key = array_search($query_id, $this->open_queries);
-		
-		if (!$key || $key == NULL)
-		{
-			// Add a freeresults for cache
-			return false;
-		}*/
-		
 		unset($this->open_queries[(int) $query_id]);
 
-		return mysql_free_result($query_id);
+		return @mysql_free_result($query_id);
 	}
 
 	function sql_escape($msg)
 	{
-		return mysql_escape_string($msg);
+		return @mysql_escape_string($msg);
 	}
 	
 	function sql_optimize_tables($tables = false)
@@ -477,32 +442,6 @@ class sql_db
 
 				$starttime = explode(' ', microtime());
 				$starttime = $starttime[0] + $starttime[1];
-				break;
-
-			case 'fromcache':
-			
-				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == 3)
-				{
-					return;
-				}
-				
-				$endtime = explode(' ', microtime());
-				$endtime = $endtime[0] + $endtime[1];
-				
-				$result = mysql_query($query, $this->db_connect_id);
-				
-				while ($void = mysql_fetch_assoc($result))
-				{
-					// Take the time spent on parsing rows into account
-				}
-				
-				$splittime = explode(' ', microtime());
-				$splittime = $splittime[0] + $splittime[1];
-
-				$this->querydetails[$this->num_queries] = array('query'	=> $query, 'cache' => ($endtime - $starttime), 'time' => ($splittime - $endtime));
-
-				mysql_free_result($result);
-
 				break;
 
 			case 'stop':
