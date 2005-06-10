@@ -12,13 +12,10 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-
-// -------------------------------------------------------------
-//
+// Based on sessions.php 
 // COPYRIGHT : © 2001, 2004 phpBB Group
 // WWW       : http://www.phpbb.com/
-//
-// -------------------------------------------------------------
+
 // session_url will alway contain the users last url. This is in {module}{queries} format
 
 /*
