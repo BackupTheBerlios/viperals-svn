@@ -85,10 +85,9 @@ class core_error_handler
 				{
 					if ($errtype == E_WARNING)
 					{
-// should we exit on E_WARNING ?
-						//header("HTTP/1.0 500 INTERNAL SERVER ERROR");
-						//script_close();
-						//die('E_WARNING error'); // do something better than that.
+						header("HTTP/1.0 500 INTERNAL SERVER ERROR");
+						script_close();
+						die('E_WARNING error');
 					}
 					return;
 				}
@@ -116,15 +115,14 @@ class core_error_handler
 					
 					if ($this->logging)
 					{
-						//$this->error_log();
+						$this->error_log();
 					}
 					
-					//header("HTTP/1.0 500 INTERNAL SERVER ERROR");
+					header("HTTP/1.0 500 INTERNAL SERVER ERROR");
 					echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'
 								.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
-// should we exit on E_WARNING ?
-					//script_close();
-					//die;
+					script_close();
+					die;
 				}
 				
 				$this->error_setting = array('type', 'title', 'redirect');
@@ -134,15 +132,18 @@ class core_error_handler
 			case E_USER_ERROR:
 			
 				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
-
+					
 				if ($this->error_setting['header'])
 				{
-// Add to a lang file or soemthing then add here
-					header("HTTP/1.0 503 Service Unavailable");
-				}
-				else
-				{
-					header("HTTP/1.0 503 Service Unavailable");
+					$header_array = array(
+						'404' => 'HTTP/1.0 404 Not Found',
+						'503' => 'HTTP/1.0 503 Service Unavailable'
+						);
+						
+					if (!empty($header_array[$this->error_setting['header']]))
+					{
+						header($header_array[$this->error_setting['header']]);
+					}
 				}
 				
 				if (!empty($_CLASS['core_display']) && $_CLASS['core_display']->displayed['header'])

@@ -33,24 +33,30 @@ class sql_db
 	var $open_queries = array();
 	var $caller_info = false;
 
-	function sql_connect($server, $user, $password, $database, $port = false, $persistency = false)
-	{
-		$server = $server . (($port) ? ':' . $port : '');
-
-		$this->db_connect_id = ($persistency) ? mysql_pconnect($server, $user, $password) : mysql_connect($server, $user, $password);
-
-		if ($this->db_connect_id && $database)
+	function sql_connect($db)
+	{		
+		if ($db['port'])
 		{
-			if (mysql_select_db($database))
+			$db['server'] .= ':' . $port;
+		}
+
+		$this->db_connect_id = ($db['persistency']) ? mysql_pconnect($db['server'], $db['username'], $db['password']) : mysql_connect($db['server'], $db['username'], $db['password']);
+
+		if ($this->db_connect_id)
+		{
+			if (mysql_select_db($db['database']))
 			{
 				return $this->db_connect_id;
 			}
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
 		
-		$error = ($error) ? $error : '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
-		trigger_error($error, E_USER_ERROR);
+		if (!$error)
+		{
+			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
+		}
 
+		trigger_error($error, E_USER_ERROR);
 		die;
 	}
 

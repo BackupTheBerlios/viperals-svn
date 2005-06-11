@@ -186,7 +186,7 @@ class auth
 		global $_CLASS;
 
 		$hold_ary = $this->acl_raw_data($userdata['user_id'], false, false);
-		$hold_ary = $hold_ary[$userdata['user_id']];
+		$hold_ary = !empty($hold_ary[$userdata['user_id']]) ? $hold_ary[$userdata['user_id']] : '';
 
 		// If this user is founder we're going to force fill the admin options ...
 		if ($userdata['user_type'] == USER_FOUNDER)
@@ -261,8 +261,25 @@ class auth
 		$sql_user = ($user_id) ? ((!is_array($user_id)) ? "user_id = $user_id" : 'user_id IN (' . implode(', ', $user_id) . ')') : '';
 		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
 		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
-
 		$hold_ary = array();
+
+		$sql = 'SELECT ug.user_id, ao.auth_option, a.forum_id, a.auth_setting
+			FROM ' . USER_GROUP_TABLE . ' ug, ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_GROUPS_TABLE . ' a
+			WHERE ao.auth_option_id = a.auth_option_id
+				AND a.group_id = ug.group_id
+				AND ug.user_status <> '.STATUS_PENDING
+				 . (($sql_user) ? ' AND ug.' . $sql_user : ' ') . "
+				$sql_forum
+				$sql_opts
+			ORDER BY a.forum_id, ao.auth_option";
+		$result = $_CLASS['core_db']->sql_query($sql);
+
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		{
+			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+		}
+		$_CLASS['core_db']->sql_freeresult($result);
+		
 		$sql = 'SELECT ao.auth_option, a.user_id, a.forum_id, a.auth_setting
 			FROM ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_USERS_TABLE . ' a
 			WHERE ao.auth_option_id = a.auth_option_id
@@ -275,25 +292,6 @@ class auth
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
-		}
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		$sql = 'SELECT ug.user_id, ao.auth_option, a.forum_id, a.auth_setting
-			FROM ' . USER_GROUP_TABLE . ' ug, ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_GROUPS_TABLE . ' a
-			WHERE ao.auth_option_id = a.auth_option_id
-				AND a.group_id = ug.group_id
-				' . (($sql_user) ? 'AND ug.' . $sql_user : '') . "
-				$sql_forum
-				$sql_opts
-			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-		{
-			if (!isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) || (isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) && $hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] != ACL_NO))
-			{
-				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
-			}
 		}
 		$_CLASS['core_db']->sql_freeresult($result);
 

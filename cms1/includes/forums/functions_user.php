@@ -152,11 +152,17 @@ function user_delete($mode, $user_id)
 				GROUP BY topic_id";
 			$result = $_CLASS['core_db']->sql_query($sql);
 
+			$topic_id_ary = array();
 			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
 				$topic_id_ary[$row['topic_id']] = $row['total_posts'];
 			}
 			$_CLASS['core_db']->sql_freeresult($result);
+			
+			if (!count($topic_id_ary))
+			{
+				break;
+			}
 
 			$sql = 'SELECT topic_id, topic_replies, topic_replies_real 
 				FROM ' . TOPICS_TABLE . ' 

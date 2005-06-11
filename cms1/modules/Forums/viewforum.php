@@ -28,11 +28,7 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
 require($site_file_root.'includes/forums/functions_display.php');
-
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 // Start initial var setup
 $forum_id	= request_var('f', 0);

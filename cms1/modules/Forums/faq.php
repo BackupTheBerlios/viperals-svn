@@ -28,11 +28,6 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
-
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
-
 $mode = request_var('mode', '');
 
 // Load the appropriate faq file

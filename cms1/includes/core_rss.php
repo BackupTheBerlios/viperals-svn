@@ -13,7 +13,6 @@
 //																//
 //**************************************************************//
 // Add channel support, rss_data[channel][item][item_branch]
-// add atom support seems to be kind of popular
 
 class core_rss
 {
@@ -39,40 +38,16 @@ class core_rss
 		$this->channel_tags = (is_array($channel_tags)) ? $channel_tags : array('title', 'link', 'description', 'author');
 	}
 	
-	function get_rss($url = false, $items_limit = 10, $data_Value = false)
+	function get_rss($url, $items_limit = 10)
 	{
-		if ($data_Value)
-		{
-			@eval('$data_Value='.$data_Value.';');
-
-			if (is_array($data_Value) && ($data_Value['expire'] == 0 || $data_Value['expire'] > time()))
-			{
-				
-				$this->rss_data = $data_Value['data'];
-				$this->rss_expire = $data_Value['expire'];
-				$this->rss_other_data = $data_Value['rss_other_data'];
-
-				unset($data_Value);
-								
-				return true;
-			}
-			unset($data_Value);
-		}
-		
-		if ($url && $this->get_rss_array($url, $items_limit))
-		{
-			return true;
-		}
-
-		return false;
+		return $this->get_rss_array($url, $items_limit);
 	}
 
-	function get_rss_data_raw($expire = 0)
+	function get_rss_data_raw()
 	{
 		global $_CLASS;
 		
-		$expire = time() + $expire;
-		return array('data' => $this->rss_data, 'expire' => $expire, 'rss_other_data' => $this->rss_other_data);
+		return array('data' => $this->rss_data, 'rss_other_data' => $this->rss_other_data);
 	}
 	
 	function get_rss_data($line = false)

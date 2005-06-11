@@ -48,7 +48,9 @@ function check_load_status($return = false)
 				{
 					return $load_status = true;
 				}
-				trigger_error('BOARD_UNAVAILABLE');
+
+				$this->error_setting['header'] = '503';
+				trigger_error('SITE_UNAVAILABLE');
 			}
 		}
 	}
@@ -79,7 +81,8 @@ function check_maintance_status($return = false)
 			{
 				return $maintance_status = true;
 			}
-			
+
+			$this->error_setting['header'] = '503';
 			trigger_error($_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
 		}
 		
@@ -265,9 +268,9 @@ function generate_link($link = false, $link_options = false)
 		{
 			$link .= '?sid='.$_CLASS['core_user']->data['session_id'];
 		}
-	
-	} else {
-	
+	}
+	else
+	{
 		if ($link{0} == '&')
 		{
 			$link = $_CORE_MODULE['title'].$link;
@@ -281,12 +284,12 @@ function generate_link($link = false, $link_options = false)
 			$link .= '&amp;sid='.$_CLASS['core_user']->data['session_id'];
 		}
     }
-    
+
     if ($options['full'])
     {
 		return generate_base_url().$link;
     }
-    
+
     return $link;
 }
 
@@ -379,7 +382,7 @@ function unique_id()
 	return uniqid(mt_rand(), true);
 }
 
-function loadclass($file, $name, $class = false)
+function load_class($file, $name, $class = false)
 {
 	global $_CLASS;
 	
@@ -794,46 +797,8 @@ function url_redirect($url = false, $save = true)
     exit;
 }
 
-
 /////////////////////
 /// To be removed ///
 /////////////////////
-
-function send_mail(&$mailer_message, $message, $html='', $subject='', $to='', $to_name='', $from='', $from_name='' )
-{
-	global $_CORE_CONFIG, $_CLASS, $phpEx;
-
-	loadclass($site_file_root.'includes/mailer/class.phpmailer.php', 'PHPMailer');
-	
-	ini_set('sendmail_from', ($from) ? $from : $_CORE_CONFIG['global']['admin_mail']);
-
-	if ($_CORE_CONFIG['email']['smtp_on'])
-	{
-		$_CLASS['PHPMailer']->IsSMTP();
-		$_CLASS['PHPMailer']->Host = $_CORE_CONFIG['email']['smtphost'];
-		
-		if ($_CORE_CONFIG['email']['smtp_auth'])
-		{
-			$_CLASS['PHPMailer']->SMTPAuth = true;
-			$_CLASS['PHPMailer']->Username = $_CORE_CONFIG['email']['smtp_uname'];
-			$_CLASS['PHPMailer']->Password = $_CORE_CONFIG['email']['smtp_pass'];
-		}
-	}
-	
-	$_CLASS['PHPMailer']->From = ($from) ? trim_text($from) : $_CORE_CONFIG['global']['admin_mail'];;
-	$_CLASS['PHPMailer']->FromName = ($from_name) ? trim_text($from_name) : $_CORE_CONFIG['global']['sitename'];
-	$_CLASS['PHPMailer']->AddAddress(($to) ? trim_text($to) : $_CORE_CONFIG['global']['admin_mail'], $to_name);
-	//$_CLASS['PHPMailer']->AddReplyTo($from, $from_name);
-	$AltBody = strip_tags($message);
-	
-	$_CLASS['PHPMailer']->Subject = strip_tags(trim_text($subject));
-	$_CLASS['PHPMailer']->IsHTML(($_CORE_CONFIG['email']['allow_html_email']) ? true : false);
-	$_CLASS['PHPMailer']->Body	= ($_CORE_CONFIG['email']['allow_html_email']) ? $message : $AltBody;
-
-	
-	$_CLASS['PHPMailer']->AltBody = $AltBody;
-	
-	return $_CLASS['PHPMailer']->Send();
-}
 
 ?>

@@ -22,19 +22,19 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ]
 //
 // -------------------------------------------------------------
-
-
 if (!defined('VIPERAL'))
 {
     die();
 }
+
 require_once($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
+load_class($site_file_root.'includes/forums/auth.php', 'auth');
+
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->add_lang();
 $_CLASS['core_user']->add_img(0, 'Forums');
 
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_template']->assign(array(
 	'S_SEARCH_USER' => false,
@@ -64,33 +64,6 @@ obtain_ranks($ranks);
 // What do you want to do today? ... oops, I think that line is taken ...
 switch ($mode)
 {
-	case 'leaders':
-		// TODO
-		// Display a listing of board admins, moderators?
-		$user_ary = $_CLASS['auth']->acl_get_list(false, array('a_', 'm_'), false);
-
-		$user_id_ary = array();
-		foreach ($user_ary as $forum_id => $forum_ary)
-		{
-			foreach ($forum_ary as $auth_option => $id_ary)
-			{
-				$user_id_ary += $id_ary;
-			}
-		}
-
-		$sql = 'SELECT user_id, username
-			FROM ' . USERS_TABLE . '
-			WHERE user_id IN (' . implode(', ', $user_id_ary) . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		foreach ($user_ary[0]['u_'] as $user_id)
-		{
-		}
-
-		break;
-
 	case 'contact':
 		$_CLASS['core_template']->assign(array(
 			'S_SEND_ICQ' => false,
@@ -705,6 +678,35 @@ switch ($mode)
 		);
 		break;
 
+	case 'leaders':
+		// Admins => Group leaders => moderators
+	
+		// TODO
+		// Display a listing of board admins, moderators?
+		$user_ary = $_CLASS['auth']->acl_get_list(false, array('a_', 'm_'), false);
+
+		$user_id_ary = array();
+		foreach ($user_ary as $forum_id => $forum_ary)
+		{
+			foreach ($forum_ary as $auth_option => $id_ary)
+			{
+				$user_id_ary += $id_ary;
+			}
+		}
+
+		$sql = 'SELECT user_id, username
+			FROM ' . USERS_TABLE . '
+			WHERE user_id IN (' . implode(', ', $user_id_ary) . ')';
+		$result = $_CLASS['core_db']->sql_query($sql);
+
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		foreach ($user_ary[0]['u_'] as $user_id)
+		{
+		}
+
+		break;
+
 	case 'group':
 	
 		$_CLASS['core_user']->add_lang('groups', 'Forums');
@@ -736,7 +738,7 @@ switch ($mode)
 
 		// Additional sorting options for user search ... if search is enabled, if not
 		// then only admins can make use of this (for ACP functionality)
-		$sql_from = $sql_where = $form = $field = '';
+		$sql_from = $sql_where = $sql_fields = $form = $field = '';
 		if ($mode == 'searchuser' && ($config['load_search'] || $_CLASS['auth']->acl_get('a_')))
 		{
 			$form	= request_var('form', '');
@@ -830,12 +832,14 @@ switch ($mode)
 				FROM ' . GROUPS_TABLE . "
 				WHERE group_id = $group_id";
 			$result = $_CLASS['core_db']->sql_query($sql);
+			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$_CLASS['core_db']->sql_freeresult($result);
 
-			if (!extract($_CLASS['core_db']->sql_fetchrow($result)))
+			if (!$row)
 			{
 				trigger_error('NO_GROUP');
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			extract($row);
 
 			switch ($group_type)
 			{
@@ -876,7 +880,7 @@ switch ($mode)
 			$rank_title = $rank_img = '';
 			if (!empty($group_rank))
 			{
-				$rank_title = (isset($ranks['special'][$data['user_rank']]['rank_title'])) ? $ranks['special'][$data['user_rank']]['rank_title'] : '';
+				$rank_title = (isset($ranks['special'][$group_rank]['rank_title'])) ? $ranks['special'][$group_rank]['rank_title'] : '';
 				$rank_img = (!empty($ranks['special'][$group_rank]['rank_image'])) ? '<img src="' . $config['ranks_path'] . '/' . $ranks['special'][$group_rank]['rank_image'] . '" border="0" alt="' . $ranks['special'][$group_rank]['rank_title'] . '" title="' . $ranks['special'][$group_rank]['rank_title'] . '" /><br />' : '';
 			}
 
@@ -893,6 +897,7 @@ switch ($mode)
 				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $group_receive_pm && $config['allow_mass_pm']) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;g='.$group_id) : '')
 			);
 
+			$sql_fields = ', ug.user_status';
 			$sql_from = ', ' . USER_GROUP_TABLE . ' ug ';
 			$sql_where .= " AND u.user_id = ug.user_id AND ug.group_id = $group_id";
 		}
@@ -931,7 +936,6 @@ switch ($mode)
 			
 			$pagination_url .= '&amp;' . $key . '=' . urlencode(htmlspecialchars($var));
 			$pagination_url2 .= ($key != 'start') ? '&amp;' . $key . '=' . urlencode(htmlspecialchars($var)) : '';
-			
 		}
 
 		// Some search user specific data
@@ -991,8 +995,8 @@ switch ($mode)
 		$_CLASS['core_db']->sql_freeresult($result);
 		
 		// Do the SQL thang
-		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_lastvisit
-			FROM ' . USERS_TABLE . " u$sql_from
+		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_lastvisit 
+			'. $sql_fields .' FROM ' . USERS_TABLE . " u$sql_from
 			WHERE u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ")
 				$sql_where
 			ORDER BY $order_by";
@@ -1001,6 +1005,11 @@ switch ($mode)
 		$id_cache = array();
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
+			if ($mode == 'group' && $row['user_status'] == STATUS_PENDING)
+			{
+				 continue;
+			}
+
 			$row['session_time'] = (!empty($session_times[$row['user_id']])) ? $session_times[$row['user_id']] : '';
 			$id_cache[$row['user_id']] = $row;
 		}
@@ -1024,8 +1033,10 @@ switch ($mode)
 			{
 				$cp_row = (isset($profile_fields_cache[$user_id])) ? $cp->generate_profile_fields_template('show', false, $profile_fields_cache[$user_id]) : array();
 			}
-			
-			$memberrow = array_merge(show_profile($row), array(
+
+			$option_row = ($mode == 'group' && $row['user_status'] == STATUS_LEADER) ? 'leader_row' : 'member_row';
+
+			$$option_row = array_merge(show_profile($row), array(
 				'ROW_NUMBER'		=> $i + ($start + 1),
 				'S_CUSTOM_PROFILE'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false,
 				'U_VIEWPROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']))
@@ -1033,12 +1044,12 @@ switch ($mode)
 
 			if (isset($cp_row['row']) && sizeof($cp_row['row']))
 			{
-				$memberrow = array_merge($memberrow, $cp_row['row']);
+				$$option_row = array_merge($$option_row, $cp_row['row']);
 			}
 			
-			$_CLASS['core_template']->assign_vars_array('memberrow', $memberrow);
+			$_CLASS['core_template']->assign_vars_array($option_row, $$option_row);
 			
-			if (isset($cp_row['blockrow']) && sizeof($cp_row['blockrow']))
+			/*if (isset($cp_row['blockrow']) && sizeof($cp_row['blockrow']))
 			{
 				foreach ($cp_row['blockrow'] as $field_data)
 				{
@@ -1047,7 +1058,7 @@ switch ($mode)
 					////////////
 					$_CLASS['core_template']->assign_vars_array('memberrow.custom_fields', $field_data);
 				}
-			}
+			}*/
 			$i++;
 			unset($id_cache[$user_id]);
 	}
@@ -1082,6 +1093,8 @@ switch ($mode)
 		'L_WEBSITE'				=> $_CLASS['core_user']->lang['WEBSITE'],
 		'L_MARK'				=> $_CLASS['core_user']->lang['MARK'],
 		'L_NO_MEMBERS'			=> $_CLASS['core_user']->lang['NO_MEMBERS'],
+		'L_GROUP_MEMBERS'		=> 'Group Members',
+		'L_GROUP_LEADERS'		=> 'Group Leaders',
 		'L_SELECT_MARKED'		=> $_CLASS['core_user']->lang['SELECT_MARKED'],
 		'L_ORDER'				=> $_CLASS['core_user']->lang['ORDER'],
 		'L_MARK_ALL'			=> $_CLASS['core_user']->lang['MARK_ALL'],

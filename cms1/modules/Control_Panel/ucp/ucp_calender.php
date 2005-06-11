@@ -17,7 +17,7 @@ class ucp_calender extends module
 	{
 		global $_CLASS, $site_file_root;
 
-		loadclass($site_file_root.'includes/display/calender.php', 'calender');
+		load_class($site_file_root.'includes/display/calender.php', 'calender');
 		$link = 'Control_Panel&amp;i='.$id;
 		
 		$day = get_variable('day', 'REQUEST', false, 'integer');

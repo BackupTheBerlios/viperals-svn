@@ -76,6 +76,12 @@ define('GROUP_HIDDEN', 2);
 define('GROUP_SPECIAL', 3);
 define('GROUP_FREE', 4);
 
+// Group status settings
+define('STATUS_PENDING', 0);
+define('STATUS_NORMAL', 1);
+define('STATUS_LEADER', 2);
+
+
 // Forum/Topic states
 define('FORUM_CAT', 0);
 define('FORUM_POST', 1);
@@ -181,7 +187,7 @@ define('FORUMS_TABLE', $prefix.'_bb2forums');
 define('FORUMS_ACCESS_TABLE', $prefix.'_bb2forum_access');
 define('FORUMS_TRACK_TABLE', $prefix.'_bb2forums_marking');
 define('FORUMS_WATCH_TABLE', $prefix.'_bb2forums_watch');
-define('GROUPS_TABLE', $prefix.'_bb2groups');
+define('GROUPS_TABLE', $prefix.'_groups');
 define('ICONS_TABLE', $prefix.'_bb2icons');
 define('LANG_TABLE', $prefix.'_bb2lang');
 define('LOG_TABLE', $prefix.'_bb2log');
@@ -210,7 +216,7 @@ define('STYLES_IMAGE_TABLE', $prefix.'_bb2styles_imageset');
 define('TOPICS_TABLE', $prefix.'_bb2topics');
 define('TOPICS_TRACK_TABLE', $prefix.'_bb2topics_marking');
 define('TOPICS_WATCH_TABLE', $prefix.'_bb2topics_watch');
-define('USER_GROUP_TABLE', $prefix.'_bb2user_group');
+define('USER_GROUP_TABLE', $prefix.'_user_group');
 define('USERS_TABLE', $prefix.'_users');
 define('USERS_NOTES_TABLE', $prefix.'_bb2users_notes');
 define('WORDS_TABLE', $prefix.'_bb2words');

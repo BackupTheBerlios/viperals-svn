@@ -30,11 +30,6 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
-
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
-
 // Initial var setup
 $forum_id	= request_var('f', 0);
 $topic_id	= request_var('t', 0);

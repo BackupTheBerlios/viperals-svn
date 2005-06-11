@@ -17,8 +17,6 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
-
 // Grab only parameters needed here
 $post_id	= request_var('p', 0);
 $topic_id	= request_var('t', 0);
@@ -56,9 +54,6 @@ if (in_array($mode, array('post', 'reply', 'quote', 'edit', 'delete', 'popup')) 
 require_once($site_file_root.'includes/forums/message_parser.php');
 require($site_file_root.'includes/forums/functions_admin.php');
 require($site_file_root.'includes/forums/functions_posting.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
-
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 // What is all this following SQL for? Well, we need to know
 // some basic information in all cases before we do anything.

@@ -72,7 +72,6 @@ class cache
 		if (!empty($this->vars[$name]))
 		{
 			unset($this->vars[$name]);
-			unset($this->var_expires[$name]);
 		}
 	}
 

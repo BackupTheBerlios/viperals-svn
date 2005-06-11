@@ -392,7 +392,9 @@ class ucp_pm extends module
 			//page_header($page_title);
 			$_CLASS['core_template']->display('modules/Control_Panel/'.$tpl_file);
 			require('footer.php');
-		} else {
+		}
+		else
+		{
 			$this->display($_CLASS['core_user']->lang['UCP_PM'], $tpl_file);
 		}
 	}

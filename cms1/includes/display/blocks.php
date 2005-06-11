@@ -361,7 +361,7 @@ class core_blocks
 		else
 		{
 			loadclass($site_file_root.'includes/core_rss.php', 'core_rss');
-			$_CLASS['core_rss']->item_tags = array('title', 'link');
+			$_CLASS['core_rss']->setup(false, array('title', 'link'));
 				
 			if (!$_CLASS['core_rss']->get_rss($this->block['options']['rss_url']))
 			{

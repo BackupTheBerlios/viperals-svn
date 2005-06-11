@@ -28,12 +28,6 @@ if (!defined('VIPERAL'))
     die();
 }
 
-
-require_once($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
-
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
-
 $download_id = request_var('id', 0);
 
 // Thumbnails are not handled by this file by default - but for modders this should be interesting. ;)

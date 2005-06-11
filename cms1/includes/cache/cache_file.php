@@ -48,13 +48,13 @@ class cache_file extends cache
 		}
 	}
 
-	function put($name, $value, $ttl = 31536000)
+	function put($name, $data, $ttl = 31536000)
 	{
 		$new_line = chr(10);
 		$protection_code = "if (!defined('VIPERAL')) { die('Hello'); }$new_line";
 		$expires = time() + $ttl;
 
-		$data = "<?php $protection_code \$this->vars['$name'] = ".$this->format_array($value)."; \n\$this->expires['$name'] = $expires;  ?>";
+		$data = "<?php $protection_code \$this->vars['$name'] = ".$this->format_array($data)."; \n\$this->expires['$name'] = $expires;  ?>";
 
 		if ($fp = @fopen($this->cache_dir . "cache_$name.php", 'wb'))
 		{
@@ -64,7 +64,7 @@ class cache_file extends cache
 			fclose($fp);
 		}
 
-		$this->vars[$name] = $value;
+		$this->vars[$name] = $data;
 		$this->expires[$name] = $expires;
 	}
 	

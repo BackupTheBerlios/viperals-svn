@@ -783,7 +783,7 @@ function obtain_word_list(&$censors)
 		return;
 	}
 
-	if (!($censors = $_CLASS['core_cache']->get('word_censors')))
+	if (($censors = $_CLASS['core_cache']->get('word_censors')) === false)
 	{
 		$sql = 'SELECT word, replacement
 			FROM  ' . WORDS_TABLE;
@@ -837,11 +837,7 @@ function obtain_ranks(&$ranks)
 {
 	global $_CLASS;
 
-	if ($_CLASS['core_cache']->exists('ranks'))
-	{
-		$ranks = $_CLASS['core_cache']->get('ranks');
-	}
-	else
+	if (($icons = $_CLASS['core_cache']->get('ranks')) === false )
 	{
 		$sql = 'SELECT *
 			FROM ' . RANKS_TABLE . '
@@ -878,11 +874,7 @@ function obtain_attach_extensions(&$extensions, $forum_id = false)
 {
 	global $_CLASS;
 
-	if ($_CLASS['core_cache']->exists('extensions'))
-	{
-		$extensions = $_CLASS['core_cache']->get('extensions');
-	}
-	else
+	if (($icons = $_CLASS['core_cache']->get('extensions')) === false )
 	{
 		// The rule is to only allow those extensions defined. ;)
 		$sql = 'SELECT e.extension, g.*
@@ -989,36 +981,6 @@ function redirect($url)
 	// Behave as per HTTP/1.1 spec for others
 	header('Location: ' . $url);
 	exit;
-}
-
-/**
-* Obtain active bots
-*/
-function obtain_bots(&$bots)
-{
-	global $_CLASS;
-
-	if ($_CLASS['core_cache']->exists('bots'))
-	{
-		$bots = $_CLASS['core_cache']->get('bots');
-	}
-	else
-	{
-		$sql = 'SELECT user_id, bot_agent, bot_ip 
-			FROM ' . BOTS_TABLE . '
-			WHERE bot_active = 1';
-		$result = $_CLASS['core_db']->sql_query($sql);
-		
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-		{
-			$bots[] = $row;
-		}
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		$_CLASS['core_cache']->put('bots', $bots);
-	}
-	
-	return;
 }
 
 // Build Confirm box

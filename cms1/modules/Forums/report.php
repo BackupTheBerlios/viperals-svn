@@ -29,7 +29,7 @@ if (!defined('VIPERAL'))
 }
 
 require_once($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
+load_class($site_file_root.'includes/forums/auth.php', 'auth');
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->add_lang('mcp');

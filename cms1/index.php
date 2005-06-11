@@ -19,31 +19,21 @@ $site_file_root = 'C:/apachefriends/xampp/cms/';
 
 require($site_file_root.'core.php');
 
+$mod = get_variable('mod', 'REQUEST', false);
+
 if (!$mod)
 {
+	// Set as homepage 
 	$_CLASS['core_display']->homepage = true;
 }
 else
 {
-	$path = "modules/$mod/".(($file) ? $file : 'index').'.php';
-}
-
-switch ($mod)
-{
-	case 'redirect':
-		// Fix banners, make into a dam class.
-		if ($bid = get_variable('bid', 'GET', false, 'integer'))
-		{
-			clickbanner($bid);
-			die;
-    	}
-    	
-    	url_redirect();
-    	break;
+	$path = "modules/$mod/index.php";
 }
 
 if ($_CLASS['core_display']->homepage)
 {
+	// Get homepage modules
 	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE homepage > 0 ORDER BY homepage ASC');
 	
 	While ($row = $_CLASS['core_db']->sql_fetchrow($result))
@@ -57,6 +47,7 @@ if ($_CLASS['core_display']->homepage)
 }
 else
 {
+	//Grab module data if it exsits
 	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE type='.MODULE_NORMAL." AND name='".$_CLASS['core_db']->sql_escape($mod)."'");
 	$_CORE_MODULE = $_CLASS['core_db']->sql_fetchrow($result);
 }
@@ -64,28 +55,28 @@ else
 $_CLASS['core_db']->sql_freeresult($result);
 $path = $site_file_root.$path;
 
+//
 if (!$_CORE_MODULE || !file_exists($path))
 {
 	$_CORE_MODULE['sides'] = BLOCK_ALL;
 
+	// If it's the homepage show messages and blocks
 	if ($_CLASS['core_display']->homepage) 
 	{
+		$_CLASS['core_display']->display_head();
+
+		// Hey admin we don't have a modules set
 		if ($_CLASS['core_auth']->admin_auth('modules'))
 		{
-			// display message inline
-			trigger_error('_NO_HOMEPAGE_ADMIN', E_USER_NOTICE);
+			$_CLASS['core_display']->message = _NO_HOMEPAGE_ADMIN;
 		}
-		else
-		{
-			// Maybe someone wants only messages and/or blocks !
-			$_CLASS['core_display']->display_head();
-			$_CLASS['core_display']->display_footer();
-		}
+
+		$_CLASS['core_display']->display_footer();
+
 	}
 	else
 	{
-		// Uncomment below for an embedded error
-		// $_CLASS['core_display']->display_head();
+		$this->error_setting['header'] = '404';
 		trigger_error('_PAGE_NOT_FOUND', E_USER_ERROR);
 	}
 }
