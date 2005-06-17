@@ -1,20 +1,40 @@
-{ if isset($bottomblock) }
-	  {section name=bottomblockloop loop=$bottomblock}
-	<div class="centerblock">
-		<div class="title">{$bottomblock[bottomblockloop].TITLE}</div>
-			<div class="OpenTable"><div class="outer">
-				<div class="inner">
-					<div class="blockcontent">{$bottomblock[bottomblockloop].CONTENT}</div>
+	<!-- IF isset({ $block_bottom }) -->
+		{section name=block_bottom_loop loop=$block_bottom}
+		<div class="centerblock">
+			<div class="title">{$block_bottom[block_bottom_loop].TITLE}</div>
+				<div class="OpenTable"><div class="outer">
+					<div class="inner">
+						<div class="blockcontent">{$block_bottom[block_bottom_loop].CONTENT}</div>
+					</div>
 				</div>
 			</div>
 		</div>
+			{/section}
+	<!-- ENDIF -->
+	
+	<!-- IF isset({ $message_block_bottom }) -->
+	<br/>
+		<div class="messageblock">
+		<!-- LOOP $message_block_bottom -->
+			<div class="title" onclick="blockswitch2('{ $message_block_bottom:ID }');" style="cursor:pointer">{ $message_block_bottom:TITLE }
+			<!-- IF { $message_block_bottom:EDIT_LINK } -->[ <!-- IF { $message_block_bottom:EXPIRES } -->{ $message_block_bottom:EXPIRES } | <!-- ENDIF -->
+			<a href="{ $message_block_bottom:EDIT_LINK }" >{ $message_block_bottom:L_EDIT }</a> ]<!-- ENDIF --></div>
+			<div class="content" { $message_block_bottom:HIDE } id="pe{ $message_block_bottom:ID }">{ $message_block_bottom:CONTENT }</div>
+		<br />
+		<!-- ENDLOOP -->
+	
+		</div>
+	<br />
+	<!-- ENDIF -->
 	</div>
-		{/section}
-{ /if }
-</div>
-</div>
+	</div>
+	
+	<!-- INCLUDE blockright.html -->
 
-{ include file='blockright.html' }
+	<div class="footer">
+		<br />
+		<div align="center" class="footmsg">{ $THEME_FOOTER }</div>
+	</div>
 
-<div class="footer">
-<br /><div align="center" class="footmsg">{$THEME_FOOTER}</div>
+	</body>
+</html>

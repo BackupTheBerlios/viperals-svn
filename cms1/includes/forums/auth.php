@@ -105,7 +105,7 @@ class auth
 		}
 
 		// Needs to change ... check founder status when updating cache?
-		return $cache[$f][$opt];
+		return (!empty($cache[$f][$opt])) ? $cache[$f][$opt] : false;
 	}
 
 	function acl_getf($opt)
@@ -257,7 +257,6 @@ class auth
 	function acl_raw_data($user_id = false, $opts = false, $forum_id = false)
 	{
 		global $_CLASS;
-
 		$sql_user = ($user_id) ? ((!is_array($user_id)) ? "user_id = $user_id" : 'user_id IN (' . implode(', ', $user_id) . ')') : '';
 		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
 		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
@@ -276,7 +275,10 @@ class auth
 
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+			if ($row['auth_setting'] != ACL_UNSET)
+			{
+				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+			}
 		}
 		$_CLASS['core_db']->sql_freeresult($result);
 		
@@ -291,7 +293,10 @@ class auth
 
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+			if ($row['auth_setting'] != ACL_UNSET)
+			{
+				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+			}
 		}
 		$_CLASS['core_db']->sql_freeresult($result);
 

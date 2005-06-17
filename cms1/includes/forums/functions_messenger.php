@@ -22,6 +22,7 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+//jab_package_size  missing in $config
 
 class messenger
 {
@@ -239,9 +240,6 @@ class messenger
 	{
 		global $_CLASS, $site_file_root;
 
-		// Session doesn't exist, create it
-		$_CLASS['core_user']->start();
-
 		require_once($site_file_root.'includes/forums/functions_admin.php');
 		add_log('critical', 'LOG_' . $type . '_ERROR', $msg);
 	}
@@ -251,7 +249,9 @@ class messenger
 	//
 	function save_queue()
 	{
-		if ($this->use_queue)
+		global $config;
+
+		if ($config['email_package_size'] && $this->use_queue)
 		{
 			$this->queue->save();
 		}

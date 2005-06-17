@@ -19,6 +19,8 @@ function check_email($email)
 	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
 }
 
+/*
+*/
 function check_load_status($return = false)
 {
 	global $_CORE_CONFIG, $_CLASS;
@@ -101,7 +103,8 @@ function check_variable($variable, $default, $vartype)
 		break;
 		
 		default:
-			$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
+			$variable = trim_text(str_replace('\xFF', ' ', $variable), "\n");
+			//$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
 			$variable = strip_slashes($variable);
 		break;
 	}
@@ -257,12 +260,12 @@ function generate_link($link = false, $link_options = false)
 	{
 		$options = array_merge($options, $link_options);
 	} 	
-	
+
 	$file = ($options['admin']) ? ADMIN_PAGE : INDEX_PAGE;
 	
 	if (!$link)
 	{
-		$link = $file;
+		$link = $file.'?';
 		
 		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
 		{
@@ -276,7 +279,8 @@ function generate_link($link = false, $link_options = false)
 			$link = $_CORE_MODULE['title'].$link;
 		}
 		
-		$link = $file.'?mod='.$link;
+		//$link = $file.'?mod='.$link;
+		$link = $file.'?'.$link;
 		
 		// somtimes it ok to repeat strpos($link, '?') !== false is to much :-)
 		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
@@ -773,8 +777,8 @@ function theme_select($default = false)
 // fix me, add preg replace,
 function trim_text($text, $replacement = ' ')
 {
-	$text = str_replace("\r\n", $replacement, $text);
-	$text = str_replace("\n", $replacement, $text);
+	
+	$text = str_replace(array("\r\n", "\n"), $replacement, $text);
 	return trim($text);
 }
 

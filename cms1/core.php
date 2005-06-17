@@ -41,20 +41,20 @@ $phpversion = explode('.', PHP_VERSION);
 $phpversion = intval($phpversion[0].$phpversion[1]);
 
 $base_memory_usage = (function_exists('memory_get_usage')) ? memory_get_usage() : 0;
-
+           
 require($site_file_root.'includes/functions.php');
 require($site_file_root.'config.php');
 require($site_file_root.'includes/tables.php');
 require($site_file_root.'includes/handler.php');
 require($site_file_root.'includes/db/'.$site_db['type'].'.php');
-require($site_file_root.'includes/smarty/Smarty.class.php');
+require($site_file_root.'includes/display/template.php');
 require($site_file_root.'includes/cache/cache.php');
 require($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
 
 // Load basic classes
 load_class(false, 'core_error_handler', 'core_error_handler');
 load_class(false, 'core_cache', 'cache_'.$acm_type);
-load_class(false, 'core_template', 'Smarty');
+load_class(false, 'core_template', 'core_template');
 load_class(false, 'core_db', 'sql_db');
 
 // Set error handler
@@ -73,7 +73,7 @@ unset($sitedb);
 
 $_CLASS['core_db']->return_on_error = true;
 
-// This error incase we can't get our configs
+// Error messages just incase we can't get our configs
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
@@ -174,7 +174,7 @@ $_CLASS['core_user']->startup();
 
 if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['global']['error'])
 {
-	//$_CLASS['core_error_handler']->report = $_CORE_CONFIG['global']['error'];	
+	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['global']['error'];	
 }
 else
 {
@@ -182,9 +182,6 @@ else
 	$_CLASS['core_error_handler']->report = ERROR_NONE;
 }
 
-$_CORE_CONFIG['global']['error'] = ERROR_NONE;
-$_CLASS['core_error_handler']->report = ERROR_NONE;
-	
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here

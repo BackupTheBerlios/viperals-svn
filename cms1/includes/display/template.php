@@ -11,6 +11,9 @@ class core_template
 		$this->cache_dir = $site_file_root.'cache/template/';
     }
     
+    /*
+		Assign variable to be used in template
+    */
     function assign($var, $value = false)
     {
         if (is_array($var))
@@ -26,16 +29,25 @@ class core_template
 		}
     }
 
-    function get_vars($name)
-    {
-		return (!empty($this->_vars[$name])) ? $this->_vars[$name] : '';
-    }
-    
+	/*
+		Assign variable that are part of a Loop
+    */
 	function assign_vars_array($name, $value)
 	{
 		$this->_vars[$name][] = $value;
 	}
 
+    /*
+		Return Currently stored variable is any, NULL is it's unset
+    */
+    function get_vars($name)
+    {
+		return (!empty($this->_vars[$name])) ? $this->_vars[$name] : NULL;
+    }
+    
+	/*
+		Remove an asigned var or var_array
+    */
 	function remove_vars($var)
     {
 		if (is_array($var))
@@ -50,7 +62,11 @@ class core_template
 			unset($this->_vars[$var]);
 		}
     }
-    
+
+    /*
+		Display template
+		This loads the template if it exsists else parses it before displaying
+    */
 	function display($name, $allow_theme = true)
 	{
 		if (!$this->generate_dirs($name))
@@ -61,16 +77,15 @@ class core_template
 		if ($file = $this->is_compiled($name))
 		{
 			include($file);
-			//return;
+			return;
 		}
 		else
 		{
 			if ($this->compile($name))
 			{
-				//echo $this->_compiled_code;
-				if ($this->compile_save($name))
+				if ($this->_compile_save($name))
 				{
-					include($file);
+					include($this->cache_dir.$this->generate_name($name));
 				}
 				else
 				{
@@ -82,6 +97,10 @@ class core_template
 		}
     }
 
+    /*
+		Display template
+		This loads the template if it exsists else parses it before displaying
+    */
 	function generate_dirs($name)
 	{
 		global $_CLASS, $site_file_root;
@@ -112,11 +131,12 @@ class core_template
 	function generate_name($name)
 	{
 		global $_CLASS;
-// should we make a sub dir method ?
+
 		$file_name = str_replace(array('.', '/'), '#', $name);
+
 		return (($this->theme_themplate) ? $_CLASS['core_display']->theme.'#' : '') . "$file_name.php";
 	}
-	
+
     function is_compiled($name)
     {
 		$cache_location = $this->cache_dir.$this->generate_name($name);
@@ -137,15 +157,20 @@ class core_template
     }
 
 	/*
+		Compile the template into a php friendly format
+		
 		Idea Based from phpBB3
 	*/
-    function compile($name)
+    function compile($name, $code = false)
     {
-		$code = file_get_contents($this->template_dir.$name);
-
-		if ($code === false)
+		if (!$code)
 		{
-			return false;
+			$code = file_get_contents($this->template_dir.$name);
+	
+			if ($code === false)
+			{
+				return false;
+			}
 		}
 
 		preg_match_all('/\<!--[ ]*(.*?) (.*?)?[ ]*--\>/', $code, $tag_blocks);
@@ -158,43 +183,69 @@ class core_template
 			$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
 		}
 
-		$compile_blocks = array();
-		//print_r($tag_blocks);die;
 		$size = count($tag_blocks[1]);
+		$tag_holding = array();
 
 		for ($loop = 0; $loop < $size; $loop++)
 		{
 			switch (strtoupper(trim($tag_blocks[1][$loop])))
 			{
 				case 'IF':
+					$tag_holding[] = 'IF';
 					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_if($tag_blocks[2][$loop]) . ' ?>';
 					break;
 
 				case 'ELSE':
+					if (end($tag_holding)  != 'IF')
+					{
+						// Error here
+					}
+					
 					$tag_blocks[0][$loop] = '<?php } else { ?>';
 					break;
 
 				case 'ELSEIF':
+					if (end($tag_holding)  != 'IF')
+					{
+						// Error here
+					}
+					
 					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_if($tag_blocks[2][$loop], true) . ' ?>';
 					break;
 
 				case 'ENDIF':
+					if (array_pop($tag_holding) != 'IF')
+					{
+						// Error here
+					}
+
 					$tag_blocks[0][$loop] = '<?php } ?>';
 					break;
 				
 				case 'LOOP':
-					$in_loop =  true;
+					$tag_holding[] = 'LOOP';
 					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_loop($tag_blocks[2][$loop]) . ' ?>';
 					break;
 
 				case 'LOOPELSE':
-					$in_loop =  false;
+					if (array_pop($tag_holding) != 'LOOP')
+					{
+						// Error here
+					}
+					
+					$tag_holding[] = 'LOOPELSE';
 					$tag_blocks[0][$loop] = '<?php } } else {  ?>';
 					break;
 					
 				case 'ENDLOOP':
-					$tag_blocks[0][$loop] = '<?php }'.(($in_loop) ? ' } array_pop($this->_loop);' : '').' ?>';
-					$in_loop =  false;
+					$last_tag = array_pop($tag_holding);
+					
+					if ($last_tag != ('LOOP' || 'LOOPELSE'))
+					{
+						// Error here
+					}
+
+					$tag_blocks[0][$loop] = '<?php }'.(($last_tag == 'LOOP') ? ' } ' : '').' ?>';
 					break;
 				
 				case 'INCLUDE':
@@ -202,8 +253,7 @@ class core_template
 					break;
 					
 				default:
-					//$tag_blocks[0][$loop] = ''; // wow this was hard to figure out
-					//$compile_blocks[] = '<!-- '.$tag_blocks[1][$loop].' '.$tag_blocks[2][$loop].' -->';
+					//$tag_blocks[0][$loop] = '<!-- '.$tag_blocks[1][$loop].' '.$tag_blocks[2][$loop].' -->';
 					break;
 			}
 		}
@@ -217,10 +267,11 @@ class core_template
 		}
 
 		return true;
-		//echo htmlentities($code);
     }
 
-	// Handles template language
+	/*
+		Handles template language
+	*/
 	function _get_lang($lang)
 	{
 		global $_CLASS;
@@ -230,7 +281,6 @@ class core_template
 
 	function _parse_content($code)
 	{
-		//$code = trim($code);
 		if (is_integer($code) || (strpos($code, '{') === false))
 		{
 			return $code;
@@ -238,8 +288,6 @@ class core_template
 		
 		preg_match_all('/\{(.*?)\}/', $code, $values);
 		
-		//print_r($values);
-
 		$size = count($values[1]);
 
 		for ($loop = 0; $loop < $size; $loop++)
@@ -254,13 +302,19 @@ class core_template
 			
 			$values[1][$loop] = '<?php echo '.$parse.'; ?>';
 		}
-		//print_r($values);
-		$values[0] = array_unique($values[0]);
-		$values[1] = array_unique($values[1]);
-		
+	
 		return str_replace($values[0], $values[1], $code);
 	}
 
+	/*
+		Parse all content enclosed in { }
+		Asisgned variables { $VAR } 
+		Loop array variables { $ARRAY:VAR }
+		Specail array Var { $ARRAY:#LOOP_INDEX }
+		
+		To DO: Defines
+			{ #VAR }
+	*/
 	function _parse_var($var)
     {
 		// Is it something to be parsed ?
@@ -272,7 +326,7 @@ class core_template
 			return false;
 		}
 		
-		$var = substr(trim($var), 1);
+		$var = substr($var, 1);
 
 		if (strpos($var, 'L_') !== false)
 		{
@@ -293,18 +347,48 @@ class core_template
 			}
 			else
 			{
-				$loop_name = '_'.strtolower($vars[($loop - 1)]);
-				$_output .= "[\$this->_loop['$loop_name']]['$vars[$loop]']";
+				if (strpos($vars[$loop], '#') !== 0)
+				{
+					$loop_name = '_'.strtolower($vars[($loop - 1)]);
+					$_output .= "[\$this->_loop['$loop_name']]['$vars[$loop]']";
+				}
+				else
+				{
+					$var = substr($vars[$loop], 1);
+					Switch ($var)
+					{
+						case 'LOOP_INDEX':
+							$loop_name = '_'.strtolower($vars[($loop - 1)]);
+							$_output = "\$this->_loop['$loop_name']";
+						break;
+
+						case 'LOOP_NUMBER':
+							$loop_name = '_'.strtolower($vars[($loop - 1)]);
+							$_output = "\$this->_loop['$loop_name'] + 1";
+						break;
+						
+						case 'LOOP_SIZE':
+							$_output = "count(\$this->_vars['$vars[$loop]']);";
+						break;
+					}
+				}
 			}
 		}
 		
-		//print_r($vars);die;
         return $_output;
     }
     
+    /*
+		Parse If tags
+		Format: <!-- if isset({ $S_FORUM_RULES }) || { $S_FORUM_RULES } -->
+		
+		To Do: add user frendly tag NOT, etc
+			<!-- if isset({ $S_FORUM_RULES }) || { NOT $S_FORUM_RULES } -->
+    */
 	function compile_tag_if($options, $elseif = false)
 	{
-		//<!-- if isset({ $S_FORUM_RULES }) || { $S_FORUM_RULES } -->
+		//strtok()
+		
 		preg_match_all('/\{(.*?)\}/', $options, $values);
 		$size = count($values[1]);
 
@@ -321,8 +405,6 @@ class core_template
 			$values[1][$loop] = $parse;
 		}
 
-		$values[0] = array_unique($values[0]);
-		$values[1] = array_unique($values[1]);
 		$options = str_replace($values[0], $values[1], $options);
 
 		return (($elseif) ? '} elseif (' : 'if (') . ($options.') { ');
@@ -338,12 +420,11 @@ class core_template
 		$loop_code = $this->_parse_var(trim($options));
 
 		$options = substr($options, 1);
-		$loop_name = '_'.strtolower($options);
+		$loop_name = '_'.strtolower(str_replace(array(':', '#') , '_', $options));
 
-        $output = "if (isset($loop_code) && is_array($loop_code)) {\n";
-        $output .=  "\${$loop_name}_count =  count($loop_code);";
-        
-//for ($i = 1; $i <= 10; $i++) {
+        $output =  "\n\${$loop_name}_count = (isset($loop_code)) ? ((is_integer($loop_code)) ? $loop_code : count($loop_code)) : false;\n";
+        $output .= "if (\${$loop_name}_count) {\n";
+
 		$output .= "for (\$this->_loop['$loop_name'] = 0; \$this->_loop['$loop_name'] < \${$loop_name}_count; \$this->_loop['$loop_name']++) {";
         return $output;
     }
@@ -370,4 +451,3 @@ class core_template
 		return false;
 	}
 }
-

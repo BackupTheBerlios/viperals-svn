@@ -54,12 +54,12 @@ class cache_file extends cache
 		$protection_code = "if (!defined('VIPERAL')) { die('Hello'); }$new_line";
 		$expires = time() + $ttl;
 
-		$data = "<?php $protection_code \$this->vars['$name'] = ".$this->format_array($data)."; \n\$this->expires['$name'] = $expires;  ?>";
+		$file_data = "<?php $protection_code \$this->vars['$name'] = ".$this->format_array($data)."; \n\$this->expires['$name'] = $expires;  ?>";
 
 		if ($fp = @fopen($this->cache_dir . "cache_$name.php", 'wb'))
 		{
 			@flock($fp, LOCK_EX);
-			fwrite($fp, $data);
+			fwrite($fp, $file_data);
 			@flock($fp, LOCK_UN);
 			fclose($fp);
 		}

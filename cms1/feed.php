@@ -14,12 +14,12 @@
 //**************************************************************//
 define('VIPERAL', 'FEED');
 
-//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
+//echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
 $site_file_root = 'C:/apachefriends/xampp/cms/';
 
 require($site_file_root.'core.php');
 
-//error_reporting(0);
+error_reporting(0);
 header('Content-Type: text/xml');
 
 $result = $_CLASS['core_db']->sql_query('SELECT id, title, time, intro, poster_name FROM '.$prefix.'_news ORDER BY id DESC LIMIT 10');
@@ -36,7 +36,6 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	$_CLASS['core_template']->assign_vars_array('items', array(
 		'TITLE' 		=> htmlspecialchars($row['title'], ENT_QUOTES),
 		'LINK' 			=> generate_link('News&amp;mode=view&amp;id='.$row['id'], array('full' => true)),
-//htmlentities causes problems with some chars.
 		'DESCRIPTION' 	=> htmlspecialchars(strip_tags($row['intro']), ENT_QUOTES),
 		'TIME'			=> gmdate('M d Y H:i:s', $row['time']) .' GMT',
 		'AUTHOR'		=> $row['poster_name']

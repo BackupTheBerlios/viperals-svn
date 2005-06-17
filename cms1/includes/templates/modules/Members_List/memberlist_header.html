@@ -1,6 +1,19 @@
-{ if isset($DISPLAY_STYLESHEET_LINK) }
+<!-- IF isset({$DISPLAY_STYLESHEET_LINK}) -->
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" href="themes/viperal/style/style.css" type="text/css" />
-{ /if }
+<meta http-equiv="content-Type" content="text/html; charset={ $SITE_CHARSET }" />
+<link rel="stylesheet" href="{ $A_STYLESHEET }" type="text/css" />
+
+<!-- ENDIF -->
+
+<script language="Javascript" type="text/javascript">
+<!--
+	function popup(url, width, height)
+	{
+		window.open(url, '_popup', 'HEIGHT=' + height + ',resizable=yes,scrollbars=yes, WIDTH=' + width);
+		return false;
+	}
+//-->
+</script>
+
 { $A_TABLE_OPEN }

@@ -354,7 +354,6 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	$right = $padding = 0;
 	$padding_store = array('0' => 0);
 	$display_jumpbox = false;
-	$iteration = 0;
 	
 	// Sometimes it could happen that forums will be displayed here not be displayed within the index page
 	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
@@ -396,7 +395,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 		{
 			$_CLASS['core_template']->assign_vars_array('jumpbox_forums', array(
 				'FORUM_ID'		=> ($select_all) ? 0 : -1,
-				'FORUM_NAME'	=> ($select_all) ? $_CLASS['core_user']->lang['ALL_FORUMS'] : $_CLASS['core_user']->lang['SELECT_FORUM'],
+				'FORUM_NAME'	=> ($select_all) ? $_CLASS['core_user']->get_lang('ALL_FORUMS') : $_CLASS['core_user']->get_lang('SELECT_FORUM'),
 				'SELECTED'		=> '',
 				'S_IS_CAT'		=> false,
 				'S_IS_LINK'		=> false,
@@ -407,12 +406,6 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 			$display_jumpbox = true;
 		}
 
-		for ($i = 0; $i < $padding; $i++)
-		{
-			$_CLASS['core_template']->assign_vars_array('jumpbox_forums_level', array(
-			'SECTION'		=> $iteration));
-		}
-		
 		$_CLASS['core_template']->assign_vars_array('jumpbox_forums', array(
 			'FORUM_ID'		=> $row['forum_id'],
 			'FORUM_NAME'	=> $row['forum_name'],
@@ -422,12 +415,8 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 			'S_IS_POST'		=> ($row['forum_type'] == FORUM_POST) ? true : false,
 			'PADDING'		=> $padding)
 		);
-
-		$iteration++;
-	
 	}
 	$_CLASS['core_db']->sql_freeresult($result);
-	unset($padding_store);
 
 	$_CLASS['core_template']->assign(array(
 		'S_DISPLAY_JUMPBOX'	=> $display_jumpbox,
@@ -837,7 +826,7 @@ function obtain_ranks(&$ranks)
 {
 	global $_CLASS;
 
-	if (($icons = $_CLASS['core_cache']->get('ranks')) === false )
+	if (($ranks = $_CLASS['core_cache']->get('ranks')) === false )
 	{
 		$sql = 'SELECT *
 			FROM ' . RANKS_TABLE . '
@@ -874,7 +863,7 @@ function obtain_attach_extensions(&$extensions, $forum_id = false)
 {
 	global $_CLASS;
 
-	if (($icons = $_CLASS['core_cache']->get('extensions')) === false )
+	if (($extensions = $_CLASS['core_cache']->get('extensions')) === false )
 	{
 		// The rule is to only allow those extensions defined. ;)
 		$sql = 'SELECT e.extension, g.*
@@ -1449,12 +1438,14 @@ function page_header()
 		'U_SEARCH_SELF'			=> generate_link('Forums&amp;file=search&amp;search_id=egosearch'),
 		'U_SEARCH_NEW' 			=> generate_link('Forums&amp;file=search&amp;search_id=newposts'),
 		'U_SEARCH_UNANSWERED'	=> generate_link('Forums&amp;file=search&amp;search_id=unanswered'),
+		'U_SEARCH_ACTIVE_TOPICS'=> generate_link('Forums&amp;file=search&amp;search_id=active_topics'),
 		'U_DELETE_COOKIES'		=> generate_link('Control_Panel&amp;mode=delete_cookies'),
 
-		'S_USER_LOGGED_IN' 		=> ($_CLASS['core_user']->is_user) ? true : false,
+		'S_USER_LOGGED_IN' 		=> ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false,
+		'S_REGISTERED_USER'		=> $_CLASS['core_user']->is_user,
 		'S_USER_PM_POPUP' 		=> $_CLASS['core_user']->optionget('popuppm'),
 		'S_USER_LANG'			=> $_CLASS['core_user']->data['user_lang'], 
-		'S_USER_BROWSER' 		=> (isset($_CLASS['core_user']->data['session_browser'])) ? $_CLASS['core_user']->data['session_browser'] : $_CLASS['core_user']->lang['UNKNOWN_BROWSER'],
+		'S_USER_BROWSER' 		=> ($_CLASS['core_user']->data['session_browser']) ? $_CLASS['core_user']->data['session_browser'] : $_CLASS['core_user']->lang['UNKNOWN_BROWSER'],
 		'S_CONTENT_DIRECTION' 	=> $_CLASS['core_user']->lang['DIRECTION'],
 		'S_CONTENT_ENCODING' 	=> $_CLASS['core_user']->lang['ENCODING'],
 		'S_CONTENT_DIR_LEFT' 	=> $_CLASS['core_user']->lang['LEFT'],
@@ -1464,24 +1455,18 @@ function page_header()
 		'S_DISPLAY_SEARCH'		=> ($config['load_search']) ? 1 : 0, 
 		'S_DISPLAY_PM'			=> ($config['allow_privmsg']) ? 1 : 0, 
 		'S_DISPLAY_MEMBERLIST'	=> $_CLASS['auth']->acl_get('u_viewprofile'), 
-		'L_JUMP_PAGE'			=> $_CLASS['core_user']->lang['JUMP_PAGE'],
-		'L_NEXT'				=> $_CLASS['core_user']->lang['NEXT'],
-		'L_PREVIOUS'			=> $_CLASS['core_user']->lang['PREVIOUS'],
-		'L_GOTO_PAGE'			=> $_CLASS['core_user']->lang['GOTO_PAGE'],
-		'L_FAQ'					=> $_CLASS['core_user']->lang['FAQ'],
-		'L_SEARCH'				=> $_CLASS['core_user']->lang['SEARCH'],
-		'L_MEMBERLIST'			=> $_CLASS['core_user']->lang['MEMBERLIST'],
-		'L_PROFILE'				=> $_CLASS['core_user']->lang['PROFILE'],
-		'L_SEARCH_NEW'			=> $_CLASS['core_user']->lang['SEARCH_NEW'],
-		'L_SEARCH_SELF'			=> $_CLASS['core_user']->lang['SEARCH_SELF'],
-		'L_SEARCH_UNANSWERED'	=> $_CLASS['core_user']->lang['SEARCH_UNANSWERED'],
+
 		'T_SMILIES_PATH'		=> "{$config['smilies_path']}/",
 		'T_AVATAR_PATH'			=> "{$config['avatar_path']}/",
 		'T_AVATAR_GALLERY_PATH'	=> "{$config['avatar_gallery_path']}/",
 		'T_ICONS_PATH'			=> "{$config['icons_path']}/",
 		'T_RANKS_PATH'			=> "{$config['ranks_path']}/",
 		'T_UPLOAD_PATH'			=> "{$config['upload_path']}/",
-		'TRANSLATION_INFO' => 'Ported by <a href="http://www.viperal.com/" target="_Viperal">Viperal</a>',
+
+// Temp
+		'T_IMAGE_PATH'			=> "themes/viperal/template/modules/Forums/images/",
+
+		'TRANSLATION_INFO'	=> 'Ported by <a href="http://www.viperal.com/" target="_Viperal">Viperal</a>',
 		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
 		)

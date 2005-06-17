@@ -1,21 +1,21 @@
 <div class="newsblock">
-
-{section name=newsloop loop=$news}
-	<div class="title" onclick="blockswitch2('{$news[newsloop].ID}');" style="cursor:pointer">{$news[newsloop].TITLE}</div>
-	<div class="content" { if $news[newsloop].COLLAPSE }style="display: none"{ /if } id="pe{$news[newsloop].ID}">
-	{$news[newsloop].CONTENT}
+<!-- LOOP $news -->
+	<div class="title" onclick="blockswitch2('{ $news:ID }');" style="cursor:pointer">{ $news:TITLE }</div>
+	<div class="content" <!-- IF { $news:COLLAPSE } -->style="display: none"<!-- ENDIF --> id="pe{ $news:ID }">
+	{ $news:CONTENT }
 	<br /><br />
-	{ if $news[newsloop].FULL_STORY }<a href="{$news[newsloop].CONTENT_LINK}" > Readmore ..</a>{ /if }
+	<!-- IF { $news:FULL_STORY } --><a href="{ $news:CONTENT_LINK }" > Readmore ..</a><!-- ENDIF -->
 	<hr />
 	
-	 <div style="float: left; Top: -2.5em;"><a onclick="window.open('{ $news[newsloop].PRINT_LINK }', 'print{$news[newsloop].ID}', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600');return false;" href="{ $news[newsloop].PRINT_LINK }" >
+	 <div style="float: left; Top: -2.5em;"><a onclick="window.open('{ $news:PRINT_LINK }', 'print{ $news:ID }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600');return false;" href="{ $news:PRINT_LINK }" >
 	 <img src="themes/viperal/images/print.gif" alt="" /></a></div>
-	 <div style="float: right; Top: -2.5em;">Posted: {$news[newsloop].TIME}<br/>
-	 { if $news[newsloop].POSTER_LINK }By: <a href="{ $news[newsloop].POSTER_LINK }">{$news[newsloop].POSTER} </a>{ else }By: {$news[newsloop].POSTER} { /if }</div></div>
+	 <div style="float: right; Top: -2.5em;">Posted: { $news:TIME }<br/>
+	<!-- IF { $news:POSTER_LINK } -->By: <a href="{ $news:POSTER_LINK }">{ $news:POSTER } </a><!-- ELSE -->By: { $news:POSTER } <!-- ENDIF --></div></div>
 	<br />
 	<br />
 	<br />
-{ /section }
-{ if $NEWS_PAGINATION }<div class="numbering">[ { if $NEWS_PREVIOUS_PAGE }<a href="{$NEWS_PREVIOUS_PAGE}">{$L_PREVIOUS}</a>&nbsp;|&nbsp;{ /if } {$NEWS_PAGINATION} { if $NEWS_NEXT_PAGE }&nbsp;|&nbsp;<a href="{$NEWS_NEXT_PAGE}">{$L_NEXT}</a>{ /if } ]</div><br />{ /if }
+<!-- ENDLOOP  -->
+<!-- IF { $NEWS_PAGINATION } --><div class="numbering">[ <!-- IF { $NEWS_PREVIOUS_PAGE } --><a href="{ $NEWS_PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;|&nbsp;<!-- ENDIF --> { $NEWS_PAGINATION }
+<!-- IF { $NEWS_NEXT_PAGE } -->&nbsp;|&nbsp;<a href="{ $NEWS_NEXT_PAGE }">{$L_NEXT}</a><!-- ENDIF --> ]</div><br /><!-- ENDIF -->
 </div>
 <br />

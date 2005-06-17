@@ -533,7 +533,13 @@ function mcp_move_topic($topic_ids)
 	else
 	{
 		$_CLASS['core_display']->meta_refresh(3, $redirect);
-		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>'));
+
+		$message = $_CLASS['core_user']->lang[$success_msg];
+		$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $redirect . '">', '</a>');
+		$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id).'">', '</a>');
+		$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href='.generate_link('Forums&amp;file=viewforum&amp;f='.$to_forum_id).'">', '</a>');
+		
+		trigger_error($message);
 	}
 }
 
@@ -633,6 +639,13 @@ function mcp_delete_post($post_ids)
 		}
 		$affected_topics = sizeof($topic_id_list);
 		$db->sql_freeresult($result);
+
+		$post_data = get_post_data($post_ids);
+
+		foreach ($post_data as $id => $row)
+		{
+			add_log('mod', $row['forum_id'], $row['topic_id'], 'LOG_DELETE_POST', $row['post_subject']);
+		}
 
 		// Now delete the posts, topics and forums are automatically resync'ed
 		delete_posts('post_id', $post_ids);

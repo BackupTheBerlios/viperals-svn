@@ -14,7 +14,6 @@
 		<th colspan="2">{$L_GROUP_DETAILS}</td>
 		<th>{$L_MARK}</td>
 	</tr>
-	{ if isset($leader) }
 	{section name=leaderloop loop=$leader}
 	{ if !$leader[leaderloop].S_ROW_COUNT }
 	<tr>
@@ -27,9 +26,7 @@
 		<td class="{ if !$leader[leaderloop].S_ROW_COUNT is odd }row2{ else }row1{ /if }" width="6%" align="center" nowrap="nowrap">{ if !$leader[leaderloop].GROUP_SPECIAL }<input type="checkbox" name="mark[{$leader[leaderloop].GROUP_ID}]" />{ /if }</td>
 	</tr>
 	{ /section }
-	{ /if }
 	
-	{ if isset($member) }
 	{section name=memberloop loop=$member}
 	{ if !$member[memberloop].S_ROW_COUNT }
 	<tr>
@@ -42,9 +39,7 @@
 		<td class="{ if $member[memberloop].S_ROW_COUNT is odd }row2{ else }row1{ /if }" width="6%" align="center" nowrap="nowrap">{ if !$member[memberloop].GROUP_SPECIAL }<input type="checkbox" name="mark[{$member[memberloop].GROUP_ID}]" />{ /if }</td>
 	</tr>
 	{ /section }
-	{ /if }
 	
-	{ if isset($pending) }
 	{section name=pendingloop loop=$pending}
 	{ if !$pending[pendingloop].S_ROW_COUNT }
 	<tr>
@@ -57,9 +52,7 @@
 		<td class="{ if $pending[pendingloop].S_ROW_COUNT is odd }row2{ else }row1{ /if }" width="6%" align="center" nowrap="nowrap">{ if !$pending[pendingloop].GROUP_SPECIAL }<input type="checkbox" name="mark[{ $pending[pendingloop].GROUP_ID }]" />{ /if }</td>
 	</tr>
 	{ /section }
-	{ /if }
 	
-	{ if isset($nonmember) }
 		{section name=nonmemberloop loop=$nonmember}
 		{ if !$nonmember[nonmemberloop].S_ROW_COUNT }
 		<tr>
@@ -72,7 +65,6 @@
 			<td class="{ if $nonmember[nonmemberloop].S_ROW_COUNT is odd }row2{ else }row1{ /if }" width="6%" align="center" nowrap="nowrap">{ if !$nonmember[nonmemberloop].GROUP_SPECIAL }<input type="checkbox" name="mark[{$nonmember[nonmemberloop].GROUP_ID}]" />{ /if }</td>
 		</tr>
 		{ /section }
-	{ /if }
 
 	<tr>
 		<td class="cat" colspan="3"></div><div style="float:right"><span class="genmed">Select: </span><select name="mode"><option value="join">Join marked</option><option value="resign">Resign marked</option><option value="demote">Demote marked</option></select>&nbsp;<input class="btnmain" type="submit" name="submit" value="{$L_SUBMIT}" />&nbsp;</div></td>

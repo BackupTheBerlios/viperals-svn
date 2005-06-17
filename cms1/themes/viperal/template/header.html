@@ -1,63 +1,72 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{$SITE_LANG}" lang="{$SITE_LANG}">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{ $SITE_LANG }" lang="{ $SITE_LANG }">
 <head>
 <title>{ $SITE_TITLE }</title>
 <meta http-equiv="content-Type" content="text/html; charset={ $SITE_CHARSET }" />
 <meta name="author" content="{ $SITE_NAME }" /><meta http-equiv="expires" content="0" />
 <meta name="copyright" content="Copyright { $SITE_NAME } { $SITE_URL }" />
 <meta name="robots" content="index, follow" />
-<link rel="stylesheet" href="/themes/viperal/style/style.css" type="text/css" />
-{$HEADER_REGULAR}
-{$HEADER_JS}
+<link rel="stylesheet" href="{ $A_STYLESHEET }" type="text/css" />
+{ $HEADER_REGULAR }
+{ $HEADER_JS }
 <script type="text/javascript" src="/themes/viperal/blockscript.js"></script>
+
+<!--[if IE]>
+<style>
+	.bodymain {
+		height:1500px;
+	}
+</style>
+<![endif]-->
 </head>
 <body>
-{$HEADER_BODY}
+{ $HEADER_BODY }
 
 <a name="Top"></a>
 
 <div class="menu"></div>
 
 <div id="header">
-	<a href="{$THEME_MAININDEX}"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{$THEME_SITENAME}" /></a>
+	<a href="{ $THEME_MAININDEX }"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{ $THEME_SITENAME }" /></a>
 </div>
-{ include file='blockleft.html' }
 
-<div class="mainbody" style="margin-left: {$MARGINLEFT}">
+<!-- include blockleft.html -->
+
+<div class="mainbody" style="margin-left: { $THEME_MARGINLEFT }">
 	<div id="page">
-		You are here: {$PAGE_TITLE}
+		You are here: { $PAGE_TITLE }
 	</div>
 	
-	<div class="bodymain" style="margin-right: {$MARGINRIGHT}">
+	<div class="bodymain" style="margin-right: { $THEME_MARGINRIGHT }">
+	<!-- IF { $HEADER_MESSAGE }-->
+	{ $A_TABLE_OPEN }<div style="text-align: center;">{ $HEADER_MESSAGE }</div>{ $A_TABLE_CLOSE }
+	<!-- ENDIF -->
 
-	{ if isset($messageblock) }
-	
+	<!-- IF isset({ $message_block_top }) -->
 		<div class="messageblock">
-	
-		{section name=messageblockloop loop=$messageblock}
-			<div class="title" onclick="blockswitch2('{$messageblock[messageblockloop].ID}');" style="cursor:pointer">{$messageblock[messageblockloop].TITLE}
-			{ if $messageblock[messageblockloop].EDIT_LINK }[ { if $messageblock[messageblockloop].EXPIRES }{$messageblock[messageblockloop].EXPIRES} | {/if }
-			<a href="{$messageblock[messageblockloop].EDIT_LINK}" >{$messageblock[messageblockloop].L_EDIT}</a> ]{ /if }</div>
-			<div class="content" {$messageblock[messageblockloop].HIDE} id="pe{$messageblock[messageblockloop].ID}">{$messageblock[messageblockloop].CONTENT}</div>
+		<!-- LOOP $message_block_top -->
+			<div class="title" onclick="blockswitch2('{ $message_block_top:ID }');" style="cursor:pointer">{ $message_block_top:TITLE }
+			<!-- IF { $message_block_top:EDIT_LINK } -->[ <!-- IF { $message_block_top:EXPIRES } -->{ $message_block_top:EXPIRES } | <!-- ENDIF -->
+			<a href="{ $message_block_top:EDIT_LINK }" >{ $message_block_top:L_EDIT }</a> ]<!-- ENDIF --></div>
+			<div class="content" { $message_block_top:HIDE } id="pe{ $message_block_top:ID }">{ $message_block_top:CONTENT }</div>
 		<br />
-		{/section}
-	
+		<!-- ENDLOOP -->
 		</div>
 	<br />
-	{ /if }
 
-	{ if isset($centerblock) }
-	  {section name=blockcenterloop loop=$centerblock}
-	
+	<!-- ENDIF -->
+
+<!-- IF isset({ $block_center }) -->
+	<!-- LOOP $block_center -->
 	<div class="centerblock">
-		<div class="title">{$centerblock[blockcenterloop].TITLE}</div>
+		<div class="title">{ $block_center:TITLE }</div>
 			<div class="OpenTable"><div class="outer">
 				<div class="inner">
-					<div class="content">{$centerblock[blockcenterloop].CONTENT}</div>
+					<div class="content">{ $block_center:CONTENT }</div>
 				</div>
 			</div>
 		</div>
 	</div>
-		{/section}
+	<!-- ENDLOOP -->
 	<br />
-	{ /if }
+<!-- ENDIF -->

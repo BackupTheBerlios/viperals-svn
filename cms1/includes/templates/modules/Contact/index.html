@@ -1,12 +1,13 @@
-{ if $ERROR }
+<!-- IF { $ERROR } -->
 	{ $A_TABLE_OPEN }
 	<div align="center">
 		<font color="#990000">{ $ERROR }</font>
 	</div>
 	{ $A_TABLE_CLOSE }
-{ /if }
+<!-- ENDIF -->
 
 { $A_TABLE_OPEN }
+
 <form method="post" action="{ $ACTION }" >
 	<div align="center">{ $L_FEEDBACKNOTE }<br />
 	<b>( Please note your ip will be logged )</b></div><br />
@@ -14,7 +15,7 @@
     <input class="post" type="text" name="sender_name" value="{ $SENDER_NAME }" size="30" /><br />
     <label><b>{ $L_YOUREMAIL }:</b></label><br />
     <input class="post" type="text" name="sender_email" value="{ $SENDER_EMAIL }" size="30" /><br />
-    
+
     <input class="btnlite" type="submit" name="contact" value="{ $L_SUBMIT }" />
     <input class="btnlite" type="submit" name="preview" value="{ $L_PREVIEW }" /><br /></td>
 	
