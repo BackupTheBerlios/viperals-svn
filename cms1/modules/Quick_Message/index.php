@@ -153,7 +153,7 @@ function show_messages($all = false)
 		{
 			if (($row['user_id'] && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['user_id'] && $row['ip'] == $_CLASS['core_user']->ip))
 			{
-				$delete_link = generate_link('quick_message&amp;mode=delete&amp;id='.$row['id']);
+				$delete_link = generate_link('Quick_Message&amp;mode=delete&amp;id='.$row['id']);
 			}
 		}
 		
@@ -192,7 +192,6 @@ function show_messages($all = false)
 			'MESSAGE'		=> trim_text($row['message'], '<br />'),
 			'TIME'			=> $_CLASS['core_user']->format_date($row['time']),
 			'POSTER_AVATAR' => $avatar,
-			//'ONLINE_IMG'	=> ($row['user_id']) ? $_CLASS['core_user']->img('btn_online', 'ONLINE') : '', 
 			'U_PROFILE' 	=> ($row['user_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,
 		));
 		
@@ -204,7 +203,7 @@ function show_messages($all = false)
 	$_CLASS['core_db']->sql_freeresult($result);	
 
 	$_CLASS['core_template']->assign(array(
-		'Q_MESSAGE_PAGINATION'	=> generate_pagination('quick_message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
+		'Q_MESSAGE_PAGINATION'	=> generate_pagination('Quick_Message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
 		'Q_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
 		'Q_TOTAL_MESSAGES'		=> $row['total']
 	));

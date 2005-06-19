@@ -13,7 +13,6 @@
 
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
     die();
 }
 
@@ -55,14 +54,14 @@ function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_e
 	global $_CLASS, $_CORE_CONFIG;
 	
 	$mail_message = '<center>Hi '.$receiver_name.' <br /><br /> '.$sender_name.' has recommended you look at this site.'
-				.'<br /><br /><a href="'.$_CORE_CONFIG['global']['site_url'].'">'.$_CORE_CONFIG['global']['site_name'].' - '.$_CORE_CONFIG['global']['siteurl'].'</a>';
+				.'<br /><br /><a href="'.$_CORE_CONFIG['global']['site_url'].'">'.$_CORE_CONFIG['global']['site_name'].' - '.$_CORE_CONFIG['global']['site_url'].'</a>';
 	
 	if ($message)
 	{
 		$message .= '<br /><br /><b>There following message was attached by sender</b><br />'.$message;
 	}
 	
-	$mail_message .= '<br /><br /><br /><center>Message Sent from IP '. $_CLASS['core_user']->ip . '<br />Please report spammer at '. $_CORE_CONFIG['global']['siteurl'] .'</center>';
+	$mail_message .= '<br /><br /><br /><center>Message Sent from IP '. $_CLASS['core_user']->ip . '<br />Please report spammers at '. $_CORE_CONFIG['global']['site_url'] .'</center>';
 
 
 	if ($preview)
@@ -72,8 +71,6 @@ function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_e
 	}
 	
 	$subject = $_CLASS['core_user']->lang['RECOMMENDATION'] . $sender_name;
-
-	OpenTable();
 
 	if (send_mail($mailer_message, $mail_message, true, $subject, $receiver_email, $receiver_name, $sender_email, $sender_name))
 	{
@@ -90,8 +87,6 @@ function send_recommend($sender_name, $sender_email, $receiver_name, $receiver_e
 				
 		trigger_error($message);
 	}
-	
-	CloseTable();
 	
 	$_CLASS['core_display']->display_footer();
   

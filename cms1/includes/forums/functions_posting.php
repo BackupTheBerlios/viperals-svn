@@ -26,39 +26,17 @@
 // Fill smiley templates (or just the variables) with smileys, either in a window or inline
 function generate_smilies($mode, $forum_id)
 {
-	global $_CLASS, $config;
-
-	if ($mode == 'window')
-	{
-		if ($forum_id)
-		{
-			$sql = 'SELECT forum_style
-				FROM ' . FORUMS_TABLE . "
-				WHERE forum_id = $forum_id";
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
-		
-			$_CLASS['core_user']->setup('posting', (int) $row['forum_style']);
-		}
-		else
-		{
-			$_CLASS['core_user']->setup('posting');
-		}
-
-		page_header($_CLASS['core_user']->lang['SMILIES']);
-		//$template->set_filenames(array(
-		//	'body' => 'forums/posting_smilies.html')
-		//);
-	}
+	global $_CLASS;
 
 	$display_link = false;
+	$mode = ($mode == 'window') ? 'window' : 'inline';
+
 	if ($mode == 'inline')
 	{
 		$sql = 'SELECT smiley_id
 			FROM ' . SMILIES_TABLE . '
 			WHERE display_on_posting = 0';
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1, 0, 3600);
+		$result = $_CLASS['core_db']->sql_query_limit($sql, 1, 0);
 
 		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
@@ -67,38 +45,48 @@ function generate_smilies($mode, $forum_id)
 		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
-	$sql = 'SELECT *
-		FROM ' . SMILIES_TABLE . 
-		(($mode == 'inline') ? ' WHERE display_on_posting = 1 ' : '') . '
-		GROUP BY smiley_url
-		ORDER BY smiley_order';
-	$result = $_CLASS['core_db']->sql_query($sql, 3600);
-
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	if (($smiley = $_CLASS['core_cache']->get('smiley_'.$mode)) === false)
 	{
-		$_CLASS['core_template']->assign_vars_array('smiley', array(
-			'SMILEY_CODE' 	=> $row['code'],
-			'SMILEY_IMG' 	=> $config['smilies_path'] . '/' . $row['smiley_url'],
-			'SMILEY_WIDTH'  => $row['smiley_width'],
-			'SMILEY_HEIGHT' => $row['smiley_height'],
-			'SMILEY_DESC'   => $row['emotion'])
-		);
+		$smiley = array();
+
+		$sql = 'SELECT *
+			FROM ' . SMILIES_TABLE . 
+			(($mode == 'inline') ? ' WHERE display_on_posting = 1 ' : '') . '
+			GROUP BY smiley_url
+			ORDER BY smiley_order';
+		$result = $_CLASS['core_db']->sql_query($sql);
+	
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		{
+			$smiley[] = array(
+				'SMILEY_CODE' 	=> $row['code'],
+				'SMILEY_IMG' 	=> $row['smiley_url'],
+				'SMILEY_WIDTH'  => $row['smiley_width'],
+				'SMILEY_HEIGHT' => $row['smiley_height'],
+				'SMILEY_DESC'   => $row['emotion']
+			);
+		}
+
+		$_CLASS['core_cache']->put('smiley_'.$mode, $smiley);
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+
+	$_CLASS['core_template']->assign('smiley', $smiley);
 
 	if ($mode == 'inline')
 	{
 		$_CLASS['core_template']->assign(array(
 			'S_SHOW_SMILEY_LINK' 	=> ($display_link) ? true : false,
-			'L_MORE_SMILIES'		=> $_CLASS['core_user']->lang['MORE_SMILIES'],
 			'U_MORE_SMILIES' 		=> generate_link('Forums&amp;file=posting&amp;mode=smilies&amp;f='.$forum_id))
 		);
 	}
 
 	if ($mode == 'window')
 	{
-		page_footer();
-		$_CLASS['core_template']->display('forums/posting_smilies.html');
+		global $config;
+
+		$_CLASS['core_template']->assign('T_SMILIES_PATH', "{$config['smilies_path']}/");
+		$_CLASS['core_template']->display('modules/Forums/posting_smilies.html');
 	}
 }
 
@@ -369,6 +357,11 @@ function create_thumbnail($source, $destination, $mimetype)
 
 	list($new_width, $new_height) = get_img_size_format($width, $height);
 
+	if (($width < $new_width) && ($height < $new_height))
+	{
+		return false;
+	}
+
 	$used_imagick = false;
 
 	if (file_exists($destination))
@@ -479,11 +472,8 @@ function posting_gen_topic_icons($mode, $icon_id)
 	$icons = array();
 	obtain_icons($icons);
 
-	if (!$icon_id)
-	{
-		$_CLASS['core_template']->assign('S_NO_ICON_CHECKED', ' checked="checked"');
-	}
-	
+	$_CLASS['core_template']->assign('S_NO_ICON_CHECKED', ((!$icon_id) ? ' checked="checked"' : ''));
+
 	if (sizeof($icons))
 	{
 		foreach ($icons as $id => $data)

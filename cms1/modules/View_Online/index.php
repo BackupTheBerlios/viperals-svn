@@ -17,7 +17,7 @@ if (!defined('VIPERAL'))
 }
 
 require($site_file_root.'includes/forums/functions.php');
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
+load_class($site_file_root.'includes/forums/auth.php', 'auth');
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 // Get and set some variables
@@ -159,16 +159,8 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	}
 		//if ($row['session_page'] != 'Forums')
 		//{
-				if (eregi($adminindex, $row['session_url']))
-				{
-					$location = 'Admin Menu';
-					$location_url = ($_CLASS['core_user']->is_admin) ? $row['session_url'].(($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : '') : generate_link();
-				}
-				else
-				{
-					$location = ($row['session_page']) ? $row['session_page'] : 'Home';
-					$location_url = generate_link($row['session_url']);
-				}
+			$location = ($row['session_page']) ? $row['session_page'] : 'Home';
+			$location_url = generate_link($row['session_url']);
 				
 		/*} else {
 		
@@ -343,13 +335,11 @@ $_CLASS['core_template']->assign(array(
 
 // We do not need to load the who is online box here. ;)
 
-// Output the page
 $_CLASS['core_display']->display_head($_CLASS['core_user']->lang['WHO_IS_ONLINE']);
+
 $config['load_online'] = false;
 
 page_header();
-
-//make_jumpbox('viewforum.php');
 
 $_CLASS['core_template']->display('modules/View_Online/viewonline_body.html');
 

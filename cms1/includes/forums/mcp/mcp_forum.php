@@ -31,27 +31,6 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 {
 	global $config, $_CLASS;
 	
-	$_CLASS['core_template']->assign(array(
-		'L_DISPLAY_TOPICS'			=> $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
-		'L_SORT_BY'					=> $_CLASS['core_user']->lang['SORT_BY'],
-		'L_GO'						=> $_CLASS['core_user']->lang['GO'],
-		'L_TOPICS'					=> $_CLASS['core_user']->lang['TOPICS'],
-		'L_REPLIES'					=> $_CLASS['core_user']->lang['REPLIES'],
-		'L_LAST_POST'				=> $_CLASS['core_user']->lang['LAST_POST'],
-		'L_MARK'					=> $_CLASS['core_user']->lang['MARK'],
-		'L_SELECT'					=> $_CLASS['core_user']->lang['SELECT'],
-		'L_NO_TOPICS'				=> $_CLASS['core_user']->lang['NO_TOPICS'],
-		'L_DELETE'					=> $_CLASS['core_user']->lang['DELETE'],
-		'L_MOVE'					=> $_CLASS['core_user']->lang['MOVE'],
-		'L_FORK'					=> $_CLASS['core_user']->lang['FORK'],
-		'L_LOCK'					=> $_CLASS['core_user']->lang['LOCK'],
-		'L_UNLOCK'					=> $_CLASS['core_user']->lang['UNLOCK'],
-		'L_RESYNC'					=> $_CLASS['core_user']->lang['RESYNC'],
-		'L_JUMP_TO'					=> $_CLASS['core_user']->lang['JUMP_TO'],
-		'L_GO'						=> $_CLASS['core_user']->lang['GO'],
-		'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'])
-	);
-	
 	if ($action == 'merge_select')
 	{
 		// Fixes a "bug" that makes forum_view use the same ordering as topic_view

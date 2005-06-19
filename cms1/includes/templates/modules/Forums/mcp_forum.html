@@ -1,59 +1,65 @@
-{ include file='modules/Forums/mcp_header.html' }
+<!-- INCLUDE modules/Forums/mcp_header.html -->
 
-<form method="post" name="mcp" action="{$S_MCP_ACTION}"><table class="tablebg" width="100%" cellspacing="1">
+<form method="post" name="mcp" action="{ $S_MCP_ACTION }"><table class="tablebg" width="100%" cellspacing="1">
 	<tr>
-		<td class="cat" colspan="6" align="center"><span class="gensmall">{$L_DISPLAY_TOPICS}:</span> {$S_SELECT_SORT_DAYS}&nbsp;<span class="gensmall">{$L_SORT_BY}</span> {$S_SELECT_SORT_KEY} {$S_SELECT_SORT_DIR}&nbsp;<input class="btnlite" type="submit" name="sort" value="{$L_GO}" /></span></td>
+		<td class="cat" colspan="6" align="center"><span class="gensmall">{ $L_DISPLAY_TOPICS }:</span> { $S_SELECT_SORT_DAYS }&nbsp;<span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR }&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_GO }" /></span></td>
 	</tr>
 	<tr>
 		<th width="4%" nowrap="nowrap">&nbsp;</th>
-		<th nowrap="nowrap">&nbsp;{$L_TOPICS}&nbsp;</th>
-		<th width="8%" nowrap="nowrap">&nbsp;{$L_REPLIES}&nbsp;</th>
-		<th width="17%" nowrap="nowrap">&nbsp;{$L_LAST_POST}&nbsp;</th>
-		<th width="5%" nowrap="nowrap">&nbsp;{$L_MARK}&nbsp;</th>
+		<th nowrap="nowrap">&nbsp;{ $L_TOPICS }&nbsp;</th>
+		<th width="8%" nowrap="nowrap">&nbsp;{ $L_REPLIES }&nbsp;</th>
+		<th width="17%" nowrap="nowrap">&nbsp;{ $L_LAST_POST }&nbsp;</th>
+		<th width="5%" nowrap="nowrap">&nbsp;{ $L_MARK }&nbsp;</th>
 	</tr>
-	{section name=topicrowloop loop=$topicrow}
+	<!-- LOOP $topicrow -->
 	<tr>
-		<td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_FOLDER_IMG}</td>
-		{*
-		{ if $S_TOPIC_ICONS }
-		 <td class="row1" width="25" align="center">{$topicrow[topicrowloop].TOPIC_ICON_IMG}</td>
-		{ /if }
-		*}
+		<td class="row1" width="25" align="center">{ $topicrow:TOPIC_FOLDER_IMG }</td>
+
+		<!-- IF { $S_TOPIC_ICONS } -->
+		 <td class="row1" width="25" align="center">{ $topicrow:TOPIC_ICON_IMG }</td>
+		<!-- ENDIF -->
+
 		<td class="row1">
-			{ if $topicrow[topicrowloop].S_SELECT_TOPIC }
-				<span class="genmed">[ <a href="{$topicrow[topicrowloop].U_SELECT_TOPIC}">{$L_SELECT}</a> ]&nbsp;</span>
-			{ /if }
-			{ if $topicrow[topicrowloop].S_TOPIC_UNAPPROVED }
-				<a href="{$topicrow[topicrowloop].U_MCP_QUEUE}">{$UNAPPROVED_IMG}</a>&nbsp;
-			{ /if }
-			{ if $topicrow[topicrowloop].S_TOPIC_REPORTED }
-				<a href="{$topicrow[topicrowloop].U_MCP_REPORT}">{$REPORTED_IMG}</a>&nbsp;
-			{ /if }
-			<p class="topictitle">{$topicrow[topicrowloop].NEWEST_POST_IMG} {$topicrow[topicrowloop].ATTACH_ICON_IMG} <a href="{$topicrow[topicrowloop].U_VIEW_TOPIC}">{$topicrow[topicrowloop].TOPIC_TITLE}</a></p>
+			<!-- IF { $topicrow:S_SELECT_TOPIC } -->
+				<span class="genmed">[ <a href="{ $topicrow:U_SELECT_TOPIC }">{ $L_SELECT }</a> ]&nbsp;</span>
+			<!-- ENDIF -->
+			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } -->
+				<a href="{ $topicrow:U_MCP_QUEUE }">{ $UNAPPROVED_IMG }</a>&nbsp;
+			<!-- ENDIF -->
+			<!-- IF { $topicrow:S_TOPIC_REPORTED } -->
+				<a href="{ $topicrow:U_MCP_REPORT }">{ $REPORTED_IMG }</a>&nbsp;
+			<!-- ENDIF -->
+			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a></p>
 		</td>
-		<td class="row1" width="50" align="center"><p class="topicdetails">{$topicrow[topicrowloop].REPLIES}</p></td>
-		<td class="row1" width="120" align="center"><p class="topicdetails">{$topicrow[topicrowloop].LAST_POST_TIME}</p></td>
-		<td class="row2" align="center"><input type="checkbox" name="topic_id_list[]" value="{$topicrow[topicrowloop].TOPIC_ID}" {$topicrow[topicrowloop].S_TOPIC_CHECKED}/></td>
+		<td class="row1" width="50" align="center"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
+		<td class="row1" width="120" align="center"><p class="topicdetails">{ $topicrow:LAST_POST_TIME }</p></td>
+		<td class="row2" align="center"><input type="checkbox" name="topic_id_list[]" value="{ $topicrow:TOPIC_ID }" { $topicrow:S_TOPIC_CHECKED }/></td>
 
 	</tr>
-	{ sectionelse }
+	<!-- LOOPELSE -->
 	<tr>
-		<td class="row1" colspan="8" height="28" align="center"><p class="gen">{$L_NO_TOPICS}</p></td>
+		<td class="row1" colspan="8" height="28" align="center"><p class="gen">{ $L_NO_TOPICS }</p></td>
 	</tr>
-	{ /section }
+	<!-- ENDLOOP -->
 	<tr>
 		<td class="cat" colspan="6" align="right">
 			<select name="mode">
-				{ if $S_CAN_DELETE }<option value="delete_topic">{$L_DELETE}</option>{ /if }
-				{ if $S_CAN_MOVE }<option value="move">{$L_MOVE}</option>{ /if }
-				{ if $S_CAN_FORK }<option value="fork">{$L_FORK}</option>{ /if }
-				{ if $S_CAN_LOCK }<option value="lock">{$L_LOCK}</option><option value="unlock">{$L_UNLOCK}</option>{ /if }
-				{ if $S_CAN_SYNC }<option value="resync">{$L_RESYNC}</option>{ /if }
+				<!-- IF { $S_CAN_DELETE } -->
+				<option value="delete_topic">{ $L_DELETE }</option>
+				<!-- ENDIF --><!-- IF { $S_CAN_MOVE } -->
+				<option value="move">{ $L_MOVE }</option>
+				<!-- ENDIF --><!-- IF { $S_CAN_FORK } -->
+				<option value="fork">{ $L_FORK }</option>
+				<!-- ENDIF --><!-- IF { $S_CAN_LOCK } -->
+				<option value="lock">{ $L_LOCK }</option><option value="unlock">{ $L_UNLOCK }</option>
+				<!-- ENDIF --><!-- IF { $S_CAN_SYNC } -->
+				<option value="resync">{ $L_RESYNC }</option>
+				<!-- ENDIF -->
 			</select>
-			<input class="btnmain" type="submit" value="{$L_SUBMIT}" />
+			<input class="btnmain" type="submit" value="{ $L_SUBMIT }" />
 		</td>
 	</tr>
 </table>
 </form>
 
-{ include file='modules/Forums/mcp_footer.html' }
+<!-- INCLUDE modules/Forums/mcp_footer.html -->

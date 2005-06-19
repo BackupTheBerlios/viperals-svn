@@ -177,22 +177,26 @@ class core_template
 		$content_blocks = preg_split('/\<!--[ ]*(.*?) (.*?)?[ ]*--\>/', $code);
 		
 		$size = count($content_blocks);
+		$tag_holding = array();
+		$line = 1;
 
 		for ($loop = 0; $loop < $size; $loop++)
 		{
 			$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
-		}
-
-		$size = count($tag_blocks[1]);
-		$tag_holding = array();
-
-		for ($loop = 0; $loop < $size; $loop++)
-		{
+			
+			$line += substr_count($content_blocks[$loop], "\n");
+			//echo $line.',';
+			
+			if (empty($tag_blocks[1][$loop]))
+			{
+				continue;
+			}
+			
 			switch (strtoupper(trim($tag_blocks[1][$loop])))
 			{
 				case 'IF':
 					$tag_holding[] = 'IF';
-					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_if($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_if($tag_blocks[2][$loop]) . ' ?>';
 					break;
 
 				case 'ELSE':
@@ -210,7 +214,7 @@ class core_template
 						// Error here
 					}
 					
-					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_if($tag_blocks[2][$loop], true) . ' ?>';
+					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_if($tag_blocks[2][$loop], true) . ' ?>';
 					break;
 
 				case 'ENDIF':
@@ -224,7 +228,7 @@ class core_template
 				
 				case 'LOOP':
 					$tag_holding[] = 'LOOP';
-					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_loop($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_loop($tag_blocks[2][$loop]) . ' ?>';
 					break;
 
 				case 'LOOPELSE':
@@ -249,7 +253,7 @@ class core_template
 					break;
 				
 				case 'INCLUDE':
-					$tag_blocks[0][$loop] = '<?php ' . $this->compile_tag_include($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_include($tag_blocks[2][$loop]) . ' ?>';
 					break;
 					
 				default:
@@ -328,7 +332,7 @@ class core_template
 		
 		$var = substr($var, 1);
 
-		if (strpos($var, 'L_') !== false)
+		if (strpos($var, 'L_') === 0)
 		{
 			return "(isset(\$this->_vars['$var'])) ? \$this->_vars['$var'] : \$this->_get_lang('$var')";
 		}
@@ -385,7 +389,7 @@ class core_template
 		To Do: add user frendly tag NOT, etc
 			<!-- if isset({ $S_FORUM_RULES }) || { NOT $S_FORUM_RULES } -->
     */
-	function compile_tag_if($options, $elseif = false)
+	function _compile_tag_if($options, $elseif = false)
 	{
 		//strtok()
 		
@@ -411,16 +415,17 @@ class core_template
 	}
 
 	//<!-- LOOP $loop_rules -->
-	function compile_tag_loop($options)
+	function _compile_tag_loop($options)
     {
 		//too do
 		//<!-- LOOP $loop_{ $blablaa } -->
 
 		$optiosn = trim($options);
 		$loop_code = $this->_parse_var(trim($options));
+		$postition = strrpos($options, ':');
 
-		$options = substr($options, 1);
-		$loop_name = '_'.strtolower(str_replace(array(':', '#') , '_', $options));
+		$options = ($postition !== false) ? substr($options, $postition + 1) : substr($options, 1);
+		$loop_name = '_'.strtolower(str_replace('#' , '_', $options));
 
         $output =  "\n\${$loop_name}_count = (isset($loop_code)) ? ((is_integer($loop_code)) ? $loop_code : count($loop_code)) : false;\n";
         $output .= "if (\${$loop_name}_count) {\n";
@@ -429,7 +434,7 @@ class core_template
         return $output;
     }
     
-	function compile_tag_include($options)
+	function _compile_tag_include($options)
 	{
 		return "\$this->display('$options');";
 	}

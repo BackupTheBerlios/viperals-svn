@@ -911,10 +911,11 @@ function obtain_attach_extensions(&$extensions, $forum_id = false)
 				if (sizeof($check) == 1 && $check[0] == 0)
 				{
 					$allowed = true;
-					continue;
 				}
-
-				$allowed = (!in_array($forum_id, $check)) ? false : true;
+				else
+				{
+					$allowed = (!in_array($forum_id, $check)) ? false : true;
+				}
 			}
 			else
 			{
@@ -1161,7 +1162,6 @@ function smiley_text($text, $force_option = false)
 	global $config, $_CLASS;
 
 	return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->optionget('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
-	//return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->optionget('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILE_PATH}', '<img src="' . $config['smilies_path'], $text);
 }
 
 // Inline Attachment processing

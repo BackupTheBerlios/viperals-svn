@@ -13,35 +13,10 @@
 
 // * Called from ucp_pm with mode == 'view_messages' && action == 'view_folder'
 $_CLASS['core_template']->assign(array(
-	'S_SHOW_RECIPIENTS'			=> false,
-	'messagerow'				=> false,
-	'L_SUBJECT'					=> $_CLASS['core_user']->lang['SUBJECT'],
-	'L_RECIPIENTS'				=> $_CLASS['core_user']->lang['RECIPIENTS'],
-	'L_AUTHOR'					=> $_CLASS['core_user']->lang['AUTHOR'],
-	'L_FOLDER'					=> $_CLASS['core_user']->lang['FOLDER'],
-	'L_SENT_AT'					=> $_CLASS['core_user']->lang['SENT_AT'],
-	'L_MARK'					=> $_CLASS['core_user']->lang['MARK'],
-	'L_UNKNOWN_FOLDER'			=> $_CLASS['core_user']->lang['UNKNOWN_FOLDER'],
-	'L_NO_MESSAGES'				=> $_CLASS['core_user']->lang['NO_MESSAGES'],
-	'L_DISPLAY_MESSAGES'		=> $_CLASS['core_user']->lang['DISPLAY_MESSAGES'],
-	'L_SORT_BY'					=> $_CLASS['core_user']->lang['SORT_BY'],
-	'L_GO'						=> $_CLASS['core_user']->lang['GO'],
-	'L_UNREAD_MESSAGES'			=> $_CLASS['core_user']->lang['UNREAD_MESSAGES'],
-	'L_PM_INBOX'				=> $_CLASS['core_user']->lang['PM_INBOX'],
-	'L_PM_OUTBOX'				=> $_CLASS['core_user']->lang['PM_OUTBOX'],
-	'L_PM_SENTBOX'				=> $_CLASS['core_user']->lang['PM_SENTBOX'],
-	'L_CREATE_FOLDER'			=> $_CLASS['core_user']->lang['CREATE_FOLDER'],
-	'L_VIEW_PREVIOUS_HISTORY'	=> $_CLASS['core_user']->lang['VIEW_PREVIOUS_HISTORY'],
-	'L_VIEW_NEXT_HISTORY'		=> $_CLASS['core_user']->lang['VIEW_NEXT_HISTORY'],
-	'L_VIEW_PREVIOUS_PM'		=> $_CLASS['core_user']->lang['VIEW_PREVIOUS_PM'],
-	'L_VIEW_NEXT_PM'			=> $_CLASS['core_user']->lang['VIEW_NEXT_PM'],
-	'L_PRINT_PM'				=> $_CLASS['core_user']->lang['PRINT_PM'],
-	'L_EMAIL_PM'				=> (isset($_CLASS['core_user']->lang['EMAIL_PM'])) ? $_CLASS['core_user']->lang['EMAIL_PM'] : '',
-	'L_FORWARD_PM'				=> $_CLASS['core_user']->lang['FORWARD_PM'],
-	'L_MARK_ALL'				=> $_CLASS['core_user']->lang['MARK_ALL'],
-	'L_UNMARK_ALL'				=> $_CLASS['core_user']->lang['UNMARK_ALL'],
-	'S_PM_ICONS' => false)
-);
+	'S_SHOW_RECIPIENTS'	=> false,
+	'messagerow'		=> false,
+	'S_PM_ICONS'		=> false
+	));
 
 function view_folder($id, $mode, $folder_id, $folder, $type)
 {

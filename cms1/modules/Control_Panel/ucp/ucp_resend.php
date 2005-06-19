@@ -139,12 +139,6 @@ class ucp_resend extends module
 		}
 		
 		$_CLASS['core_template']->assign(array(
-			'L_USERNAME' 			=> $_CLASS['core_user']->lang['USERNAME'],
-			'L_EMAIL_ADDRESS'	 	=> $_CLASS['core_user']->lang['EMAIL_ADDRESS'],
-			'L_EMAIL_REMIND' 		=> $_CLASS['core_user']->lang['EMAIL_REMIND'],
-			'L_SUBMIT' 				=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET' 				=> $_CLASS['core_user']->lang['RESET'],
-			'L_UCP_RESEND'			=> $_CLASS['core_user']->lang['UCP_RESEND'],
 			'USERNAME'	=> $username,
 			'EMAIL'		=> $email)
 		);

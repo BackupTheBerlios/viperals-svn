@@ -94,7 +94,10 @@ class ucp_zebra extends module
 						$user_id_ary = array();
 						do
 						{
-							$user_id_ary[] = $row['user_id'];
+							if (!in_array($row['user_type'], array(USER_IGNORE, USER_INACTIVE, USER_BOT_ACTIVE, USER_BOT_INACTIVE)))
+							{
+								$user_id_ary[] = $row['user_id'];
+							}
 						}
 						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 
@@ -199,23 +202,6 @@ class ucp_zebra extends module
 
 		$_CLASS['core_template']->assign(array( 
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
-			'L_YOUR_FRIENDS'			=> $_CLASS['core_user']->lang['YOUR_FRIENDS'],
-			'L_YOUR_FRIENDS_EXPLAIN'	=> $_CLASS['core_user']->lang['YOUR_FRIENDS_EXPLAIN'],
-			'L_ADD_FRIENDS'				=> $_CLASS['core_user']->lang['ADD_FRIENDS'],
-			'L_ADD_FRIENDS_EXPLAIN'		=> $_CLASS['core_user']->lang['ADD_FRIENDS_EXPLAIN'],
-			'L_NO_FRIENDS'				=> $_CLASS['core_user']->lang['NO_FRIENDS'],
-			
-			'L_FOES_EXPLAIN'			=> $_CLASS['core_user']->lang['FOES_EXPLAIN'],
-			'L_YOUR_FOES'				=> $_CLASS['core_user']->lang['YOUR_FOES'],
-			'L_ADD_FOES'				=> $_CLASS['core_user']->lang['ADD_FOES'],
-			'L_ADD_FOES_EXPLAIN'		=> $_CLASS['core_user']->lang['ADD_FOES_EXPLAIN'],
-			'L_YOUR_FOES_EXPLAIN'		=> $_CLASS['core_user']->lang['YOUR_FOES_EXPLAIN'],
-			'L_NO_FOES'					=> $_CLASS['core_user']->lang['NO_FOES'],
-			
-			'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET'					=> $_CLASS['core_user']->lang['RESET'],
-			'L_FRIENDS_EXPLAIN'			=> $_CLASS['core_user']->lang['FRIENDS_EXPLAIN'],
-			
 
 			'U_SEARCH_USER'		=> generate_link('Members_List&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 
 

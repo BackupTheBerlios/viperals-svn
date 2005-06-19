@@ -16,38 +16,6 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 	global $_CLASS, $_CORE_CONFIG, $site_file_root, $config;
 	
 	$_CLASS['core_user']->add_lang('viewtopic');
-	$_CLASS['core_template']->assign(array(
-		'L_TO' 					=> $_CLASS['core_user']->lang['TO'],
-		'L_BCC' 				=> $_CLASS['core_user']->lang['BCC'],
-		'L_AUTHOR'	 			=> $_CLASS['core_user']->lang['AUTHOR'],
-		'L_MESSAGE' 			=> $_CLASS['core_user']->lang['MESSAGE'],
-		'L_JOINED' 				=> $_CLASS['core_user']->lang['JOINED'],
-		'L_POSTS' 				=> $_CLASS['core_user']->lang['POSTS'],
-		'L_LOCATION' 			=> $_CLASS['core_user']->lang['LOCATION'],
-		'L_MESSAGE_REPORTED' 	=> $_CLASS['core_user']->lang['MESSAGE_REPORTED'],
-		'L_ATTACHMENTS' 		=> $_CLASS['core_user']->lang['ATTACHMENTS'],
-		'L_DOWNLOAD_NOTICE'		=> $_CLASS['core_user']->lang['DOWNLOAD_NOTICE'],
-		'L_PM_SUBJECT' 			=> $_CLASS['core_user']->lang['PM_SUBJECT'],
-		'L_PM_FROM' 			=> $_CLASS['core_user']->lang['PM_FROM'],
-		'L_PRINT_PM' 			=> $_CLASS['core_user']->lang['PRINT_PM'],
-		'L_EMAIL_PM' 			=> $_CLASS['core_user']->lang['EMAIL_PM'],
-		'L_FORWARD_PM'	 		=> $_CLASS['core_user']->lang['FORWARD_PM'],
-		'L_GO'	 				=> $_CLASS['core_user']->lang['GO'],
-		'L_MESSAGE_HISTORY'		=> $_CLASS['core_user']->lang['MESSAGE_HISTORY'],
-		'L_FOLDER' 				=> $_CLASS['core_user']->lang['FOLDER'],
-		'L_VIEW_PM' 			=> $_CLASS['core_user']->lang['VIEW_PM'],
-		'L_UNREAD_MESSAGES' 	=> $_CLASS['core_user']->lang['UNREAD_MESSAGES'],
-		'L_PM_INBOX' 			=> $_CLASS['core_user']->lang['PM_INBOX'],
-		'L_PM_OUTBOX'			=> $_CLASS['core_user']->lang['PM_OUTBOX'],
-		'L_PM_SENTBOX' 			=> $_CLASS['core_user']->lang['PM_SENTBOX'],
-		'L_CREATE_FOLDER' 		=> $_CLASS['core_user']->lang['CREATE_FOLDER'],
-		'L_VIEW_PREVIOUS_HISTORY' 	=> $_CLASS['core_user']->lang['VIEW_PREVIOUS_HISTORY'],
-		'L_VIEW_NEXT_HISTORY'		=> $_CLASS['core_user']->lang['VIEW_NEXT_HISTORY'],
-		'L_VIEW_PREVIOUS_PM' 		=> $_CLASS['core_user']->lang['VIEW_PREVIOUS_PM'],
-		'L_VIEW_NEXT_PM' 			=> $_CLASS['core_user']->lang['VIEW_NEXT_PM'],
-		'L_SENT_AT' 				=> $_CLASS['core_user']->lang['SENT_AT'])
-	);
-
 	$msg_id		= (int) $msg_id;
 	$folder_id	= (int) $folder_id;
 	$author_id	= (int) $message_row['author_id'];

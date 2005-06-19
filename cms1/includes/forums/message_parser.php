@@ -1163,6 +1163,8 @@ class parse_message extends bbcode_firstpass
 					$this->attachment_data[$pos][$var] = (int) $this->attachment_data[$pos][$var];
 				}
 			}
+
+			$this->attachment_data[$pos]['download_count'] = 0;
 		}
 	}
 	

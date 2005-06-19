@@ -58,26 +58,10 @@ require($site_file_root.'includes/forums/functions_user.php');
 $_CLASS['core_template']->assign(array(
 	'S_SHOW_PM_BOX'			=> false,
 	'S_SHOW_COLOUR_LEGEND'	=> false,
-	'L_OPTIONS'				=> 'Options',
 	'USERNAME'				=> '',
 	'friends_online'		=> false,
 	'friends_offline' 		=> false,
-	'L_PM_TO' 				=> $_CLASS['core_user']->lang['PM_TO'],
-	'L_USERNAME' 			=> $_CLASS['core_user']->lang['USERNAME'],
-	'L_ADD'	 				=> $_CLASS['core_user']->lang['ADD'],
-	'L_USERNAMES' 			=> $_CLASS['core_user']->lang['USERNAMES'],
-	'L_FIND_USERNAME' 		=> $_CLASS['core_user']->lang['FIND_USERNAME'],
-	'L_USERGROUPS' 			=> $_CLASS['core_user']->lang['USERGROUPS'],
-	'L_ADD_BCC' 			=> $_CLASS['core_user']->lang['ADD_BCC'],
-	'L_ADD_TO' 				=> $_CLASS['core_user']->lang['ADD_TO'],
-	'L_MESSAGE_COLOURS' 	=> $_CLASS['core_user']->lang['MESSAGE_COLOURS'],
-	'L_FRIENDS' 			=> $_CLASS['core_user']->lang['FRIENDS'],
-	'L_FRIENDS_ONLINE' 		=> $_CLASS['core_user']->lang['FRIENDS_ONLINE'],
-	'L_NO_FRIENDS_ONLINE' 	=> $_CLASS['core_user']->lang['NO_FRIENDS_ONLINE'],
-	'L_FRIENDS_OFFLINE' 	=> $_CLASS['core_user']->lang['FRIENDS_OFFLINE'],
-	'L_NO_FRIENDS_OFFLINE' 	=> $_CLASS['core_user']->lang['NO_FRIENDS_OFFLINE'],
-	)
-);
+	));
 
 // ---------
 // FUNCTIONS
@@ -442,9 +426,7 @@ if ($mode == 'compose' && request_var('action', '') != 'edit')
 		'S_ALLOW_MASS_PM'	=> ($config['allow_mass_pm']),
 		'S_GROUP_OPTIONS'	=> ($config['allow_mass_pm']) ? $group_options : '',
 		'U_SEARCH_USER'		=> generate_link('Members_List&amp;mode=searchuser&amp;form=post&amp;field=username_list'),
-		'L_FIND_USERNAME'	=> $_CLASS['core_user']->lang['FIND_USERNAME'])
-
-	);
+	));
 }
 
 // Instantiate module system and generate list of available modules

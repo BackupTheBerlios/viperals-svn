@@ -2,7 +2,6 @@
 
 if (!defined('VIPERAL'))
 {
-    Header('Location: ../../');
     die();
 }
 

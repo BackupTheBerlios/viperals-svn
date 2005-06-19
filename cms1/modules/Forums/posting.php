@@ -97,14 +97,8 @@ switch ($mode)
 		break;
 
 	case 'smilies':
-		$sql = '';
 		generate_smilies('window', $forum_id);
-		break;
-
-	case 'popup':
-		$sql = 'SELECT forum_style
-			FROM ' . FORUMS_TABLE . '
-			WHERE forum_id = ' . $forum_id;
+		die;
 		break;
 
 	default:
@@ -118,12 +112,6 @@ if ($sql)
 
 	extract($_CLASS['core_db']->sql_fetchrow($result));
 	$_CLASS['core_db']->sql_freeresult($result);
-
-	if ($mode == 'popup')
-	{
-		upload_popup($forum_style);
-		exit;
-	}
 
 	$quote_username = (isset($username)) ? $username : ((isset($post_username)) ? $post_username : '');
 
@@ -214,7 +202,7 @@ if ($sql)
 		$result = $_CLASS['core_db']->sql_query($sql);
 
 		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->sql_fetchrowset($result));
-		
+
 		$_CLASS['core_db']->sql_freeresult($result);
 	}
 	
@@ -326,31 +314,55 @@ if ($mode == 'edit')
 
 // should we alow ip no user deletion ?
 // Delete triggered ?
-if ($mode == 'delete' && (($poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id) || $_CLASS['auth']->acl_get('m_delete', $forum_id)))
+if ($mode == 'delete')
 {
+	if ($_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id && ((!$_CLASS['core_user']->is_user && $poster_id == ANONYMOUS && $poster_ip == $_CLASS['core_user']->ip) || ($_CLASS['core_user']->is_user && $poster_id == $_CLASS['core_user']->data['user_id'])))
+	{
+		$user_deletable = true;
+	}
+	else
+	{
+		$user_deletable = false;
+	}
+}
+
+if ($mode == 'delete' && ($user_deletable || $_CLASS['auth']->acl_get('m_delete', $forum_id)))
+{
+
+	
 	$s_hidden_fields = '<input type="hidden" name="p" value="' . $post_id . '" /><input type="hidden" name="f" value="' . $forum_id . '" /><input type="hidden" name="mode" value="delete" />';
 
 	if (confirm_box(true))
 	{
 		$data = array(
-			'topic_first_post_id' => $topic_first_post_id,
-			'topic_last_post_id' => $topic_last_post_id,
-			'topic_approved' => $topic_approved,
-			'topic_type' => $topic_type,
-			'post_approved' => $post_approved,
-			'post_time' => $post_time,
-			'poster_id' => $poster_id
+			'topic_first_post_id'=> $topic_first_post_id,
+			'topic_last_post_id'=> $topic_last_post_id,
+			'topic_approved'	=> $topic_approved,
+			'topic_type'		=> $topic_type,
+			'post_approved' 	=> $post_approved,
+			'post_time'			=> $post_time,
+			'poster_id'			=> $poster_id
 		);
 		
 		$next_post_id = delete_post($mode, $post_id, $topic_id, $forum_id, $data);
 	
 		if ($topic_first_post_id == $topic_last_post_id)
 		{
+			if (!$user_deletable)
+			{
+				add_log('mod', $forum_id, $topic_id, 'LOG_DELETE_TOPIC', $topic_title);
+			}
+
 			$meta_info = generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id);
 			$message = $_CLASS['core_user']->lang['POST_DELETED'];
 		}
 		else
 		{
+			if (!$user_deletable)
+			{
+				add_log('mod', $forum_id, $topic_id, 'LOG_DELETE_POST', $post_subject);
+			}
+
 			$meta_info = generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;p=$next_post_id#$next_post_id");
 			$message = $_CLASS['core_user']->lang['POST_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;p=$next_post_id#$next_post_id").'">', '</a>');
 		}
@@ -476,7 +488,6 @@ $_CLASS['core_template']->assign(array(
 		'S_TOPIC_TYPE_STICKY' => false,
 		'S_HAS_ATTACHMENTS' => false,
 		'S_DISPLAY_REVIEW'	=> false,
-		'L_INFORMATION'	=> $_CLASS['core_user']->lang['INFORMATION'],
 ));
 
 // Load Draft
@@ -544,7 +555,9 @@ if ($submit || $preview || $refresh)
 	{
 		$status_switch  = (($enable_html+1) << 16) + (($enable_bbcode+1) << 8) + (($enable_smilies+1) << 4) + (($enable_urls+1) << 2) + (($enable_sig+1) << 1);
 		$status_switch = ($status_switch != $check_value);
-	} else {
+	}
+	else
+	{
 		$status_switch = 1;
 	}
 
@@ -604,11 +617,7 @@ if ($submit || $preview || $refresh)
 	{
 		if (topic_review($topic_id, $forum_id, 'post_review', $topic_cur_post_id))
 		{
-			$_CLASS['core_template']->assign(array(
-				'S_POST_REVIEW'				=> true,
-				'L_POST_REVIEW'				=> $_CLASS['core_user']->lang['POST_REVIEW'],
-				'L_POST_REVIEW_EXPLAIN'		=> $_CLASS['core_user']->lang['POST_REVIEW_EXPLAIN'],)
-				);
+			$_CLASS['core_template']->assign('S_POST_REVIEW',  true);
 		}
 		$submit = false;
 		$refresh = true;
@@ -1006,7 +1015,6 @@ generate_smilies('inline', $forum_id);
 // Generate inline attachment select box
 posting_gen_inline_attachments($attachment_data);
 
-
 // Do show topic type selection only in first post.
 $topic_type_toggle = false;
 
@@ -1088,104 +1096,6 @@ $_CLASS['core_template']->assign(array(
 	'L_POST_A'				=> $page_title,
 	'L_ICON'				=> ($mode == 'reply' || $mode == 'quote') ? $_CLASS['core_user']->lang['POST_ICON'] : $_CLASS['core_user']->lang['TOPIC_ICON'], 
 	'L_MESSAGE_BODY_EXPLAIN'=> (intval($config['max_post_chars'])) ? sprintf($_CLASS['core_user']->lang['MESSAGE_BODY_EXPLAIN'], intval($config['max_post_chars'])) : '',
-	'L_BBCODE_B_HELP'			=> $_CLASS['core_user']->lang['BBCODE_B_HELP'],
-	'L_BBCODE_I_HELP'			=> $_CLASS['core_user']->lang['BBCODE_I_HELP'],
-	'L_BBCODE_U_HELP'			=> $_CLASS['core_user']->lang['BBCODE_U_HELP'],
-	'L_BBCODE_Q_HELP'			=> $_CLASS['core_user']->lang['BBCODE_Q_HELP'],
-	'L_BBCODE_C_HELP'			=> $_CLASS['core_user']->lang['BBCODE_C_HELP'],
-	'L_BBCODE_L_HELP'			=> $_CLASS['core_user']->lang['BBCODE_L_HELP'],
-	'L_BBCODE_O_HELP'			=> $_CLASS['core_user']->lang['BBCODE_O_HELP'],
-	'L_BBCODE_P_HELP'			=> $_CLASS['core_user']->lang['BBCODE_P_HELP'],
-	'L_BBCODE_W_HELP'			=> $_CLASS['core_user']->lang['BBCODE_W_HELP'],
-	'L_BBCODE_A_HELP'			=> $_CLASS['core_user']->lang['BBCODE_A_HELP'],
-	'L_BBCODE_S_HELP'			=> $_CLASS['core_user']->lang['BBCODE_S_HELP'],
-	'L_BBCODE_F_HELP'			=> $_CLASS['core_user']->lang['BBCODE_F_HELP'],
-	'L_BBCODE_E_HELP'			=> $_CLASS['core_user']->lang['BBCODE_E_HELP'],
-	'L_BBCODE_Z_HELP'			=> $_CLASS['core_user']->lang['BBCODE_Z_HELP'],
-	'L_EMPTY_MESSAGE'			=> $_CLASS['core_user']->lang['EMPTY_MESSAGE'],
-	'L_FORUM_RULES'				=> $_CLASS['core_user']->lang['FORUM_RULES'],
-	'L_MODERATORS'				=> $_CLASS['core_user']->lang['MODERATORS'],
-	'L_MCP'						=> $_CLASS['core_user']->lang['MCP'],
-	'L_DRAFT_LOADED'			=> $_CLASS['core_user']->lang['DRAFT_LOADED'],
-	'L_LOAD_DRAFT'				=> $_CLASS['core_user']->lang['LOAD_DRAFT'],
-	'L_LOAD_DRAFT_EXPLAIN'		=> $_CLASS['core_user']->lang['LOAD_DRAFT_EXPLAIN'],
-	'L_SAVE_DATE'				=> $_CLASS['core_user']->lang['SAVE_DATE'],
-	'L_DRAFT_TITLE'				=> $_CLASS['core_user']->lang['DRAFT_TITLE'],
-	'L_OPTIONS'					=> $_CLASS['core_user']->lang['OPTIONS'],
-	'L_TOPIC'					=> $_CLASS['core_user']->lang['TOPIC'],
-	'L_SUBJECT'					=> $_CLASS['core_user']->lang['SUBJECT'],
-	'L_MESSAGE_BODY'			=> $_CLASS['core_user']->lang['MESSAGE_BODY'],
-	'L_SMILIES'					=> $_CLASS['core_user']->lang['SMILIES'],
-	'L_MORE_SMILIES'			=> $_CLASS['core_user']->lang['MORE_SMILIES'],
-	'L_FONT_SIZE'				=> $_CLASS['core_user']->lang['FONT_SIZE'],
-	'L_FONT_TINY'				=> $_CLASS['core_user']->lang['FONT_TINY'],
-	'L_FONT_SMALL'				=> $_CLASS['core_user']->lang['FONT_SMALL'],
-	'L_FONT_NORMAL'				=> $_CLASS['core_user']->lang['FONT_NORMAL'],
-	'L_FONT_LARGE'				=> $_CLASS['core_user']->lang['FONT_LARGE'],
-	'L_FONT_HUGE'				=> $_CLASS['core_user']->lang['FONT_HUGE'],
-	'L_CLOSE_TAGS'				=> $_CLASS['core_user']->lang['CLOSE_TAGS'],
-	'L_ATTACHMENTS'				=> $_CLASS['core_user']->lang['ATTACHMENTS'],
-	'L_PLACE_INLINE'			=> $_CLASS['core_user']->lang['PLACE_INLINE'],
-	'L_DISABLE_HTML'			=> $_CLASS['core_user']->lang['DISABLE_HTML'],
-	'L_DISABLE_BBCODE'			=> $_CLASS['core_user']->lang['DISABLE_BBCODE'],
-	'L_DISABLE_SMILIES'			=> $_CLASS['core_user']->lang['DISABLE_SMILIES'],
-	'L_DISABLE_MAGIC_URL'		=> $_CLASS['core_user']->lang['DISABLE_MAGIC_URL'],
-	'L_ATTACH_SIG'				=> $_CLASS['core_user']->lang['ATTACH_SIG'],
-	'L_PREVIEW'					=> $_CLASS['core_user']->lang['PREVIEW'],
-	'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
-	'L_SAVE'					=> $_CLASS['core_user']->lang['SAVE'],
-	'L_GO'						=> $_CLASS['core_user']->lang['GO'],
-
-	'L_LOAD'					=> $_CLASS['core_user']->lang['LOAD'],
-	'L_CANCEL'					=> $_CLASS['core_user']->lang['CANCEL'],
-	'L_FONT_COLOR'				=> $_CLASS['core_user']->lang['FONT_COLOR'],
-	'L_ADD_ATTACHMENT'			=> $_CLASS['core_user']->lang['ADD_ATTACHMENT'],
-	'L_ADD_ATTACHMENT_EXPLAIN'	=> $_CLASS['core_user']->lang['ADD_ATTACHMENT_EXPLAIN'],
-	'L_FILENAME'				=> $_CLASS['core_user']->lang['FILENAME'],
-	'L_FILE_COMMENT'			=> $_CLASS['core_user']->lang['FILE_COMMENT'],
-	'L_ADD_FILE'				=> $_CLASS['core_user']->lang['ADD_FILE'],
-	'L_POSTED_ATTACHMENTS'		=> $_CLASS['core_user']->lang['POSTED_ATTACHMENTS'],
-	'L_UPDATE_COMMENT'			=> $_CLASS['core_user']->lang['UPDATE_COMMENT'],
-	'L_DELETE_FILE'				=> $_CLASS['core_user']->lang['DELETE_FILE'],
-	'L_MOVE'					=> $_CLASS['core_user']->lang['MOVE'],
-	'L_CONFIRM'					=> $_CLASS['core_user']->lang['CONFIRM'],
-	'L_USERNAME'				=> $_CLASS['core_user']->lang['USERNAME'],
-	'L_DELETE_POST'				=> $_CLASS['core_user']->lang['DELETE_POST'],
-	'L_DELETE_POST_WARN'		=> $_CLASS['core_user']->lang['DELETE_POST_WARN'],
-	'L_NOTIFY_REPLY'			=> $_CLASS['core_user']->lang['NOTIFY_REPLY'],
-	'L_LOCK_TOPIC'				=> $_CLASS['core_user']->lang['LOCK_TOPIC'],
-	'L_LOCK_POST'				=> $_CLASS['core_user']->lang['LOCK_POST'],
-	'L_LOCK_POST_EXPLAIN'		=> $_CLASS['core_user']->lang['LOCK_POST_EXPLAIN'],
-	'L_CHANGE_TOPIC_TO'			=> $_CLASS['core_user']->lang['CHANGE_TOPIC_TO'],
-	'L_POST_TOPIC_AS'			=> $_CLASS['core_user']->lang['POST_TOPIC_AS'],
-	'L_STICK_TOPIC_FOR'			=> $_CLASS['core_user']->lang['STICK_TOPIC_FOR'],
-	'L_STICKY_ANNOUNCE_TIME_LIMIT'	=> $_CLASS['core_user']->lang['STICKY_ANNOUNCE_TIME_LIMIT'],
-	'L_DAYS'					=> $_CLASS['core_user']->lang['DAYS'],
-	'L_STICK_TOPIC_FOR_EXPLAIN'	=> $_CLASS['core_user']->lang['STICK_TOPIC_FOR_EXPLAIN'],
-	'L_EDIT_REASON'				=> $_CLASS['core_user']->lang['EDIT_REASON'],
-	'L_POLL_DELETE'				=> $_CLASS['core_user']->lang['POLL_DELETE'],
-	'L_DELETE_POST_WARN'		=> $_CLASS['core_user']->lang['DELETE_POST_WARN'],
-	'L_WHO_IS_ONLINE'			=> $_CLASS['core_user']->lang['WHO_IS_ONLINE'],
-	'L_NONE'					=> $_CLASS['core_user']->lang['NONE'],
-	'L_JUMP_TO'					=> $_CLASS['core_user']->lang['JUMP_TO'],
-	'L_POSTED'					=> $_CLASS['core_user']->lang['POSTED'],
-	'L_POST_SUBJECT'			=> $_CLASS['core_user']->lang['POST_SUBJECT'],
-	'L_STYLES_TIP'				=> $_CLASS['core_user']->lang['STYLES_TIP'],
-
-	'L_ADD_POLL'				=> $_CLASS['core_user']->lang['ADD_POLL'],
-	'L_ADD_POLL_EXPLAIN'		=> $_CLASS['core_user']->lang['ADD_POLL_EXPLAIN'],
-	'L_POLL_QUESTION'			=> $_CLASS['core_user']->lang['POLL_QUESTION'],
-	'L_POLL_OPTIONS'			=> $_CLASS['core_user']->lang['POLL_OPTIONS'],
-	'L_POLL_FOR'				=> $_CLASS['core_user']->lang['POLL_FOR'],
-	'L_POLL_MAX_OPTIONS'		=> $_CLASS['core_user']->lang['POLL_MAX_OPTIONS'],
-	'L_POLL_VOTE_CHANGE'		=> $_CLASS['core_user']->lang['POLL_VOTE_CHANGE'],
-	'L_POLL_VOTE_CHANGE_EXPLAIN'=> $_CLASS['core_user']->lang['POLL_VOTE_CHANGE_EXPLAIN'],
-	
-	'L_POLL_MAX_OPTIONS_EXPLAIN'	=> $_CLASS['core_user']->lang['POLL_MAX_OPTIONS_EXPLAIN'],
-	'L_POLL_FOR_EXPLAIN'		=> $_CLASS['core_user']->lang['POLL_FOR_EXPLAIN'],
-	'L_WHO_IS_ONLINE'			=> $_CLASS['core_user']->lang['WHO_IS_ONLINE'],
-	'L_NONE'					=> $_CLASS['core_user']->lang['NONE'],
-	'L_JUMP_TO'					=> $_CLASS['core_user']->lang['JUMP_TO'],
 	
 	'FORUM_NAME' 			=> $forum_name,
 	'FORUM_DESC'			=> ($forum_desc) ? strip_tags($forum_desc) : '',
@@ -1195,7 +1105,7 @@ $_CLASS['core_template']->assign(array(
 	'SUBJECT'				=> $post_subject,
 	'MESSAGE'				=> $post_text,
 	'HTML_STATUS'			=> ($html_status) ? $_CLASS['core_user']->lang['HTML_IS_ON'] : $_CLASS['core_user']->lang['HTML_IS_OFF'],
-	'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($_CLASS['core_user']->lang['BBCODE_IS_ON'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>') : sprintf($_CLASS['core_user']->lang['BBCODE_IS_OFF'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>'),
+	'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($_CLASS['core_user']->lang['BBCODE_IS_ON'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode" onclick="window.open(\''.generate_link('Forums&amp;file=faq&amp;mode=bbcode')."', '_phpbbcode', 'HEIGHT=500,resizable=yes,scrollbars=yes,WIDTH=740');return false\">", '</a>') : sprintf($_CLASS['core_user']->lang['BBCODE_IS_OFF'], '<a href="' . generate_link('Forums&amp;file=faq&amp;mode=bbcode') . '" target="_phpbbcode">', '</a>'),
 	'IMG_STATUS'			=> ($img_status) ? $_CLASS['core_user']->lang['IMAGES_ARE_ON'] : $_CLASS['core_user']->lang['IMAGES_ARE_OFF'],
 	'FLASH_STATUS'			=> ($flash_status) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
 	'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
@@ -1207,9 +1117,7 @@ $_CLASS['core_template']->assign(array(
 
 	'U_VIEW_FORUM' 			=> generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id),
 	'U_VIEWTOPIC' 			=> ($mode != 'post') ? generate_link("Forums&amp;file=viewtopic&amp;$forum_id&amp;t=$topic_id") : '',
-	'U_PROGRESS_BAR'		=> html_entity_decode(generate_link("Forums&amp;file=posting&amp;f=$forum_id&amp;mode=popup")), // do NOT replace & with &amp; here
 
-	'S_CLOSE_PROGRESS_WINDOW'	=> isset($_POST['add_file']),
 	'S_EDIT_POST'			=> ($mode == 'edit'),
 	'S_EDIT_REASON'			=> ($mode == 'edit' && $_CLASS['core_user']->data['user_id'] != $poster_id),
 	'S_DISPLAY_USERNAME'	=> (!$_CLASS['core_user']->is_user || ($mode == 'edit' && $post_username)),
@@ -1271,6 +1179,10 @@ if ($_CLASS['auth']->acl_get('f_attach', $forum_id) && $_CLASS['auth']->acl_get(
 {
 	posting_gen_attachment_entry($attachment_data, $filename_data);
 }
+else
+{
+	$_CLASS['core_template']->assign('S_SHOW_ATTACH_BOX', false);
+}
 
 // Output page ...
 $_CLASS['core_display']->display_head($page_title);
@@ -1282,13 +1194,7 @@ if ($mode == 'reply' || $mode == 'quote')
 {
 	if (topic_review($topic_id, $forum_id))
 	{
-		$_CLASS['core_template']->assign(array(
-		'S_DISPLAY_REVIEW'  => true,
-		'L_TOPIC_REVIEW'	=> $_CLASS['core_user']->lang['TOPIC_REVIEW'],
-		'L_AUTHOR'			=> $_CLASS['core_user']->lang['AUTHOR'],
-		'L_MESSAGE'			=> $_CLASS['core_user']->lang['MESSAGE'],
-		'L_POST_SUBJECT'	=> $_CLASS['core_user']->lang['POST_SUBJECT'],
-		'L_POSTED'			=> $_CLASS['core_user']->lang['POSTED']));
+		$_CLASS['core_template']->assign('S_DISPLAY_REVIEW', true);
 	}
 }
 
@@ -1971,28 +1877,5 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	$message = $_CLASS['core_user']->lang[$message] . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? '<br /><br />' . sprintf($_CLASS['core_user']->lang['VIEW_MESSAGE'], '<a href="' . $url . '">', '</a>') : '') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $data['forum_id']) . '">', '</a>');
 	trigger_error($message);
 }
-
-function upload_popup($forum_style)
-{
-	global $_CLASS;
-
-	$_CLASS['core_user']->add_lang('posting');
-	$_CLASS['core_user']->add_img();
-
-	page_header('PROGRESS_BAR');
-
-	$_CLASS['core_template']->assign(array(
-		'L_UPLOAD_IN_PROGRESS'		=> $_CLASS['core_user']->lang['UPLOAD_IN_PROGRESS'],
-		'L_CLOSE_WINDOW'			=> $_CLASS['core_user']->lang['CLOSE_WINDOW'],
-		'PROGRESS_BAR'				=> $_CLASS['core_user']->img('attach_progress_bar', $_CLASS['core_user']->lang['UPLOAD_IN_PROGRESS']))
-	);
-
-	$_CLASS['core_template']->display('modules/Forums/posting_progress_bar.html');
-	$_CLASS['core_display']->display_footer();
-}
-
-//
-// FUNCTIONS
-// ---------
 
 ?>

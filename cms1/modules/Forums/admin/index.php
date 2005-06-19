@@ -28,7 +28,7 @@ $data = array(
 
 $_CLASS['core_blocks']->add_block($data);
 
-loadclass($site_file_root.'includes/forums/auth.php', 'auth');
+load_class($site_file_root.'includes/forums/auth.php', 'auth');
 require_once($site_file_root.'includes/forums/functions.php');
 require_once($site_file_root.'includes/forums/functions_admin.php');
 

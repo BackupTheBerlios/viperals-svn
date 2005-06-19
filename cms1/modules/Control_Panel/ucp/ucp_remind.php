@@ -88,13 +88,6 @@ class ucp_remind extends module
 		}
 
 		$_CLASS['core_template']->assign(array(
-			'L_SEND_PASSWORD' 		=> $_CLASS['core_user']->lang['SEND_PASSWORD'],
-			'L_USERNAME' 			=> $_CLASS['core_user']->lang['USERNAME'],
-			'L_EMAIL_ADDRESS'	 	=> $_CLASS['core_user']->lang['EMAIL_ADDRESS'],
-			'L_EMAIL_REMIND' 		=> $_CLASS['core_user']->lang['EMAIL_REMIND'],
-			'L_SUBMIT' 				=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET' 				=> $_CLASS['core_user']->lang['RESET'],
-			'L_TOTAL_POSTS' 		=> $_CLASS['core_user']->lang['TOTAL_POSTS'],
 			
 			'USERNAME'	=> $username,
 			'EMAIL'		=> $email)

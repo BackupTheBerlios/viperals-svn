@@ -17,7 +17,6 @@
 
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
     die();
 }	
 

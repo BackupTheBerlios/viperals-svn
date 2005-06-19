@@ -63,7 +63,6 @@ class ucp_register extends module
 
 					'U_COPPA_NO'		=> generate_link('Control_Panel&amp;mode=register&amp;coppa=0'), 
 					'U_COPPA_YES'		=> generate_link('Control_Panel&amp;mode=register&amp;coppa=1'), 
-					'L_REGISTRATION'	=> $_CLASS['core_user']->lang['REGISTRATION'],
 
 					'S_SHOW_COPPA'		=> true, 
 					'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register'))
@@ -72,18 +71,10 @@ class ucp_register extends module
 			else
 			{
 				$_CLASS['core_template']->assign(array(
-					'L_REGISTRATION'	=> $_CLASS['core_user']->lang['REGISTRATION'],
 					'S_SHOW_COPPA'		=> false, 
 					'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register'))
 				);
 			}
-			
-			$_CLASS['core_template']->assign(array(
-				'L_TERMS_OF_USE'	=> $_CLASS['core_user']->lang['TERMS_OF_USE_CONTENT'],
-				'L_COPPA_BIRTHDAY'	=> $_CLASS['core_user']->lang['COPPA_BIRTHDAY'], 
-				'L_AGREE'			=> $_CLASS['core_user']->lang['AGREE'],
-				'L_NOT_AGREE'		=> $_CLASS['core_user']->lang['NOT_AGREE'])
-			);
 			
 			$this->display($_CLASS['core_user']->lang['REGISTER'], 'ucp_agreement.html');
 		}
@@ -463,20 +454,7 @@ class ucp_register extends module
 			'EMAIL'						=> (isset($email)) ? $email : '',
 			'EMAIL_CONFIRM'				=> (isset($email_confirm)) ? $email_confirm : '',
 			'CONFIRM_IMG'				=> $confirm_image,
-			'L_EMAIL_ADDRESS'			=> $_CLASS['core_user']->lang['EMAIL_ADDRESS'], 
-			'L_CONFIRM_EMAIL'			=> $_CLASS['core_user']->lang['CONFIRM_EMAIL'],
-			'L_REGISTRATION'			=> $_CLASS['core_user']->lang['REGISTRATION'], 
-			'L_NEW_PASSWORD'			=> $_CLASS['core_user']->lang['NEW_PASSWORD'], 
-			'L_CONFIRM_PASSWORD'		=> $_CLASS['core_user']->lang['CONFIRM_PASSWORD'], 
-			'L_LANGUAGE'				=> $_CLASS['core_user']->lang['LANGUAGE'],
-			'L_TIMEZONE'				=> $_CLASS['core_user']->lang['TIMEZONE'], 
-			'L_CONFIRMATION'			=> $_CLASS['core_user']->lang['CONFIRMATION'], 
-			'L_CONFIRM_CODE'			=> $_CLASS['core_user']->lang['CONFIRM_CODE'],
-			'L_CONFIRM_CODE_EXPLAIN'	=> $_CLASS['core_user']->lang['CONFIRM_CODE_EXPLAIN'], 
-			'L_COPPA_COMPLIANCE'		=> $_CLASS['core_user']->lang['COPPA_COMPLIANCE'], 
-			'L_COPPA_EXPLAIN'			=> $_CLASS['core_user']->lang['COPPA_EXPLAIN'], 
-			'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET'					=> $_CLASS['core_user']->lang['RESET'], 
+
 			'L_CONFIRM_EXPLAIN'			=> sprintf($_CLASS['core_user']->lang['CONFIRM_EXPLAIN'], '<a href="mailto:' . htmlentities($config['board_contact']) . '">', '</a>'), 
 			'L_ITEMS_REQUIRED'			=> $l_reg_cond, 
 			'L_USERNAME_EXPLAIN'		=> sprintf($_CLASS['core_user']->lang[$user_char_ary[str_replace('\\\\', '\\', $_CORE_CONFIG['user']['allow_name_chars'])] . '_EXPLAIN'], $_CORE_CONFIG['user']['min_name_chars'], $_CORE_CONFIG['user']['max_name_chars']),

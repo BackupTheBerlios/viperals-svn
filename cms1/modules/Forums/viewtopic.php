@@ -1369,50 +1369,6 @@ if ($force_encoding)
 	$_CLASS['core_user']->lang['ENCODING'] = $force_encoding;
 }
 
-/// lets assign those language that are needed///
-$_CLASS['core_template']->assign(array(
-	'L_MODERATORS'			=> $_CLASS['core_user']->lang['MODERATORS'],
-	'L_AUTHOR'				=> $_CLASS['core_user']->lang['AUTHOR'],
-	'L_PRINT_TOPIC'			=> $_CLASS['core_user']->lang['PRINT_TOPIC'],
-	'L_EMAIL_TOPIC'			=> $_CLASS['core_user']->lang['EMAIL_TOPIC'],
-	'L_BUMP_TOPIC'			=> $_CLASS['core_user']->lang['BUMP_TOPIC'],
-	'L_VIEW_PREVIOUS_TOPIC'	=> $_CLASS['core_user']->lang['VIEW_PREVIOUS_TOPIC'],
-	'L_VIEW_UNREAD_POST'	=> $_CLASS['core_user']->lang['VIEW_UNREAD_POST'],
-	'L_VIEW_NEXT_TOPIC'		=> $_CLASS['core_user']->lang['VIEW_NEXT_TOPIC'],
-	'L_USERNAME'			=> $_CLASS['core_user']->lang['USERNAME'],
-	'L_POST_SUBJECT'		=> $_CLASS['core_user']->lang['POST_SUBJECT'],
-	'L_GO'					=> $_CLASS['core_user']->lang['GO'],
-	'L_MCP'					=> $_CLASS['core_user']->lang['MCP'],
-	'L_SEARCH_FOR'			=> $_CLASS['core_user']->lang['SEARCH_FOR'],
-	'L_MESSAGE'				=> $_CLASS['core_user']->lang['MESSAGE'],
-	'L_POSTED'				=> $_CLASS['core_user']->lang['POSTED'],
-	'L_JOINED'				=> $_CLASS['core_user']->lang['JOINED'],
-	'L_POSTS'				=> $_CLASS['core_user']->lang['POSTS'],
-	'L_LOCATION'			=> $_CLASS['core_user']->lang['LOCATION'],
-	'L_RATE'				=> $_CLASS['core_user']->lang['RATE'],
-	'L_RATE_GOOD'			=> $_CLASS['core_user']->lang['RATE_GOOD'],
-	'L_RATE_BAD'			=> $_CLASS['core_user']->lang['RATE_BAD'],
-	'L_POST_DETAILS'		=> $_CLASS['core_user']->lang['POST_DETAILS'],
-	'L_DISPLAY_TOPICS'		=> $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
-	'L_QUICK_MOD'			=> $_CLASS['core_user']->lang['QUICK_MOD'],
-	'L_JUMP_TO'				=> $_CLASS['core_user']->lang['JUMP_TO'],
-	'L_SORT_BY'				=> $_CLASS['core_user']->lang['SORT_BY'],
-	'L_FORUM_RULES'			=> $_CLASS['core_user']->lang['FORUM_RULES'],
-
-	'L_TOTAL_VOTES'			=> $_CLASS['core_user']->lang['TOTAL_VOTES'],
-	'L_POLL_VOTED_OPTION'	=> $_CLASS['core_user']->lang['POLL_VOTED_OPTION'],
-	'L_ATTACHMENTS'			=> $_CLASS['core_user']->lang['ATTACHMENTS'],
-	'L_DOWNLOAD_NOTICE'		=>	$_CLASS['core_user']->lang['DOWNLOAD_NOTICE'],
-	
-	'L_POST_UNAPPROVED'		=> $_CLASS['core_user']->lang['POST_UNAPPROVED'],
-	'L_POST_REPORTED'		=> $_CLASS['core_user']->lang['POST_REPORTED'],
-	
-	'L_WHO_IS_ONLINE'		=> $_CLASS['core_user']->lang['JUMP_TO'],
-	'L_VIEW_RESULTS'		=> $_CLASS['core_user']->lang['VIEW_RESULTS'],
-	'L_DISPLAY_POSTS'		=> $_CLASS['core_user']->lang['DISPLAY_POSTS'],
-	'L_SUBMIT_VOTE'			=> $_CLASS['core_user']->lang['SUBMIT_VOTE'])
-);
-
 if ($view == 'print')
 {
 

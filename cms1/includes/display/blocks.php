@@ -17,7 +17,7 @@
 /* to do
 options interface
 add bottom messages
-look at rss again :-|
+move Auth, lang, and expire/begin checks to load_blocks
 */
 
 class core_blocks
@@ -28,6 +28,10 @@ class core_blocks
 	var $content;
 	var $template;
 	
+	/*
+		Check to see there's any blocks for the specified side
+		should be used to stop themes from displaying blank sides
+	*/
 	function check_side($side)
 	{
 // expand this for center blocks
@@ -60,6 +64,9 @@ class core_blocks
 		return $side_check[$trueside] = false;
 	}
 	
+	/*
+		Load Blocks from cache or databases, also run needed checks
+	*/
 	function load_blocks($force = false)
 	{
 		if ($this->blocks_loaded && !$force)
@@ -89,6 +96,8 @@ class core_blocks
 		$this->blocks_loaded = true;
 	}
 	
+	/*
+	*/
 	function add_block($data, $position = false)
 	{
 		$option_array = array('title','position', 'content', 'file' , 'modules', 'time' ,'expires', 'id',	'auth',	'type', 'options');
@@ -101,6 +110,8 @@ class core_blocks
 		$this->blocks_array[$data['position']][] = $data_perpared;
 	}
 	
+	/*
+	*/
 	function display($position, $template_name = false)
 	{
 		//$this->template_name = $template_name;
@@ -172,6 +183,8 @@ class core_blocks
 		unset($this->blocks_array[$position]);
 	}
 
+	/*
+	*/
 	function display_blocks()
 	{
 		Switch ($this->block['type'])
@@ -199,7 +212,9 @@ class core_blocks
 		
 		return;
 	}
-	
+
+	/*
+	*/
 	function block_file()
 	{
 		global $_CLASS, $site_file_root;
@@ -360,7 +375,7 @@ class core_blocks
 		}
 		else
 		{
-			loadclass($site_file_root.'includes/core_rss.php', 'core_rss');
+			load_class($site_file_root.'includes/core_rss.php', 'core_rss');
 			$_CLASS['core_rss']->setup(false, array('title', 'link'));
 				
 			if (!$_CLASS['core_rss']->get_rss($this->block['options']['rss_url']))
@@ -369,7 +384,7 @@ class core_blocks
 				return;
 			}
 			
-			$this->content = '<center>';
+			$this->content = '<center><br />';
 			
 			while ($data = $_CLASS['core_rss']->get_rss_data())
 			{

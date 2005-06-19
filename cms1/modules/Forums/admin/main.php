@@ -317,7 +317,7 @@ $mark   = (isset($_REQUEST['mark'])) ? implode(', ', request_var('mark', array(0
 			{
 				require($site_file_root.'config.php');
 				
-				$db_name = (preg_match('#^(3\.23\.[6-9])|(3\.23\.[1-9][1-9])|(4\.)#', $version)) ? '`'.$sitedb['dbname'].'`' : $sitedb['dbname'];
+				$db_name = (preg_match('#^(3\.23\.[6-9])|(3\.23\.[1-9][1-9])|(4\.)#', $version)) ? '`'.$site_db['database'].'`' : $site_db['database'];
 
 				$sql = "SHOW TABLE STATUS
 					FROM " . $db_name;

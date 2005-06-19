@@ -24,6 +24,9 @@ class core_display
 	var $modules = array();
 	var $copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
 	
+	/*
+		Handles sorting and auth'ing of modules
+	*/
 	function add_module($module)
 	{
 		global $_CLASS;
@@ -42,7 +45,10 @@ class core_display
 		
 		$this->modules[] = $module;
 	}
-	
+
+	/*
+		Returns a parsed modules data
+	*/
 	function get_module()
 	{
 		if (isset($this->modules))
@@ -53,11 +59,18 @@ class core_display
 		return false;
 	}
 	
+	/*
+		Returns a parsed modules data
+	*/
 	function display_head($title = false)
 	{
 		$this->display_header($title);
 	}
 	
+	/*
+		Recommended Site headers.
+		Changes here is not recommended unless you know what your doing
+	*/
 	function headers()
 	{
 		global $_CLASS;
@@ -66,12 +79,15 @@ class core_display
 		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
 		
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
-		//header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . " GMT" );
 		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
 		header('Expires: 0');
 		header('Pragma: no-cache');
 	}
 	
+	/*
+		Handles displaying of the Basic top section of site ( Top messages and blocks ).
+		Also calls themes header $this->headers(); with should handle side blocks extra.
+	*/
 	function display_header($title = false)
 	{
 		global $_CLASS, $_CORE_CONFIG, $_CORE_MODULE;
@@ -157,6 +173,9 @@ class core_display
 		}
 	}
 	
+	/*
+		Handles displaying of the Basic lower section of site ( bottom messages and blocks blocks ).
+	*/
 	function display_footer($save = true)
 	{
 		global $_CLASS, $_CORE_MODULE, $_CORE_CONFIG;
@@ -197,8 +216,6 @@ class core_display
 		if ($this->displayed['header'])
 		{
 			$this->theme_footer();
-// maybe add to templete file, maybe !
-			echo '</body></html>';
 		}
 		
 		script_close($save);
@@ -206,6 +223,9 @@ class core_display
 		die;	
 	}
 	
+	/*
+		General display of basic debug info
+	*/
 	function footer_debug()
 	{
 		global $_CORE_CONFIG, $SID, $mainindex, $SID, $_CLASS, $starttime;
@@ -214,7 +234,7 @@ class core_display
 		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['core_db']->sql_time;
 	
 		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->sql_time, 4).'s | ' . $_CLASS['core_db']->sql_num_queries() . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
-		
+
 		if (function_exists('memory_get_usage'))
 		{
 			if ($memory_usage = memory_get_usage())
@@ -230,7 +250,7 @@ class core_display
 
 		return $debug_output;
 	}
-	
+
 	function footmsg()
 	{
 	
@@ -248,11 +268,6 @@ class core_display
 			$footer .= $_CORE_CONFIG['global']['foot2']. '<br />';
 		}
 		
-		if ($_CORE_CONFIG['global']['foot3'])
-		{
-			$footer .= $_CORE_CONFIG['global']['foot3'] . '<br />';
-		}
-				
 		return $footer.'[ '.$this->footer_debug(). ']<br />';
 	}
 	

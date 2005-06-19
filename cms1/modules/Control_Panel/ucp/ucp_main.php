@@ -267,8 +267,8 @@ class ucp_main extends module
 
 				$_CLASS['core_template']->assign(array(
 					'USER_COLOR'		=> (!empty($_CLASS['core_user']->data['user_colour'])) ? $_CLASS['core_user']->data['user_colour'] : '', 
-					'JOINED'			=> $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
-					'VISITED'			=> (empty($last_visit)) ? ' - ' : $_CLASS['core_user']->format_date($last_visit, $_CLASS['core_user']->lang['DATE_FORMAT']),
+					'JOINED'			=> $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_regdate']),
+					'VISITED'			=> (empty($_CLASS['core_user']->data['user_lastvisit'])) ? ' - ' : $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_lastvisit']),
 					'POSTS'				=> ($_CLASS['core_user']->data['user_posts']) ? $_CLASS['core_user']->data['user_posts'] : 0,
 					'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),
 					'POSTS_PCT'			=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $percentage),
@@ -281,10 +281,6 @@ class ucp_main extends module
 
 					'OCCUPATION'	=> (!empty($row['user_occ'])) ? $row['user_occ'] : '',
 					'INTERESTS'		=> (!empty($row['user_interests'])) ? $row['user_interests'] : '',
-
-					'L_YOUR_WARNINGS'	=> $_CLASS['core_user']->lang['YOUR_WARNINGS'],
-
-//					'S_GROUP_OPTIONS'	=> $group_options, 
 
 					'U_SEARCH_USER'		=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($_CLASS['core_user']->data['username']) . "&amp;show_results=posts") : '',  
 					'U_ACTIVE_FORUM'	=> generate_link('Forums&amp;file=viewforum&amp;f='.$active_f_id),
@@ -659,12 +655,6 @@ class ucp_main extends module
 					);
 				}
 				
-				$_CLASS['core_template']->assign(array(
-					'L_BOOKMARKS_FORUMS'		=> $_CLASS['core_user']->lang['BOOKMARKS_FORUMS'],
-					'L_BOOKMARKS_SITE'			=> $_CLASS['core_user']->lang['BOOKMARKS_SITE'],
-					'L_BOOKMARKS_DISABLED'		=> $_CLASS['core_user']->lang['BOOKMARKS_DISABLED'])
-				);
-					
 				break;
 
 			case 'drafts':
@@ -811,25 +801,11 @@ class ucp_main extends module
 						'DRAFT_MESSAGE'	=> ($submit) ? $draft_message : $draft['draft_message'],
 						'DRAFT_SUBJECT'	=> ($submit) ? $draft_subject : $draft['draft_subject'],
 						'TITLE'			=> $title,
-						
-						'L_SAVE_DATE'	 	=> $_CLASS['core_user']->lang['SAVE_DATE'],
-						'L_DRAFT_TITLE' 	=> $_CLASS['core_user']->lang['DRAFT_TITLE'],
-						'L_YOUR_DETAILS' 	=> $_CLASS['core_user']->lang['YOUR_DETAILS'],
-						'L_JOINED' 			=> $_CLASS['core_user']->lang['JOINED'],
-						'L_TOTAL_POSTS' 	=> $_CLASS['core_user']->lang['TOTAL_POSTS'],
-						
+
 						'DRAFT_ID'			=> $draft['draft_id'],
 						'FORUM_ID'			=> $draft['forum_id'],
 						'TOPIC_ID'			=> $draft['topic_id'],
-						
-						'L_FONT_SIZE'		=> $_CLASS['core_user']->lang['FONT_SIZE'],
-						'L_FONT_TINY'		=> $_CLASS['core_user']->lang['FONT_TINY'],
-						'L_FONT_SMALL'		=> $_CLASS['core_user']->lang['FONT_SMALL'],
-						'L_FONT_NORMAL'		=> $_CLASS['core_user']->lang['FONT_NORMAL'],
-						'L_FONT_LARGE'		=> $_CLASS['core_user']->lang['FONT_LARGE'],
-						'L_FONT_HUGE'		=> $_CLASS['core_user']->lang['FONT_HUGE'],
-						'L_CLOSE_TAGS'		=> $_CLASS['core_user']->lang['CLOSE_TAGS'],
-
+	
 						'U_VIEW'			=> $view_url,
 						'U_VIEW_EDIT'		=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode&amp;edit=" . $draft['draft_id']),
 						'U_INSERT'			=> $insert_url,
@@ -843,14 +819,6 @@ class ucp_main extends module
 					($edit) ? $_CLASS['core_template']->assign($template_row) : $_CLASS['core_template']->assign_vars_array('draftrow', $template_row);
 				}
 
-				$_CLASS['core_template']->assign(array(
-					'L_SAVE_DATE'	 		=> $_CLASS['core_user']->lang['SAVE_DATE'],
-					'L_DRAFT_TITLE' 		=> $_CLASS['core_user']->lang['DRAFT_TITLE'],
-					'L_LOAD_DRAFT' 			=> $_CLASS['core_user']->lang['LOAD_DRAFT'],
-					'L_JOINED' 				=> $_CLASS['core_user']->lang['JOINED'],
-					)
-				);
-				
 				break;
 		}
 
@@ -860,45 +828,7 @@ class ucp_main extends module
 			'S_DISPLAY_MARK_ALL'		=> ($mode == 'watched' || ($mode == 'drafts' && !isset($_GET['edit']))) ? true : false, 
 			'S_HIDDEN_FIELDS'			=> (isset($s_hidden_fields)) ? $s_hidden_fields : '',
 			'S_UCP_ACTION'				=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"),
-			'L_UCP' 					=> $_CLASS['core_user']->lang['UCP'],
-			'L_UCP_WELCOME' 			=> $_CLASS['core_user']->lang['UCP_WELCOME'],
-			'L_IMPORTANT_NEWS'	 		=> $_CLASS['core_user']->lang['IMPORTANT_NEWS'],
-			'L_NO_IMPORTANT_NEWS' 		=> $_CLASS['core_user']->lang['NO_IMPORTANT_NEWS'],
-			'L_YOUR_DETAILS' 			=> $_CLASS['core_user']->lang['YOUR_DETAILS'],
-			'L_JOINED' 					=> $_CLASS['core_user']->lang['JOINED'],
-			'L_TOTAL_POSTS' 			=> $_CLASS['core_user']->lang['TOTAL_POSTS'],
-			'L_ACTIVE_IN_FORUM' 		=> (isset($_CLASS['core_user']->lang['ACTIVE_IN_FORUM'])) ? $_CLASS['core_user']->lang['ACTIVE_IN_FORUM'] : '',
-			'L_ACTIVE_IN_TOPIC' 		=> (isset($_CLASS['core_user']->lang['ACTIVE_IN_TOPIC'])) ? $_CLASS['core_user']->lang['ACTIVE_IN_TOPIC'] : '',
-			'L_SEARCH_USER_POSTS' 		=> (isset($_CLASS['core_user']->lang['SEARCH_USER_POSTS'])) ? $_CLASS['core_user']->lang['SEARCH_USER_POSTS'] : '',
-			'L_YOUR_DETAILS' 			=> $_CLASS['core_user']->lang['YOUR_DETAILS'],
-			'L_WATCHED_FORUMS' 			=> $_CLASS['core_user']->lang['WATCHED_FORUMS'],
-			'L_NO_POSTS' 				=> $_CLASS['core_user']->lang['NO_POSTS'],
-			'L_NO_WATCHED_FORUMS'	 	=> $_CLASS['core_user']->lang['NO_WATCHED_FORUMS'],
-			'L_WATCHED_TOPICS' 			=> $_CLASS['core_user']->lang['WATCHED_TOPICS'],
-			'L_NO_WATCHED_TOPICS'	 	=> $_CLASS['core_user']->lang['NO_WATCHED_TOPICS'],
-			'L_UNWATCH_MARKED' 			=> $_CLASS['core_user']->lang['UNWATCH_MARKED'],
-			'L_FORUM' 					=> $_CLASS['core_user']->lang['FORUM'],
-			'L_POSTED' 					=> $_CLASS['core_user']->lang['POSTED'],
-			'L_MOVE_UP' 				=> $_CLASS['core_user']->lang['MOVE_UP'],
-			'L_MOVE_DOWN' 				=> $_CLASS['core_user']->lang['MOVE_DOWN'],
-			'L_NO_BOOKMARKS' 			=> $_CLASS['core_user']->lang['NO_BOOKMARKS'],
-			'L_REMOVE_BOOKMARK_MARKED' 	=> $_CLASS['core_user']->lang['REMOVE_BOOKMARK_MARKED'],
-			'L_NO_SAVED_DRAFTS' 		=> $_CLASS['core_user']->lang['NO_SAVED_DRAFTS'],
-			'L_DRAFTS_EXPLAIN'	 		=> $_CLASS['core_user']->lang['DRAFTS_EXPLAIN'],
-			'L_OPTIONS' 				=> $_CLASS['core_user']->lang['OPTIONS'],
-			'L_PRIVATE_MESSAGE' 		=> $_CLASS['core_user']->lang['PRIVATE_MESSAGE'],
-			'L_VIEW_EDIT' 				=> $_CLASS['core_user']->lang['VIEW_EDIT'],
-			'L_SUBJECT' 				=> $_CLASS['core_user']->lang['SUBJECT'],
-			'L_MESSAGE' 				=> $_CLASS['core_user']->lang['MESSAGE'],
-			'L_EDIT_DRAFT_EXPLAIN'		=> $_CLASS['core_user']->lang['EDIT_DRAFT_EXPLAIN'],
-			'L_BACK_TO_DRAFTS' 			=> $_CLASS['core_user']->lang['BACK_TO_DRAFTS'],
-			'L_SUBMIT' 					=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET' 					=> $_CLASS['core_user']->lang['RESET'],
-			'L_MARK_ALL' 				=> $_CLASS['core_user']->lang['MARK_ALL'],
-			'L_UNMARK_ALL' 				=> $_CLASS['core_user']->lang['UNMARK_ALL'],
-			'L_DELETE' 					=> $_CLASS['core_user']->lang['DELETE'],
-			'L_DELETE_MARKED' 			=> $_CLASS['core_user']->lang['DELETE_MARKED'])
-		);
+		));
 		
 		$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_main_' . $mode . '.html');
 	}

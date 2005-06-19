@@ -34,35 +34,6 @@ function mcp_front_view($id, $mode, $action, $url)
 {
 	global $_CLASS;
 
-	$_CLASS['core_template']->assign(array(
-		'L_FORUM'						=> $_CLASS['core_user']->lang['FORUM'],
-		'L_TOPIC'						=> $_CLASS['core_user']->lang['TOPIC'],
-		'L_SUBJECT'						=> $_CLASS['core_user']->lang['SUBJECT'],
-		'L_AUTHOR'						=> $_CLASS['core_user']->lang['AUTHOR'],
-		'L_POST_TIME'					=> $_CLASS['core_user']->lang['POST_TIME'],
-		'L_MODERATE'					=> $_CLASS['core_user']->lang['MODERATE'],
-		'L_VIEW_DETAILS'				=> $_CLASS['core_user']->lang['VIEW_DETAILS'],
-		'L_UNAPPROVED_POSTS_ZERO_TOTAL'	=> $_CLASS['core_user']->lang['UNAPPROVED_POSTS_ZERO_TOTAL'],
-		'L_UNAPPROVED_TOTAL'			=> $_CLASS['core_user']->lang['UNAPPROVED_TOTAL'],
-		'L_LATEST_REPORTED'				=> $_CLASS['core_user']->lang['LATEST_REPORTED'],
-		'L_REPORT_TIME'					=> $_CLASS['core_user']->lang['REPORT_TIME'],
-		'L_REPORTER'					=> $_CLASS['core_user']->lang['REPORTER'],
-		'L_NO_ENTRIES'					=> $_CLASS['core_user']->lang['NO_ENTRIES'],
-		'L_REPORTS_ZERO_TOTAL'			=> $_CLASS['core_user']->lang['REPORTS_ZERO_TOTAL'],
-		'L_REPORTS_TOTAL'				=> $_CLASS['core_user']->lang['REPORTS_TOTAL'],
-		'L_LATEST_UNAPPROVED'			=> $_CLASS['core_user']->lang['LATEST_UNAPPROVED'],			
-		'L_USERNAME'					=> $_CLASS['core_user']->lang['USERNAME'],
-		'L_IP'							=> $_CLASS['core_user']->lang['IP'],
-		'L_ACTION'						=> $_CLASS['core_user']->lang['ACTION'],
-		'L_TIME'						=> $_CLASS['core_user']->lang['TIME'],
-		'L_JUMP_TO'						=> $_CLASS['core_user']->lang['JUMP_TO'],
-		'L_VIEW_TOPIC'					=> $_CLASS['core_user']->lang['VIEW_TOPIC'],
-		'L_VIEW_TOPIC_LOGS'				=> $_CLASS['core_user']->lang['VIEW_TOPIC_LOGS'],
-		'L_REPORTS_TOTAL'				=> $_CLASS['core_user']->lang['REPORTS_TOTAL'],
-		'L_GO'							=> $_CLASS['core_user']->lang['GO'],
-		'L_LATEST_LOGS'					=> $_CLASS['core_user']->lang['LATEST_LOGS'])
-	);
-	
 	// Latest 5 unapproved
 	$forum_list = get_forum_list('m_approve');
 	$post_list = array();

@@ -197,17 +197,6 @@ class ucp_profile extends module
 					'NEW_PASSWORD'		=> (isset($new_password)) ? $new_password : '',
 					
 					'CUR_PASSWORD'					=> '', 
-					'L_UCP_PROFILE_REG_WELCOME'		=> $_CLASS['core_user']->lang['UCP_PROFILE_REG_WELCOME'],
-					'L_EMAIL_ADDRESS'				=> $_CLASS['core_user']->lang['EMAIL_ADDRESS'],
-					'L_CONFIRM_EMAIL'				=> $_CLASS['core_user']->lang['CONFIRM_EMAIL'],
-					'L_CONFIRM_EMAIL_EXPLAIN'		=> $_CLASS['core_user']->lang['CONFIRM_EMAIL_EXPLAIN'],
-					'L_CHANGE_PASSWORD'				=> $_CLASS['core_user']->lang['CHANGE_PASSWORD'],
-					'L_CONFIRM_PASSWORD'			=> $_CLASS['core_user']->lang['CONFIRM_PASSWORD'],
-					'L_CONFIRM_PASSWORD_EXPLAIN'	=> $_CLASS['core_user']->lang['CONFIRM_PASSWORD_EXPLAIN'],
-					'L_CURRENT_PASSWORD'			=> $_CLASS['core_user']->lang['CURRENT_PASSWORD'],
-					'L_CURRENT_PASSWORD_EXPLAIN'	=> $_CLASS['core_user']->lang['CURRENT_PASSWORD_EXPLAIN'],
-					'L_SUBMIT'						=> $_CLASS['core_user']->lang['SUBMIT'],
-					'L_RESET'						=> $_CLASS['core_user']->lang['RESET'],
 					
 					'L_USERNAME_EXPLAIN'		=> sprintf($_CLASS['core_user']->lang[$user_char_ary[str_replace('\\\\', '\\', $_CORE_CONFIG['user']['allow_name_chars'])] . '_EXPLAIN'], $_CORE_CONFIG['user']['min_name_chars'], $_CORE_CONFIG['user']['max_name_chars']), 
 					'L_CHANGE_PASSWORD_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['CHANGE_PASSWORD_EXPLAIN'], $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
@@ -468,37 +457,6 @@ class ucp_profile extends module
 
 					'L_SIGNATURE_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['SIGNATURE_EXPLAIN'], $config['max_sig_chars']),
 
-					'L_BBCODE_B_HELP'		=> $_CLASS['core_user']->lang['BBCODE_B_HELP'],
-					'L_BBCODE_I_HELP'		=> $_CLASS['core_user']->lang['BBCODE_I_HELP'],
-					'L_BBCODE_U_HELP'		=> $_CLASS['core_user']->lang['BBCODE_U_HELP'],
-					'L_BBCODE_Q_HELP'		=> $_CLASS['core_user']->lang['BBCODE_Q_HELP'],
-					'L_BBCODE_C_HELP'		=> $_CLASS['core_user']->lang['BBCODE_C_HELP'],
-					'L_BBCODE_L_HELP'		=> $_CLASS['core_user']->lang['BBCODE_L_HELP'],
-					'L_BBCODE_O_HELP'		=> $_CLASS['core_user']->lang['BBCODE_O_HELP'],
-					'L_BBCODE_P_HELP'		=> $_CLASS['core_user']->lang['BBCODE_P_HELP'],
-					'L_BBCODE_W_HELP'		=> $_CLASS['core_user']->lang['BBCODE_W_HELP'],
-					'L_BBCODE_A_HELP'		=> $_CLASS['core_user']->lang['BBCODE_A_HELP'],
-					'L_BBCODE_S_HELP'		=> $_CLASS['core_user']->lang['BBCODE_S_HELP'],
-					'L_BBCODE_F_HELP'		=> $_CLASS['core_user']->lang['BBCODE_F_HELP'],
-					'L_BBCODE_E_HELP'		=> $_CLASS['core_user']->lang['BBCODE_E_HELP'],
-					'L_STYLES_TIP'			=> $_CLASS['core_user']->lang['STYLES_TIP'],
-					'L_SIGNATURE'			=> $_CLASS['core_user']->lang['SIGNATURE'],	
-					'L_SIGNATURE_PREVIEW'	=> $_CLASS['core_user']->lang['SIGNATURE_PREVIEW'],
-					'L_FONT_SIZE'			=> $_CLASS['core_user']->lang['FONT_SIZE'],
-					'L_FONT_TINY'			=> $_CLASS['core_user']->lang['FONT_TINY'],
-					'L_FONT_SMALL'			=> $_CLASS['core_user']->lang['FONT_SMALL'],
-					'L_FONT_NORMAL'			=> $_CLASS['core_user']->lang['FONT_NORMAL'],
-					'L_FONT_LARGE'			=> $_CLASS['core_user']->lang['FONT_LARGE'],
-					'L_FONT_HUGE'			=> $_CLASS['core_user']->lang['FONT_HUGE'],
-					'L_CLOSE_TAGS'			=> $_CLASS['core_user']->lang['CLOSE_TAGS'],
-					'L_DISABLE_HTML'		=> $_CLASS['core_user']->lang['DISABLE_HTML'],
-					'L_DISABLE_BBCODE'		=> $_CLASS['core_user']->lang['DISABLE_BBCODE'],
-					'L_DISABLE_SMILIES'		=> $_CLASS['core_user']->lang['DISABLE_SMILIES'],
-					'L_DISABLE_MAGIC_URL'	=> $_CLASS['core_user']->lang['DISABLE_MAGIC_URL'],
-					'L_PREVIEW'				=> $_CLASS['core_user']->lang['PREVIEW'],
-					'L_SUBMIT'				=> $_CLASS['core_user']->lang['SUBMIT'],
-					'L_RESET'				=> $_CLASS['core_user']->lang['RESET'],
-					
 					'S_HTML_ALLOWED'		=> $config['allow_sig_html'], 
 					'S_BBCODE_ALLOWED'		=> $config['allow_sig_bbcode'], 
 					'S_SMILIES_ALLOWED'		=> $config['allow_sig_smilies'],)
@@ -635,24 +593,7 @@ class ucp_profile extends module
 					'AVATAR_SIZE'	=> $config['avatar_filesize'], 
 
 					'S_FORM_ENCTYPE'				=> ($can_upload) ? ' enctype="multipart/form-data"' : '', 
-					'L_CURRENT_IMAGE'				=> $_CLASS['core_user']->lang['CURRENT_IMAGE'],
-					'L_UPLOAD_AVATAR_FILE'			=> $_CLASS['core_user']->lang['UPLOAD_AVATAR_FILE'],
-					'L_UPLOAD_AVATAR_URL'			=> $_CLASS['core_user']->lang['UPLOAD_AVATAR_URL'],
-					'L_UPLOAD_AVATAR_URL_EXPLAIN'	=> $_CLASS['core_user']->lang['UPLOAD_AVATAR_URL_EXPLAIN'],
-					'L_LINK_REMOTE_AVATAR'			=> $_CLASS['core_user']->lang['LINK_REMOTE_AVATAR'],
-					'L_LINK_REMOTE_AVATAR_EXPLAIN'	=> $_CLASS['core_user']->lang['LINK_REMOTE_AVATAR_EXPLAIN'],
-					'L_LINK_REMOTE_SIZE'			=> $_CLASS['core_user']->lang['LINK_REMOTE_SIZE'],
-					'L_LINK_REMOTE_SIZE_EXPLAIN'	=> $_CLASS['core_user']->lang['LINK_REMOTE_SIZE_EXPLAIN'],
-					'L_DISPLAY_GALLERY'				=> $_CLASS['core_user']->lang['DISPLAY_GALLERY'],
-					'L_AVATAR_GALLERY'				=> $_CLASS['core_user']->lang['AVATAR_GALLERY'],
-					'L_DELETE_AVATAR'				=> $_CLASS['core_user']->lang['DELETE_AVATAR'],
-					'L_AVATAR_CATEGORY'				=> $_CLASS['core_user']->lang['AVATAR_CATEGORY'],
-					'L_AVATAR_PAGE'					=> $_CLASS['core_user']->lang['AVATAR_PAGE'],
-					'L_GO'							=> $_CLASS['core_user']->lang['GO'],
-					'L_CANCEL'						=> $_CLASS['core_user']->lang['CANCEL'],
-					'L_SUBMIT'						=> $_CLASS['core_user']->lang['SUBMIT'],
-					'L_RESET'						=> $_CLASS['core_user']->lang['RESET'],
-					
+				
 					'L_AVATAR_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['AVATAR_EXPLAIN'], $config['avatar_max_width'], $config['avatar_max_height'], round($config['avatar_filesize'] / 1024)),)
 				);
 
@@ -722,25 +663,6 @@ class ucp_profile extends module
 		$_CLASS['core_template']->assign(array(
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_PROFILE_' . strtoupper($mode)],
 			
-			'L_PROFILE_INFO_NOTICE'		=> $_CLASS['core_user']->lang['PROFILE_INFO_NOTICE'],
-			'L_UCP_ICQ'					=> $_CLASS['core_user']->lang['UCP_ICQ'],
-			'L_UCP_AIM'					=> $_CLASS['core_user']->lang['UCP_AIM'],
-			'L_UCP_MSNM'				=> $_CLASS['core_user']->lang['UCP_MSNM'],
-			'L_UCP_YIM'					=> $_CLASS['core_user']->lang['UCP_YIM'],
-			'L_PROFILE_INFO_NOTICE'		=> $_CLASS['core_user']->lang['PROFILE_INFO_NOTICE'],
-			'L_UCP_JABBER'				=> $_CLASS['core_user']->lang['UCP_JABBER'],
-			'L_WEBSITE'					=> $_CLASS['core_user']->lang['WEBSITE'],
-			'L_LOCATION'				=> $_CLASS['core_user']->lang['LOCATION'],
-			'L_OCCUPATION'				=> $_CLASS['core_user']->lang['OCCUPATION'],
-			'L_INTERESTS'				=> $_CLASS['core_user']->lang['INTERESTS'],
-			'L_BIRTHDAY'				=> $_CLASS['core_user']->lang['BIRTHDAY'],
-			'L_BIRTHDAY_EXPLAIN'		=> $_CLASS['core_user']->lang['BIRTHDAY_EXPLAIN'],
-			'L_DAY'						=> $_CLASS['core_user']->lang['DAY'],
-			'L_MONTH'					=> $_CLASS['core_user']->lang['MONTH'],
-			'L_YEAR'					=> $_CLASS['core_user']->lang['YEAR'],
-			'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET'					=> $_CLASS['core_user']->lang['RESET'],
-		
 			'S_HIDDEN_FIELDS'			=> $s_hidden_fields,
 			'S_UCP_ACTION'				=> $module_link)
 		);

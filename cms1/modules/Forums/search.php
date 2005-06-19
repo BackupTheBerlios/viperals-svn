@@ -27,11 +27,12 @@ if ($_CLASS['core_user']->is_bot || !$_CLASS['auth']->acl_get('u_search') || !$c
 }
 
 // Define initial vars
-$mode		= request_var('mode', '');
-$search_id	= request_var('search_id', '');
-$start		= request_var('start', 0);
-$post_id	= request_var('p', 0);
-$view		= request_var('view', '');
+$mode				= request_var('mode', '');
+$search_id			= request_var('search_id', '');
+$search_session_id 	= request_var('search_session_id', 0);
+$start				= request_var('start', 0);
+$post_id			= request_var('p', 0);
+$view				= request_var('view', '');
 
 $search_keywords	= request_var('search_keywords', '');
 $search_author		= request_var('search_author', '');
@@ -46,66 +47,6 @@ $search_forum	= request_var('search_forum', 0);
 $sort_days	= request_var('st', 0);
 $sort_key	= request_var('sk', 't');
 $sort_dir	= request_var('sd', 'd');
-
-$_CLASS['core_template']->assign(array(
-	'L_SEARCH_QUERY'				=> $_CLASS['core_user']->lang['SEARCH_QUERY'],
-	'L_SEARCH_KEYWORDS'				=> $_CLASS['core_user']->lang['SEARCH_KEYWORDS'],
-	'L_SEARCH_KEYWORDS_EXPLAIN'		=> $_CLASS['core_user']->lang['SEARCH_KEYWORDS_EXPLAIN'],
-	'L_SEARCH_ALL_TERMS'			=> $_CLASS['core_user']->lang['SEARCH_ALL_TERMS'],
-	'L_SEARCH_ANY_TERMS'			=> $_CLASS['core_user']->lang['SEARCH_ANY_TERMS'],
-	'L_SEARCH_AUTHOR'				=> $_CLASS['core_user']->lang['SEARCH_AUTHOR'],
-	'L_SEARCH_AUTHOR_EXPLAIN'		=> $_CLASS['core_user']->lang['SEARCH_AUTHOR_EXPLAIN'],
-	'L_SEARCH_FORUMS'				=> $_CLASS['core_user']->lang['SEARCH_FORUMS'],
-	'L_SEARCH_FORUMS_EXPLAIN'		=> $_CLASS['core_user']->lang['SEARCH_FORUMS_EXPLAIN'],
-	'L_SEARCH_OPTIONS'				=> $_CLASS['core_user']->lang['SEARCH_OPTIONS'],
-	'L_SEARCH_SUBFORUMS'			=> $_CLASS['core_user']->lang['SEARCH_SUBFORUMS'],
-	'L_SEARCH_WITHIN'				=> $_CLASS['core_user']->lang['SEARCH_WITHIN'],
-	'L_YES'							=> $_CLASS['core_user']->lang['YES'],
-	'L_NO'							=> $_CLASS['core_user']->lang['NO'],
-	'L_SEARCH_TITLE_MSG'			=> $_CLASS['core_user']->lang['SEARCH_TITLE_MSG'],
-	'L_SEARCH_MSG_ONLY'				=> $_CLASS['core_user']->lang['SEARCH_MSG_ONLY'],
-	'L_SEARCH_TITLE_ONLY'			=> $_CLASS['core_user']->lang['SEARCH_TITLE_ONLY'],
-	'L_RESULT_SORT'					=> $_CLASS['core_user']->lang['RESULT_SORT'],
-	'L_SORT_ASCENDING'				=> $_CLASS['core_user']->lang['SORT_ASCENDING'],
-	'L_SORT_DESCENDING'				=> $_CLASS['core_user']->lang['SORT_DESCENDING'],
-	'L_DISPLAY_RESULTS'				=> $_CLASS['core_user']->lang['DISPLAY_RESULTS'],
-	'L_POSTS'						=> $_CLASS['core_user']->lang['POSTS'],
-	'L_TOPICS'						=> $_CLASS['core_user']->lang['TOPICS'],
-	'L_RESULT_DAYS'					=> $_CLASS['core_user']->lang['RESULT_DAYS'],
-	'L_RETURN_FIRST'				=> $_CLASS['core_user']->lang['RETURN_FIRST'],
-	'L_POST_CHARACTERS'				=> $_CLASS['core_user']->lang['POST_CHARACTERS'],
-	'L_RESET'						=> $_CLASS['core_user']->lang['RESET'],
-	'L_NO_RECENT_SEARCHES'			=> $_CLASS['core_user']->lang['NO_RECENT_SEARCHES'],
-
-	'L_SEARCHED_FOR'				=> $_CLASS['core_user']->lang['SEARCHED_FOR'],
-	'L_IGNORED_TERMS'				=> $_CLASS['core_user']->lang['IGNORED_TERMS'],
-	'L_SEARCH_IN_RESULTS'			=> $_CLASS['core_user']->lang['SEARCH_IN_RESULTS'],
-	'L_SEARCH_TITLE_ONLY'			=> $_CLASS['core_user']->lang['SEARCH_TITLE_ONLY'],
-	'L_AUTHOR'						=> $_CLASS['core_user']->lang['AUTHOR'],
-	'L_GO'							=> $_CLASS['core_user']->lang['GO'],
-	'L_REPLIES'						=> $_CLASS['core_user']->lang['REPLIES'],
-	'L_VIEWS'						=> $_CLASS['core_user']->lang['VIEWS'],
-	'L_LAST_POST'					=> $_CLASS['core_user']->lang['LAST_POST'],
-	'L_SORT_BY'						=> $_CLASS['core_user']->lang['SORT_BY'],
-	'L_JUMP_TO'						=> 'Jump To',
-
-	'L_MESSAGE'						=> $_CLASS['core_user']->lang['MESSAGE'],
-	'L_FORUM'						=> $_CLASS['core_user']->lang['FORUM'],
-	'L_TOPIC'						=> $_CLASS['core_user']->lang['TOPIC'],
-	'L_POST_SUBJECT'				=> $_CLASS['core_user']->lang['POST_SUBJECT'],
-	'L_POSTED'						=> $_CLASS['core_user']->lang['POSTED'],
-	'L_REPLIES'						=> $_CLASS['core_user']->lang['REPLIES'],
-	'L_VIEWS'						=> $_CLASS['core_user']->lang['VIEWS'],
-	'L_LAST_POST'					=> $_CLASS['core_user']->lang['LAST_POST'],
-	'L_SORT_BY'						=> $_CLASS['core_user']->lang['SORT_BY'],
-	
-	'L_RESULT_DAYS'					=> $_CLASS['core_user']->lang['RESULT_DAYS'],
-	'L_RETURN_FIRST'				=> $_CLASS['core_user']->lang['RETURN_FIRST'],
-	'L_POST_CHARACTERS'				=> $_CLASS['core_user']->lang['POST_CHARACTERS'],
-	'L_RESET'						=> $_CLASS['core_user']->lang['RESET'],
-	'L_NO_RECENT_SEARCHES'			=> $_CLASS['core_user']->lang['NO_RECENT_SEARCHES'],
-	'L_RECENT_SEARCHES'				=> $_CLASS['core_user']->lang['RECENT_SEARCHES'])
-);
 
 // Define some vars
 $limit_days		= array(0 => $_CLASS['core_user']->lang['ALL_RESULTS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
@@ -134,7 +75,7 @@ if ($config['search_interval'])
 	}
 }
 
-if ($search_keywords || $search_author || $search_id)
+if ($search_keywords || $search_author || $search_id || $search_session_id)
 {
 	$post_id_ary = $split_words = $old_split_words = $common_words = array();
 
@@ -213,6 +154,33 @@ if ($search_keywords || $search_author || $search_id)
 
 		switch ($search_id)
 		{
+			// Oh holy Bob, bring us some activity...
+			case 'active_topics':
+				$show_results = 'topics';
+
+				if (!$sort_days)
+				{
+					$sort_days = 1;
+					gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $u_sort_param);
+				}
+
+				$last_post_time = (time() - ($sort_days * 24 * 3600));
+
+				$sql = 'SELECT DISTINCT t.topic_id
+					FROM ' . POSTS_TABLE . ' p
+					LEFT JOIN ' . TOPICS_TABLE . " t ON (t.topic_approved = 1 AND p.topic_id = t.topic_id)
+					WHERE p.post_time > $last_post_time
+						$sql_forums
+					ORDER BY t.topic_last_post_time DESC";
+				$result = $_CLASS['core_db']->sql_query_limit($sql, 1000);
+
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				{
+					$post_id_ary[] = $row['topic_id'];
+				}
+				$_CLASS['core_db']->sql_freeresult($result);
+				break;
+				
 			case 'egosearch':
 				break;
 
@@ -282,39 +250,39 @@ if ($search_keywords || $search_author || $search_id)
 					trigger_error('NO_SEARCH_RESULTS');
 				}
 				break;
-
-			default:
-				$search_id = (int) $search_id;
-
-				$sql = 'SELECT search_array
-					FROM ' . SEARCH_TABLE . "
-					WHERE search_id = $search_id
-						AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
-				$result = $_CLASS['core_db']->sql_query($sql);
-
-				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
-				{
-					$data = explode('#', $row['search_array']);
-
-					$split_words = unserialize(array_shift($data));
-					if ($search_keywords)
-					{
-						// If we're wanting to search on these results we store the existing split word array
-						$old_split_words = $split_words;
-					}
-					$stopped_words = unserialize(array_shift($data));
-					foreach ($store_vars as $var)
-					{
-						$$var = array_shift($data);
-					}
-
-					$sql_where = (($show_results == 'posts') ? 'p.post_id' : 't.topic_id') . ' IN (' . implode(', ', $data) . ')';
-					unset($data);
-				}
-				$_CLASS['core_db']->sql_freeresult($result);
 		}
 	}
+	
+	if ($search_session_id)
+	{
+		$sql = 'SELECT search_array
+			FROM ' . SEARCH_TABLE . "
+			WHERE search_id = $search_session_id
+				AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
+		$result = $_CLASS['core_db']->sql_query($sql);
 
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		{
+			$data = explode('#', $row['search_array']);
+
+			$split_words = unserialize(array_shift($data));
+			if ($search_keywords)
+			{
+				// If we're wanting to search on these results we store the existing split word array
+				$old_split_words = $split_words;
+			}
+			$stopped_words = unserialize(array_shift($data));
+			foreach ($store_vars as $var)
+			{
+				$$var = array_shift($data);
+			}
+
+			$sql_where = (($show_results == 'posts') ? 'p.post_id' : 't.topic_id') . ' IN (' . implode(', ', $data) . ')';
+			unset($data);
+		}
+		$_CLASS['core_db']->sql_freeresult($result);
+	}
+	// TODO: hook in fulltext_phpbb/mysql
 
 	// Are we looking for words
 	if ($search_keywords)
@@ -599,7 +567,7 @@ if ($search_keywords || $search_author || $search_id)
 	}
 
 
-	if ($post_id_ary)
+	if ($post_id_ary && sizeof($post_id_ary))
 	{
 		// Finish building query (for all combinations) and run it ...
 		$sql = 'SELECT session_id
@@ -637,10 +605,10 @@ if ($search_keywords || $search_author || $search_id)
 		unset($post_id_ary);
 
 		srand ((double) microtime() * 1000000);
-		$search_id = rand();
+		$search_session_id = rand();
 
 		$sql_ary = array(
-			'search_id'		=> $search_id,
+			'search_id'		=> $search_session_id,
 			'session_id'	=> $_CLASS['core_user']->data['session_id'],
 			'search_time'	=> $current_time,
 			'search_array'	=> $data
@@ -679,12 +647,14 @@ if ($search_keywords || $search_author || $search_id)
 		'SEARCH_MATCHES'	=> $l_search_matches,
 		'SEARCH_WORDS'		=> $split_words, 
 		'IGNORED_WORDS'		=> ($ignored_words) ? $ignored_words : '', 
-		'PAGINATION'		=> generate_pagination("Forums&amp;file=&amp;search_id=$search_id&amp;hilit=$hilit&amp;$u_sort_param", $total_match_count, $per_page, $start),
+		'PAGINATION'		=> generate_pagination("Forums&amp;file=search&amp;search_session_id=$search_session_id&amp;search_id=$search_id&amp;hilit=$hilit&amp;$u_sort_param", $total_match_count, $per_page, $start),
 		'PAGE_NUMBER'		=> on_page($total_match_count, $per_page, $start),
 		'TOTAL_MATCHES'		=> $total_match_count,
 
 		'S_SELECT_SORT_DIR'		=> $s_sort_dir,
 		'S_SELECT_SORT_KEY'		=> $s_sort_key,
+		'S_SELECT_SORT_DAYS'	=> $s_limit_days,
+
 		'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=&amp;search_id='.$search_id),
 		'S_SHOW_TOPICS'			=> ($show_results == 'posts') ? false : true,
 
@@ -701,143 +671,149 @@ if ($search_keywords || $search_author || $search_id)
 	// within an existing search result set
 	$sort_by_sql	= array('a' => (($show_results == 'posts') ? 'u.username' : 't.topic_poster'), 't' => (($show_results == 'posts') ? 'p.post_time' : 't.topic_last_post_time'), 'f' => 'f.forum_id', 'i' => 't.topic_title', 's' => (($show_results == 'posts') ? 'pt.post_subject' : 't.topic_title'));
 
-	if ($show_results == 'posts')
+	if ($sql_where)
 	{
-		// Not joining this query to the one below at present ... may do in future
-		$sql = 'SELECT zebra_id, friend, foe
-			FROM ' . ZEBRA_TABLE . ' 
-			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		$zebra = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($show_results == 'posts')
 		{
-			if ($row['friend'])
+			// Not joining this query to the one below at present ... may do in future
+			$sql = 'SELECT zebra_id, friend, foe
+				FROM ' . ZEBRA_TABLE . ' 
+				WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
+			$result = $_CLASS['core_db']->sql_query($sql);
+	
+			$zebra = array();
+			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
-				$zebra['friend'][] = $row['zebra_id'];
+				$zebra[($row['friend']) ? 'friend' : 'foe'][] = $row['zebra_id'];
 			}
-			else
-			{
-				$zebra['foe'][] = $row['zebra_id'];
-			}
-		}
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		$sql = 'SELECT p.*, f.forum_id, f.forum_name, t.*, u.username, u.user_sig, u.user_sig_bbcode_uid
-			FROM ' . FORUMS_TABLE . ' f, ' . TOPICS_TABLE . ' t, ' . USERS_TABLE . ' u, ' . POSTS_TABLE . " p 
-			WHERE $sql_where 
-				AND f.forum_id = p.forum_id
-				AND p.topic_id = t.topic_id
-				AND p.poster_id = u.user_id";
-	}
-	else
-	{
-		$sql = 'SELECT t.*, f.forum_id, f.forum_name
-			FROM ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f 
-			WHERE $sql_where 
-				AND f.forum_id = t.forum_id";
-	}
-	$sql .= ' ORDER BY ' . $sort_by_sql[$sort_key] . ' ' . (($sort_dir == 'd') ? 'DESC' : 'ASC') . " LIMIT $start, $per_page";
-	$result = $_CLASS['core_db']->sql_query($sql);
-
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-	{
-		$forum_id = $row['forum_id'];
-		$topic_id = $row['topic_id'];
-
-		$view_topic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;hilit=$u_hilit";
-
-		if ($show_results == 'topics')
-		{
-			$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
-
-			$folder_img = $folder_alt = $topic_type = '';
-			topic_status($row, $replies, time(), time(), $folder_img, $folder_alt, $topic_type);
-
-			$tpl_ary = array(
-				'TOPIC_AUTHOR' 		=> topic_topic_author($row),
-				'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
-				'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
-				'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
-				'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
-				'PAGINATION' 		=> topic_generate_pagination($replies, $view_topic_url),
-				'REPLIES' 			=> $replies,
-				'VIEWS' 			=> $row['topic_views'],
-				'TOPIC_TYPE' 		=> $topic_type,
-
-				'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
-				'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
-				'TOPIC_ICON_IMG'		=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['img'] : '',
-				'TOPIC_ICON_IMG_WIDTH'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['width'] : '',
-				'TOPIC_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['height'] : '',
-				'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
-				'S_TOPIC_TYPE'			=> $row['topic_type'],
-				'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false,
-
-				'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
-				'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
-
-				'U_LAST_POST'		=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false),
-				'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
-				'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
-				'U_MCP_QUEUE'		=> generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id)
-			);
+			$_CLASS['core_db']->sql_freeresult($result);
+	
+			$sql = 'SELECT p.*, f.forum_id, f.forum_name, t.*, u.username, u.user_sig, u.user_sig_bbcode_uid
+				FROM ' . FORUMS_TABLE . ' f, ' . TOPICS_TABLE . ' t, ' . USERS_TABLE . ' u, ' . POSTS_TABLE . " p 
+				WHERE $sql_where 
+					AND f.forum_id = p.forum_id
+					AND p.topic_id = t.topic_id
+					AND p.poster_id = u.user_id";
 		}
 		else
 		{
-			if ((isset($zebra['foe']) && in_array($row['poster_id'], $zebra['foe'])) && (!$view || $view != 'show' || $post_id != $row['post_id']))
-			{
-				$_CLASS['core_template']->assign_vars_array('searchresults', array(
-					'S_IGNORE_POST' => true, 
-
-					'L_IGNORE_POST' => sprintf($_CLASS['core_user']->lang['POST_BY_FOE'], $row['username'], '<a href="'.generate_link("Forums&amp;file=search&amp;search_id=$search_id&amp;$u_sort_param&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
-				);
-
-				continue;
-			}
-
-			if ($row['enable_html'])
-			{
-				$row['post_text'] = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $row['post_text']);
-			}
-
-			$row['post_text'] = censor_text($row['post_text']);
-
-			decode_message($row['post_text'], $row['bbcode_uid']);
-		
-			if ($return_chars)
-			{
-				$row['post_text'] = (strlen($row['post_text']) < $return_chars + 3) ? $row['post_text'] : substr($row['post_text'], 0, $return_chars) . '...';
-			}
-
-			// This was shamelessly 'borrowed' from volker at multiartstudio dot de
-			// via php.net's annotated manual
-			$row['post_text'] = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . $hilit . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $row['post_text'] . '<'), 1, -1));
-
-			$row['post_text'] = smiley_text($row['post_text']);
-
-			$tpl_ary = array(
-				'POSTER_NAME'		=> ($row['poster_id'] == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST']) : $row['username'], 
-				'POST_SUBJECT'		=> censor_text($row['post_subject']), 
-				'POST_DATE'			=> (!empty($row['post_time'])) ? $_CLASS['core_user']->format_date($row['post_time']) : '', 
-				'MESSAGE' 			=> (!empty($row['post_text'])) ? str_replace("\n", '<br />', $row['post_text']) : ''
-			);
+			$sql = 'SELECT t.*, f.forum_id, f.forum_name
+				FROM ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f 
+				WHERE $sql_where 
+					AND f.forum_id = t.forum_id";
 		}
-
-		$_CLASS['core_template']->assign_vars_array('searchresults', array_merge($tpl_ary, array(
-			'FORUM_ID' 			=> $forum_id,
-			'TOPIC_ID' 			=> $topic_id,
-			'POST_ID'			=> ($show_results == 'posts') ? $row['post_id'] : false, 
-
-			'FORUM_TITLE'		=> $row['forum_name'], 
-			'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
-
-			'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
-			'U_VIEW_FORUM'		=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id), 
-			'U_VIEW_POST'		=> (!empty($row['post_id'])) ? generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id'] . '&amp;p=' . $row['post_id'] . '&amp;hilit=' . $u_hilit . '#' . $row['post_id'], false, false) : '')
-		));
+		$sql .= ' ORDER BY ' . $sort_by_sql[$sort_key] . ' ' . (($sort_dir == 'd') ? 'DESC' : 'ASC') . " LIMIT $start, $per_page";
+		$result = $_CLASS['core_db']->sql_query($sql);
+	
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		{
+			$forum_id = $row['forum_id'];
+			$topic_id = $row['topic_id'];
+	
+			$view_topic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;hilit=$u_hilit";
+	
+			if ($show_results == 'topics')
+			{
+				$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
+	
+				$folder_img = $folder_alt = $topic_type = '';
+				topic_status($row, $replies, time(), time(), $folder_img, $folder_alt, $topic_type);
+	
+				$tpl_ary = array(
+					'TOPIC_AUTHOR' 		=> topic_topic_author($row),
+					'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
+					'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
+					'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
+					'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
+					'PAGINATION' 		=> topic_generate_pagination($replies, $view_topic_url),
+					'REPLIES' 			=> $replies,
+					'VIEWS' 			=> $row['topic_views'],
+					'TOPIC_TYPE' 		=> $topic_type,
+	
+					'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
+					'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
+					'TOPIC_ICON_IMG'		=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['img'] : '',
+					'TOPIC_ICON_IMG_WIDTH'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['width'] : '',
+					'TOPIC_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['height'] : '',
+					'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+					'S_TOPIC_TYPE'			=> $row['topic_type'],
+					'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false,
+	
+					'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
+					'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
+	
+					'U_LAST_POST'		=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false),
+					'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+					'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
+					'U_MCP_QUEUE'		=> generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id)
+				);
+			}
+			else
+			{
+				if ((isset($zebra['foe']) && in_array($row['poster_id'], $zebra['foe'])) && (!$view || $view != 'show' || $post_id != $row['post_id']))
+				{
+					$_CLASS['core_template']->assign_vars_array('searchresults', array(
+						'S_IGNORE_POST' => true, 
+						'L_IGNORE_POST' => sprintf($_CLASS['core_user']->lang['POST_BY_FOE'], $row['username'], '<a href="'.generate_link("Forums&amp;file=search&amp;search_session_id=$search_session_id&amp;$u_sort_param&amp;p=" . $row['post_id'] . '&amp;view=show#' . $row['post_id']) . '">', '</a>'))
+					);
+	
+					continue;
+				}
+	
+				if ($row['enable_html'])
+				{
+					$row['post_text'] = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $row['post_text']);
+				}
+	
+				$row['post_text'] = censor_text($row['post_text']);
+	
+				decode_message($row['post_text'], $row['bbcode_uid']);
+			
+				if ($return_chars)
+				{
+					$row['post_text'] = (strlen($row['post_text']) < $return_chars + 3) ? $row['post_text'] : substr($row['post_text'], 0, $return_chars) . '...';
+				}
+	
+				if ($hilit)
+				{
+					// This was shamelessly 'borrowed' from volker at multiartstudio dot de
+					// via php.net's annotated manual
+					$row['post_text'] = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . str_replace('\\', '\\\\', $hilit) . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $row['post_text'] . '<'), 1, -1));
+				}
+				
+				$row['post_text'] = smiley_text($row['post_text']);
+				
+				// Replace naughty words such as farty pants
+				$row['post_subject'] = censor_text($row['post_subject']);
+				$row['post_text'] = str_replace("\n", '<br />', censor_text($row['post_text']));
+				
+				$tpl_ary = array(
+					'POSTER_NAME'		=> ($row['poster_id'] == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST']) : $row['username'], 
+					'POST_SUBJECT'		=> censor_text($row['post_subject']), 
+					'POST_DATE'			=> (!empty($row['post_time'])) ? $_CLASS['core_user']->format_date($row['post_time']) : '', 
+					'MESSAGE' 			=> $row['post_text']
+				);
+			}
+	
+			$_CLASS['core_template']->assign_vars_array('searchresults', array_merge($tpl_ary, array(
+				'FORUM_ID' 			=> $forum_id,
+				'TOPIC_ID' 			=> $topic_id,
+				'POST_ID'			=> ($show_results == 'posts') ? $row['post_id'] : false, 
+	
+				'FORUM_TITLE'		=> $row['forum_name'], 
+				'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
+	
+				'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
+				'U_VIEW_FORUM'		=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id), 
+				'U_VIEW_POST'		=> (!empty($row['post_id'])) ? generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id'] . '&amp;p=' . $row['post_id'] . '&amp;hilit=' . $u_hilit . '#' . $row['post_id'], false, false) : '')
+			));
+		}
+		$_CLASS['core_db']->sql_freeresult($result);
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	else
+	{
+		$_CLASS['core_template']->assign('S_NO_SEARCH_RESULTS', true);
+	}
 
 	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SEARCH']);
 	

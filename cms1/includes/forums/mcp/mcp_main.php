@@ -266,14 +266,9 @@ function lock_unlock($mode, $ids)
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{
@@ -370,14 +365,9 @@ function change_topic_type($mode, $topic_ids)
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{
@@ -516,19 +506,15 @@ function mcp_move_topic($topic_ids)
 			'ADDITIONAL_MSG'		=> $additional_msg)
 		);
 
+		page_header();
 		confirm_box(false, 'MOVE_TOPIC' . ((sizeof($topic_ids) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_move.html');
 	}
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{
@@ -585,14 +571,9 @@ function mcp_delete_topic($topic_ids)
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{
@@ -701,14 +682,9 @@ function mcp_delete_post($post_ids)
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{
@@ -934,19 +910,15 @@ function mcp_fork_topic($topic_ids)
 			'ADDITIONAL_MSG'		=> $additional_msg)
 		);
 
+		page_header();
 		confirm_box(false, 'FORK_TOPIC' . ((sizeof($topic_ids) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_move.html');
 	}
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{

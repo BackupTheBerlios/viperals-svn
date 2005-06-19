@@ -31,47 +31,6 @@ function mcp_topic_view($id, $mode, $action, $url)
 {
 	global $config, $site_file_root, $_CLASS;
 
-	$_CLASS['core_template']->assign(array(
-		'L_SPLIT_TOPIC'				=> $_CLASS['core_user']->lang['SPLIT_TOPIC'],
-		'L_SPLIT_TOPIC_EXPLAIN'		=> $_CLASS['core_user']->lang['SPLIT_TOPIC_EXPLAIN'],
-		'L_SPLIT_SUBJECT'			=> $_CLASS['core_user']->lang['SPLIT_SUBJECT'],
-		'L_SPLIT_FORUM'				=> $_CLASS['core_user']->lang['SPLIT_FORUM'],
-		'L_TOPIC_ICON'				=> $_CLASS['core_user']->lang['TOPIC_ICON'],
-		'L_NONE'					=> $_CLASS['core_user']->lang['NONE'],
-		'L_MERGE_TOPIC'				=> $_CLASS['core_user']->lang['MERGE_TOPIC'],
-		'L_MERGE_TOPIC_EXPLAIN'		=> $_CLASS['core_user']->lang['MERGE_TOPIC_EXPLAIN'],
-		'L_MERGE_TOPIC_ID'			=> $_CLASS['core_user']->lang['MERGE_TOPIC_ID'],
-		'L_SELECT_TOPIC'			=> $_CLASS['core_user']->lang['SELECT_TOPIC'],
-		'L_DISPLAY_OPTIONS'			=> $_CLASS['core_user']->lang['DISPLAY_OPTIONS'],
-		'L_POSTS_PER_PAGE'			=> $_CLASS['core_user']->lang['POSTS_PER_PAGE'],
-		'L_POSTS_PER_PAGE_EXPLAIN'	=> $_CLASS['core_user']->lang['POSTS_PER_PAGE_EXPLAIN'],
-		'L_DISPLAY_POSTS'			=> $_CLASS['core_user']->lang['DISPLAY_POSTS'],
-		'L_SORT_BY'					=> $_CLASS['core_user']->lang['SORT_BY'],
-		'L_GO'						=> $_CLASS['core_user']->lang['GO'],			
-		'L_AUTHOR'					=> $_CLASS['core_user']->lang['AUTHOR'],
-		'L_MESSAGE'					=> $_CLASS['core_user']->lang['MESSAGE'],
-		'L_SELECT'					=> $_CLASS['core_user']->lang['SELECT'],
-		'L_POST_SUBJECT'			=> $_CLASS['core_user']->lang['POST_SUBJECT'],
-		'L_POST_DETAILS'			=> $_CLASS['core_user']->lang['POST_DETAILS'],
-		'L_POST_UNAPPROVED'			=> $_CLASS['core_user']->lang['POST_UNAPPROVED'],
-		'L_POST_REPORTED'			=> $_CLASS['core_user']->lang['POST_REPORTED'],
-		'L_POSTED'					=> $_CLASS['core_user']->lang['POSTED'],
-		'L_SELECT_ACTION'			=> $_CLASS['core_user']->lang['SELECT_ACTION'],
-		'L_APPROVE_POSTS'			=> $_CLASS['core_user']->lang['APPROVE_POSTS'],
-		'L_LOCK_POST_POSTS'			=> $_CLASS['core_user']->lang['LOCK_POST_POSTS'],
-		'L_LOCK_POST_EXPLAIN'		=> $_CLASS['core_user']->lang['LOCK_POST_EXPLAIN'],
-		'L_UNLOCK_POST_POSTS'		=> $_CLASS['core_user']->lang['UNLOCK_POST_POSTS'],
-		'L_MERGE_POSTS'				=> $_CLASS['core_user']->lang['MERGE_POSTS'],
-		'L_SPLIT_POSTS'				=> $_CLASS['core_user']->lang['SPLIT_POSTS'],
-		'L_SPLIT_AFTER'				=> $_CLASS['core_user']->lang['SPLIT_AFTER'],
-		'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
-		'L_MARK_ALL'				=> $_CLASS['core_user']->lang['MARK_ALL'],
-		'L_UNMARK_ALL'				=> $_CLASS['core_user']->lang['UNMARK_ALL'],
-		'L_JUMP_TO'					=> $_CLASS['core_user']->lang['JUMP_TO'],
-		'L_GO'						=> $_CLASS['core_user']->lang['GO'],
-		'L_DELETE_POSTS'			=> $_CLASS['core_user']->lang['DELETE_POSTS'])
-	);
-	
 	$_CLASS['core_user']->add_lang('viewtopic');
 
 	$topic_id = request_var('t', 0);

@@ -1370,10 +1370,9 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 	return $errors;
 }
 
-function delete_forum_content($forum_id)
+function delete_forum_content($forum_id, $loop = true)
 {
 	global $_CLASS, $site_file_root;
-
 	require_once($site_file_root.'includes/forums/functions_posting.php');
 
 	$_CLASS['core_db']->sql_transaction('begin');
@@ -1493,9 +1492,15 @@ function delete_forum_content($forum_id)
 					$result = $_CLASS['core_db']->sql_query_limit($sql, 500, $start);
 
 					$ids = array();
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					$row = $_CLASS['core_db']->sql_fetchrow($result);
+					
+					if ($row)
 					{
-						$ids[] = $row[$field];
+						do
+						{
+							$ids[] = $row[$field];
+						}
+						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 					}
 					$_CLASS['core_db']->sql_freeresult($result);
 
@@ -1518,7 +1523,6 @@ function delete_forum_content($forum_id)
 						$start = false;
 					}
 				}
- // not sure how this works with transactions
 				while ($start);
 				//while ($row);
 			}
@@ -1546,7 +1550,13 @@ function delete_forum_content($forum_id)
 	}
 
 	$_CLASS['core_db']->sql_transaction('commit');
-/// TEMP
+	
+	if ($loop = true)
+	{
+		// Make sure we delete everything on active forums?
+		delete_forum_content($forum_id, false);
+	}
+
 	return array();
 }
 

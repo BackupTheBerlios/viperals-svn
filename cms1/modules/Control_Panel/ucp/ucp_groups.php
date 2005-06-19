@@ -27,7 +27,7 @@ class ucp_groups extends module
 		{
 			case 'membership':
 
-				$sql = 'SELECT g.group_id, g.group_name, g.group_description, g.group_type, ug.group_leader, ug.user_pending
+				$sql = 'SELECT g.group_id, g.group_name, g.group_description, g.group_type, ug.user_status
 					FROM ' . GROUPS_TABLE . ' g, ' . USER_GROUP_TABLE . ' ug
 					WHERE ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 						AND g.group_id = ug.group_id
@@ -38,7 +38,7 @@ class ucp_groups extends module
 				$leader_count = $member_count = $pending_count = 0;
 				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 				{
-					$block = ($row['group_leader']) ? 'leader' : (($row['user_pending']) ? 'pending' : 'member');
+					$block = ($row['user_status'] == STATUS_LEADER) ? 'leader' : (($row['user_status'] == STATUS_PENDING) ? 'pending' : 'member');
 
 					$_CLASS['core_template']->assign_vars_array($block, array(
 						'GROUP_ID'		=> $row['group_id'],
@@ -89,16 +89,7 @@ class ucp_groups extends module
 					'S_MEMBER_COUNT'	=> $member_count,
 					'S_PENDING_COUNT'	=> $pending_count,
 					'S_NONMEMBER_COUNT'	=> $nonmember_count,
-					
-					'L_GROUPS_EXPLAIN'		=> $_CLASS['core_user']->lang['GROUPS_EXPLAIN'],
-					'L_GROUP_DETAILS'		=> $_CLASS['core_user']->lang['GROUP_DETAILS'],
-					'L_MARK'				=> $_CLASS['core_user']->lang['MARK'],
-					'L_GROUP_LEADER'		=> $_CLASS['core_user']->lang['GROUP_LEADER'],
-					'L_GROUP_MEMBER'		=> $_CLASS['core_user']->lang['GROUP_MEMBER'],
-					'L_GROUP_PENDING'		=> $_CLASS['core_user']->lang['GROUP_PENDING'],
-					'L_GROUP_NONMEMBER'		=> $_CLASS['core_user']->lang['GROUP_NONMEMBER'],
-					'L_SUBMIT'				=> $_CLASS['core_user']->lang['SUBMIT'])
-				);
+				));
 
 				break;
 

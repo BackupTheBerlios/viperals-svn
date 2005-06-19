@@ -63,7 +63,7 @@
 						</tr>
 						<tr>
 							<td align="center"><table cellspacing="0" cellpadding="2" border="0">
-								{section name=poll_optionloop loop=$poll_option}
+								<!-- LOOP $poll_option -->
 								<tr>
 									<!-- IF { $S_CAN_VOTE } -->
 									<td>
@@ -84,7 +84,7 @@
 									<!-- ENDIF -->
 									<!-- ENDIF -->
 								</tr>
-								{ /section }
+								<!-- ENDLOOP -->
 							</table></td>
 						</tr>
 						<!-- IF { $S_CAN_VOTE } -->
@@ -109,8 +109,8 @@
 			</tr>
 			<!-- ENDIF -->
 			<tr>
-				<th width="150" nowrap="nowrap">{$L_AUTHOR}</th>
-				<th nowrap="nowrap">{$L_MESSAGE}</th>
+				<th width="150" nowrap="nowrap">{ $L_AUTHOR }</th>
+				<th nowrap="nowrap">{ $L_MESSAGE }</th>
 			</tr>
 
 		<!-- LOOP $postrow -->
@@ -204,13 +204,13 @@
 								<tr>
 									<td class="row3"><b class="genmed">{ $L_ATTACHMENTS }: </b></td>
 								</tr>
-								{section name=attachmentloop loop=$attachment}
+								<!-- LOOP $attachment -->
 									<!-- IF { $attachment:TOPIC } == { $postrow:POST_ID } -->
 								<tr>
 									<!-- IF { $postrow:#LOOP_INDEX } % 2 --><td class="row2"><!-- ELSE --><td class="row1"><!-- ENDIF -->{ $attachment:DISPLAY_ATTACHMENT }</td>
 								</tr>
 									<!-- ENDIF -->
-								{ /section }
+								<!-- ENDLOOP -->
 							</table>
 							<!-- ENDIF -->
 
@@ -263,26 +263,18 @@
 				<!-- IF { $postrow:U_PROFILE } --><a href="{ $postrow:U_PROFILE }">{ $PROFILE_IMG }</a> <!-- ENDIF --> 
 				<!-- IF { $postrow:U_PM } --><a href="{ $postrow:U_PM }">{ $PM_IMG }</a> <!-- ENDIF -->
 				<!-- IF { $postrow:U_EMAIL } --><a href="{ $postrow:U_EMAIL }">{ $EMAIL_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_WWW } --><a href="{ $postrow:U_WWW }">{ $WWW_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_ICQ } --><a href="{ $postrow:U_ICQ }">{ $ICQ_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_AIM } --><a href="{ $postrow:U_AIM }">{ $AIM_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_ICQ } --><a href="{ $postrow:U_ICQ }">{ $ICQ_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_MSN } --><a href="{ $postrow:U_MSN }">{ $MSN_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_YIM } --><a href="{ $postrow:U_YIM }">{ $YIM_IMG }</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_JABBER } --><a href="{ $postrow:U_JABBER }">{ $JABBER_IMG }</a> <!-- ENDIF -->
+				<!-- IF { $postrow:U_WWW } --><a href="{ $postrow:U_WWW }" target="_blank">{ $WWW_IMG }</a> <!-- ENDIF -->
 				&nbsp;</div> <div class="gensmall" style="float:right">
-				<!-- IF { $postrow:U_QUOTE } --><a href="{$postrow:U_QUOTE}">{$QUOTE_IMG}</a> <!-- ENDIF -->
-				<!-- IF { $postrow:U_EDIT } --><a href="{$postrow:U_EDIT}">{$EDIT_IMG}</a> <!-- ENDIF -->
+				<!-- IF { $postrow:U_QUOTE } --><a href="{ $postrow:U_QUOTE }">{ $QUOTE_IMG }</a> <!-- ENDIF -->
+				<!-- IF { $postrow:U_EDIT } --><a href="{ $postrow:U_EDIT }">{ $EDIT_IMG }</a> <!-- ENDIF -->
 				&nbsp;</div></td>
 			</tr>
-
 			<!-- ENDIF -->
 			<tr>
 				<td class="spacer" colspan="2" height="1"><img src="images/spacer.gif" alt="" width="1" height="1" /></td>
 			</tr>
-
-			<!-- ENDLOOP -->
-
+		<!-- ENDLOOP -->
+			
 			<tr align="center">
 				<td class="cat" colspan="2"><form name="viewtopic" method="post" action="{$S_TOPIC_ACTION}"><span class="gensmall">{$L_DISPLAY_POSTS}:</span> {$S_SELECT_SORT_DAYS}&nbsp;<span class="gensmall">{$L_SORT_BY}</span> {$S_SELECT_SORT_KEY} {$S_SELECT_SORT_DIR}&nbsp;<input class="btnlite" type="submit" value="{$L_GO}" name="sort" /></form></td>
 			</tr>
@@ -308,7 +300,7 @@
 	<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
 		<tr>
 			<td class="row1">
-				<p class="breadcrumbs"><a href="{ $U_INDEX }">{ $L_INDEX }</a>{section name=navlinksloop loop=$navlinks} &#187; <a href="{$navlinks[navlinksloop].U_VIEW_FORUM}">{$navlinks[navlinksloop].FORUM_NAME}</a>{/section}</p>
+				<p class="breadcrumbs"><a href="{ $U_INDEX }">{ $L_INDEX }</a><!-- LOOP $navlinks --> &#187; <a href="{ $navlinks:U_VIEW_FORUM }">{ $navlinks:FORUM_NAME }</a><!-- ENDLOOP --></p>
 				<p class="datetime">{ $S_TIMEZONE }</p>
 			</td>
 		</tr>

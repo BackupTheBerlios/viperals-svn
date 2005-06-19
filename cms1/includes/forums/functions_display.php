@@ -503,11 +503,7 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 
 	if (!isset($attachment_tpl))
 	{
-		if ($_CLASS['core_cache']->exists('attachment_tpl'))
-		{
-			$attachment_tpl = $_CLASS['core_cache']->get('attachment_tpl');
-		}
-		else
+		if (($attachment_tpl = $_CLASS['core_cache']->get('attachment_tpl')) === false)
 		{
 			$attachment_tpl = array();
 

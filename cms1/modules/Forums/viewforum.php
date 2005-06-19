@@ -485,41 +485,6 @@ else
 	));
 
 }
-/// lets assign those language that are needed///
-$_CLASS['core_template']->assign(array(
-	'L_MODERATORS'			=> $_CLASS['core_user']->lang['MODERATORS'],
-	'L_AUTHOR'				=> $_CLASS['core_user']->lang['AUTHOR'],
-	'L_TOPICS'				=> $_CLASS['core_user']->lang['TOPICS'],
-	'L_POSTS'				=> $_CLASS['core_user']->lang['POSTS'],
-	'L_LAST_POST'			=> $_CLASS['core_user']->lang['LAST_POST'],
-	'L_FORUM'				=> $_CLASS['core_user']->lang['FORUM'],
-	'L_MARK_FORUMS_READ'	=>	$_CLASS['core_user']->lang['MARK_FORUMS_READ'],
-	'L_VIEWS'				=> $_CLASS['core_user']->lang['VIEWS'],
-	'L_REPLIES'				=> $_CLASS['core_user']->lang['REPLIES'],
-	'L_WHO_IS_ONLINE'		=> $_CLASS['core_user']->lang['WHO_IS_ONLINE'],
-	'L_STATISTICS'			=> $_CLASS['core_user']->lang['STATISTICS'],
-	'L_USERNAME'			=> $_CLASS['core_user']->lang['USERNAME'],
-	'L_GO'					=> $_CLASS['core_user']->lang['GO'],
-	'L_ANNOUNCEMENTS'		=> $_CLASS['core_user']->lang['ANNOUNCEMENTS'],
-	'L_SEARCH_FOR'			=> $_CLASS['core_user']->lang['SEARCH_FOR'],
-	'L_NEW_POSTS'			=> $_CLASS['core_user']->lang['NEW_POSTS'],
-	'L_NO_NEW_POSTS'		=> $_CLASS['core_user']->lang['NO_NEW_POSTS'],
-	'L_ICON_ANNOUNCEMENT'	=> $_CLASS['core_user']->lang['ICON_ANNOUNCEMENT'],
-	'L_NEW_POSTS_HOT'		=> $_CLASS['core_user']->lang['NEW_POSTS_HOT'],
-	'L_NO_NEW_POSTS_HOT'	=> $_CLASS['core_user']->lang['NO_NEW_POSTS_HOT'],
-	'L_ICON_STICKY'			=> $_CLASS['core_user']->lang['ICON_STICKY'],
-	'L_NEW_POSTS_LOCKED'	=> $_CLASS['core_user']->lang['NEW_POSTS_LOCKED'],
-	'L_NO_NEW_POSTS_LOCKED'	=> $_CLASS['core_user']->lang['NO_NEW_POSTS_LOCKED'],
-	'L_MOVED_TOPIC'			=> $_CLASS['core_user']->lang['MOVED_TOPIC'],
-	'L_DISPLAY_TOPICS'		=> $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
-	'L_JUMP_TO'				=> $_CLASS['core_user']->lang['JUMP_TO'],
-	'L_NO_POSTS'			=> $_CLASS['core_user']->lang['NO_POSTS'],
-	'L_MCP'					=> $_CLASS['core_user']->lang['MCP'],
-	'L_MARK_TOPICS_READ'	=> $_CLASS['core_user']->lang['MARK_TOPICS_READ'],
-	'L_FORUM_RULES'			=> $_CLASS['core_user']->lang['FORUM_RULES'],
-	'L_SORT_BY'				=> $_CLASS['core_user']->lang['SORT_BY'])
-	
-);
 
 $_CLASS['core_display']->display_head($_CLASS['core_user']->lang['VIEW_FORUM'] . ' &gt; ' . $forum_data['forum_name']);
 

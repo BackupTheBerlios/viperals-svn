@@ -1,75 +1,53 @@
-{* $Id: posting_attach_body.html,v 1.4 2004/05/26 19:43:14 acydburn Exp $ 
-{literal}
-<script language="javascript" type="text/javascript">
-<!--
-	function popup_progress_bar()
-	{
-	    close_waitscreen = 0;{/literal}
-		window.open('{$U_PROGRESS_BAR}', '_upload', 'HEIGHT=200,resizable=yes,scrollbars=no,WIDTH=400');
-	{literal}}
-//-->
-</script>
-{/literal}
-{ if $S_CLOSE_PROGRESS_WINDOW }
-<script language="javascript" type="text/javascript">
-<!--
-	close_waitscreen = 1;
-//-->
-</script>
-{ /if }
-*}
+
 	<tr>
-		<th colspan="2" height="28">{$L_ADD_ATTACHMENT}</th>
+		<th colspan="2" height="28">{ $L_ADD_ATTACHMENT }</th>
 	</tr>
 	<tr>
-		<td class="row3" colspan="2"><span class="gensmall">{$L_ADD_ATTACHMENT_EXPLAIN}</span></td>
+		<td class="row3" colspan="2"><span class="gensmall">{ $L_ADD_ATTACHMENT_EXPLAIN }</span></td>
 	</tr>
 
 	<tr> 
-		<td class="row1"><b class="genmed">{$L_FILENAME}</b></td> 
-		<td class="row2"><input type="file" name="fileupload" size="40" maxlength="{$FILESIZE}" value="" class="btnlite" /></td>
+		<td class="row1"><b class="genmed">{ $L_FILENAME }</b></td> 
+		<td class="row2"><input type="file" name="fileupload" size="40" maxlength="{ $FILESIZE }" value="" class="btnlite" /></td>
 	</tr> 
 	<tr> 
-		<td class="row1"><b class="genmed">{$L_FILE_COMMENT}</b></td> 
+		<td class="row1"><b class="genmed">{ $L_FILE_COMMENT }</b></td> 
 		<td class="row2"><table border="0" cellspacing="0" cellpadding="2">
 			<tr>
 				<td><textarea class="post" name="filecomment" rows="3" cols="35" size="40">{ $FILE_COMMENT }</textarea>&nbsp;</td>
 				<td valign="top"><table border="0" cellspacing="4" cellpadding="0">
 					<tr>
-						<td><input class="btnlite" type="submit" style="width:150px" name="add_file" value="{$L_ADD_FILE}" onclick="javascript:popup_progress_bar();" /></td>
+						<td><input class="btnlite" type="submit" style="width:150px" name="add_file" value="{ $L_ADD_FILE }" /></td>
 					</tr></table>
 				</td>
 			</tr></table>
 		</td>
 	</tr> 
 
-	{ if $S_HAS_ATTACHMENTS }
+	<!-- IF { $S_HAS_ATTACHMENTS } -->
 	<tr>
-		<th colspan="2" height="28">{$L_POSTED_ATTACHMENTS}</th>
+		<th colspan="2" height="28">{ $L_POSTED_ATTACHMENTS }</th>
 	</tr>
-
-		{section name=attach_rowloop loop=$attach_row}
-		<tr>
-			<td class="row1"><b class="genmed">{$L_FILENAME}</b></td>
-			<td class="row2"><a class="genmed" href="{$attach_row[attach_rowloop].U_VIEW_ATTACHMENT}" target="_blank">{$attach_row[attach_rowloop].FILENAME}</a></td> 
-		</tr>
-		<tr> 
-			<td class="row1"><b class="genmed">{$L_FILE_COMMENT}</b></td> 
-			<td class="row2"><table border="0" cellspacing="0" cellpadding="2">
-				<tr>
-					<td><textarea class="post" name="comment_list[{$attach_row[attach_rowloop].ASSOC_INDEX}]" rows="3" cols="35" wrap="virtual" size=40>{$attach_row[attach_rowloop].FILE_COMMENT}</textarea>&nbsp;</td>
-					<td valign="top"><table border="0" cellspacing="4" cellpadding="0">
-						<tr>
-							<td><input class="btnlite" type="submit" style="width:150px" name="edit_comment[{$attach_row[attach_rowloop].ASSOC_INDEX}]" value="{$L_UPDATE_COMMENT}" /></td>
-						</tr>
-						<tr>
-							<td><input class="btnlite" type="submit" style="width:150px" name="delete_file[{$attach_row[attach_rowloop].ASSOC_INDEX}]" value="{$L_DELETE_FILE}" /></td>
-						</tr></table>
-					</td>
-				</tr></table>
-			</td>
-		</tr>
-		{$attach_row[attach_rowloop].S_HIDDEN}	
-		{ /section }
-
-	{ /if }
+	<!-- ENDIF --><!-- LOOP $attach_row -->
+	<tr>
+		<td class="row1"><b class="genmed">{ $L_FILENAME }</b></td>
+		<td class="row2"><a class="genmed" href="{ $attach_row:U_VIEW_ATTACHMENT }" target="_blank">{ $attach_row:FILENAME }</a></td> 
+	</tr>
+	<tr> 
+		<td class="row1"><b class="genmed">{ $L_FILE_COMMENT }</b></td> 
+		<td class="row2"><table border="0" cellspacing="0" cellpadding="2">
+			<tr>
+				<td><textarea class="post" name="comment_list[{ $attach_row:ASSOC_INDEX }]" rows="3" cols="35" wrap="virtual" size=40>{ $attach_row:FILE_COMMENT }</textarea>&nbsp;</td>
+				<td valign="top"><table border="0" cellspacing="4" cellpadding="0">
+					<tr>
+						<td><input class="btnlite" type="submit" style="width:150px" name="edit_comment[{ $attach_row:ASSOC_INDEX }]" value="{ $L_UPDATE_COMMENT }" /></td>
+					</tr>
+					<tr>
+						<td><input class="btnlite" type="submit" style="width:150px" name="delete_file[{ $attach_row:ASSOC_INDEX }]" value="{ $L_DELETE_FILE }" /></td>
+					</tr></table>
+				</td>
+			</tr></table>
+		</td>
+	</tr>
+	{ $attach_row:S_HIDDEN }	
+	<!-- ENDLOOP -->

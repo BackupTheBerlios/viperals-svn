@@ -131,28 +131,6 @@ class ucp_prefs extends module
 				$_CLASS['core_template']->assign(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
 
-					'L_SHOW_EMAIL'					=> $_CLASS['core_user']->lang['SHOW_EMAIL'],
-					'L_ADMIN_EMAIL'					=> $_CLASS['core_user']->lang['ADMIN_EMAIL'],
-					'L_ALLOW_PM'					=> $_CLASS['core_user']->lang['ALLOW_PM'],
-					'L_ALLOW_PM_EXPLAIN'			=> $_CLASS['core_user']->lang['ALLOW_PM_EXPLAIN'],
-					'L_HIDE_ONLINE'					=> $_CLASS['core_user']->lang['HIDE_ONLINE'],
-					'L_NOTIFY_METHOD'				=> $_CLASS['core_user']->lang['NOTIFY_METHOD'],
-					'L_NOTIFY_METHOD_EXPLAIN'		=> $_CLASS['core_user']->lang['NOTIFY_METHOD_EXPLAIN'],
-					'L_NOTIFY_ON_PM'				=> $_CLASS['core_user']->lang['NOTIFY_ON_PM'],
-					'L_POPUP_ON_PM'					=> $_CLASS['core_user']->lang['POPUP_ON_PM'],
-					'L_BOARD_LANGUAGE'				=> $_CLASS['core_user']->lang['BOARD_LANGUAGE'],
-					'L_BOARD_STYLE'					=> $_CLASS['core_user']->lang['BOARD_STYLE'],
-					'L_BOARD_TIMEZONE'				=> $_CLASS['core_user']->lang['BOARD_TIMEZONE'],
-					'L_BOARD_DST'					=> $_CLASS['core_user']->lang['BOARD_DST'],
-					'L_BOARD_DATE_FORMAT'			=> $_CLASS['core_user']->lang['BOARD_DATE_FORMAT'],
-					'L_BOARD_DATE_FORMAT_EXPLAIN'	=> $_CLASS['core_user']->lang['BOARD_DATE_FORMAT_EXPLAIN'],
-					'L_NOTIFY_METHOD_EMAIL'			=> $_CLASS['core_user']->lang['NOTIFY_METHOD_EMAIL'],
-					'L_NOTIFY_METHOD_IM'			=> $_CLASS['core_user']->lang['NOTIFY_METHOD_IM'],
-					'L_NOTIFY_METHOD_BOTH'			=> $_CLASS['core_user']->lang['NOTIFY_METHOD_BOTH'],
-					'L_BOARD_DATE_FORMAT_EXPLAIN'	=> $_CLASS['core_user']->lang['BOARD_DATE_FORMAT_EXPLAIN'],
-					'L_REPORT_PM_NOTIFY'			=> $_CLASS['core_user']->lang['REPORT_PM_NOTIFY'],
-					'L_REPORT_PM_NOTIFY_EXPLAIN'	=> $_CLASS['core_user']->lang['REPORT_PM_NOTIFY_EXPLAIN'],
-			
 					'VIEW_EMAIL_YES'	=> $view_email_yes, 
 					'VIEW_EMAIL_NO'		=> $view_email_no, 
 					'ADMIN_EMAIL_YES'	=> $mass_email_yes, 
@@ -328,20 +306,6 @@ class ucp_prefs extends module
 				$_CLASS['core_template']->assign(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
 					
-					'L_VIEW_IMAGES'			=> $_CLASS['core_user']->lang['VIEW_IMAGES'],
-					'L_VIEW_FLASH'			=> $_CLASS['core_user']->lang['VIEW_FLASH'],
-					'L_VIEW_SMILIES'		=> $_CLASS['core_user']->lang['VIEW_SMILIES'],
-					'L_VIEW_SIGS'			=> $_CLASS['core_user']->lang['VIEW_SIGS'],
-					'L_VIEW_AVATARS'		=> $_CLASS['core_user']->lang['VIEW_AVATARS'],
-					'L_DISABLE_CENSORS'		=> $_CLASS['core_user']->lang['DISABLE_CENSORS'],
-					'L_VIEW_TOPICS_DAYS'	=> $_CLASS['core_user']->lang['VIEW_TOPICS_DAYS'],
-					'L_VIEW_TOPICS_KEY'		=> $_CLASS['core_user']->lang['VIEW_TOPICS_KEY'],
-					'L_VIEW_TOPICS_DIR'		=> $_CLASS['core_user']->lang['VIEW_TOPICS_DIR'],
-					
-					'L_VIEW_POSTS_DAYS'		=> $_CLASS['core_user']->lang['VIEW_POSTS_DAYS'],
-					'L_VIEW_POSTS_KEY'		=> $_CLASS['core_user']->lang['VIEW_POSTS_KEY'],
-					'L_VIEW_POSTS_DIR'		=> $_CLASS['core_user']->lang['VIEW_POSTS_DIR'],
-					
 					'VIEW_IMAGES_YES'		=> $images_yes, 
 					'VIEW_IMAGES_NO'		=> $images_no, 
 					'VIEW_FLASH_YES'		=> $flash_yes, 
@@ -428,12 +392,6 @@ class ucp_prefs extends module
 				$_CLASS['core_template']->assign(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
 
-					'L_DEFAULT_BBCODE'		=> $_CLASS['core_user']->lang['DEFAULT_BBCODE'],
-					'L_DEFAULT_HTML'		=> $_CLASS['core_user']->lang['DEFAULT_HTML'],
-					'L_DEFAULT_SMILIES'		=> $_CLASS['core_user']->lang['DEFAULT_SMILIES'],
-					'L_DEFAULT_ADD_SIG'		=> $_CLASS['core_user']->lang['DEFAULT_ADD_SIG'],
-					'L_DEFAULT_NOTIFY'		=> $_CLASS['core_user']->lang['DEFAULT_NOTIFY'],
-
 					'DEFAULT_BBCODE_YES'	=> $bbcode_yes, 
 					'DEFAULT_BBCODE_NO'		=> $bbcode_no, 
 					'DEFAULT_HTML_YES'		=> $html_yes, 
@@ -451,12 +409,7 @@ class ucp_prefs extends module
 		$_CLASS['core_template']->assign(array( 
 			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PREFS_' . strtoupper($mode)],
 			'S_PRIVMSGS'		=> false,
-			
-			'L_YES'				=> $_CLASS['core_user']->lang['YES'],
-			'L_NO'				=> $_CLASS['core_user']->lang['NO'],
-			'L_SUBMIT'			=> $_CLASS['core_user']->lang['SUBMIT'],
-			'L_RESET'			=> $_CLASS['core_user']->lang['RESET'],
-			'L_THEME'			=> $_CLASS['core_user']->lang['THEME'],
+
 			'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
 			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"))
 		);

@@ -265,8 +265,8 @@ function generate_link($link = false, $link_options = false)
 	
 	if (!$link)
 	{
-		$link = $file.'?';
-		
+		$link = ($file) ? $file : '?';
+
 		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
 		{
 			$link .= '?sid='.$_CLASS['core_user']->data['session_id'];
@@ -280,7 +280,7 @@ function generate_link($link = false, $link_options = false)
 		}
 		
 		//$link = $file.'?mod='.$link;
-		$link = $file.'?'.$link;
+		$link = (($file) ? $file.'?mod=' : '?').$link;
 		
 		// somtimes it ok to repeat strpos($link, '?') !== false is to much :-)
 		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))

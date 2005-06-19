@@ -30,26 +30,6 @@ class mcp_queue extends module
 	{
 		global $_CLASS, $site_file_root, $config;
 
-		$_CLASS['core_template']->assign(array(
-			'L_SELECT'						=> $_CLASS['core_user']->lang['FORUM'],
-			'L_TOPIC'						=> $_CLASS['core_user']->lang['TOPIC'],
-			'L_DISPLAY_OPTIONS'				=> $_CLASS['core_user']->lang['DISPLAY_OPTIONS'],
-			'L_DISPLAY_ITEMS'				=> $_CLASS['core_user']->lang['DISPLAY_ITEMS'],
-			'L_SORT_BY'						=> $_CLASS['core_user']->lang['SORT_BY'],
-			'L_FORUM'						=> $_CLASS['core_user']->lang['FORUM'],
-			'L_GO'							=> $_CLASS['core_user']->lang['GO'],
-			'L_VIEW_DETAILS'				=> $_CLASS['core_user']->lang['VIEW_DETAILS'],
-			'L_NO_POSTS'					=> $_CLASS['core_user']->lang['NO_POSTS'],
-			'L_APPROVE'						=> $_CLASS['core_user']->lang['APPROVE'],
-			'L_DISAPPROVE'					=> $_CLASS['core_user']->lang['DISAPPROVE'],
-			'L_MARK_ALL'					=> $_CLASS['core_user']->lang['MARK_ALL'],
-			'L_UNMARK_ALL'					=> $_CLASS['core_user']->lang['UNMARK_ALL'],
-			'L_AUTHOR'						=> $_CLASS['core_user']->lang['AUTHOR'],
-			'L_JUMP_TO'						=> $_CLASS['core_user']->lang['JUMP_TO'],
-			'L_GO'							=> $_CLASS['core_user']->lang['GO'],
-			'L_POST_TIME'					=> $_CLASS['core_user']->lang['POST_TIME'])
-		);
-	
 		$forum_id = request_var('f', 0);
 		$start = request_var('start', 0);
 
@@ -533,14 +513,9 @@ function approve_post($post_id_list)
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{
@@ -744,14 +719,9 @@ function disapprove_post($post_id_list)
 
 	$redirect = request_var('redirect', generate_link('Forums'));
 
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
-
 	if (!$success_msg)
 	{
-		redirect($redirect);
+		url_redirect($redirect);
 	}
 	else
 	{

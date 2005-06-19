@@ -27,10 +27,7 @@ if (!defined('VIPERAL')) {
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
 load_class($site_file_root.'includes/forums/auth.php', 'auth');
-
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->add_img();
 
@@ -86,32 +83,6 @@ if ($config['load_birthdays'])
 	}
 	$_CLASS['core_db']->sql_freeresult($result);
 }
-
-/// lets assign those language that are needed///
-$_CLASS['core_template']->assign(array(
-	'L_FORUM'			=> $_CLASS['core_user']->lang['FORUM'],
-	'L_TOPICS'			=> $_CLASS['core_user']->lang['TOPICS'],
-	'L_POSTS'			=> $_CLASS['core_user']->lang['POSTS'],
-	'L_LAST_POST'		=> $_CLASS['core_user']->lang['LAST_POST'],
-	'L_MARK_FORUMS_READ'=> $_CLASS['core_user']->lang['MARK_FORUMS_READ'],
-	'L_WHO_IS_ONLINE'	=> $_CLASS['core_user']->lang['WHO_IS_ONLINE'],
-	'L_BIRTHDAYS'		=> $_CLASS['core_user']->lang['BIRTHDAYS'],
-	'L_STATISTICS'		=> $_CLASS['core_user']->lang['STATISTICS'],
-	'L_USERNAME'		=> $_CLASS['core_user']->lang['USERNAME'],
-	'L_GO'				=> $_CLASS['core_user']->lang['GO'],
-	'L_PASSWORD'		=> $_CLASS['core_user']->lang['PASSWORD'],
-	'L_LOG_ME_IN'		=> $_CLASS['core_user']->lang['LOG_ME_IN'],
-	'L_NO_BIRTHDAYS'	=> $_CLASS['core_user']->lang['NO_BIRTHDAYS'],
-	'L_LEGEND'			=> $_CLASS['core_user']->lang['LEGEND'],
-	'L_LOGIN'			=> $_CLASS['core_user']->lang['LOGIN'],
-	'L_REDIRECTS'		=> $_CLASS['core_user']->lang['REDIRECTS'],
-	'L_NO_POSTS'		=> $_CLASS['core_user']->lang['NO_POSTS'],
-	'L_NO_FORUMS'		=> $_CLASS['core_user']->lang['NO_FORUMS'],
-	'L_DELETE_COOKIES'	=> $_CLASS['core_user']->lang['DELETE_COOKIES'],
-	'L_NEW_POSTS'		=> $_CLASS['core_user']->lang['NEW_POSTS'],
-	'L_NO_NEW_POSTS'	=> $_CLASS['core_user']->lang['NO_NEW_POSTS'],
-	'L_FORUM_LOCKED'	=> $_CLASS['core_user']->lang['FORUM_LOCKED'])
-);
 
 // Assign index specific vars
 $_CLASS['core_template']->assign(array(

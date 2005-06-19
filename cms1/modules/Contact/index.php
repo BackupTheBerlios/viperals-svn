@@ -15,7 +15,6 @@
 
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
     die();
 }
 
@@ -50,57 +49,56 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
-        $mail_message = '<br />' .$message . '<br /><br />
-        <center>Message Sent from '. $_CORE_CONFIG['global']['site_url'] .'<br>
-        '. $_CLASS['core_user']->lang['SENT_BY'] . ': ' . $sender_name . '<br />
-        '. $_CLASS['core_user']->lang['SENDER_EMAIL'] . ': '. $sender_email . '<br />
-        '.	$_CLASS['core_user']->lang['WITH_IP'] . $_CLASS['core_user']->ip . '<br /></center>';
-        
-        if (!$preview)
-        {
-			if ($_CLASS['core_user']->is_admin && $send_to ) {
-				$to = $send_to;
-			} else {
-				$to = $_CORE_CONFIG['global']['admin_mail'];        
-			}
-		
-			$subject = $_CORE_CONFIG['global']['site_name'] . $_CLASS['core_user']->lang['FEEDBACK'];
-          
-			if (send_mail($mailer_message, $mail_message, true, $subject, $to,  $to_name='', $sender_email, $sender_name))
+	$mail_message = '<br />' .$message . '<br /><br />
+	<center>Message Sent from '. $_CORE_CONFIG['global']['site_url'] .'<br>
+	'. $_CLASS['core_user']->lang['SENT_BY'] . ': ' . $sender_name . '<br />
+	'. $_CLASS['core_user']->lang['SENDER_EMAIL'] . ': '. $sender_email . '<br />
+	'.	$_CLASS['core_user']->lang['WITH_IP'] . $_CLASS['core_user']->ip . '<br /></center>';
+	
+	if (!$preview)
+	{
+		if ($_CLASS['core_user']->is_admin && $send_to )
+		{
+			$to = $send_to;
+		}
+		else
+		{
+			$to = $_CORE_CONFIG['global']['admin_mail'];        
+		}
+	
+		$subject = $_CORE_CONFIG['global']['site_name'] . $_CLASS['core_user']->lang['FEEDBACK'];
+	  
+		if (send_mail($mailer_message, $mail_message, true, $subject, $to,  $to_name='', $sender_email, $sender_name))
+		{
+			trigger_error($_CLASS['core_user']->lang['FEEDBACK_SENT']);
+		}
+		else
+		{
+			$mail_message = $_CLASS['core_user']->lang['FEEDBACK_PROBLEM'];
+			
+			if (is_admin())
 			{
-				
-				trigger_error($_CLASS['core_user']->lang['FEEDBACK_SENT']);
-				
-			} else {
-			
-				$mail_message = $_CLASS['core_user']->lang['FEEDBACK_PROBLEM'];
-				
-				if (is_admin())
-				{
-					$mail_message .=  '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
-				}
-			
-				trigger_error($mail_message);
+				$mail_message .=  '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
 			}
-			
-
-		} else {
 		
-			OpenTable();
-				echo '<div align="center"><b>'.$_CLASS['core_user']->lang['MESSAGE_PREVIEW'].'</b></div>';
-				echo $mail_message;
-			CloseTable();
-        }
+			trigger_error($mail_message);
+		}
+	}
+	else
+	{
+		echo '<div align="center"><b>'.$_CLASS['core_user']->lang['MESSAGE_PREVIEW'].'</b></div>';
+		echo $mail_message;
+	}
 }
  
 
-If (!empty($_POST['preview']) || !empty($_POST['contact'])) {
-
-    $data['MESSAGE'] = get_variable('message', 'POST', '');
-    $data['NAME'] = get_variable('sender_name', 'POST', '');
-    $data['EMAIL'] = get_variable('sender_email', 'POST', '');
+If (!empty($_POST['preview']) || !empty($_POST['contact']))
+{
+	$data['MESSAGE'] = get_variable('message', 'POST', '');
+	$data['NAME'] = get_variable('sender_name', 'POST', '');
+	$data['EMAIL'] = get_variable('sender_email', 'POST', '');
     
-    $error = '';
+	$error = '';
 
 	foreach ($data as $field => $value)
 	{
@@ -109,34 +107,34 @@ If (!empty($_POST['preview']) || !empty($_POST['contact'])) {
 				$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
 				unset($field, $value, $lang);
 				
-        } elseif ($field == 'EMAIL' && !check_email($value)) {
+        }
+        elseif ($field == 'EMAIL' && !check_email($value))
+        {
         
 			$error .= $_CLASS['core_user']->lang['BAD_EMAIL'].'<br />';
 		}
 	} 
 	
-	if (!empty($_POST['preview']) && $data['MESSAGE']) {
-	
+	if (!empty($_POST['preview']) && $data['MESSAGE'])
+	{
 		send_feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $preview = true);
 		feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $error);
-	
-	} elseif (!empty($_POST['contact']) && !$error) {
-	
-		send_feedback($data['NAME'], $data['EMAIL'], $data['MESSAGE']);
-	
-	} else {
-	
-		feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $error);
 	}
-	
-		
-} else {
-
+	elseif (!empty($_POST['contact']) && !$error)
+	{
+		send_feedback($data['NAME'], $data['EMAIL'], $data['MESSAGE']);
+	}
+	else
+	{
+		feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $error);
+	}	
+}
+else
+{
 	$sender_name = ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $_CLASS['core_user']->data['username'] : '';
 	$sender_email = ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $_CLASS['core_user']->data['user_email'] : '';
 
 	feedback($sender_name, $sender_email);
-  
 }
 
 $_CLASS['core_display']->display_footer();

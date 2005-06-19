@@ -111,8 +111,6 @@ class ucp_pm extends module
 				}
 
 				$_CLASS['core_template']->assign(array(
-					'L_CLOSE_WINDOW'	=> $_CLASS['core_user']->lang['CLOSE_WINDOW'],
-					'L_LOGIN_CHECK_PM'	=> $_CLASS['core_user']->lang['LOGIN_CHECK_PM'],
 					'MESSAGE'			=> $l_new_message,
 					'U_JS_RETURN_INBOX'	=> $indox_link,
 					'S_NOT_LOGGED_IN'	=> ($_CLASS['core_user']->data['user_id'] == ANONYMOUS) ? true : false,

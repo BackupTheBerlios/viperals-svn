@@ -322,21 +322,6 @@ if ($report_post)
 	generate_forum_nav($report_data);
 }
 
-/// lets assign those language that are needed///
-$_CLASS['core_template']->assign(array(
-	'L_REPORT_POST'				=> $_CLASS['core_user']->lang['REPORT_POST'],
-	'L_REPORT_POST_EXPLAIN'		=> $_CLASS['core_user']->lang['REPORT_POST_EXPLAIN'],
-	'L_REASON'					=> $_CLASS['core_user']->lang['REASON'],
-	'L_REPORT_NOTIFY'			=> $_CLASS['core_user']->lang['REPORT_NOTIFY'],
-	'L_REPORT_NOTIFY_EXPLAIN'	=> $_CLASS['core_user']->lang['REPORT_NOTIFY_EXPLAIN'],
-	'L_YES'						=> $_CLASS['core_user']->lang['YES'],
-	'L_NO'						=> $_CLASS['core_user']->lang['NO'],
-	'L_MORE_INFO'				=> $_CLASS['core_user']->lang['MORE_INFO'],
-	'L_CAN_LEAVE_BLANK'			=> $_CLASS['core_user']->lang['CAN_LEAVE_BLANK'],
-	'L_SUBMIT'					=> $_CLASS['core_user']->lang['SUBMIT'],
-	'L_CANCEL'					=> $_CLASS['core_user']->lang['CANCEL'])
-);
-
 $_CLASS['core_display']->display_head(($report_post) ? $_CLASS['core_user']->lang['REPORT_POST'] : $_CLASS['core_user']->lang['REPORT_MESSAGE']);
 
 page_header();

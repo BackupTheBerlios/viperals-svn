@@ -307,8 +307,6 @@ class module
 // FUNCTIONS
 // ---------
 
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
-
 $_CLASS['core_user']->add_img();
 $_CLASS['core_user']->add_lang('mcp');
 

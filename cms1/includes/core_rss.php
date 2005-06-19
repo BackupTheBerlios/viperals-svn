@@ -17,8 +17,7 @@
 class core_rss
 {
 	var $rss_data = array();
-	var $rss_expire;
-	var $rss_other_data;
+	var $rss_info;
 	var $feed_type = false;
 	var $item_tags = array('title', 'link', 'description', 'author');
 	var $channel_tags = array('title', 'link', 'description', 'author');
@@ -27,13 +26,10 @@ class core_rss
 
 	function setup($channel = false, $item_tags = false, $channel_tags = false)
 	{
-		$this->feed_type = 0;
-		$this->rss_data = array();
-		$this->rss_other_data = '';
-		$this->rss_expire = 0;
-		$this->rss_info = array();
-		$this->send_cookie = false;
-		
+		$this->feed_type = $this->send_cookie = false;
+		$this->rss_info = $this->rss_data = array();
+		$this->item = 0;
+
 		$this->item_tags = (is_array($item_tags)) ? $item_tags : array('title', 'link', 'description', 'author');
 		$this->channel_tags = (is_array($channel_tags)) ? $channel_tags : array('title', 'link', 'description', 'author');
 	}
@@ -177,13 +173,8 @@ class core_rss
 		xml_set_element_handler($this->rss_parser, 'tag_open', 'tag_close');
 		xml_set_character_data_handler($this->rss_parser, 'cdata');
 
-		$this->feed_type = false;
-		$this->item = 0;
 		$this->item_open = false;
 		$this->title_type = false;
-		$this->rss_data = array();
-		$this->rss_expire = 0;
-		$this->rss_info = array();
 	
 		$data = '';
 
@@ -292,11 +283,11 @@ class core_rss
 	
 	function cdata($parser, $cdata)
 	{
+// Fix Undefined Notice
 		if ($this->title_type)
 		{
-			// have some problems here
-			$cdata = htmlspecialchars(html_entity_decode($cdata, ENT_QUOTES), ENT_QUOTES);
-
+			$cdata = htmlspecialchars(strtr($cdata, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES))));
+			
 			if ($this->item_open)
 			{
 				$this->rss_data[$this->item][$this->title_type] .= $cdata;
