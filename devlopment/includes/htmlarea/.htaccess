@@ -1,5 +1,0 @@
-deny from none
-<filesmatch "\.php$">
-deny from none
-</filesmatch>
-RewriteEngine off
