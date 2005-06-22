@@ -1,6 +1,4 @@
-{ include file='modules/Control_Panel/ucp_header.html' }
-
-{* $Id: ucp_profile_signature.html,v 1.4 2004/02/11 18:27:44 psotfx Exp $ *}
+<!-- INCLUDE modules/Control_Panel/ucp_header.html -->
 
 <script language="javascript" type="text/javascript">
 <!--
@@ -14,26 +12,28 @@ bbtags = new Array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[quote]','[/quote]','
 imageTag = false;
 
 // Helpline messages
-b_help = "{$L_BBCODE_B_HELP}";
-i_help = "{$L_BBCODE_I_HELP}";
-u_help = "{$L_BBCODE_U_HELP}";
-q_help = "{$L_BBCODE_Q_HELP}";
-c_help = "{$L_BBCODE_C_HELP}";
-l_help = "{$L_BBCODE_L_HELP}";
-o_help = "{$L_BBCODE_O_HELP}";
-p_help = "{$L_BBCODE_P_HELP}";
-w_help = "{$L_BBCODE_W_HELP}";
-a_help = "{$L_BBCODE_A_HELP}";
-s_help = "{$L_BBCODE_S_HELP}";
-f_help = "{$L_BBCODE_F_HELP}";
-e_help = "{$L_BBCODE_E_HELP}";
-{ literal }
+b_help = "{ $L_BBCODE_B_HELP }";
+i_help = "{ $L_BBCODE_I_HELP }";
+u_help = "{ $L_BBCODE_U_HELP }";
+q_help = "{ $L_BBCODE_Q_HELP }";
+c_help = "{ $L_BBCODE_C_HELP }";
+l_help = "{ $L_BBCODE_L_HELP }";
+o_help = "{ $L_BBCODE_O_HELP }";
+p_help = "{ $L_BBCODE_P_HELP }";
+w_help = "{ $L_BBCODE_W_HELP }";
+a_help = "{ $L_BBCODE_A_HELP }";
+s_help = "{ $L_BBCODE_S_HELP }";
+f_help = "{ $L_BBCODE_F_HELP }";
+e_help = "{ $L_BBCODE_E_HELP }";
+
 function checkForm()
 {
-	if (document.post.message.value.length < 2) {{/literal}
-		alert('{$L_EMPTY_MESSAGE}');{literal}
+	if (document.post.message.value.length < 2) {
+		alert('{ $L_EMPTY_MESSAGE }');
 		return false;
-	} else {
+	}
+	else
+	{
 //		document.post.post.disabled = true;
 		return true;
 	}
@@ -42,22 +42,39 @@ function checkForm()
 //-->
 </script>
 <script language="javascript" type="text/javascript" src="java/editor.js"></script>
-{ /literal }
 
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
-		<th colspan="2">{$L_TITLE}</th>
+		<th colspan="2">{ $L_TITLE }</th>
 	</tr>
 
-	{ if $ERROR }
+	<!-- IF { $ERROR } -->
 	<tr>
-		<td class="row3" colspan="2" align="center"><span class="genmed error">{$ERROR}</span></td>
+		<td class="row3" colspan="2" align="center"><span class="genmed error">{ $ERROR }</span></td>
 	</tr>
-	{ /if }
+	<!-- ENDIF -->
 
 	<tr> 
-		<td class="row1" width="35%" valign="top"><b class="genmed">{$L_SIGNATURE}: </b><br /><span class="gensmall">{$L_SIGNATURE_EXPLAIN}</span></td>
-		<td class="row2"><table cellspacing="0" cellpadding="2" border="0">
+		<td class="row1" width="22%" valign="top">
+		<b class="genmed">{ $L_SIGNATURE }: </b><br /><span class="gensmall">{ $L_SIGNATURE_EXPLAIN }</span><br/><br/>
+		<table width="80%" cellspacing="5" cellpadding="0" border="0" align="center">
+			<tr>
+				<td class="gensmall" align="center"><b>{ $L_SMILIES }</b></td>
+			</tr>
+			<tr>
+				<td align="center"><!-- LOOP $smiley --><a href="javascript:smiley('{ $smiley:SMILEY_CODE }')"><img src="{ $T_SMILIES_PATH }{ $smiley:SMILEY_IMG }" width="{ $smiley:SMILEY_WIDTH }" height="{ $smiley:SMILEY_HEIGHT }" border="0" alt="{ $smiley:SMILEY_DESC }" title="{ $smiley:SMILEY_DESC }" onclick="smiley('{ $smiley:SMILEY_CODE }');return false" hspace="2" vspace="2" /></a> <!-- ENDLOOP --></td>
+			</tr>
+
+			<!-- IF { $S_SHOW_SMILEY_LINK } -->
+				<tr>
+					<td align="center"><a class="nav" href="{ $U_MORE_SMILIES }" onclick="window.open('{ $U_MORE_SMILIES }', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{ $L_MORE_SMILIES} </a></td>
+				</tr>
+			<!-- ENDIF -->
+
+		</table>
+		</td>
+		<td class="row2">
+		<table cellspacing="0" cellpadding="2" border="0">
 			<tr align="center" valign="middle">
 				<td><input class="btnbbcode" type="button" accesskey="b" name="addbbcode0" value=" B " style="font-weight:bold; width: 30px" onclick="bbstyle(0)" onmouseover="helpline('b')" /></td>
 				<td><input class="btnbbcode" type="button" accesskey="i" name="addbbcode2" value=" i " style="font-style:italic; width: 30px" onclick="bbstyle(2)" onmouseover="helpline('i')" /></td>
@@ -72,14 +89,14 @@ function checkForm()
 			<tr>
 				<td colspan="9"><table width="100%" cellspacing="0" cellpadding="0" border="0">
 					<tr>
-						<td><span class="genmed"> &nbsp;{$L_FONT_SIZE}:</span> <select name="addbbcode20" onchange="bbfontstyle('[size=' + this.form.addbbcode20.options[this.form.addbbcode20.selectedIndex].value + ']', '[/size]');this.form.addbbcode20.selectedIndex = 2;" onmouseover="helpline('f')">
-							<option value="7">{$L_FONT_TINY}</option>
-							<option value="9">{$L_FONT_SMALL}</option>
-							<option value="12" selected="selected">{$L_FONT_NORMAL}</option>
-							<option value="18">{$L_FONT_LARGE}</option>
-							<option  value="24">{$L_FONT_HUGE}</option>
+						<td><span class="genmed"> &nbsp;{ $L_FONT_SIZE }:</span> <select name="addbbcode20" onchange="bbfontstyle('[size=' + this.form.addbbcode20.options[this.form.addbbcode20.selectedIndex].value + ']', '[/size]');this.form.addbbcode20.selectedIndex = 2;" onmouseover="helpline('f')">
+							<option value="7">{ $L_FONT_TINY }</option>
+							<option value="9">{ $L_FONT_SMALL }</option>
+							<option value="12" selected="selected">{ $L_FONT_NORMAL }</option>
+							<option value="18">{ $L_FONT_LARGE }</option>
+							<option  value="24">{ $L_FONT_HUGE }</option>
 						</select></td>
-						<td class="gensmall" nowrap="nowrap" align="right"><a href="javascript:bbstyle(-1)" onmouseover="helpline('a')">{$L_CLOSE_TAGS}</a></td>
+						<td class="gensmall" nowrap="nowrap" align="right"><a href="javascript:bbstyle(-1)" onmouseover="helpline('a')">{ $L_CLOSE_TAGS }</a></td>
 					</tr>
 				</table></td>
 			</tr>
@@ -103,59 +120,57 @@ function checkForm()
 		</table></td>
 	</tr>
 	<tr>
-		<td class="row1" valign="top"><b class="genmed">{$L_OPTIONS}</b><br /><table cellspacing="2" cellpadding="0" border="0">
+		<td class="row1" valign="top"><b class="genmed">{ $L_OPTIONS }</b><br /><table cellspacing="2" cellpadding="0" border="0">
 			<tr>
-				<td class="gensmall">{$HTML_STATUS}</td>
+				<td class="gensmall">{ $HTML_STATUS }</td>
 			</tr>
 			<tr>
-				<td class="gensmall">{$BBCODE_STATUS}</td>
+				<td class="gensmall">{ $BBCODE_STATUS }</td>
 			</tr>
 			<tr>
-				<td class="gensmall">{$IMG_STATUS}</td>
+				<td class="gensmall">{ $IMG_STATUS }</td>
 			</tr>
 			<tr>
-				<td class="gensmall">{$FLASH_STATUS}</td>
+				<td class="gensmall">{ $FLASH_STATUS }</td>
 			</tr>
 			<tr>
-				<td class="gensmall">{$SMILIES_STATUS}</td>
+				<td class="gensmall">{ $SMILIES_STATUS }</td>
 			</tr>
 		</table></td>
 		<td class="row2" valign="top"><table cellspacing="0" cellpadding="1" border="0">
-			{ if $S_HTML_ALLOWED }
+			<!-- IF { $S_HTML_ALLOWED } -->
 			<tr>
-				<td><input type="checkbox" name="disable_html"{$S_HTML_CHECKED} /></td>
-				<td class="gen">{$L_DISABLE_HTML}</td>
+				<td><input type="checkbox" name="disable_html" { $S_HTML_CHECKED } /></td>
+				<td class="gen">{ $L_DISABLE_HTML }</td>
 			</tr>
-			{ /if }
-			{ if $S_BBCODE_ALLOWED }
+			<!-- ENDIF --><!-- IF { $S_BBCODE_ALLOWED } -->
 			<tr>
-				<td><input type="checkbox" name="disable_bbcode"{$S_BBCODE_CHECKED} /></td>
-				<td class="gen">{$L_DISABLE_BBCODE}</td>
+				<td><input type="checkbox" name="disable_bbcode" { $S_BBCODE_CHECKED } /></td>
+				<td class="gen">{ $L_DISABLE_BBCODE }</td>
 			</tr>
-			{ /if }
-			{ if $S_SMILIES_ALLOWED }
+			<!-- ENDIF --><!-- IF { $S_SMILIES_ALLOWED } -->
 			<tr>
-				<td><input type="checkbox" name="disable_smilies"{$S_SMILIES_CHECKED} /></td>
-				<td class="gen">{$L_DISABLE_SMILIES}</td>
+				<td><input type="checkbox" name="disable_smilies" { $S_SMILIES_CHECKED } /></td>
+				<td class="gen">{ $L_DISABLE_SMILIES }</td>
 			</tr>
-			{ /if }
+			<!-- ENDIF -->
 			<tr>
-				<td><input type="checkbox" name="disable_magic_url"{$S_MAGIC_URL_CHECKED} /></td>
-				<td class="gen">{$L_DISABLE_MAGIC_URL}</td>
+				<td><input type="checkbox" name="disable_magic_url" { $S_MAGIC_URL_CHECKED } /></td>
+				<td class="gen">{ $L_DISABLE_MAGIC_URL }</td>
 			</tr>
 		</table></td>
 	</tr>
-	{ if $SIGNATURE_PREVIEW }
+	<!-- IF { $SIGNATURE_PREVIEW } -->
 	<tr>
-		<th colspan="2" valign="middle">{$L_SIGNATURE_PREVIEW}</th>
+		<th colspan="2" valign="middle">{ $L_SIGNATURE_PREVIEW }</th>
 	</tr>
 	<tr> 
-		<td class="row1" colspan="2"><div class="postdetails" style="padding: 6px;">{$SIGNATURE_PREVIEW}</div></td>
+		<td class="row1" colspan="2"><div class="postdetails" style="padding: 6px;">{ $SIGNATURE_PREVIEW }</div></td>
 	</tr>
-	{ /if }
+	<!-- ENDIF -->
 	<tr>
-		<td class="cat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input class="btnlite" type="submit" name="preview" value="{$L_PREVIEW}" />&nbsp;&nbsp;<input class="btnmain" type="submit" name="submit" value="{$L_SUBMIT}" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="{$L_RESET}" name="reset" /></td>
+		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="btnlite" type="submit" name="preview" value="{ $L_PREVIEW }" />&nbsp;&nbsp;<input class="btnmain" type="submit" name="submit" value="{ $L_SUBMIT }" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="{ $L_RESET }" name="reset" /></td>
 	</tr>
 </table>
 
-{ include file='modules/Control_Panel/ucp_footer.html' }
+<!-- INCLUDE modules/Control_Panel/ucp_footer.html -->

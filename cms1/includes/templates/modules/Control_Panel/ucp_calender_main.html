@@ -1,4 +1,4 @@
-{ include file='modules/Control_Panel/ucp_header.html' }
+<!-- INCLUDE modules/Control_Panel/ucp_header.html -->
 
 <table class="tablebg" width="100%" cellpadding="5" cellspacing="1px">
 	<tr class="row2">
@@ -12,47 +12,39 @@
 
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
-		<th width="14%">{$L_SUNDAY}</th>
-		<th width="14%">{$L_MONDAY}</th>
-		<th width="14%">{$L_TUESDAY}</th>
-		<th width="14%">{$L_WEDNESDAY}</th>
-		<th width="14%">{$L_THURSDAY}</th>
-		<th width="14%">{$L_FRIDAY}</th>
-		<th width="14%">{$L_SATURDAY}</th>
+		<th width="14%">{ $L_SUNDAY }</th>
+		<th width="14%">{ $L_MONDAY }</th>
+		<th width="14%">{ $L_TUESDAY }</th>
+		<th width="14%">{ $L_WEDNESDAY }</th>
+		<th width="14%">{ $L_THURSDAY }</th>
+		<th width="14%">{ $L_FRIDAY }</th>
+		<th width="14%">{ $L_SATURDAY }</th>
 	</tr>
-	{section name=daysloop loop=$days}
+	<!-- LOOP $days -->
 
-	{ if $smarty.section.daysloop.index % 7 == 0 }</tr><tr style="height:80px">{ /if }
-	{*	<tr class="row1">{ else }<tr class="row2">{ /if }*}
+	<!-- IF ({ $days:#LOOP_INDEX } % 7) == 0 --></tr><tr style="height:80px"><!-- ENDIF -->
 
-	{if $days[daysloop].NUMBER }
-		{ if $days[daysloop].LINK }
-			{*<td class="row1" valign="top" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $days[daysloop].LINK }'" style="padding:5px">*}
-			<td class="row1" valign="top" onmouseover="this.className='row2'" onmouseout="this.className='row1'" style="padding:5px">
-
-				<a href="{ $days[daysloop].LINK }"><b>{ $days[daysloop].NUMBER }</b></a>
+	<!-- IF { $days:NUMBER } -->
+		<!-- IF { $days:LINK } -->
+			<td class="row1" valign="top" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $days:LINK }'" style="padding:5px">
+				<a href="{ $days:LINK }"><b>{ $days:NUMBER }</b></a>
 				<br/>
-				{ if $days[daysloop].DATA }
-					{section name=loop_data loop=$days[daysloop].DATA}
-						<a href="{ $days[daysloop].DATA[loop_data].link }" onclick="window.open('{ $days[daysloop].DATA[loop_data].link }','_event{ $days[daysloop].DATA[loop_data].id }','width=500,height=400,scrollbars=yes');return false;" target="_event{ $days[daysloop].DATA[loop_data].id }">{ $days[daysloop].DATA[loop_data].title }</a><br/>
-					{ /section }
-				{ /if }
+				<!-- LOOP $days:DATA -->
+					<a href="{ $days:DATA:link }" onclick="window.open('{ $days:DATA:link }','_event{ $days:DATA:id }','width=500,height=400,scrollbars=yes');return false;" target="_event{ $days:DATA:id }">{ $days:DATA:title }</a><br/>
+				<!-- ENDLOOP -->
 			</td>
-		{ else }
-			<td class="row3" valign="top" style="padding:5px">{ $days[daysloop].NUMBER }<br/>{ $days[daysloop].DATA }</td>
-		{ /if }
-	{ else }
+		<!-- ELSE -->
+			<td class="row3" valign="top" style="padding:5px">{ $days:NUMBER }<br/>{ $days:DATA }</td>
+		<!-- ENDIF -->
+	<!-- ELSE -->
 		<td class="row2" style="padding:5px"></td>
-	{ /if }
+	<!-- ENDIF -->
 	
-	{ if $smarty.section.daysloop.index % 5 == 0 }{ /if }
-	
-	{ /section }
-	
+	<!-- ENDLOOP -->
 	<tr>
 		<th colspan="7"></th>
 	</tr>
 
 </table>
 
-{ include file='modules/Control_Panel/ucp_footer.html' }
+<!-- INCLUDE modules/Control_Panel/ucp_footer.html -->

@@ -1,37 +1,34 @@
-{* $Id: posting_preview.html,v 1.5 2004/02/08 18:02:17 acydburn Exp $ *}
- 
+
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr> 
-		<th>{$L_PREVIEW}</th>
+		<th>{ $L_PREVIEW }</th>
 	</tr>
-	<tr> 
-		<td class="row1">{$MINI_POST_IMG}<span class="postdetails">{$L_POSTED}: {$POST_DATE} &nbsp;&nbsp;&nbsp; {$L_POST_SUBJECT}: {$PREVIEW_SUBJECT}</span></td>
+	<tr>  
+		<td class="row1">{ $MINI_POST_IMG }<span class="postdetails">{ $L_POSTED }: { $POST_DATE } &nbsp;&nbsp;&nbsp; { $L_POST_SUBJECT }: { $PREVIEW_SUBJECT }</span></td>
 	</tr>
 
 	<tr> 
 		<td class="row1"><table width="100%" border="0" cellspacing="0" cellpadding="0">
 			<tr>
-				<td><div class="postbody">{$PREVIEW_MESSAGE}</div>
-				{if $S_HAS_ATTACHMENTS }
+				<td><div class="postbody">{ $PREVIEW_MESSAGE }</div>
+				<!-- IF { $S_HAS_ATTACHMENTS } -->
 				<br clear="all" /><br />
 							
 				<table class="tablebg" width="100%" cellspacing="1">
 					<tr>
-						<td class="row3"><b class="genmed">{$L_ATTACHMENTS}: </b></td>
+						<td class="row3"><b class="genmed">{ $L_ATTACHMENTS }: </b></td>
 					</tr>
-					{section name=attachmentloop loop=$attachment}
+					<!-- LOOP $attachment -->
 					<tr>
-						<td class="row2">{$attachment[attachmentloop].DISPLAY_ATTACHMENT}</td>
+						<td class="row2">{ $attachment:DISPLAY_ATTACHMENT }</td>
 					</tr>
-					{ /section }
+					<!-- ENDLOOP -->
 				</table>
-				{ /if }
-				{if $PREVIEW_SIGNATURE }<span class="postbody"><br />_________________<br />{$PREVIEW_SIGNATURE}</span>{ /if }</td>
+				<!-- ENDIF -->
+				<!-- IF { $PREVIEW_SIGNATURE } --><span class="postbody"><br />_________________<br />{ $PREVIEW_SIGNATURE }</span><!-- ENDIF --></td>
 			</tr>
-		</table></td>
-	</tr>
-	<tr>
-		<td class="spacer"><img src="images/spacer.gif" alt="" width="1" height="1" /></td>
+		</table>
+		</td>
 	</tr>
 </table>
 

@@ -24,6 +24,9 @@ class cache
 		// remove all calls to this
 	}
 	
+	/*
+		Format an array to a file valid format
+	*/
 	function format_array($array, $tab = false)
 	{
 		// based from phpBB www.phpbb.com
@@ -57,6 +60,10 @@ class cache
 		return 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
 	}
 
+	/*
+		Get a cached value
+		Checks if it's loaded to memory before atempting to get from cache
+	*/
 	function get($name)
 	{
 		if (empty($this->vars[$name]))
@@ -67,6 +74,9 @@ class cache
 		return $this->vars[$name];
 	}
 
+	/*
+		Remove stored value from memory
+	*/
 	function remove($name)
 	{
 		if (!empty($this->vars[$name]))

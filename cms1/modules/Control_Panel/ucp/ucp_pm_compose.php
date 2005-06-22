@@ -27,7 +27,6 @@ function compose_pm($id, $mode, $action)
 	}
 	
 	$_CLASS['core_template']->assign(array(
-		'S_FORUM_RULES'					=> false,
 		'S_DRAFT_LOADED'				=> false, 
 		'S_SHOW_DRAFTS'					=> false,
 		'S_POST_REVIEW'					=> false,

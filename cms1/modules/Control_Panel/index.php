@@ -164,7 +164,9 @@ class module
 
 						$j++;
 					}
-				} else {
+				}
+				else
+				{
 					$_CLASS['core_template']->assign('ucp_subsection', false);
 				}
 			}

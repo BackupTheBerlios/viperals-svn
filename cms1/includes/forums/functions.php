@@ -1466,7 +1466,7 @@ function page_header()
 // Temp
 		'T_IMAGE_PATH'			=> "themes/viperal/template/modules/Forums/images/",
 
-		'TRANSLATION_INFO'	=> 'Ported by <a href="http://www.viperal.com/" target="_Viperal">Viperal</a>',
+		'TRANSLATION_INFO'	=> 'Ported by <a href="http://www.viperal.com/" target="viperal">Viperal</a>',
 		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
 		)

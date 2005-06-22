@@ -389,7 +389,7 @@ class ucp_pm extends module
 		{
 			//page_header($page_title);
 			$_CLASS['core_template']->display('modules/Control_Panel/'.$tpl_file);
-			require('footer.php');
+			$_CLASS['core_display']->display_footer();
 		}
 		else
 		{

@@ -1,4 +1,5 @@
-body {
+body
+{
     font-family: Verdana, Helvetica, sans-serif;
     font-size: 10px;
     margin: 0px;
@@ -9,13 +10,14 @@ body {
 
 .logo
 {
-	position:	fixed;
+	position:fixed;
 	top: -1px;
 	left: -1px;
 	z-index:	1;
 }
 
-#page {
+#page
+{
 	position: relative;
 	height:15px;
 	background: url(images/curve.gif) top left no-repeat;
@@ -25,73 +27,75 @@ body {
 }
 
 
-#header {
+#header
+{
 	position: relative;
 	height:138px;
 	width: 100%;
 	background: url(images/background.gif);
 	border-bottom:1px solid #ccc;
-	}
+}
 	
-#blocksleft {
+#blocksleft
+{
 	position:absolute;
 	top: 137px;
 	left:0px;
 	width:180px;
 	height:100%;
 	margin:0px 0px 10px 0px;
-	}
+}
 	
-#blocksright {
+#blocksright
+{
 	position:absolute;
 	top: 160px;
 	right:0px;
 	width:180px;
 	margin:0px 0px 10px 0px;
-	}
+}
 	
-.menu {
-	position:fixed;
-	top: 0px;
-	right:0px;
-	z-index:1;
-	}
-	
-.mainbody {
+.mainbody
+{
 	position:relative;
 	height:100%;
 	border-left:1px solid #ccc;
 	border-top:1px solid #ccc;
 	background-color:white;
-	}
+}
 	
-.bodymain {
+.bodymain
+{
 	position:relative;
 	border-top:1px solid #ccc;
 	height:100%;
 	min-height:1500px;
 	border-right:1px dashed #ccc;
-	}
+}
 
-.main {
+.main
+{
     width: 100%;
     background-color: #eee;
 }
 	
-.footer {
+.footer
+{
 	position:relative;
 	border-top:1px dashed black;
 	padding:5px;
 	background-color:white;
-	}
+}
 		
-.messageblock {
+.messageblock
+{
     background-color: #eee;
     border-top:1px solid #ccc;
     border-bottom:1px solid #ccc;
 }
 
-.messageblock .title {
+.messageblock .title
+{
 	position: relative;
 	background: #C7D0D7;
 	border: 1px solid #ccc;
@@ -100,7 +104,8 @@ body {
 
 }
 
-.messageblock .content {
+.messageblock .content
+{
 	padding: 10px;
 	position: relative;
 	min-height: 13px;
@@ -108,14 +113,16 @@ body {
 	font-size: 110%;
 }
 
-.centerblock {
+.centerblock
+{
 	width : 100%;
 	font-size: 100%;
     border-top:1px solid #ccc;
     border-bottom:1px solid #ccc;
 }
 
-.centerblock .title {
+.centerblock .title
+{
 	position: relative;
 	width : 30%;
 	background: #C7D0D7;
@@ -123,7 +130,8 @@ body {
 	padding: 2px;
 }
 
-.centerblock .content {
+.centerblock .content
+{
 	width : 100%;
 }
 
@@ -134,18 +142,21 @@ body {
 	padding: 5px;
 }
 
-.blocks .top {
+.blocks .top
+{
   position: relative;
   border-bottom: 1px dashed;
   padding: 2px;
   background-color:#C7D0D7;
 }
 
-.blocks .content {
+.blocks .content
+{
 	width : 100%;
 }
 
-.newsblock {
+.newsblock
+{
     background-color: #eee;
     background: url(images/bg.gif);
     border-top: 1px solid #ccc;
@@ -153,72 +164,53 @@ body {
     font-size: 110%;
 }
 	
-.newsblock .title {
+.newsblock .title
+{
+	position: relative;
 	background: #C7D0D7;
 	border: 1px solid #ccc;
 	min-height: 13px;
 	padding: 2px;
 }
 
-.newsblock .content {
+.newsblock .content
+{
 	padding: 10px;
 	min-height: 13px;
 	color: black;
 }
 
-.newsblock .numbering {
+.newsblock .numbering
+{
 	text-align: center;
 }
 
-.OpenTable {
+.OpenTable
+{
+	padding: 5px;
 	position:relative;
-	padding:10px;
 }
 
-.OpenTable .outer {
-	
-	border: 1px dashed #ccc;
+.OpenTable .outer
+{
+	border-top: 1px solid #ccc;
+	border-bottom: 1px solid #ccc;
 	background: #C7D0D7;
 	padding:1px;
 }	
 
-.OpenTable .inner {
+.OpenTable .inner
+{
 	border: 1px dashed #ccc;
 	background: #F2F1ED;
 	padding:5px;
-}
-	
-/* Quote & Code blocks maybe still be needed */
-.code {
-    font-family: Courier, 'Courier New', sans-serif; font-size: 11px; color: #006600;
-    background-color: #FAFAFA; border: #D1D7DC; border-style: solid;
-    border-left-width: 1px; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px
-}
-
-.quote {
-    font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 11px; color: #444444; line-height: 125%;
-    background-color: #FAFAFA; border: #D1D7DC; border-style: solid;
-    border-left-width: 1px; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px
 }
 
 /* 
 	LAYOUT
 */
-#wrapcentre { position: relative; width: 95%; left: 2.5%; padding-top: 40px; padding-bottom: 20px; }
-#wrapfooter { position: relative; width: 95%; left: 2.5%; text-align: center; }
-#wrapnav { width: 100%; margin: 0px; background-color: #ECECEC; border-width: 1px; border-style: solid; border-color: #A9B8C2; }
-#logodesc { width: 95%; margin-left: 2.5%; margin-right: 2.5%; }
-#findbar { width: 100%; margin: 0px; padding: 0px; border: 0px; }
 
-.forumrules { background-color: #ECECEC; border-width: 1px; border-style: solid; border-color: #A9B8C2; padding: 4px; font-weight: normal; font-size: 100%; font-family: Verdana, Arial, Helvetica, sans-serif; }
-
-#pageheader { }
-#pagecontent { }
-#pagefooter { }
-
-#poll { }
-#postrow { }
-#postdata { }
+.forumrules { background-color: #ECECEC; border-width: 1px;  border-color: #A9B8C2; padding: 4px; font-weight: normal; font-size: 100%; font-family: Verdana, Arial, Helvetica, sans-serif; }
 
 
 /* 
@@ -302,7 +294,9 @@ a.th:hover {  color: #FFA34F; text-decoration: underline; }
 	FORM
 */
 form { margin: 0px; padding: 0px; border: 0px; } 
-input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+input { font-size: 100%; color: black; font-family: Verdana, serif; font-weight: normal; }
+input[type="button"], input[type="reset"] , input[type="submit"] { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+
 textarea { background-color: white; color: black; font-family: Verdana, serif; font-size: 110%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
 select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
 .post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}

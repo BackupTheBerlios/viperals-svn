@@ -296,13 +296,13 @@ switch ($mode)
 		$sql = 'SELECT username, user_id, user_type, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_lastvisit
 			FROM ' . USERS_TABLE . "
 			WHERE user_id = $user_id
-				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
+				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ', '.USER_INACTIVE.')';
 		$result = $_CLASS['core_db']->sql_query($sql);
 
-		if (!($member = $_CLASS['core_db']->sql_fetchrow($result)))
+		if (!($member = $_CLASS['core_db']->sql_fetchrow($result)) || $member['user_type'] == USER_INACTIVE)
 		{
 			$_CLASS['core_db']->sql_freeresult($result);
-			trigger_error('NO_USER');
+			trigger_error(($member) ? 'USER_INACTIVE' : 'NO_USER');
 		}
 		
 		$_CLASS['core_db']->sql_freeresult($result);
@@ -478,7 +478,7 @@ switch ($mode)
 
 			$profile_fields = (isset($profile_fields[$user_id])) ? $cp->generate_profile_fields_template('show', false, $profile_fields[$user_id]) : array();
 		}
-		
+
 		$_CLASS['core_template']->assign(array(
 			'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),
 			'POSTS_PCT'			=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $percentage),

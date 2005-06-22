@@ -1,10 +1,9 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html dir="{$S_CONTENT_DIRECTION}">
+<html dir="{ $S_CONTENT_DIRECTION }">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset={$S_CONTENT_ENCODING}">
+<meta http-equiv="Content-Type" content="text/html; charset={ $S_CONTENT_ENCODING }">
 <meta http-equiv="Content-Style-Type" content="text/css">
-<title>{$SITENAME} :: {$PAGE_TITLE}</title>
-{literal}
+<title>{ $SITENAME } :: { $PAGE_TITLE }</title>
 <style type="text/css">
 <!--
 body {
@@ -52,20 +51,19 @@ hr.sep	{$
 }
 -->
 </style>
-{/literal}
 </head>
 <body>
 
 <table width="85%" cellspacing="3" cellpadding="0" border="0" align="center">
 	<tr>
-		<td colspan="2" align="center"><span class="Forum">{$SITENAME}</span><br /><span class="gensmall">{$L_PRIVATE_MESSAGING}</a></span></td>
+		<td colspan="2" align="center"><span class="Forum">{ $SITENAME }</span><br /><span class="gensmall">{ $L_PRIVATE_MESSAGING }</a></span></td>
 	</tr>
 	<tr>
 		<td colspan="2"><br /></td>
 	</tr>
 	<tr>
-		<td><span class="Topic">{$SUBJECT}</span><br /></td>
-		<td align="right" valign="bottom"><span class="gensmall">{$PAGE_NUMBER}</span></td>
+		<td><span class="Topic">{ $SUBJECT }</span><br /></td>
+		<td align="right" valign="bottom"><span class="gensmall">{ $PAGE_NUMBER }</span></td>
 	</tr>
 </table>
 
@@ -74,39 +72,37 @@ hr.sep	{$
 
 <table width="85%" cellspacing="3" cellpadding="0" border="0" align="center">
 	<tr>
-		<td width="10%" nowrap="nowrap">{$L_PM_FROM}:&nbsp;</td>
-		<td><b>{$AUTHOR_NAME}</b> [ {$SENT_DATE} ]</td>
+		<td width="10%" nowrap="nowrap">{ $L_PM_FROM }:&nbsp;</td>
+		<td><b>{ $AUTHOR_NAME }</b> [ { $SENT_DATE } ]</td>
 	</tr>
-	
-	{if $S_TO_RECIPIENT }
+	<!-- IF { $S_TO_RECIPIENT } -->
 	<tr>
 		<td width="10%" nowrap="nowrap">{$L_TO}:</td>
 		<td>
-		{ section name=to_recipientloop loop=$to_recipient} 
-
-			{if $to_recipient[to_recipientloop].COLOUR }<span style="color:#{$to_recipient[to_recipientloop].COLOUR}">{ else }<span{if $to_recipient[to_recipientloop].IS_GROUP } class="blue"{ /if }>{ /if }{$to_recipient[to_recipientloop].NAME}</span>&nbsp;
-		{ /section }
+		<!-- LOOP $to_recipient -->
+			<!-- IF { $to_recipient:COLOUR } --><span style="color:#{$to_recipient:COLOUR}">{ else }<span<!-- IF { $to_recipient:IS_GROUP } --> class="blue"<!-- ENDIF -->><!-- ENDIF -->{ $to_recipient:NAME }</span>&nbsp;
+		<!-- ENDLOOP -->
 		</td>
 	</tr>
-	{ /if }
-	{if $S_BCC_RECIPIENT }
+	<!-- ENDIF -->
+	<!-- IF { $S_BCC_RECIPIENT } -->
 	<tr>
-		<td width="10%" nowrap="nowrap">{$L_BCC}:</td>
+		<td width="10%" nowrap="nowrap">{ $L_BCC }:</td>
 		<td>
-		{ section name=bcc_recipientloop loop=$bcc_recipient} 
-			{if $bcc_recipient[bcc_recipientloop].COLOUR }<span style="color:#{$bcc_recipient[bcc_recipientloop].COLOUR}">{ else }<span<{if $bcc_recipient[bcc_recipientloop].IS_GROUP } class="blue"{ /if }>{ /if }{$bcc_recipient[bcc_recipientloop].NAME}</span>&nbsp;
-		{ /section }
+		<!-- LOOP $bcc_recipient -->
+			<!-- IF { $bcc_recipient:COLOUR } --><span style="color:#{$bcc_recipient:COLOUR}">{ else }<span<<!-- IF { $bcc_recipient:IS_GROUP } --> class="blue"<!-- ENDIF -->><!-- ENDIF -->{ $bcc_recipient:NAME }</span>&nbsp;
+		<!-- ENDLOOP -->
 		</td>
 	</tr>
-	{ /if }
+	<!-- ENDIF -->
 	<tr>
-		<td colspan="2"><hr class="sep" />{$MESSAGE}</td>
+		<td colspan="2"><hr class="sep" />{ $MESSAGE }</td>
 	</tr>
 </table>
 
 <hr width="85%" />
 
-{*
+<!--
 	We request you retain the full copyright notice below including the link to www.phpbb.com.
 	This not only gives respect to the large amount of time given freely by the developers
 	but also helps build interest, traffic and use of phpBB2. If you (honestly) cannot retain
@@ -115,14 +111,15 @@ hr.sep	{$
 	our forums may be affected.
 
 	The phpBB Group : 2002
-*}
+-->
+
 <table width="85%" cellspacing="3" cellpadding="0" border="0" align="center">
 	<tr>
-		<td><span class="gensmall">{$PAGE_NUMBER}</span></td>
-		<td align="right"><span class="gensmall">{$S_TIMEZONE}</span></td>
+		<td><span class="gensmall">{ $PAGE_NUMBER }</span></td>
+		<td align="right"><span class="gensmall">{ $S_TIMEZONE }</span></td>
 	</tr>
 	<tr>
-		<td colspan="2" align="center"><span class="gensmall">Powered by phpBB {$PHPBB_VERSION} &copy; 2002 phpBB Group<br />http://www.phpbb.com/</span></td>
+		<td colspan="2" align="center"><span class="gensmall">Powered by phpBB { $PHPBB_VERSION } &copy; 2002 phpBB Group<br />http://www.phpbb.com/</span></td>
 	</tr>
 </table>
 

@@ -178,17 +178,17 @@ function checkForm()
 		<td class="row2" width="78%"><input class="post" style="width:450px" type="text" name="subject" size="45" maxlength="60" tabindex="2" value="{ $SUBJECT }" /></td>
 	</tr>
 	<tr>
-		<td class="row1" valign="top"><b class="genmed">{ $L_MESSAGE_BODY }:</b><br /><span class="gensmall">{ $L_MESSAGE_BODY_EXPLAIN }</span><br /><br /><table width="80%" cellspacing="5" cellpadding="0" border="0" align="center">
+		<td class="row1" valign="top"><b class="genmed">{ $L_MESSAGE_BODY }:</b><br /><!-- IF { $L_MESSAGE_BODY_EXPLAIN } --><span class="gensmall">{ $L_MESSAGE_BODY_EXPLAIN }</span><!-- ENDIF --><br /><br /><table width="80%" cellspacing="5" cellpadding="0" border="0" align="center">
 			<tr>
 				<td class="gensmall" align="center"><b>{ $L_SMILIES }</b></td>
 			</tr>
 			<tr>
-				<td align="center"><!-- LOOP $smiley --><a href="javascript:smiley('{ $smiley:SMILEY_CODE }')"><img src="{ $T_SMILIES_PATH }{ $smiley:SMILEY_IMG }" width="{ $smiley:SMILEY_WIDTH }" height="{ $smiley:SMILEY_HEIGHT }" border="0" alt="{ $smiley:SMILEY_DESC }" title="{ $smiley:SMILEY_DESC }" onclick="smiley('{ $smiley:SMILEY_CODE }');return false" hspace="2" vspace="2" /></a><!-- ENDLOOP --></td>
+				<td align="center"><!-- LOOP $smiley --><a href="javascript:smiley('{ $smiley:SMILEY_CODE }')"><img src="{ $T_SMILIES_PATH }{ $smiley:SMILEY_IMG }" width="{ $smiley:SMILEY_WIDTH }" height="{ $smiley:SMILEY_HEIGHT }" border="0" alt="{ $smiley:SMILEY_DESC }" title="{ $smiley:SMILEY_DESC }" onclick="smiley('{ $smiley:SMILEY_CODE }');return false" hspace="2" vspace="2" /></a> <!-- ENDLOOP --></td>
 			</tr>
 
 			<!-- IF { $S_SHOW_SMILEY_LINK } -->
 				<tr>
-					<td align="center"><a class="nav" href="{ $U_MORE_SMILIES }" onclick="window.open('{ $U_MORE_SMILIES }', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{ $L_MORE_SMILIES }</a></td>
+					<td align="center"><a class="nav" href="{ $U_MORE_SMILIES }" onclick="window.open('{ $U_MORE_SMILIES }', 'phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{ $L_MORE_SMILIES }</a></td>
 				</tr>
 			<!-- ENDIF -->
 

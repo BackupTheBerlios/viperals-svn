@@ -22,40 +22,18 @@ $_CLASS['core_user']->add_lang();
 
 $_CLASS['core_display']->display_header($_CLASS['core_user']->lang['FEEDBACK_TITLE']);
 
-function feedback($sender_name, $sender_email, $message='', $error = false)
-{
-	global $_CLASS, $_CORE_MODULE;
-	
-		$_CLASS['core_template']->assign(array( 
-			'L_FEEDBACKNOTE' 		=> $_CLASS['core_user']->lang['FEEDBACK_NOTE'],
-			'L_YOURNAME' 			=> $_CLASS['core_user']->lang['YOURNAME'],
-			'L_YOUREMAIL'	 		=> $_CLASS['core_user']->lang['YOUREMAIL'],
-			'L_MESSAGE' 			=> $_CLASS['core_user']->lang['MESSAGE'],
-			'L_PREVIEW' 			=> $_CLASS['core_user']->lang['PREVIEW'],
-			'L_SUBMIT' 				=> $_CLASS['core_user']->lang['SUBMIT'],
-			'IP'					=> $_CLASS['core_user']->ip,
-			'ERROR' 				=> $error,
-			'MESSAGE' 				=> $message,
-			'ACTION' 				=> generate_link($_CORE_MODULE['name']),
-			'SENDER_EMAIL' 			=> $sender_email,
-			'SENDER_NAME' 			=> $sender_name,
-			)
-		);
-		
-	$_CLASS['core_template']->display('modules/Contact/index.html');
-}
-
 function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
+// Make template
 	$mail_message = '<br />' .$message . '<br /><br />
 	<center>Message Sent from '. $_CORE_CONFIG['global']['site_url'] .'<br>
 	'. $_CLASS['core_user']->lang['SENT_BY'] . ': ' . $sender_name . '<br />
 	'. $_CLASS['core_user']->lang['SENDER_EMAIL'] . ': '. $sender_email . '<br />
 	'.	$_CLASS['core_user']->lang['WITH_IP'] . $_CLASS['core_user']->ip . '<br /></center>';
 	
-	if (!$preview)
+	/*if (!$preview)
 	{
 		if ($_CLASS['core_user']->is_admin && $send_to )
 		{
@@ -88,17 +66,18 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 	{
 		echo '<div align="center"><b>'.$_CLASS['core_user']->lang['MESSAGE_PREVIEW'].'</b></div>';
 		echo $mail_message;
-	}
+	}*/
 }
- 
+
+
+$error = '';
 
 If (!empty($_POST['preview']) || !empty($_POST['contact']))
 {
-	$data['MESSAGE'] = get_variable('message', 'POST', '');
-	$data['NAME'] = get_variable('sender_name', 'POST', '');
-	$data['EMAIL'] = get_variable('sender_email', 'POST', '');
+	$data['MESSAGE']= get_variable('message', 'POST', '');
+	$data['NAME']	= get_variable('sender_name', 'POST', '');
+	$data['EMAIL']	= get_variable('sender_email', 'POST', '');
     
-	$error = '';
 
 	foreach ($data as $field => $value)
 	{
@@ -118,25 +97,34 @@ If (!empty($_POST['preview']) || !empty($_POST['contact']))
 	if (!empty($_POST['preview']) && $data['MESSAGE'])
 	{
 		send_feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $preview = true);
-		feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $error);
 	}
 	elseif (!empty($_POST['contact']) && !$error)
 	{
 		send_feedback($data['NAME'], $data['EMAIL'], $data['MESSAGE']);
 	}
-	else
-	{
-		feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $error);
-	}	
+
+	$sender_name = $data['NAME'];
+	$sender_email = $data['EMAIL'];
+	$message = $data['MESSAGE'];
 }
 else
 {
-	$sender_name = ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $_CLASS['core_user']->data['username'] : '';
-	$sender_email = ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $_CLASS['core_user']->data['user_email'] : '';
-
-	feedback($sender_name, $sender_email);
+	$sender_name = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['username'] : '';
+	$sender_email = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_email'] : '';
+	$message = '';
 }
 
+	
+$_CLASS['core_template']->assign(array( 
+	'ERROR' 				=> $error,
+	'MESSAGE' 				=> $message,
+	'ACTION' 				=> generate_link($_CORE_MODULE['name']),
+	'SENDER_EMAIL' 			=> $sender_email,
+	'SENDER_NAME' 			=> $sender_name,
+	)
+);
+		
+$_CLASS['core_template']->display('modules/Contact/index.html');
 $_CLASS['core_display']->display_footer();
 
 ?>

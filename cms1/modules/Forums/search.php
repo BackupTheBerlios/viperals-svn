@@ -57,6 +57,7 @@ gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $
 
 $store_vars		= array('sort_key', 'sort_dir', 'sort_days', 'show_results', 'return_chars', 'total_match_count');
 $current_time	= time();
+$stopped_words	= array();
 
 // Check last search time ... if applicable
 if ($config['search_interval'])
@@ -150,8 +151,6 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 	
 	if ($search_id)
 	{
-		$stopped_words = array();
-
 		switch ($search_id)
 		{
 			// Oh holy Bob, bring us some activity...
@@ -266,12 +265,15 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 			$data = explode('#', $row['search_array']);
 
 			$split_words = unserialize(array_shift($data));
+
 			if ($search_keywords)
 			{
 				// If we're wanting to search on these results we store the existing split word array
 				$old_split_words = $split_words;
 			}
+
 			$stopped_words = unserialize(array_shift($data));
+
 			foreach ($store_vars as $var)
 			{
 				$$var = array_shift($data);
@@ -595,12 +597,15 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 		{
 			$split_words = array_merge($split_words, $old_split_words);
 		}
+
 		$data = serialize(array_diff($split_words, $common_words));
 		$data .= '#' . serialize(array_merge($stopped_words, $common_words));
+
 		foreach ($store_vars as $var)
 		{
 			$data .= '#' . $$var;
 		}
+
 		$data .= '#' . implode('#', $post_id_ary);
 		unset($post_id_ary);
 

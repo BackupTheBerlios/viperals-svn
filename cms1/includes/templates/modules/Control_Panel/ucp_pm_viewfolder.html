@@ -1,98 +1,87 @@
-{ include file='modules/Control_Panel/ucp_header.html' }
+<!-- INCLUDE modules/Control_Panel/ucp_header.html -->
 
-{* $Id: ucp_pm_viewfolder.html,v 1.1 2004/06/02 18:07:40 acydburn Exp $ *}
+<!-- INCLUDE modules/Control_Panel/ucp_pm_message_header.html -->
 
-<div id="pagecontent">
-
-{ include file='modules/Control_Panel/ucp_pm_message_header.html' }
 	<div style="padding: 2px;"></div>
 
-{ if $S_PM_ICONS && S_UNREAD }
+<!-- IF { $S_PM_ICONS } && { $S_UNREAD } -->
+	<!-- DEFINE COLSPAN = 7 -->
+<!-- ELSEIF !{ $S_PM_ICONS } && !{ $S_UNREAD } -->
+	<!-- DEFINE COLSPAN = 5 -->
+<!-- ELSE -->
+	<!-- DEFINE COLSPAN = 6 -->
+<!-- ENDIF -->
 
-	{assign var="COLSPAN" value="7"}
-	
-{ elseif !$S_PM_ICONS && !$S_UNREAD }
-
-	{assign var="COLSPAN" value="5"}
-
-{ else }
-	{assign var="COLSPAN" value="6"}
-
-{ /if }
-
-<form name="viewfolder" method="post" action="{$S_PM_ACTION}" style="margin:0px">
+<form name="viewfolder" method="post" action="{ $S_PM_ACTION }" style="margin:0px">
 
 <table class="tablebg" width="100%" cellspacing="1" cellpadding="0" border="0">
-{ if $NUM_NOT_MOVED }
+<!-- IF { $NUM_NOT_MOVED } -->
 	<tr>
-		<td class="row3" colspan="{$COLSPAN}" align="center"><span class="gen">{$NOT_MOVED_MESSAGES}<br />{$RELEASE_MESSAGE_INFO}</span></td>
+		<td class="row3" colspan="{ #COLSPAN }" align="center"><span class="gen">{ $NOT_MOVED_MESSAGES }<br />{ $RELEASE_MESSAGE_INFO }</span></td>
 	</tr>
-{  /if }
+<!-- ENDIF -->
 	<tr>
-		<th colspan="{ if $S_PM_ICONS }3{ else }2{ /if }">&nbsp;{$L_SUBJECT}&nbsp;</th>
-		{ if $S_UNREAD }
-			<th>&nbsp;{ if $S_SHOW_RECIPIENTS }{$L_RECIPIENTS}{ else }{$L_AUTHOR}{ /if }&nbsp;</th>
-			<th>&nbsp;{$L_FOLDER}&nbsp;</th>
-		{ else }
-			<th>&nbsp;{ if $S_SHOW_RECIPIENTS }{$L_RECIPIENTS}{ else }{$L_AUTHOR}{ /if }&nbsp;</th>
-		{ /if }
-		<th>&nbsp;{$L_SENT_AT}&nbsp;</th>
-		<th>&nbsp;{$L_MARK}&nbsp;</th>
+		<th colspan="<!-- IF { $S_PM_ICONS } -->3<!-- ELSE -->2<!-- ENDIF -->">&nbsp;{ $L_SUBJECT }&nbsp;</th>
+		<!-- IF { $S_UNREAD } -->
+			<th>&nbsp;<!-- IF { $S_SHOW_RECIPIENTS } -->{ $L_RECIPIENTS }<!-- ELSE -->{ $L_AUTHOR }<!-- ENDIF -->&nbsp;</th>
+			<th>&nbsp;{ $L_FOLDER }&nbsp;</th>
+		<!-- ELSE -->
+			<th>&nbsp;<!-- IF { $S_SHOW_RECIPIENTS } -->{ $L_RECIPIENTS }<!-- ELSE -->{ $L_AUTHOR }<!-- ENDIF -->&nbsp;</th>
+		<!-- ENDIF -->
+		<th>&nbsp;{ $L_SENT_AT }&nbsp;</th>
+		<th>&nbsp;{ $L_MARK }&nbsp;</th>
 	</tr>
 	
-	{section name=messagerowloop loop=$messagerow}
+	<!-- LOOP $messagerow -->
 	<tr>
-		<td class="row1" width="25" align="center" nowrap="nowrap">{$messagerow[messagerowloop].FOLDER_IMG}</td>
-		{ if $S_PM_ICONS }
-			<td class="row1" width="25" align="center">{$messagerow[messagerowloop].PM_ICON_IMG}</td>
-		{ /if }
-		{ if $messagerow[messagerowloop].S_PM_DELETED }<td class="row3">{ else }<td class="row1">{ /if }
-			{ if $messagerow[messagerowloop].S_PM_REPORTED }
-				<a href="{$messagerow[messagerowloop].U_MCP_REPORT}">{$REPORTED_IMG}</a>&nbsp;
-			{ /if }
-			{ if !$messagerow[messagerowloop].PM_IMG && $messagerow[messagerowloop].PM_CLASS }
-				<span class="{$messagerow[messagerowloop].PM_CLASS}"><img src="images/spacer.gif" width="10" height="10" alt="" border="0" /></span>&nbsp;
-			{ elseif $messagerow[messagerowloop].PM_IMG }
-				{$messagerow[messagerowloop].PM_IMG}&nbsp;
-			{ /if }
+		<td class="row1" width="25" align="center" nowrap="nowrap">{ $messagerow:FOLDER_IMG }</td>
+		<!-- IF { $S_PM_ICONS } -->
+			<td class="row1" width="25" align="center">{ $messagerow:PM_ICON_IMG }</td>
+		<!-- ENDIF -->
+		<!-- IF { $messagerow:S_PM_DELETED } --><td class="row3"><!-- ELSE --><td class="row1"><!-- ENDIF -->
+			<!-- IF { $messagerow:S_PM_REPORTED } -->
+				<a href="{$messagerow:U_MCP_REPORT}">{ $REPORTED_IMG }</a>&nbsp;
+			<!-- ENDIF -->
+			<!-- IF !{ $messagerow:PM_IMG } && { $messagerow:PM_CLASS } -->
+				<span class="{$messagerow:PM_CLASS}"><img src="images/spacer.gif" width="10" height="10" alt="" border="0" /></span>&nbsp;
+			<!-- ELSEIF { $messagerow:PM_IMG } -->
+				{$messagerow:PM_IMG}&nbsp;
+			<!-- ENDIF -->
 			<p class="topictitle">
-				{ $messagerow[messagerowloop].ATTACH_ICON_IMG } 
+				{ $messagerow:ATTACH_ICON_IMG } 
 				
-				{ if $messagerow[messagerowloop].S_PM_DELETED }
+				<!-- IF { $messagerow:S_PM_DELETED } -->
 					{ $L_MESSAGE_REMOVED_FROM_OUTBOX }<br />
-					<a href="{ $messagerow[messagerowloop].U_REMOVE_PM}" style="float:right;">{ $L_DELETE_MESSAGE }</a>
-				{ else }
-					<a href="{ $messagerow[messagerowloop].U_VIEW_PM }">{ $messagerow[messagerowloop].SUBJECT }</a>
-				{ /if }
+					<a href="{ $messagerow:U_REMOVE_PM}" style="float:right;">{ $L_DELETE_MESSAGE }</a>
+				<!-- ELSE -->
+					<a href="{ $messagerow:U_VIEW_PM }">{ $messagerow:SUBJECT }</a>
+				<!-- ENDIF -->
 				
 			</p></td>
-		<td class="row1" width="100" align="center"><p class="topicauthor">{ if $S_SHOW_RECIPIENTS }{$messagerow[messagerowloop].RECIPIENTS}{ else }{$messagerow[messagerowloop].MESSAGE_AUTHOR}{ /if }</p></td>
-		{ if $S_UNREAD }
-			<td class="row1" width="100" align="center"><p class="topicauthor">{ if $messagerow[messagerowloop].FOLDER }<a href="{$messagerow[messagerowloop].U_FOLDER}">{$messagerow[messagerowloop].FOLDER}</a>{ else }{$L_UNKNOWN_FOLDER}{ /if }</p></td>
-		{ /if }
-		<td class="row1" width="120" align="center"><p class="topicdetails">{$messagerow[messagerowloop].SENT_TIME}</p></td>
-		<td class="row1" width="20" align="center"><p class="topicdetails"><input type="checkbox" name="marked_msg_id[]" value="{$messagerow[messagerowloop].MESSAGE_ID}" /></p></td>
+		<td class="row1" width="100" align="center"><p class="topicauthor"><!-- IF { $S_SHOW_RECIPIENTS } -->{ $messagerow:RECIPIENTS }<!-- ELSE -->{$messagerow:MESSAGE_AUTHOR}<!-- ENDIF --></p></td>
+		<!-- IF { $S_UNREAD } -->
+			<td class="row1" width="100" align="center"><p class="topicauthor"><!-- IF { $messagerow:FOLDER } --><a href="{ $messagerow:U_FOLDER }">{ $messagerow:FOLDER }</a><!-- ELSE -->{ $L_UNKNOWN_FOLDER }<!-- ENDIF --></p></td>
+		<!-- ENDIF -->
+		<td class="row1" width="120" align="center"><p class="topicdetails">{ $messagerow:SENT_TIME }</p></td>
+		<td class="row1" width="20" align="center"><p class="topicdetails"><input type="checkbox" name="marked_msg_id[]" value="{ $messagerow:MESSAGE_ID }" /></p></td>
 	</tr>
-	{ sectionelse }
+	<!-- LOOPELSE -->
 	<tr>
-		<td class="row1" colspan="{$COLSPAN}" height="30" align="center" valign="middle"><span class="gen">{$L_NO_MESSAGES}</span></td>
+		<td class="row1" colspan="{ #COLSPAN }" height="30" align="center" valign="middle"><span class="gen">{ $L_NO_MESSAGES }</span></td>
 	</tr>
-	{ /section }
+	<!-- ENDLOOP -->
 	
-	<input type="hidden" name="cur_folder_id" value="{$CUR_FOLDER_ID}" />
+	<input type="hidden" name="cur_folder_id" value="{ $CUR_FOLDER_ID }" />
 </table>
 <table border="0" cellspacing="0" cellpadding="0" width="100%">
 	<tr>
-		<td class="cat" align="left"><span class="gensmall">{$L_DISPLAY_MESSAGES}:</span> {$S_SELECT_SORT_DAYS} <span class="gensmall">{$L_SORT_BY}</span> {$S_SELECT_SORT_KEY} {$S_SELECT_SORT_DIR} <input class="btnlite" type="submit" name="sort" value="{$L_GO}" /></td>
-		<td class="cat" align="right"><select name="mark_option">{$S_MARK_OPTIONS}</select>&nbsp;<input class="btnlite" type="submit" name="submit_mark" value="{$L_GO}" />&nbsp;</td>
+		<td class="cat" align="left"><span class="gensmall">{ $L_DISPLAY_MESSAGES }:</span> { $S_SELECT_SORT_DAYS } <span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR } <input class="btnlite" type="submit" name="sort" value="{ $L_GO }" /></td>
+		<td class="cat" align="right"><select name="mark_option">{ $S_MARK_OPTIONS }</select>&nbsp;<input class="btnlite" type="submit" name="submit_mark" value="{$L_GO}" />&nbsp;</td>
 	</tr>
 </table>
 
 <div style="padding: 2px;"></div>
-{ include file='modules/Control_Panel/ucp_pm_message_footer.html' }
-
+<!-- INCLUDE modules/Control_Panel/ucp_pm_message_footer.html -->
 <br clear="all" />
 
-</div>
-
-{ include file='modules/Control_Panel/ucp_footer.html' }
+<!-- INCLUDE modules/Control_Panel/ucp_footer.html -->

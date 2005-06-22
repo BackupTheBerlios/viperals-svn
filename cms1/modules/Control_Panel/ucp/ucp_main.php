@@ -18,11 +18,10 @@ class ucp_main extends module
 		global $config, $_CLASS, $site_file_root, $_CORE_CONFIG;
 
 		$_CLASS['core_template']->assign(array(
-			'ERROR' => false,
-			'topicrow' => false,
-			'S_PRIVMSGS' => false,
-			'WARNINGS' => false,
-			'draftrow' => false)
+			'ERROR' 		=> false,
+			'topicrow'		=> false,
+			'WARNINGS'		=> false,
+			'draftrow'		=> false)
 		);
 		
 		switch ($mode)
@@ -154,25 +153,25 @@ class ucp_main extends module
 	
 						$last_post_img = '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
 	
-						$last_post_author = ($row['topic_last_poster_id'] == ANONYMOUS) ? (($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] . ' ' : $_CLASS['core_user']->lang['GUEST'] . ' ') : '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) . '">' . $row['topic_last_poster_name'] . '</a>';
-	
 						$_CLASS['core_template']->assign_vars_array('topicrow', array(
-							'FORUM_ID' 			=> $forum_id,
-							'TOPIC_ID' 			=> $topic_id,
+							'FORUM_ID'			=> $forum_id,
+							'TOPIC_ID'			=> $topic_id,
 							'GOTO_PAGE'			=> '',
 							'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
-							'LAST_POST_AUTHOR' 	=> $last_post_author,
-							'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
-							'TOPIC_TYPE' 		=> $topic_type,
+							'LAST_POST_AUTHOR'	=> ($row['topic_last_poster_name']) ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
+
+							'TOPIC_TITLE'		=> censor_text($row['topic_title']),
+							'TOPIC_TYPE'		=> $topic_type,
 	
-							'LAST_POST_IMG' 	=> $last_post_img,
-							'NEWEST_POST_IMG' 	=> $newest_post_img,
+							'LAST_POST_IMG'		=> $last_post_img,
+							'NEWEST_POST_IMG'	=> $newest_post_img,
 							'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 							'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', '') : '',
 	
 							'S_USER_POSTED'		=> (!empty($row['mark_type'])) ? true : false, 
-	
-							'U_VIEW_TOPIC'	=> $view_topic_url)
+
+							'U_LAST_POST_AUTHOR'	=> ($row['topic_last_poster_id'] != ANONYMOUS) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) : false,
+							'U_VIEW_TOPIC'		=> $view_topic_url)
 						);
 					}
 				}
@@ -520,14 +519,11 @@ class ucp_main extends module
 				
 				if (!$config['allow_bookmarks'])
 				{
-					$_CLASS['core_template']->assign('S_NO_DISPLAY_BOOKMARKS', true);
+					$_CLASS['core_template']->assign('S_BOOKMARKS_DISABLED', true);
 					break;
-				} else {
-					$_CLASS['core_template']->assign('S_NO_DISPLAY_BOOKMARKS' , false);
 				}
 				
 				require($site_file_root.'includes/forums/functions_display.php');
-				//$_CLASS['core_user']->add_lang('viewforum');
 
 				$move_up = request_var('move_up', 0);
 				$move_down = request_var('move_down', 0);
@@ -614,10 +610,24 @@ class ucp_main extends module
 					ORDER BY b.order_id ASC';
 				$result = $_CLASS['core_db']->sql_query($sql);
 				
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+				{
+					$_CLASS['core_db']->sql_freeresult($result);
+					
+					$_CLASS['core_template']->assign(array(
+							'S_BOOKMARKS'			=> false,
+							'S_BOOKMARKS_DISABLED'	=> false
+					));
+					break;
+				}
+
+				$bookmarks = true;
+				
+				do
 				{
 					$forum_id = $row['forum_id'];
 					$topic_id = $row['b_topic_id'];
+					$bookmarks = true;
 
 					$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
 					
@@ -654,7 +664,15 @@ class ucp_main extends module
 						'U_MOVE_DOWN'		=> ($row['order_id'] != $max_order_id) ? generate_link("Control_Panel&amp;i=main&amp;mode=bookmarks&amp;move_down={$row['order_id']}") : '')
 					);
 				}
-				
+				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+
+				$_CLASS['core_db']->sql_freeresult($result);
+
+				$_CLASS['core_template']->assign(array(
+					'S_BOOKMARKS'			=> $bookmarks,
+					'S_BOOKMARKS_DISABLED'	=> false
+				));
+
 				break;
 
 			case 'drafts':

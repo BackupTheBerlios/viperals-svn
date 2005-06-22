@@ -1,12 +1,13 @@
-{ include file='modules/Forums/simple_header.html' }
+{ $A_TABLE_OPEN }
 
 	<table class="tablebg" width="100%" cellspacing="1">
 		<tr> 
-			<th>{$L_WHOIS}</th>
+			<th>{ $L_WHOIS }</th>
 		</tr>
 		<tr>
-			<td class="row1"><pre>{$WHOIS}</pre></td>
+			<td class="row1"><pre>{ $WHOIS }</pre></td>
 		</tr>
 	</table>
 
-{ include file='modules/Forums/simple_footer.html' }
+{ $A_TABLE_CLOSE }
+<!-- phpBB copyright -->

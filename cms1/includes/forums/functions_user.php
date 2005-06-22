@@ -998,7 +998,8 @@ function avatar_gallery($category, &$error)
 	$dp = @opendir($path);
 
 	$data = array();
-	$avatar_row_count = $avatar_col_count = 0;
+	$count = 0;
+
 	while ($file = readdir($dp))
 	{
 		if ($file{0} != '.' && is_dir("$path/$file"))
@@ -1009,15 +1010,10 @@ function avatar_gallery($category, &$error)
 			{
 				if (preg_match('#\.(gif$|png$|jpg|jpeg)$#i', $sub_file))
 				{
-					$data[$file][$avatar_row_count][$avatar_col_count]['file'] = "$file/$sub_file"; 
-					$data[$file][$avatar_row_count][$avatar_col_count]['name'] = ucfirst(str_replace('_', ' ', preg_replace('#^(.*)\..*$#', '\1', $sub_file)));
+					$data[$file][$count]['file'] = "$file/$sub_file"; 
+					$data[$file][$count]['name'] = ucfirst(str_replace('_', ' ', preg_replace('#^(.*)\..*$#', '\1', $sub_file)));
 
-					$avatar_col_count++;
-					if ($avatar_col_count == 10)
-					{
-						$avatar_row_count++;
-						$avatar_col_count = 0;
-					}
+					$count++;
 				}
 			}
 			closedir($dp2);
@@ -1027,10 +1023,10 @@ function avatar_gallery($category, &$error)
 	
 	if (!sizeof($data))
 	{
-		return array($_CLASS['core_user']->lang['NONE'] => array());
+		return false;
 	}
 	
-	@ksort($data);
+	ksort($data);
 
 	return $data;
 }

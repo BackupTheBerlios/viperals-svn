@@ -386,10 +386,13 @@ class ucp_profile extends module
 				
 				require($site_file_root.'includes/forums/functions_posting.php');
 				
-				$enable_html	= ($config['allow_sig_html']) ? request_var('enable_html', false) : false;
-				$enable_bbcode	= ($config['allow_sig_bbcode']) ? request_var('enable_bbcode', $_CLASS['core_user']->optionget('bbcode')) : false;
-				$enable_smilies = ($config['allow_sig_smilies']) ? request_var('enable_smilies', $_CLASS['core_user']->optionget('smilies')) : false;
-				$enable_urls	= request_var('enable_urls', true);
+				// Generate smiley listing
+				generate_smilies('inline', 0);
+	
+				$enable_html	= ($config['allow_sig_html']) ? isset($_POST['disable_html']) : false;
+				$enable_bbcode	= ($config['allow_sig_bbcode']) ? (isset($_POST['disable_bbcode']) ? false : $_CLASS['core_user']->optionget('bbcode')) : false;
+				$enable_smilies = ($config['allow_sig_smilies']) ? (isset($_POST['disable_smilies']) ? false : $_CLASS['core_user']->optionget('smilies')) : false;
+				$enable_urls	= (isset($_POST['disable_magic_url'])) ? false : true;
 				$signature		= request_var('signature', $_CLASS['core_user']->data['user_sig']);
 				
 				if ($submit || $preview)
@@ -465,7 +468,7 @@ class ucp_profile extends module
 
 			case 'avatar':
 
-				$display_gallery = (isset($_POST['displaygallery'])) ? true : false;
+				$display_gallery = (isset($_POST['display_gallery'])) ? true : false;
 				$category = request_var('category', '');
 				$delete = (isset($_POST['delete'])) ? true : false;
 				
@@ -501,12 +504,6 @@ class ucp_profile extends module
 					);
 
 					$error = validate_data($data, $var_ary);
-					
-					if (!empty($_FILES['uploadfile']['error']) && $_FILES['uploadfile']['error'] == '2')
-					{
-						$error[] = 'Sorry the avator file size is to big';
-						//trigger_error('Sorry the avator file size is to big');
-					}
 					
 					if (!sizeof($error))
 					{
@@ -592,11 +589,12 @@ class ucp_profile extends module
 					'AVATAR'		=> $avatar_img, 
 					'AVATAR_SIZE'	=> $config['avatar_filesize'], 
 
-					'S_FORM_ENCTYPE'				=> ($can_upload) ? ' enctype="multipart/form-data"' : '', 
-				
+					'S_FORM_ENCTYPE'	=> ($can_upload) ? ' enctype="multipart/form-data"' : '', 
+
 					'L_AVATAR_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['AVATAR_EXPLAIN'], $config['avatar_max_width'], $config['avatar_max_height'], round($config['avatar_filesize'] / 1024)),)
 				);
 
+// Needs some work
 				if ($display_gallery && $_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_local'])
 				{
 					$avatar_list = avatar_gallery($category, $error);
@@ -615,27 +613,15 @@ class ucp_profile extends module
 
 					$avatar_list = $avatar_list[$category];
 
-					$row = 0;
-					foreach ($avatar_list as $avatar_row_ary)
+					foreach ($avatar_list as $avatar)
 					{
-						$_CLASS['core_template']->assign_vars_array('avatar_row', array());
 
-						foreach ($avatar_row_ary as $avatar_col_ary)
-						{
-							$_CLASS['core_template']->assign_vars_array('avatar_column', array(
-								'ROW'			=> $row,
-								'AVATAR_IMAGE'	=> $config['avatar_gallery_path'] . '/' . $avatar_col_ary['file'],
-								'AVATAR_NAME'	=> $avatar_col_ary['name'],
-								'AVATAR_FILE'	=> $avatar_col_ary['file'])
-							);
-
-							$_CLASS['core_template']->assign_vars_array('avatar_option_column', array(
-								'ROW'				=> $row,
-								'AVATAR_IMAGE'		=> $config['avatar_gallery_path'] . '/' . $avatar_col_ary['file'],
-								'S_OPTIONS_AVATAR'	=> $avatar_col_ary['file'])
-							);
-						}
-						$row ++;
+						$_CLASS['core_template']->assign_vars_array('avatar',  array(
+								'AVATAR_IMAGE'		=> $config['avatar_gallery_path'] . '/' . $avatar['file'],
+								'AVATAR_NAME'		=> $avatar['name'],
+								'AVATAR_FILE'		=> $avatar['file'],
+								'S_OPTIONS_AVATAR'	=> $avatar['file']
+							));
 					}
 					unset($avatar_list);			
 				}
@@ -651,10 +637,7 @@ class ucp_profile extends module
 						'S_UPLOAD_AVATAR_URL'	=> $can_upload,
 						'S_LINK_AVATAR'			=> ($_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_remote']) ? true : false,
 						'S_GALLERY_AVATAR'		=> ($_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_local']) ? true : false,
-						//'S_AVATAR_CAT_OPTIONS'	=> $s_categories,
-						//'S_AVATAR_PAGE_OPTIONS'	=> $s_pages,
-						)
-					);
+					));
 				}
 
 				break;

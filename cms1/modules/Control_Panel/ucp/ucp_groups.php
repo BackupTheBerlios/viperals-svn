@@ -19,108 +19,66 @@ class ucp_groups extends module
 
 		$_CLASS['core_user']->add_lang('groups');
 
-		$submit		= (!empty($_POST['submit'])) ? true : false;
-		$delete		= (!empty($_POST['delete'])) ? true : false;
+		$submit	= (!empty($_POST['submit'])) ? true : false;
+		$delete	= (!empty($_POST['delete'])) ? true : false;
+		
 		$error = $data = array();
 
-		switch ($mode)
+		$sql = 'SELECT g.group_id, g.group_name, g.group_description, g.group_type, ug.user_status
+			FROM ' . GROUPS_TABLE . ' g, ' . USER_GROUP_TABLE . ' ug
+			WHERE ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
+				AND g.group_id = ug.group_id
+			ORDER BY g.group_type DESC, g.group_name';
+		$result = $_CLASS['core_db']->sql_query($sql);
+
+		$group_id_ary = array();
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			case 'membership':
+			$block = ($row['user_status'] == STATUS_LEADER) ? 'leader' : (($row['user_status'] == STATUS_PENDING) ? 'pending' : 'member');
 
-				$sql = 'SELECT g.group_id, g.group_name, g.group_description, g.group_type, ug.user_status
-					FROM ' . GROUPS_TABLE . ' g, ' . USER_GROUP_TABLE . ' ug
-					WHERE ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
-						AND g.group_id = ug.group_id
-					ORDER BY g.group_type DESC, g.group_name';
-				$result = $_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_template']->assign_vars_array($block, array(
+				'GROUP_ID'			=> $row['group_id'],
+				'GROUP_NAME'		=> ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
+				'GROUP_DESC'		=> ($row['group_type'] <> GROUP_SPECIAL) ? $row['group_description'] : $_CLASS['core_user']->lang['GROUP_IS_SPECIAL'],
+				'GROUP_SPECIAL'		=> ($row['group_type'] <> GROUP_SPECIAL) ? false : true,
 
-				$group_id_ary = array();
-				$leader_count = $member_count = $pending_count = 0;
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-				{
-					$block = ($row['user_status'] == STATUS_LEADER) ? 'leader' : (($row['user_status'] == STATUS_PENDING) ? 'pending' : 'member');
+				'U_VIEW_GROUP'		=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
+				'S_GROUP_DEFAULT'	=> ($row['group_id'] == $_CLASS['core_user']->data['group_id']) ? true : false
+			));
 
-					$_CLASS['core_template']->assign_vars_array($block, array(
-						'GROUP_ID'		=> $row['group_id'],
-						'GROUP_NAME'	=> ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
-						'GROUP_DESC'	=> ($row['group_type'] <> GROUP_SPECIAL) ? $row['group_description'] : $_CLASS['core_user']->lang['GROUP_IS_SPECIAL'],
-						'GROUP_SPECIAL'	=> ($row['group_type'] <> GROUP_SPECIAL) ? false : true,
-
-						'U_VIEW_GROUP'	=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
-
-						'S_GROUP_DEFAULT'	=> ($row['group_id'] == $_CLASS['core_user']->data['group_id']) ? true : false,
-						'S_ROW_COUNT'		=> ${$block . '_count'}++,)
-					);
-
-					$group_id_ary[] = $row['group_id'];
-				}
-				$_CLASS['core_db']->sql_freeresult($result);
-
-				// Hide hidden groups unless user is an admin with group privileges
-				$sql_and = ($_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel')) ? '<> ' . GROUP_SPECIAL : 'NOT IN (' . GROUP_SPECIAL . ', ' . GROUP_HIDDEN . ')';
-				$sql = 'SELECT group_id, group_name, group_description, group_type
-					FROM ' . GROUPS_TABLE . '
-					WHERE group_id NOT IN (' . implode(', ', $group_id_ary) . ")
-						AND group_type $sql_and
-					ORDER BY group_type DESC, group_name";
-				$result = $_CLASS['core_db']->sql_query($sql);
-
-				$nonmember_count = 0;
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-				{
-
-					$_CLASS['core_template']->assign_vars_array('nonmember', array(
-						'GROUP_ID'		=> $row['group_id'],
-						'GROUP_NAME'	=> ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
-						'GROUP_DESC'	=> $row['group_description'],
-						'GROUP_SPECIAL'	=> ($row['group_type'] <> GROUP_SPECIAL) ? false : true,
-						'GROUP_CLOSED'	=> ($row['group_type'] <> GROUP_CLOSED || $_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel')) ? false : true,
-
-						'U_VIEW_GROUP'	=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
-
-						'S_ROW_COUNT'	=> $nonmember_count++,)
-					);
-				}
-				$_CLASS['core_db']->sql_freeresult($result);
-
-				$_CLASS['core_template']->assign(array(
-					'S_CHANGE_DEFAULT'	=> ($_CLASS['auth']->acl_get('u_chggrp')) ? true : false,
-					'S_LEADER_COUNT'	=> $leader_count,
-					'S_MEMBER_COUNT'	=> $member_count,
-					'S_PENDING_COUNT'	=> $pending_count,
-					'S_NONMEMBER_COUNT'	=> $nonmember_count,
-				));
-
-				break;
-
-			case 'manage':
-				break;
+			$group_id_ary[] = $row['group_id'];
 		}
 
-		$this->display($_CLASS['core_user']->lang['UCP_GROUPS'], 'ucp_groups_' . $mode . '.html');
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		// Hide hidden groups unless user is an admin with group privileges
+		$sql_and = ($_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel')) ? '<> ' . GROUP_SPECIAL : 'NOT IN (' . GROUP_SPECIAL . ', ' . GROUP_HIDDEN . ')';
+
+		$sql = 'SELECT group_id, group_name, group_description, group_type
+			FROM ' . GROUPS_TABLE . '
+			WHERE group_id NOT IN (' . implode(', ', $group_id_ary) . ")
+				AND group_type $sql_and
+			ORDER BY group_type DESC, group_name";
+		$result = $_CLASS['core_db']->sql_query($sql);
+
+		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		{
+			$_CLASS['core_template']->assign_vars_array('nonmember', array(
+				'GROUP_ID'		=> $row['group_id'],
+				'GROUP_NAME'	=> ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
+				'GROUP_DESC'	=> $row['group_description'],
+				'GROUP_SPECIAL'	=> ($row['group_type'] <> GROUP_SPECIAL) ? false : true,
+				'GROUP_CLOSED'	=> ($row['group_type'] <> GROUP_CLOSED || $_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel')) ? false : true,
+
+				'U_VIEW_GROUP'	=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id'])
+			));
+		}
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		$_CLASS['core_template']->assign('S_CHANGE_DEFAULT', ($_CLASS['auth']->acl_get('u_chggrp')));
+
+		$this->display($_CLASS['core_user']->get_lang('UCP_GROUPS'), 'ucp_groups_membership.html');
 	}
 }
-
-/*
-	include($phpbb_root_path . 'includes/emailer.'.$phpEx);
-	$emailer = new emailer($config['smtp_delivery']);
-
-	$email_headers = 'From: ' . $config['board_email'] . "\nReturn-Path: " . $config['board_email'] . "\r\n";
-
-	$emailer->use_template('group_request', $moderator['user_lang']);
-	$emailer->email_address($moderator['user_email']);
-	$emailer->set_subject();//$lang['Group_request']
-	$emailer->extra_headers($email_headers);
-
-	$emailer->assign_vars(array(
-		'SITENAME' => $config['sitename'],
-		'GROUP_MODERATOR' => $moderator['username'],
-		'EMAIL_SIG' => str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']),
-
-		'U_GROUPCP' => $server_url . '?' . 'g' . "=$group_id&validate=true")
-	);
-	$emailer->send();
-	$emailer->reset();
-*/
 
 ?>

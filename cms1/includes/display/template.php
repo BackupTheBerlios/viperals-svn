@@ -2,8 +2,10 @@
 
 class core_template
 {
+	var $cache_handler = 'file';
 	var $template_dir;
 	var $compile_check = true;
+	var $_vars = array();
 
     function core_template()
     {
@@ -67,7 +69,7 @@ class core_template
 		Display template
 		This loads the template if it exsists else parses it before displaying
     */
-	function display($name, $allow_theme = true)
+	function display($name, $cache = true)
 	{
 		if (!$this->generate_dirs($name))
 		{
@@ -185,7 +187,6 @@ class core_template
 			$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
 			
 			$line += substr_count($content_blocks[$loop], "\n");
-			//echo $line.',';
 			
 			if (empty($tag_blocks[1][$loop]))
 			{
@@ -251,7 +252,11 @@ class core_template
 
 					$tag_blocks[0][$loop] = '<?php }'.(($last_tag == 'LOOP') ? ' } ' : '').' ?>';
 					break;
-				
+
+				case 'DEFINE':
+					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_define($tag_blocks[2][$loop]) . ' ?>';
+					break;
+					
 				case 'INCLUDE':
 					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_include($tag_blocks[2][$loop]) . ' ?>';
 					break;
@@ -280,12 +285,12 @@ class core_template
 	{
 		global $_CLASS;
 
-		return $_CLASS['core_user']->get_lang(substr($lang, 2));
+		return $_CLASS['core_user']->get_lang($lang);
 	}
 
 	function _parse_content($code)
 	{
-		if (is_integer($code) || (strpos($code, '{') === false))
+		if (strpos($code, '{') === false)
 		{
 			return $code;
 		}
@@ -315,79 +320,104 @@ class core_template
 		Asisgned variables { $VAR } 
 		Loop array variables { $ARRAY:VAR }
 		Specail array Var { $ARRAY:#LOOP_INDEX }
-		
-		To DO: Defines
-			{ #VAR }
 	*/
+
 	function _parse_var($var)
     {
 		// Is it something to be parsed ?
 		$var = trim($var);
 
-		if (!$var || strpos($var, '$') !== 0)
+		if (!$var || (strpos($var, '$') !== 0 && strpos($var, '#') !== 0))
 		{
 			//return $var;
 			return false;
 		}
 		
-		$var = substr($var, 1);
-
-		if (strpos($var, 'L_') === 0)
+		if (strpos($var, '$L_') === 0)
 		{
-			return "(isset(\$this->_vars['$var'])) ? \$this->_vars['$var'] : \$this->_get_lang('$var')";
+			$var = substr($var, 1);
+			return "(isset(\$this->_vars['$var'])) ? \$this->_vars['$var'] : \$this->_get_lang('".substr($var, 2)."')";
 		}
 
 		$vars = explode(':', $var);
 		$in_loop = false;
-
+		
 		$size = count($vars);
 
 		for ($loop = 0; $loop < $size; $loop++)
 		{
 			if (!$in_loop)
 			{
-				$_output = "\$this->_vars['$vars[$loop]']";
-				$in_loop = true;
+				if (strpos($vars[$loop], '#') !== 0)
+				{
+					$vars[$loop] = substr($vars[$loop], 1);
+
+					$output = "\$this->_vars['$vars[$loop]']";
+					$in_loop = true;
+					
+					continue;
+				}
+
+				$vars[$loop] = substr($vars[$loop], 1);
+				$output = "\$this->_vars['defines']['$vars[$loop]']";
 			}
 			else
 			{
 				if (strpos($vars[$loop], '#') !== 0)
 				{
 					$loop_name = '_'.strtolower($vars[($loop - 1)]);
-					$_output .= "[\$this->_loop['$loop_name']]['$vars[$loop]']";
-				}
-				else
-				{
-					$var = substr($vars[$loop], 1);
-					Switch ($var)
-					{
-						case 'LOOP_INDEX':
-							$loop_name = '_'.strtolower($vars[($loop - 1)]);
-							$_output = "\$this->_loop['$loop_name']";
-						break;
+					$output .= "[\$this->_loop['$loop_name']]['$vars[$loop]']";
 
-						case 'LOOP_NUMBER':
-							$loop_name = '_'.strtolower($vars[($loop - 1)]);
-							$_output = "\$this->_loop['$loop_name'] + 1";
-						break;
-						
-						case 'LOOP_SIZE':
-							$_output = "count(\$this->_vars['$vars[$loop]']);";
-						break;
-					}
+					continue;
 				}
+
+				$var = substr($vars[$loop], 1);
+				Switch ($var)
+				{
+					case 'LOOP_INDEX':
+						$loop_name = '_'.strtolower($vars[($loop - 1)]);
+						$output = "\$this->_loop['$loop_name']";
+					break;
+
+					case 'LOOP_NUMBER':
+						$loop_name = '_'.strtolower($vars[($loop - 1)]);
+						$output = "(\$this->_loop['$loop_name'] + 1)";
+					break;
+					
+					case 'LOOP_SIZE':
+						$output = "count(\$this->_vars['$vars[$loop]']);";
+					break;
+				}
+				
 			}
 		}
 		
-        return $_output;
+        return $output;
     }
-    
+
+	function _compile_tag_define($options)
+	{
+		$options = explode('=', $options);
+		$size = count($options);
+		$output = '';
+
+		for ($loop = 0; $loop < $size; $loop++)
+		{
+			//need to addslashed, check for variable type
+			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = '".trim($options[($loop + 1)])."';";
+			$loop++;
+
+		}
+
+		return $output;
+	}
+	
     /*
 		Parse If tags
 		Format: <!-- if isset({ $S_FORUM_RULES }) || { $S_FORUM_RULES } -->
 		
 		To Do: add user frendly tag NOT, etc
-			<!-- if isset({ $S_FORUM_RULES }) || { NOT $S_FORUM_RULES } -->
+			<!-- if isset({ $S_FORUM_RULES }) || NOT { $S_FORUM_RULES } -->
     */
 	function _compile_tag_if($options, $elseif = false)
 	{
@@ -427,7 +457,7 @@ class core_template
 		$options = ($postition !== false) ? substr($options, $postition + 1) : substr($options, 1);
 		$loop_name = '_'.strtolower(str_replace('#' , '_', $options));
 
-        $output =  "\n\${$loop_name}_count = (isset($loop_code)) ? ((is_integer($loop_code)) ? $loop_code : count($loop_code)) : false;\n";
+        $output =  "\n\${$loop_name}_count = isset($loop_code) ? (is_integer($loop_code) ? $loop_code : (is_array($loop_code) ? count($loop_code) : false)) : false;\n";
         $output .= "if (\${$loop_name}_count) {\n";
 
 		$output .= "for (\$this->_loop['$loop_name'] = 0; \$this->_loop['$loop_name'] < \${$loop_name}_count; \$this->_loop['$loop_name']++) {";
