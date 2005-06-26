@@ -32,10 +32,10 @@ To do
 class session
 {
 	var $data = array();
-	var $browser = '';
-	var $ip = '';
-	var $url = '';
-	var $page = '';
+	var $browser;
+	var $ip;
+	var $url;
+	var $page;
 	var $load;
 	var $new_data = false;
 	var $new_session = false;
@@ -49,19 +49,20 @@ class session
 		
 		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
-		$this->browser = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'];
+		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'], 0, 100);
 		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
-		$this->page = $mod;
 
 		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
 		{
-			$pos = $pos + strlen(INDEX_PAGE.'?mod='); 
+			$pos = $pos + strlen(INDEX_PAGE.'?mod=');
 			$this->url = substr($this->url, $pos);
 			
 			if (($pos = strpos($this->url, 'sid')) !== false)
 			{
 				$this->url = substr($this->url, 0, $pos-1);
 			}
+
+			$this->url = substr($this->url, 0, 100);
 		}
 		else
 		{
@@ -118,7 +119,7 @@ class session
 
 			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
-	
+
 			// Did the session exist in the DB?
 			if (isset($this->data['user_id']))
 			{
@@ -137,14 +138,7 @@ class session
 						$this->session_save = true;
 					}
 					
-					if ($this->data['session_data'])
-					{
-						$this->data['session_data'] = unserialize($this->data['session_data']);
-					}
-					else
-					{
-						$this->data['session_data'] = array();
-					}
+					$this->data['session_data'] = ($this->data['session_data']) ? unserialize($this->data['session_data']) : array();
 					
 					$this->is_user = ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER)) ? true : false;
 					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS) ? true : false;
@@ -362,7 +356,7 @@ class session
 		
 		$this->data['session_last_visit'] = ($this->data['session_time']) ? $this->data['session_time'] : (($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : time());
 		$view_online = (!$this->data['user_allow_viewonline']) ? 0 : (($session_data['view_online']) ? 1 : 0);
-		
+
 		$sql_array = array(
 			'session_user_id'		=> (int) $this->data['user_id'],
 			'session_start'			=> (int) $this->time,
@@ -388,7 +382,6 @@ class session
 		}
 		else
 		{	
-// maybe make a loop here incase, just incase the session_id already exsits
 			$sql_array['session_id'] = (string) md5(unique_id());
 
 			$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
@@ -638,7 +631,7 @@ class session
 			'session_time'			=> (int) $this->time,
 			'session_page'			=> (string) $this->page,
 			'session_url'			=> (string) $this->url,
-			'session_data'			=> (string) serialize($this->data['session_data']),
+			'session_data'			=> ($this->data['session_data']) ? serialize($this->data['session_data']) : '',
 		);
 
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "

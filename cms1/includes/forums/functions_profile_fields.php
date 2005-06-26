@@ -128,7 +128,8 @@ class custom_profile
 			if (($cp_result = $this->validate_profile_field($row['field_type'], $check_value, $row)) !== false)
 			{
 				// If not and only showing common error messages, use this one
-				$error = '';
+				$error = false;
+
 				switch ($cp_result)
 				{
 					case 'FIELD_INVALID_DATE':
@@ -158,7 +159,11 @@ class custom_profile
 						}
 						break;
 				}
-				$cp_error[] = $error;
+
+				if ($error)
+				{
+					$cp_error[] = $error;
+				}
 			}
 		}
 		$_CLASS['core_db']->sql_freeresult($result);

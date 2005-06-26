@@ -24,8 +24,7 @@
 // -------------------------------------------------------------
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
-    die();
+    die;
 }
 
 require_once($site_file_root.'includes/forums/functions.php');

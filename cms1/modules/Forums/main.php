@@ -22,8 +22,8 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
-if (!defined('VIPERAL')) {
-    header('location: ../../');
+if (!defined('VIPERAL'))
+{
     die();
 }
 

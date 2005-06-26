@@ -26,8 +26,7 @@
 
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
-    die();
+    die;
 }
 
 // Initial var setup

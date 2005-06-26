@@ -1,4 +1,8 @@
 <?php
+if (!defined('VIPERAL') || VIPERAL != 'Admin')
+{
+	die; 
+}
 
 //Need to be in the admin menu look into making a new one or using this one :-)
 /*if ($_CLASS['auth']->acl_get('a_ban'))

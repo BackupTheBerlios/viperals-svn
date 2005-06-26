@@ -11,21 +11,21 @@
 //																//
 //**************************************************************//
 
-if (!defined('VIPERAL')) {
-    header('location: /');
+if (!defined('VIPERAL'))
+{
     die;
 }
 
-global $_CLASS, $mainindex, $SID, $config, $MAIN_CFG,  $adminindex;
+global $_CLASS, $config, $_CORE_CONFIG;
 
-if (is_user()) {
-
+if ($_CLASS['core_user']->is_user)
+{
     $this->content = '<div style="text-align: center;">';
       
-	if ($_CLASS['user']->data['user_avatar'])	{
-		
+	if ($_CLASS['core_user']->data['user_avatar'])
+	{
 		$avatar_img = '';
-		switch ($_CLASS['user']->data['user_avatar_type'])
+		switch ($_CLASS['core_user']->data['user_avatar_type'])
 		{
 			case AVATAR_UPLOAD:
 				$avatar_img = $config['avatar_path'] . '/';
@@ -35,32 +35,38 @@ if (is_user()) {
 				break;
 		}
 		
-		$avatar_img .= $_CLASS['user']->data['user_avatar'];
+		$avatar_img .= $_CLASS['core_user']->data['user_avatar'];
 
-		$this->content .= '<img src="' . $avatar_img . '" width="' . $_CLASS['user']->data['user_avatar_width'] . '" height="' . $_CLASS['user']->data['user_avatar_height'] . '" border="0" alt="avatar" />';
+		$this->content .= '<img src="' . $avatar_img . '" width="' . $_CLASS['core_user']->data['user_avatar_width'] . '" height="' . $_CLASS['core_user']->data['user_avatar_height'] . '" border="0" alt="avatar" />';
 	
 	}
 	
-	$this->content .= '<br />'.$_CLASS['user']->lang['WELCOME'].'<br />' . $_CLASS['user']->data['username'].'<br /><hr /></div><b>Your Info</b><br /><br />'
-	.'<div style="margin-left: 12px;"><a href="'.getlink('Control_Panel&amp;i=2').'">'.$_CLASS['user']->lang['PRIVATE_MESSAGE'].'</a></b><hr />'.sprintf($_CLASS['user']->lang['NEW_PMS'], $_CLASS['user']->data['user_new_privmsg']) . '<br />'
-	.sprintf($_CLASS['user']->lang['UNREAD_PM'], $_CLASS['user']->data['user_unread_privmsg']) . '<br /><br />'
-	//.$_CLASS['user']->format_date($_CLASS['user']->data['user_lastvisit'])
-	.'<a href="'.getlink('Control_Panel').'">Control Panel</a><br />'
-	.'<a href="'.getlink('Control_Panel&amp;mode=logout').'">'.$_CLASS['user']->lang['LOGOUT'].'</a><br /></div>';
+	$this->content .= '<br />'.$_CLASS['core_user']->lang['WELCOME'].'<br />' . $_CLASS['core_user']->data['username'].'<br /><hr /></div><b>Your Info</b><br /><br />'
+	.'<div style="margin-left: 12px;"><a href="'.generate_link('Control_Panel&amp;i=2').'">'.$_CLASS['core_user']->lang['PRIVATE_MESSAGE'].'</a><hr />'.sprintf($_CLASS['core_user']->lang['NEW_PMS'], $_CLASS['core_user']->data['user_new_privmsg']) . '<br />'
+	.sprintf($_CLASS['core_user']->lang['UNREAD_PM'], $_CLASS['core_user']->data['user_unread_privmsg']) . '<br /><br />'
+	//.$_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_lastvisit'])
+	.'<a href="'.generate_link('Control_Panel').'">Control Panel</a><br />'
+	.'<a href="'.generate_link('Control_Panel&amp;mode=logout').'">'.$_CLASS['core_user']->lang['LOGOUT'].'</a><br /></div>';
+}
+else
+{
+    $this->content .= '<br /><form action="'.generate_link('Control_Panel&amp;mode=login').'" method="post"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td>
+    '.$_CLASS['core_user']->lang['USERNAME'].'</td><td align="right"><input class="post" type="text" name="username" size="10" maxlength="25" /></td></tr><tr><td>
+    '.$_CLASS['core_user']->lang['PASSWORD'].'</td><td align="right"><input class="post" type="password" name="password" size="10" maxlength="20" /></td></tr><tr><td>';
 
-} else {
-    
-    $this->content .= '<br /><form action="'.getlink('Control_Panel&amp;mode=login').'" method="post"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td>
-    '.$_CLASS['user']->lang['USERNAME'].'</td><td align="right"><input class="post" type="text" name="username" size="10" maxlength="25" /></td></tr><tr><td>
-    '.$_CLASS['user']->lang['PASSWORD'].'</td><td align="right"><input class="post" type="password" name="password" size="10" maxlength="20" /></td></tr><tr><td>';
-
-    $this->content .= (($MAIN_CFG['user']['require_activation'] != USER_ACTIVATION_DISABLE) ? '(<a href="'.getlink('Control_Panel&amp;mode=register').'">'.$_CLASS['user']->lang['REGISTER'].'</a>)' : '') . '</td>
-    <td align="right">
-        <input type="hidden" name="redirect" value="'.htmlspecialchars($_CLASS['user']->url).'" />
-        <input class="btnlite" type="submit" name="login" value="'.$_CLASS['user']->lang['LOGIN'].'" />
-		<input type="hidden" name="sid" value="'.$SID.'" />
-    </td></tr></table></form>';
-
+    $this->content .= (($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_DISABLE) ? '(<a href="'.generate_link('Control_Panel&amp;mode=register').'">'.$_CLASS['core_user']->lang['REGISTER'].'</a>)' : '') . '</td>
+		<td align="right">
+			<input type="hidden" name="redirect" value="'.htmlspecialchars($_CLASS['core_user']->url).'" />
+			<input class="button" type="submit" name="login" value="'.$_CLASS['core_user']->lang['LOGIN'].'" /><br/>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<input name="autologin" type="checkbox"><span class="gensmall">Remmeber me</span>
+		</td>
+	</tr>
+	</table>
+</form>';
 }
 
 $who_where['guest'] = $who_where['user'] = $who_where['staff'] = false;
@@ -73,11 +79,13 @@ foreach ($session_users as $row)
 {
 	if ($row['user_id'] != ANONYMOUS && $row['user_id'] != $prev_id)
   	{
-		if (!is_admin() && (!$row['user_allow_viewonline'] || !$row['session_viewonline']))
+		if (!$_CLASS['core_user']->is_admin && (!$row['user_allow_viewonline'] || !$row['session_viewonline']))
 		{
 			$online['hidden']++;
 			continue;
-		} else {
+		}
+		else
+		{
 			$online['user']++;
 		}
 		
@@ -88,56 +96,42 @@ foreach ($session_users as $row)
 		
 		$prev_id = $row['user_id'];
 	
-	} elseif ($row['user_id'] == ANONYMOUS && !in_array($row['session_ip'], $prev_ip)) {
-	
-			$online['guest']++;
-			
-	} else {
-	
-		continue;
-		
+	}
+	elseif ($row['user_id'] == ANONYMOUS && !in_array($row['session_ip'], $prev_ip))
+	{
+		$online['guest']++;		
+	}
+	else
+	{
+		continue;	
 	}
 	
 	$prev_ip[] = $row['session_ip'];
 	$online['total']++;
 
-	switch ($row['session_page'])
+	if (!$row['session_page'])
 	{
-	
-		case '':
-			if (eregi($adminindex, $row['session_url'])) {
-				$row['session_page'] = 'Admin Menu';
-				$row['session_url'] = (is_admin()) ? $row['session_url'] : $mainindex.'?'.$SID;
-				break;
-				
-			} else {
-			
-				$row['session_page'] = 'Home';
-				$row['session_url'] = $mainindex.'?'.$SID;
-				break;
-				
-			}
-		
-		default:
-			$row['session_page'] = eregi_replace('_',' ', $row['session_page']);
-			$row['session_url'] .= $SID;
-		break;
+		$row['session_page'] = 'Home';
+		$row['session_url'] = generate_link();
+	}	
+	else
+	{
+		$row['session_page'] = eregi_replace('_',' ', $row['session_page']);
+		$row['session_url'] = generate_link($row['session_url']);
 	}
 	
-	if ($row['user_id'] != ANONYMOUS) {
-	
-		$link = (($row['user_type'] <> USER_IGNORE) ? '<a href="'.getlink('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>' : $row['username']).' &gt;';
+	if ($row['user_id'] != ANONYMOUS)
+	{
+		$link = (($row['user_type'] <> USER_IGNORE) ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>' : $row['username']).' &gt;';
 		$who_where['user'] .= $online['user'] .': '.$link.' <a href="'.$row['session_url'].'">'.$row['session_page'].'</a><br />';
-	
-	} else {	
-	
+	}
+	else
+	{
 		$who_where['guest'] .= $online['guest'] .': <a href="'.$row['session_url'].'">'.$row['session_page'].'</a><br />';
 	}
 
 }
 unset($session_users);
-
-//$total_topics = $config['num_topics'];
 
 $this->content .= '
 <hr /><table >
@@ -148,7 +142,7 @@ $this->content .= '
   </tr>
   <tr> 
 	<td align="center" valign="middle" rowspan="1"><img src="images/blocks/user/stats.gif" alt="statistics" border="0" /></td>
-	<td class="gensmall" align="left" width="100%">Members&nbsp;<b>'.$config['num_users'].'</b><br />Latest:&nbsp;<a href="' . getlink('Members_List&amp;mode=viewprofile&amp;u='.$config['newest_user_id']) . '">'. $config['newest_username']. '</a>
+	<td class="gensmall" align="left" width="100%">Members&nbsp;<b>'.$config['num_users'].'</b><br />Latest:&nbsp;<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u='.$config['newest_user_id']) . '">'. $config['newest_username']. '</a>
 	<br />Post&nbsp;<b>'.$config['num_posts'].'</b><br /><hr />
 	</td>
   </tr>
@@ -183,14 +177,12 @@ $this->content .= '
 		
 	</td>
   </tr>';
-
-/* Friend Online
-
-
-if ($_CLASS['user']->data['user_id'] != ANONYMOUS)
+  
+/*
+if ($_CLASS['core_user']->is_user)
 {
-$logged_visible_friends_online = 0;
-$logged_hidden_friends_online = 0;
+	$logged_visible_friends_online = 0;
+	$logged_hidden_friends_online = 0;
 
 	// Now figure out how many friends are online and make a list of them
 	$sql = 'SELECT DISTINCT 
@@ -206,14 +198,14 @@ $logged_hidden_friends_online = 0;
 			INNER JOIN
 				' . USERS_TABLE . ' u 
 				ON s.session_user_id = u.user_id
-			WHERE 	z.user_id =  ' . $_CLASS['user']->data['user_id'] . ' 
+			WHERE 	z.user_id =  ' . $_CLASS['core_user']->data['user_id'] . ' 
 				AND z.friend = 1 
 			GROUP BY z.zebra_id';
 
-	$result = $_CLASS['db']->sql_query($sql);
+	$result = $_CLASS['core_db']->sql_query($sql);
 	$update_time = $config['load_online_time'] * 60;
 
-	while( $row = $_CLASS['db']->sql_fetchrow($result) )
+	while( $row = $_CLASS['core_db']->sql_fetchrow($result) )
 	{
 		// If online session time is too old then skip this user
 		if( time() - $update_time > $row['online_time'] )
@@ -241,13 +233,13 @@ $logged_hidden_friends_online = 0;
 		if (($row['user_allow_viewonline'] && $row['viewonline']) || $auth->acl_get('u_viewonline'))
 		{
 			// TODO: If friend has you on ignore list then don't add
-			$friends_online_link = "<a href=\"memberlist.$phpEx$SID&amp;mode=viewprofile&amp;u=" . $row['user_id'] . '">' . $friends_online_link . '</a>';
+			$friends_online_link = "<a href=\"memberlist.$phpEx&amp;mode=viewprofile&amp;u=" . $row['user_id'] . '">' . $friends_online_link . '</a>';
 			$friends_online_userlist .= ($friends_online_userlist != '') ? ', ' . $friends_online_link : $friends_online_link;
 		}
 	}
 	$total_online_friends = $logged_visible_friends_online + $logged_hidden_friends_online;
 }
-If ($_CLASS['user']->data['user_id'] != ANONYMOUS)
+If ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 {
   $this->content .= '
   <tr> 
@@ -265,10 +257,11 @@ If ($_CLASS['user']->data['user_id'] != ANONYMOUS)
 		<b>'.$total_online_friends.'</b>&nbsp;Total Friends 
 		<br />
 		<br />
-		[<a href="'.getlink('Control_Panel'.$SID.'&i=5').'">Manage List</a>]
+		[<a href="'.generate_link('Control_Panel&i=5').'">Manage List</a>]
 	</td>
   </tr>';
 }*/
+
 $this->content .= '</table>';
 
 unset($prev_id);

@@ -13,36 +13,37 @@
 
 if (!defined('VIPERAL'))
 {
-    Header('Location: ../');
-    die();
+    die;
 }
 
-global $prefix, $_CLASS, $bgcolor1, $bgcolor2, $_CORE_CONFIG;
+global $prefix, $_CLASS, $_CORE_CONFIG;
 
 $this->content = '<div style="width: 100%; height: '.$_CORE_CONFIG['quick_message']['height'].'px; overflow: auto;">';
 
-$bgcolor = '';
 
 $result = $_CLASS['core_db']->sql_query('select * from '.$prefix.'_quick_message order by time DESC LIMIT 10');
 
-while ($row = $_CLASS['core_db']->sql_fetchrow($result)) {
+while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+{
 
-	$bgcolor = ($bgcolor == $bgcolor1) ? $bgcolor2 : $bgcolor1;
-	
-	$wordsarray = explode(' ',$row['message']);
+	$words_array = explode(' ',$row['message']);
 	$row['message'] = '';
 
-    foreach($wordsarray as $words)
+    foreach($words_array as $words)
     {
-		if (substr($words, 0,4) != '[url')
+		if (substr($words, 0, 4) != '[url')
 		{
 			$row['message'] .= ' '.wordwrap($words, 18, "\n", 1);
-		} else {
+		}
+		else
+		{
 			$row['message'] .= $words;
 		}
     }
+
+	unset($words_array, $words);
 	
-	$this->content .= '<div style="padding: 4px; background-color:' . $bgcolor . ';">';
+	$this->content .= '<div style="padding: 4px;">';
 	
 	if ($row['user_name'])
 	{
@@ -64,7 +65,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result)) {
 		$row['message'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['message']);
 	}
 	
-	$this->content .= $row['message'].'<br />'.(($_CORE_CONFIG['quick_message']['time']) ? $_CLASS['core_user']->format_date($row['time']) : '').'</div>';
+	$this->content .= $row['message'].'<br />'.(($_CORE_CONFIG['quick_message']['time']) ? $_CLASS['core_user']->format_date($row['time']) : '').'</div><hr/>';
 }
 
 $_CLASS['core_db']->sql_freeresult($result);
@@ -86,7 +87,7 @@ if (!$_CLASS['core_user']->is_user)
 }
 
 $this->content .= 'Message <br/> <textarea name="message" style="width:90%;" rows="3"></textarea><br /><br />
-			<input class="btnlite" type="submit" name="submit" value="Post" />
+			<input class="button" type="submit" name="submit" value="Post" />
 		</div></form>
 		';
 

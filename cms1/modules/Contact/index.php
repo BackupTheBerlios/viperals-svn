@@ -26,47 +26,8 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
-// Make template
-	$mail_message = '<br />' .$message . '<br /><br />
-	<center>Message Sent from '. $_CORE_CONFIG['global']['site_url'] .'<br>
-	'. $_CLASS['core_user']->lang['SENT_BY'] . ': ' . $sender_name . '<br />
-	'. $_CLASS['core_user']->lang['SENDER_EMAIL'] . ': '. $sender_email . '<br />
-	'.	$_CLASS['core_user']->lang['WITH_IP'] . $_CLASS['core_user']->ip . '<br /></center>';
-	
-	/*if (!$preview)
-	{
-		if ($_CLASS['core_user']->is_admin && $send_to )
-		{
-			$to = $send_to;
-		}
-		else
-		{
-			$to = $_CORE_CONFIG['global']['admin_mail'];        
-		}
-	
-		$subject = $_CORE_CONFIG['global']['site_name'] . $_CLASS['core_user']->lang['FEEDBACK'];
-	  
-		if (send_mail($mailer_message, $mail_message, true, $subject, $to,  $to_name='', $sender_email, $sender_name))
-		{
-			trigger_error($_CLASS['core_user']->lang['FEEDBACK_SENT']);
-		}
-		else
-		{
-			$mail_message = $_CLASS['core_user']->lang['FEEDBACK_PROBLEM'];
-			
-			if (is_admin())
-			{
-				$mail_message .=  '<br /><div align="center"><b>'.$_CLASS['PHPMailer']->ErrorInfo.'</b></div>';
-			}
-		
-			trigger_error($mail_message);
-		}
-	}
-	else
-	{
-		echo '<div align="center"><b>'.$_CLASS['core_user']->lang['MESSAGE_PREVIEW'].'</b></div>';
-		echo $mail_message;
-	}*/
+	$body = $_CLASS['core_template']->display('modules/Contact/email/index.html', true);
+	print $body;
 }
 
 

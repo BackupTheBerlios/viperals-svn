@@ -75,7 +75,10 @@ class ucp_groups extends module
 		}
 		$_CLASS['core_db']->sql_freeresult($result);
 
-		$_CLASS['core_template']->assign('S_CHANGE_DEFAULT', ($_CLASS['auth']->acl_get('u_chggrp')));
+		$_CLASS['core_template']->assign(array(
+			'S_CHANGE_DEFAULT' 	=> ($_CLASS['auth']->acl_get('u_chggrp')),
+			'S_DISPLAY_FORM'	=> true,
+		));
 
 		$this->display($_CLASS['core_user']->get_lang('UCP_GROUPS'), 'ucp_groups_membership.html');
 	}

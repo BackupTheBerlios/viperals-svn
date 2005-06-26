@@ -845,6 +845,7 @@ class ucp_main extends module
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_MAIN_' . strtoupper($mode)],
 			'S_DISPLAY_MARK_ALL'		=> ($mode == 'watched' || ($mode == 'drafts' && !isset($_GET['edit']))) ? true : false, 
 			'S_HIDDEN_FIELDS'			=> (isset($s_hidden_fields)) ? $s_hidden_fields : '',
+			'S_DISPLAY_FORM'			=> true,
 			'S_UCP_ACTION'				=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"),
 		));
 		

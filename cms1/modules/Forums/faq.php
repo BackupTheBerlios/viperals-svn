@@ -53,7 +53,6 @@ $counter_2 = 0;
 $help_block = array();
 $help_block_titles = array();
 
-// should be a way to combine these two
 foreach ($_CLASS['core_user']->lang['help'] as $help_ary)
 {
 	if ($help_ary[0] != '--')

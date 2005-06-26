@@ -56,6 +56,7 @@ require($site_file_root.'includes/forums/functions_user.php');
 
 //define the undefineds
 $_CLASS['core_template']->assign(array(
+	'S_DISPLAY_FORM'		=> true,
 	'S_SHOW_PM_BOX'			=> false,
 	'S_SHOW_COLOUR_LEGEND'	=> false,
 	'USERNAME'				=> '',

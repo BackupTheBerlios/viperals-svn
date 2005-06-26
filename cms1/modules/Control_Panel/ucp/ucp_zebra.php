@@ -18,10 +18,9 @@ class ucp_zebra extends module
 		global $_CLASS;
 		
 		$_CLASS['core_template']->assign(array(
-			'S_PRIVMSGS'	=> false,
-			'ERROR'			=> false,
-			'USERNAMES'		=> false,
-			'S_USERNAME_OPTIONS' => false)
+			'ERROR'				=> false,
+			'USERNAMES'			=> false,
+			'S_USERNAME_OPTIONS'=> false)
 		);
 		
 		$submit	= (!empty($_POST['submit']) || !empty($_GET['add'])) ? true : false;

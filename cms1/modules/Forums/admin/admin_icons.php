@@ -10,6 +10,10 @@
 
 /**
 */
+if (!defined('VIPERAL') || VIPERAL != 'Admin')
+{
+	die; 
+}
 
 // Do we have general permissions?
 if (!$_CLASS['auth']->acl_get('a_icons'))

@@ -10,11 +10,9 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
-
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
-    die();
+    die;
 }
 
 // Grab only parameters needed here
@@ -316,7 +314,7 @@ if ($mode == 'edit')
 // Delete triggered ?
 if ($mode == 'delete')
 {
-	if ($_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id && ((!$_CLASS['core_user']->is_user && $poster_id == ANONYMOUS && $poster_ip == $_CLASS['core_user']->ip) || ($_CLASS['core_user']->is_user && $poster_id == $_CLASS['core_user']->data['user_id'])))
+	if ($_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id && ((!$_CLASS['core_user']->is_user && $poster_id == ANONYMOUS && $poster_ip && $poster_ip == $_CLASS['core_user']->ip) || ($_CLASS['core_user']->is_user && $poster_id == $_CLASS['core_user']->data['user_id'])))
 	{
 		$user_deletable = true;
 	}

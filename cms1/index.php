@@ -16,17 +16,12 @@ define('VIPERAL', 'CMS');
 
 //echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
 $site_file_root = 'C:/apachefriends/xampp/cms/';
-
 require($site_file_root.'core.php');
 
+// needed for the content module 
+//$content = key($_GET);
 
-$mod = key($_GET);
-
-if (!isset($_GET[$mod]) || $_GET[$mod])
-{
-	$mod = false;
-}
-//get_variable('mod', 'REQUEST', false);
+$mod = get_variable('mod', 'REQUEST', false);
 
 if (!$mod)
 {
@@ -62,7 +57,9 @@ else
 $_CLASS['core_db']->sql_freeresult($result);
 $path = $site_file_root.$path;
 
-//
+// Bug with more then one homepage
+// Move this to Display class or something
+
 if (!$_CORE_MODULE || !file_exists($path))
 {
 	$_CORE_MODULE['sides'] = BLOCK_ALL;
@@ -88,6 +85,8 @@ if (!$_CORE_MODULE || !file_exists($path))
 	}
 }
 
+$_CLASS['core_user']->page = $mod;
+
 if (!$_CORE_MODULE['active'])
 {
 	if (!$_CLASS['core_auth']->admin_auth('modules'))
@@ -103,16 +102,6 @@ if (!$_CLASS['core_display']->homepage && !$_CLASS['core_auth']->auth($_CORE_MOD
 	trigger_error('Not Auth!');
 }
 
-/*
-if ($_CORE_MODULE['editor'] && $MAIN_CFG['global']['wysiwyg'] && $_CLASS['core_user']->data['wysiwyg'])
-{
-	loadclass($site_file_root.'includes/core_editor.php');
-	$_CLASS['core_editor']->setup($_CORE_MODULE['editor'], $_CORE_MODULE['editortype']);
-}*/
-
-//loadclass($site_file_root.'includes/core_editor.php', 'core_editor');
-//$_CLASS['core_editor']->setup();
-	
 require($path);
 
 ?>

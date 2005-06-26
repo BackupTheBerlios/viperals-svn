@@ -43,17 +43,15 @@
 	<!-- ENDIF -->
 
 	<!-- IF isset({ $message_block_top }) -->
-		<div class="messageblock">
-		<!-- LOOP $message_block_top -->
-			<div class="title" onclick="blockswitch2('{ $message_block_top:ID }');" style="cursor:pointer">{ $message_block_top:TITLE }
-			<!-- IF { $message_block_top:EDIT_LINK } -->[ <!-- IF { $message_block_top:EXPIRES } -->{ $message_block_top:EXPIRES } | <!-- ENDIF -->
-			<a href="{ $message_block_top:EDIT_LINK }" >{ $message_block_top:L_EDIT }</a> ]<!-- ENDIF --></div>
-			<div class="content" { $message_block_top:HIDE } id="pe{ $message_block_top:ID }">{ $message_block_top:CONTENT }</div>
-		<br />
-		<!-- ENDLOOP -->
-		</div>
+	<div class="messageblock">
+	<!-- LOOP $message_block_top -->
+		<div class="title" onclick="blockswitch2('{ $message_block_top:ID }');" style="cursor:pointer">{ $message_block_top:TITLE }
+		<!-- IF { $message_block_top:EDIT_LINK } -->[ <!-- IF { $message_block_top:EXPIRES } -->{ $message_block_top:EXPIRES } | <!-- ENDIF -->
+		<a href="{ $message_block_top:EDIT_LINK }" >{ $message_block_top:L_EDIT }</a> ]<!-- ENDIF --></div>
+		<div class="content" { $message_block_top:HIDE } id="pe{ $message_block_top:ID }">{ $message_block_top:CONTENT }</div>
 	<br />
-
+	<!-- ENDLOOP $message_block_top -->
+	</div><br />
 	<!-- ENDIF -->
 
 <!-- IF isset({ $block_center }) -->
@@ -67,6 +65,6 @@
 			</div>
 		</div>
 	</div>
-	<!-- ENDLOOP -->
+	<!-- ENDLOOP $block_center -->
 	<br />
 <!-- ENDIF -->

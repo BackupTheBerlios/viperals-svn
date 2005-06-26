@@ -10,7 +10,7 @@
 			</div>
 		</div>
 			{/section}
-	<!-- ENDIF -->
+	<!-- ENDIF $block_bottom -->
 	
 	<!-- IF isset({ $message_block_bottom }) -->
 	<br/>
@@ -21,7 +21,7 @@
 			<a href="{ $message_block_bottom:EDIT_LINK }" >{ $message_block_bottom:L_EDIT }</a> ]<!-- ENDIF --></div>
 			<div class="content" { $message_block_bottom:HIDE } id="pe{ $message_block_bottom:ID }">{ $message_block_bottom:CONTENT }</div>
 		<br />
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $message_block_bottom -->
 	
 		</div>
 	<br />

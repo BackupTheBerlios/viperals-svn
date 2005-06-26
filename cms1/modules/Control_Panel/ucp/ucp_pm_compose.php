@@ -27,18 +27,15 @@ function compose_pm($id, $mode, $action)
 	}
 	
 	$_CLASS['core_template']->assign(array(
+		'S_DISPLAY_FORM'				=> false,
 		'S_DRAFT_LOADED'				=> false, 
 		'S_SHOW_DRAFTS'					=> false,
 		'S_POST_REVIEW'					=> false,
-		'S_DELETE_ALLOWED'				=> false, 
-		'S_SHOW_TOPIC_ICONS'			=> false,
 		'S_INLINE_ATTACHMENT_OPTIONS'	=> false,
 		'S_EDIT_REASON'					=> false, 
-		'S_CLOSE_PROGRESS_WINDOW'		=> false,
 		'S_HAS_ATTACHMENTS'				=> false,
 		'to_recipient'					=> false,
 		'bcc_recipient'					=> false, 
-		'S_SHOW_SMILEY_LINK'			=> false,
 		'S_DISPLAY_HISTORY'				=> false,
 		'S_DISPLAY_PREVIEW'				=> false)
 	);

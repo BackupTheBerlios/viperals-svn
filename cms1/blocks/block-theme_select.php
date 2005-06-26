@@ -10,23 +10,18 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-//<select name="prevtheme" onchange="submit();">
 
 if (!defined('VIPERAL'))
 {
-    Header('Location: ../');
-    die();
+    die;
 }
 
 $this->content = '
-<div style="text-align: center;">
-	<form action="'.$_SERVER['REQUEST_URI'].'" method="post">
-		<select name="prevtheme">
-'.theme_select().'
-		</select>
-		<br /><br /><input class="btnlite" value="Select" type="submit" />
-	</form>
-</div>
-';
+<form action="'.generate_link($_CLASS['core_user']->url).'" method="post">
+	<p style="text-align: center;">
+		<select name="prevtheme" onchange="this.form.submit();">'.theme_select().'</select>
+		<br /><br /><input class="button" value="Select" type="submit" />
+	</p>
+</form>';
 
 ?>

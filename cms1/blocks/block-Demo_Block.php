@@ -13,8 +13,7 @@
 
 if (!defined('VIPERAL'))
 {
-    Header('Location: ../');
-    die();
+    die;
 }
 
 $this->content = 'Content here';

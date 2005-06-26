@@ -10,7 +10,10 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
-
+if (!defined('VIPERAL') || VIPERAL != 'Admin')
+{
+	die; 
+}
 
 // Grab and set some basic parameters
 //

@@ -265,7 +265,7 @@ function generate_link($link = false, $link_options = false)
 	
 	if (!$link)
 	{
-		$link = ($file) ? $file : '?';
+		$link = $file;
 
 		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
 		{
@@ -279,10 +279,8 @@ function generate_link($link = false, $link_options = false)
 			$link = $_CORE_MODULE['title'].$link;
 		}
 		
-		//$link = $file.'?mod='.$link;
-		$link = (($file) ? $file.'?mod=' : '?').$link;
-		
-		// somtimes it ok to repeat strpos($link, '?') !== false is to much :-)
+		$link = $file.'?mod='.$link;
+
 		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
 		{
 			$link .= '&amp;sid='.$_CLASS['core_user']->data['session_id'];
@@ -633,54 +631,6 @@ function script_close($save = true)
 	{
 		$_CLASS['core_db']->sql_close();
 	}
-	
-	/*
-	// Call cron-type script
-	if (!defined('IN_CRON'))
-	{
-		$cron_type = '';
-
-		if (time() - $config['queue_interval'] > $config['last_queue_run'] && !defined('IN_ADMIN') && file_exists($phpbb_root_path . 'cache/queue.' . $phpEx))
-		{
-			// Process email queue
-			$cron_type = 'queue';
-		}
-		else if (method_exists($cache, 'tidy') && time() - $config['cache_gc'] > $config['cache_last_gc'])
-		{
-			// Tidy the cache
-			$cron_type = 'tidy_cache';
-		}
-		else if (time() - (7 * 24 * 3600) > $config['database_last_gc'])
-		{
-			// Tidy some table rows every week
-			$cron_type = 'tidy_database';
-		}
-
-		if ($cron_type)
-		{
-			$template->assign_var('RUN_CRON_TASK', '<img src="' . $phpbb_root_path . 'cron.' . $phpEx . '?cron_type=' . $cron_type . '" width="1" height="1" />');
-		}
-	} */
-	
-	/*
-	if (!class_exists('tidy'))
-	{
-		$html = ob_get_clean();
-		
-		// Specify configuration
-		$config = array(
-				   'indent'        => true,
-				   'output-xhtml'  => true,
-				   'wrap'          => 200);
-		
-		// Tidy
-		$tidy = new tidy;
-		$tidy->parseString($html, $config, 'utf8');
-		$tidy->cleanRepair();
-		
-		// Output
-		echo $tidy;
-	}*/
 }
 
 function on_page($num_items, $per_page, $start)
@@ -694,6 +644,7 @@ function on_page($num_items, $per_page, $start)
 	return sprintf($_CLASS['core_user']->lang['PAGE_OF'], $on_page, max(ceil($num_items / $per_page), 1));
 }
 
+// to keep or not to keep ?
 function session_users()
 {
 	global $_CLASS, $config;
@@ -748,13 +699,13 @@ function theme_select($default = false)
 	$handle = opendir($site_file_root.'themes');
 	while ($file = readdir($handle))
 	{
-		if (!strpos('.',$file))
+		if ($file{0} !== '.')
 		{
 			if (file_exists($site_file_root."themes/$file/index.php"))
 			{
 				$themetmp[] = array('file' => $file, 'template'=> true);
 			}
-		} 
+		}
 	}
 	
 	closedir($handle);
@@ -774,18 +725,14 @@ function theme_select($default = false)
 	return $theme;
 }
 
-// fix me, add preg replace,
+// this is not really trimming is it, maybe rename this and remove trim
 function trim_text($text, $replacement = ' ')
 {
-	
-	$text = str_replace(array("\r\n", "\n"), $replacement, $text);
-	return trim($text);
+	return trim(str_replace(array("\r\n", "\n"), $replacement, $text));
 }
 
 function url_redirect($url = false, $save = true)
 {
-    global $cache;
-
 	script_close($save);
 	
 	$url = ($url) ? $url : generate_link(array('full' => true));
@@ -800,9 +747,5 @@ function url_redirect($url = false, $save = true)
 	header('Location: ' . $url);
     exit;
 }
-
-/////////////////////
-/// To be removed ///
-/////////////////////
 
 ?>

@@ -14,6 +14,10 @@
 // TODO
 // Avatar gallery ...
 // Mass user pref setting via group membership
+if (!defined('VIPERAL') || VIPERAL != 'Admin')
+{
+	die; 
+}
 
 require_once($site_file_root.'includes/forums/functions_user.'.$phpEx);
 

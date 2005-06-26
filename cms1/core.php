@@ -59,7 +59,7 @@ load_class(false, 'core_db', 'sql_db');
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-$_CLASS['core_error_handler']->stop();
+//$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))

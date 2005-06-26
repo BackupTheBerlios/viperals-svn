@@ -713,7 +713,7 @@ class parse_message extends bbcode_firstpass
 	{
 		global $config, $_CLASS;
 		
-		$mode = ($mode != 'post') ? 'sig' : 'post';
+		$mode = ($mode != 'sig') ? 'post' : 'sig';
 
 		$this->allow_img_bbcode = $allow_img_bbcode;
 		$this->allow_flash_bbcode = $allow_flash_bbcode;

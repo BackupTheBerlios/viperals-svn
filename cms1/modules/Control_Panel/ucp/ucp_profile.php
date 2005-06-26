@@ -29,9 +29,10 @@ class ucp_profile extends module
 		$preview	= (!empty($_POST['preview'])) ? true : false;
 		$submit		= (!empty($_POST['submit'])) ? true : false;
 		$delete		= (!empty($_POST['delete'])) ? true : false;
+		$module_link	= generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
+
 		$error = $data = array();
 		$s_hidden_fields = '';
-		$module_link = generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
 		
 		switch ($mode)
 		{
@@ -202,7 +203,7 @@ class ucp_profile extends module
 					'L_CHANGE_PASSWORD_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['CHANGE_PASSWORD_EXPLAIN'], $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
 				
 					'S_FORCE_PASSWORD'	=> ($_CORE_CONFIG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - $_CORE_CONFIG['user']['chg_passforce']) ? true : false, 
-					'S_CHANGE_USERNAME' => ($_CORE_CONFIG['user']['allow_namechange'] && $_CLASS['auth']->acl_get('u_chgname')) ? true : false, 
+					'S_CHANGE_USERNAME'	=> ($_CORE_CONFIG['user']['allow_namechange'] && $_CLASS['auth']->acl_get('u_chgname')) ? true : false, 
 					'S_CHANGE_EMAIL'	=> ($_CLASS['auth']->acl_get('u_chgemail')) ? true : false,
 					'S_CHANGE_PASSWORD'	=> ($_CLASS['auth']->acl_get('u_chgpasswd')) ? true : false)
 				);
@@ -399,7 +400,7 @@ class ucp_profile extends module
 				{
 					require_once($site_file_root.'includes/forums/message_parser.php');
 					
-					if (!sizeof($error))
+					if ($signature)
 					{
 						$message_parser = new parse_message($signature);
 	
@@ -418,22 +419,34 @@ class ucp_profile extends module
 								'user_sig_bbcode_uid'		=> (string) $message_parser->bbcode_uid, 
 								'user_sig_bbcode_bitfield'	=> (int) $message_parser->bbcode_bitfield
 							);
-	
-							$sql = 'UPDATE ' . USERS_TABLE . ' 
-								SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
-								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-							$_CLASS['core_db']->sql_query($sql);
-	
-							$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'\>', '</a>');
-							trigger_error($message);
 						}
 					}
+					else
+					{
+						$sql_ary = array(
+							'user_sig'					=> '', 
+							'user_sig_bbcode_uid'		=> '', 
+							'user_sig_bbcode_bitfield'	=> (int) ''
+						);
+					}
+					
+					if (!sizeof($error) && $submit)
+					{
+						$sql = 'UPDATE ' . USERS_TABLE . ' 
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
+							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
+						$_CLASS['core_db']->sql_query($sql);
+	
+						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'\>', '</a>');
+						trigger_error($message);
+					}
+					
 					// Replace "error" strings with their real, localised form
 					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 				}
 
 				$signature_preview = '';
-				if ($preview)
+				if ($preview && $signature)
 				{
 					// Now parse it for displaying
 					$signature_preview = $message_parser->format_display($enable_html, $enable_bbcode, $enable_urls, $enable_smilies, false);

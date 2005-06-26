@@ -151,7 +151,7 @@ switch ($mode)
 
 				'U_GROUP'		=> $u_group,
 				'U_VIEWPROFILE'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']),
-				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$user_id) : '')
+				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$row['user_id']) : '')
 			);
 		}
 		$_CLASS['core_db']->sql_freeresult($result);

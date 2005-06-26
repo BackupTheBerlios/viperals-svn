@@ -10,6 +10,10 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+if (!defined('VIPERAL') || VIPERAL != 'Admin')
+{
+	die; 
+}
 
 if (!empty($setmodules))
 {

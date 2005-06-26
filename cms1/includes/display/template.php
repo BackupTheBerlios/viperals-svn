@@ -2,9 +2,12 @@
 
 class core_template
 {
+	var $cache = false;
 	var $cache_handler = 'file';
-	var $template_dir;
 	var $compile_check = true;
+	var $template_dir;
+
+	var $_compiled_code;
 	var $_vars = array();
 
     function core_template()
@@ -68,12 +71,22 @@ class core_template
     /*
 		Display template
 		This loads the template if it exsists else parses it before displaying
+		
+		To Do:
+			Make an template cache load/save class extent.
+				You never know what people my want to do.
+
     */
-	function display($name, $cache = true)
+	function display($name, $return = false)
 	{
 		if (!$this->generate_dirs($name))
 		{
 			return;
+		}
+
+		if ($this->cache || $return)
+		{
+			$this->_cache_start($name);
 		}
 
 		if ($file = $this->is_compiled($name))
@@ -85,13 +98,28 @@ class core_template
 		{
 			if ($this->compile($name))
 			{
-				if ($this->_compile_save($name))
+				if (!$this->_compile_save($name));
 				{
-					include($this->cache_dir.$this->generate_name($name));
+					// Admin error, but we only want this once.
 				}
-				else
+
+				eval(' ?>' . $this->_compiled_code . '<?php ');
+
+				if ($this->cache)
 				{
-					eval(' ?>' . $this->_compiled_code . '<?php ');
+					// return true if it's parent template
+					// Maybe return the include level as an intergers ?
+					if ($this->_cache_stop($name))
+					{
+						$cache = $this->_cache_process($name);
+						unset($this->_compiled_code);
+						
+						if ($return)
+						{
+							return $cache;
+						}
+						// save cache
+					}
 				}
 
 				unset($this->_compiled_code);
@@ -197,7 +225,7 @@ class core_template
 			{
 				case 'IF':
 					$tag_holding[] = 'IF';
-					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_if($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = $this->_compile_tag_if($tag_blocks[2][$loop]);
 					break;
 
 				case 'ELSE':
@@ -205,7 +233,7 @@ class core_template
 					{
 						// Error here
 					}
-					
+
 					$tag_blocks[0][$loop] = '<?php } else { ?>';
 					break;
 
@@ -214,8 +242,8 @@ class core_template
 					{
 						// Error here
 					}
-					
-					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_if($tag_blocks[2][$loop], true) . ' ?>';
+
+					$tag_blocks[0][$loop] = $this->_compile_tag_if($tag_blocks[2][$loop], true);
 					break;
 
 				case 'ENDIF':
@@ -229,7 +257,7 @@ class core_template
 				
 				case 'LOOP':
 					$tag_holding[] = 'LOOP';
-					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_loop($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = $this->_compile_tag_loop($tag_blocks[2][$loop]);
 					break;
 
 				case 'LOOPELSE':
@@ -237,30 +265,34 @@ class core_template
 					{
 						// Error here
 					}
-					
+
 					$tag_holding[] = 'LOOPELSE';
 					$tag_blocks[0][$loop] = '<?php } } else {  ?>';
 					break;
 					
 				case 'ENDLOOP':
 					$last_tag = array_pop($tag_holding);
-					
+
 					if ($last_tag != ('LOOP' || 'LOOPELSE'))
 					{
 						// Error here
 					}
 
-					$tag_blocks[0][$loop] = '<?php }'.(($last_tag == 'LOOP') ? ' } ' : '').' ?>';
+					$tag_blocks[0][$loop] = $this->_compile_tag_endloop($tag_blocks[2][$loop], $last_tag);
 					break;
 
 				case 'DEFINE':
-					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_define($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = $this->_compile_tag_define($tag_blocks[2][$loop]);
 					break;
-					
+
+				case 'AREA':
+					$tag_blocks[0][$loop] = $this->_compile_tag_area($tag_blocks[2][$loop]);
+					break;
+
 				case 'INCLUDE':
-					$tag_blocks[0][$loop] = '<?php ' . $this->_compile_tag_include($tag_blocks[2][$loop]) . ' ?>';
+					$tag_blocks[0][$loop] = $this->_compile_tag_include($tag_blocks[2][$loop]);
 					break;
-					
+
 				default:
 					//$tag_blocks[0][$loop] = '<!-- '.$tag_blocks[1][$loop].' '.$tag_blocks[2][$loop].' -->';
 					break;
@@ -363,29 +395,29 @@ class core_template
 			}
 			else
 			{
+				$loop_name = strtolower($vars[($loop - 1)]);
+
 				if (strpos($vars[$loop], '#') !== 0)
 				{
-					$loop_name = '_'.strtolower($vars[($loop - 1)]);
-					$output .= "[\$this->_loop['$loop_name']]['$vars[$loop]']";
+					$output .= "[\$this->_loop['$loop_name']['index']]['$vars[$loop]']";
 
 					continue;
 				}
 
 				$var = substr($vars[$loop], 1);
+
 				Switch ($var)
 				{
 					case 'LOOP_INDEX':
-						$loop_name = '_'.strtolower($vars[($loop - 1)]);
-						$output = "\$this->_loop['$loop_name']";
+						$output = "\$this->_loop['$loop_name']['index']";
 					break;
 
 					case 'LOOP_NUMBER':
-						$loop_name = '_'.strtolower($vars[($loop - 1)]);
-						$output = "(\$this->_loop['$loop_name'] + 1)";
+						$output = "(\$this->_loop['$loop_name']['index'] + 1)";
 					break;
 					
 					case 'LOOP_SIZE':
-						$output = "count(\$this->_vars['$vars[$loop]']);";
+						$output = "\$this->_loop['$loop_name']['count']";
 					break;
 				}
 				
@@ -395,6 +427,12 @@ class core_template
         return $output;
     }
 
+	/*
+		Parse Define tags
+		Format: 
+		
+		This is a templete made variable
+    */
 	function _compile_tag_define($options)
 	{
 		$options = explode('=', $options);
@@ -404,12 +442,12 @@ class core_template
 		for ($loop = 0; $loop < $size; $loop++)
 		{
 			//need to addslashed, check for variable type
-			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = '".trim($options[($loop + 1)])."';";
+			$value = trim($options[($loop + 1)]);
+			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = is_integer($value) ? $value : '$value';";
 			$loop++;
-
 		}
 
-		return $output;
+		return "<?php $output ?>";
 	}
 	
     /*
@@ -441,7 +479,7 @@ class core_template
 
 		$options = str_replace($values[0], $values[1], $options);
 
-		return (($elseif) ? '} elseif (' : 'if (') . ($options.') { ');
+		return '<?php '.(($elseif) ? '} elseif (' : 'if (') . "$options) {  ?>";
 	}
 
 	//<!-- LOOP $loop_rules -->
@@ -449,26 +487,50 @@ class core_template
     {
 		//too do
 		//<!-- LOOP $loop_{ $blablaa } -->
+		//	change loopcode to have (), isset(($loop_code))
 
-		$optiosn = trim($options);
-		$loop_code = $this->_parse_var(trim($options));
+		$options = trim($options);
 		$postition = strrpos($options, ':');
+		$loop_code = $this->_parse_var($options);
 
 		$options = ($postition !== false) ? substr($options, $postition + 1) : substr($options, 1);
-		$loop_name = '_'.strtolower(str_replace('#' , '_', $options));
+		$loop_name = strtolower(str_replace('#' , '_', $options));
 
-        $output =  "\n\${$loop_name}_count = isset($loop_code) ? (is_integer($loop_code) ? $loop_code : (is_array($loop_code) ? count($loop_code) : false)) : false;\n";
-        $output .= "if (\${$loop_name}_count) {\n";
+        $output =  "\n\$this->_loop['$loop_name']['count'] = isset($loop_code) ? (is_integer($loop_code) ? $loop_code : (is_array($loop_code) ? count($loop_code) : false)) : false;\n";
+        $output .= "if (\$this->_loop['$loop_name']['count']) {\n";
 
-		$output .= "for (\$this->_loop['$loop_name'] = 0; \$this->_loop['$loop_name'] < \${$loop_name}_count; \$this->_loop['$loop_name']++) {";
-        return $output;
+		$output .= "for (\$this->_loop['$loop_name']['index'] = 0; \$this->_loop['$loop_name']['index'] < \$this->_loop['$loop_name']['count']; \$this->_loop['$loop_name']['index']++) {";
+        return "<?php $output ?>";
     }
-    
+
+    //<!-- ENDLOOP $loop_rules -->
+	function _compile_tag_endloop($options, $last_tag)
+    {
+		$output = '}'.(($last_tag == 'LOOP') ? ' } ' : '');
+
+		if ($options = trim($options))
+		{
+			$postition = strrpos($options, ':');
+			$loop_code = $this->_parse_var($options);
+
+			$options = ($postition !== false) ? substr($options, $postition + 1) : substr($options, 1);
+			$loop_name = strtolower(str_replace('#' , '_', $options));
+			$output .= " unset(\$this->_loop['$loop_name'], $loop_code);";
+		}
+
+        return "<?php $output ?>";
+    }
+
 	function _compile_tag_include($options)
 	{
-		return "\$this->display('$options');";
+		return "<?php \$this->display('$options'); ?>";
 	}
-	
+
+	function _compile_tag_area($options)
+	{
+		return "<?php \$this->set_area('$var', '$index'); ?>";
+	}
+
 	function _compile_save($name, $data = false)
 	{
 		$cache_location = $this->cache_dir.$this->generate_name($name);
