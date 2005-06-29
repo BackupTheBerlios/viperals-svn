@@ -180,6 +180,16 @@ class calender
 		
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
+			if ($row['recur'] && ($row['start_time'] < $day['start']))
+			{
+				$row['start_time'] = $row['start_time'] + ($row['recur'] * ceil(($day['start'] - $row['start_time']) / $row['recur']));
+								
+				if ($row['start_time'] > $day['end'])
+				{
+					continue;
+				}
+			}
+
 			$_CLASS['core_template']->assign_vars_array($template_name, array(
 					'TITLE'			=> $row['title'],
 					'ID'			=> $row['id'],
@@ -268,7 +278,7 @@ class calender
 		// Get the closest time to our start_date, if start_time is before that start_date
 		if ($start_time < $start_date)
 		{
-			$start_time = $start_time + ($recurring * max(($start_date - $start_time) / $recurring));
+			$start_time = $start_time + ($recurring * ceil(($start_date - $start_time) / $recurring));
 		}
 
 		// mainly a check for the above, since recurrence can be out of the start/end date range
