@@ -162,7 +162,6 @@ class calender
 	{
 		global $_CLASS;
 
-		//mktime(hour,minute,second,month,day,year,is_dst)
 		if (!$time)
 		{
 			$time = mktime(12, 0, 0, $this->month, $this->day, $this->year);
@@ -218,10 +217,9 @@ class calender
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			// Does time between start and end span more than one day ?
-			//if (($row['end_time'] - $row['start_time']) >= 86400)
-			if (($row['end_time'] - $row['start_time']) < 86400)
+			if (($row['end_time'] - $row['start_time']) >= 86400)
 			{
-				$days = $this->generate_days($row['start_time'], $row['end_time'], 30,  $row['recur']);
+				$days = $this->generate_days($row['start_time'], $row['end_time'], $month['start'], $month['end'],  $row['recur']);
 
 				foreach ($days as $day => $null)
 				{
@@ -250,30 +248,43 @@ class calender
 		}
 		
 		$_CLASS['core_db']->sql_freeresult($result);		
-		//print_r($this->month_data_array);
 	}
 
-	function generate_days($start, $end, $limit = 30, $recurring = 86400)
+	function generate_days($start_time, $end_time, $start_date, $end_date, $recurring = 86400)
 	{
 		global $_CLASS;
 
-		// how well, would this work
-		// we don't want useless loops if the recurrence is 1hr, etc
-		if ($recurring < 86400)
+		// Never know how some versions may treat things, or what other people may do.
+		settype($start_time, 'integer');
+		settype($start_date, 'integer');
+		settype($end_time, 'integer');
+		settype($end_date, 'integer');
+		settype($recurring, 'integer');
+
+		// we don't want useless loops if the recurrence less than 1 day
+		$recurring = ($recurring > 86400) ? (int) $recurring : 86400;
+		$end_time = ($end_time < $end_date) ? (int) $end_time : (int) $end_date;
+
+		// Get the closest time to our start_date, if start_time is before that start_date
+		if ($start_time < $start_date)
 		{
-			$recurring = 86400;
+			$start_time = $start_time + ($recurring * max(($start_date - $start_time) / $recurring));
 		}
 
-		settype($recurring, 'integer');
-		$time = $start;
-		$loop = 0;
-
-		While (($time < $end) && $loop < $limit)
+		// mainly a check for the above, since recurrence can be out of the start/end date range
+		if ($start_time > $end_date)
 		{
-			$days[date('j', $time)] = true;
+			return array(); //return empty array.
+		}
 
-			$time += $recurring;
-			$loop++;
+		$loop_time = $start_time;
+		$days = array();
+
+		While ($loop_time < $end_time)
+		{
+			$days[date('j', $loop_time)] = true;
+
+			$loop_time += $recurring;
 		}
 		
 		return $days;
