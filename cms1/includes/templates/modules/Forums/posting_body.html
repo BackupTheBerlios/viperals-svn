@@ -56,17 +56,15 @@ function checkForm()
 <br clear="all" />
 <!-- ENDIF -->
 
-<div id="pageheader">
-	<h2><!-- IF { $TOPIC_TITLE } --><a class="titles" href="{ $U_VIEWTOPIC }">{ $TOPIC_TITLE }</a><!-- ELSE --><a class="titles" href="{ $U_VIEW_FORUM }" title="{ $FORUM_DESC }">{ $FORUM_NAME }</a><!-- ENDIF --></h2>
+<h2><!-- IF { $TOPIC_TITLE } --><a class="titles" href="{ $U_VIEWTOPIC }">{ $TOPIC_TITLE }</a><!-- ELSE --><a class="titles" href="{ $U_VIEW_FORUM }" title="{ $FORUM_DESC }">{ $FORUM_NAME }</a><!-- ENDIF --></h2>
 
-	<!-- IF { $MODERATORS } -->
-		<p class="moderators">{ $L_MODERATORS }: { $MODERATORS }</p>
-	<!-- ENDIF -->
-</div>
+<!-- IF { $MODERATORS } -->
+	<p class="moderators">{ $L_MODERATORS }: { $MODERATORS }</p>
+<!-- ENDIF -->
 
 <br clear="all" /><br />
 
-<form action="{$S_POST_ACTION}" method="post" name="post"{$S_FORM_ENCTYPE}>
+<form action="{ $S_POST_ACTION }" method="post" name="post" { $S_FORM_ENCTYPE }>
 
 <!-- IF { $S_DRAFT_LOADED } -->
 	<table class="tablebg" width="100%" cellspacing="1">
@@ -130,7 +128,7 @@ function checkForm()
 			<td class="spacer" colspan="2"><img src="images/spacer.gif" alt="" width="1" height="1" /></td>
 		</tr>
 		<tr> 
-			<td class="row2" align="center"><span class="gen">{ $L_UNGLOBALISE_EXPLAIN }<br /><br />{ $L_SELECT_DESTINATION_FORUM }&nbsp;&nbsp;</span><select name="to_forum_id">{ $S_FORUM_SELECT }</select><br /><br /><input class="btnmain" type="submit" name="post" value="{ $L_CONFIRM }" />&nbsp;&nbsp; <input class="btnlite" type="submit" name="cancel_unglobalise" value="{ $L_CANCEL }" /></td>
+			<td class="row2" align="center"><span class="gen">{ $L_UNGLOBALISE_EXPLAIN }<br /><br />{ $L_SELECT_DESTINATION_FORUM }&nbsp;&nbsp;</span><select name="to_forum_id">{ $S_FORUM_SELECT }</select><br /><br /><input class="btnmain" type="submit" name="post" value="{ $L_CONFIRM }" />&nbsp;&nbsp; <input class="bottom" type="submit" name="cancel_unglobalise" value="{ $L_CANCEL }" /></td>
 		</tr>
 	</table>
 
@@ -332,7 +330,7 @@ function checkForm()
 
 	<!-- IF { $S_SHOW_ATTACH_BOX } || { $S_SHOW_POLL_BOX } -->
 	<tr>
-		<td class="cat" colspan="2" align="center"><input class="btnlite" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{ $L_SUBMIT }" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="btnlite" type="submit" accesskey="k" tabindex="8" name="save" value="{ $L_SAVE }" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="btnlite" type="submit" accesskey="d" tabindex="9" name="load" value="{ $L_LOAD }" /><!-- ENDIF -->&nbsp; <input class="btnlite" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
+		<td class="cat" colspan="2" align="center"><input class="bottom" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{ $L_SUBMIT }" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="bottom" type="submit" accesskey="k" tabindex="8" name="save" value="{ $L_SAVE }" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="bottom" type="submit" accesskey="d" tabindex="9" name="load" value="{ $L_LOAD }" /><!-- ENDIF -->&nbsp; <input class="bottom" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
 	</tr>
 	<!-- ENDIF -->
 	
@@ -344,7 +342,7 @@ function checkForm()
 		</tr>
 	<!-- ENDIF -->
 	<tr>
-		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="btnlite" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{ $L_SUBMIT }" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="btnlite" type="submit" accesskey="k" tabindex="8" name="save" value="{ $L_SAVE }" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="btnlite" type="submit" accesskey="d" tabindex="9" name="load" value="{ $L_LOAD }" /><!-- ENDIF -->&nbsp; <input class="btnlite" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL}" /></td>
+		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="bottom" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{ $L_SUBMIT }" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="bottom" type="submit" accesskey="k" tabindex="8" name="save" value="{ $L_SAVE }" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="bottom" type="submit" accesskey="d" tabindex="9" name="load" value="{ $L_LOAD }" /><!-- ENDIF -->&nbsp; <input class="bottom" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL}" /></td>
 	</tr>
 </table>
 

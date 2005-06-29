@@ -34,17 +34,6 @@ $_CLASS['core_user']->add_img();
 require($site_file_root.'includes/forums/functions_display.php');
 display_forums('', $config['load_moderators']);
 
-// Set some stats, get posts count from forums data if we... hum... retrieve all forums data
-$total_posts = $config['num_posts'];
-$total_topics = $config['num_topics'];
-$total_users = $config['num_users'];
-$newest_user = $config['newest_username'];
-$newest_uid = $config['newest_user_id'];
-
-$l_total_user_s = ($total_users == 0) ? 'TOTAL_USERS_ZERO' : 'TOTAL_USERS_OTHER';
-$l_total_post_s = ($total_posts == 0) ? 'TOTAL_POSTS_ZERO' : 'TOTAL_POSTS_OTHER';
-$l_total_topic_s = ($total_topics == 0) ? 'TOTAL_TOPICS_ZERO' : 'TOTAL_TOPICS_OTHER';
-
 // Grab group details for legend display
 $sql = 'SELECT group_id, group_name, group_colour, group_type
 	FROM ' . GROUPS_TABLE . ' 
@@ -84,12 +73,16 @@ if ($config['load_birthdays'])
 	$_CLASS['core_db']->sql_freeresult($result);
 }
 
+$l_total_user_s = ($config['num_users'] == 0) ? 'TOTAL_USERS_ZERO' : 'TOTAL_USERS_OTHER';
+$l_total_post_s = ($config['num_posts'] == 0) ? 'TOTAL_POSTS_ZERO' : 'TOTAL_POSTS_OTHER';
+$l_total_topic_s = ($config['num_topics'] == 0) ? 'TOTAL_TOPICS_ZERO' : 'TOTAL_TOPICS_OTHER';
+
 // Assign index specific vars
 $_CLASS['core_template']->assign(array(
-	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->lang[$l_total_post_s], $total_posts),
-	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->lang[$l_total_topic_s], $total_topics),
-	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->lang[$l_total_user_s], $total_users),
-	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->lang['NEWEST_USER'], '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$newest_uid) . '">', $newest_user, '</a>'), 
+	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_post_s), $config['num_posts']),
+	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_topic_s), $config['num_topics']),
+	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_user_s), $config['num_users']),
+	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->get_lang('NEWEST_USER'), '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$config['newest_user_id']) . '">', $config['newest_username'], '</a>'), 
 	'LEGEND'		=> $legend, 
 	'BIRTHDAY_LIST'	=> $birthday_list, 
 
@@ -98,9 +91,9 @@ $_CLASS['core_template']->assign(array(
 	'FORUM_LOCKED_IMG'	=>	$_CLASS['core_user']->img('forum_locked', 'NO_NEW_POSTS_LOCKED'),
 
 	'S_LOGIN_ACTION'			=> generate_link('Control_Panel&amp;mode=login'), 
-	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']) ? true : false, 
+	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']), 
 
-	'U_MARK_FORUMS' => generate_link('Forums&amp;mark=forums')
+	'U_MARK_FORUMS'	=> generate_link('Forums&amp;mark=forums')
 	)
 );
 

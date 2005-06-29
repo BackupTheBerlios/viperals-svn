@@ -51,8 +51,7 @@ function check_load_status($return = false)
 					return $load_status = true;
 				}
 
-				$this->error_setting['header'] = '503';
-				trigger_error('SITE_UNAVAILABLE');
+				trigger_error('503:SITE_UNAVAILABLE');
 			}
 		}
 	}
@@ -84,8 +83,7 @@ function check_maintance_status($return = false)
 				return $maintance_status = true;
 			}
 
-			$this->error_setting['header'] = '503';
-			trigger_error($_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
+			trigger_error('503:'.$_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
 		}
 		
 		return $_CORE_CONFIG['maintenance']['start'];
@@ -103,7 +101,7 @@ function check_variable($variable, $default, $vartype)
 		break;
 		
 		default:
-			$variable = trim_text(str_replace('\xFF', ' ', $variable), "\n");
+			$variable = trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n"));
 			//$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
 			$variable = strip_slashes($variable);
 		break;
@@ -725,10 +723,9 @@ function theme_select($default = false)
 	return $theme;
 }
 
-// this is not really trimming is it, maybe rename this and remove trim
-function trim_text($text, $replacement = ' ')
+function modify_lines($text, $replacement = ' ')
 {
-	return trim(str_replace(array("\r\n", "\n"), $replacement, $text));
+	return str_replace(array("\r\n", "\n"), $replacement, $text);
 }
 
 function url_redirect($url = false, $save = true)

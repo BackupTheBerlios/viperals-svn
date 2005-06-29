@@ -1,19 +1,14 @@
-<form method="post" name="jumpbox" action="{ $S_JUMPBOX_ACTION }" onsubmit="if(document.jumpbox.f.value == -1){return false;}">
+<form method="post" name="jumpbox" action="{ $S_JUMPBOX_ACTION }" onsubmit="if(document.jumpbox.f.value == -1){ return false; }">
 
 <table cellspacing="0" cellpadding="0" border="0">
 	<tr>
 		<td nowrap="nowrap"><span class="gensmall">{ $L_JUMP_TO }:</span>&nbsp;<select name="f" onchange="if(this.options[this.selectedIndex].value != -1){ forms['jumpbox'].submit() }">
 
 <!-- LOOP $jumpbox_forums -->
-	<!-- IF { $jumpbox_forums:#index } == 1 --><option value="-1">------------------</option><!-- ENDIF -->
-	<option value="{ $jumpbox_forums:FORUM_ID }"{ $jumpbox_forums:SELECTED }>
-	
-	<!-- LOOP $jumpbox_forums:PADDING -->
-			&nbsp; &nbsp;
-	<!-- ENDLOOP -->
-
-	
-	{ $jumpbox_forums:FORUM_NAME }</option>
+	<!-- IF { $jumpbox_forums:#LOOP_INDEX } == 1 --><option value="-1">------------------</option><!-- ENDIF -->
+	<option value="{ $jumpbox_forums:FORUM_ID }" { $jumpbox_forums:SELECTED }>
+		<!-- LOOP $jumpbox_forums:PADDING -->&nbsp; &nbsp;<!-- ENDLOOP -->{ $jumpbox_forums:FORUM_NAME }
+	</option>
 <!-- ENDLOOP -->
 		</select>&nbsp;<input class="btnlite" type="submit" value="{ $L_GO }" /></td>
 	</tr>

@@ -42,10 +42,10 @@
 			<!-- IF { $messagerow:S_PM_REPORTED } -->
 				<a href="{$messagerow:U_MCP_REPORT}">{ $REPORTED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
-			<!-- IF !{ $messagerow:PM_IMG } && { $messagerow:PM_CLASS } -->
-				<span class="{$messagerow:PM_CLASS}"><img src="images/spacer.gif" width="10" height="10" alt="" border="0" /></span>&nbsp;
-			<!-- ELSEIF { $messagerow:PM_IMG } -->
+			<!-- IF { $messagerow:PM_IMG } -->
 				{$messagerow:PM_IMG}&nbsp;
+			<!-- ELSEIF { $messagerow:PM_CLASS } -->
+				<span class="{$messagerow:PM_CLASS}"><img src="images/spacer.gif" width="10" height="10" alt="" border="0" /></span>&nbsp;
 			<!-- ENDIF -->
 			<p class="topictitle">
 				{ $messagerow:ATTACH_ICON_IMG } 
@@ -73,10 +73,13 @@
 	
 	<input type="hidden" name="cur_folder_id" value="{ $CUR_FOLDER_ID }" />
 </table>
-<table border="0" cellspacing="0" cellpadding="0" width="100%">
+
+<div style="padding: 2px;"></div>
+
+<table class="tablebg" border="0" cellspacing="1" cellpadding="0" width="100%">
 	<tr>
-		<td class="cat" align="left"><span class="gensmall">{ $L_DISPLAY_MESSAGES }:</span> { $S_SELECT_SORT_DAYS } <span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR } <input class="btnlite" type="submit" name="sort" value="{ $L_GO }" /></td>
-		<td class="cat" align="right"><select name="mark_option">{ $S_MARK_OPTIONS }</select>&nbsp;<input class="btnlite" type="submit" name="submit_mark" value="{$L_GO}" />&nbsp;</td>
+		<td class="cat" align="left"><span class="gensmall">{ $L_DISPLAY_MESSAGES }:</span> { $S_SELECT_SORT_DAYS } <span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR } <input class="bottom" type="submit" name="sort" value="{ $L_GO }" /></td>
+		<td class="cat" align="right"><select name="mark_option">{ $S_MARK_OPTIONS }</select>&nbsp;<input class="bottom" type="submit" name="submit_mark" value="{$L_GO}" />&nbsp;</td>
 	</tr>
 </table>
 

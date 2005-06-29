@@ -32,9 +32,11 @@ if (!$_CLASS['core_user']->is_user)
 	{
 		url_redirect();
 	}
+
 	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
 }
 
+// redo this, don't want unneeded loggins. maybe set at session create (ADMIN_NOT_LOGGED, ADMIN_NOT_ADMIN)
 if ($_CLASS['core_user']->data['session_admin'] == ADMIN_NOT_LOGGED)
 {
 	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN_CONFIRM'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
@@ -43,7 +45,6 @@ if ($_CLASS['core_user']->data['session_admin'] == ADMIN_NOT_LOGGED)
 if (!$_CLASS['core_user']->is_admin)
 {
 	trigger_error('NOT_ADMIN');
-	die;
 }
 
 $mod = get_variable('mod', 'REQUEST', false);
@@ -57,23 +58,31 @@ if ($mod)
 
 if (!$mod || !$_CORE_MODULE)
 {
-	$_CORE_MODULE = array('title' => '', 'name' => 'index');
-}
-
-if (file_exists($site_file_root.'admin/'.$_CORE_MODULE['name'].'.php'))
-{
-	$file_path = $site_file_root.'admin/'.$_CORE_MODULE['name'].'.php';
+	$_CORE_MODULE = array('title' => '', 'name' => '');
+	$file_path = $site_file_root.'admin/index.php';
 }
 else
 {
-	$file_path = (file_exists($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/index.php')) ? $site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/index.php' : $site_file_root.'admin/index.php';
+	if (file_exists($site_file_root.'admin/'.$_CORE_MODULE['name'].'.php'))
+	{
+		$file_path = $site_file_root.'admin/'.$_CORE_MODULE['name'].'.php';
+	}
+	else
+	{
+		$file_path = (file_exists($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/index.php')) ? $site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/index.php' : false;
+	}
+}
+
+if (!$file_path)
+{
+	trigger_error('NO_ADMIN_MODULE', E_USER_ERROR);
 }
 
 if ($_CORE_MODULE['name'])
 {
 	if (!$_CLASS['core_auth']->admin_auth($_CORE_MODULE['name']))
 	{
-		trigger_error('Not auth', E_USER_ERROR);
+		trigger_error('NOT_AUTH', E_USER_ERROR);
 	}
 }
 
@@ -86,7 +95,7 @@ $_CLASS['core_blocks']->add_block(array(
 		'file'		=> 'block-Admin.php',
 	));
 
-//loadclass($site_file_root.'includes/core_editor.php', 'core_editor');
+//load_class($site_file_root.'includes/core_editor.php', 'core_editor');
 //$_CLASS['core_editor']->setup();
 require($file_path);
     

@@ -1,5 +1,4 @@
 <!-- INCLUDE modules/Control_Panel/ucp_header.html -->
-<form name="ucp" method="post" action="{ $S_UCP_ACTION }"<!-- IF isset({ $S_FORM_ENCTYPE }) -->{ $S_FORM_ENCTYPE }<!-- ENDIF --> >
 
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
@@ -29,7 +28,6 @@
 	<!-- LOOP $draftrow -->
 	<tr>
 		<!-- IF { $draftrow:#LOOP_INDEX } % 2 --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
-
 		<td class="postdetails" style="padding: 4px;" nowrap="nowrap">{ $draftrow:DATE }</td>
 		<td style="padding: 4px;" valign="top" width="100%">
 			<p class="topictitle">{ $draftrow:DRAFT_SUBJECT }</p>
@@ -49,7 +47,7 @@
 
 	<!-- IF { $draftrow } -->
 	<tr>
-		<td class="cat" colspan="4" align="right"><input class="btnlite" type="submit" name="delete" value="{ $L_DELETE_MARKED }" />&nbsp;</td>
+		<td class="cat" colspan="4" align="right"><input class="bottom" type="submit" name="delete" value="{ $L_DELETE_MARKED }" />&nbsp;</td>
 	</tr>
 	<!-- ENDIF -->
 
@@ -103,10 +101,9 @@
 		<td colspan="9" align="left"><p class="topictitle"><a href="{ $S_UCP_ACTION }">{ $L_BACK_TO_DRAFTS }</a></p></td>
 	</tr>
 	<tr>
-		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="btnmain" type="submit" name="submit" value="{ $L_SUBMIT }" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="{ $L_RESET }" name="reset" /></td>
+		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="btnmain" type="submit" name="submit" value="{ $L_SUBMIT }" />&nbsp;&nbsp;<input class="bottom" type="reset" value="{ $L_RESET }" name="reset" /></td>
 	</tr>
 <!-- ENDIF -->
 </table>
-</form>
 
 <!-- INCLUDE modules/Control_Panel/ucp_footer.html -->

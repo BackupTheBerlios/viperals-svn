@@ -22,19 +22,34 @@ class core_display
 	var $theme = false;
 	var $homepage = false;
 	var $modules = array();
-	var $copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 Viperal';
+	var $copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 - 2005 Ryan Marshall ( Viperal )';
 	
 	/*
 		Handles sorting and auth'ing of modules
 	*/
-	function add_module($module)
+	function add_module($module, $homepage = true)
 	{
-		global $_CLASS;
+		global $_CLASS, $site_file_root;
+		
+		if (!$module || !file_exists($site_file_root.'modules/'.$module['name'].'/index.php'))
+		{
+			return '404:_PAGE_NOT_FOUND';
+		}
+		
+		if (!$module['active'])
+		{
+			if (!$_CLASS['core_auth']->admin_auth('modules'))
+			{
+				return '_MODULE_NOT_ACTIVE';
+			}
+
+			$_CLASS['core_display']->message = "<b>This Modules Isn't Active</b><br />";
+		}
 		
 		//authization check here
-		if (!$_CLASS['core_auth']->admin_auth('modules') && !$_CLASS['core_auth']->auth($module['auth']))
+		if (!$_CLASS['core_auth']->auth($module['auth']) && !$_CLASS['core_auth']->admin_auth('modules'))
 		{
-			return;
+			return '_MODULE_NOT_AUTH';
 		}
 		
 		//first module control the sides.
@@ -44,6 +59,8 @@ class core_display
 		}
 		
 		$this->modules[] = $module;
+
+		return true;
 	}
 
 	/*
@@ -56,6 +73,7 @@ class core_display
 			// this also unsets $this->modules
 			return array_shift($this->modules);
 		}
+
 		return false;
 	}
 	

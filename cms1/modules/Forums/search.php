@@ -660,7 +660,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 		'S_SELECT_SORT_KEY'		=> $s_sort_key,
 		'S_SELECT_SORT_DAYS'	=> $s_limit_days,
 
-		'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=&amp;search_id='.$search_id),
+		'S_SEARCH_ACTION'		=> generate_link('Forums&amp;file=search&amp;search_id='.$search_id),
 		'S_SHOW_TOPICS'			=> ($show_results == 'posts') ? false : true,
 
 		'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', 'TOPIC_REPORTED'),

@@ -26,8 +26,24 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
+	$_CLASS['core_template']->assign(array(
+		'SENT_FROM'		=> $sender_name,
+		'SENDER_NAME'	=> $sender_name,
+		'SENDER_EMAIL'	=> $sender_email,
+		'SENDER_IP'		=> $_CLASS['core_user']->ip,
+
+		'MESSAGE' 		=> $message,
+	));
+	
 	$body = $_CLASS['core_template']->display('modules/Contact/email/index.html', true);
-	print $body;
+
+	if ($preview)
+	{
+		$_CLASS['core_template']->assign('PREVIEW', $body);
+		return;
+	}
+	
+	//print $body;
 }
 
 
@@ -82,8 +98,7 @@ $_CLASS['core_template']->assign(array(
 	'ACTION' 				=> generate_link($_CORE_MODULE['name']),
 	'SENDER_EMAIL' 			=> $sender_email,
 	'SENDER_NAME' 			=> $sender_name,
-	)
-);
+));
 		
 $_CLASS['core_template']->display('modules/Contact/index.html');
 $_CLASS['core_display']->display_footer();

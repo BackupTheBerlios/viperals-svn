@@ -1,29 +1,28 @@
 <?php
+
 /*
 To do for version 1:
 	SEction to add events
-	add limit to to data in events month { also morelinks } and maybe day
-	EVent details view
-	Implement recurring events table
 	Complete manage calender
 	Time Zones -------
 	Fix-up view, add new stuff
 	Move langs out of calender class
-	Caching //maybe after my caching system is done
+	Caching
 */
+
 class ucp_calender extends module  
 {
 	function ucp_calender($id, $mode)
 	{
 		global $_CLASS, $site_file_root;
 
-		load_class($site_file_root.'includes/display/calender.php', 'calender');
 		$link = 'Control_Panel&amp;i='.$id;
 		
 		$day = get_variable('day', 'REQUEST', false, 'integer');
 		$month = get_variable('month', 'REQUEST', false, 'integer');
-		$year = get_variable('year', 'REQUEST', date('Y'), 'integer');
+		$year = get_variable('year', 'REQUEST', false, 'integer');
 		
+		load_class($site_file_root.'includes/display/calender.php', 'calender');
 		$_CLASS['calender']->set_date($day, $month, $year);
 		
 		if ($_GET['mode'] == 'details')
@@ -35,16 +34,37 @@ class ucp_calender extends module
 		{
 			case 'day_view':
 				$_CLASS['calender']->month_view($link);
-				$_CLASS['calender']->day_view($link);
 				$_CLASS['calender']->get_events_day($link);
 
+				$day_flanks = $_CLASS['calender']->flank_days();
+				$month_flanks = $_CLASS['calender']->flank_months();
+
+				$previous_day = generate_link($link.'&amp;mode=day_view&amp;year='.$day_flanks['previous_day']['year'].'&amp;month='.$day_flanks['previous_day']['month'].'&amp;day='.$day_flanks['previous_day']['day']);
+				$next_day = generate_link($link.'&amp;mode=day_view&amp;year='.$day_flanks['next_day']['year'].'&amp;month='.$day_flanks['next_day']['month'].'&amp;day='.$day_flanks['next_day']['day']);
+				$previous_month = generate_link($link.'&amp;mode=day_view&amp;year='.$month_flanks['previous_month']['year'].'&amp;month='.$month_flanks['previous_month']['month']);
+				$next_month = generate_link($link.'&amp;mode=day_view&amp;year='.$month_flanks['next_month']['year'].'&amp;month='.$month_flanks['next_month']['month']);
+				
+				$_CLASS['core_template']->assign(array(
+					'L_SUNDAY'				=> $_CLASS['core_user']->lang['datetime']['Sun'],
+					'L_MONDAY'				=> $_CLASS['core_user']->lang['datetime']['Mon'],
+					'L_TUESDAY'				=> $_CLASS['core_user']->lang['datetime']['Tue'],
+					'L_WEDNESDAY'			=> $_CLASS['core_user']->lang['datetime']['Wed'],
+					'L_THURSDAY'			=> $_CLASS['core_user']->lang['datetime']['Thu'],
+					'L_FRIDAY'				=> $_CLASS['core_user']->lang['datetime']['Fri'],
+					'L_SATURDAY'			=> $_CLASS['core_user']->lang['datetime']['Sat'],
+					'L_TODAY'				=> $_CLASS['core_user']->lang['datetime']['TODAY'],
+					'THIS_DAY'				=> date('F j, Y', mktime(0, 0, 0, $_CLASS['calender']->month, $_CLASS['calender']->day, $_CLASS['calender']->year)),
+					'PREVIOUS_DAY_LINK'		=> $previous_day,
+					'NEXT_DAY_LINK'			=> $next_day,
+				));
+
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_day.html');
-				break;
+			break;
 				
 			case 'add_event':
 				$_CLASS['calender']->add_event($link);
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_add.html');
-				break;
+			break;
 				
 			case 'details':
 			
@@ -61,37 +81,53 @@ class ucp_calender extends module
 			
 				$_CLASS['core_template']->display('modules/Control_Panel/ucp_calender_details.html');
 				$_CLASS['core_display']->display_footer();
-
-				break;
+			break;
 			
 			case 'month_view':
 			default:
+				
 				$_CLASS['calender']->get_events_month($link);
 				$_CLASS['calender']->month_view($link);
 
+				$month_flanks = $_CLASS['calender']->flank_months();
+
+				$_CLASS['core_template']->assign(array(
+					'L_SUNDAY'				=> $_CLASS['core_user']->lang['datetime']['Sunday'],
+					'L_MONDAY'				=> $_CLASS['core_user']->lang['datetime']['Monday'],
+					'L_TUESDAY'				=> $_CLASS['core_user']->lang['datetime']['Tuesday'],
+					'L_WEDNESDAY'			=> $_CLASS['core_user']->lang['datetime']['Wednesday'],
+					'L_THURSDAY'			=> $_CLASS['core_user']->lang['datetime']['Thursday'],
+					'L_FRIDAY'				=> $_CLASS['core_user']->lang['datetime']['Friday'],
+					'L_SATURDAY'			=> $_CLASS['core_user']->lang['datetime']['Saturday'],
+					'L_TODAY'				=> $_CLASS['core_user']->lang['datetime']['TODAY'],
+					
+					'THIS_MONTH_NAME'		=> $_CLASS['core_user']->lang['datetime'][date('F', mktime(0, 0, 0, $_CLASS['calender']->month, 1, $_CLASS['calender']->year))],
+					'NEXT_MONTH_NAME'		=> $_CLASS['core_user']->lang['datetime'][date('F', mktime(0, 0, 0, $month_flanks['next_month']['month'], 1, $_CLASS['calender']->year))],
+					'PREVIOUS_MONTH_NAME'	=> $_CLASS['core_user']->lang['datetime'][date('F', mktime(0, 0, 0, $month_flanks['previous_month']['month'], 1, $_CLASS['calender']->year))],
+					'NEXT_MONTH_YEAR'		=> $month_flanks['next_month']['year'],
+					'PREVIOUS_MONTH_YEAR'	=> $month_flanks['previous_month']['year'],
+					'CURRENT_YEAR'			=> $_CLASS['calender']->year,
+					'PREVIOUS_MONTH'		=> generate_link($link.'&amp;mode=month_view&amp;year='.$month_flanks['previous_month']['year'].'&amp;month='.$month_flanks['previous_month']['month']),
+					'NEXT_MONTH'			=> generate_link($link.'&amp;mode=month_view&amp;year='.$month_flanks['next_month']['year'].'&amp;month='.$month_flanks['next_month']['month']),
+				));
+
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_main.html');
-				break;	
+			break;	
 		}
 	}
 	
 	function add_event($link)
 	{
 		global $_CLASS;
-	}
-	
-	function get_data()
-	{
+
 		$data_array = array(
 		'title'			=> get_variable('title', 'POST', false),
 		'description'	=> get_variable('description', 'POST', false),
 		'note'			=> get_variable('note', 'POST', false),
-		'event_start'	=> get_variable('start', 'POST', false),
-		'event_time'	=> get_variable('end', 'POST', false),
+		'start_time'	=> get_variable('start', 'POST', false),
+		'end_time'		=> get_variable('end', 'POST', false),
 		'recurring'		=> '',
-		'start_time'	=>'',
-		'end_time'		=>'',
-			);
-		
+		);
 	}
 }
 

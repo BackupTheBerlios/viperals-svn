@@ -131,31 +131,34 @@ class core_error_handler
 	
 			case E_USER_ERROR:
 			
-				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
-					
-				if ($this->error_setting['header'])
+				$code = false;
+
+				if (strpos($error, ':')) // there shouldn't be a 0 position
 				{
-					$header_array = array(
-						'404' => 'HTTP/1.0 404 Not Found',
-						'503' => 'HTTP/1.0 503 Service Unavailable'
-						);
-						
-					if (!empty($header_array[$this->error_setting['header']]))
+					list($code, $error) = explode(':', $error, 2);
+					
+					if (!is_numeric($code))
 					{
-						header($header_array[$this->error_setting['header']]);
+						$error = $code.$error;
+					}
+					else
+					{
+						$header_array = array(
+							404 => 'HTTP/1.0 404 Not Found',
+							503 => 'HTTP/1.0 503 Service Unavailable'
+						);
+
+						settype($code, 'integer');
+
+						if (!empty($header_array[$code]))
+						{
+							header($header_array[$code]);
+						}
 					}
 				}
-				
-				if (!empty($_CLASS['core_display']) && $_CLASS['core_display']->displayed['header'])
-				{
-					OpenTable();
-					echo '<h2 align="center">Error</h2>';
-					echo '<br clear="all" /><table width="85%" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td><br clear="all" />' . $error . '<hr />Please notify the board administrator or webmaster : <a href="mailto:' . $_CORE_CONFIG['global']['admin_mail'] . '">' . $_CORE_CONFIG['global']['admin_mail'] . '</a></td></tr></table><br clear="all" /></body></html>';
-					CloseTable();
-					
-					$_CLASS['core_display']->display_footer();
-				}
-				
+
+				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
+
 				$_CLASS['core_template']->assign('MESSAGE_TEXT',  $error);
 						
 				$_CLASS['core_template']->display('error.html');
@@ -173,25 +176,16 @@ class core_error_handler
 				
 				$_CLASS['core_display']->display_head($this->error_setting['title']);
 
-				if (defined('IN_ADMIN') && !empty($_CLASS['core_user']->data['session_admin']))
-				{
-					// this is phpbb 2.1.2 remove it
-					adm_page_message($msg_title, $msg_text, false);
-					adm_page_footer();
-				}
-				else
-				{
-					$_CLASS['core_template']->assign(array(
-						'MESSAGE_TITLE'	=> $this->error_setting['title'],
-						'MESSAGE_TEXT'	=> $error)
-					);
-					
-					$this->error_setting = array('type', 'title', 'redirect', 'header');
-					
-					$_CLASS['core_template']->display('message.html');
-	
-					$_CLASS['core_display']->display_footer(false);
-				}
+				$_CLASS['core_template']->assign(array(
+					'MESSAGE_TITLE'	=> $this->error_setting['title'],
+					'MESSAGE_TEXT'	=> $error
+				));
+				
+				$this->error_setting = array('type', 'title', 'redirect');
+				
+				$_CLASS['core_template']->display('message.html');
+
+				$_CLASS['core_display']->display_footer(false);
 	
 			break;
 		}

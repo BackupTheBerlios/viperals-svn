@@ -14,7 +14,7 @@
 	<td colspan="5"><b class="gensmall">{ $L_ADMINISTRATORS }</b></td>
 </tr>
 <!-- LOOP $admin -->
-	<!-- IF { $admin:S_ROW_COUNT is even } --><tr class="row2"><!-- ELSE --><tr class="row1"><!-- ENDIF -->
+	<!-- IF { $admin:#LOOP_INDEX is even } --><tr class="row2"><!-- ELSE --><tr class="row1"><!-- ENDIF -->
 
 	<td class="gen" align="center"><strong><a<!-- IF { $admin:USER_COLOR } --> style="color:#{ $admin:USER_COLOR }"<!-- ENDIF --> href="{ $admin:U_VIEWPROFILE }">{ $admin:USERNAME }</a></strong></td>
 	<td class="gensmall" align="center">&nbsp;</td>

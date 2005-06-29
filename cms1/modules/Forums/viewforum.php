@@ -459,11 +459,6 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			}
 		}
 	}
-	else
-	{
-// update smarty
-//$_CLASS['core_template']->assign_vars_array('topicrow', array());
-	}
 
 	// This is rather a fudge but it's the best I can think of without requiring information
 	// on all topics (as we do in 2.0.x). It looks for unread or new topics, if it doesn't find

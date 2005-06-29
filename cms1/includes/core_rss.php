@@ -80,7 +80,7 @@ class core_rss
 			return false;
 		}
 
-		if (!($this->fp = fsockopen($parsed_url['host'], $parsed_url['port'], $errno, $errstr, 15)))
+		if (!($this->fp = @fsockopen($parsed_url['host'], $parsed_url['port'], $errno, $errstr, 5)))
 		{
 			$this->error = "Can't connection";
 			return false;
@@ -194,15 +194,16 @@ class core_rss
 		
 		if (!$status)
 		{
-			$error_code = xml_get_error_code($this->parser);
+			$error_code = xml_get_error_code($this->rss_parser);
 			
 			if ($error_code != XML_ERROR_NONE) // XML_ERROR_NO_MEMORY
 			{
 				$error_string = xml_error_string($error_code);
-				$error_line = xml_get_current_line_number($this->parser);
-				$error_col = xml_get_current_column_number($this->parser);
+				$error_line = xml_get_current_line_number($this->rss_parser);
+				$error_col = xml_get_current_column_number($this->rss_parser);
 
 				$this->error = "$error_string at line $error_line, column $error_col";
+				//echo $this->error;
 			}
 		}
 			

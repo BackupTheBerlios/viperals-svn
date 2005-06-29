@@ -13,7 +13,6 @@
 	}
 //-->
 </script>
-<form name="ucp" method="post" action="{ $S_UCP_ACTION }"<!-- IF isset({ $S_FORM_ENCTYPE }) -->{ $S_FORM_ENCTYPE }<!-- ENDIF --> >
 
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
@@ -58,7 +57,7 @@
 		<td class="cat" colspan="6"><div style="float:left"><span class="gensmall">{ $L_SORT_BY }: </span><select name="sk">{$S_SORT_OPTIONS}</select> <select name="sd">{ $S_ORDER_SELECT }</select>&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_SORT }" /></div><div style="float:right"><input class="btnlite" type="submit" name="delete" value="{ $L_DELETE_MARKED }" />&nbsp;</div></td>
 	</tr>
 </table>
-</form>
+
 <div style="float:right"><b class="gensmall"><a href="javascript:marklist('ucp', true);">{ $L_MARK_ALL }</a> :: <a  href="javascript:marklist('ucp', false);">{ $L_UNMARK_ALL }</a></b></div>
 
 <!-- ELSE -->

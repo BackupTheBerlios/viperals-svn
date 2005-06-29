@@ -1,7 +1,7 @@
 <!-- IF { $ERROR } -->
 	{ $A_TABLE_OPEN }
 	<div align="center">
-		<font color="#990000">{ $ERROR }</font>
+		<font class="error">{ $ERROR }</font>
 	</div>
 	{ $A_TABLE_CLOSE }
 <!-- ENDIF -->
@@ -18,15 +18,20 @@
 				<label><b>{ $L_YOUREMAIL }:</b></label><br />
 				<input class="post" type="text" name="sender_email" value="{ $SENDER_EMAIL }" size="30" /><br /><br />
 	
-				<input class="btnlite" type="submit" name="contact" value="{ $L_SUBMIT }" />
-				<input class="btnlite" type="submit" name="preview" value="{ $L_PREVIEW }" /><br /><br /><hr />
+				<input class="bottom" type="submit" name="contact" value="{ $L_SUBMIT }" />
+				<input class="bottom" type="submit" name="preview" value="{ $L_PREVIEW }" /><br /><br /><hr />
 				<div align="center">{ $L_FEEDBACK_NOTE }</div>
 			</td>
-			<td style="width:90%;"><strong>{ $L_MESSAGE }:</strong><br />
-				<textarea name="message" id="message" editor_enabled="true" style="width:98%; height:200px" cols="63" rows="15">{ $MESSAGE }</textarea><br /><br />
+			<td style="width:90%;">
+				<strong>{ $L_MESSAGE }:</strong><br />
+				<textarea name="message" id="message" editor_enabled="true" style="width:98%; height:180px" cols="63" rows="15">{ $MESSAGE }</textarea><br /><br />
 			</td>
 		</tr>
+
     </table>
 </form>
+
+<hr/>
+{ $PREVIEW }
 
 { $A_TABLE_CLOSE }

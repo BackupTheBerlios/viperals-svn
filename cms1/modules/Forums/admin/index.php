@@ -37,13 +37,13 @@ $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $file = get_variable('file', 'REQUEST', 'main');
 
-if (file_exists($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/'.$file.'.php'))
+if (file_exists($site_file_root.'includes/forums/admin/'.$file.'.php'))
 {
-	require($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/'.$file.'.php');
+	require($site_file_root.'includes/forums/admin/'.$file.'.php');
 }
 else
 {
-	require($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/main.php');
+	require($site_file_root.'includes/forums/admin/main.php');
 }
 
 
@@ -96,28 +96,6 @@ function adm_page_footer($copyright_html = true)
 	$_CLASS['core_display']->display_footer();
 
 	}
-}
-
-function adm_page_message($title, $message, $show_header = false, $show_prev_info = true)
-{
-	global $_CLASS, $_SERVER, $_ENV;
-
-?>
-<br /><br />
-
-<table class="tablebg" width="80%" cellspacing="1" cellpadding="4" border="0" align="center">
-	<tr>
-		<th><?php echo $title; ?></th>
-	</tr>
-	<tr>
-		<td class="row1" align="center"><?php echo $message; ?></td>
-	</tr>
-</table>
-
-<br />
-
-<?php
-
 }
 
 function adm_page_confirm($title, $message)

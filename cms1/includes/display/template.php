@@ -1,12 +1,27 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
 class core_template
 {
 	var $cache = false;
+	var $cache_includes = true;
 	var $cache_handler = 'file';
 	var $compile_check = true;
 	var $template_dir;
 
+	var $_in_cache = 0;
 	var $_compiled_code;
 	var $_vars = array();
 
@@ -77,22 +92,21 @@ class core_template
 				You never know what people my want to do.
 
     */
-	function display($name, $return = false)
+	function display($name, $return = false, $cache = true)
 	{
 		if (!$this->generate_dirs($name))
 		{
 			return;
 		}
 
-		if ($this->cache || $return)
+		if (($this->cache && $cache) || $return)
 		{
-			$this->_cache_start($name);
+			$this->_cache_start($cache);
 		}
 
 		if ($file = $this->is_compiled($name))
 		{
 			include($file);
-			return;
 		}
 		else
 		{
@@ -105,24 +119,22 @@ class core_template
 
 				eval(' ?>' . $this->_compiled_code . '<?php ');
 
-				if ($this->cache)
-				{
-					// return true if it's parent template
-					// Maybe return the include level as an intergers ?
-					if ($this->_cache_stop($name))
-					{
-						$cache = $this->_cache_process($name);
-						unset($this->_compiled_code);
-						
-						if ($return)
-						{
-							return $cache;
-						}
-						// save cache
-					}
-				}
-
 				unset($this->_compiled_code);
+			}
+		}
+
+		if ($this->_in_cache)
+		{
+			// return true if it's parent template
+			// Maybe return the include level as an intergers ?
+			if ($this->_cache_stop($name))
+			{
+				$cache = $this->_cache_process();
+
+				if ($return)
+				{
+					return $cache;
+				}
 			}
 		}
     }
@@ -205,22 +217,32 @@ class core_template
 
 		preg_match_all('/\<!--[ ]*(.*?) (.*?)?[ ]*--\>/', $code, $tag_blocks);
 		$content_blocks = preg_split('/\<!--[ ]*(.*?) (.*?)?[ ]*--\>/', $code);
-		
+
 		$size = count($content_blocks);
 		$tag_holding = array();
+		$compile = true;
 		$line = 1;
 
 		for ($loop = 0; $loop < $size; $loop++)
 		{
-			$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
-			
 			$line += substr_count($content_blocks[$loop], "\n");
-			
+
+			if (!$compile)
+			{
+				if (strtoupper(trim($tag_blocks[1][$loop])) == 'ENDIGNORE')
+				{
+					$compile = true;
+				}
+				continue;
+			}
+
+			$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
+						
 			if (empty($tag_blocks[1][$loop]))
 			{
 				continue;
 			}
-			
+
 			switch (strtoupper(trim($tag_blocks[1][$loop])))
 			{
 				case 'IF':
@@ -281,16 +303,20 @@ class core_template
 					$tag_blocks[0][$loop] = $this->_compile_tag_endloop($tag_blocks[2][$loop], $last_tag);
 					break;
 
+				case 'INCLUDE':
+					$tag_blocks[0][$loop] = $this->_compile_tag_include($tag_blocks[2][$loop]);
+					break;
+					
+				case 'IGNORE':
+					$compile = false;
+					break;
+
 				case 'DEFINE':
 					$tag_blocks[0][$loop] = $this->_compile_tag_define($tag_blocks[2][$loop]);
 					break;
 
 				case 'AREA':
 					$tag_blocks[0][$loop] = $this->_compile_tag_area($tag_blocks[2][$loop]);
-					break;
-
-				case 'INCLUDE':
-					$tag_blocks[0][$loop] = $this->_compile_tag_include($tag_blocks[2][$loop]);
 					break;
 
 				default:
@@ -327,10 +353,8 @@ class core_template
 			return $code;
 		}
 		
-		preg_match_all('/\{(.*?)\}/', $code, $values);
+		$size = (int) preg_match_all('/\{(.*?)\}/', $code, $values);
 		
-		$size = count($values[1]);
-
 		for ($loop = 0; $loop < $size; $loop++)
 		{
 			$parse = $this->_parse_var($values[1][$loop]);
@@ -404,9 +428,9 @@ class core_template
 					continue;
 				}
 
-				$var = substr($vars[$loop], 1);
+				$vars[$loop] = substr($vars[$loop], 1);
 
-				Switch ($var)
+				Switch ($vars[$loop])
 				{
 					case 'LOOP_INDEX':
 						$output = "\$this->_loop['$loop_name']['index']";
@@ -419,11 +443,14 @@ class core_template
 					case 'LOOP_SIZE':
 						$output = "\$this->_loop['$loop_name']['count']";
 					break;
+					
+					default:
+						$output = "\$this->_vars['defines']['$vars[$loop]']";
+					break;
 				}
 				
 			}
 		}
-		
         return $output;
     }
 
@@ -443,7 +470,7 @@ class core_template
 		{
 			//need to addslashed, check for variable type
 			$value = trim($options[($loop + 1)]);
-			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = is_integer($value) ? $value : '$value';";
+			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = ".(is_integer($value) ? $value : "'$value'");
 			$loop++;
 		}
 
@@ -461,8 +488,7 @@ class core_template
 	{
 		//strtok()
 		
-		preg_match_all('/\{(.*?)\}/', $options, $values);
-		$size = count($values[1]);
+		$size = (int) preg_match_all('/\{(.*?)\}/', $options, $values);
 
 		for ($loop = 0; $loop < $size; $loop++)
 		{
@@ -488,6 +514,17 @@ class core_template
 		//too do
 		//<!-- LOOP $loop_{ $blablaa } -->
 		//	change loopcode to have (), isset(($loop_code))
+		// Parse through the tag's attributes
+		if ($count = preg_match_all('/[ ](.*?)="(.*?)"/', $options, $matches))
+		{
+			$options = str_replace($matches[0], '', $options);
+
+			//print_r($matches[0]);
+			for ($loop = 0; $loop < $count; $loop++)
+			{
+				${$matches[1][$loop]} = $matches[2][$loop];
+			}
+		}
 
 		$options = trim($options);
 		$postition = strrpos($options, ':');
@@ -546,5 +583,42 @@ class core_template
 		}
 
 		return false;
+	}
+	
+	function _cache_start($name)
+	{
+		if ($this->_in_cache)
+		{
+			if (!$this->cache_includes)
+			{
+				//echo '<<-- ?'.$this->_in_cache.'? -->>';
+				//ob_start();
+			}
+		}
+		else
+		{
+			ob_start();
+		}
+		
+		$this->_in_cache++;
+	}
+	
+	function _cache_stop($name)
+	{
+		$this->_in_cache--;
+
+		if (!$this->_in_cache)
+		{
+			$this->_cache['main'] = ob_get_clean();
+			return true;
+		}
+	}
+
+	function _cache_process()
+	{
+		$output = $this->_cache['main'];
+		$this->_cache = array();
+
+		return $output;
 	}
 }

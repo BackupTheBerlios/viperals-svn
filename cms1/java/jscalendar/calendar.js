@@ -12,7 +12,7 @@
  * Read the entire license text here: http://www.gnu.org/licenses/lgpl.html
  */
 
-// $Id: calendar.js,v 1.51 2005/03/07 16:44:31 mishoo Exp $
+// $Id: calendar.js,v 1.52 2005/06/14 15:29:20 mishoo Exp $
 
 /** The Calendar object constructor. */
 Calendar = function (firstDayOfWeek, dateStr, onSelected, onClose) {
@@ -38,7 +38,7 @@ Calendar = function (firstDayOfWeek, dateStr, onSelected, onClose) {
 	this.dateStr = dateStr;
 	this.ar_days = null;
 	this.showsTime = false;
-	this.time24 = true;
+	this.time24 = false;
 	this.yearStep = 2;
 	this.hiliteToday = true;
 	this.multiple = null;
@@ -592,7 +592,7 @@ Calendar.cellClick = function(el, ev) {
 		cal.date.setDateOnly(el.caldate);
 		date = cal.date;
 		var other_month = !(cal.dateClicked = !el.otherMonth);
-		if (!other_month && !cal.currentDateEl)
+		if (!other_month && !cal.currentDateEl && cal.multiple)
 			cal._toggleMultipleDate(new Date(date));
 		else
 			newdate = !el.disabled;

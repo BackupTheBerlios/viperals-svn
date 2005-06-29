@@ -52,9 +52,18 @@ function jumpto()
 	<!-- ENDIF -->
 </p>
 
-<br clear="all" /><br/>
+<br clear="all" />
+<br/>
 
 <table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+	<tr>
+			<td class="row1">
+				<b>{ $L_OPTIONS }: </b><a href="{ $U_SEARCH_UNANSWERED }">{ $L_SEARCH_UNANSWERED }</a> | <a href="{ $U_SEARCH_ACTIVE_TOPICS}">{ $L_SEARCH_ACTIVE_TOPICS }</a>
+					<!-- IF { $S_USER_LOGGED_IN } -->
+						| <a href="{ $U_SEARCH_NEW }">{ $L_SEARCH_NEW }</a> | <a href="{ $U_SEARCH_SELF }">{ $L_SEARCH_SELF }</a></span>
+					<!-- ENDIF -->
+			</td>
+		</tr>
 	<tr>
 		<td class="row1">
 			<p class="breadcrumbs"><a href="{ $U_INDEX }">{ $L_INDEX }</a>

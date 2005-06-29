@@ -150,7 +150,7 @@ class core_user extends session
 		}
 		
 		$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
-		return '<img src=' . $imgs[$img . $suffix] . ' alt="' . $alt . '" title="' . $alt . '" name="' . $img . '" />';
+		return '<img src=' . $imgs[$img . $suffix] . ' alt="' . $alt . '" title="' . $alt . '" />';
 	}
 		
 	function add_lang($langfile = false, $module = false)

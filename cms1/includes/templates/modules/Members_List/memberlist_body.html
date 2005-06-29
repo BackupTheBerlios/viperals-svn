@@ -28,7 +28,7 @@
 <form method="post" name="charsearch" action="{ $S_MODE_ACTION }">
 	<table width="100%" cellspacing="1">
 		<tr>
-			<td align="left"><span class="gensmall">{ $L_USERNAME_BEGINS_WITH }: </span><select name="first_char" onchange="this.form.submit();">{ $S_CHAR_OPTIONS }</select>&nbsp;<input type="submit" name="char" value="{ $L_DISPLAY }" class="btnlite" /></td>
+			<td align="left"><span class="gensmall">{ $L_USERNAME_BEGINS_WITH }: </span><select name="first_char" onchange="this.form.submit();">{ $S_CHAR_OPTIONS }</select>&nbsp;<input type="submit" name="char" value="{ $L_DISPLAY }" class="bottom" /></td>
 			<!-- IF { $U_FIND_MEMBER } && !{ $S_SEARCH_USER }-->
 				<td class="gensmall" align="right"><a href="{ $U_FIND_MEMBER }">{ $L_FIND_USERNAME }</a></td>
 			<!-- ELSEIF { $S_SEARCH_USER } && { $U_HIDE_FIND_MEMBER } && !{ $S_FORM_NAME } -->
@@ -126,9 +126,9 @@
 
 		<tr>
 			<td class="cat" colspan="<!-- IF { $S_SEARCH_USER } -->9<!-- ELSE -->8<!-- ENDIF -->" align="center">
-			<!-- IF { $S_SEARCH_USER } --><input class="btnlite" type="submit" value="{$L_SELECT_MARKED}" />
+			<!-- IF { $S_SEARCH_USER } --><input class="bottom" type="submit" value="{$L_SELECT_MARKED}" />
 			<!-- ELSE --><span class="gensmall">{ $L_SELECT_SORT_METHOD }:</span>&nbsp;<select name="sk">{ $S_MODE_SELECT }</select>&nbsp; <span class="gensmall">{ $L_ORDER }</span>&nbsp;<select name="sd">{ $S_ORDER_SELECT }</select>&nbsp;
-			<input type="submit" name="submit" value="{ $L_SUBMIT }" class="btnlite" /><!-- ENDIF --></td>
+			<input type="submit" name="submit" value="{ $L_SUBMIT }" class="bottom" /><!-- ENDIF --></td>
 		</tr>
 	</table>
 </form>

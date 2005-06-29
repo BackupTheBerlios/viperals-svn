@@ -29,13 +29,10 @@ z_help = "{ $L_BBCODE_Z_HELP }";
 
 function checkForm()
 {
-	if (document.post.message.value.length < 2)
-	{
+	if (document.post.message.value.length < 6) {
 		alert('{ $L_EMPTY_MESSAGE }');
 		return false;
-	}
-	else
-	{
+	} else {
 //		document.post.post.disabled = true;
 		return true;
 	}
@@ -171,7 +168,7 @@ function checkForm()
 
 			<!-- IF { $S_SHOW_SMILEY_LINK } -->
 				<tr>
-					<td align="center"><a class="nav" href="{ $U_MORE_SMILIES }" onclick="window.open('{ $U_MORE_SMILIES }', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="_phpbbsmilies">{ $L_MORE_SMILIES} </a></td>
+					<td align="center"><a class="nav" href="{ $U_MORE_SMILIES }" onclick="window.open('{ $U_MORE_SMILIES }', '_phpbbsmilies', 'HEIGHT=350,resizable=yes,scrollbars=yes,WIDTH=300');return false;" target="phpbbsmilies">{ $L_MORE_SMILIES} </a></td>
 				</tr>
 			<!-- ENDIF -->
 
@@ -282,23 +279,16 @@ function checkForm()
 		</table></td>
 	</tr>
 
-	<!-- IF { $S_EDIT_REASON } -->
-		<tr>
-			<td class="row1" valign="top"><b class="genmed">{ $L_EDIT_REASON }:</b></td>
-			<td class="row2"><input class="post" type="text" name="edit_reason" size="50" maxlength="100" value="{ $EDIT_REASON }" /></td>
-		</tr>
-	<!-- ENDIF -->
-
 	<!-- IF { $S_SHOW_ATTACH_BOX } -->
 	<tr>
-		<td class="cat" colspan="2" align="center"><input class="btnlite" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{ $L_SUBMIT }" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="btnlite" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="btnlite" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" /><!-- ENDIF -->&nbsp; <input class="btnlite" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
+		<td class="cat" colspan="2" align="center"><input class="bottom" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{ $L_SUBMIT }" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="bottom" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="bottom" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" /><!-- ENDIF -->&nbsp; <input class="bottom" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
 	</tr>
 	<!-- ENDIF -->
 	
 	<!-- IF { $S_SHOW_ATTACH_BOX } --><!-- INCLUDE modules/Control_Panel/ucp_posting_attach_body.html --><!-- ENDIF -->
 
 	<tr>
-		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="btnlite" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{$L_SUBMIT}" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="btnlite" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="btnlite" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" /><!-- ENDIF -->&nbsp; <input class="btnlite" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
+		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="bottom" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{$L_SUBMIT}" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="bottom" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="bottom" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" /><!-- ENDIF -->&nbsp; <input class="bottom" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
 	</tr>
 </table>
 </form>

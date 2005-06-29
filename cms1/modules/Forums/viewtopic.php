@@ -60,9 +60,12 @@ if ($view && !$post_id)
 	{
 		$sql = 'SELECT forum_id FROM ' . TOPICS_TABLE . "
 			WHERE topic_id = $topic_id";
-		$_CLASS['core_db']->sql_query_limit($sql, 1);
+
 		$result = $_CLASS['core_db']->sql_query($sql);
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		if ($row)
 		{
 			$forum_id = $row['forum_id'];
 		}
@@ -70,7 +73,6 @@ if ($view && !$post_id)
 		{
 			trigger_error('NO_TOPIC');
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
 	}
 
 	if ($view == 'unread')
@@ -81,9 +83,8 @@ if ($view && !$post_id)
 			FROM (' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . " t)
 			WHERE t.topic_id = $topic_id
 				AND p.topic_id = t.topic_id
-				" . (($auth->acl_get('m_approve', $forum_id)) ? '' : 'AND p.post_approved = 1') . "
-				AND (p.post_time > $topic_last_read
-					OR p.post_id = t.topic_last_post_id)
+				" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND p.post_approved = 1') . "
+				AND p.post_time > $topic_last_read
 			ORDER BY p.post_time ASC";
 		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
 
@@ -110,7 +111,7 @@ if ($view && !$post_id)
 			FROM ' . TOPICS_TABLE . ' t, ' . TOPICS_TABLE . " t2
 			WHERE t2.topic_id = $topic_id
 				AND t.forum_id = t2.forum_id
-				" . (($auth->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1') . "
+				" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1') . "
 				AND t.topic_last_post_time $sql_condition t2.topic_last_post_time
 			ORDER BY t.topic_last_post_time $sql_ordering";
 		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
@@ -237,7 +238,7 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 {
 	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 	{
-		trigger_error($_CLASS['core_user']->lang['SORRY_AUTH_READ']);
+		trigger_error('SORRY_AUTH_READ');
 	}
 
 	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_VIEWFORUM']));
@@ -785,7 +786,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	
 		if ($row['post_approved'])
 		{
-			$has_attachments = TRUE;
+			$has_attachments = true;
 		}
 	}
 
@@ -1128,12 +1129,9 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	$message = $row['post_text'];
 
 	// If the board has HTML off but the post has HTML on then we process it, else leave it alone
-	if (!$_CLASS['auth']->acl_get('f_html', $forum_id) && $row['enable_html'])
+	if ((!$config['allow_html'] || !$_CLASS['auth']->acl_get('f_html', $forum_id)) && $row['enable_html'])
 	{
-		if ($row['enable_html'] && $_CLASS['auth']->acl_get('f_bbcode', $forum_id))
-		{
-			$message = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $message);
-		}
+		$message = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $message);
 	}
 
 	// Second parse bbcode here
@@ -1164,7 +1162,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		$message = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . str_replace('\\', '\\\\', $highlight_match) . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $message . '<'), 1, -1));
 	}
 
-	if ($row['enable_html'] && $_CLASS['auth']->acl_get('f_html', $forum_id))
+	if ($row['enable_html'] && ($config['allow_html'] && $_CLASS['auth']->acl_get('f_html', $forum_id)))
 	{
 		// Remove Comments from post content
 		$message = preg_replace('#<!\-\-(.*?)\-\->#is', '', $message);
@@ -1236,7 +1234,19 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		$icons[$row['icon_id']] = array('img' => '' , 'width' => '', 'height' => '');
 	}
 
+	$post_attachments = array();
+
+	// Remove this foreach.
+	if (isset($attachments[$row['post_id']]) && sizeof($attachments[$row['post_id']]))
+	{
+		foreach ($attachments[$row['post_id']] as $attachment)
+		{
+			$post_attachments[] = array('DISPLAY_ATTACHMENT'	=> $attachment);
+		}
+	}
+
 	$postrow = array(
+		'ATTACHMENTS'	=> count($post_attachments) ? $post_attachments : false,
 		'POSTER_NAME' 	=> $row['poster'],
 		'POSTER_RANK' 	=> $user_cache[$poster_id]['rank_title'],
 		'RANK_IMAGE' 	=> $user_cache[$poster_id]['rank_image'],
@@ -1253,7 +1263,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'EDIT_REASON'	=> $row['post_edit_reason'],
 		'BUMPED_MESSAGE'=> $l_bumped_by,
 
-		'MINI_POST_IMG' => ($_CLASS['core_user']->is_user && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? $_CLASS['core_user']->img('icon_post_new', 'NEW_POST') : $_CLASS['core_user']->img('icon_post', 'POST'),
+		'MINI_POST_IMG'			=> ($_CLASS['core_user']->is_user && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? $_CLASS['core_user']->img('icon_post_new', 'NEW_POST') : $_CLASS['core_user']->img('icon_post', 'POST'),
 		'POST_ICON_IMG'			=> $icons[$row['icon_id']]['img'],
 		'POST_ICON_IMG_WIDTH'   => $icons[$row['icon_id']]['width'],
 		'POST_ICON_IMG_HEIGHT'  => $icons[$row['icon_id']]['height'],
@@ -1278,8 +1288,6 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'U_YIM' 			=> $user_cache[$poster_id]['yim'],
 		'U_JABBER'			=> $user_cache[$poster_id]['jabber'], 
 
-		'U_RATE_GOOD'		=> generate_link('Forums&amp;file=viewtopic&amp;rate=good&amp;p=' . $row['post_id']), 
-		'U_RATE_BAD'		=> generate_link('Forums&amp;file=viewtopic&amp;rate=bad&amp;p=' . $row['post_id']), 
 		'U_REPORT'			=> generate_link('Forums&amp;file=report&amp;p=' . $row['post_id']),
 		'U_MCP_REPORT'		=> ($_CLASS['auth']->acl_gets('m_', 'a_', 'f_report', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
 		'U_MCP_APPROVE'		=> ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
@@ -1290,7 +1298,6 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'POST_ID'           => $row['post_id'],
 		'S_IGNORE_POST' 	=> false, 
 		
-		'S_HAS_ATTACHMENTS' => (!empty($attachments[$row['post_id']])) ? TRUE : FALSE,
 		'S_POST_UNAPPROVED'	=> ($row['post_approved']) ? FALSE : TRUE,
 		'S_POST_REPORTED'	=> ($row['post_reported'] && $_CLASS['auth']->acl_get('m_', $forum_id)) ? TRUE : FALSE,
 		'S_DISPLAY_NOTICE'	=> ($display_notice && $row['post_attachment']) ? true : false, 
@@ -1312,30 +1319,16 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	{
 		foreach ($cp_row['blockrow'] as $field_data)
 		{
-			/////////////
-			//Fix Me
-			////////////
 			//$_CLASS['core_template']->assign_vars_array('postrow.custom_fields', $field_data);
-		}
-	}
-	
-	// Display not already displayed Attachments for this post, we already parsed them. ;)
-	if (isset($attachments[$row['post_id']]) && sizeof($attachments[$row['post_id']]))
-	{
-		foreach ($attachments[$row['post_id']] as $attachment)
-		{
-			$_CLASS['core_template']->assign_vars_array('attachment', array(
-				'TOPIC'					=> $row['post_id'],
-				'DISPLAY_ATTACHMENT'	=> $attachment)
-			);
 		}
 	}
 
 	$prev_post_id = $row['post_id'];
 
-	unset($rowset[$i]);
+	unset($rowset[$i], $post_attachments);
 	unset($attachments[$row['post_id']]);
 }
+
 unset($rowset);
 unset($user_cache);
 

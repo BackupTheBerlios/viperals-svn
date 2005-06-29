@@ -13,8 +13,6 @@ function marklist(form_name, status)
 //-->
 </script>
 
-<form name="ucp" method="post" action="{ $S_UCP_ACTION }"<!-- IF isset({ $S_FORM_ENCTYPE }) -->{ $S_FORM_ENCTYPE }<!-- ENDIF --> >
-
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
 		<th colspan="5">{ $L_UCP }</th>
@@ -96,7 +94,6 @@ function marklist(form_name, status)
 	</tr>
 	<!-- ENDIF -->
 </table>
-</form>
 
 <!-- IF !{ $S_BOOKMARKS } --><div class="gensmall" style="float: right; padding-top: 2px;"><b><a href="javascript:marklist('ucp', true);">{ $L_MARK_ALL }</a> :: <a  href="javascript:marklist('ucp', false);">{ $L_UNMARK_ALL }</a></b></div><!-- ENDIF -->
 <br />

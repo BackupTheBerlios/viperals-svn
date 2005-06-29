@@ -1,76 +1,49 @@
 { $A_TABLE_OPEN }
 
-<table class="tablebg" width="100%" cellspacing="1px">
+<table class="tablebg" width="100%" cellpadding="1" cellspacing="1">
 	<tbody>
 		<tr>
-			<th width="20%">{$L_POSTER}</th>
-			<th width="80%" colspan="2">{$L_MESSAGE}</th>
+			<th width="20%">{ $L_POSTER }</th>
+			<th width="80%" colspan="2">{ $L_MESSAGE }</th>
 		</tr>
-		
-		{ if $Q_MESSAGE_PAGINATION }
-		<tr>
-			<td class="row3" style="padding: 5px;" colspan="3">
-				<table width="100%" cellspacing="1">
-					<tr>
-						<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{$Q_PAGE_NUMBER}<br /></td>
-						<td class="gensmall" nowrap="nowrap">&nbsp;[ {$Q_TOTAL_MESSAGES} ]&nbsp;</td>
-						<td class="gensmall" width="100%" align="right" nowrap="nowrap">
-						[ { if $Q_MESSAGE_PREVIOUS_PAGE }<a href="{$Q_MESSAGE_PREVIOUS_PAGE}">{$L_PREVIOUS}</a>&nbsp;|&nbsp;{ /if } {$Q_MESSAGE_PAGINATION} { if $Q_MESSAGE_NEXT_PAGE }&nbsp;|&nbsp;<a href="{$Q_MESSAGE_NEXT_PAGE}">{$L_NEXT}</a>{ /if } ]
-						</td>
-					</tr>
-				</table>
+		<!-- LOOP $quick_message -->
+		<tr style="min-height: 100px;">
+			<td class="row1" align="center" valign="top">
+				<!-- IF { $quick_message:USER_LINK }  -->
+					<a href="{ $quick_message:USER_LINK } "><b> { $quick_message:USER_NAME } </b></a><br /><br />
+				<!-- ELSE -->
+					<b> { $quick_message:USER_NAME } </b>
+				<!-- ENDIF -->
 			</td>
-		</tr>
-		{ /if }
-
-		{section name=quick_message_loop loop=$quick_message}
-		
-		<tr>
-			<td class="row1" rowspan="2" style="padding: 5px;" align="center" valign="top">
-				{ if $quick_message[quick_message_loop].USER_LINK } 
-					<a href="{ $quick_message[quick_message_loop].USER_LINK } "><b> { $quick_message[quick_message_loop].USER_NAME } </b></a><br /><br />
-					{ $quick_message[quick_message_loop].POSTER_AVATAR }
-				{ else }
-					<b> { $quick_message[quick_message_loop].USER_NAME } </b>
-				{ /if }
-				
-			</td>
-			{ if $quick_message[quick_message_loop].DELETE_LINK }
-				<td class="row1">
-			{ else }
-				<td class="row1" style="height: 10px;" colspan="2">
-			{ /if }
-				<span class="gensmall">{ $quick_message[quick_message_loop].TIME }</span>
-			</td>
-			{ if $quick_message[quick_message_loop].DELETE_LINK }
 			<td class="row1">
-				<a href="{ $quick_message[quick_message_loop].DELETE_LINK } "><b>  { $L_DELETE }  </b></a>
+				<span class="gensmall">{ $quick_message:TIME }</span>
+				<!-- IF { $quick_message:DELETE_LINK } -->
+					<a href="{ $quick_message:DELETE_LINK } "><b>  { $L_DELETE }</b></a>
+				<!-- ENDIF -->
+				<hr/>
+				<p>
+					{ $quick_message:MESSAGE }
+				</p>
 			</td>
-			{ /if }
 		</tr>
 		<tr>
-			<td class="row1" valign="top" style="padding: 5px;" colspan="2">
-				{ $quick_message[quick_message_loop].MESSAGE }
+			<td class="row2" style="padding: 3px;" colspan="3">
 			</td>
 		</tr>
-		<tr>
-			<td class="row3" style="padding: 2px;" colspan="3">
-			</td>
-		</tr>
-		{ sectionelse }
+		<!-- LOOPELSE -->
 			<tr class="row2">
 				<td colspan="2">
 					{ $ERROR }
 				</td>
 			</tr>
-		{ /section }
-		{ if $Q_MESSAGE_PAGINATION }
+		<!-- ENDLOOP -->
+		<!-- IF { $Q_MESSAGE_PAGINATION } -->
 		<tr class="row3">
 			<td style="padding: 5px;" valign="middle" colspan="2">
-				<div style="padding-right: 5px; text-align: right;" class="numbering">[ { if $Q_MESSAGE_PREVIOUS_PAGE }<a href="{$Q_MESSAGE_PREVIOUS_PAGE}">{$L_PREVIOUS}</a>&nbsp;|&nbsp;{ /if } {$Q_MESSAGE_PAGINATION} { if $Q_MESSAGE_NEXT_PAGE }&nbsp;|&nbsp;<a href="{$Q_MESSAGE_NEXT_PAGE}">{$L_NEXT}</a>{ /if } ]</div>
+				<div style="padding-right: 5px; text-align: right;" class="numbering">[ <!-- IF { $Q_MESSAGE_PREVIOUS_PAGE } --><a href="{ $Q_MESSAGE_PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;|&nbsp;<!-- ENDIF --> { $Q_MESSAGE_PAGINATION } <!-- IF { $Q_MESSAGE_NEXT_PAGE } -->&nbsp;|&nbsp;<a href="{ $Q_MESSAGE_NEXT_PAGE }">{ $L_NEXT }</a><!-- ENDIF --> ]</div>
 			</td>
 		</tr>
-		{ /if }
+		<!-- ENDIF -->
 	</tbody>
 </table>
 

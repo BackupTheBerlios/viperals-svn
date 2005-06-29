@@ -1,36 +1,42 @@
-{ if $ERROR }
+<!-- IF { $ERROR } -->
 	{ $A_TABLE_OPEN }
 	<div align="center">
 		<font color="#990000">{ $ERROR }</font>
 	</div>
 	{ $A_TABLE_CLOSE }
-{ /if }
+<!-- ENDIF -->
 
-{ if isset($PREVIEW) }
+
+<!-- IF isset({ $PREVIEW }) -->
 	{ $A_TABLE_OPEN }
 		<div style="padding: 5px;">{ $PREVIEW }</div>
 	{ $A_TABLE_CLOSE }
-{ /if }
+<!-- ENDIF -->
 
 { $A_TABLE_OPEN }
 
 <form method="post" action="{ $ACTION }" >
-    <table width="100%"><tr><td style="padding: 10px;" valign="top"><b>{ $L_YOURNAME }:</b><br />
-    <input type="text" name="sender_name" value="{ $SENDER_NAME }" size="30" /><br />
-    <b>{ $L_YOUREMAIL }:</b><br />
-    <input type="text" name="sender_email" value="{ $SENDER_EMAIL }" size="30" /><br /><br />
-    <b>{ $L_FRIENDNAME }:</b><br />
-    <input type="text" name="receiver_name" value="{ $RECEIVER_NAME }" size="30" /><br />
-    <b>{ $L_FRIENDEMAIL }:</b><br />
-    <input type="text" name="receiver_email" value="{ $RECEIVER_EMAIL }" size="30" /><br />
-    <br /><br />
-    <input type="submit" name="recommend" value="{ $L_SUBMIT }" />
-    <input type="submit" name="preview" value="{ $L_PREVIEW }" /><br /></td>
-	
-	<td width="100%" align="left"><strong>{ $L_MESSAGE }:</strong><br />
-    <textarea name="message" id="message" style="width:90%; height:100px" cols="63" rows="15">{ $MESSAGE }</textarea><br /><br />
-    <b>( Please note your ip will be logged )</b>
-    </td></table>
+<table cellspacing="1" cellpadding="5" width="100%">
+	<tr>
+		<td valign="top">
+			<b>{ $L_YOURNAME }:</b><br />
+			<input type="text" name="sender_name" value="{ $SENDER_NAME }" size="30" /><br />
+			<b>{ $L_YOUREMAIL }:</b><br />
+			<input type="text" name="sender_email" value="{ $SENDER_EMAIL }" size="30" />
+			<p><b>{ $L_FRIENDNAME }:</b><br />
+			<input type="text" name="receiver_name" value="{ $RECEIVER_NAME }" size="30" /><br />
+			<b>{ $L_FRIENDEMAIL }:</b><br />
+			<input type="text" name="receiver_email" value="{ $RECEIVER_EMAIL }" size="30" /></p>
+			<br />
+			<input type="submit" class="bottom" name="recommend" value="{ $L_SUBMIT }" />
+			<input type="submit" class="bottom" name="preview" value="{ $L_PREVIEW }" /><br />
+		</td>
+		<td width="100%" valign="top" align="left">
+			<strong>{ $L_MESSAGE }:</strong><br />
+			<textarea name="message" id="message" style="width:98%; height:100px" cols="63" rows="15">{ $MESSAGE }</textarea><br /><br />
+		</td>
+	</tr>
+</table>
 </form>
 
 { $A_TABLE_CLOSE }

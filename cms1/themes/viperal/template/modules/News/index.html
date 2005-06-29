@@ -1,7 +1,7 @@
 <div class="newsblock">
 <!-- LOOP $news -->
 	<div class="title" onclick="blockswitch2('{ $news:ID }');" style="cursor:pointer">{ $news:TITLE }</div>
-	<div class="content" <!-- IF { $news:COLLAPSE } -->style="display: none"<!-- ENDIF --> id="pe{ $news:ID }">
+	<div class="content"<!-- IF { $news:COLLAPSE } --> style="display: none"<!-- ENDIF --> id="pe{ $news:ID }">
 	{ $news:CONTENT }
 	<br /><br />
 	<!-- IF { $news:FULL_STORY } --><a href="{ $news:CONTENT_LINK }" > Readmore ..</a><!-- ENDIF -->

@@ -11,7 +11,7 @@
 		<th>&nbsp;{ $L_LAST_POST }&nbsp;</th>
 	</tr>
 	
-	<!-- LOOP $forumrow -->
+	<!-- LOOP $forumrow START="1" STOP="2" -->
 	<!-- IF { $forumrow:S_IS_CAT } -->
 	<tr>
 		<td class="cat" colspan="2"><h4><a href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a></h4></td>
@@ -33,8 +33,8 @@
 	</tr>
 	<!-- ELSE -->
 	<tr>
-		<td class="row1" width="50" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
-		<td class="row1" width="100%">
+		<td class="row1" width="50" height="40" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
+		<td class="row1" height="40" width="100%">
 			<a class="forumlink" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
 			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p>
 			<!-- IF { $forumrow:MODERATORS } -->

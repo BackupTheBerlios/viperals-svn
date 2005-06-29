@@ -14,9 +14,9 @@ $_CORE_CONFIG['quick_message']['delete_time'] = 18000;
 
 if (!defined('VIPERAL'))
 {
-    header('location: ../../');
-    die();
+    die;
 }
+
 switch (get_variable('mode', 'GET', false))
 {
 	case 'add':
@@ -189,7 +189,7 @@ function show_messages($all = false)
 			'USER_NAME'		=> $user_name,
 			'USER_LINK'		=> $userlink,
 			'DELETE_LINK'	=> $delete_link,
-			'MESSAGE'		=> trim_text($row['message'], '<br />'),
+			'MESSAGE'		=> modify_lines($row['message'], '<br />'),
 			'TIME'			=> $_CLASS['core_user']->format_date($row['time']),
 			'POSTER_AVATAR' => $avatar,
 			'U_PROFILE' 	=> ($row['user_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,

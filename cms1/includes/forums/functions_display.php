@@ -46,18 +46,19 @@ function display_forums($root_data = '', $display_moderators = true)
 	// Display list of active topics for this category?
 	$show_active = (isset($root_data['forum_flags']) && $root_data['forum_flags'] & 16) ? true : false;
 
-	if ($config['load_db_lastread'] && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+	if ($config['load_db_lastread'] && $_CLASS['core_user']->is_user)
 	{
 		switch (SQL_LAYER)
 		{
 			case 'oracle':
+				$lastread_select = $sql_from = '';
 				break;
 
 			default:
 				$sql_from = '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
+				$lastread_select = ', ft.mark_time ';
 				break;
 		}
-		$lastread_select = ', ft.mark_time ';
 	}
 	else
 	{
@@ -78,7 +79,7 @@ function display_forums($root_data = '', $display_moderators = true)
 
 	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
-		if ($mark_read == 'forums' && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+		if ($mark_read == 'forums' && $_CLASS['core_user']->is_user)
 		{
 			if ($_CLASS['auth']->acl_get('f_list', $row['forum_id']))
 			{
@@ -168,7 +169,7 @@ function display_forums($root_data = '', $display_moderators = true)
 
 		$mark_time_forum = ($config['load_db_lastread']) ? $row['mark_time'] : ((isset($tracking_topics[$forum_id][0])) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0);
 
-		if ($mark_time_forum < $row['forum_last_post_time'] && $_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+		if ($mark_time_forum < $row['forum_last_post_time'] && $_CLASS['core_user']->is_user)
 		{
 			$forum_unread[$parent_id] = true;
 		}
@@ -233,26 +234,23 @@ function display_forums($root_data = '', $display_moderators = true)
 		{
 			if ($subforums[$forum_id]['display'])
 			{
-				$alist = array();
-				foreach ($subforums[$forum_id]['name'] as $sub_forum_id => $subforum_name)
+				$links = array();
+
+				foreach ($subforums[$forum_id]['name'] as $subforum_id => $subforum_name)
 				{
 					if (!empty($subforum_name))
 					{
-						$alist[$sub_forum_id] = $subforum_name;
-					}
-				}
-
-				if (sizeof($alist))
-				{
-					$links = array();
-					foreach ($alist as $subforum_id => $subforum_name)
-					{
 						$links[] = '<a href="' .generate_link('Forums&amp;file=viewforum&amp;f='.$subforum_id).'">' . $subforum_name . '</a>';
 					}
-					$subforums_list = implode(', ', $links);
+				}
 
+				if (sizeof($links))
+				{
+					$subforums_list = implode(', ', $links);
 					$l_subforums = (sizeof($subforums[$forum_id]) == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
 				}
+
+				unset($links);
 			}
 
 			$folder_image = (!empty($forum_unread[$forum_id])) ? 'sub_forum_new' : 'sub_forum';
@@ -283,7 +281,6 @@ function display_forums($root_data = '', $display_moderators = true)
 			$folder_alt = (!empty($forum_unread[$forum_id])) ? 'NEW_POSTS' : 'NO_NEW_POSTS';
 		}
 
-
 		// Create last post link information, if appropriate
 		if ($row['forum_last_post_id'])
 		{
@@ -313,7 +310,7 @@ function display_forums($root_data = '', $display_moderators = true)
 
 		$_CLASS['core_template']->assign_vars_array('forumrow', array(
 			'S_IS_CAT'			=> false, 
-			'S_IS_LINK'			=> ($row['forum_type'] != FORUM_LINK) ? false : true, 
+			'S_IS_LINK'			=> ($row['forum_type'] == FORUM_LINK), 
 
 			'LAST_POST_IMG'		=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'), 
 
@@ -344,8 +341,8 @@ function display_forums($root_data = '', $display_moderators = true)
 
 		'S_HAS_SUBFORUM'	=>	($visible_forums) ? true : false,
 
-		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS'])
-	);
+		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
+	));
 
 	return $active_forum_ary;
 }
@@ -416,8 +413,9 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 			$folder = 'folder_locked';
 			$folder_new = 'folder_locked_new';
 			
-		} else {
-		
+		}
+		else
+		{
 			switch ($topic_row['topic_type'])
 			{
 				case POST_GLOBAL:

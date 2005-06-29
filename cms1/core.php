@@ -4,7 +4,7 @@
 //**************************************************************//
 //																//
 //  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
+//  By Ryan Marshall ( Viperal )								//
 //																//
 //  http://www.viperal.com										//
 //																//
@@ -59,7 +59,7 @@ load_class(false, 'core_db', 'sql_db');
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-//$_CLASS['core_error_handler']->stop();
+$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))
@@ -77,6 +77,7 @@ $_CLASS['core_db']->return_on_error = true;
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
+//remove this config.
 if (($config = $_CLASS['core_cache']->get('config')) !== false)
 {
 	$sql = 'SELECT config_name, config_value
@@ -186,7 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here
 }
-
 
 // Do the theme
 $themeprev = get_variable('prevtheme', 'REQUEST', false);
