@@ -19,6 +19,46 @@ function check_email($email)
 	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
 }
 
+function check_bot_status($browser, $ip)
+{
+	$bots_array = get_bots();
+	$is_bot = false;
+
+	foreach ($bots_array as $bot)
+	{
+		if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $browser))
+		{
+			$is_bot = true;
+		}
+		
+		if ($bot['user_ip'] && (!$bot['user_agent'] || $is_bot))
+		{
+			$is_bot = false;
+			
+			foreach (explode(',', $bot['user_ip']) as $bot_ip)
+			{
+				if (strpos($ip, $bot_ip) === 0)
+				{
+					$is_bot = true;
+				}
+			}
+		}
+		
+		if ($is_bot)
+		{
+			if ($bot['user_type'] == USER_BOT_INACTIVE)
+			{
+				// How would this affect indexing ?
+				header("HTTP/1.0 503 Service Unavailable");
+				script_close(false);
+			}
+			break;
+		}
+	}
+	
+	return $is_bot;
+}
+
 /*
 */
 function check_load_status($return = false)
@@ -293,12 +333,12 @@ function generate_link($link = false, $link_options = false)
     return $link;
 }
 
+// to be redone
 function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = false, $tpl_prefix = '')
 {
 	//Code Copyright 2004 phpBB Group - http://www.phpbb.com/
 	global $_CLASS;
 
-	//$seperator = $_CLASS['core_user']->img['pagination_sep'];
 	$seperator = ' | ';
 
 	$admin_link = (VIPERAL == 'Admin') ? array('admin' => true) : '';
@@ -362,10 +402,6 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 	}
 	
 	$_CLASS['core_template']->assign(array(
-		'L_GOTO_PAGE'	=>	$_CLASS['core_user']->lang['GOTO_PAGE'],
-		'L_PREVIOUS'	=>	$_CLASS['core_user']->lang['PREVIOUS'],
-		'L_NEXT'		=>	$_CLASS['core_user']->lang['NEXT'],
-		'L_PREVIOUS'	=>	$_CLASS['core_user']->lang['PREVIOUS'],
 		$tpl_prefix . 'BASE_URL'	=> generate_link($base_url),
 		$tpl_prefix . 'PER_PAGE'	=> $per_page,
 		
@@ -398,14 +434,14 @@ function load_class($file, $name, $class = false)
 	}
 }
 
-function login_box($login_options = false)
+function login_box($login_options = false, $template = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
 	
-	$err = '';
+	$error = '';
 	$login_array = array(
 		'redirect' 		=> false,
-		'explain' 	 	=> '',
+		'explain' 	 	=> false,
 		'success'  		=> '',
 		'admin_login'	=> false,
 		'full_login'	=> true,
@@ -419,7 +455,7 @@ function login_box($login_options = false)
 	
 	if ($login_array['full_screen'])
 	{
-		$_CLASS['core_user']->start();
+		//$_CLASS['core_user']->user_setup();
 	}
 	
 	if (isset($_POST['login']))
@@ -432,47 +468,48 @@ function login_box($login_options = false)
 			'show_online'		=> (!empty($_POST['viewonline'])) ? 0 : 1,
 			'auth_error_return'	=> true,
 		 );
-		
-		$login_array['redirect'] = get_variable('redirect', 'POST', false);	
-		$login_array['redirect'] = generate_link($login_array['redirect']);
-		$result = false;
 
-		if ($data['user_name'] && $data['user_password'] && ($result = $_CLASS['core_user']->create($data)) === true)
+		if ($data['user_name'] && $data['user_password'])
 		{
-			if ($login_array['admin_login'])
+			$result = $_CLASS['core_auth']->user_auth($data['user_name'], $data['user_password']);
+			echo $result;
+			
+// need to fix this, user_type is an interger
+			if (is_numeric($result))
 			{
-// log
+				$login_array['redirect'] = get_variable('redirect', 'POST', $login_array['redirect']);	
+				$login_array['redirect'] = generate_link($login_array['redirect']);
+				
+				$_CLASS['core_user']->login($result);
+
+				$_CLASS['core_display']->meta_refresh(5, $login_array['redirect']);
+				$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
+				trigger_error($message);
+				die;
 			}
 			
-
-			$_CLASS['core_display']->meta_refresh(3, $login_array['redirect']);
-			$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
-			trigger_error($message); die;	
-		}
-
-		if ($login_array['admin_login'])
-		{
-// log
-		}
+			if (is_string($result))
+			{
+				trigger_error($result, E_USER_ERROR);
+			}
+	
+			trigger_error(($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR', E_USER_ERROR);
 		
-		if (is_string($result))
-		{
-			trigger_error($result, E_USER_ERROR);
 		}
-
-		$error = ($result === USER_INACTIVE) ? $_CLASS['core_user']->lang['ACTIVE_ERROR'] :  $_CLASS['core_user']->lang['LOGIN_ERROR'];
-//USER_IGNORE  I think this is unactivated accounts
+		else
+		{
+			trigger_error('INCOMPLETE_LOGIN_INFO', E_USER_ERROR);
+		}
 	}
 
 	if (!$login_array['redirect'])
 	{
 		$login_array['redirect'] = htmlspecialchars($_CLASS['core_user']->url);
 	}
-	
+
 	$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
 
 	$_CLASS['core_template']->assign(array(
-		'LOGIN_ERROR'			=> $err, 
 		'LOGIN_EXPLAIN'			=> $login_array['explain'], 
 		'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
 		'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
@@ -480,32 +517,19 @@ function login_box($login_options = false)
 		'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
 		'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
 		'USERNAME'				=> '',
-		'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']) ? true : false,
-		'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link('Control_Panel&amp;mode=login') : generate_link(false, array('admin' => true)),
+		'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']),
+		'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link($_CLASS['core_user']->url) : generate_link(false, array('admin' => true)),
 		'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
-		'L_LOGIN'				=> $_CLASS['core_user']->lang['LOGIN'],
-		'L_LOGIN_INFO'			=> $_CLASS['core_user']->lang['LOGIN_INFO'], 
-		'L_TERMS_USE'			=> $_CLASS['core_user']->lang['TERMS_USE'],
-		'L_USERNAME'			=> $_CLASS['core_user']->lang['USERNAME'],
-		'L_PASSWORD' 			=> $_CLASS['core_user']->lang['PASSWORD'],
-		'L_REGISTER'			=> $_CLASS['core_user']->lang['REGISTER'],
-		'L_RESEND_ACTIVATION'	=> $_CLASS['core_user']->lang['RESEND_ACTIVATION'],
-		'L_FORGOT_PASS'			=> $_CLASS['core_user']->lang['FORGOT_PASS'],
-		'L_HIDE_ME'				=> $_CLASS['core_user']->lang['HIDE_ME'],
-		'L_LOG_ME_IN'			=> $_CLASS['core_user']->lang['LOG_ME_IN'],
-		'L_PRIVACY'				=> $_CLASS['core_user']->lang['PRIVACY']
-		)
-	);
-	
+	));
+
 	if ($login_array['full_screen'])
 	{
-		$_CLASS['core_template']->display('login_body_full.html');
+		$_CLASS['core_template']->display(($template) ? $template : 'login_body_full.html');
 		script_close(false);
-		die;
 	}
 
 	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['LOGIN']);
-	$_CLASS['core_template']->display('login_body.html');
+	$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
 	$_CLASS['core_display']->display_footer();
 }
 
@@ -543,6 +567,7 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 	}
 }
 
+// move to forums functions
 function set_config($config_name, $config_value, $is_dynamic = false)
 {
 	global $_CLASS, $config;
@@ -629,6 +654,8 @@ function script_close($save = true)
 	{
 		$_CLASS['core_db']->sql_close();
 	}
+
+	die;
 }
 
 function on_page($num_items, $per_page, $start)

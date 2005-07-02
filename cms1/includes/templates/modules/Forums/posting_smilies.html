@@ -31,7 +31,7 @@ function smiley(text)
 				<td class="row1" align="center" valign="middle">
 				<!-- LOOP $smiley -->
 					<a href="javascript:smiley('{ $smiley:SMILEY_CODE }')"><img src="{ $T_SMILIES_PATH }{ $smiley:SMILEY_IMG }" width="{ $smiley:SMILEY_WIDTH }" height="{ $smiley:SMILEY_HEIGHT }" border="0" alt="{ $smiley:SMILEY_DESC }" title="{ $smiley:SMILEY_DESC }" hspace="2" vspace="2" onclick="smiley('{ $smiley:SMILEY_CODE }');return false" /></a>
-				<!-- ENDLOOP -->
+				<!-- ENDLOOP $smiley -->
 					<br /><a class="nav" href="javascript:window.close();">{ $L_CLOSE_WINDOW }</a>
 				</td>
 			</tr>

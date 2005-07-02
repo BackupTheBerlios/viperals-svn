@@ -1,9 +1,16 @@
 <?php
 
-class core_user extends session
+class core_user extends sessions
 {
+	var $browser;
+	var $ip;
+	var $url;
+	var $page;
+
+	var $data = array();
 	var $lang = array();
 	var $img = array();
+
 	var $date_format;
 	var $timezone;
 	var $dst;
@@ -11,8 +18,92 @@ class core_user extends session
 	var $lang_name;
 	var $lang_path;
 
+// remove
 	var $keyoptions = array('viewimg' => 0, 'viewflash' => 1, 'viewsmilies' => 2, 'viewsigs' => 3, 'viewavatars' => 4, 'viewcensors' => 5, 'attachsig' => 6, 'html' => 7, 'bbcode' => 8, 'smilies' => 9, 'popuppm' => 10, 'report_pm_notify' => 11);
 	var $keyvalues = array();
+
+	function core_user()
+	{
+		$this->time = time();
+		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'], 0, 100);
+		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
+
+		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
+		{
+			$pos = $pos + strlen(INDEX_PAGE.'?mod=');
+			$this->url = substr($this->url, $pos);
+			
+			if (($pos = strpos($this->url, 'sid')) !== false)
+			{
+				$this->url = substr($this->url, 0, $pos-1);
+			}
+
+			$this->url = substr($this->url, 0, 100);
+		}
+		else
+		{
+			$this->url = '';
+		}
+
+		if (!isset($_COOKIE))
+		{
+			$_COOKIE = array();
+		}
+	}
+
+	function login($id = ANONYMOUS, $view_online = true, $admin_login)
+	{
+		global $_CLASS;
+		//$this->can_create($id);
+
+		$result = $_CLASS['core_db']->sql_query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '.$id);
+		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
+		
+		if (!$this->data)
+		{
+			die;
+// what to do what to do, this should not happen
+		}
+		
+		if ($id == ANONYMOUS && check_bot_status($this->browser, $this->ip))
+		{
+			$this->is_user = false;
+			$this->is_bot = true;
+
+			$this->data['session_admin'] = ADMIN_NOT_ADMIN;
+		}
+		else
+		{
+			$this->is_user = ($id == ANONYMOUS) ? false : true;
+			$this->is_bot = false;
+	
+			if ($_CLASS['core_auth']->admin_power())
+			{
+				$this->data['session_admin'] = ($admin_login) ? ADMIN_IS_ADMIN : ADMIN_NOT_LOGGED;
+			}
+			else
+			{
+				$this->data['session_admin'] = ADMIN_NOT_ADMIN;
+			}
+		}
+			
+		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN) ? true : false;
+		$this->data['session_viewonline'] = $view_online;
+
+		/*if (!$this->is_user && $_CORE_CONFIG['global']['only_registered'])
+		{
+			$this->need_url_id = false;
+			login_box(array('full_screen'	=> true));
+		}*/
+
+		$this->session_create();
+	}
+	
+	function login_out()
+	{
+		$this->destroy();
+	}
 
 	function user_setup()
 	{
@@ -193,6 +284,8 @@ class core_user extends session
 	{
 		static $midnight;
 
+		settype($gmepoch, 'integer');
+
 		if (!$gmepoch)
 		{
 			return;
@@ -270,6 +363,7 @@ class core_user extends session
 	}
 	
 	// Start code for checking/setting option bit field for user table
+// Replace
 	function optionget($key, $data = false)
 	{
 		if (!isset($this->keyvalues[$key]))

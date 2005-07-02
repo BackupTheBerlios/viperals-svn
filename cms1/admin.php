@@ -33,13 +33,13 @@ if (!$_CLASS['core_user']->is_user)
 		url_redirect();
 	}
 
-	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
+	login_box(array('admin_login' => true, 'full_screen' => true,  'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
 }
 
 // redo this, don't want unneeded loggins. maybe set at session create (ADMIN_NOT_LOGGED, ADMIN_NOT_ADMIN)
 if ($_CLASS['core_user']->data['session_admin'] == ADMIN_NOT_LOGGED)
 {
-	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN_CONFIRM'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
+	login_box(array('admin_login' => true, 'full_screen' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN_CONFIRM'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
 }
 
 if (!$_CLASS['core_user']->is_admin)

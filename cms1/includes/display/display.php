@@ -237,8 +237,6 @@ class core_display
 		}
 		
 		script_close($save);
-
-		die;	
 	}
 	
 	/*

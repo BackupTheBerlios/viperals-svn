@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF
 	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	xmlns="http://purl.org/rss/1.0/"
@@ -10,24 +9,20 @@
 	<description>{ $SLOGAN }</description>
 	<items>
 		<rdf:Seq>
-{ section name=itemsloop loop=$items }
-	<rdf:li rdf:resource="{ $items[itemsloop].LINK }" />
-{/section}
+<!-- LOOP $items -->
+	<rdf:li rdf:resource="{ $items:LINK }" />
+<!-- ENDLOOP -->
 
 		</rdf:Seq>
 	</items>
 </channel>
-{ section name=itemsloop loop=$items }
-
-<item rdf:about="{ $items[itemsloop].LINK }">
-	<title>{ $items[itemsloop].TITLE }</title>
-	<link>{ $items[itemsloop].LINK }</link>
-	<description>{ $items[itemsloop].DESCRIPTION }</description>
-	<dc:creator>{ $items[itemsloop].AUTHOR }</dc:creator>
-	<dc:date>{ $items[itemsloop].TIME }</dc:date>
+<!-- LOOP $items -->
+<item rdf:about="{ $items:LINK }">
+	<title>{ $items:TITLE }</title>
+	<link>{ $items:LINK }</link>
+	<description>{ $items:DESCRIPTION }</description>
+	<dc:creator>{ $items:AUTHOR }</dc:creator>
+	<dc:date>{ $items:TIME }</dc:date>
 </item>
-
-{/section}
-
-
+<!-- ENDLOOP -->
 </rdf:RDF>

@@ -6,24 +6,23 @@
 <channel>
 <title>{ $SITE_NAME }</title>
 <link>{ $SITE_URL }</link>
-{* <description>{ $DESCRIPTION }</description> *}
 <dc:language>en-us</dc:language>
 <dc:creator>Viperal CMS</dc:creator>
 <dc:date>{ $TIME }</dc:date>
 
-{ section name=itemsloop loop=$items }
+<!-- LOOP $items -->
 <item>
-<title>{ $items[itemsloop].TITLE }</title>
-<link>{ $items[itemsloop].LINK }</link>
+<title>{ $items:TITLE }</title>
+<link>{ $items:LINK }</link>
 <description>
 
-{ $items[itemsloop].DESCRIPTION }
+{ $items:DESCRIPTION }
 
 </description>
 <dc:subject></dc:subject>
-<dc:date>{ $items[itemsloop].TIME }</dc:date>
+<dc:date>{ $items:TIME }</dc:date>
 </item>
-{/section}
+<!-- ENDLOOP -->
 
 </channel>
 </rss>

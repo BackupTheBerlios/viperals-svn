@@ -11,7 +11,7 @@
 		<th>&nbsp;{ $L_LAST_POST }&nbsp;</th>
 	</tr>
 	
-	<!-- LOOP $forumrow START="1" STOP="2" -->
+	<!-- LOOP $forumrow -->
 	<!-- IF { $forumrow:S_IS_CAT } -->
 	<tr>
 		<td class="cat" colspan="2"><h4><a href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a></h4></td>
@@ -67,7 +67,7 @@
 	<tr>
 		<td class="row1" colspan="5" align="center"><p class="gensmall">{$L_NO_FORUMS}</p></td>
 	</tr>
-	<!-- ENDLOOP -->
+	<!-- ENDLOOP $forumrow -->
 </table>
 <a class="gensmall" href="{ $U_DELETE_COOKIES }">{ $L_DELETE_COOKIES }</a><br />
 

@@ -19,67 +19,27 @@
 // WWW       : http://www.phpbb.com/
 //
 // -------------------------------------------------------------
-// session_url will alway contain the users last url. This is in {module}{queries} format
 
-/*
-To do
-	Complete only registered site feather
-	Clean up
-	Banning system
-	Clean up again :-)
-*/
 
-class session
+class sessions
 {
-	var $data = array();
-	var $browser;
-	var $ip;
-	var $url;
-	var $page;
 	var $load;
 	var $new_data = false;
 	var $new_session = false;
 	var $session_save = false;
 	var $need_url_id = true;
 
-
-	function startup()
+	function start()
 	{
 		global $_CLASS, $_CORE_CONFIG, $SID, $mod;
 		
-		$this->time = time();
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
-		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'], 0, 100);
-		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
 
-		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
-		{
-			$pos = $pos + strlen(INDEX_PAGE.'?mod=');
-			$this->url = substr($this->url, $pos);
-			
-			if (($pos = strpos($this->url, 'sid')) !== false)
-			{
-				$this->url = substr($this->url, 0, $pos-1);
-			}
-
-			$this->url = substr($this->url, 0, 100);
-		}
-		else
-		{
-			$this->url = '';
-		}
-
-		if (!isset($_COOKIE))
-		{
-			$_COOKIE = array();
-		}
-		
 		$this->need_url_id = true;
-		
+
 		$session_data = (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) : array();
 		$session_data['session_id'] = get_variable('sid', 'GET', false);
-		
-		//print_r($session_data);
+
 		if (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']))
 		{
 			// session id in url > cookie
@@ -89,7 +49,7 @@ class session
 				$this->need_url_id = (defined('NEED_SID')) ? true : false;
 			}
 		}
-		
+
 		// Obtain users IP
 		$this->ip = (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
 
@@ -118,19 +78,31 @@ class session
 			$result = $_CLASS['core_db']->sql_query($sql);
 
 			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+			//print_r($this->data);
+			//echo $session_data['session_id'];
 			$_CLASS['core_db']->sql_freeresult($result);
 
-			// Did the session exist in the DB?
 			if (isset($this->data['user_id']))
 			{
-				// Validate IP length according to admin ... has no effect on IPv6
-				$s_ip = implode('.', array_slice(explode('.', $this->data['session_ip']), 0, $_CORE_CONFIG['server']['ip_check']));
-				$u_ip = implode('.', array_slice(explode('.', $this->ip), 0, $_CORE_CONFIG['server']['ip_check']));
+				$valid  = true;
 
-				$s_browser = ($_CORE_CONFIG['server']['browser_check']) ? $this->data['session_browser'] : '';
-				$u_browser = ($_CORE_CONFIG['server']['browser_check']) ? $this->browser : '';
+				if ($_CORE_CONFIG['server']['browser_check'] && ($this->data['session_browser'] != $this->browser))
+				{
+					$valid  = false;
+				}
 
-				if ($u_ip == $s_ip && $s_browser == $u_browser)
+				if ($_CORE_CONFIG['server']['ip_check'])
+				{
+					$s_ip = implode('.', explode('.', $this->data['session_ip'], $_CORE_CONFIG['server']['ip_check']));
+					$u_ip = implode('.', explode('.', $this->ip, $_CORE_CONFIG['server']['ip_check']));
+					
+					if ($u_ip != $s_ip)
+					{
+						$valid  = false;
+					}
+				}
+				
+				if ($valid)
 				{
 					// Set session update a minute or so after last update or if page changes
 					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
@@ -140,23 +112,13 @@ class session
 					
 					$this->data['session_data'] = ($this->data['session_data']) ? unserialize($this->data['session_data']) : array();
 					
-					$this->is_user = ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER)) ? true : false;
-					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS) ? true : false;
-					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN) ? true : false;
+					$this->is_user	= ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER));
+					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS);
+					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
 
 					check_maintance_status();
 					
-					if (check_load_status())
-					{
-						$this->load = check_load_status();
-					}
-					
-					if ($_CORE_CONFIG['global']['only_registered'] && !$this->is_user)
-					{
-						$this->need_url_id = false;
-						login_box(array('full_screen'	=> true));
-					}
-					
+					$this->load = check_load_status();
 					$this->user_setup();
 					
 					return true;
@@ -166,196 +128,52 @@ class session
 			$this->data = array();
 		}
 		
+		echo 'test';
+
 		check_maintance_status();
-		
-		if (check_load_status())
-		{
-			$this->load = check_load_status();
-		}
+		$this->load = check_load_status();
 
-		if ($_CORE_CONFIG['global']['only_registered'])
-		{
-			$this->need_url_id = false;
-			login_box(array('full_screen'	=> true));
-		}
-		
-		if (isset($session_data['login_code']) && isset($session_data['user_id']))
-		{
-			return $this->create(array('user_id' => $session_data['user_id'], 'user_password' => $session_data['login_code'], 'auto_log' => true));
-		}
-
-		return $this->create();
+		return $this->login();
 	}
 
-	// Create a new session
-	function create($data = array())
+	function can_create()
 	{
-		global $_CLASS, $_CORE_CONFIG, $config;
-		
-		$session_data = array(
-			'user_name'			=> false,
-			'user_id'			=> false,
-			'user_password'		=> false,
-			'admin_login'		=> false,
-			'auth_error_return'	=> false,
-			'auto_log'			=> false,
-			'view_online'		=> true,
-		);
-		
-		$session_data = array_merge($session_data, array_filter($data));
-		
-		$session_data['user_id']	= (int) $session_data['user_id'];
-		$session_data['is_bot']		= false;
-		
-		$session_data['old_session_id'] = !empty($this->data['session_id']) ? $this->data['session_id'] : false;
-		$session_data['old_id'] 		= !empty($this->data['user_id']) ? $this->data['user_id'] : false;
+		global $_CLASS, $_CORE_CONFIG;
 
-		$bots_array = get_bots();
-// maybe make a check bot status funtion so it be reused
-		foreach ($bots_array as $bot)
-		{
-			if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $this->browser))
-			{
-				$session_data['is_bot'] = true;
-			}
-			
-			if ($bot['user_ip'] && (!$bot['user_agent'] || $session_data['is_bot']))
-			{
-				$session_data['is_bot'] = false;
-				
-				foreach (explode(',', $bot['user_ip']) as $bot_ip)
-				{
-					if (strpos($this->ip, $bot_ip) === 0)
-					{
-						$session_data['is_bot'] = true;
-					}
-				}
-			}
-			
-			if ($session_data['is_bot'])
-			{
-				if ($bot['user_type'] == USER_BOT_INACTIVE)
-				{
-					// How would this affect indexing ?
-					header("HTTP/1.0 503 Service Unavailable");
-					script_close(false);
-					die;
-				}
-				
-				$session_data['user_id'] = $bot['user_id'];
-				break;
-			}
-		}
-		
-		if ($_CORE_CONFIG['server']['limit_sessions'] && (!$session_data['old_id'] || $session_data['old_id'] == ANONYMOUS) && (VIPERAL != 'ADMIN'))
+		if ($_CORE_CONFIG['server']['limit_sessions'])
 		{
 			$sql = 'SELECT COUNT(*) AS sessions
 				FROM ' . SESSIONS_TABLE . '
 				WHERE session_time >= ' . ($this->time - 60);
 			$result = $_CLASS['core_db']->sql_query($sql);
-
+		
 			$row = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
-
+		
 			if (intval($row['sessions']) > intval($_CORE_CONFIG['server']['limit_sessions']))
 			{
 				$this->gc($this->time);
-
+		
 				if (!$session_data['is_bot'])
 				{
 					$this->user_setup();
 					trigger_error('SITE_UNAVAILABLE', E_USER_ERROR);
 				}
-
+		
 				header("HTTP/1.0 503 Service Unavailable");
 				script_close(false);
 				die;
 			}
 		}
+	}
 
-		$auth = false;
+	// Create a new session
+	function session_create()
+	{
+		global $_CLASS, $_CORE_CONFIG, $config;
+		$auto_log = false;
 
-		if ($session_data['user_password'] && ($session_data['user_name'] || $session_data['user_id']))
-		{
-			$auth = $this->auth($session_data);
-
-			if ($session_data['auth_error_return'] && $auth !== true)
-			{
-				return $auth;
-			}
-			// error here if loggin is from a cookie
-		}
-
-		if ($auth === true)
-		{
-			if ($session_data['user_id']) 
-			{
-				$where_sql =  'u.user_id = '.$session_data['user_id'];
-			}
-			else
-			{
-				$where_sql =  "u.username = '".$_CLASS['core_db']->sql_escape($session_data['user_name'])."'";
-			}
-			
-			$sql = 'SELECT * FROM ' . USERS_TABLE . ' u
-						LEFT JOIN ' . SESSIONS_TABLE . ' s ON ( u.user_id = s.session_user_id )
-						WHERE '.$where_sql;
-					
-			$result = $_CLASS['core_db']->sql_query($sql);
-			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-			
-			$_CLASS['core_db']->sql_freeresult($result);
-			
-			if ($this->data['session_id'] && !$session_data['is_bot'])
-			{
-				if ($this->browser != $this->data['session_browser'] || $this->ip != $this->data['session_ip'])
-				{
-// clear data here
-// need to make a single non changing array so we can reset these thing without ot much coding
-				}
-			}
-
-			$this->is_user = (!$session_data['is_bot']) ? true : false;
-			
-			if ($session_data['admin_login'])
-			{
-				$session_admin = ($this->is_user && $_CLASS['core_auth']->admin_power()) ? ADMIN_IS_ADMIN : ADMIN_NOT_ADMIN;
-			}
-			else
-			{
-				$session_admin = ADMIN_NOT_LOGGED;
-			}
-
-			$this->is_admin = ($session_admin == ADMIN_IS_ADMIN) ? true : false;
-		}
-
-		$this->is_bot = ($session_data['is_bot']) ? true : false;
-
-		if ($auth !== true)
-		{
-			$sql = 'SELECT *
-				FROM ' . USERS_TABLE . '
-				WHERE user_id = ' . ANONYMOUS;
-			$result = $_CLASS['core_db']->sql_query($sql);
-	
-			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
-
-			// reset and add some basics
-			$session_data += array('user_name' => false, 'user_id' => false, 'user_password' => false, 'auto_log' => false);
-			$this->data['session_time'] = $this->data['session_id'] = 0;
-
-			$this->is_admin	= $this->is_user = false;
-			$session_admin = ADMIN_NOT_ADMIN;
-		}
-		
-		if ($session_data['old_session_id'] && $session_data['old_session_id'] != $this->data['session_id'])
-		{
-			$this->destroy($session_data['old_session_id'], $session_data['old_id'], true);
-		}
-		
-		$this->data['session_last_visit'] = ($this->data['session_time']) ? $this->data['session_time'] : (($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : time());
-		$view_online = (!$this->data['user_allow_viewonline']) ? 0 : (($session_data['view_online']) ? 1 : 0);
+		$this->data['session_last_visit'] = ($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : $this->time;
 
 		$sql_array = array(
 			'session_user_id'		=> (int) $this->data['user_id'],
@@ -367,27 +185,16 @@ class session
 			'session_url'			=> (string) $this->url,
 			'session_ip'			=> (string) $this->ip,
 			'session_user_type'		=> (string) $this->data['user_type'],
-			'session_admin'			=> (int) $session_admin,
+			'session_admin'			=> (int) $this->data['session_admin'],
 			'session_auth'			=> (int) serialize($_CLASS['core_auth']->auth_dump()),
-			'session_viewonline'	=> (int) $view_online,
+			'session_viewonline'	=> (int) $this->data['session_viewonline'],
 		);
-		
-		
-		if ($this->data['session_id'])
-		{
-			$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
-				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
-			
-			$_CLASS['core_db']->sql_query($sql);	
-		}
-		else
-		{	
-			$sql_array['session_id'] = (string) md5(unique_id());
 
-			$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
-			
-			$this->new_session = true;
-		}
+		$sql_array['session_id'] = (string) md5(unique_id());
+
+		$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
+		
+		$this->new_session = true;
 		
 		$this->data = array_merge($this->data, $sql_array);
 		unset($sql_array);
@@ -399,7 +206,7 @@ class session
 
 		if (!$this->is_bot)
 		{
-			if ($session_data['auto_log'] && $this->is_user)
+			if ($auto_log && $this->is_user)
 			{
 				$cookie_data['login_code'] = $session_data['user_password'];
 				$cookie_data['user_id'] = $this->data['user_id'];
@@ -412,9 +219,9 @@ class session
 			}
 			
 			$this->set_cookie('sid', $this->data['session_id'], 0);
+			$this->need_url_id = false;
 		}
-		
-		$this->need_url_id = ($this->is_bot) ? false : true;
+
 		$this->data['sessions'] = array();
 		$this->user_setup();
 
@@ -433,19 +240,19 @@ class session
 			
 			$this->set_cookie('data', '', $this->time - 31536000);
 			$this->set_cookie('sid', '', $this->time - 31536000);
-		}
-		
-		if ($this->data['session_time'])
-		{
-			$sql = 'UPDATE ' . USERS_TABLE . '
-				SET user_lastvisit = ' . $this->data['session_time'] . '
-				WHERE user_id = ' . $id;
-			$_CLASS['core_db']->sql_query($sql);
+			
+			if ($this->data['session_time'])
+			{
+				$sql = 'UPDATE ' . USERS_TABLE . '
+					SET user_lastvisit = ' . $this->data['session_time'] . '
+					WHERE user_id = ' . $id;
+				$_CLASS['core_db']->sql_query($sql);
+			}
 		}
 		
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id) . "'
-				AND session_user_id = " . $id;
+			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id);
+
 		$_CLASS['core_db']->sql_query($sql);
 
 		if ($return)
@@ -465,25 +272,6 @@ class session
 		$this->data['session_id'] = '';
 		$this->data['session_time'] = $this->data['session_admin'] = 0;
 		$this->need_url_id = $this->is_user = $this->is_bot = $this->is_admin = false;
-	}
-	
-	function auth($data)
-	{
-		global $config, $site_file_root;
-
-		if (file_exists($site_file_root.'includes/auth/auth_' . $config['auth_method'] . '.php'))
-		{
-			include_once($site_file_root.'includes/auth/auth_' . $config['auth_method'] . '.php');
-
-			$method = 'auth_' . $config['auth_method'];
-			
-			if (function_exists($method))
-			{
-				return $method($data);
-			}
-		}
-
-		trigger_error('Authentication method not found', E_USER_ERROR);
 	}
 	
 	// Garbage collection
@@ -628,10 +416,14 @@ class session
 		}
 
 		$sql_array = array(
-			'session_time'			=> (int) $this->time,
-			'session_page'			=> (string) $this->page,
-			'session_url'			=> (string) $this->url,
+			'session_admin'			=> (int) $this->data['session_admin'],
+			//'session_auth'		=> (int) serialize($_CLASS['core_auth']->auth_dump()),
 			'session_data'			=> ($this->data['session_data']) ? serialize($this->data['session_data']) : '',
+			'session_page'			=> (string) $this->page,
+			'session_time'			=> (int) $this->time,
+			'session_viewonline'	=> (int) $this->data['session_viewonline'],
+			'session_url'			=> (string) $this->url,
+			'session_user_type'		=> (string) $this->data['user_type'],
 		);
 
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
