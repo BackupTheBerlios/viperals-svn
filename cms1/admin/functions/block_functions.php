@@ -1,4 +1,17 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
 function block_change($id)
 {	
@@ -100,7 +113,7 @@ function block_weight($id, $option)
 	}
 }
 
-function block_delete($id)
+function block_delete($id, $return_link)
 {
     global $_CLASS;
     
@@ -115,22 +128,27 @@ function block_delete($id)
 	
 	check_position($block['position']);
 
-    if (get_variable('ok', 'REQUEST', false))
+    if (get_variable('ok', 'POST', false))
     {
 		
         $result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
         $_CLASS['core_db']->sql_query('delete from '.BLOCKS_TABLE.' where id='.$id);
 
         $_CLASS['core_cache']->destroy('blocks');
-		        
-    } else {
-// We'll be using "$_POST", A simple "Delete" bottom, along with a link to "Go Back"
-		$_CLASS['core_display']->display_head();
+        
+        trigger_error('Block deleted<br/><a href="'.generate_link($return_link, array('admin' => true)).'">Click here to return</a>');	        
+    }
+	else
+	{
+		/*$_CLASS['core_display']->display_head();
 		OpenTable();
-		echo '<center>Remove Message ?';
-		echo '<br /><br />[ <a href="'.generate_link("&amp;mode=delete&amp;id=$id&amp;ok=1", array('admin' => true)).'">Yes</a> | <a href="'.generate_link('', array('admin' => true)).'">No</a> ]</center>';
+		echo '<form name="confirm" action="'.generate_link($mod, array('admin' => true)).'" method="post">
+		<center><b>If your certain that you want to remove this item click delete to continue<br/>';
+		echo '<a href="'.generate_link($_CLASS['core_user']->url, array('admin' => true)).'">Click here to return</a><br/><br/>
+		<input type="submit" name="confirm" value="Delete" class="btnmain" />&nbsp;&nbsp;<input type="submit" name="cancel" value="Cancel" class="btnlite" />
+		</center>';
 		CloseTable();
-        $_CLASS['core_display']->display_footer();
+        $_CLASS['core_display']->display_footer();*/
     }
 }
 

@@ -19,15 +19,22 @@
 				<!-- IF { $top_admin_messages:STARTS } --><br /><b>{ $L_STARTS }: </b>{ $top_admin_messages:STARTS }<!-- ENDIF -->
 				<!-- IF { $top_admin_messages:EXPIRES } --><br /><b>{ $L_EXPIRES }: </b>{ $top_admin_messages:EXPIRES }<!-- ENDIF -->
 			</td>
-			<td class="row1"align="center" >{ $top_admin_messages:LEFT_OPTIONS }</td><td class="row1" align="center">{ $top_admin_messages:RIGHT_OPTIONS }</td>
-			<td class="row1" align="center"><a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a></td>
-		
-			
+			<td class="row1" align="center" >
+				<!-- IF { $top_admin_messages:WEIGHT_UP } -->
+				<a href="{ $top_admin_messages:WEIGHT_MOVE_UP }"><img src="images/down.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $top_admin_messages:WEIGHT_MOVE_TOP }"><img src="images/bottom.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
 			<td class="row1" align="center">
-			
-			
+				<!-- IF { $top_admin_messages:WEIGHT_DOWN } -->
+				<a href="{ $top_admin_messages:WEIGHT_MOVE_DOWN }"><img src="images/down.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $top_admin_messages:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center"><a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a></td>
+			<td class="row1" align="center">
 			<!-- IF { $top_admin_messages:EDIT_LINK } -->
-			 <a href="{ $top_admin_messages:EDIT_LINK }">{ $L_EDIT }</a>
+				<a href="{ $top_admin_messages:EDIT_LINK }">{ $L_EDIT }</a>
 			<!-- ENDIF -->
 			<!-- IF { $top_admin_messages:DELETE_LINK } -->
 				 | <a href="{ $top_admin_messages:DELETE_LINK }">{ $L_DELETE }</a>
@@ -50,7 +57,18 @@
 				<!-- IF { $bottom_admin_messages:STARTS } --><br /><b>{ $L_STARTS }: </b>{ $bottom_admin_messages:STARTS }<!-- ENDIF -->
 				<!-- IF { $bottom_admin_messages:EXPIRES } --><br /><b>{ $L_EXPIRES }: </b>{ $bottom_admin_messages:EXPIRES }<!-- ENDIF -->
 			</td>
-			<td class="row1"align="center" >{ $bottom_admin_messages:LEFT_OPTIONS }</td><td class="row1" align="center">{ $bottom_admin_messages:RIGHT_OPTIONS }</td>
+			<td class="row1" align="center" >
+				<!-- IF { $bottom_admin_messages:WEIGHT_UP } -->
+				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_UP }"><img src="images/down.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_TOP }"><img src="images/bottom.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $bottom_admin_messages:WEIGHT_DOWN } -->
+				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_DOWN }"><img src="images/down.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
 			<td class="row1" align="center"><a href="{ $bottom_admin_messages:ACTIVE_LINK }"><img src="images/{ $bottom_admin_messages:ACTIVE }" alt="{ $bottom_admin_messages:CHANGE }" title="{ $bottom_admin_messages:CHANGE }" border="0"></a></td>
 			
 			<td class="row1" align="center">[

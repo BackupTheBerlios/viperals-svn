@@ -29,7 +29,18 @@
 				<a href="{ $left_admin_blocks:EDIT_LINK }">{ $left_admin_blocks:TITLE }</a>
 				<!-- IF { $left_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $left_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
-			<td class="row1" align="center" >{ $left_admin_blocks:WEIGHTL }</td><td class="row1" align="center">{ $left_admin_blocks:WEIGHTR }</td>
+			<td class="row1" align="center" >
+				<!-- IF { $left_admin_blocks:WEIGHT_UP } -->
+				<a href="{ $left_admin_blocks:WEIGHT_MOVE_UP }"><img src="images/down.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $left_admin_blocks:WEIGHT_MOVE_TOP }"><img src="images/bottom.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $left_admin_blocks:WEIGHT_DOWN } -->
+				<a href="{ $left_admin_blocks:WEIGHT_MOVE_DOWN }"><img src="images/down.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $left_admin_blocks:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
 			<td class="row2" align="center">{ $left_admin_blocks:TYPE }</td>
 			<td class="row1" align="center">
 				<a href="{ $left_admin_blocks:ACTIVE_LINK }">{ $left_admin_blocks:CHANGE }</a>
@@ -57,7 +68,18 @@
 				<a href="{ $centertop_admin_blocks:EDIT_LINK }">{ $centertop_admin_blocks:TITLE }</a>
 				<!-- IF { $centertop_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $centertop_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
-			<td class="row1" align="center" >{ $centertop_admin_blocks:WEIGHTL }</td><td class="row1" align="center">{ $centertop_admin_blocks:WEIGHTR }</td>
+			<td class="row1" align="center" >
+				<!-- IF { $centertop_admin_blocks:WEIGHT_UP } -->
+				<a href="{ $centertop_admin_blocks:WEIGHT_MOVE_UP }"><img src="images/down.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $centertop_admin_blocks:WEIGHT_MOVE_TOP }"><img src="images/bottom.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $centertop_admin_blocks:WEIGHT_DOWN } -->
+				<a href="{ $centertop_admin_blocks:WEIGHT_MOVE_DOWN }"><img src="images/down.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $centertop_admin_blocks:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
 			<td class="row2" align="center">{ $centertop_admin_blocks:TYPE }</td>
 			<td class="row1" align="center"><a href="{ $centertop_admin_blocks:ACTIVE_LINK }">{ $centertop_admin_blocks:CHANGE }</a></td>
 			
@@ -84,7 +106,18 @@
 				<a href="{ $centerbottom_admin_blocks:EDIT_LINK }">{ $centerbottom_admin_blocks:TITLE }</a>
 				<!-- IF { $centerbottom_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $centerbottom_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
-			<td class="row1" align="center" >{ $centerbottom_admin_blocks:WEIGHTL }</td><td class="row1" align="center">{ $centerbottom_admin_blocks:WEIGHTR }</td>
+			<td class="row1" align="center" >
+				<!-- IF { $centerbottom_admin_blocks:WEIGHT_UP } -->
+				<a href="{ $centerbottom_admin_blocks:WEIGHT_MOVE_UP }"><img src="images/down.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $centerbottom_admin_blocks:WEIGHT_MOVE_TOP }"><img src="images/bottom.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $centerbottom_admin_blocks:WEIGHT_DOWN } -->
+				<a href="{ $centerbottom_admin_blocks:WEIGHT_MOVE_DOWN }"><img src="images/down.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $centerbottom_admin_blocks:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
 			<td class="row2" align="center">{ $centerbottom_admin_blocks:TYPE }</td>
 			<td class="row1" align="center"><a href="{ $centerbottom_admin_blocks:ACTIVE_LINK }"><img src="images/{ $centerbottom_admin_blocks:ACTIVE }" alt="{ $centerbottom_admin_blocks:CHANGE }" title="{ $centerbottom_admin_blocks:CHANGE }" border="0"></a></td>
 			<td class="row1" align="center">
@@ -109,7 +142,18 @@
 				<a href="{ $right_admin_blocks:EDIT_LINK }">{ $right_admin_blocks:TITLE }</a>
 				<!-- IF { $right_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $right_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
-			<td class="row1" align="center" >{ $right_admin_blocks:WEIGHTL }</td><td class="row1" align="center">{ $right_admin_blocks:WEIGHTR }</td>
+			<td class="row1" align="center" >
+				<!-- IF { $right_admin_blocks:WEIGHT_UP } -->
+				<a href="{ $right_admin_blocks:WEIGHT_MOVE_UP }"><img src="images/down.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $right_admin_blocks:WEIGHT_MOVE_TOP }"><img src="images/bottom.gif" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $right_admin_blocks:WEIGHT_DOWN } -->
+				<a href="{ $right_admin_blocks:WEIGHT_MOVE_DOWN }"><img src="images/down.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $right_admin_blocks:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
 			<td class="row2" align="center">{ $right_admin_blocks:TYPE }</td>
 			<td class="row1" align="center"><a href="{ $right_admin_blocks:ACTIVE_LINK }">{ $right_admin_blocks:CHANGE }</a></td>
 			<td class="row1" align="center">
