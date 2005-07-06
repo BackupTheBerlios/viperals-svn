@@ -5,7 +5,7 @@
 
 { $A_TABLE_OPEN }
 
-<form action="{ $B_ACTION }" method="post">
+<form action="{ $B_ACTION }" name="message" method="post">
 	<table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
 		<tbody>
 			<!-- IF { $B_ERROR } -->
@@ -15,6 +15,7 @@
 				</td>
 			</tr>
 			<!-- ENDIF -->
+
 			<tr> 
 				<th colspan="3" height="28" valign="middle">{ $B_TITLE }</th>
 			</tr>
@@ -55,12 +56,13 @@
 			</tr>
 			<tr> 
 				<td class="row1" valign="top" ><b class="genmed">{ $L_MESSAGE }: </b></td>
-				<td class="row2" colspan="2"><textarea name="content" id="content" editor_enabled="true" style="width:90%; height:400px" cols="63" rows="15">{ $B_CONTENT }</textarea><br /><br /></td>
-		
+				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5"></div>
+				<textarea name="content" id="content" editor_enabled="true" style="width:90%; height:400px; display: ;" cols="63" rows="15">{ $B_CONTENT }</textarea><br /><br /></td>
 			</tr>
 			<tr>
 				<td class="cat" colspan="3" align="center" height="28">
 					<input type="hidden" name="update" value="{ $B_BID }">
+					<input class="btnmain" id="preview_fast" value="{ $L_PREVIEW }" type="button" onclick="fast_preview(); return false;">
 					<input class="btnmain" name="submit" value="Submit" type="submit">&nbsp;&nbsp;<input class="btnlite" value="Reset" name="reset" type="reset">
 				</td>
 			</tr>
@@ -71,6 +73,26 @@
 { $A_TABLE_CLOSE }
 
 <script type="text/javascript">
+
+function fast_preview()
+{
+	if(document.getElementById('preview_fast').value == '{ $L_PREVIEW }')
+	{
+		document.getElementById('preview_fast').value = 'Edit';
+		document.getElementById('message_preview').innerHTML = document.getElementById('content').value;
+		document.getElementById('message_preview').style.display = '';
+		document.getElementById('content').style.display = 'none';
+
+	}
+	else
+	{
+		document.getElementById('preview_fast').value = '{ $L_PREVIEW }';
+		document.getElementById('message_preview').innerHTML = '';
+		document.getElementById('message_preview').style.display = 'none';
+		document.getElementById('content').style.display = '';
+	}
+}
+
   Calendar.setup(
     {
       inputField  : "time",         // ID of the input field
@@ -86,4 +108,3 @@
     }
   );
 </script>
-

@@ -11,18 +11,17 @@
 //																//
 //**************************************************************//
 // Add saving reports to a log file and its define ..
-// Fix up error level defines
 
 class core_error_handler
 {
 	var $active;
 	var $previous_level;
-	var $previous_logger;
+	var $previous_logger = false;
 	var $error_array = array();
 	var $error;
 	var $report;
 	var $logging;
-	var $error_setting = array('type', 'title', 'redirect');
+	var $error_setting = array('title', 'redirect');
 	
 	function start($report = ERROR_NONE, $log_file = false)
 	{
@@ -53,8 +52,7 @@ class core_error_handler
 		
 		$this->active = false;
 		
-		// logging could of been changed by user
-		if ($this->logging || $this->previous_logger)
+		if ($this->previous_logger !== false)
 		{
 			ini_set('error_log', $this->previous_logger);
 		}
@@ -83,12 +81,6 @@ class core_error_handler
 			
 				if (!$this->report)
 				{
-					if ($errtype == E_WARNING)
-					{
-						header("HTTP/1.0 500 INTERNAL SERVER ERROR");
-						script_close();
-						die('E_WARNING error');
-					}
 					return;
 				}
 				
@@ -96,36 +88,7 @@ class core_error_handler
 				$this->error = array('type' => $errtype, 'error' => $error, 'file'=> $errfile, 'line' => $errline);
 				$this->format_error($errtype);
 
-				if ($errtype == 'E_WARNING')
-				{
-					if (empty($_CLASS['core_user']))
-					{
-						if ($this->report == ERROR_ONPAGE)
-						{
-							echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'
-								.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
-						
-						} else {
-						
-							echo 'There is a error on this page that isn\'t detectable with the error'
-								.' reoprter<br/>Please set error level to 4 in core.php to see the error';
-						}
-						
-					}
-					
-					if ($this->logging)
-					{
-						$this->error_log();
-					}
-					
-					header("HTTP/1.0 500 INTERNAL SERVER ERROR");
-					echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'
-								.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';
-					script_close();
-					die;
-				}
-				
-				$this->error_setting = array('type', 'title', 'redirect');
+				$this->error_setting = array('title', 'redirect');
 				
 			break;
 	
@@ -181,7 +144,7 @@ class core_error_handler
 					'MESSAGE_TEXT'	=> $error
 				));
 				
-				$this->error_setting = array('type', 'title', 'redirect');
+				$this->error_setting = array('title', 'redirect');
 				
 				$_CLASS['core_template']->display('message.html');
 

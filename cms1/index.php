@@ -15,7 +15,7 @@
 define('VIPERAL', 'CMS');
 
 //echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = 'C:/apachefriends/xampp/cms/';
+$site_file_root = '';
 require($site_file_root.'core.php');
 
 $mod = get_variable('mod', 'REQUEST', false);

@@ -28,7 +28,7 @@ function check_bot_status($browser, $ip)
 	{
 		if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $browser))
 		{
-			$is_bot = true;
+			$is_bot = $bot['user_id'];
 		}
 		
 		if ($bot['user_ip'] && (!$bot['user_agent'] || $is_bot))
@@ -39,7 +39,7 @@ function check_bot_status($browser, $ip)
 			{
 				if (strpos($ip, $bot_ip) === 0)
 				{
-					$is_bot = true;
+					$is_bot = $bot['user_id'];
 				}
 			}
 		}
@@ -137,7 +137,7 @@ function check_variable($variable, $default, $vartype)
 	switch ($vartype)
 	{
 	 	Case 'integer':
-			$variable = (is_numeric($variable)) ? (int) $variable : $default;
+			$variable = is_numeric($variable) ? (int) $variable : $default;
 		break;
 		
 		default:
@@ -437,8 +437,9 @@ function load_class($file, $name, $class = false)
 function login_box($login_options = false, $template = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
-	
+
 	$error = '';
+
 	$login_array = array(
 		'redirect' 		=> false,
 		'explain' 	 	=> false,
@@ -451,13 +452,8 @@ function login_box($login_options = false, $template = false)
 	if (is_array($login_options))
 	{
 		$login_array = array_merge($login_array, $login_options);
-	} 	
-	
-	if ($login_array['full_screen'])
-	{
-		//$_CLASS['core_user']->user_setup();
 	}
-	
+
 	if (isset($_POST['login']))
 	{
 		$data = array(
@@ -472,16 +468,14 @@ function login_box($login_options = false, $template = false)
 		if ($data['user_name'] && $data['user_password'])
 		{
 			$result = $_CLASS['core_auth']->user_auth($data['user_name'], $data['user_password']);
-			echo $result;
-			
+
 // need to fix this, user_type is an interger
 			if (is_numeric($result))
 			{
-				$login_array['redirect'] = get_variable('redirect', 'POST', $login_array['redirect']);	
-				$login_array['redirect'] = generate_link($login_array['redirect']);
-				
-				$_CLASS['core_user']->login($result);
+				$_CLASS['core_user']->login($result, $data['admin_login'], $data['show_online']);
 
+				$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $data['admin_login']));	
+				
 				$_CLASS['core_display']->meta_refresh(5, $login_array['redirect']);
 				$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
 				trigger_error($message);
@@ -490,15 +484,17 @@ function login_box($login_options = false, $template = false)
 			
 			if (is_string($result))
 			{
-				trigger_error($result, E_USER_ERROR);
+				$error = $result;
+				//trigger_error($result, E_USER_ERROR);
 			}
-	
-			trigger_error(($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR', E_USER_ERROR);
-		
+
+			$error = ($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR';
+			//trigger_error(($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR', E_USER_ERROR);
 		}
 		else
 		{
-			trigger_error('INCOMPLETE_LOGIN_INFO', E_USER_ERROR);
+			$error = 'INCOMPLETE_LOGIN_INFO';
+			//trigger_error('INCOMPLETE_LOGIN_INFO', E_USER_ERROR);
 		}
 	}
 
@@ -510,6 +506,7 @@ function login_box($login_options = false, $template = false)
 	$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
 
 	$_CLASS['core_template']->assign(array(
+		'LOGIN_ERROR'			=> $_CLASS['core_user']->get_lang($error),
 		'LOGIN_EXPLAIN'			=> $login_array['explain'], 
 		'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
 		'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
@@ -528,7 +525,7 @@ function login_box($login_options = false, $template = false)
 		script_close(false);
 	}
 
-	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['LOGIN']);
+	$_CLASS['core_display']->display_head($_CLASS['core_user']->get_lang('LOGIN'));
 	$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
 	$_CLASS['core_display']->display_footer();
 }
@@ -621,7 +618,7 @@ function script_close($save = true)
 		
 		if ($save)
 		{
-			if ($_CORE_CONFIG['global']['error'])
+			if ($_CORE_CONFIG['server']['error_options'])
 			{
 				if (!empty($_CLASS['core_db']->querylist))
 				{
@@ -686,7 +683,6 @@ function session_users()
 				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
 					WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
 				AND u.user_id = s.session_user_id';
-			//ORDER BY u.username ASC, s.session_ip ASC'; //mysql Using temporary 
 	$result = $_CLASS['core_db']->sql_query($sql);
 	
 	$update = false;
@@ -742,7 +738,9 @@ function theme_select($default = false)
 		if ($themetmp[$i]['file'] == $default)
 		{
 			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['file'].'</option>';
-		} else {
+		}
+		else
+		{
 			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['file'].'</option>';
 		}
 	}
@@ -757,19 +755,21 @@ function modify_lines($text, $replacement = ' ')
 
 function url_redirect($url = false, $save = true)
 {
-	script_close($save);
-	
 	$url = ($url) ? $url : generate_link(array('full' => true));
 	$url = str_replace('&amp;', '&', $url);
-	
+
 	if (preg_match('/IIS|Microsoft|WebSTAR|Xitami/', getenv('SERVER_SOFTWARE')))
 	{
 		header('Refresh: 0; URL=' . $url);
-		exit;
+	}
+	else
+	{
+		header('Location: ' . $url);
 	}
 
-	header('Location: ' . $url);
-    exit;
+	echo 'Something here for bad browers, hehe';
+
+	script_close($save);
 }
 
 ?>

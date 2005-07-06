@@ -123,6 +123,8 @@ class calender
 		$count = ceil(($this->last_day + $this->first_day) / 7) * 7;
 		$num = false;
 		
+		$current_month = ($this->year_current && ($this->month == date('n')));
+
 		for($i = 1; $i <= $count; $i++)
 		{
 			if ($i == $this->first_day)
@@ -140,9 +142,10 @@ class calender
 			
 			if ($template_name)
 			{
+				
 				$_CLASS['core_template']->assign_vars_array($template_name, array(
 					'NUMBER'	=> $num,
-					'LINK'		=> ($num != $this->day) ? generate_link("$link&amp;mode=day_view&amp;day=".$num) : false,
+					'LINK'		=> ($num != $this->day || !$current_month) ? generate_link($link.'&amp;year='.$this->year.'&amp;month='.$this->month.'&amp;mode=day_view&amp;day='.$num) : false,
 					'DATA'		=> empty($this->month_data_array[($num - 1)]) ? false : $this->month_data_array[($num - 1)],
 					));
 			}
@@ -167,29 +170,34 @@ class calender
 			$time = mktime(12, 0, 0, $this->month, $this->day, $this->year);
 		}
 		
-		$date = explode(',', date('n,d,y', $time));
+		$date = explode(':', date('n:d:y', $time));
 		
 		$day['start'] = mktime(0, 0, 0, $date[0], $date[1], $date[2]);
 		$day['end'] = mktime(24, 0, 0, $date[0], $date[1], $date[2]) - 1;
 
 		$sql = 'SELECT * FROM '. $this->table .'
-					WHERE start_time <= '. $day['end'] .' 
-					AND end_time >= '. $day['start'];
+					WHERE start_date <= '. $day['end'] .' 
+					AND end_date >= '. $day['start'];
 					
 		$result = $_CLASS['core_db']->sql_query($sql);
 		
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			if ($row['recur'] && ($row['start_time'] < $day['start']))
+			if ($row['recur'] && ($row['start_date'] < $day['start']))
 			{
-				$row['start_time'] = $row['start_time'] + ($row['recur'] * ceil(($day['start'] - $row['start_time']) / $row['recur']));
+				$row['start_date'] = $row['start_date'] + ($row['recur'] * ceil(($day['start'] - $row['start_date']) / $row['recur']));
 								
-				if ($row['start_time'] > $day['end'])
+				if ($row['start_date'] > $day['end'])
 				{
 					continue;
 				}
 			}
 
+			/*$time = explode(':', $row['start_time']);
+
+			$row['start_time'] = mktime($time[0], $time[1], 0, $date[0], $date[1], $date[2]);
+			$end_time = $row['start_time'] + $row['duration'];*/
+ 
 			$_CLASS['core_template']->assign_vars_array($template_name, array(
 					'TITLE'			=> $row['title'],
 					'ID'			=> $row['id'],
@@ -217,8 +225,8 @@ class calender
 		$month['end'] = mktime(24, 0, 0, $date[0], $date[1], $date[2]) - 1;
 
 		$sql = 'SELECT * FROM '. $this->table .'
-					WHERE start_time <= '. $month['end'] .' 
-					AND end_time >= '. $month['start'];
+					WHERE start_date <= '. $month['end'] .' 
+					AND end_date >= '. $month['start'];
 		
 		$result = $_CLASS['core_db']->sql_query($sql);
 
@@ -227,9 +235,9 @@ class calender
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
 			// Does time between start and end span more than one day ?
-			if (($row['end_time'] - $row['start_time']) >= 86400)
+			if (($row['end_date'] - $row['start_date']) >= 86400)
 			{
-				$days = $this->generate_days($row['start_time'], $row['end_time'], $month['start'], $month['end'],  $row['recur']);
+				$days = $this->generate_days($row['start_date'], $row['end_date'], $month['start'], $month['end'],  $row['recur']);
 
 				foreach ($days as $day => $null)
 				{
@@ -246,7 +254,7 @@ class calender
 			}
 			else
 			{
-				$day = date('j', $row['start_time']) - 1;
+				$day = date('j', $row['start_date']) - 1;
 				if (count($this->month_data_array[$day]) >= $limit)
 				{
 					continue;

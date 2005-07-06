@@ -490,7 +490,7 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 // Display Attachments
 function display_attachments($forum_id, $blockname, &$attachment_data, &$update_count, $force_physical = false, $return = false)
 {
-	global $extensions, $attachment_tpl;
+	global $extensions, $site_file_root, $attachment_tpl;
 	global $config, $_CLASS;
 
 //	$starttime = explode(' ', microtime());
@@ -506,7 +506,8 @@ function display_attachments($forum_id, $blockname, &$attachment_data, &$update_
 			$attachment_tpl = array();
 
 			// Generate Template
-			$template_filename = (file_exists('themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html')) ? 'themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html' : 'template/modules/Forums/attachment.html';
+			$template_filename = (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html')) ? 'themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html' : 'includes/templates/modules/Forums/attachment.html';
+			$template_filename = $site_file_root.$template_filename;
 
 			if (!($fp = @fopen($template_filename, 'rb')))
 			{

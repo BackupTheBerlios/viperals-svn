@@ -1,0 +1,18 @@
+<table class="tablebg" cellspacing="1" cellpadding="4" border="0">
+	<tr>
+		<th nowrap="nowrap">Bot name</th>
+		<th nowrap="nowrap">Last visit</th>
+		<th colspan="3" nowrap="nowrap">Options</th>
+
+	</tr>
+	{ section name=admin_bots_loop loop=$admin_bots }
+	<tr>
+		<td class="row1" width="25%">{ $admin_bots[admin_bots_loop].NAME }</td>
+		<td class="row1" width="15%" align="center" nowrap="nowrap">{ $admin_bots[admin_bots_loop].LAST_VISIT }</td>
+		<td class="row1" width="1%"align="center">&nbsp;<a href="{ $admin_bots[admin_bots_loop].STATUS_LINK }">{ $admin_bots[admin_bots_loop].STATUS }</a>&nbsp;</td>
+		<td class="row1" width="1%" align="center">&nbsp;<a href="{ $admin_bots[admin_bots_loop].LAST_VISIT }">Edit</a>&nbsp;</td>
+
+		<td class="row1" width="1%" align="center">&nbsp;<a href="{ $admin_bots[admin_bots_loop].DELETE_LINK }">Delete</a>&nbsp;</td>
+	</tr>
+	{ /section }
+</table>

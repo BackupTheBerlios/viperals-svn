@@ -308,7 +308,7 @@ switch ($mode)
 		$_CLASS['core_db']->sql_freeresult($result);
 
 		$sql = 'SELECT g.group_id, g.group_name, g.group_type
-			FROM ' . GROUPS_TABLE . ' g, ' . USER_GROUP_TABLE . " ug
+			FROM ' . USER_GROUP_TABLE . ' ug, ' . GROUPS_TABLE . " g
 			WHERE ug.user_id = $user_id
 				AND g.group_id = ug.group_id" . ((!$_CLASS['auth']->acl_gets('a_group')) ? ' AND group_type <> ' . GROUP_HIDDEN : '') . '
 			ORDER BY group_type, group_name';
@@ -470,14 +470,14 @@ switch ($mode)
 		
 		// Custom Profile Fields
 		$profile_fields = array();
-		if ($config['load_cpf_viewprofile'])
+		/*if ($config['load_cpf_viewprofile'])
 		{
 			require_once($site_file_root.'includes/forums/functions_profile_fields.php');
 			$cp = new custom_profile();
 			$profile_fields = $cp->generate_profile_fields_template('grab', $user_id);
 
 			$profile_fields = (isset($profile_fields[$user_id])) ? $cp->generate_profile_fields_template('show', false, $profile_fields[$user_id]) : array();
-		}
+		}*/
 
 		$_CLASS['core_template']->assign(array(
 			'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),
@@ -1059,15 +1059,14 @@ switch ($mode)
 		$_CLASS['core_db']->sql_freeresult($result);
 		
 		// Load custom profile fields
-		if ($config['load_cpf_memberlist'])
+		/*if ($config['load_cpf_memberlist'])
 		{
 			include($site_file_root. 'includes/forums/functions_profile_fields.php');
 			$cp = new custom_profile();
 			// Grab all profile fields from users in id cache for later use - similar to the poster cache
 			$profile_fields_cache = $cp->generate_profile_fields_template('grab', array_keys($id_cache));
-		}
+		}*/
 		
-		$i = 0;
 		foreach ($id_cache as $user_id => $row)
 		{
 			$cp_row = array();
@@ -1080,7 +1079,6 @@ switch ($mode)
 			$option_row = ($mode == 'group' && $row['user_status'] == STATUS_LEADER) ? 'leader_row' : 'member_row';
 
 			$$option_row = array_merge(show_profile($row), array(
-				'ROW_NUMBER'		=> $i + ($start + 1),
 				'S_CUSTOM_PROFILE'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false,
 				'U_VIEWPROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']))
 			);

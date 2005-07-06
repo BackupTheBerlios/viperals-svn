@@ -12,21 +12,17 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-
-// -------------------------------------------------------------
-//
-// COPYRIGHT : © 2001, 2004 phpBB Group
-// WWW       : http://www.phpbb.com/
-//
-// -------------------------------------------------------------
-
+/*
+	Contains Parts Based from phpBB3
+	copyright (c) 2005 phpBB Group 
+	license http://opensource.org/licenses/gpl-license.php GNU Public License 
+*/
 
 class sessions
 {
 	var $load;
-	var $new_data = false;
 	var $new_session = false;
-	var $session_save = false;
+	var $save_session = false;
 	var $need_url_id = true;
 
 	function start()
@@ -50,24 +46,6 @@ class sessions
 			}
 		}
 
-		// Obtain users IP
-		$this->ip = (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
-
-		if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
-		{
-			$private_ip = array('#^0\.#', '#^127\.0\.0\.1#', '#^192\.168\.#', '#^172\.16\.#', '#^10\.#', '#^224\.#', '#^240\.#');
-			foreach (explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']) as $x_ip)
-			{
-				if (preg_match('#([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)#', $x_ip, $ip_list))
-				{
-					if (($this->ip = trim(preg_replace($private_ip, $this->ip, $ip_list[1]))) == trim($ip_list[1]))
-					{
-						break;
-					}
-				}
-			}
-		}
-
 		if ($session_data['session_id'])
 		{
 			$sql = 'SELECT u.*, s.*
@@ -78,8 +56,6 @@ class sessions
 			$result = $_CLASS['core_db']->sql_query($sql);
 
 			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-			//print_r($this->data);
-			//echo $session_data['session_id'];
 			$_CLASS['core_db']->sql_freeresult($result);
 
 			if (isset($this->data['user_id']))
@@ -107,7 +83,7 @@ class sessions
 					// Set session update a minute or so after last update or if page changes
 					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
 					{
-						$this->session_save = true;
+						$this->save_session = true;
 					}
 					
 					$this->data['session_data'] = ($this->data['session_data']) ? unserialize($this->data['session_data']) : array();
@@ -128,8 +104,6 @@ class sessions
 			$this->data = array();
 		}
 		
-		echo 'test';
-
 		check_maintance_status();
 		$this->load = check_load_status();
 
@@ -150,21 +124,15 @@ class sessions
 			$row = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
 		
-			if (intval($row['sessions']) > intval($_CORE_CONFIG['server']['limit_sessions']))
+			if ((int) $row['sessions'] > (int) $_CORE_CONFIG['server']['limit_sessions'])
 			{
 				$this->gc($this->time);
 		
-				if (!$session_data['is_bot'])
-				{
-					$this->user_setup();
-					trigger_error('SITE_UNAVAILABLE', E_USER_ERROR);
-				}
-		
-				header("HTTP/1.0 503 Service Unavailable");
-				script_close(false);
-				die;
+				return false;
 			}
 		}
+
+		return true;
 	}
 
 	// Create a new session
@@ -175,7 +143,8 @@ class sessions
 
 		$this->data['session_last_visit'] = ($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : $this->time;
 
-		$sql_array = array(
+		$session_data = array(
+			'session_id'			=> (string) md5(unique_id()),
 			'session_user_id'		=> (int) $this->data['user_id'],
 			'session_start'			=> (int) $this->time,
 			'session_last_visit'	=> (int) $this->data['session_last_visit'],
@@ -190,15 +159,13 @@ class sessions
 			'session_viewonline'	=> (int) $this->data['session_viewonline'],
 		);
 
-		$sql_array['session_id'] = (string) md5(unique_id());
+		$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
 
-		$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
-		
-		$this->new_session = true;
-		
-		$this->data = array_merge($this->data, $sql_array);
-		unset($sql_array);
-		
+		$this->new_session = $this->need_url_id = true;
+
+		$this->data = array_merge($this->data, $session_data);
+		unset($session_data);
+
 		if ($this->time > $config['session_last_gc'] + $config['session_gc'])
 		{
 			$this->gc($this->time);
@@ -217,10 +184,11 @@ class sessions
 			{
 				$this->set_cookie('data', '', 0);
 			}
-			
+
 			$this->set_cookie('sid', $this->data['session_id'], 0);
-			$this->need_url_id = false;
 		}
+
+		$this->need_url_id = ($this->is_bot) ? false : true;
 
 		$this->data['sessions'] = array();
 		$this->user_setup();
@@ -229,11 +197,11 @@ class sessions
 	}
 
 	// Destroy a session
-	function destroy($session_id = false, $id = false,  $return = false)
+	function session_destroy($session_id = false, $return = false)
 	{
 		global $_CLASS;
 
-		if (!$session_id || !$id)
+		if (!$session_id)
 		{
 			$session_id = $this->data['session_id'];
 			$id = $this->data['user_id'];
@@ -251,7 +219,7 @@ class sessions
 		}
 		
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id);
+			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id)."'";
 
 		$_CLASS['core_db']->sql_query($sql);
 
@@ -271,6 +239,7 @@ class sessions
 
 		$this->data['session_id'] = '';
 		$this->data['session_time'] = $this->data['session_admin'] = 0;
+
 		$this->need_url_id = $this->is_user = $this->is_bot = $this->is_admin = false;
 	}
 	
@@ -372,23 +341,23 @@ class sessions
 
 		return;
 	}
-	
+
 	function get_data($name)
 	{
 		return (empty($this->data['session_data'][$name])) ? false : $this->data['session_data'][$name];
 	}
-	
+
 	function kill_data($name)
 	{
 		if (empty($this->data['session_data'][$name]))
 		{
 			return;
 		}
-		
+
 		unset($this->data['session_data'][$name]);
-		$this->new_data = true;
+		$this->save_session = true;
 	}
-	
+
 	function set_data($name, $value, $force_save = false)
 	{
 		if (!empty($this->data['session_data'][$name]) && ($this->data['session_data'][$name] == $value))
@@ -397,43 +366,38 @@ class sessions
 		}
 		
 		$this->data['session_data'][$name] = $value;
-			
-		$this->new_data = true;
+		$this->save_session = true;
 		
 		if ($force_save)
 		{
 			$this->save();
 		}
 	}
-	
+
 	function save()
 	{
 		global $_CLASS;
 
-		if (!$this->new_data && !$this->session_save)
+		if (!$this->save_session)
 		{
 			return;
 		}
 
 		$sql_array = array(
-			'session_admin'			=> (int) $this->data['session_admin'],
-			//'session_auth'		=> (int) serialize($_CLASS['core_auth']->auth_dump()),
 			'session_data'			=> ($this->data['session_data']) ? serialize($this->data['session_data']) : '',
 			'session_page'			=> (string) $this->page,
 			'session_time'			=> (int) $this->time,
-			'session_viewonline'	=> (int) $this->data['session_viewonline'],
 			'session_url'			=> (string) $this->url,
-			'session_user_type'		=> (string) $this->data['user_type'],
 		);
 
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
 				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
-		
+
 		$_CLASS['core_db']->sql_query($sql);
 
-		$this->new_data = $this->session_save = false;
+		$this->session_save = false;
 	}
-	
+
 	function set_cookie($name, $cookiedata, $cookietime)
 	{
 		global $_CORE_CONFIG;

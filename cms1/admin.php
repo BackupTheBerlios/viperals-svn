@@ -12,12 +12,11 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-
 define('VIPERAL', 'Admin');
 //define('NEED_SID', true);
 
 //echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = 'C:/apachefriends/xampp/cms/';
+$site_file_root = '';
 
 require($site_file_root.'core.php');
 $_CLASS['core_user']->add_lang('admin/common.php');
@@ -36,7 +35,6 @@ if (!$_CLASS['core_user']->is_user)
 	login_box(array('admin_login' => true, 'full_screen' => true,  'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
 }
 
-// redo this, don't want unneeded loggins. maybe set at session create (ADMIN_NOT_LOGGED, ADMIN_NOT_ADMIN)
 if ($_CLASS['core_user']->data['session_admin'] == ADMIN_NOT_LOGGED)
 {
 	login_box(array('admin_login' => true, 'full_screen' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN_CONFIRM'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
@@ -80,7 +78,7 @@ if (!$file_path)
 
 if ($_CORE_MODULE['name'])
 {
-	if (!$_CLASS['core_auth']->admin_auth($_CORE_MODULE['name']))
+	if (!$_CLASS['core_auth']->admin_power($_CORE_MODULE['name']))
 	{
 		trigger_error('NOT_AUTH', E_USER_ERROR);
 	}

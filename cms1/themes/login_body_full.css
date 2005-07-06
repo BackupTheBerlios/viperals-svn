@@ -1,0 +1,42 @@
+body {
+    font-family: Verdana, Helvetica, sans-serif;
+    font-size: 10px;
+    margin-top: 10%;
+    padding: 0px;
+    background-color: white;
+    background: url(/images/bg.gif);
+}
+
+.error { color: red; }
+
+/* 
+	TABLE
+*/
+th { height: 28px; color: #FFA34F; font-size: 110%; font-weight: bold; background-color: #006699; background-image: url('./images/cellpic3.gif'); white-space: nowrap; padding-left: 5px; padding-right: 5px; }
+.tablebg { background-color: #A9B8C2; }
+.catdiv { height: 28px; margin: 0px; padding: 0px; border: 0px; background-color: white; background-image: url('./images/cellpic2.jpg'); background-repeat: repeat-y; }
+.cat { height: 28px; margin: 0px; padding: 0px; border: 0px; background-color: #C7D0D7; background-image: url('../images/cellpic1.gif'); text-indent: 4px; }
+.row1 { background-color: #ECECEC; padding: 4px; }
+.row2 { background-color: #DCE1E5; padding: 4px; }
+.row3 { background-color: #C0C8D0; padding: 4px; }
+.rowgood { background-color: #C2D6CD; padding: 4px; }
+.rowneutral { background-color: #CAC1D7; padding: 4px; }
+.rowbad { background-color: #D7C1C3; padding: 4px; }
+.spacer { background-color: #D1D7DC; }
+hr { height: 1px; border-width: 0px; background-color: #D1D7DC; color: #D1D7DC }
+
+
+/* 
+	ANCHOR
+*/
+a:link { color: #005784; text-decoration: none; }
+a:active { color: #005784; text-decoration: none; }
+a:visited { color: #005784; text-decoration: none; }
+a:hover { color: #000000; text-decoration: none; }
+
+form { margin: 0px; padding: 0px; border: 0px; }
+input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+textarea { background-color: white; color: black; font-family: Verdana, serif; font-size: 110%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
+select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
+.post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}
+.btnmain { font-weight: bold; background-color: #FAFAFA; border-style: solid; border-width: 1px; }

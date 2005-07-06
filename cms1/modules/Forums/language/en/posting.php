@@ -112,6 +112,7 @@ $this->lang += array(
 	'LOGIN_EXPLAIN_POST'		=> 'You need to login in order to post within this forum',
 
 	'MESSAGE_BODY_EXPLAIN'		=> 'Enter your message here, it may contain no more than <b>%d</b> characters.',
+
 	'MESSAGE_DELETED'			=> 'Your message has been deleted successfully',
 	'MORE_SMILIES'				=> 'View more smilies',
 	

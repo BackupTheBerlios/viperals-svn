@@ -13,6 +13,32 @@
 //																//
 //**************************************************************//
 
+function block_auth($id)
+{
+	global $_CLASS;
+
+	$result = $_CLASS['core_db']->sql_query('SELECT position, auth FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+	$block = $_CLASS['core_db']->sql_fetchrow($result);
+	$_CLASS['core_db']->sql_freeresult($result);
+	
+	$block['auth'] = ($block['auth']) ? unserialize($block['auth']) : '';
+	
+	check_position($block['position']);
+	
+	if ($auth = $_CLASS['core_auth']->make_options($block['auth']))
+	{
+		$block['auth'] = $auth;
+		$auth = ($auth === true) ? '' : $_CLASS['core_db']->sql_escape(serialize($auth));
+	
+		$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE." set auth = '$auth' WHERE id = $id");
+		$_CLASS['core_cache']->destroy('blocks');
+	}
+	
+	$_CLASS['core_display']->display_head();
+	$_CLASS['core_auth']->make_options($block['auth'], true);
+	$_CLASS['core_display']->display_footer();
+}
+
 function block_change($id)
 {	
 	global $_CLASS;
@@ -113,7 +139,7 @@ function block_weight($id, $option)
 	}
 }
 
-function block_delete($id, $return_link)
+function block_delete($id, $return_link = '')
 {
     global $_CLASS;
     
@@ -128,11 +154,11 @@ function block_delete($id, $return_link)
 	
 	check_position($block['position']);
 
-    if (get_variable('ok', 'POST', false))
+// TEMP
+    if (get_variable('confirm', 'POST', false) == 'Delete')
     {
-		
         $result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
-        $_CLASS['core_db']->sql_query('delete from '.BLOCKS_TABLE.' where id='.$id);
+        $_CLASS['core_db']->sql_query('DELETE from '.BLOCKS_TABLE.' where id='.$id);
 
         $_CLASS['core_cache']->destroy('blocks');
         
@@ -140,15 +166,18 @@ function block_delete($id, $return_link)
     }
 	else
 	{
-		/*$_CLASS['core_display']->display_head();
-		OpenTable();
-		echo '<form name="confirm" action="'.generate_link($mod, array('admin' => true)).'" method="post">
+		$_CLASS['core_display']->display_head();
+		echo $_CLASS['core_display']->table_open;
+		
+		echo '<form name="confirm" action="" method="post">
 		<center><b>If your certain that you want to remove this item click delete to continue<br/>';
 		echo '<a href="'.generate_link($_CLASS['core_user']->url, array('admin' => true)).'">Click here to return</a><br/><br/>
-		<input type="submit" name="confirm" value="Delete" class="btnmain" />&nbsp;&nbsp;<input type="submit" name="cancel" value="Cancel" class="btnlite" />
+		<input type="submit" name="confirm" value="Delete" class="btnmain" />&nbsp;&nbsp;<input type="submit" name="cancel" value="Cancel" class="button" />
 		</center>';
-		CloseTable();
-        $_CLASS['core_display']->display_footer();*/
+
+		echo $_CLASS['core_display']->table_close;
+		
+        $_CLASS['core_display']->display_footer();
     }
 }
 

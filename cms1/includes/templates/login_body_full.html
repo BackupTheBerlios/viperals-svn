@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Viperal: Login</title>
+<base href="http://localhost/" />
+<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="expires" content="0" />
+<link rel="stylesheet" href="themes/login_body_full.css" type="text/css" />
+
+<form action="{$S_LOGIN_ACTION}" method="post">
+<body>
+<div valign="middle">
+<table align="center" class="tablebg" width="40%" cellspacing="1">
+	<tr> 
+		<th >{ $L_LOGIN }</th>
+	</tr>
+	<!-- IF { $LOGIN_EXPLAIN } -->
+	<tr>
+		<td class="row3" colspan="2" align="center"><span class="gensmall">{ $LOGIN_EXPLAIN }</td>
+	</tr>
+	<!-- ENDIF -->
+	<tr> 
+		<td class="row2">
+		<table cellspacing="1" cellpadding="4">
+
+			<!-- IF { $LOGIN_ERROR } -->
+			<tr>
+				<td class="gensmall" colspan="2" align="center"><span class="error">{$LOGIN_ERROR}</span></td>
+			</tr>
+			<!-- ENDIF -->
+
+			<tr> 
+				<td><b class="gensmall">{$L_USERNAME}:</b></td>
+				<td><input class="post" type="text" name="username" size="25" maxlength="40" value="{$USERNAME}" tabindex="1" /><br /><a class="gensmall" href="{$U_REGISTER}">{$L_REGISTER}</a></td>
+			</tr>
+			<tr> 
+				<td><b class="gensmall">{$L_PASSWORD}:</b></td>
+				<td>
+					<input class="post" type="password" name="password" size="25" maxlength="25" tabindex="2" />
+					<!-- IF { $U_SEND_PASSWORD } --><br /><a class="gensmall" href="{ $U_SEND_PASSWORD }">{ $L_FORGOT_PASS }</a><!-- ENDIF -->
+					<!-- IF { $U_RESEND_ACTIVATION } --><br /><a class="gensmall" href="{ $U_RESEND_ACTIVATION }">{ $L_RESEND_ACTIVATION }</a><!-- ENDIF -->
+				 </td>
+			</tr>
+			<!-- IF { $S_DISPLAY_FULL_LOGIN } -->
+			<tr> 
+				<td>&nbsp;</td>
+				<td><input type="checkbox" name="autologin" tabindex="4" /> <span class="gensmall">{$L_LOG_ME_IN}</span></td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td><input type="checkbox" name="viewonline" tabindex="5" /> <span class="gensmall">{$L_HIDE_ME}</span></td>
+			</tr>
+			<!-- ENDIF -->
+		</table></td>
+	</tr>
+	<tr> 
+		<td class="cat" colspan="2" align="center">{$S_HIDDEN_FIELDS}<input type="submit" name="login" class="btnmain" value="{$L_LOGIN}" tabindex="3" /></td>
+	</tr>
+</table></form>
+</div>
+<body>

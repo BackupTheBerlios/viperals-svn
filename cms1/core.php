@@ -32,7 +32,7 @@ if ((bool) ini_get('register_globals'))
 	unset($variable, $value);
 }
 
-define('STRIP', (get_magic_quotes_gpc()) ? true : false);
+define('STRIP', get_magic_quotes_gpc());
 
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
@@ -40,7 +40,8 @@ $starttime = $starttime[1] + $starttime[0];
 $phpversion = explode('.', PHP_VERSION);
 $phpversion = intval($phpversion[0].$phpversion[1]);
 
-$base_memory_usage = (function_exists('memory_get_usage')) ? memory_get_usage() : 0;
+// Move to index files
+$base_memory_usage = function_exists('memory_get_usage') ? memory_get_usage() : 0;
            
 require($site_file_root.'includes/functions.php');
 require($site_file_root.'config.php');
@@ -52,14 +53,14 @@ require($site_file_root.'includes/cache/cache.php');
 require($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
 
 // Load basic classes
-load_class(false, 'core_error_handler', 'core_error_handler');
+load_class(false, 'core_error_handler');
 load_class(false, 'core_cache', 'cache_'.$acm_type);
-load_class(false, 'core_template', 'core_template');
+load_class(false, 'core_template');
 load_class(false, 'core_db', 'sql_db');
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-$_CLASS['core_error_handler']->stop();
+//$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))
@@ -164,18 +165,19 @@ if (VIPERAL == 'FEED')
 require($site_file_root.'includes/session.php');
 require($site_file_root.'includes/user.php');
 require($site_file_root.'includes/auth/auth.php');
+require($site_file_root.'includes/auth/auth_db.php');
 require($site_file_root.'includes/display/blocks.php');
 require($site_file_root.'includes/display/display.php');
 
-load_class(false, 'core_auth');
+load_class(false, 'core_auth', 'auth_db');
 load_class(false, 'core_user');
 
 $_CLASS['core_user'] =& new core_user();
-$_CLASS['core_user']->startup();
+$_CLASS['core_user']->start();
 
-if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['global']['error'])
+if ($_CLASS['core_user']->is_admin)
 {
-	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['global']['error'];	
+	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options'];	
 }
 else
 {
@@ -219,7 +221,7 @@ elseif (!$theme || !check_theme($theme))
 			
 			while ($file = readdir($handle))
 			{
-				if (!strpos('.',$file) && check_theme($file))
+				if ($file{0} !== '.' && check_theme($file))
 				{
 					$theme = $file;
 					break;

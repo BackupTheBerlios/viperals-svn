@@ -173,8 +173,7 @@ class core_display
 			'HEADER_REGULAR'	=>	$this->header['meta'].$this->header['regular'],
 			'HEADER_JS' 		=>	$this->header['js'],
 			'HEADER_BODY' 		=>	$this->header['body']				
-			)
-		);
+		));
 		
 		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_TOP);
 		

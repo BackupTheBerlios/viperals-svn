@@ -24,8 +24,7 @@
 // -------------------------------------------------------------
 if (!defined('VIPERAL'))
 {
-    header('location: /');
-    die();
+    die;
 }
 
 // case-insensitive strpos() - needed for some functions

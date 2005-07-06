@@ -55,46 +55,38 @@ function get_id($rediret = true)
 switch (get_variable('mode', 'GET', false))
 {
 	case 'change':
-	
 		block_change(get_id());
 		url_redirect(generate_link('messages', array('admin' => true)));
-
     break;
     
     case 'weight':
-
 		block_weight(get_id(), get_variable('option', 'GET', false));
 		url_redirect(generate_link('messages', array('admin' => true)));
-		
     break;
-    	
+
     case 'delete':
-    
 		block_delete(get_id());
 		url_redirect(generate_link('messages', array('admin' => true)));
-		
     break;
-        
+  
     case 'edit':
-    
 		message_edit(get_id());
     break;
     
     case 'add':
-    
 		message_edit(false);
-	
     break;
        
     case 'save':
-    
 		message_save();
-		
+    break;
+
+    case 'auth':
+		block_auth(get_id());
     break;
 
     default:
 		message_admin();
-    
 }
 
 die;
@@ -116,12 +108,15 @@ function message_admin()
     while($row = $_CLASS['core_db']->sql_fetchrow($result))
     {
 		$_CLASS['core_template']->assign_vars_array($block_position[$row['position']].'_admin_messages', array(
-			'ACTIVE'		=> ($block['active']) ? true : false,
-			'ACTIVE_LINK'	=> generate_link('messages&amp;mode=change&amp;id='.$row['id'], array('admin' => true)),
+			'ACTIVE'		=> ($row['active']) ? true : false,
 			'CHANGE'		=> ($row['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+
+			'AUTH_LINK'		=> generate_link('messages&amp;mode=auth&amp;id='.$row['id'], array('admin' => true)),
+			'ACTIVE_LINK'	=> generate_link('messages&amp;mode=change&amp;id='.$row['id'], array('admin' => true)),
 			'VIEW_LINK' 	=> generate_link('messages&amp;mode=show&amp;id='.$row['id'], array('admin' => true)),
 			'EDIT_LINK'		=> generate_link('messages&amp;mode=edit&amp;id='.$row['id'], array('admin' => true)),
 			'DELETE_LINK' 	=> generate_link('messages&amp;mode=delete&amp;id='.$row['id'], array('admin' => true)),
+
 			'EXPIRES'		=> ($row['expires']) ? $_CLASS['core_user']->format_date($row['expires']) : false,
 			'STARTS'		=> ($row['time'] > time()) ? $_CLASS['core_user']->format_date($row['time']) : false,
 			'TITLE'			=> $row['title'],
@@ -135,7 +130,7 @@ function message_admin()
 		));
     }
     $_CLASS['core_db']->sql_freeresult($result);
-    
+
     $_CLASS['core_template']->assign(array(
 		'L_ADD_NEW'			=> 'New Message',
 		'L_BLOCK_HTML'		=> 'Add HTML block',
@@ -280,24 +275,32 @@ function messages_get_data(&$data, &$error)
 		$data['position'] = BLOCK_MESSAGE_TOP;
 	}
 	
+	$time = $expires = '';
+
 	if ($data['time'])
 	{
-		if (($time = strtotime($data['time'])) === -1)
+		$time = strtotime($data['time']);
+
+		if (!$time || $time == -1)
 		{
 			$error .= $_CLASS['core_user']->lang['ERROR_START_TIME'].'<br />';
-		} else {
-			$data['time'] = $time;
+		}
+	}
+
+	if ($data['expires'])
+	{
+		$expires = strtotime($data['expires']);
+
+		if (!$expires || $expires == -1)
+		{
+			$error .= $_CLASS['core_user']->lang['ERROR_END_TIME'].'<br />';
 		}
 	}
 	
-	if ($data['expires'])
+	if (!$error)
 	{
-		if (($expires = strtotime($data['expires'])) === -1)
-		{
-			$error .= $_CLASS['core_user']->lang['ERROR_END_TIME'].'<br />';
-		} else {
-			$data['expires'] = $expires;
-		}
+		$data['time'] = $time;
+		$data['expires'] = $expires;
 	}
 }
 
@@ -338,7 +341,7 @@ function message_save()
 			return message_edit($data, $error);
 		}
 		
-		$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position='.$block['position']);
+		$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
 		$maxweight = $_CLASS['core_db']->sql_fetchrow($result);
 		$_CLASS['core_db']->sql_freeresult($result);
 		
@@ -350,6 +353,7 @@ function message_save()
 	}
 	
 	$_CLASS['core_cache']->destroy('blocks');
+
 	$_CLASS['core_display']->meta_refresh('3', generate_link('messages', array('admin' => true)));
 	trigger_error(sprintf($_CLASS['core_user']->lang['SAVED'], generate_link('messages', array('admin' => true))));	
 }

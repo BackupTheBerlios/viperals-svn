@@ -28,14 +28,14 @@
 		<!-- IF { $days:LINK } -->
 			<td class="row1" valign="top" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $days:LINK }'" style="padding:5px">
 				<a href="{ $days:LINK }"><b>{ $days:NUMBER }</b></a>
+		<!-- ELSE -->
+			<td class="row3" valign="top" style="padding:5px"><b>{ $days:NUMBER }</b>
+		<!-- ENDIF -->
 				<br/>
 				<!-- LOOP $days:DATA -->
 					<a href="{ $days:DATA:link }" onclick="window.open('{ $days:DATA:link }','_event{ $days:DATA:id }','width=500,height=400,scrollbars=yes');return false;" target="_event{ $days:DATA:id }">{ $days:DATA:title }</a><br/>
 				<!-- ENDLOOP -->
 			</td>
-		<!-- ELSE -->
-			<td class="row3" valign="top" style="padding:5px">{ $days:NUMBER }<br/>{ $days:DATA }</td>
-		<!-- ENDIF -->
 	<!-- ELSE -->
 		<td class="row2" style="padding:5px"></td>
 	<!-- ENDIF -->

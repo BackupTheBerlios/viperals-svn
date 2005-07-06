@@ -1,15 +1,5 @@
 <?php
 
-/*
-To do for version 1:
-	SEction to add events
-	Complete manage calender
-	Time Zones -------
-	Fix-up view, add new stuff
-	Move langs out of calender class
-	Caching
-*/
-
 class ucp_calender extends module  
 {
 	function ucp_calender($id, $mode)
@@ -25,7 +15,7 @@ class ucp_calender extends module
 		load_class($site_file_root.'includes/display/calender.php', 'calender');
 		$_CLASS['calender']->set_date($day, $month, $year);
 		
-		if ($_GET['mode'] == 'details')
+		if (isset($_GET['mode']) && $_GET['mode'] == 'details')
 		{
 			$mode = 'details';
 		}
@@ -62,7 +52,16 @@ class ucp_calender extends module
 			break;
 				
 			case 'add_event':
-				$_CLASS['calender']->add_event($link);
+				if (isset($_POST['submit']))
+				{
+					$this->add_event();
+					break;
+				}
+
+				$_CLASS['core_template']->assign(array(
+					'S_UCP_ACTION'	=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"),
+				));
+
 				$this->display($_CLASS['core_user']->lang['UCP_MAIN'], 'ucp_calender_add.html');
 			break;
 				
@@ -115,19 +114,47 @@ class ucp_calender extends module
 			break;	
 		}
 	}
-	
-	function add_event($link)
+
+	function add_event()
 	{
 		global $_CLASS;
 
 		$data_array = array(
-		'title'			=> get_variable('title', 'POST', false),
-		'description'	=> get_variable('description', 'POST', false),
-		'note'			=> get_variable('note', 'POST', false),
-		'start_time'	=> get_variable('start', 'POST', false),
-		'end_time'		=> get_variable('end', 'POST', false),
-		'recurring'		=> '',
+			'title'			=> get_variable('title', 'POST', false),
+			'description'	=> get_variable('description', 'POST', false),
+			'note'			=> get_variable('note', 'POST', false),
+			'start_time'	=> get_variable('start', 'POST', false),
+			'end_time'		=> get_variable('end', 'POST', false),
+			'recur'			=> false,
 		);
+
+		$error = '';
+
+		if (($start_time = strtotime($data_array['start_time'])) === -1)
+		{
+			$error .= $_CLASS['core_user']->get_lang('ERROR_START_TIME').'<br />';
+		}
+
+		if (($end_time = strtotime($data_array['end_time'])) === -1)
+		{
+			$error .= $_CLASS['core_user']->get_lang('ERROR_END_TIME').'<br />';
+		}
+		
+		if (!$error && $start_time > $end_time)
+		{
+			$error .= $_CLASS['core_user']->get_lang('ERROR_').'<br />';
+		}
+
+		if (!$error)
+		{
+			//$duration = $start_time - $end_time;
+			//$start_time = $date = implode(''. explode(':', date('H:i', $start_time)));;
+
+			$data_array['start_time'] = $data_array['start_date'] = $start_time;
+			$data_array['end_time'] = $data_array['end_date'] = $end_time;
+			
+			$_CLASS['core_db']->sql_query('INSERT INTO cms_calender ' . $_CLASS['core_db']->sql_build_array('INSERT', $data_array));
+		}
 	}
 }
 

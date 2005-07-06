@@ -11,41 +11,31 @@
 //																//
 //**************************************************************//
 
-function login_db($data)
+class auth_db extends core_auth
 {
-	global $_CLASS;
-	
-	if ($data['user_id'])
+// move to main once we have another auth method as an example
+	function user_auth($user_name, $user_password)
 	{
-		$sql_where = "user_id = '" . $_CLASS['core_db']->sql_escape($data['user_id']) . "'";
-	
-	} elseif ($data['user_name']) {
-	
-		$sql_where = "username = '" . $_CLASS['core_db']->sql_escape($data['user_name']) . "'";
-		
-	} else {
+		global $_CLASS;
 
-		return false;
-	}	
-	
-	$sql = 'SELECT user_id, username, user_password, user_password_encoding, user_type FROM ' . USERS_TABLE . " WHERE $sql_where";
-		
-	$result = $_CLASS['core_db']->sql_query($sql);
-	$status = false;
+		$sql = 'SELECT user_id, username, user_password, user_password_encoding, user_type 
+					FROM ' . USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->sql_escape($user_name) . "'";
 
-	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
-	{
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$status = false;
+	
+		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		{
+			if (encode_password($user_password, $row['user_password_encoding']) == $row['user_password'])
+			{
+				$status = ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_IGNORE) ? $row['user_type'] : (int) $row['user_id'];
+			}
+		}
+		
 		$_CLASS['core_db']->sql_freeresult($result);
 		
-		if ($data['is_bot'] || (encode_password($data['user_password'], $row['user_password_encoding']) == $row['user_password']))
-		{
-			$status = ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_IGNORE) ? $row['user_type'] : true;
-		}
+		return $status;
 	}
-	
-	$_CLASS['core_db']->sql_freeresult($result);
-	
-	return $status;
 }
 
 ?>

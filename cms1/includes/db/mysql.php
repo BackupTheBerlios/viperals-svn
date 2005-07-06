@@ -121,7 +121,7 @@ class sql_db
 	}
 
 	// Base query method
-	function sql_query($query = '', $cache_ttl = 0)
+	function sql_query($query = '')
 	{
 		if (!$query)
 		{
@@ -155,7 +155,7 @@ class sql_db
 		return ($this->query_result) ? $this->query_result : false;
 	}
 
-	function sql_query_limit($query, $total, $offset = 0, $cache_ttl = 0) 
+	function sql_query_limit($query, $total, $offset = 0) 
 	{ 
 		if (!$query) 
 		{ 
@@ -173,7 +173,7 @@ class sql_db
 
 		$query .= "\n LIMIT " . ((!empty($offset)) ? $offset . ', ' . $total : $total);
 
-		return $this->sql_query($query, $cache_ttl); 
+		return $this->sql_query($query); 
 
 	}
 
@@ -263,6 +263,7 @@ class sql_db
 			return false;
 		}
 		
+		$this->rowset[$query_id] = $this->row[$query_id] = '';
 		unset($this->rowset[$query_id]);
 		unset($this->row[$query_id]);
 		
@@ -419,16 +420,20 @@ class sql_db
 		switch ($mode)
 		{
 			case 'start':
-				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == 3)
+				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
 				{
 					$query_hold = $query;
 					
 					if (preg_match('/UPDATE ([a-z0-9_]+).*?WHERE(.*)/s', $query, $m))
 					{
 						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					} elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $query, $m))	{
+					}
+					elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $query, $m))
+					{
 						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					} else {
+					}
+					else
+					{
 						$explain_query = $query;
 					}
 	
@@ -463,7 +468,7 @@ class sql_db
 				// remove the root directorys
 				$this->caller_info[0]['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $this->caller_info[0]['file']));
 	
-				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == 3)
+				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
 				{
 					if ($this->query_result)
 					{

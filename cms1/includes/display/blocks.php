@@ -67,6 +67,7 @@ class core_blocks
 	/*
 		Load Blocks from cache or databases, also run needed checks
 	*/
+// Add auth check here
 	function load_blocks($force = false)
 	{
 		if ($this->blocks_loaded && !$force)
@@ -84,6 +85,7 @@ class core_blocks
 			
 			while($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
+				$row['auth'] = ($row['auth']) ? unserialize($row['auth']) : '';
 				$this->blocks_array[$row['position']][] = $row;
 			}
 			
@@ -140,7 +142,7 @@ class core_blocks
 		
 		foreach($this->blocks_array[$position] as $this->block)
 		{
-			if ($this->block['auth'] && !$_CLASS['core_auth']->admin_auth('blocks') && !$_CLASS['core_auth']->auth($this->block['auth']))
+			if ($this->block['auth'] && !$_CLASS['core_auth']->admin_power('blocks') && !$_CLASS['core_auth']->auth($this->block['auth']))
 			{
 				continue;
 			}
@@ -223,6 +225,7 @@ class core_blocks
 		{
 			$this->info = false;
 
+// Make this part of the debugger
 			/*
 			$startqueries = $_CLASS['core_db']->sql_num_queries();
 			$startqueriestime = $_CLASS['core_db']->sql_time;
@@ -232,6 +235,7 @@ class core_blocks
 		
 			include($site_file_root.'blocks/'.$this->block['file']);
 			
+// Make this part of the debugger
 			/*
 			$endtime = explode(' ', microtime());
 			$endtime = $endtime[0] + $endtime[1];
@@ -239,7 +243,7 @@ class core_blocks
 			
 			if (!$this->content && !$this->template)
 			{
-				if ($_CLASS['core_auth']->admin_auth('blocks'))
+				if ($_CLASS['core_auth']->admin_power('blocks'))
 				{
 					$this->content = '<center><strong>'.(($this->info) ? $this->info : $_CLASS['core_user']->lang['BLOCK_ERROR2']).'</strong></center>';
 				}
@@ -251,7 +255,7 @@ class core_blocks
 		}
 		else
 		{
-			if ($_CLASS['core_auth']->admin_auth('blocks'))
+			if ($_CLASS['core_auth']->admin_power('blocks'))
 			{
 				$this->content = '<center><strong>'.$_CLASS['core_user']->lang['BLOCK_ERROR1'].'</strong></center>';
 			}
@@ -261,6 +265,7 @@ class core_blocks
 			}		
 		}
 
+// Make this part of the debugger
 		/*
 		$this->content .= '<div style="text-align: center;">';
 		if ($_CLASS['core_db']->sql_num_queries() - $startqueries)
@@ -289,7 +294,7 @@ class core_blocks
 			return;
 		}
 		
-		if ($_CLASS['core_auth']->admin_auth('messages'))
+		if ($_CLASS['core_auth']->admin_power('messages'))
 		{
 			$expires = ($this->block['expires']) ? $_CLASS['core_user']->lang['EXPIRES'].' '.$_CLASS['core_user']->format_date($this->block['expires']) : false;
 			$edit_link = generate_link('messages&amp;mode=edit&amp;id='.$this->block['id'], array('admin' => true));
@@ -350,14 +355,16 @@ class core_blocks
 		global $site_file_root, $_CLASS;
 // think about disabling the block automatically if there's url problems
 // update core_rss file
-		if ($this->block['content'] && $this->block['options']['rss_expires'] > time())
+		if ($this->block['content'] && (!$this->block['rss_expires'] || $this->block['rss_expires'] > time()))
 		{
 			$this->content = $this->block['content'];
 			
 			if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
 			{
 				$this->block_side();
-			} else {
+			}
+			else
+			{
 				$this->block_center();
 			}
 			
@@ -378,7 +385,7 @@ class core_blocks
 			load_class($site_file_root.'includes/core_rss.php', 'core_rss');
 			$_CLASS['core_rss']->setup(false, array('title', 'link'));
 				
-			if (!$_CLASS['core_rss']->get_rss($this->block['options']['rss_url']))
+			if (!$_CLASS['core_rss']->get_rss($this->block['rss_url']))
 			{
 	//admin only message here
 				return;
@@ -400,13 +407,13 @@ class core_blocks
 		}
 		
 		
-		if ($this->block['options']['rss_rate'])
+		if ($this->block['rss_rate'] !== -1)
 		{
-			$this->block['options']['rss_expires'] = time() + $this->block['options']['rss_rate'];
+			$this->block['rss_expires'] = ($this->block['rss_rate']) ? time() + $this->block['rss_rate'] : 0;
 			
 			$sql = 'UPDATE '.BLOCKS_TABLE."
 				SET content='".$_CLASS['core_db']->sql_escape($this->content)."'
-				, options='".$_CLASS['core_db']->sql_escape(serialize($this->block['options']))."' 
+				, rss_expires='".$this->block['rss_expires']."' 
 					WHERE id=".$this->block['id'];
 				
 			$_CLASS['core_db']->sql_query($sql);
@@ -416,7 +423,9 @@ class core_blocks
 		if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
 		{
 			$this->block_side();
-		} else {
+		}
+		else
+		{
 			$this->block_center();
 		}
 	}

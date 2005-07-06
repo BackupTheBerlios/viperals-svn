@@ -12,6 +12,9 @@
     	<tr>
 			<td class="row3" colspan="8"><b class="gensmall">{ $L_TOP_MESSAGES }</b></td>
 		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
 	<!-- LOOP $top_admin_messages -->
 		<tr>
 			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:EDIT_LINK }'">
@@ -34,8 +37,9 @@
 			<td class="row1" align="center"><a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a></td>
 			<td class="row1" align="center">
 			<!-- IF { $top_admin_messages:EDIT_LINK } -->
-				<a href="{ $top_admin_messages:EDIT_LINK }">{ $L_EDIT }</a>
+				<a href="{ $top_admin_messages:EDIT_LINK }">{ $L_EDIT }</a> |
 			<!-- ENDIF -->
+			<a href="{ $top_admin_messages:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $top_admin_messages:DELETE_LINK } -->
 				 | <a href="{ $top_admin_messages:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF --> </td>
@@ -49,6 +53,9 @@
 	<!-- IF isset({ $bottom_admin_messages }) -->
     	<tr>
 			<td class="row3" colspan="8"><b class="gensmall">{ $L_BOTTOM_MESSAGES }</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
 		</tr>
 	<!-- LOOP $left_admin_blocks -->
 		<tr>
@@ -73,8 +80,9 @@
 			
 			<td class="row1" align="center">[
 			<!-- IF { $bottom_admin_messages:EDIT_LINK } -->
-			<a href="{ $bottom_admin_messages:EDIT_LINK }">{ $L_EDIT }</a>
+			<a href="{ $bottom_admin_messages:EDIT_LINK }">{ $L_EDIT }</a> |
 			<!-- ENDIF -->
+			<a href="{ $bottom_admin_messages:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $bottom_admin_messages:DELETE_LINK } -->
 				| <a href="{ $bottom_admin_messages:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF --> </td>

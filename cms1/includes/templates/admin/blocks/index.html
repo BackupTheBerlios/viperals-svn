@@ -22,6 +22,9 @@
     	<tr>
 			<td class="cat" colspan="8"><b class="gensmall">{ $L_LEFT_SIDE_BLOCKS }</b></td>
 		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
 		<!-- ENDIF -->
 		<!-- LOOP $left_admin_blocks -->
 		<tr>
@@ -46,7 +49,8 @@
 				<a href="{ $left_admin_blocks:ACTIVE_LINK }">{ $left_admin_blocks:CHANGE }</a>
 			</td>
 			<td class="row1" align="center">
-				<a href="{ $left_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a>
+				<a href="{ $left_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $left_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $left_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $left_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->
@@ -61,10 +65,13 @@
     	<tr>
 			<td class="cat" colspan="8"><b class="gensmall">Center Top Blocks</b></td>
 		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
 		<!-- ENDIF -->
 		<!-- LOOP $centertop_admin_blocks -->
 		<tr>
-			<td class="row1">
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $centertop_admin_blocks:EDIT_LINK }'">
 				<a href="{ $centertop_admin_blocks:EDIT_LINK }">{ $centertop_admin_blocks:TITLE }</a>
 				<!-- IF { $centertop_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $centertop_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
@@ -84,7 +91,8 @@
 			<td class="row1" align="center"><a href="{ $centertop_admin_blocks:ACTIVE_LINK }">{ $centertop_admin_blocks:CHANGE }</a></td>
 			
 			<td class="row1" align="center">
-				<a href="{ $centertop_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a>
+				<a href="{ $centertop_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $centertop_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $centertop_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $centertop_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->
@@ -99,10 +107,13 @@
     	<tr>
 			<td class="cat" colspan="8"><b class="gensmall">Center Bottom Blocks</b></td>
 		</tr>
-		<!-- ENDIF -->
-		<!-- LOOP $cms_news -->
 		<tr>
-			<td class="row1">
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDIF -->
+		<!-- LOOP $centerbottom_admin_blocks -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $centerbottom_admin_blocks:EDIT_LINK }'">
 				<a href="{ $centerbottom_admin_blocks:EDIT_LINK }">{ $centerbottom_admin_blocks:TITLE }</a>
 				<!-- IF { $centerbottom_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $centerbottom_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
@@ -121,7 +132,8 @@
 			<td class="row2" align="center">{ $centerbottom_admin_blocks:TYPE }</td>
 			<td class="row1" align="center"><a href="{ $centerbottom_admin_blocks:ACTIVE_LINK }"><img src="images/{ $centerbottom_admin_blocks:ACTIVE }" alt="{ $centerbottom_admin_blocks:CHANGE }" title="{ $centerbottom_admin_blocks:CHANGE }" border="0"></a></td>
 			<td class="row1" align="center">
-				<a href="{ $centerbottom_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a>
+				<a href="{ $centerbottom_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $centerbottom_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $centerbottom_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $centerbottom_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->
@@ -135,10 +147,13 @@
     	<tr>
 			<td class="cat" colspan="8"><b class="gensmall">Right Side Blocks</b></td>
 		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
 		<!-- ENDIF -->
 		<!-- LOOP $right_admin_blocks -->
 		<tr>
-			<td class="row1">
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $right_admin_blocks:EDIT_LINK }'">
 				<a href="{ $right_admin_blocks:EDIT_LINK }">{ $right_admin_blocks:TITLE }</a>
 				<!-- IF { $right_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $right_admin_blocks:ERROR }</span><!-- ENDIF -->
 			</td>
@@ -157,7 +172,8 @@
 			<td class="row2" align="center">{ $right_admin_blocks:TYPE }</td>
 			<td class="row1" align="center"><a href="{ $right_admin_blocks:ACTIVE_LINK }">{ $right_admin_blocks:CHANGE }</a></td>
 			<td class="row1" align="center">
-				<a href="{ $right_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a>
+				<a href="{ $right_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $right_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $right_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $right_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->

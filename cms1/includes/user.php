@@ -24,9 +24,25 @@ class core_user extends sessions
 
 	function core_user()
 	{
-		$this->time = time();
-		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : $_ENV['HTTP_USER_AGENT'], 0, 100);
-		$this->url = (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : $_ENV['REQUEST_URI'];
+		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : getenv('HTTP_USER_AGENT'), 0, 100);
+		$this->url	= (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : getenv('REQUEST_URI');
+		$this->ip	= (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
+		$this->time	= time();
+
+		if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+		{
+			$private_ip = array('#^0\.#', '#^127\.0\.0\.1#', '#^192\.168\.#', '#^172\.16\.#', '#^10\.#', '#^224\.#', '#^240\.#');
+			foreach (explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']) as $x_ip)
+			{
+				if (preg_match('#([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)#', $x_ip, $ip_list))
+				{
+					if (($this->ip = trim(preg_replace($private_ip, $this->ip, $ip_list[1]))) == trim($ip_list[1]))
+					{
+						break;
+					}
+				}
+			}
+		}
 
 		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
 		{
@@ -35,7 +51,7 @@ class core_user extends sessions
 			
 			if (($pos = strpos($this->url, 'sid')) !== false)
 			{
-				$this->url = substr($this->url, 0, $pos-1);
+				$this->url = substr($this->url, 0, $pos - 1);
 			}
 
 			$this->url = substr($this->url, 0, 100);
@@ -51,10 +67,32 @@ class core_user extends sessions
 		}
 	}
 
-	function login($id = ANONYMOUS, $view_online = true, $admin_login)
+	function login($id = ANONYMOUS, $admin_login = false, $view_online = true)
 	{
 		global $_CLASS;
-		//$this->can_create($id);
+
+		if (isset($this->data['session_id']) && $this->data['session_id'])
+		{
+			$this->session_destroy(false, true);
+		}
+
+		if ($bot = check_bot_status($this->browser, $this->ip))
+		{
+			$id = $bot;
+		}
+
+		if (!$this->can_create())
+		{
+			if (!$bot)
+			{
+				$this->user_setup();
+				trigger_error('SITE_UNAVAILABLE', E_USER_ERROR);
+			}
+	
+			header("HTTP/1.0 503 Service Unavailable");
+			script_close(false);
+			die;
+		}
 
 		$result = $_CLASS['core_db']->sql_query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '.$id);
 		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
@@ -63,10 +101,10 @@ class core_user extends sessions
 		if (!$this->data)
 		{
 			die;
-// what to do what to do, this should not happen
+// Error here
 		}
-		
-		if ($id == ANONYMOUS && check_bot_status($this->browser, $this->ip))
+
+		if ($bot)
 		{
 			$this->is_user = false;
 			$this->is_bot = true;
@@ -78,7 +116,10 @@ class core_user extends sessions
 			$this->is_user = ($id == ANONYMOUS) ? false : true;
 			$this->is_bot = false;
 	
-			if ($_CLASS['core_auth']->admin_power())
+			$auth = new core_auth();
+			$auth->get_data($id, $_CLASS['core_user']->data['group_id']);
+
+			if ($auth->admin_auth())
 			{
 				$this->data['session_admin'] = ($admin_login) ? ADMIN_IS_ADMIN : ADMIN_NOT_LOGGED;
 			}
@@ -86,6 +127,8 @@ class core_user extends sessions
 			{
 				$this->data['session_admin'] = ADMIN_NOT_ADMIN;
 			}
+			
+			unset($auth);
 		}
 			
 		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN) ? true : false;
@@ -100,9 +143,10 @@ class core_user extends sessions
 		$this->session_create();
 	}
 	
-	function login_out()
+	function logout()
 	{
-		$this->destroy();
+		$this->session_destroy();
+		// forgot what else I needed to do here :-|
 	}
 
 	function user_setup()

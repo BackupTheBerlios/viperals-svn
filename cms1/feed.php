@@ -59,6 +59,8 @@ $feed = get_variable('feed', 'GET', false);
 Switch ($feed)
 {
 	case 'rdf':
+	case 'rss1':
+
 	$_CLASS['core_template']->display('rss/rdf.html');
 	break;
 	

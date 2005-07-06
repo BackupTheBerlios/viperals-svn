@@ -12,6 +12,10 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
+/*
+	To-do cache daa.
+	Area code for content
+*/
 
 class core_template
 {
@@ -470,7 +474,7 @@ class core_template
 		{
 			//need to addslashed, check for variable type
 			$value = trim($options[($loop + 1)]);
-			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = ".(is_integer($value) ? $value : "'$value'");
+			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = ".(is_integer($value) ? $value : "'".str_replace("'", "\'", $value)."'");
 			$loop++;
 		}
 

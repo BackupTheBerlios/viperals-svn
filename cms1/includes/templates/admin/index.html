@@ -1,0 +1,86 @@
+{ $A_TABLE_OPEN }
+
+<table border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+		<td width="50%">
+			<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+				<tbody>
+					<tr>
+						<th width="25%" align="center"><b>Viperal CMS - Latest News</b></td>
+					</tr>
+					<!-- LOOP $cms_news -->
+					<tr>
+						<td class="row1">
+							<a href="{ $cms_news:link }"><strong>{ $cms_news:title }</strong></a><br/>
+							<p>
+							{ $cms_news:description }
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td class="row2" style="padding: 4px;"></th>
+					</tr>
+					<!-- ENDLOOP -->
+				</tbody>
+			</table>
+		</td>
+		<td width="50%">
+			<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+				<tbody>
+					<tr>
+						<th width="25%" align="center"><b>Viperal CMS - Latest News</b></td>
+					</tr>
+					<!-- LOOP $cms_news -->
+					<tr>
+						<td class="row1">
+							<a href="{ $cms_news:link }"><strong>{ $cms_news:title }</strong></a><br/>
+							<p>
+							{ $cms_news:description }
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td class="row2" style="padding: 4px;"></th>
+					</tr>
+					<!-- ENDLOOP -->
+				</tbody>
+				</table>
+			</td>
+		</tr>
+    </tbody>
+</table>
+<br/>
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th colspan="3" align="center"><b>Inactive Users</b></th>
+		</tr>
+		<tr>
+			<th width="20%" height="25" nowrap="nowrap">Username</th>
+			<th width="45%">Options</th>
+			<th width="5%" nowrap="nowrap">Options</th>
+		</tr>
+		<!-- LOOP $admin_user -->
+		<tr>
+			<td class="row1">
+				{ $admin_user:user_name }
+			</td>
+			<td class="row1">
+				{ $admin_user:user_name }
+			</td>
+			<td class="row1">
+				{ $admin_user:user_name }
+			</td>
+		</tr>
+		<!-- LOOPELSE -->
+		<tr>
+			<td colspan="3" class="row1">
+				{ $L_NO_INACTIVE_USERS }
+			</td>
+		</tr>
+		<!-- ENDLOOP -->
+    </tbody>
+</table>
+
+{ $A_TABLE_CLOSE }

@@ -1555,7 +1555,7 @@ function delete_forum_content($forum_id, $loop = true)
 
 	$_CLASS['core_db']->sql_transaction('commit');
 	
-	if ($loop = true)
+	if ($loop)
 	{
 		// Make sure we delete everything on active forums?
 		delete_forum_content($forum_id, false);

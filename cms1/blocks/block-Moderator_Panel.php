@@ -16,9 +16,6 @@ if (!defined('VIPERAL')) {
     die();
 }
 
-// Convert this to template 
-// but them it will only be for templete based themes ! make a add onto no templaye themes so it can use it..
-
 global $_CLASS;
 
 if (!isset($_CLASS['core_template']->_tpl_vars['mcp_section']))
@@ -80,18 +77,35 @@ if ($_CLASS['core_template']->_sections['mcp_subsectionloop']['show']):
             for ($_CLASS['core_template']->_sections['mcp_subsectionloop']['index'] = $_CLASS['core_template']->_sections['mcp_subsectionloop']['start'], $_CLASS['core_template']->_sections['mcp_subsectionloop']['iteration'] = 1;
                  $_CLASS['core_template']->_sections['mcp_subsectionloop']['iteration'] <= $_CLASS['core_template']->_sections['mcp_subsectionloop']['total'];
                  $_CLASS['core_template']->_sections['mcp_subsectionloop']['index'] += $_CLASS['core_template']->_sections['mcp_subsectionloop']['step'], $_CLASS['core_template']->_sections['mcp_subsectionloop']['iteration']++):
-$_CLASS['core_template']->_sections['mcp_subsectionloop']['rownum'] = $_CLASS['core_template']->_sections['mcp_subsectionloop']['iteration'];
-$_CLASS['core_template']->_sections['mcp_subsectionloop']['index_prev'] = $_CLASS['core_template']->_sections['mcp_subsectionloop']['index'] - $_CLASS['core_template']->_sections['mcp_subsectionloop']['step'];
-$_CLASS['core_template']->_sections['mcp_subsectionloop']['index_next'] = $_CLASS['core_template']->_sections['mcp_subsectionloop']['index'] + $_CLASS['core_template']->_sections['mcp_subsectionloop']['step'];
-$_CLASS['core_template']->_sections['mcp_subsectionloop']['first']      = ($_CLASS['core_template']->_sections['mcp_subsectionloop']['iteration'] == 1);
-$_CLASS['core_template']->_sections['mcp_subsectionloop']['last']       = ($_CLASS['core_template']->_sections['mcp_subsectionloop']['iteration'] == $_CLASS['core_template']->_sections['mcp_subsectionloop']['total']);
 
-if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['SECTION'] == $_CLASS['core_template']->_sections['forumrowloop']['index']):
-		$this->content .= '<li>&#187;'; if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['S_SELECTED']): $this->content .= '<b>'.$_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['L_TITLE'];  if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM']): $this->content .= ' ('. $_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM'].'
-)'; endif; $this->content .= '</b>'; else: $this->content .= '<a href="'.$_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['U_TITLE'].'
-">'.$_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['L_TITLE'];  if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM']): $this->content .= ' ('. $_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM'].'
-)'; endif; $this->content .= '</a>'; endif; $this->content .= '</li>';
-							endif;
+$this->content .= '<li>&#187;';
+	
+if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['S_SELECTED'])
+{
+	 $this->content .= '<b>'.$_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['L_TITLE'];
+	 
+	 if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM'])
+	 {
+		$this->content .= ' ('. $_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM'].')';
+	}
+
+	$this->content .= '</b>';
+}
+else
+{
+	$this->content .= '<a href="'.$_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['U_TITLE'].'">'.$_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['L_TITLE'];
+
+	if ($_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM'])
+	{
+		$this->content .= ' ('. $_CLASS['core_template']->_tpl_vars['mcp_subsection'][$_CLASS['core_template']->_sections['mcp_subsectionloop']['index']]['ADD_ITEM'].')'; 
+	}
+
+	$this->content .= '</a>';
+}
+
+
+$this->content .= '</li>';
+							
 						endfor; endif;
 						$this->content .= '</ul>';
 

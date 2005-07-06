@@ -9,9 +9,9 @@
 <table class="tablebg" style="width:100%" cellpadding="4" cellspacing="1">
 	<tbody>
 		<tr>
-			<th width="25%">{ if $MODE eq 'site' }{ $L_NOTICES }{ else }<a href="/debug.php?mode=notice"><b>{ $L_NOTICES }</b></a>{ /if }</th>
-			<th width="25%">{ if $MODE eq 'wysiwyg' }{ $L_WARNINGS }{ else }<a href="/debug.php?mode=warning"><b>{ $L_WARNINGS }</b></a>{ /if }</th>
-			<th width="25%">{ if $MODE eq 'users' }{ $L_QUERIES }{ else }<a href="/debug.php?mode=queries"><b>{ $L_QUERIES }</b></a>{ /if }</th>
+			<th width="25%"><!-- IF { $MODE } == 'site' -->{ $L_NOTICES }<!-- ELSE --><a href="debug.php?mode=notice"><b>{ $L_NOTICES }</b></a><!-- ENDIF --></th>
+			<th width="25%"><!-- IF { $MODE } == 'wysiwyg' -->{ $L_WARNINGS }<!-- ELSE --><a href="debug.php?mode=warning"><b>{ $L_WARNINGS }</b></a><!-- ENDIF --></th>
+			<th width="25%"><!-- IF { $MODE } == 'users' -->{ $L_QUERIES }<!-- ELSE --><a href="debug.php?mode=queries"><b>{ $L_QUERIES }</b></a><!-- ENDIF --></th>
 		</tr>
 	<tbody>
 </table>
@@ -21,10 +21,10 @@
 
 <td align="center">
 
-{ if $MODE eq 'warning' }
-	{ if !isset($error_warnings) }
+<!-- IF { $MODE } == 'warning' -->
+	<!-- IF !isset({ $error_warnings }) -->
 		<div class="error_header">Wow We this page has no Notice  errors</div>
-	{ else }
+	<!-- ELSE -->
 			  <div>This page has the following PHP Notice Errors</div>
 		  <hr width="50%">
 		  <p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.
@@ -52,12 +52,12 @@
 		{ /section }
 	</tbody>
 </table>
-		{ /if }
+	<!-- ENDIF -->
 
-{ elseif $MODE eq 'notice'}
-	{ if !isset($error_notice) }
+<!-- ELSEIF { $MODE } == 'notice' -->
+	<!-- IF !isset({ $error_notice }) -->
 		<div class="error_header">Wow We this page has Notice errors</div>
-	{ else }
+	<!-- ELSE -->
 			  <div>This page has the following PHP Notice Errors</div>
 		  <hr width="50%">
 		  <p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.
@@ -69,40 +69,39 @@
 			<th><b>Line</b></th>
 			<th><b>Error</b></th>
 		</tr>
-		{section name=error_noticeloop loop=$error_notice}
+		<!-- LOOP $error_notice -->
 		<tr>
 			<td style="border: 1px solid #ccc;">
-				
-		{$error_notice[error_noticeloop].errfile}
+				{ $error_notice:errfile }
 			</td>
 			<td style="border: 1px solid #ccc;">
-			{$error_notice[error_noticeloop].errline}
+				{ $error_notice:errline }
 			</td>
 			<td style="border: 1px solid #ccc; width:100%;">
-			<b>{$error_notice[error_noticeloop].msg_text}</b>
+				<b>{ $error_notice:msg_text }</b>
 			</td>
 		</tr>
-		{ /section }
+		<!-- ENDLOOP $error_notice -->
 	</tbody>
 </table>
-		{ /if }
-{ elseif $MODE eq 'queries'}
+		<!-- ENDIF -->
+<!-- ELSEIF { $MODE } == 'queries' -->
 
 		<div>This page contains the Query information<br/>This page is accurate to the page you browsing.</div>
 		<hr width="50%">
 		<p class="discription"></p>
-		{ if !isset($query) }
+		<!-- IF !isset({ $query }) -->
 		
 			<div class="error_header">Sorry No query data found</div>
-		{ else }
-		{section name=queryloop loop=$query}
+		<!-- ELSE -->
+		<!-- LOOP $query -->
 		<table class="tablebg" align="center" cellpadding="10" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
 			<tbody>
 				<tr>
-					<th colspan="4" width="100%"><b>Query #{ $query[queryloop].row }</b></th>
+					<th colspan="4" width="100%"><b>Query #{ $query:row }</b></th>
 				</tr>
 				<tr>
-					<td colspan="4" width="100%" style="border: 1px solid #ccc;">{ $query[queryloop].query }</td>
+					<td colspan="4" width="100%" style="border: 1px solid #ccc;">{ $query:query }</td>
 				</tr>
 				<tr>
 					<th><b>Requested File</b></th>
@@ -111,38 +110,34 @@
 					<th><b>Rounds Affected</b></th>
 				</tr>
 				<tr>
-					<td width="100%" valign="top" style="border: 1px solid #ccc;"><b>{ $query[queryloop].file }</b></td>
-					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query[queryloop].line }</b></td>
-					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query[queryloop].time }s</b></td>
-					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query[queryloop].affected }</b></td>
+					<td width="100%" valign="top" style="border: 1px solid #ccc;"><b>{ $query:file }</b></td>
+					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query:line }</b></td>
+					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query:time }s</b></td>
+					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query:affected }</b></td>
 				</tr>
 			</tbody>
 		</table>
 		<table class="tablebg" align="center" cellpadding="7" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
 		<tbody>
 		<tr>
-			{section name=headerloop loop=$header}
-				{ if $header[headerloop].row eq $query[queryloop].row }
-					<th><b>{ $header[headerloop].value }</b></th>
-				{ /if }
-			{ /section }
+			<!-- LOOP $query:header -->
+					<th><b>{ $query:header:value }</b></th>
+			<!-- ENDLOOP -->
 		</tr>
 		<tr>
-			{section name=queriesloop loop=$queries}
-			
-				{ if $queries[queriesloop].row eq $query[queryloop].row }
-					{ if $queries[queriesloop].new }</tr><tr>{ /if }
+			<!-- LOOP $query:queries -->
+					<!-- IF { $query:queries:new } --></tr><tr><!-- ENDIF -->
 					<td style="border: 1px solid #ccc;">
-					{$queries[queriesloop].value}
+					{ $query:queries:value }
 					</td>
-				{ /if }
-			{ /section }
+			<!-- ENDLOOP -->
 		</tr>
 	</tbody>
-</table><br/>
-	{ /section }
-	{ /if }
-{ /if }
+</table>
+<br/>
+	<!-- ENDLOOP $query -->
+	<!-- ENDIF -->
+<!-- ENDIF -->
 
 
 			</td>

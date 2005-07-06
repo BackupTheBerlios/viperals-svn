@@ -522,11 +522,6 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 
 <table width="100%" cellspacing="0" cellpadding="0" border="0">
 	<tr>
-		<td align="center"><h1><?php echo $_CLASS['core_user']->lang['USERS']; ?></h1></td>
-		<td align="center"><h1><?php echo $_CLASS['core_user']->lang['USERGROUPS']; ?></h1></td>
-	</tr>
-	<tr>
-
 		<td><form method="post" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th><?php echo $_CLASS['core_user']->lang['MANAGE_USERS']; ?></th>
@@ -617,7 +612,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 	$group_list = '';
 	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 	{
-		echo '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="blue"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+		echo '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 	}
 	$_CLASS['core_db']->sql_freeresult($result);
 		

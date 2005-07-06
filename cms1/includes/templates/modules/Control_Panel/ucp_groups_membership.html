@@ -20,9 +20,9 @@
 	</tr>
 	<!-- ENDIF -->
 	<tr>
-		<td class="<!-- IF { $leader:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap"><!-- IF { $S_CHANGE_DEFAULT } --><input type="radio" name="default"<!-- IF { $leader:S_GROUP_DEFAULT } --> checked="checked"<!-- ENDIF --> /><!-- ENDIF --></td>
-		<td class="<!-- IF { $leader:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->"><b class="genmed"><a href="{ $leader:U_VIEW_GROUP }">{ $leader:GROUP_NAME }</a></b><!-- IF { $leader:GROUP_DESC } --><p class="forumdesc">{ $leader:GROUP_DESC }</p><!-- ENDIF --></td>
-		<td class="<!-- IF { $leader:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $leader:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $leader:GROUP_ID }]" /><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $S_CHANGE_DEFAULT } --><input type="radio" name="default"<!-- IF { $leader:S_GROUP_DEFAULT } --> checked="checked"<!-- ENDIF --> /><!-- ENDIF --></td>
+		<td class="row1"><b class="genmed"><a href="{ $leader:U_VIEW_GROUP }">{ $leader:GROUP_NAME }</a></b><!-- IF { $leader:GROUP_DESC } --><p class="forumdesc">{ $leader:GROUP_DESC }</p><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $leader:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $leader:GROUP_ID }]" /><!-- ENDIF --></td>
 	</tr>
 	<!-- ENDLOOP -->
 	
@@ -33,9 +33,9 @@
 	</tr>
 	<!-- ENDIF -->
 	<tr>
-		<td class="<!-- IF { $member:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap"><!-- IF { $S_CHANGE_DEFAULT } --><input type="radio" name="default"<!-- IF { $member:S_GROUP_DEFAULT } --> checked="checked"<!-- ENDIF --> /><!-- ENDIF --></td>
-		<td class="<!-- IF { $member:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->"><b class="genmed"><a href="{ $member:U_VIEW_GROUP }">{ $member:GROUP_NAME }</a></b><!-- IF { $member:GROUP_DESC } --><p class="forumdesc">{ $member:GROUP_DESC }</p><!-- ENDIF --></td>
-		<td class="<!-- IF { $member:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $member:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $member:GROUP_ID }]" /><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $S_CHANGE_DEFAULT } --><input type="radio" name="default"<!-- IF { $member:S_GROUP_DEFAULT } --> checked="checked"<!-- ENDIF --> /><!-- ENDIF --></td>
+		<td class="row1"><b class="genmed"><a href="{ $member:U_VIEW_GROUP }">{ $member:GROUP_NAME }</a></b><!-- IF { $member:GROUP_DESC } --><p class="forumdesc">{ $member:GROUP_DESC }</p><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $member:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $member:GROUP_ID }]" /><!-- ENDIF --></td>
 	</tr>
 	<!-- ENDLOOP -->
 	
@@ -46,9 +46,9 @@
 	</tr>
 	<!-- ENDIF -->
 	<tr>
-		<td class="<!-- IF { $pending:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap">&nbsp;</td>
-		<td class="<!-- IF { $pending:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->"><b class="genmed"><a href="{ $pending:U_VIEW_GROUP }">{ $pending:GROUP_NAME }</a></b><!-- IF { $pending:GROUP_DESC } --><p class="forumdesc">{ $pending:GROUP_DESC }</p><!-- ENDIF --></td>
-		<td class="<!-- IF { $pending:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $pending:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $pending:GROUP_ID }]" /><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap">&nbsp;</td>
+		<td class="row1"><b class="genmed"><a href="{ $pending:U_VIEW_GROUP }">{ $pending:GROUP_NAME }</a></b><!-- IF { $pending:GROUP_DESC } --><p class="forumdesc">{ $pending:GROUP_DESC }</p><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $pending:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $pending:GROUP_ID }]" /><!-- ENDIF --></td>
 	</tr>
 	<!-- ENDLOOP -->
 	
@@ -59,9 +59,9 @@
 		</tr>
 		<!-- ENDIF -->
 		<tr>
-			<td class="<!-- IF { $nonmember:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap">&nbsp;</td>
-			<td class="<!-- IF { $nonmember:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->"><b class="genmed"><a href="{$nonmember:U_VIEW_GROUP}">{ $nonmember:GROUP_NAME }</a></b><!-- IF { $nonmember:GROUP_DESC } --><p class="forumdesc">{ $nonmember:GROUP_DESC }</p><!-- ENDIF --></td>
-			<td class="<!-- IF { $nonmember:LOOP_INDEX } % 2 -->row2<!-- ELSE -->row1<!-- ENDIF -->" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $nonmember:GROUP_SPECIAL } --><input type="checkbox" name="mark[{$nonmember:GROUP_ID}]" /><!-- ENDIF --></td>
+			<td class="row1" width="6%" align="center" nowrap="nowrap">&nbsp;</td>
+			<td class="row1"><b class="genmed"><a href="{$nonmember:U_VIEW_GROUP}">{ $nonmember:GROUP_NAME }</a></b><!-- IF { $nonmember:GROUP_DESC } --><p class="forumdesc">{ $nonmember:GROUP_DESC }</p><!-- ENDIF --></td>
+			<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $nonmember:GROUP_SPECIAL } --><input type="checkbox" name="mark[{$nonmember:GROUP_ID}]" /><!-- ENDIF --></td>
 		</tr>
 		<!-- ENDLOOP -->
 

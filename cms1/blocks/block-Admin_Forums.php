@@ -18,7 +18,7 @@ if (!defined('VIPERAL'))
 
 global $_CLASS;
 
-require($site_file_root.'modules/Forums/admin/links.php');
+require($site_file_root.'includes/forums/admin/links.php');
 
 $this->content .= '
 <table class="tablebg" width="100%" cellpadding="0" cellspacing="0" border="0">

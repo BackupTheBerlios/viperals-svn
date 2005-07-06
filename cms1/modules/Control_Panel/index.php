@@ -11,28 +11,9 @@
 // 
 // -------------------------------------------------------------
 
-// TODO for 2.2:
-//
-// * Registration
-//    * Link to (additional?) registration conditions
-
-// * Opening tab:
-//    * Last visit time
-//    * Last active in
-//    * Most active in
-//    * New PM counter
-//    * Unread PM counter
-//    * Link/s to MCP if applicable?
-
-// * PM system
-//    * See privmsg
-
-// * Permissions?
-//    * List permissions granted to this user (in UCP and ACP UCP)
-
 if (!defined('VIPERAL'))
 {
-    die();
+    die;
 }
 
 require_once($site_file_root.'includes/forums/functions.php');
@@ -46,11 +27,6 @@ $mode	= request_var('mode', '');
 $module = request_var('i', '');
 
 $ucp = new module();
-
-if ($mode == 'login' || $mode == 'logout')
-{
-	define('IN_LOGIN', true);
-}
 
 require($site_file_root.'includes/forums/functions_user.php');
 
@@ -315,7 +291,7 @@ switch ($mode)
 	case 'logout':
 		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 		{
-			$_CLASS['core_user']->destroy();
+			$_CLASS['core_user']->logout();
 		}
 
 		$_CLASS['core_display']->meta_refresh(3, generate_link());
@@ -375,7 +351,8 @@ if (!$_CLASS['core_user']->is_user)
 		url_redirect(generate_link());
 	}
 	
-	login_box('', $_CLASS['core_user']->lang['LOGIN_EXPLAIN_UCP']);
+	//login_box('', $_CLASS['core_user']->lang['LOGIN_EXPLAIN_UCP']);
+	login_box();
 }
 
 

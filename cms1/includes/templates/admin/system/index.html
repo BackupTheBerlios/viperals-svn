@@ -1,16 +1,26 @@
+<style type="text/css">@import url(java/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="java/jscalendar/calendar_stripped.js"></script>
+<script type="text/javascript" src="java/jscalendar/lang/calendar-en.js"></script>
+<script type="text/javascript" src="java/jscalendar/calendar-setup.js"></script>
+
+{ $A_TABLE_OPEN }
+
 <table class="tablebg" style="width:100%" cellpadding="4" cellspacing="1">
 	<tr>
-{ section name=a_options_loop loop=$a_options }
-		<th width="25%">{ if $a_options[a_options_loop].ACTIVE }{ $a_options[a_options_loop].LANG }{ else }<a href="{ $a_options[a_options_loop].LINK }"><b>{ $a_options[a_options_loop].LANG }</b></a>{ /if }</th>
-{ /section }
+<!-- LOOP $a_options -->
+	<th width="25%"><!-- IF { $a_options:ACTIVE } -->{ $a_options:LANG }<!-- ELSE --><a href="{ $a_options:LINK }"><b>{ $a_options:LANG }</b></a><!-- ENDIF --></th>
+<!-- ENDLOOP -->
 	</tr>
 </table>
-
-<div class="OpenTable"><div class="outer"><div class="inner">
+<table cellpadding="4" cellspacing="1">
+	<tr>
+		<td></th>
+	</tr>
+</table>
 <form action="{ $ACTION }" method="post">
 <table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
 	<tbody>
-	{ if $A_OPTION eq 'site' }
+	<!-- IF { $A_OPTION } == 'site' -->
 	<tr>
 		<th colspan="2">{ $L_SITE }</th>
 	</tr>
@@ -36,16 +46,16 @@
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_LINK_OPTIMIZATION }: </b></td>
-		<td class="row2"><input name="link_optimization" value="1" { if $LINK_OPTIMIZATION } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="link_optimization" value="0" { if !$LINK_OPTIMIZATION } checked="checked" { /if } type="radio">{ $L_NO }</td>
+		<td class="row2"><input name="link_optimization" value="1" <!-- IF { $LINK_OPTIMIZATION } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_YES }&nbsp;&nbsp;<input name="link_optimization" value="0" <!-- IF !{ $LINK_OPTIMIZATION } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
 	</tr>
 	<tr>
 
 		<td class="row1" width="50%"><b>{ $L_DEFAULT_THEME }: </b></td>
 		<td class="row2">
 			<select name="default_theme">
-			{section name=site_themeloop loop=$site_theme}
-				<option value="{ $site_theme[site_themeloop].FILE }" { if $site_theme[site_themeloop].FILE eq $DEFAULT_THEME }  selected="selected" { /if }> { $site_theme[site_themeloop].NAME }</option>
-			{ /section }
+			<!-- LOOP $site_theme -->
+				<option value="{ $site_theme:FILE }" <!-- IF { $site_theme:FILE } == { $DEFAULT_THEME } --> selected="selected" <!-- ENDIF -->> { $site_theme:NAME }</option>
+			<!-- ENDLOOP -->
 			</select>
 		</td>
 	</tr>
@@ -55,23 +65,31 @@
 		<textarea name="foot1" rows="5" cols="40">{ $FOOTER_FIRST }</textarea><br /><br />
 		<textarea name="foot2" rows="5" cols="40">{ $FOOTER_SECOND }</textarea>
 	</tr>
-{ elseif $A_OPTION eq 'system' }
+<!-- ELSEIF { $A_OPTION } == 'system' -->
 	<tr>
 		<th colspan="2">{ $L_MAINTENANCE }</th>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_MAINTENANCE }: </b></td>
-		<td class="row2"><input name="maintenance" value="1" { if $MAINTENANCE } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="maintenance" value="0" { if !$MAINTENANCE } checked="checked" { /if } type="radio">{ $L_NO }<br /></td>
+		<td class="row2"><input name="maintenance" value="1" <!-- IF { $MAINTENANCE } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_YES }&nbsp;&nbsp;<input name="maintenance" value="0" <!-- IF !{ $MAINTENANCE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }<br /></td>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_MAINTENANCE_START }: </b></td>
-		<td class="row2"><input class="post" size="40" maxlength="255" name="maintenance_start" value="{ $MAINTENANCE_START }" type="text"></td>
+		<td class="row2">
+		<input class="post" size="40" maxlength="255" id="maintenance_start" name="maintenance_start" value="{ $MAINTENANCE_START }" type="text">
+			<img src="java/jscalendar/calendar.png" style="cursor: pointer;" id="time_trigger" />
+			
+		</td>
 	</tr>
 	<tr>
 		<td class="row1" width="50%" valign="top"><b>{ $L_MAINTENANCE_TEXT }: </b></td>
 		<td class="row2"><br /><textarea name="maintenance_text" rows="5" cols="40">{ $MAINTENANCE_MSG }</textarea></td>
 	</tr>
-<tr>
+	<tr>
+		<td class="row1" width="50%"><b>{ $L_DEBUGGING }: </b></td>
+		<td class="row2"><select name="error_options"><option value="0"<!-- IF { $ERROR } == '0' --> selected="selected" <!-- ENDIF -->>None</option><option value="1"<!-- IF { $ERROR } == '1' --> selected="selected" <!-- ENDIF -->>On page</option><option value="2"<!-- IF { $ERROR } == '2' --> selected="selected" <!-- ENDIF -->>Debug Screen</option></select></td>
+	</tr>
+	<tr>
 		<th colspan="2">Server Settings</th>
 	</tr>
 
@@ -88,7 +106,7 @@
 
 
 	<tr>
-		<td class="row1" width="50%"><b>Script path: </b><br><span class="gensmall">The path where phpBB2 is located relative to the domain name</span></td>
+		<td class="row1" width="50%"><b>Script path: </b><br><span class="gensmall">Site located relative to the domain name</span></td>
 
 		<td class="row2"><input class="post" maxlength="255" name="site_path" value="{ $SITE_PATH }" type="text"></td>
 	</tr>
@@ -96,12 +114,12 @@
 
 	<tr>
 		<td class="row1" width="50%"><b>Session IP validation: </b><br><span class="gensmall">Determines how much of the users IP is used to validate a session; All compares the complete address, A.B.C the first x.x.x, A.B the first x.x, None disables checking.</span></td>
-		<td class="row2"><input name="ip_check" value="4" { if $IP_CHECK eq 4 } checked="checked" { /if }type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" { if $IP_CHECK eq 3 } checked="checked" { /if } type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" { if $IP_CHECK eq 2 } checked="checked" { /if } type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" { if $IP_CHECK eq 0 } checked="checked" { /if } type="radio"> None&nbsp;&nbsp;</td>
+		<td class="row2"><input name="ip_check" value="4" <!-- IF { $IP_CHECK } == 4  -->checked="checked" <!-- ENDIF -->type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" <!-- IF { $IP_CHECK } == 3 -->checked="checked" <!-- ENDIF --> type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" <!-- IF { $IP_CHECK } == 2 --> checked="checked" <!-- ENDIF --> type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" <!-- IF { $IP_CHECK } == 0 --> checked="checked" <!-- ENDIF --> type="radio"> None&nbsp;&nbsp;</td>
 
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>Validate browser: </b><br><span class="gensmall">Enables browser validation for each session inproving security.</span></td>
-		<td class="row2"><input name="browser_check" value="1" { if $BROWSER_CHECK } checked="checked" { /if }type="radio">Yes&nbsp;&nbsp;<input name="browser_check" value="0" { if !$BROWSER_CHECK } checked="checked" { /if } type="radio">No</td>
+		<td class="row2"><input name="browser_check" value="1" <!-- IF { $BROWSER_CHECK } --> checked="checked" <!-- ENDIF -->type="radio">Yes&nbsp;&nbsp;<input name="browser_check" value="0" <!-- IF !{ $BROWSER_CHECK } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>Limit system load: </b><br><span class="gensmall">If the 1 minute system load exceeds this value the board will go offline, 1.0 equals ~100% utilisation of one processor. This only functions on UNIX based servers.</span></td>
@@ -143,97 +161,69 @@
 
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_COOKIE_SECURE }: </b><br><span class="gensmall">{ $L_COOKIE_SECURE_EXPLAIN }</span></td>
-		<td class="row2"><input name="cookie_secure" value="0" { if !$COOKIE_SECURE } checked="checked" { /if } type="radio">Disabled&nbsp;&nbsp;<input name="cookie_secure" value="1" { if $COOKIE_SECURE } checked="checked" { /if } type="radio">Enabled</td>
+		<td class="row2"><input name="cookie_secure" value="0" <!-- IF !{ $COOKIE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Disabled&nbsp;&nbsp;<input name="cookie_secure" value="1" <!-- IF { $COOKIE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Enabled</td>
 	</tr>
-
-{ elseif $A_OPTION eq 'wysiwyg' }
+	<script type="text/javascript">
+		  Calendar.setup(
+			{
+			  inputField  : "maintenance_start",
+			  button      : "time_trigger"
+			}
+		  );
+	</script>
+<!-- ELSEIF { $A_OPTION } == 'users' -->
 	<tr>
-		<th colspan="2">{ $L_WYSIWYG_EDITOR }</th>
-	</tr>
-	</tr>
-		<tr>
-		<td class="row1" width="50%"><b>{ $L_EDITOR_OPTION }: </b></td>
-		<td class="row2"><input name="wysiwyg" value="1" { if $EDITOR_OPTION } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="wysiwyg" value="0" { if !$EDITOR_OPTION } checked="checked" { /if } type="radio">{ $L_NO }</td>
-
-	</tr>
-	</tr>
-		<tr>
-		<td class="row1" width="50%"><b>{ $L_EDITOR_OPTION }: </b></td>
-		<td class="row2"><input name="wysiwyg" value="1" { if $EDITOR_OPTION } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="wysiwyg" value="0" { if !$EDITOR_OPTION } checked="checked" { /if } type="radio">{ $L_NO }</td>
-
-	</tr>
-	</tr>
-		<tr>
-		<td class="row1" width="50%"><b>{ $L_EDITOR_OPTION }: </b></td>
-		<td class="row2"><input name="wysiwyg" value="1" { if $EDITOR_OPTION } checked="checked" { /if } type="radio"> { $L_YES }&nbsp;&nbsp;<input name="wysiwyg" value="0" { if !$EDITOR_OPTION } checked="checked" { /if } type="radio">{ $L_NO }</td>
-
-	</tr>
-{ elseif $A_OPTION eq 'users' }
-	<tr>
-		<th colspan="2">{ $L_WYSIWYG_EDITOR }</th>
+		<th colspan="2">{ $L_USER_OPTIONS }</th>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_ACC_ACTIVATION }: </b><br><span class="gensmall">{ $L_ACC_ACTIVATION_EXPLAIN }</span></td>
 
 		<td class="row2">
-		{section name=A_ACC_OPTIONloop loop=$A_ACC_OPTION}
-			<input name="require_activation" value="{$A_ACC_OPTION[A_ACC_OPTIONloop].OPTION}" { if $A_ACC_OPTION[A_ACC_OPTIONloop].OPTION eq  $ACTIVATION_OPTION } checked="checked" { /if } type="radio"> {$A_ACC_OPTION[A_ACC_OPTIONloop].LANG}&nbsp;&nbsp;
-		{/section}
+		<!-- LOOP $A_ACC_OPTION -->
+			<input name="require_activation" value="{$A_ACC_OPTION:OPTION}" <!-- IF { $A_ACC_OPTION:OPTION } == { $ACTIVATION_OPTION } --> checked="checked" <!-- ENDIF --> type="radio"> {$A_ACC_OPTION:LANG}&nbsp;&nbsp;
+		<!-- ENDLOOP -->
 		</td>
 	</tr>
-
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_ENABLE_COPPA }: </b><br><span class="gensmall">{ $L_ENABLE_COPPA_EXPLAIN }</span></td>
 
-		<td class="row2"><input name="coppa_enable" value="1" { if $COPPA_ENABLE } checked="checked" { /if } type="radio">{ $L_YES }&nbsp;&nbsp;<input name="coppa_enable" value="0" { if !$COPPA_ENABLE } checked="checked" { /if } type="radio">{ $L_NO }</td>
+		<td class="row2"><input name="coppa_enable" value="1" <!-- IF { $COPPA_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="coppa_enable" value="0" <!-- IF !{ $COPPA_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
 	</tr>
-
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_COPPA_FAX }: </b></td>
 		<td class="row2"><input class="post" size="25" maxlength="100" name="coppa_fax" value="{ $COPPA_FAX }" type="text"></td>
 	</tr>
-
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_COPPA_MAIL }: </b><br><span class="gensmall">{ $L_COPPA_MAIL_EXPLAIN }</span></td>
 		<td class="row2"><textarea name="coppa_mail" rows="5" cols="40">{ $COPPA_MAIL }</textarea></td>
 	</tr>
-
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_VISUAL_CONFIRM }: </b><br><span class="gensmall">{ $L_VISUAL_CONFIRM_EXPLAIN }</span></td>
 
-		<td class="row2"><input name="enable_confirm" value="1" { if $CONFIRM_ENABLE } checked="checked" { /if } type="radio">{ $L_YES }&nbsp;&nbsp;<input name="enable_confirm" value="0" { if !$CONFIRM_ENABLE } checked="checked" { /if } type="radio">{ $L_NO }</td>
+		<td class="row2"><input name="enable_confirm" value="1" <!-- IF { $CONFIRM_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="enable_confirm" value="0" <!-- IF !{ $CONFIRM_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
 	</tr>
-
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_REG_LIMIT }: </b><br><span class="gensmall">{ $L_REG_LIMIT_EXPLAIN }</span></td>
 		<td class="row2"><input class="post" size="4" maxlength="4" name="max_reg_attempts" value="{ $MAX_REG_ATTEMPTS }" type="text"></td>
 	</tr>
-
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_USERNAME_LENGTH }: </b><br><span class="gensmall">{ $L_USERNAME_LENGTH_EXPLAIN }</span></td>
 		<td class="row2"><input class="post" size="3" maxlength="3" name="min_name_chars" value="{ $MIN_NAME_CHARS }" type="text"> Min&nbsp;&nbsp;<input class="post" size="3" maxlength="3" name="max_name_chars" value="{ $MAX_NAME_CHARS }" type="text"> Max</td>
 	</tr>
-
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_USERNAME_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
-		<td class="row2"><select name="allow_name_chars"><option value=".*" { if $ALLOW_NAME_CHARS eq ".*" } selected="selected" { /if }>Any character</option><option value="[\w]+" { if $ALLOW_NAME_CHARS eq "[\w]+" } selected="selected" { /if }>Alphanumeric only</option><option value="[\w_\+\. \-\[\]]+" { if $ALLOW_NAME_CHARS eq "[\w_\+\. \-\[\]]+" } selected="selected" { /if }>Alphanumeric and spacers</option></select></td>
+		<td class="row2"><select name="allow_name_chars"><option value=".*" <!-- IF { $ALLOW_NAME_CHARS } == '.*' --> selected="selected" <!-- ENDIF -->>Any character</option><option value="[\w]+" <!-- IF { $ALLOW_NAME_CHARS } == '[\w]+' --> selected="selected" <!-- ENDIF -->>Alphanumeric only</option><option value="[\w_\+\. \-\[\]]+" <!-- IF { $ALLOW_NAME_CHARS } == '[\w_\+\. \-\[\]]+' --> selected="selected" <!-- ENDIF -->>Alphanumeric and spacers</option></select></td>
 	</tr>
 	<tr>
 
 		<td class="row1" width="50%"><b>{ $L_PASSWORD_LENGTH }: </b><br><span class="gensmall">{ $L_PASSWORD_LENGTH_EXPLAIN }</span></td>
 		<td class="row2"><input class="post" size="3" maxlength="3" name="min_pass_chars" value="{ $MIN_PASS_CHARS }" type="text"> Min&nbsp;&nbsp;<input class="post" size="3" maxlength="3" name="max_pass_chars" value="{ $MAX_PASS_CHARS }" type="text"> Max</td>
 	</tr>
-	{*
+
 	<tr>
-		<td class="row1" width="50%"><b>{ $L_USERNAME_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
+		<td class="row1" width="50%"><b>{ $L_PASSWORD_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
 		<td class="row2"><select name="pass_complex"><option value=".*">No requirements</option><option value="[a-zA-Z]">Must be mixed case</option><option value="[a-zA-Z0-9]">Must contain alphanumerics</option><option value="[a-zA-Z\W]">Must contain symbols</option></select></td>
-	</tr>*}
+	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_FORCE_PASS_CHANGE }: </b><br><span class="gensmall">{ $L_FORCE_PASS_CHANGE_EXPLAIN }</span></td>
 		<td class="row2"><input class="post" size="3" maxlength="3" name="chg_passforce" value="{ $CHG_PASSFORCE }" type="text"></td>
@@ -241,14 +231,18 @@
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_ALLOW_EMAIL_REUSE }: </b><br><span class="gensmall">{ $L_ALLOW_EMAIL_REUSE_EXPLAIN }</span></td>
-		<td class="row2"><input name="allow_emailreuse" value="1" { if $ALLOW_EMAILREUSE } checked="checked" { /if }  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_emailreuse" value="0" { if !$ALLOW_EMAILREUSE } checked="checked" { /if } type="radio">No</td>
+		<td class="row2"><input name="allow_emailreuse" value="1" <!-- IF { $ALLOW_EMAILREUSE } --> checked="checked" <!-- ENDIF -->  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_emailreuse" value="0" <!-- IF !{ $ALLOW_EMAILREUSE } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
 	</tr>
 	<tr>
 		<td class="row1" width="50%"><b>{ $L_ALLOW_NAME_CHANGE }: </b></td>
-		<td class="row2"><input name="allow_namechange" value="1" { if $ALLOW_NAMECHANGE } checked="checked" { /if }  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_namechange" value="0" { if !$ALLOW_NAMECHANGE } checked="checked" { /if } type="radio">No</td>
+		<td class="row2"><input name="allow_namechange" value="1" <!-- IF { $ALLOW_NAMECHANGE } --> checked="checked" <!-- ENDIF -->  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_namechange" value="0" <!-- IF !{ $ALLOW_NAMECHANGE } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
 	</tr>
-{ /if }
+<!-- ENDIF -->
 	<tr>
-		<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="btnmain" type="submit">&nbsp;&nbsp;<input value="Reset" class="btnlite" type="reset"></td>
+		<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="btnmain" type="submit">&nbsp;&nbsp;<input value="Reset" class="button" type="reset"></td>
 	</tr>
-</tbody></table></form>
+</tbody>
+</table>
+</form>
+
+{ $A_TABLE_CLOSE }
