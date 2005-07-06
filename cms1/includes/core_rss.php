@@ -22,7 +22,9 @@ class core_rss
 	var $item_tags = array('title', 'link', 'description', 'author');
 	var $channel_tags = array('title', 'link', 'description', 'author');
 	var $send_cookie = false;
+
 	var $error = '';
+	var $item = 0;
 
 	function setup($channel = false, $item_tags = false, $channel_tags = false)
 	{
@@ -291,10 +293,18 @@ class core_rss
 			
 			if ($this->item_open)
 			{
+				if (empty($this->rss_data[$this->item][$this->title_type]))
+				{
+					$this->rss_data[$this->item][$this->title_type] = '';
+				}
 				$this->rss_data[$this->item][$this->title_type] .= $cdata;
 			}
 			elseif ($this->channel_open)
 			{
+				if (empty($this->rss_info[$this->title_type]))
+				{
+					$this->rss_info[$this->title_type] = '';
+				}
 				$this->rss_info[$this->title_type] .= $cdata;
 			}
 		}

@@ -10,7 +10,7 @@
 		</tr>
     <!-- IF isset({ $top_admin_messages }) -->
     	<tr>
-			<td class="row3" colspan="8"><b class="gensmall">{ $L_TOP_MESSAGES }</b></td>
+			<td class="cat" colspan="8"><b class="gensmall">{ $L_TOP_MESSAGES }</b></td>
 		</tr>
 		<tr>
 			<td class="spacer" colspan="8" height="7"></td>
@@ -34,7 +34,9 @@
 				<a href="{ $top_admin_messages:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
 				<!-- ENDIF -->
 			</td>
-			<td class="row1" align="center"><a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a></td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:ACTIVE_LINK }'">
+				<a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a>
+			</td>
 			<td class="row1" align="center">
 			<!-- IF { $top_admin_messages:EDIT_LINK } -->
 				<a href="{ $top_admin_messages:EDIT_LINK }">{ $L_EDIT }</a> |
@@ -52,12 +54,12 @@
 
 	<!-- IF isset({ $bottom_admin_messages }) -->
     	<tr>
-			<td class="row3" colspan="8"><b class="gensmall">{ $L_BOTTOM_MESSAGES }</b></td>
+			<td class="cat" colspan="8"><b class="gensmall">{ $L_BOTTOM_MESSAGES }</b></td>
 		</tr>
 		<tr>
 			<td class="spacer" colspan="8" height="7"></td>
 		</tr>
-	<!-- LOOP $left_admin_blocks -->
+	<!-- LOOP $bottom_admin_messages -->
 		<tr>
 			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:EDIT_LINK }'">
 				<a href="{ $bottom_admin_messages:EDIT_LINK }" title="{ $L_EDIT }">{ $bottom_admin_messages:TITLE }</a><br />
@@ -76,9 +78,10 @@
 				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_BOTTOM }"><img src="images/bottom.gif" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
 				<!-- ENDIF -->
 			</td>
-			<td class="row1" align="center"><a href="{ $bottom_admin_messages:ACTIVE_LINK }"><img src="images/{ $bottom_admin_messages:ACTIVE }" alt="{ $bottom_admin_messages:CHANGE }" title="{ $bottom_admin_messages:CHANGE }" border="0"></a></td>
-			
-			<td class="row1" align="center">[
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:ACTIVE_LINK }'">
+				<a href="{ $bottom_admin_messages:ACTIVE_LINK }">{ $bottom_admin_messages:CHANGE }</a>
+			</td>
+			<td class="row1" align="center">
 			<!-- IF { $bottom_admin_messages:EDIT_LINK } -->
 			<a href="{ $bottom_admin_messages:EDIT_LINK }">{ $L_EDIT }</a> |
 			<!-- ENDIF -->

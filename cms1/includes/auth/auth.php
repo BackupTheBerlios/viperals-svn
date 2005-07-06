@@ -89,17 +89,39 @@ class core_auth
 			return true;
 		}
 
-		if (!empty($data['users_allowed']) && in_array($_CLASS['core_user']->data['user_id'], $data['users_allowed']))
+		if (empty($data['users_allowed']) && empty($data['groups_allowed']))
 		{
-			return true;
-		}
+			$return = true;
 
-		if (!empty($data['groups_allowed']) && in_array($_CLASS['core_user']->data['user_id'], $data['groups_allowed']))
+			if (!empty($data['users_disallowed']) && in_array($_CLASS['core_user']->data['user_id'], $data['users_disallowed']))
+			{
+				$return = false;
+			}
+
+			if ($return && !empty($data['groups_disallowed']) && in_array($_CLASS['core_user']->data['group_id'], $data['groups_disallowed']))
+			{
+				$return = false;
+			}
+
+			return $return;
+		}
+		else
 		{
-			return true;
-		}
+			if (!empty($data['users_allowed']) && in_array($_CLASS['core_user']->data['user_id'], $data['users_allowed']))
+			{
+				return true;
+			}
+	
+			if (!empty($data['groups_allowed']) && in_array($_CLASS['core_user']->data['group_id'], $data['groups_allowed']))
+			{
+				if (empty($data['users_disallowed']) || !in_array($_CLASS['core_user']->data['user_id'], $data['users_disallowed']))
+				{
+					return true;
+				}
+			}
 
-		return false;
+			return false;
+		}
 	}
 
 	function admin_power($section_id = false)
@@ -118,14 +140,10 @@ class core_auth
 	{
 		global $_CLASS;
 
-		//print_r($_POST);
-		if (!is_array($options))
-		{
-			$options = array();
-		}
-
 		$options['groups_allowed'] = empty($options['groups_allowed']) ? array() : $options['groups_allowed'];
 		$options['users_allowed'] = empty($options['users_allowed']) ? array() : $options['users_allowed'];
+		$options['groups_disallowed'] = empty($options['groups_disallowed']) ? array() : $options['groups_disallowed'];
+		$options['users_disallowed'] = empty($options['users_disallowed']) ? array() : $options['users_disallowed'];
 
 		if (!$display)
 		{
@@ -134,70 +152,98 @@ class core_auth
 				return false;
 			}
 
+			$user_ids = array('disallowed' => array(), 'allowed' => array());
+
+			// Allowed
 			$g_remove = empty($_POST['g_remove']) ? array() : $_POST['g_remove'];
 			$u_remove = empty($_POST['u_remove']) ? array() : $_POST['u_remove'];
-			$u_add = ($_POST['u_add']) ? explode("\n", modify_lines($_POST['u_add'], "\n")) : array();
+			$u_add['allowed'] = ($_POST['u_add']) ? explode("\n", modify_lines($_POST['u_add'], "\n")) : array();
 			$g_add = empty($_POST['g_add']) ? array() : $_POST['g_add'];
-			$user_ids = array();
 
-			if (count($u_add))
+			// Disallowed
+			$dg_remove = empty($_POST['dg_remove']) ? array() : $_POST['dg_remove'];
+			$du_remove = empty($_POST['du_remove']) ? array() : $_POST['du_remove'];
+			$u_add['disallowed'] = ($_POST['du_add']) ? explode("\n", modify_lines($_POST['du_add'], "\n")) : array();
+			$dg_add = empty($_POST['dg_add']) ? array() : $_POST['dg_add'];
+
+			foreach ($u_add as $name => $values)
 			{
-				$sql = 'SELECT user_id
-							FROM ' . USERS_TABLE . " 
-							WHERE username IN ('" . implode("' ,'", $u_add) . "')";
-				$result = $_CLASS['core_db']->sql_query($sql);
-
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				if (count($values))
 				{
-					$user_ids[] = $row['user_id'];
+					$sql = 'SELECT user_id
+								FROM ' . USERS_TABLE . " 
+								WHERE username IN ('" . implode("' ,'", $values) . "')";
+					$result = $_CLASS['core_db']->sql_query($sql);
+	
+					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					{
+						$user_ids[$name][] = $row['user_id'];
+					}
+					$_CLASS['core_db']->sql_freeresult($result);
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
 			}
 
-			$options['groups_allowed'] = array_merge(array_diff($options['groups_allowed'], $g_remove), $g_add);
-			$options['users_allowed'] = array_merge(array_diff($options['users_allowed'], $u_remove), $user_ids);
+			$options['groups_allowed'] = array_diff(array_merge($options['groups_allowed'], $g_add), $g_remove);
+			$options['users_allowed'] = array_diff(array_merge($options['users_allowed'], $user_ids['allowed']), $u_remove);
 
-			return (empty($options['groups_allowed']) && empty($options['users_allowed'])) ? true : $options;
+			$options['groups_disallowed'] = array_diff(array_merge($options['groups_disallowed'], $dg_add), $dg_remove, $options['groups_allowed']);
+			$options['users_disallowed'] = array_diff(array_merge($options['users_disallowed'], $user_ids['disallowed']), $du_remove, $options['users_allowed']);
+
+			foreach ($options as $option)
+			{
+				if (!empty($option))
+				{
+					return $options;
+				}
+			}
+
+			return true;
 		}
 
-		//print_r($options['groups_allowed']);
-		//print_r($options['users_allowed']);
+		$group_list = $allowed_group_list = $disallowed_group_list = $allowed_user_list = $disallowed_user_list = '';
 
-		$group_list = $current_user_list = $current_group_list = '';
+		$set_users = array_merge($options['users_allowed'], $options['users_disallowed']);
+		$set_groups = array_merge($options['groups_allowed'], $options['groups_disallowed']);
 
-		if (count($options['users_allowed']))
+		if (count($set_users))
 		{
 			$sql = 'SELECT user_id, username, user_colour
 				FROM ' . USERS_TABLE . '
-				WHERE user_id IN ('.implode(', ', $options['users_allowed']).')
+				WHERE user_id IN ('.implode(', ', $set_users).')
 					ORDER BY username';
 			$result = $_CLASS['core_db']->sql_query($sql);
 
 			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
-				$current_user_list .= '<option ' . (($row['user_colour'] == GROUP_SPECIAL) ? ' style="color: #'.$row['user_colour'].';"' : '') . ' value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
+				$user_list = (in_array($row['user_id'], $options['users_allowed'])) ? 'allowed_user_list' : 'disallowed_user_list';
+
+				$$user_list .= '<option ' . (($row['user_colour']) ? ' style="color: #'.$row['user_colour'].';"' : '') . ' value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
 			}
 			$_CLASS['core_db']->sql_freeresult($result);
 		}
 
-		if (count($options['groups_allowed']))
+		if (count($set_groups))
 		{
 			$sql = 'SELECT group_id, group_name, group_type 
 				FROM ' . GROUPS_TABLE . '
-				WHERE group_id IN ('.implode(', ', $options['groups_allowed']).')
+				WHERE group_id IN ('.implode(', ', $set_groups).')
 					ORDER BY group_type DESC, group_name';
 			$result = $_CLASS['core_db']->sql_query($sql);
 
 			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 			{
-				$current_group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+				$group_list = (in_array($row['group_id'], $options['groups_allowed'])) ? 'allowed_group_list' : 'disallowed_group_list';
+				
+				$$group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+				
 			}
 			$_CLASS['core_db']->sql_freeresult($result);
 		}
 
-		$sql = "SELECT group_id, group_name, group_type 
-			FROM " . GROUPS_TABLE . "
-			ORDER BY group_type DESC, group_name";
+		$sql = 'SELECT group_id, group_name, group_type 
+			FROM ' . GROUPS_TABLE . 
+				((!empty($set_groups)) ? ' WHERE group_id NOT IN ('.implode(', ', $set_groups).')' : '').'
+					ORDER BY group_type DESC, group_name';
 		$result = $_CLASS['core_db']->sql_query($sql);
 
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
@@ -208,9 +254,10 @@ class core_auth
 	
 		$_CLASS['core_template']->assign(array(
 			'P_ADD_GROUPS'		=> $group_list,
-			'P_ADD_USERS'		=> '',
-			'P_CURRENT_USERS'	=> $current_user_list,
-			'P_CURRENT_GROUPS'	=> $current_group_list,
+			'P_CURRENT_USERS'	=> $allowed_user_list,
+			'P_DCURRENT_USERS'	=> $disallowed_user_list,
+			'P_CURRENT_GROUPS'	=> $allowed_group_list,
+			'P_DCURRENT_GROUPS'	=> $disallowed_group_list,
 		));
 	
 		$_CLASS['core_template']->display('permission.html');

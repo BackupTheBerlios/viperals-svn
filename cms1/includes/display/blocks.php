@@ -12,7 +12,6 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-//print_r(apache_request_headers());
 
 /* to do
 options interface

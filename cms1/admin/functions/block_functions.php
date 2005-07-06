@@ -21,13 +21,18 @@ function block_auth($id)
 	$block = $_CLASS['core_db']->sql_fetchrow($result);
 	$_CLASS['core_db']->sql_freeresult($result);
 	
+	if (!$block)
+	{
+		trigger_error('BLOCK_NOT_FOUND');
+	}
+	
 	$block['auth'] = ($block['auth']) ? unserialize($block['auth']) : '';
 	
 	check_position($block['position']);
 	
 	if ($auth = $_CLASS['core_auth']->make_options($block['auth']))
 	{
-		$block['auth'] = $auth;
+		$block['auth'] = ($auth === true) ? '' : $auth;
 		$auth = ($auth === true) ? '' : $_CLASS['core_db']->sql_escape(serialize($auth));
 	
 		$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE." set auth = '$auth' WHERE id = $id");
