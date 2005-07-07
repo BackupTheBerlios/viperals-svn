@@ -29,21 +29,6 @@ class core_user extends sessions
 		$this->ip	= (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
 		$this->time	= time();
 
-		if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
-		{
-			$private_ip = array('#^0\.#', '#^127\.0\.0\.1#', '#^192\.168\.#', '#^172\.16\.#', '#^10\.#', '#^224\.#', '#^240\.#');
-			foreach (explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']) as $x_ip)
-			{
-				if (preg_match('#([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)#', $x_ip, $ip_list))
-				{
-					if (($this->ip = trim(preg_replace($private_ip, $this->ip, $ip_list[1]))) == trim($ip_list[1]))
-					{
-						break;
-					}
-				}
-			}
-		}
-
 		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
 		{
 			$pos = $pos + strlen(INDEX_PAGE.'?mod=');
@@ -54,6 +39,7 @@ class core_user extends sessions
 				$this->url = substr($this->url, 0, $pos - 1);
 			}
 
+			$this->url = htmlspecialchars(strtr($this->url, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES))));
 			$this->url = substr($this->url, 0, 100);
 		}
 		else

@@ -172,7 +172,6 @@ require($site_file_root.'includes/display/display.php');
 load_class(false, 'core_auth', 'auth_db');
 load_class(false, 'core_user');
 
-$_CLASS['core_user'] =& new core_user();
 $_CLASS['core_user']->start();
 
 if ($_CLASS['core_user']->is_admin)
