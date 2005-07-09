@@ -163,28 +163,26 @@ function check_theme($theme)
 
 function encode_password($pure, $encoding = 'md5')
 {
-// now far should we going to take this ?
-// don't want to end up with a class
 	switch ($encoding)
 	{
 		Case 'md5':
 			return md5($pure);
-		
+		break;
+
 		Case 'sha1':
 			if (function_exists('sha1'))
 			{
 				return sha1($pure);
 			}
 			$encoding = 'MHASH_SHA1';
+		break;
 	}
-	
+
 	if (strpos($encoding, 'MHASH_') !== false && function_exists('mhash'))
 	{
-			$enconded =	mhash($encoding, $pure);
-			$enconded = bin2hex($enconded);
-			return $enconded;
+		return bin2hex(mhash($encoding, $pure));
 	}
-	
+
 	return false;
 }
 
@@ -411,11 +409,19 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 	return $page_string;
 }
 
-function unique_id()
+function generate_string($length)
 {
-	list($sec, $usec) = explode(' ', microtime());
-	mt_srand((float) $sec + ((float) $usec * 100000));
-	return uniqid(mt_rand(), true);
+	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+	$string = '';
+	$num_chars = strlen($chars) - 1;
+
+	for ($i = 0; $i < $length; ++$i)
+	{
+		$string .= substr($chars, mt_rand(0, $num_chars), 1);
+	}
+
+	return $string;
 }
 
 function load_class($file, $name, $class = false)
@@ -428,7 +434,7 @@ function load_class($file, $name, $class = false)
 	{
 		if ($file)
 		{
-			require_once($file);
+			include_once($file);
 		}
 		$_CLASS[$name] =& new $class;
 	}
@@ -465,7 +471,23 @@ function login_box($login_options = false, $template = false)
 			'auth_error_return'	=> true,
 		 );
 
-		if ($data['user_name'] && $data['user_password'])
+		if (!$data['user_name'] || !$data['user_password'])
+		{
+			$error = 'INCOMPLETE_LOGIN_INFO';
+		}	
+			
+		if (!$error && $_CORE_CONFIG['user']['enable_confirm'])
+		{
+			$code = $_CLASS['core_user']->get_data('confirmation_code');
+			$confirm_code = get_variable('confirm_code', 'POST');
+			
+			if (!$code || !$confirm_code || $code !== $confirm_code)
+			{
+				$error = 'CONFIRM_CODE_WRONG';
+			}
+		}
+
+		if (!$error)
 		{
 			$result = $_CLASS['core_auth']->user_auth($data['user_name'], $data['user_password']);
 
@@ -477,7 +499,7 @@ function login_box($login_options = false, $template = false)
 				$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $data['admin_login']));	
 				
 				$_CLASS['core_display']->meta_refresh(5, $login_array['redirect']);
-				$message = (($login_array['success']) ? $login_array['success'] : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
+				$message = (($login_array['success']) ? $_CLASS['core_user']->get_lang($login_array['success']) : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
 				trigger_error($message);
 				die;
 			}
@@ -491,11 +513,6 @@ function login_box($login_options = false, $template = false)
 			$error = ($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR';
 			//trigger_error(($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR', E_USER_ERROR);
 		}
-		else
-		{
-			$error = 'INCOMPLETE_LOGIN_INFO';
-			//trigger_error('INCOMPLETE_LOGIN_INFO', E_USER_ERROR);
-		}
 	}
 
 	if (!$login_array['redirect'])
@@ -505,15 +522,29 @@ function login_box($login_options = false, $template = false)
 
 	$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
 
+	if ($_CORE_CONFIG['user']['enable_confirm'])
+	{
+		$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
+		$_CLASS['core_user']->set_data('confirmation_code', generate_string(6));
+	}
+	else
+	{
+		$confirm_image = false;
+	}
+
 	$_CLASS['core_template']->assign(array(
 		'LOGIN_ERROR'			=> $_CLASS['core_user']->get_lang($error),
-		'LOGIN_EXPLAIN'			=> $login_array['explain'], 
+		'LOGIN_EXPLAIN'			=> $_CLASS['core_user']->get_lang($login_array['explain']), 
+
 		'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
 		'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
 		'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
 		'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
 		'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
-		'USERNAME'				=> '',
+		'U_CONFIRM_IMAGE'		=> $confirm_image,
+
+		'USERNAME'				=> isset($data['user_name']) ? $data['user_name'] : '',
+
 		'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']),
 		'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link($_CLASS['core_user']->url) : generate_link(false, array('admin' => true)),
 		'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
@@ -522,7 +553,7 @@ function login_box($login_options = false, $template = false)
 	if ($login_array['full_screen'])
 	{
 		$_CLASS['core_template']->display(($template) ? $template : 'login_body_full.html');
-		script_close(false);
+		script_close();
 	}
 
 	$_CLASS['core_display']->display_head($_CLASS['core_user']->get_lang('LOGIN'));
@@ -618,7 +649,7 @@ function script_close($save = true)
 		
 		if ($save)
 		{
-			if ($_CORE_CONFIG['server']['error_options'])
+			if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['server']['error_options'])
 			{
 				if (!empty($_CLASS['core_db']->querylist))
 				{
@@ -676,12 +707,13 @@ function session_users()
 	{
 		return $loaded;
 	}
-	
+
 	$loaded = array();
+	//	WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
 
 	$sql = 'SELECT s.*, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
 				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
-					WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
+					WHERE s.session_time >= ' . (time() - (21600)) .'
 				AND u.user_id = s.session_user_id';
 	$result = $_CLASS['core_db']->sql_query($sql);
 	
@@ -750,7 +782,7 @@ function theme_select($default = false)
 
 function modify_lines($text, $replacement = ' ')
 {
-	return str_replace(array("\r\n", "\n"), $replacement, $text);
+	return str_replace(array("\r\n", "\r", "\n"), $replacement, $text);
 }
 
 function url_redirect($url = false, $save = true)

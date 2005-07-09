@@ -143,8 +143,10 @@ class sessions
 
 		$this->data['session_last_visit'] = ($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : $this->time;
 
+		$session_id = (function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
+
 		$session_data = array(
-			'session_id'			=> (string) md5(unique_id()),
+			'session_id'			=> (string) $session_id,
 			'session_user_id'		=> (int) $this->data['user_id'],
 			'session_start'			=> (int) $this->time,
 			'session_last_visit'	=> (int) $this->data['session_last_visit'],

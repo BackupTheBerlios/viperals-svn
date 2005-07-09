@@ -14,8 +14,6 @@
 //**************************************************************//
 
 /* to do
-options interface
-add bottom messages
 move Auth, lang, and expire/begin checks to load_blocks
 */
 
@@ -101,7 +99,7 @@ class core_blocks
 	*/
 	function add_block($data, $position = false)
 	{
-		$option_array = array('title','position', 'content', 'file' , 'modules', 'time' ,'expires', 'id',	'auth',	'type', 'options');
+		$option_array = array('title','position', 'content', 'file' , 'modules', 'time' ,'expires', 'id',	'auth',	'type');
 		
 		foreach($option_array as $option)
 		{
@@ -141,11 +139,10 @@ class core_blocks
 		
 		foreach($this->blocks_array[$position] as $this->block)
 		{
-			if ($this->block['auth'] && !$_CLASS['core_auth']->admin_power('blocks') && !$_CLASS['core_auth']->auth($this->block['auth']))
+			if ($this->block['auth'] && !$_CLASS['core_auth']->auth($this->block['auth']) && !$_CLASS['core_auth']->admin_power('blocks') )
 			{
 				continue;
 			}
-			
 //language check here.
 			if ($this->block['expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['expires']))
 			{
@@ -170,11 +167,6 @@ class core_blocks
 				{
 					continue;
 				}
-			}
-			
-			if ($this->block['options'])
-			{
-				$this->block['options'] = unserialize($this->block['options']);
 			}
 			
 			$this->display_blocks();
@@ -224,22 +216,12 @@ class core_blocks
 		{
 			$this->info = false;
 
-// Make this part of the debugger
-			/*
-			$startqueries = $_CLASS['core_db']->sql_num_queries();
-			$startqueriestime = $_CLASS['core_db']->sql_time;
-			$starttime = explode(' ', microtime());
-			$starttime = $starttime[0] + $starttime[1];
-			*/
+			//$_CLASS['core_error_handler']->debug_start($this->block['title']);
 		
 			include($site_file_root.'blocks/'.$this->block['file']);
 			
-// Make this part of the debugger
-			/*
-			$endtime = explode(' ', microtime());
-			$endtime = $endtime[0] + $endtime[1];
-			*/
-			
+			//$_CLASS['core_error_handler']->debug_stop($this->block['title']);
+
 			if (!$this->content && !$this->template)
 			{
 				if ($_CLASS['core_auth']->admin_power('blocks'))
@@ -264,22 +246,15 @@ class core_blocks
 			}		
 		}
 
-// Make this part of the debugger
-		/*
-		$this->content .= '<div style="text-align: center;">';
-		if ($_CLASS['core_db']->sql_num_queries() - $startqueries)
-		{
-			$this->content .= '<br />block queries: '.($_CLASS['core_db']->sql_num_queries() - $startqueries)
-							.' in '.round($_CLASS['core_db']->sql_time - $startqueriestime, 4).' s';
-		}
-		$this->content .= '<br />Generation time: '.round($endtime - $starttime, 4).'s';
-		$this->content .= '</div>';
-		*/
+		//$this->content .= '<div style="text-align: center;"><br />'.$_CLASS['core_error_handler']->debug_get($this->block['title'], 'formated').'</div>';
+		//$_CLASS['core_error_handler']->debug_remove($this->block['title']);
 
 		if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
 		{
 			$this->block_side();
-		} else {
+		}
+		else
+		{
 			$this->block_center();
 		}
 	}
@@ -308,7 +283,7 @@ class core_blocks
 		$postion = ($this->block['position'] == BLOCK_MESSAGE_TOP) ? 'top' : 'bottom';
 		
 		$_CLASS['core_template']->assign_vars_array('message_block_'.$postion, array(
-				//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
+				'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
 				'TITLE'		=> $this->block['title'],
 				'CONTENT'	=> $this->block['content'],
 				'EXPIRES'	=> $expires,
@@ -327,7 +302,7 @@ class core_blocks
 		$position = ($this->block['position'] == BLOCK_RIGHT) ? 'right' : 'left';
 		
 		$_CLASS['core_template']->assign_vars_array('block_'.$position, array(
-			//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
+			'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
 			'TITLE'		=> $this->block['title'],
 			'CONTENT'	=> $this->content,
 			'ID'		=> $this->block['id'],
@@ -344,7 +319,9 @@ class core_blocks
 		if ($this->block['position'] == BLOCK_LEFT || $this->block['position'] == BLOCK_RIGHT)
 		{
 			$this->block_side();
-		} else {
+		}
+		else
+		{
 			$this->block_center();
 		}
 	}
@@ -404,8 +381,9 @@ class core_blocks
 			
 			$this->content .= '</center>';
 		}
-		
-		
+
+		settype($this->block['rss_rate'], 'integer');
+
 		if ($this->block['rss_rate'] !== -1)
 		{
 			$this->block['rss_expires'] = ($this->block['rss_rate']) ? time() + $this->block['rss_rate'] : 0;
@@ -436,10 +414,9 @@ class core_blocks
 		$position = ($this->block['position'] == BLOCK_TOP) ? 'center' : 'bottom';
 		
 		$_CLASS['core_template']->assign_vars_array('block_'.$position , array(
-			//'TITLE'	=> $_CLASS['core_user']->get_lang($this->block['title']),
-			'TITLE'   => $this->block['title'],
-			'CONTENT' => $this->content,
-			'TEMPLATE' => $this->template
+			'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
+			'CONTENT'	=> $this->content,
+			'TEMPLATE'	=> $this->template
 		));
 	}
 }

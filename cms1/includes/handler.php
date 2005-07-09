@@ -17,12 +17,15 @@ class core_error_handler
 	var $active;
 	var $previous_level;
 	var $previous_logger = false;
-	var $error_array = array();
+
 	var $error;
+	var $error_array = array();
+	var $error_setting = array('title', 'redirect');
+	var $debug = array();
+
 	var $report;
 	var $logging;
-	var $error_setting = array('title', 'redirect');
-	
+
 	function start($report = ERROR_NONE, $log_file = false)
 	{
 		if ($this->active)
@@ -40,7 +43,7 @@ class core_error_handler
 			$this->previous_logger = ini_set('error_log', $log_file);
 		}
 		
-		set_error_handler(array(&$this, 'handler'));
+		set_error_handler(array(&$this, 'error_handler'));
 	}
 	
 	function stop($level = false)
@@ -60,8 +63,78 @@ class core_error_handler
 		error_reporting(($level) ? $level : $this->previous_level);
 		restore_error_handler();
 	}
-	
-	function handler($errtype, $error, $errfile, $errline)
+
+	function debug_start($name)
+	{
+		global $_CLASS;
+
+		$start_time = explode(' ', microtime());
+		$start_time = $start_time[0] + $start_time[1];
+		
+		$this->debug[$name]['start_time'] = $start_time;
+		$this->debug[$name]['queries_before_time'] = $_CLASS['core_db']->sql_time;
+		$this->debug[$name]['queries_before'] = $_CLASS['core_db']->sql_num_queries();
+		
+		return true;
+	}
+
+	function debug_stop($name)
+	{
+		global $_CLASS;
+
+		if (!isset($this->debug[$name]))
+		{
+			return false;
+		}
+
+		$end_time = explode(' ', microtime());
+		$end_time = $end_time[0] + $end_time[1];
+		
+		$this->debug[$name]['end_time'] = $end_time;
+		$this->debug[$name]['queries_after_time'] = $_CLASS['core_db']->sql_time;
+		$this->debug[$name]['queries_after'] = $_CLASS['core_db']->sql_num_queries();
+		
+		return true;
+	}
+
+	function debug_get($name, $option = 'time')
+	{
+		if (!isset($this->debug[$name]))
+		{
+			return false;
+		}
+		
+		switch ($option)
+		{
+			case 'time':
+				return round($this->debug[$name]['end_time'] - $this->debug[$name]['start_time'], 4);
+			break;
+
+			case 'queries':
+				return $this->debug[$name]['queries_after'] - $this->debug[$name]['queries_before'];
+			break;
+
+			case 'queries_time':
+				return round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4);
+			break;
+			
+			case 'formated':
+				return 'Generation time: '.round($this->debug[$name]['end_time'] - $this->debug[$name]['start_time'], 4).'s<br />'
+				.'Queries: '.($this->debug[$name]['queries_after'] - $this->debug[$name]['queries_before'])
+				.'<br />Queries Time '.round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4).' s<br />';
+			break;
+		}
+	}
+
+	function debug_remove($name)
+	{
+		if (isset($this->debug[$name]))
+		{
+			unset($this->debug[$name]);
+		}
+	}
+
+	function error_handler($errtype, $error, $errfile, $errline)
 	{
 
 		global $_CLASS, $site_file_root, $_CORE_CONFIG;

@@ -23,38 +23,19 @@ class ucp_zebra extends module
 			'S_USERNAME_OPTIONS'=> false)
 		);
 		
-		$submit	= (!empty($_POST['submit']) || !empty($_GET['add'])) ? true : false;
 		$s_hidden_fields = '';
 
-		if ($submit)
+		if (!empty($_POST['submit']) || !empty($_GET['add']))
 		{
-			$var_ary = array(
-				'usernames'	=> array(0),
-				'add'		=> '', 
-			);
+			$data['usernames'] = request_var('usernames', array(0));
+			$data['add'] = request_var('add', '');
 
-			foreach ($var_ary as $var => $default)
-			{
-				$data[$var] = request_var($var, $default);
-			}
-
-			$var_ary = array(
-				'add'	=> array('string', false)
-			);
-
-			$error = validate_data($data, $var_ary);
+			$error = validate_data($data, array('add'	=> array('string', false)));
 			
-			extract($data);
-			unset($data);
-
-			if ($add && !sizeof($error))
+			if ($data['add'] && !sizeof($error))
 			{
-				$add = explode("\n", $add);
+				$data['add'] = explode("\n", $data['add']);
 
-				// Do these name/s exist on a list already? If so, ignore ... we could be
-				// 'nice' and automatically handle names added to one list present on 
-				// the other (by removing the existing one) ... but I have a feeling this
-				// may lead to complaints
 				$sql = 'SELECT z.*, u.username 
 					FROM ' . ZEBRA_TABLE . ' z, ' . USERS_TABLE . ' u 
 					WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
@@ -75,17 +56,16 @@ class ucp_zebra extends module
 				}
 				$_CLASS['core_db']->sql_freeresult($result);
 
-				$add = array_diff($add, $friends, $foes, array($_CLASS['core_user']->data['username']));
-				unset($friends);
-				unset($foes);
+				$data['add'] = array_diff($data['add'], $friends, $foes, array($_CLASS['core_user']->data['username']));
+				unset($friends, $foes);
 
-				$add = implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $add));
+				$data['add'] = implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $data['add']));
 
-				if ($add)
+				if ($data['add'])
 				{
-					$sql = 'SELECT user_id    
+					$sql = 'SELECT user_id, user_type
 						FROM ' . USERS_TABLE . ' 
-						WHERE username IN (' . $add . ')';
+						WHERE username IN (' . $data['add'] . ')';
 					$result = $_CLASS['core_db']->sql_query($sql);
 
 					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
@@ -121,31 +101,9 @@ class ucp_zebra extends module
 						{
 							$sql_mode = ($mode == 'friends') ? 'friend' : 'foe';
 
-							switch (SQL_LAYER)
-							{
-								case 'mysql':
-									$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
-										VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-									$_CLASS['core_db']->sql_query($sql);
-									break;
-
-								case 'mysql4':
-								case 'mssql':
-								case 'sqlite':
-									$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
-										" . implode(' UNION ALL ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-									$_CLASS['core_db']->sql_query($sql);
-									break;
-
-								default:
-									foreach ($user_id_ary as $zebra_id)
-									{
-										$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode)
-											VALUES (" . $_CLASS['core_user']->data['user_id'] . ", $zebra_id, 1)";
-										$_CLASS['core_db']->sql_query($sql);
-									}
-									break;
-							}
+							$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
+								VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
+							$_CLASS['core_db']->sql_query($sql);
 						}
 						else
 						{
@@ -161,14 +119,14 @@ class ucp_zebra extends module
 					$_CLASS['core_db']->sql_freeresult($result);
 				}
 			}
-			else if ($usernames && !sizeof($error))
+			else if ($data['usernames'] && !sizeof($error))
 			{
 				// Force integer values
-				$usernames = array_map('intval', $usernames);
+				$data['usernames'] = array_map('intval', $data['usernames']);
 
 				$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
-						AND zebra_id IN (' . implode(', ', $usernames) . ')';
+						AND zebra_id IN (' . implode(', ', $data['usernames']) . ')';
 				$_CLASS['core_db']->sql_query($sql);
 			}
 			
@@ -200,9 +158,9 @@ class ucp_zebra extends module
 		$_CLASS['core_db']->sql_freeresult($result);
 
 		$_CLASS['core_template']->assign(array( 
-			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
+			'L_TITLE'				=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
 
-			'U_SEARCH_USER'		=> generate_link('Members_List&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 
+			'U_SEARCH_USER'			=> generate_link('Members_List&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 
 
 			'S_USERNAME_OPTIONS'	=> $s_username_options,
 			'S_HIDDEN_FIELDS'		=> $s_hidden_fields,

@@ -50,6 +50,20 @@ if (!$mod)
 }
 else
 {
+	if ($mod == 'system')
+	{
+		include_once($site_file_root.'includes/system.php');
+		
+		$mode = get_variable('mode', 'REQUEST', false);
+		if (!$mode || !function_exists($mode))
+		{
+			script_close(false);
+		}
+
+		$mode();
+		script_close(false);
+	}
+
 	//Grab module data if it exsits
 	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE type='.MODULE_NORMAL." AND name='".$_CLASS['core_db']->sql_escape($mod)."'");
 	$row = $_CLASS['core_db']->sql_fetchrow($result);

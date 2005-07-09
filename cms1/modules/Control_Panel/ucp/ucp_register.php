@@ -21,10 +21,10 @@ class ucp_register extends module
 		
 		if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_DISABLE)
 		{
-			trigger_error($_CLASS['core_user']->lang['UCP_REGISTER_DISABLE']);
+			trigger_error('UCP_REGISTER_DISABLE');
 		}
 
-		require($site_file_root.'includes/forums/functions_profile_fields.php');
+		//require($site_file_root.'includes/forums/functions_profile_fields.php');
 
 		// Do not alter this first one to use request_var!
 		$confirm_id = request_var('confirm_id', '');
@@ -44,11 +44,10 @@ class ucp_register extends module
 			$_CLASS['core_user']->add_lang(array('common', 'ucp'));
 		}
 		
-		$cp = new custom_profile();
+		//$cp = new custom_profile();
 
 		$error = $data = $cp_data = $cp_error = array();
 
-		//
 		if (!$agreed)
 		{
 			if ($coppa === false && $_CORE_CONFIG['user']['coppa_enable'])
@@ -118,7 +117,7 @@ class ucp_register extends module
 					array('string', false, 6, 60), 
 					array('email')),
 				'email_confirm'		=> array('string', false, 6, 60), 
-				'confirm_code'		=> array('string', !$_CORE_CONFIG['user']['enable_confirm'], 6, 6), 
+				'confirm_code'		=> array('string', !($_CORE_CONFIG['user']['enable_confirm']), 6, 6), 
 				'tz'				=> array('num', false, -13, 13),
 				'lang'				=> array('match', false, '#^[a-z_]{2,}$#i'),
 			);
@@ -131,47 +130,19 @@ class ucp_register extends module
 			$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 
 			// validate custom profile fields
-			$cp->submit_cp_field('register', $_CLASS['core_user']->get_iso_lang_id(), $cp_data, $error);
+			//$cp->submit_cp_field('register', $_CLASS['core_user']->get_iso_lang_id(), $cp_data, $error);
 
 			// Visual Confirmation handling
 			$wrong_confirm = false;
 			
 			if ($_CORE_CONFIG['user']['enable_confirm'])
 			{
-				if (!$confirm_id)
+				$code = $_CLASS['core_user']->get_data('confirmation_code');
+
+				if (!$code || !$confirm_code || $code !== $confirm_code)
 				{
 					$error[] = $_CLASS['core_user']->lang['CONFIRM_CODE_WRONG'];
 					$wrong_confirm = true;
-				}
-				else
-				{
-					$sql = 'SELECT code 
-						FROM ' . CONFIRM_TABLE . " 
-						WHERE confirm_id = '" . $_CLASS['core_db']->sql_escape($confirm_id) . "' 
-							AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
-					$result = $_CLASS['core_db']->sql_query($sql);
-		
-					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
-					{
-						if ($row['code'] != $confirm_code)
-						{
-							$error[] = $_CLASS['core_user']->lang['CONFIRM_CODE_WRONG'];
-							$wrong_confirm = true;
-						}
-						else
-						{
-							$sql = 'DELETE FROM ' . CONFIRM_TABLE . " 
-								WHERE confirm_id = '" . $_CLASS['core_db']->sql_escape($confirm_id) . "' 
-									AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
-							$_CLASS['core_db']->sql_query($sql);
-						}
-					}
-					else
-					{		
-						$error[] = $_CLASS['core_user']->lang['CONFIRM_CODE_WRONG'];
-						$wrong_confirm = true;
-					}
-					$_CLASS['core_db']->sql_freeresult($result);
 				}
 			}
 
@@ -247,16 +218,16 @@ class ucp_register extends module
 
 				$sql = 'INSERT INTO ' . USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
 				$_CLASS['core_db']->sql_query($sql);
-				
+
 				$user_id = $_CLASS['core_db']->sql_nextid();
-		
+
 				// Insert Custom Profile Fields
-				if (sizeof($cp_data))
+				/*if (sizeof($cp_data))
 				{
 					$cp_data['user_id'] = (int) $user_id;
 					$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $cp->build_insert_sql_array($cp_data));
 					$_CLASS['core_db']->sql_query($sql);
-				}
+				}*/
 
 				// Place into appropriate group, either REGISTERED(_COPPA) or INACTIVE(_COPPA) depending on config
 				$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
@@ -379,52 +350,22 @@ class ucp_register extends module
 		{
 			if (!$change_lang)
 			{
-				$sql = 'SELECT session_id 
-					FROM ' . SESSIONS_TABLE; 
-				$result = $_CLASS['core_db']->sql_query($sql);
-	
-				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				if ($_CORE_CONFIG['user']['max_reg_attempts'])
 				{
-					$sql_in = array();
-					do
-					{
-						$sql_in[] = "'" . $_CLASS['core_db']->sql_escape($row['session_id']) . "'";
-					}
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result));
-				
-					$sql = 'DELETE FROM ' .  CONFIRM_TABLE . ' 
-						WHERE session_id NOT IN (' . implode(', ', $sql_in) . ')';
-					$_CLASS['core_db']->sql_query($sql);
-				}
-				$_CLASS['core_db']->sql_freeresult($result);
-	
-				$sql = 'SELECT COUNT(session_id) AS attempts 
-					FROM ' . CONFIRM_TABLE . " 
-					WHERE session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
-				$result = $_CLASS['core_db']->sql_query($sql);
-	
-				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
-				{
-					if ($_CORE_CONFIG['user']['max_reg_attempts'] && $row['attempts'] >= $_CORE_CONFIG['user']['max_reg_attempts'])
+					$attempts = (int) $_CLASS['core_user']->get_data('reg_attempts');
+
+					if ($attempts >= $_CORE_CONFIG['user']['max_reg_attempts'])
 					{
 						trigger_error($_CLASS['core_user']->lang['TOO_MANY_REGISTERS']);
 					}
+
+					$_CLASS['core_user']->set_data('reg_attempts', ($attempts + 1));
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
-	
-				$code = gen_rand_string(6);
-				$confirm_id = md5(uniqid($_CLASS['core_user']->ip));
-	
-				$sql = 'INSERT INTO ' . CONFIRM_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
-					'confirm_id'	=> (string) $confirm_id,
-					'session_id'	=> (string) $_CLASS['core_user']->data['session_id'],
-					'code'			=> (string) $code)
-				);
-				$_CLASS['core_db']->sql_query($sql);
+				
+				$_CLASS['core_user']->set_data('confirmation_code', generate_string(6));
 			}
-			
-			$confirm_image = (@extension_loaded('zlib')) ? '<img src="'.generate_link('Control_Panel&amp;mode=confirm&amp;id='.$confirm_id).'" alt="" title="" />' : '<img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=1").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=2").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=3").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=4").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=5").' alt="" title="" /><img src="'.generate_link("Control_Panel&amp;mode=confirm&amp;id=$confirm_id&amp;c=6").' alt="" title="" />';
-			$s_hidden_fields .= '<input type="hidden" name="confirm_id" value="' . $confirm_id . '" />';
+
+			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
 		}
 
 		// 
@@ -462,7 +403,7 @@ class ucp_register extends module
 
 			'S_LANG_OPTIONS'	=> language_select($lang), 
 			'S_TZ_OPTIONS'		=> tz_select($tz),
-			'S_CONFIRM_CODE'	=> ($_CORE_CONFIG['user']['enable_confirm']) ? true : false,
+			'S_CONFIRM_CODE'	=> ($_CORE_CONFIG['user']['enable_confirm']),
 			'S_COPPA'			=> $coppa, 
 			'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
 			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;mode=register"))
@@ -471,7 +412,7 @@ class ucp_register extends module
 		$_CLASS['core_user']->profile_fields = array();
 
 		// Generate profile fields -> Template Block Variable profile_fields
-		$cp->generate_profile_fields('register', $_CLASS['core_user']->get_iso_lang_id());
+		//$cp->generate_profile_fields('register', $_CLASS['core_user']->get_iso_lang_id());
 		
 		$this->display($_CLASS['core_user']->lang['REGISTER'], 'ucp_register.html');
 	}

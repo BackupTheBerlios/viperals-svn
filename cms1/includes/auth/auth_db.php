@@ -26,7 +26,7 @@ class auth_db extends core_auth
 	
 		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			if (encode_password($user_password, $row['user_password_encoding']) == $row['user_password'])
+			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
 			{
 				$status = ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_IGNORE) ? $row['user_type'] : (int) $row['user_id'];
 			}
