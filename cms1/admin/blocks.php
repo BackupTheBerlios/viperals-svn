@@ -13,7 +13,7 @@
 //																//
 //**************************************************************//
 
-if (VIPERAL != 'Admin') 
+if (VIPERAL !== 'Admin') 
 {
 	die;
 }
@@ -95,7 +95,33 @@ switch ($mode)
     break;
 
     case 'auth':
-		block_auth(get_id());
+		$id = get_id();
+
+		$result = $_CLASS['core_db']->sql_query('SELECT position, auth FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$block = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		if (!$block)
+		{
+			trigger_error('BLOCK_NOT_FOUND');
+		}
+
+		$block['auth'] = ($block['auth']) ? unserialize($block['auth']) : '';
+
+		check_position($block['position']);
+
+		if ($auth = $_CLASS['core_auth']->generate_auth_options($block['auth']))
+		{
+			$block['auth'] = ($auth === true) ? '' : $auth;
+			$auth = ($auth === true) ? '' : $_CLASS['core_db']->sql_escape(serialize($auth));
+		
+			$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE." set auth = '$auth' WHERE id = $id");
+			$_CLASS['core_cache']->destroy('blocks');
+		}
+
+		$_CLASS['core_display']->display_head();
+		$_CLASS['core_auth']->generate_auth_options($block['auth'], true);
+		$_CLASS['core_display']->display_footer();
     break;
 
     default:
@@ -139,63 +165,51 @@ function blocks_admin()
 
     $result = $_CLASS['core_db']->sql_query('SELECT id, title, type,  position, weight, active, file, auth
 		FROM '.BLOCKS_TABLE.'
-		WHERE position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY weight');
+		WHERE position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY weight DESC');
 
-    $blocks = array();
+    $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
 
-    while($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while($block = $_CLASS['core_db']->sql_fetchrow($result))
     {
-        $blocks[(int) $row['position']][] = $row;
-    }
-	$_CLASS['core_db']->sql_freeresult($result);
-
-    $block_type = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
-
-    foreach ($block_type as $pos => $name)
-    {
-    	if (empty($blocks[$pos]))
-    	{
-			continue;
-    	}
-
-    	foreach ($blocks[$pos] as $block)
+		if (empty($weigth[$block['position']]))
 		{
-			$error = false;
-
-			switch ($block['type'])
-			{
-				case BLOCKTYPE_FILE:
-					if (!$block['file'] || !file_exists($site_file_root.'blocks/'.$block['file']))
-					{
-						$error = 'File_MISSING';
-					}
-				break;
-			}
-
-			$_CLASS['core_template']->assign_vars_array($name.'_admin_blocks', array(
-					'ACTIVE'		=> ($block['active']),
-					'ACTIVE_LINK'	=> generate_link('blocks&amp;mode=change&amp;id='.$block['id'], array('admin' => true)),
-					'CHANGE'		=> ($block['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
-					'ERROR'			=> $error,
-
-					'EDIT_LINK'		=> generate_link('blocks&amp;mode=edit&amp;id='.$block['id'], array('admin' => true)),
-					'AUTH_LINK'		=> generate_link('blocks&amp;mode=auth&amp;id='.$block['id'], array('admin' => true)),
-
-					'DELETE_LINK' 	=> ($block['type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['id'], array('admin' => true)) : '',
-					'TITLE'			=> $block['title'],
-					'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['type']),
-
-					'WEIGHT_UP' 	=> ($block['weight'] < count($blocks[$pos])),
-					'WEIGHT_DOWN'	=> ($block['weight'] > 1),
-
-					'WEIGHT_MOVE_UP' 	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
-					'WEIGHT_MOVE_TOP' 	=> generate_link('blocks&amp;mode=weight&amp;option=top&amp;id='.$block['id'], array('admin' => true)),
-					'WEIGHT_MOVE_DOWN'	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
-					'WEIGHT_MOVE_BOTTOM'=> generate_link('blocks&amp;mode=weight&amp;option=bottom&amp;id='.$block['id'], array('admin' => true)),
-			));
+			$weigth[$block['position']] = $block['weight'];
 		}
-		unset($blocks[$pos], $block);
-    }
+
+		$error = false;
+		switch ($block['type'])
+		{
+			case BLOCKTYPE_FILE:
+				if (!$block['file'] || !file_exists($site_file_root.'blocks/'.$block['file']))
+				{
+					$error = 'File_MISSING';
+				}
+			break;
+		}
+
+		$_CLASS['core_template']->assign_vars_array($block_position[$block['position']].'_admin_blocks', array(
+				'ACTIVE'		=> ($block['active']),
+				'ACTIVE_LINK'	=> generate_link('blocks&amp;mode=change&amp;id='.$block['id'], array('admin' => true)),
+				'CHANGE'		=> ($block['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+				'ERROR'			=> ($error) ? $_CLASS['core_user']->get_lang($error) : false,
+
+				'EDIT_LINK'		=> generate_link('blocks&amp;mode=edit&amp;id='.$block['id'], array('admin' => true)),
+				'AUTH_LINK'		=> generate_link('blocks&amp;mode=auth&amp;id='.$block['id'], array('admin' => true)),
+
+				'DELETE_LINK' 	=> ($block['type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['id'], array('admin' => true)) : '',
+				'TITLE'			=> $block['title'],
+				'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['type']),
+
+				'WEIGHT_UP' 	=> ($block['weight'] < $weigth[$block['position']]),
+				'WEIGHT_DOWN'	=> ($block['weight'] > 1),
+
+				'WEIGHT_MOVE_UP' 	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
+				'WEIGHT_MOVE_TOP' 	=> generate_link('blocks&amp;mode=weight&amp;option=top&amp;id='.$block['id'], array('admin' => true)),
+				'WEIGHT_MOVE_DOWN'	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
+				'WEIGHT_MOVE_BOTTOM'=> generate_link('blocks&amp;mode=weight&amp;option=bottom&amp;id='.$block['id'], array('admin' => true)),
+		));
+	}
+	$_CLASS['core_db']->sql_freeresult($result);
 
     $_CLASS['core_template']->assign(array(
 		'L_BLOCK_REGULAR'	=> 'Add New regular Block',

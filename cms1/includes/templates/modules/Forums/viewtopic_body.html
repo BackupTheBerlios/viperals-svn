@@ -51,7 +51,7 @@
 		</tr>
 		<!-- IF { $S_HAS_POLL } -->
 		<tr>
-			<td class="row1" colspan="2" height="10"></td>
+			<td class="spacer" colspan="2" height="10"></td>
 		</tr>
 		<tr>
 			<td class="row2" colspan="2">
@@ -88,16 +88,16 @@
 							</table>
 						</td>
 					</tr>
-					<!-- IF { $S_CAN_VOTE } -->
-					<tr>
-						<td align="center"><span class="gensmall">{ $L_MAX_VOTES }</span><br /><br /><input type="submit" name="update" value="{$L_SUBMIT_VOTE}" class="btnlite" /></td>
-					</tr>
-					<!-- ENDIF -->
 					<!-- IF { $S_DISPLAY_RESULTS } -->
 					<tr>
 						<td class="gensmall" colspan="4" align="center"><b>{ $L_TOTAL_VOTES } : { $TOTAL_VOTES }</b></td>
 					</tr>
 					<!-- ELSE -->
+					<!-- IF { $S_CAN_VOTE } -->
+					<tr>
+						<td align="center"><span class="gensmall">{ $L_MAX_VOTES }</span><br /><br /><input type="submit" name="update" value="{$L_SUBMIT_VOTE}" class="button" /></td>
+					</tr>
+					<!-- ENDIF -->
 					<tr>
 						<td align="center"><span class="gensmall"><b><a href="{ $U_VIEW_RESULTS }">{ $L_VIEW_RESULTS }</a></b></span></td>
 					</tr>
@@ -108,7 +108,7 @@
 		</tr>
 		<!-- ENDIF -->
 		<tr>
-			<td class="row1" colspan="2" height="10"></td>
+			<td class="spacer" colspan="2" height="10"></td>
 		</tr>
 
 	<!-- LOOP $postrow -->

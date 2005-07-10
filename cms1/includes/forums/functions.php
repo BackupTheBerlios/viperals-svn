@@ -22,7 +22,52 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+/*
+if (($config = $_CLASS['core_cache']->get('config')) !== false)
+{
+	$sql = 'SELECT config_name, config_value
+		FROM ' . CONFIG_TABLE . '
+		WHERE is_dynamic = 1';
+	$result = $_CLASS['core_db']->sql_query($sql);
+	
+	if (is_array($result))
+	{
+		trigger_error($config_error, E_USER_ERROR);
+	}
+	
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	{
+		$config[$row['config_name']] = $row['config_value'];
+	}
+}
+else
+{
+	$config = $cached_config = array();
 
+	$sql = 'SELECT config_name, config_value, is_dynamic
+		FROM ' . CONFIG_TABLE;
+			
+	if (!$result = $_CLASS['core_db']->sql_query($sql))
+	{
+		trigger_error($config_error, E_USER_ERROR);
+	}
+	
+	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	{
+		if (!$row['is_dynamic'])
+		{
+			$cached_config[$row['config_name']] = $row['config_value'];
+		}
+
+		$config[$row['config_name']] = $row['config_value'];
+	}
+	$_CLASS['core_db']->sql_freeresult($result);
+
+	$_CLASS['core_cache']->put('config', $cached_config);
+
+	unset($cached_config);
+}
+*/
 function set_var(&$result, $var, $type, $multibyte = false)
 {
 	settype($var, $type);

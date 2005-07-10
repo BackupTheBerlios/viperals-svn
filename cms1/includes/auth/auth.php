@@ -136,7 +136,7 @@ class core_auth
 		return true;
 	}
 
-	function make_options($options = array(), $display = false)
+	function generate_auth_options($options = array(), $display = false, $return = false)
 	{
 		global $_CLASS;
 
@@ -260,7 +260,7 @@ class core_auth
 			'P_DCURRENT_GROUPS'	=> $disallowed_group_list,
 		));
 	
-		$_CLASS['core_template']->display('permission.html');
+		return $_CLASS['core_template']->display('permission.html', $return);
 	}
 }
 

@@ -13,7 +13,7 @@
 //																//
 //**************************************************************//
 
-if (VIPERAL != 'Admin') 
+if (VIPERAL !== 'Admin') 
 {
 	die;
 }
@@ -93,20 +93,21 @@ die;
 
 function message_admin()
 {
-    global $admin, $prefix, $_CLASS;
-   
-    $_CLASS['core_display']->display_head();
-        
+    global $prefix, $_CLASS;
+
     $result = $_CLASS['core_db']->sql_query('SELECT id, position, title, time, weight, active, expires FROM '.BLOCKS_TABLE.'
 					WHERE position IN ('.BLOCK_MESSAGE_TOP.', '.BLOCK_MESSAGE_BOTTOM.') 
-						ORDER BY weight');
-
-    $count = $_CLASS['core_db']->sql_numrows($result);
-    
+						ORDER BY weight DESC');
 	$block_position = array(BLOCK_MESSAGE_TOP => 'top', BLOCK_MESSAGE_BOTTOM => 'bottom');
+	$weigth = array();
 
     while($row = $_CLASS['core_db']->sql_fetchrow($result))
     {
+		if (empty($weigth[$row['position']]))
+		{
+			$weigth[$row['position']] = $row['weight'];
+		}
+		
 		$_CLASS['core_template']->assign_vars_array($block_position[$row['position']].'_admin_messages', array(
 			'ACTIVE'		=> ($row['active']) ? true : false,
 			'CHANGE'		=> ($row['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
@@ -121,12 +122,13 @@ function message_admin()
 			'STARTS'		=> ($row['time'] > time()) ? $_CLASS['core_user']->format_date($row['time']) : false,
 			'TITLE'			=> $row['title'],
 
-			'WEIGHT_UP' 		=> ($row['weight'] < $count) ? true : false,
+			'WEIGHT_UP' 		=> ($row['weight'] < $weigth[$row['position']]) ? true : false,
 			'WEIGHT_DOWN'		=> ($row['weight'] > 1) ? true : false,
-			'WEIGHT_MOVE_UP' 	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;bid='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_TOP' 	=> generate_link('blocks&amp;mode=weight&amp;option=top&amp;bid='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_DOWN'	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;bid='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_BOTTOM'=> generate_link('blocks&amp;mode=weight&amp;option=bottom&amp;bid='.$row['id'], array('admin' => true)),
+
+			'WEIGHT_MOVE_UP' 	=> generate_link('messages&amp;mode=weight&amp;option=down&amp;bid='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_TOP' 	=> generate_link('messages&amp;mode=weight&amp;option=top&amp;bid='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_DOWN'	=> generate_link('messages&amp;mode=weight&amp;option=down&amp;bid='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_BOTTOM'=> generate_link('messages&amp;mode=weight&amp;option=bottom&amp;bid='.$row['id'], array('admin' => true)),
 		));
     }
     $_CLASS['core_db']->sql_freeresult($result);
@@ -138,14 +140,15 @@ function message_admin()
 		'B_ACTION'			=> generate_link('messages&amp;mode=add', array('admin' => true))
 	));
 
+    $_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/messages/index.html');
 	$_CLASS['core_display']->display_footer();
-
 }
 
 function message_delete($id)
 {
     global $_CLASS;
+
     if (get_variable('ok', 'GET', false))
     {
 		$result = $_CLASS['core_db']->sql_query('SELECT weight, position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
@@ -159,15 +162,14 @@ function message_delete($id)
 		
 		check_position($block['position']);
 				
-        $result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
-        $_CLASS['core_db']->sql_query('delete from '.BLOCKS_TABLE.' where id='.$id);
+        $result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
+        $_CLASS['core_db']->sql_query('DELETE from '.BLOCKS_TABLE.' where id='.$id);
 
         $_CLASS['core_cache']->destroy('blocks');
 		url_redirect(generate_link('messages', array('admin' => true)));
     }
     else
     {
-    
 		$_CLASS['core_display']->display_head();
 		OpenTable();
 		echo '<center>Remove Message ?';
@@ -205,14 +207,6 @@ function message_edit($block = false, $error = false)
 
 		unset($block_post);
 	}
-	else
-	{
-		if (!$block)
-		{
-			messages_get_data($block_post, $error);
-			$error = '';
-		}
-	}
 	
 	$_CLASS['core_template']->assign(array(
 		'B_TITLE'			=> $block['title'],
@@ -245,7 +239,7 @@ function messages_get_data(&$data, &$error)
 	{
 		return;
 	}
-	
+
 	$data['title'] = get_variable('title', 'POST', '');
 	$data['content'] = trim(get_variable('content', 'POST', ''));
 	
@@ -335,23 +329,23 @@ function message_save()
 	else
 	{
 		messages_get_data($data, $error);
-		
+
 		if ($error)
 		{
 			return message_edit($data, $error);
 		}
-		
+
 		$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
 		$maxweight = $_CLASS['core_db']->sql_fetchrow($result);
 		$_CLASS['core_db']->sql_freeresult($result);
-		
+
 		$data['weight'] = (int) $maxweight['weight'] + 1;
-		
+
 		$sql = 'INSERT INTO '.BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
-		
+
 		$_CLASS['core_db']->sql_query($sql);
 	}
-	
+
 	$_CLASS['core_cache']->destroy('blocks');
 
 	$_CLASS['core_display']->meta_refresh('3', generate_link('messages', array('admin' => true)));
@@ -361,17 +355,17 @@ function message_save()
 function message_position_select($default = false)
 {
 	global $site_file_root, $_CLASS;
-	
+
 	$block_position_array = array(
 		BLOCK_MESSAGE_TOP		=> 'Top',
 		BLOCK_MESSAGE_BOTTOM	=> 'Bottom',
 	);
-	
+
 	// Needs some work if a position = 0 can cause problems
 	$default = ($default && array_key_exists($default, $block_position_array)) ? $default : BLOCK_MESSAGE_TOP;
 
 	$block_position = '';
-	
+
 	foreach ($block_position_array as $value => $name)
 	{
 		if ($value == $default)
@@ -383,24 +377,24 @@ function message_position_select($default = false)
 			$block_position .= '<option value="'.$value.'">'.$name.'</option>';
 		}
 	}
-	
+
 	return $block_position;
 }
 
 function message_type_select($default = false)
 {
 	global $site_file_root, $_CLASS;
-	
+
 	$block_position_array = array(
 		BLOCKTYPE_MESSAGE			=> 'Normal Message',
 		BLOCKTYPE_MESSAGE_GLOBAL	=> 'Global Message',
 	);
-	
+
 	// Needs some work if a position = 0 can cause problems
 	$default = ($default && array_key_exists($default, $block_position_array)) ? $default : BLOCKTYPE_MESSAGE;
 
 	$block_position = '';
-	
+
 	foreach ($block_position_array as $value => $name)
 	{
 		if ($value == $default)
@@ -412,7 +406,7 @@ function message_type_select($default = false)
 			$block_position .= '<option value="'.$value.'">'.$name.'</option>';
 		}
 	}
-	
+
 	return $block_position;
 }
 

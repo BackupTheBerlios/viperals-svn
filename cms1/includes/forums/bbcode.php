@@ -100,17 +100,19 @@ class bbcode
 
 		// Remove the uid from tags that have not been transformed into HTML
 		$message = str_replace(':' . $this->bbcode_uid, '', $message);
-		
+
+		// remove
 		$match_count = preg_match_all("#\<!--php-->(.*?)\<!--/php-->#si", $message, $matches);
 		
 		if ($match_count)
 		{
 			$conf = array('highlight.bg', 'highlight.comment', 'highlight.default', 'highlight.html', 'highlight.keyword', 'highlight.string');
+
 			foreach ($conf as $ini_var)
 			{
 				ini_set($ini_var, str_replace('highlight.', 'syntax', $ini_var));
 			}
-			
+
 			for ($i = 0; $i < $match_count; $i++)
 			{
 				$after = $this->decode_php($matches[1][$i]);
@@ -126,34 +128,39 @@ class bbcode
 	function decode_php($text)
 	{
 		global $phpversion;
-		
+
 		$text = trim($text);
-		
+
 		$remove_tags = false;
-		$str_from = array('&lt;', '&gt;', '&#39;', '&amp;');
-		$str_to = array('<', '>', '\'', '&');
+
+		$text = strtr($text, array_flip(get_html_translation_table(HTML_ENTITIES)));
+
+		$str_from = array('&lt;', '&gt;', '&#39;');
+		$str_to = array('<', '>', '\'');
 
 		$text = str_replace($str_from, $str_to, $text);
-		if (!preg_match('/^\<\?.*?\?\>/is', $text))
+
+		if (!preg_match('/^\<\?(.*?)\?\>/is', $text))
 		{
 			$remove_tags = true;
 			$text = "<?php $text ?>";
 		}
 
-		// Because highlight_string is specialcharing the text (but we already did this before), we have to reverse this in order to get correct results
-		$text = strtr($text, array_flip(get_html_translation_table(HTML_ENTITIES)));
-		
-		if ($phpversion < 420) {
+
+		if ($phpversion < 420)
+		{
 			ob_start();
 			highlight_string($text);
 			$text = ob_get_contents();
 			ob_end_clean();
-		} else {
+		}
+		else
+		{
 			$text = highlight_string($text, true);
 		}
-		
-		$str_from = array('<font color="syntax', '</font>', '<code>', '</code>','[', ']', '.', ':');
-		$str_to = array('<span class="syntax', '</span>', '', '', '&#91;', '&#93;', '&#46;', '&#58');
+
+		$str_from = array('<font color="syntax', '</font>', '<code>', '</code>','[', ']', '.', ':', '&amp;#058;');
+		$str_to = array('<span class="syntax', '</span>', '', '', '&#91;', '&#93;', '&#46;', '&#58', '&#058;');
 
 		if ($remove_tags)
 		{
@@ -178,6 +185,7 @@ class bbcode
 	
 		return $text;
 	}
+
 	//
 	// bbcode_cache_init()
 	//

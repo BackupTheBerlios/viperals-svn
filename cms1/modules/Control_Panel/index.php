@@ -211,7 +211,6 @@ class module
 		
 	}
 
-
 	// Public methods to be overwritten by modules
 	function module()
 	{
@@ -242,51 +241,48 @@ class module
 // FUNCTIONS
 // ---------
 
-
 // Basic "global" modes
 switch ($mode)
 {
 	case 'activate':
 		$ucp->load('ucp', 'activate');
 		$ucp->module->ucp_activate();
-			url_redirect(generate_link());
-		break;
-		
+		url_redirect();
+	break;
+
 	case 'resend_act':
 		$ucp->load('ucp', 'resend');
 		$ucp->module->ucp_resend();
-		break;
-	
+	break;
+
 	case 'sendpassword':
 		$ucp->load('ucp', 'remind');
 		$ucp->module->ucp_remind();
-		break;
+	break;
 
 	case 'register':
 		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS || isset($_REQUEST['not_agreed']))
 		{
-			url_redirect(generate_link());
+			url_redirect();
 		}
 
 		$ucp->load('ucp', 'register');
 		$ucp->module->ucp_register();
-		break;
+	break;
 
 	case 'confirm':
 		$ucp->load('ucp', 'confirm');
 		$ucp->module->ucp_confirm();
-		break;
+	break;
 
 	case 'login':
-	
 		if ($_CLASS['core_user']->is_user || $_CLASS['core_user']->is_bot)
 		{
-			url_redirect(generate_link());
+			url_redirect();
 		}
 
 		login_box();
-
-		break;
+	break;
 
 	case 'logout':
 		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
@@ -294,15 +290,11 @@ switch ($mode)
 			$_CLASS['core_user']->logout();
 		}
 
-		$_CLASS['core_display']->meta_refresh(3, generate_link());
+		$_CLASS['core_display']->meta_refresh(3);
 
 		$message = $_CLASS['core_user']->lang['LOGOUT_REDIRECT'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . generate_link() . '">', '</a> ');
 		trigger_error($message);
-		break;
-		
-	case 'terms_of_use':
-	case 'privacy_statement':
-		break;
+	break;
 		
 	case 'delete_cookies':
 		// Delete Cookies with dynamic names (do NOT delete poll cookies)
@@ -323,10 +315,9 @@ switch ($mode)
 			$_CLASS['core_user']->set_cookie('data', '', $set_time);
 			$_CLASS['core_user']->set_cookie('sid', '', $set_time);
 
-			// We destroy the session here, the user will be logged out nevertheless
-			$_CLASS['core_user']->destroy();
+			$_CLASS['core_user']->logout();
 
-			$_CLASS['core_display']->meta_refresh(3, generate_link());
+			$_CLASS['core_display']->meta_refresh(3);
 
 			$message = $_CLASS['core_user']->lang['COOKIES_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'], '<a href="'.generate_link().'">', '</a>');
 			trigger_error($message);
@@ -337,7 +328,7 @@ switch ($mode)
 			confirm_box(false, 'DELETE_COOKIES', '');
 		}
 		
-		url_redirect(generate_link());
+		url_redirect();
 		break;
 }
 
@@ -347,14 +338,11 @@ if (!$_CLASS['core_user']->is_user)
 {
 	if ($_CLASS['core_user']->is_bot)
 	{
-//error no access
-		url_redirect(generate_link());
+		url_redirect();
 	}
 	
-	//login_box('', $_CLASS['core_user']->lang['LOGIN_EXPLAIN_UCP']);
-	login_box();
+	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_EXPLAIN_UCP']));
 }
-
 
 // Output listing of friends online
 $update_time = $config['load_online_time'] * 60;
@@ -381,6 +369,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 }
 $_CLASS['core_db']->sql_freeresult($result);
 
+/*
 // Output PM_TO box if message composing
 if ($mode == 'compose' && request_var('action', '') != 'edit')
 {
@@ -407,7 +396,7 @@ if ($mode == 'compose' && request_var('action', '') != 'edit')
 		'S_GROUP_OPTIONS'	=> ($config['allow_mass_pm']) ? $group_options : '',
 		'U_SEARCH_USER'		=> generate_link('Members_List&amp;mode=searchuser&amp;form=post&amp;field=username_list'),
 	));
-}
+}*/
 
 // Instantiate module system and generate list of available modules
 $ucp->create('ucp', 'Control_Panel', $module, $mode);

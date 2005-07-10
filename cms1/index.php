@@ -37,8 +37,10 @@ if (!$mod)
 
 	if (!($_CORE_MODULE = $_CLASS['core_display']->get_module()))
 	{
-		$_CLASS['core_display']->display_head();
+		$_CORE_MODULE['sides'] = BLOCK_ALL;
+		$_CORE_MODULE += array('name' => '', 'title' => ''); // temp
 
+		$_CLASS['core_display']->display_head();
 		// Hey admin we don't have a modules set
 		if ($_CLASS['core_auth']->admin_auth('modules'))
 		{

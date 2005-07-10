@@ -32,12 +32,12 @@ if (!$_CLASS['core_user']->is_user)
 		url_redirect();
 	}
 
-	login_box(array('admin_login' => true, 'full_screen' => true,  'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
+	login_box(array('admin_login' => true, 'full_screen' => true,  'full_login' => false, 'explain' => 'LOGIN_ADMIN', 'success' => 'LOGIN_ADMIN_SUCCESS'), 'login_admin.html');
 }
 
 if ($_CLASS['core_user']->data['session_admin'] == ADMIN_NOT_LOGGED)
 {
-	login_box(array('admin_login' => true, 'full_screen' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_ADMIN_CONFIRM'], 'success' => $_CLASS['core_user']->lang['LOGIN_ADMIN_SUCCESS']));
+	login_box(array('admin_login' => true, 'full_screen' => true, 'full_login' => false, 'explain' => 'LOGIN_ADMIN_CONFIRM', 'success' => 'LOGIN_ADMIN_SUCCESS'), 'login_admin.html');
 }
 
 if (!$_CLASS['core_user']->is_admin)

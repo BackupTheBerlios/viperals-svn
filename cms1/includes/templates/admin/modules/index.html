@@ -3,58 +3,78 @@
 <table class="tablebg" cellpadding="4" cellspacing="1" width="100%">
     <tbody>
 		<tr>
-			<th width="55%" align="center"><b>{ $L_TITLE }</b></th>
+			<th width="<!-- IF { $S_ADMIN_AUTH_LINK } -->30<!-- ELSE -->50<!-- ENDIF -->%" align="center"><b>{ $L_TITLE }</b></th>
 			<th align="center"><b>{ $L_STATUS }</b></td>
 			<th align="center"><b>{ $L_FUNCTIONS }</b></th>
+			<!-- IF { $S_ADMIN_AUTH_LINK } -->
+			<th align="center"></th>
+			<!-- ENDIF -->
 		</tr>
 
 	<!-- IF isset({ $normal_modules }) -->
     	<tr>
-			<td class="cat" colspan="8"><b class="gensmall">Normal</b></td>
+			<td class="cat" colspan="4"><b class="gensmall">Normal</b></td>
 		</tr>
 		<tr>
-			<td class="spacer" colspan="8" height="7"></td>
+			<td class="spacer" colspan="4" height="7"></td>
 		</tr>
 		<!-- LOOP $normal_modules -->
 		<tr>
-			<td height="20" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $normal_modules:EDIT_LINK }'">
+			<td height="24" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $normal_modules:EDIT_LINK }'">
 				<a href="{ $normal_modules:EDIT_LINK }">{ $normal_modules:TITLE }</a>
 				<!-- IF { $normal_modules:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $normal_modules:ERROR }</span><!-- ENDIF -->
 			</td>
-			<td class="row1" align="center"  class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'">
+			<!-- IF { $normal_modules:ACTIVE } -->
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'">
 				<a href="{ $normal_modules:ACTIVE_LINK }">{ $normal_modules:CHANGE }</a>
 			</td>
-
+			<!-- ELSE -->
+			<td align="center" class="row2" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'">
+				<a href="{ $normal_modules:ACTIVE_LINK }">{ $normal_modules:CHANGE }</a>
+			</td>
+			<!-- ENDIF -->
 			<td nowrap="nowrap" class="row1" align="center">
 			<!-- IF { $normal_modules:EDIT_LINK } -->
 				<a href="{ $normal_modules:EDIT_LINK }">{ $L_EDIT }</a> |
 			<!-- ENDIF -->
+			<!-- IF { $normal_modules:AUTH_LINK } -->
 			<a href="{ $normal_modules:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- ENDIF -->
 			<!-- IF { $normal_modules:UNINSTALL_LINK } -->
 				 | <a href="{ $normal_modules:UNINSTALL_LINK }">{ $L_UNINSTALL }</a>
 			<!-- ENDIF -->
 			</td>
+			<!-- IF { $S_ADMIN_AUTH_LINK } -->
+			<td nowrap="nowrap" class="row1" align="center">
+				<a href="{ $normal_modules:ADMIN_AUTH_LINK }">{ $L_ADMIN_PERMISSIONS }</a>
+			</td>
+			<!-- ENDIF -->
 		</tr>
 		<tr>
-			<td class="spacer" colspan="8" height="7"></td>
+			<td class="spacer" colspan="4" height="7"></td>
 		</tr>
 		<!-- ENDLOOP -->
 	<!-- ENDIF -->
 	<!-- IF isset({ $system_modules }) -->
     	<tr>
-			<td class="cat" colspan="7"><b class="gensmall">System Modules</b></td>
+			<td class="cat" colspan="4"><b class="gensmall">System Modules</b></td>
 		</tr>
 		<tr>
-			<td class="spacer" colspan="3" height="5"></td>
+			<td class="spacer" colspan="4" height="5"></td>
 		</tr>
 		<!-- LOOP $system_modules -->
 		<tr>
-			<td colspan="3" height="20" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $system_modules:EDIT_LINK }'">
+			<td colspan="3" height="24" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $system_modules:EDIT_LINK }'">
 				<a href="{ $system_modules:EDIT_LINK }">{ $system_modules:TITLE }</a>
 			</td>
+			<!-- IF { $S_ADMIN_AUTH_LINK } -->
+			<td nowrap="nowrap" class="row1" align="center">
+				<a href="{ $system_modules:ADMIN_AUTH_LINK }">{ $L_ADMIN_PERMISSIONS }</a>
+			</td>
+			<!-- ENDIF -->
 		</tr>
 		<tr>
-			<td class="spacer" colspan="3" height="5"></td>
+			<td class="spacer" colspan="4" height="5"></td>
 		</tr>
 		<!-- ENDLOOP -->
 	<!-- ENDIF -->

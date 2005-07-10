@@ -1,6 +1,6 @@
 <?php
 
-if (VIPERAL != 'Admin') 
+if (VIPERAL !== 'Admin') 
 {
 	die;
 }

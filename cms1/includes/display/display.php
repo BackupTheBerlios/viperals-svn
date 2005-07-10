@@ -276,10 +276,11 @@ class core_display
 		return $footer.'[ '.$this->footer_debug(). ']<br />';
 	}
 	
-	function meta_refresh($time, $url)
+	function meta_refresh($time, $url = false)
 	{
 		global $_CLASS;
-		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . $url . '">';
+
+		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(array('full' => true))) . '">';
 	}
 }
 

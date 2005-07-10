@@ -13,6 +13,7 @@
 //																//
 //**************************************************************//
 // Add channel support, rss_data[channel][item][item_branch]
+// nested items
 
 class core_rss
 {

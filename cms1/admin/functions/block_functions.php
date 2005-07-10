@@ -13,39 +13,8 @@
 //																//
 //**************************************************************//
 
-function block_auth($id)
-{
-	global $_CLASS;
-
-	$result = $_CLASS['core_db']->sql_query('SELECT position, auth FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-	$block = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
-	
-	if (!$block)
-	{
-		trigger_error('BLOCK_NOT_FOUND');
-	}
-	
-	$block['auth'] = ($block['auth']) ? unserialize($block['auth']) : '';
-	
-	check_position($block['position']);
-	
-	if ($auth = $_CLASS['core_auth']->make_options($block['auth']))
-	{
-		$block['auth'] = ($auth === true) ? '' : $auth;
-		$auth = ($auth === true) ? '' : $_CLASS['core_db']->sql_escape(serialize($auth));
-	
-		$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE." set auth = '$auth' WHERE id = $id");
-		$_CLASS['core_cache']->destroy('blocks');
-	}
-	
-	$_CLASS['core_display']->display_head();
-	$_CLASS['core_auth']->make_options($block['auth'], true);
-	$_CLASS['core_display']->display_footer();
-}
-
 function block_change($id)
-{	
+{
 	global $_CLASS;
 	
 	$result = $_CLASS['core_db']->sql_query('SELECT active, position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
@@ -64,90 +33,87 @@ function block_change($id)
 	$_CLASS['core_cache']->destroy('blocks');
 }
 
-    
 function block_weight($id, $option)
-{ 
+{
 	global $_CLASS;
-	
+
 	if (!in_array($option, array('down', 'up', 'bottom', 'top')))
 	{
 		return;
 	}
-	
+
 	$result = $_CLASS['core_db']->sql_query('SELECT position, weight FROM '.BLOCKS_TABLE.' WHERE id='. (int) $id);
 	$block = $_CLASS['core_db']->sql_fetchrow($result);
 	$_CLASS['core_db']->sql_freeresult($result);
-			
+
 	if (!$block)
 	{
 		trigger_error('BLOCK_NOT_FOUND');
 	}
-	
+
 	check_position($block['position']);
 	$block['weight'] = (int) $block['weight'];
-	
+
 	switch ($option)
 	{
-	
 		case 'down':
-		
+
 			$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position='.$block['position']);
 			$maxweight = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
-			
+
 			if ($block['weight'] < $maxweight['weight'])
 			{
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight='.($block['weight'] + 1));
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight='.($block['weight'] + 1).' WHERE id ='. $id);
 			}
-			
+
 			$_CLASS['core_cache']->destroy('blocks');
-			break;
-			
+		break;
+
 		case 'up':
-		
+
 			if ($block['weight'] && $block['weight'] != 1)
 			{
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight+1 WHERE position='.$block['position'].' AND weight='.($block['weight'] - 1));
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight='.($block['weight'] -1 ).' WHERE id ='. $id);
 			}
-			
+
 			$_CLASS['core_cache']->destroy('blocks');
-			break;
-		
+		break;
+
 		case 'bottom':
-		
+
 			$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position='.$block['position']);
 			$maxweight = $_CLASS['core_db']->sql_fetchrow($result);
 			$_CLASS['core_db']->sql_freeresult($result);
-			
+
 			if ($block['weight'] < $maxweight['weight'])
 			{
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight-1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight='.$maxweight['weight'].' WHERE id='.$id);
 			}
-			
+
 			$_CLASS['core_cache']->destroy('blocks');
-			break;
-					
+		break;
+
 		case 'top':
-			
-		
+
 			if ($block['weight'] != 1)
 			{
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=weight+1 WHERE position='.$block['position'].' AND weight < '.$block['weight']);
 				$result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight=1 WHERE id='.$id);
 			}
-			
+
 			$_CLASS['core_cache']->destroy('blocks');
-			break;
+		break;
 	}
 }
 
 function block_delete($id, $return_link = '')
 {
     global $_CLASS;
-    
+
 	$result = $_CLASS['core_db']->sql_query('SELECT weight, type, position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
 	$block = $_CLASS['core_db']->sql_fetchrow($result);
 	$_CLASS['core_db']->sql_freeresult($result);
@@ -156,7 +122,7 @@ function block_delete($id, $return_link = '')
 	{
 		trigger_error(($block) ? 'BLOCK_NOT_DELETABLE' : 'BLOCK_NOT_FOUND');
 	}
-	
+
 	check_position($block['position']);
 
 // TEMP
