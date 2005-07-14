@@ -23,15 +23,14 @@ class sessions
 	var $load;
 	var $new_session = false;
 	var $save_session = false;
-	var $need_url_id = true;
+
+	var $sid_link = false;
 
 	function start()
 	{
 		global $_CLASS, $_CORE_CONFIG, $SID, $mod;
 		
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
-
-		$this->need_url_id = true;
 
 		$session_data = (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) : array();
 		$session_data['session_id'] = get_variable('sid', 'GET', false);
@@ -42,8 +41,12 @@ class sessions
 			if (!$session_data['session_id'] || (trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']) === $session_data['session_id']))
 			{
 				$session_data['session_id'] = trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']);
-				$this->need_url_id = (defined('NEED_SID')) ? true : false;
+				$this->sid_link = (defined('NEED_SID')) ? 'sid='.$session_data['session_id'] : false;
 			}
+		}
+		else
+		{
+			$this->sid_link = 'sid='.$session_data['session_id'];
 		}
 
 		if ($session_data['session_id'])
@@ -163,7 +166,7 @@ class sessions
 
 		$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
 
-		$this->new_session = $this->need_url_id = true;
+		$this->new_session =  true;
 
 		$this->data = array_merge($this->data, $session_data);
 		unset($session_data);
@@ -190,7 +193,7 @@ class sessions
 			$this->set_cookie('sid', $this->data['session_id'], 0);
 		}
 
-		$this->need_url_id = ($this->is_bot) ? false : true;
+		$this->sid_link = ($this->is_bot) ? false : 'sid='.$this->data['session_id'];
 
 		$this->data['sessions'] = array();
 		$this->user_setup();
@@ -242,7 +245,7 @@ class sessions
 		$this->data['session_id'] = '';
 		$this->data['session_time'] = $this->data['session_admin'] = 0;
 
-		$this->need_url_id = $this->is_user = $this->is_bot = $this->is_admin = false;
+		$this->sid_link = $this->is_user = $this->is_bot = $this->is_admin = false;
 	}
 	
 	// Garbage collection

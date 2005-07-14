@@ -64,15 +64,15 @@ function check_bot_status($browser, $ip)
 function check_load_status($return = false)
 {
 	global $_CORE_CONFIG, $_CLASS;
-	static $load_status = 'unset';
+	static $load_status = null;
 	
-	if ($load_status != 'unset')
+	if (!is_null($load_status))
 	{
 		return $load_status;
 	}
-	
+
 	$load_status = 0;
-	
+
 	if (file_exists('/proc/loadavg'))
 	{
 		if ($load = file('/proc/loadavg'))
@@ -102,13 +102,13 @@ function check_load_status($return = false)
 function check_maintance_status($return = false)
 {
 	global $_CORE_CONFIG, $_CLASS;
-	static $maintance_status = 'unset';
-	
-	if ($maintance_status != 'unset')
+	static $maintance_status = null;
+
+	if (!is_null($maintance_status))
 	{
 		return $maintance_status;
 	}
-	
+
 	if ($_CORE_CONFIG['maintenance']['active'])
 	{
 		if ($_CORE_CONFIG['maintenance']['start'] < time())
@@ -128,7 +128,7 @@ function check_maintance_status($return = false)
 		
 		return $_CORE_CONFIG['maintenance']['start'];
 	}
-	
+
 	return $maintance_status = false;
 }
 
@@ -303,9 +303,9 @@ function generate_link($link = false, $link_options = false)
 	{
 		$link = $file;
 
-		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
+		if ($options['force_sid'] || ($_CLASS['core_user']->sid_link && $options['sid']))
 		{
-			$link .= '?sid='.$_CLASS['core_user']->data['session_id'];
+			$link .= '?'.$_CLASS['core_user']->sid_link;
 		}
 	}
 	else
@@ -317,9 +317,9 @@ function generate_link($link = false, $link_options = false)
 		
 		$link = $file.'?mod='.$link;
 
-		if ($options['force_sid'] || ($_CLASS['core_user']->need_url_id && $options['sid']))
+		if ($options['force_sid'] || ($_CLASS['core_user']->sid_link && $options['sid']))
 		{
-			$link .= '&amp;sid='.$_CLASS['core_user']->data['session_id'];
+			$link .= '&amp;'.$_CLASS['core_user']->sid_link;
 		}
     }
 
@@ -442,123 +442,9 @@ function load_class($file, $name, $class = false)
 
 function login_box($login_options = false, $template = false)
 {
-	global $_CLASS, $_CORE_CONFIG;
+	global $_CLASS;
 
-	$error = '';
-
-	$login_array = array(
-		'redirect' 		=> false,
-		'explain' 	 	=> false,
-		'success'  		=> '',
-		'admin_login'	=> false,
-		'full_login'	=> true,
-		'full_screen'	=> false,
-	 );
-	
-	if (is_array($login_options))
-	{
-		$login_array = array_merge($login_array, $login_options);
-	}
-
-	if (isset($_POST['login']))
-	{
-		$data = array(
-			'user_name'			=> get_variable('username', 'POST'),
-			'user_password'		=> get_variable('password', 'POST'),
-			'admin_login'		=> $login_array['admin_login'],
-			'auto_log'			=> (!empty($_POST['autologin'])) ? true : false,
-			'show_online'		=> (!empty($_POST['viewonline'])) ? 0 : 1,
-			'auth_error_return'	=> true,
-		 );
-
-		if (!$data['user_name'] || !$data['user_password'])
-		{
-			$error = 'INCOMPLETE_LOGIN_INFO';
-		}	
-			
-		if (!$error && $_CORE_CONFIG['user']['enable_confirm'])
-		{
-			$code = $_CLASS['core_user']->get_data('confirmation_code');
-			$confirm_code = get_variable('confirm_code', 'POST');
-			
-			if (!$code || !$confirm_code || $code !== $confirm_code)
-			{
-				$error = 'CONFIRM_CODE_WRONG';
-			}
-		}
-
-		if (!$error)
-		{
-			$result = $_CLASS['core_auth']->user_auth($data['user_name'], $data['user_password']);
-
-// need to fix this, user_type is an interger
-			if (is_numeric($result))
-			{
-				$_CLASS['core_user']->login($result, $data['admin_login'], $data['show_online']);
-
-				$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $data['admin_login']));	
-				
-				$_CLASS['core_display']->meta_refresh(5, $login_array['redirect']);
-				$message = (($login_array['success']) ? $_CLASS['core_user']->get_lang($login_array['success']) : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
-				trigger_error($message);
-				die;
-			}
-			
-			if (is_string($result))
-			{
-				$error = $result;
-				//trigger_error($result, E_USER_ERROR);
-			}
-
-			$error = ($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR';
-			//trigger_error(($result === USER_INACTIVE) ? 'ACTIVE_ERROR' :  'LOGIN_ERROR', E_USER_ERROR);
-		}
-	}
-
-	if (!$login_array['redirect'])
-	{
-		$login_array['redirect'] = htmlspecialchars($_CLASS['core_user']->url);
-	}
-
-	$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
-
-	if ($_CORE_CONFIG['user']['enable_confirm'])
-	{
-		$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
-		$_CLASS['core_user']->set_data('confirmation_code', generate_string(6));
-	}
-	else
-	{
-		$confirm_image = false;
-	}
-
-	$_CLASS['core_template']->assign(array(
-		'LOGIN_ERROR'			=> $_CLASS['core_user']->get_lang($error),
-		'LOGIN_EXPLAIN'			=> $_CLASS['core_user']->get_lang($login_array['explain']), 
-
-		'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
-		'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
-		'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
-		'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
-		'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
-		'U_CONFIRM_IMAGE'		=> $confirm_image,
-
-		'USERNAME'				=> isset($data['user_name']) ? $data['user_name'] : '',
-
-		'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']),
-		'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link($_CLASS['core_user']->url) : generate_link(false, array('admin' => true)),
-		'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
-	));
-
-	if ($login_array['full_screen'])
-	{
-		$_CLASS['core_template']->display(($template) ? $template : 'login_body_full.html');
-		script_close();
-	}
-
-	$_CLASS['core_display']->display_head($_CLASS['core_user']->get_lang('LOGIN'));
-	$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
-	$_CLASS['core_display']->display_footer();
+	$_CLASS['core_auth']->do_login($login_options, $template);
 }
 
 function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false)
@@ -785,9 +671,9 @@ function modify_lines($text, $replacement = ' ')
 	return str_replace(array("\r\n", "\r", "\n"), $replacement, $text);
 }
 
-function url_redirect($url = false, $save = true)
+function url_redirect($url = false, $save = false)
 {
-	$url = ($url) ? $url : generate_link(array('full' => true));
+	$url = ($url) ? $url : generate_link(false, array('full' => true));
 	$url = str_replace('&amp;', '&', $url);
 
 	if (preg_match('/IIS|Microsoft|WebSTAR|Xitami/', getenv('SERVER_SOFTWARE')))

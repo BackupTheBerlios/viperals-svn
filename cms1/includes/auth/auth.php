@@ -26,9 +26,9 @@ class core_auth
 	
 		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		{
-			if (encode_password($user_password, $row['user_password_encoding']) == $row['user_password'])
+			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
 			{
-				$status = ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_IGNORE) ? $row['user_type'] : (int) $row['user_id'];
+				$status = ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_IGNORE) ? 'ACTIVE_ERROR' : (int) $row['user_id'];
 			}
 		}
 		
@@ -45,6 +45,119 @@ class core_auth
 		}
 		
 		return (!empty($this->user_permission) || !empty($this->group_permission));
+	}
+
+	function do_login($login_options, $template)
+	{
+		global $_CLASS, $_CORE_CONFIG;
+
+		$error = '';
+
+		$login_array = array(
+			'redirect' 		=> false,
+			'explain' 	 	=> false,
+			'success'  		=> '',
+			'admin_login'	=> false,
+			'full_login'	=> true,
+			'full_screen'	=> false,
+		);
+	
+		if (is_array($login_options))
+		{
+			$login_array = array_merge($login_array, $login_options);
+		}
+
+		if (isset($_POST['login']))
+		{
+			$user_name		= get_variable('username', 'POST');
+			$user_password	= get_variable('password', 'POST');
+
+			if (!$user_name || !$user_password)
+			{
+				$error = 'INCOMPLETE_LOGIN_INFO';
+			}	
+
+			if (!$error && $_CORE_CONFIG['user']['enable_confirm'])
+			{
+				$code = $_CLASS['core_user']->get_data('confirmation_code');
+				$confirm_code = get_variable('confirm_code', 'POST');
+	
+				if (!$code || !$confirm_code || $code !== $confirm_code)
+				{
+					$error = 'CONFIRM_CODE_WRONG';
+				}
+			}
+
+			if (!$error)
+			{
+				$result = $this->user_auth($user_name, $user_password);
+
+				if (is_numeric($result))
+				{
+					$data = array(
+						'admin_login'		=> $login_array['admin_login'],
+						'auto_log'			=> (!empty($_POST['autologin'])) ? true : false,
+						'show_online'		=> (!empty($_POST['viewonline'])) ? 0 : 1,
+					);
+			
+					$_CLASS['core_user']->login($result, $data['admin_login'], $data['show_online']);
+
+					$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $data['admin_login']));	
+
+					$_CLASS['core_display']->meta_refresh(5, $login_array['redirect']);
+					$message = (($login_array['success']) ? $_CLASS['core_user']->get_lang($login_array['success']) : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
+
+					trigger_error($message);
+				}
+
+				$error = (is_string($result)) ? $result : 'LOGIN_ERROR';
+			}
+		}
+
+		if (!$login_array['redirect'])
+		{
+			$login_array['redirect'] = htmlspecialchars($_CLASS['core_user']->url);
+		}
+
+		$s_hidden_fields = '<input type="hidden" name="redirect" value="' . $login_array['redirect'] . '" />';
+
+		if ($_CORE_CONFIG['user']['enable_confirm'])
+		{
+			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
+			$_CLASS['core_user']->set_data('confirmation_code', strtoupper(generate_string(6)));
+		}
+		else
+		{
+			$confirm_image = false;
+		}
+
+		$_CLASS['core_template']->assign(array(
+			'LOGIN_ERROR'			=> $_CLASS['core_user']->get_lang($error),
+			'LOGIN_EXPLAIN'			=> $_CLASS['core_user']->get_lang($login_array['explain']), 
+
+			'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
+			'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
+			'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
+			'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
+			'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
+			'U_CONFIRM_IMAGE'		=> $confirm_image,
+
+			'USERNAME'				=> isset($data['user_name']) ? $data['user_name'] : '',
+
+			'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']),
+			'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link($_CLASS['core_user']->url) : generate_link(false, array('admin' => true)),
+			'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
+		));
+
+		if ($login_array['full_screen'])
+		{
+			$_CLASS['core_template']->display(($template) ? $template : 'login_body_full.html');
+			script_close();
+		}
+
+		$_CLASS['core_display']->display_head($_CLASS['core_user']->get_lang('LOGIN'));
+		$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
+		$_CLASS['core_display']->display_footer();
 	}
 
 	function get_data($id = false, $g_id = false)
