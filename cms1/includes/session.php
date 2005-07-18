@@ -24,6 +24,7 @@ class sessions
 	var $new_session = false;
 	var $save_session = false;
 
+	var $sid_link_prefex = 'sid';
 	var $sid_link = false;
 
 	function start()

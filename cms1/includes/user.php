@@ -135,10 +135,63 @@ class core_user extends sessions
 		// forgot what else I needed to do here :-|
 	}
 
-	function user_setup()
+	function user_setup($theme = false)
 	{
 		global $_CLASS, $_CORE_CONFIG, $site_file_root;
 
+		// Do the theme
+		$theme_prev = get_variable('theme_preview', 'REQUEST', false);
+		$theme = ($theme) ? $theme : $_CLASS['core_user']->get_data('user_theme');
+		
+		if ($theme_prev && ($theme_prev != $theme) && check_theme($theme_prev))
+		{
+			$theme = $theme_prev;
+			
+			if (!get_variable('temp_preview', 'REQUEST', false))
+			{
+				$_CLASS['core_user']->set_data('user_theme', $theme);
+			}
+		}
+		elseif (!$theme || !check_theme($theme))
+		{
+			$theme = ($_CLASS['core_user']->data['user_theme']) ? $_CLASS['core_user']->data['user_theme'] : $_CORE_CONFIG['global']['default_theme'];     
+		
+			if (!check_theme($theme))
+			{
+				if (check_theme($_CORE_CONFIG['global']['default_theme']))
+				{
+					$theme = $_CORE_CONFIG['global']['default_theme'];
+				}
+				else
+				{
+					// We need a theme, don't we ?
+					$handle = opendir('themes');
+					$theme = false;
+					
+					while ($file = readdir($handle))
+					{
+						if ($file{0} !== '.' && check_theme($file))
+						{
+							$theme = $file;
+							break;
+						}
+					}
+					closedir($handle);
+					
+					if (!$theme)
+					{
+						trigger_error('Something here');
+					}
+				}
+			}
+		}
+		
+		require($site_file_root.'themes/'.$theme.'/index.php');
+		
+		load_class(false, 'core_display', 'theme_display');
+		
+		$_CLASS['core_display']->theme = $theme;
+		
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
 			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . '/common.php')) ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];

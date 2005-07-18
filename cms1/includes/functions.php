@@ -132,24 +132,6 @@ function check_maintance_status($return = false)
 	return $maintance_status = false;
 }
 
-function check_variable($variable, $default, $vartype)
-{
-	switch ($vartype)
-	{
-	 	Case 'integer':
-			$variable = is_numeric($variable) ? (int) $variable : $default;
-		break;
-		
-		default:
-			$variable = trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n"));
-			//$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
-			$variable = strip_slashes($variable);
-		break;
-	}
-	
-	return $variable;
-}
-
 function check_theme($theme)
 {
 	global $site_file_root;
@@ -212,56 +194,64 @@ function get_bots()
 
 function get_variable($var_name, $type, $default = '', $vartype = 'string')
 {
-	/*$type = "_$type";
+/*	$type = "_$type";
 
 	global $$type;
 	
-// not sure how good this is, check mem. usage
 // If linking works the way I think  it should be ok, else it could slow things down
 	$type =& $$type;
 	
-	if  (isset($type[$var_name]) && !is_array($type[$var_name]))
+	if (isset($type[$var_name]) && !is_array($type[$var_name]))
 	{
 		return check_variable($type[$var_name], $default, $vartype);
-	} else {
+	}
+	else
+	{
 		return $default;
-	}*/
-					
+	}
+	
+*/	
+	$variable = null;
+
 	switch ($type)
 	{
 		Case 'GET':
-			if  (isset($_GET[$var_name]) && !is_array($_GET[$var_name]))
-			{
-				return check_variable($_GET[$var_name], $default, $vartype);
-			} else {
-				return $default;
-			}
-			
-			break;
-			
+			$variable = isset($_GET[$var_name]) ? $_GET[$var_name] : $default;
+		break;
+
 		Case 'POST':
-			if (isset($_POST[$var_name]) && !is_array($_POST[$var_name]))
-			{
-				return check_variable($_POST[$var_name], $default, $vartype);
-			} else {
-				return $default;
-			}
+			$variable = isset($_POST[$var_name]) ? $_POST[$var_name] : $default;
+		break;
+
+		Case 'REQUEST':
+			$variable = isset($_REQUEST[$var_name]) ? $_REQUEST[$var_name] : $default;
+		break;
+
+		Case 'COOKIE':
+			$variable = isset($_COOKIE[$var_name]) ? $_COOKIE[$var_name] : $default;
+		break;
+	}
 			
+	if (is_null($variable))
+	{
+		return $default;
+	}
+	else
+	{
+		switch ($type)
+		{
+		 	Case 'integer':
+				$variable = is_numeric($variable) ? (int) $variable : $default;
 			break;
 		
-		Case 'REQUEST':
-			if (isset($_REQUEST[$var_name]) && !is_array($_REQUEST[$var_name]))
-			{
-				return check_variable($_REQUEST[$var_name], $default, $vartype);
-			} else {
-				return $default;
-			}
-			
-			break;	
-			
-		default:
-			return $default;
+			default:
+				$variable = trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n"));
+				//$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
+				$variable = strip_slashes($variable);
 			break;
+		}
+
+		return $variable;
 	}
 }
 
@@ -409,8 +399,12 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 	return $page_string;
 }
 
+/*
+	Generates random strings
+*/
 function generate_string($length)
 {
+	// Add type
 	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 	$string = '';
@@ -422,6 +416,16 @@ function generate_string($length)
 	}
 
 	return $string;
+}
+
+if (!function_exists('html_entity_decode'))
+{
+	//string html_entity_decode ( string string [, int quote_style [, string charset]] )
+	function html_entity_decode($string, $quote_style = ENT_COMPAT, $charset = '')
+	{
+		$translations = array_flip(get_html_translation_table(HTML_ENTITIES, $quote_style));
+		return strtr($string, $translations);
+	}
 }
 
 function load_class($file, $name, $class = false)
@@ -478,33 +482,6 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 	if ($clear_cache)
 	{
 		$_CLASS['core_cache']->destroy('core_config');
-	}
-}
-
-// move to forums functions
-function set_config($config_name, $config_value, $is_dynamic = false)
-{
-	global $_CLASS, $config;
-
-	$sql = 'UPDATE ' . CONFIG_TABLE . "
-		SET config_value = '" . $_CLASS['core_db']->sql_escape($config_value) . "'
-		WHERE config_name = '" . $_CLASS['core_db']->sql_escape($config_name) . "'";
-	$_CLASS['core_db']->sql_query($sql);
-
-	if (!$_CLASS['core_db']->sql_affectedrows() && !isset($config[$config_name]))
-	{
-		$sql = 'INSERT INTO ' . CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
-			'config_name'	=> $config_name,
-			'config_value'	=> $config_value,
-			'is_dynamic'	=> ($is_dynamic) ? 1 : 0));
-		$_CLASS['core_db']->sql_query($sql);
-	}
-
-	$config[$config_name] = $config_value;
-
-	if (!$is_dynamic)
-	{
-		$_CLASS['core_cache']->destroy('config');
 	}
 }
 

@@ -11,6 +11,7 @@
 //																//
 //**************************************************************//
 // Add saving reports to a log file and its define ..
+// this will be core_handlers
 
 class core_error_handler
 {
@@ -64,81 +65,78 @@ class core_error_handler
 		restore_error_handler();
 	}
 
-	function debug_start($name)
+	function debug($option, $name, $sub_option)
 	{
 		global $_CLASS;
 
-		$start_time = explode(' ', microtime());
-		$start_time = $start_time[0] + $start_time[1];
-		
-		$this->debug[$name]['start_time'] = $start_time;
-		$this->debug[$name]['queries_before_time'] = $_CLASS['core_db']->sql_time;
-		$this->debug[$name]['queries_before'] = $_CLASS['core_db']->sql_num_queries();
-		
-		return true;
-	}
-
-	function debug_stop($name)
-	{
-		global $_CLASS;
-
-		if (!isset($this->debug[$name]))
-		{
-			return false;
-		}
-
-		$end_time = explode(' ', microtime());
-		$end_time = $end_time[0] + $end_time[1];
-		
-		$this->debug[$name]['end_time'] = $end_time;
-		$this->debug[$name]['queries_after_time'] = $_CLASS['core_db']->sql_time;
-		$this->debug[$name]['queries_after'] = $_CLASS['core_db']->sql_num_queries();
-		
-		return true;
-	}
-
-	function debug_get($name, $option = 'time')
-	{
-		if (!isset($this->debug[$name]))
-		{
-			return false;
-		}
-		
 		switch ($option)
 		{
-			case 'time':
-				return round($this->debug[$name]['end_time'] - $this->debug[$name]['start_time'], 4);
+			case 'start':
+
+				$start_time = explode(' ', microtime());
+				$start_time = $start_time[0] + $start_time[1];
+
+				$this->debug[$name]['start_time'] = $start_time;
+				$this->debug[$name]['queries_before_time'] = $_CLASS['core_db']->sql_time;
+				$this->debug[$name]['queries_before'] = $_CLASS['core_db']->num_queries;
+
 			break;
 
-			case 'queries':
-				return $this->debug[$name]['queries_after'] - $this->debug[$name]['queries_before'];
+			case 'stop':
+
+				if (!isset($this->debug[$name]))
+				{
+					return;
+				}
+
+				$end_time = explode(' ', microtime());
+				$end_time = $end_time[0] + $end_time[1];
+
+				$this->debug[$name]['end_time'] = $end_time;
+				$this->debug[$name]['queries_after_time'] = $_CLASS['core_db']->sql_time;
+
 			break;
 
-			case 'queries_time':
-				return round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4);
-			break;
-			
-			case 'formated':
-				return 'Generation time: '.round($this->debug[$name]['end_time'] - $this->debug[$name]['start_time'], 4).'s<br />'
-				.'Queries: '.($this->debug[$name]['queries_after'] - $this->debug[$name]['queries_before'])
-				.'<br />Queries Time '.round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4).' s<br />';
-			break;
-		}
-	}
+			case 'remove':
 
-	function debug_remove($name)
-	{
-		if (isset($this->debug[$name]))
-		{
-			unset($this->debug[$name]);
+				if (isset($this->debug[$name]))
+				{
+					unset($this->debug[$name]);
+				}
+
+			break;
+
+			case 'get':
+
+				switch ($sub_option)
+				{
+					case 'time':
+						return round($this->debug[$name]['end_time'] - $this->debug[$name]['start_time'], 4);
+					break;
+		
+					case 'queries':
+						return $this->debug[$name]['queries_after'] - $this->debug[$name]['queries_before'];
+					break;
+		
+					case 'queries_time':
+						return round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4);
+					break;
+					
+					case 'formated':
+						return 'Generation time: '.round($this->debug[$name]['end_time'] - $this->debug[$name]['start_time'], 4).'s<br />'
+						.'Queries: '.($this->debug[$name]['queries_after'] - $this->debug[$name]['queries_before'])
+						.'<br />Queries Time '.round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4).' s<br />';
+					break;
+				}
+
+			break;
 		}
 	}
 
 	function error_handler($errtype, $error, $errfile, $errline)
 	{
-
 		global $_CLASS, $site_file_root, $_CORE_CONFIG;
-		
+
 		if ($this->report != ERROR_NONE)
 		{
 			//damn windows
@@ -146,27 +144,26 @@ class core_error_handler
 			// Remove the root paths, site files, along with document root
 			$errfile = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $errfile));
 		}
-				
+
 		switch ($errtype)
 		{
 			case E_NOTICE:
 			case E_WARNING:
-			
+
 				if (!$this->report)
 				{
 					return;
 				}
-				
+
 				$errtype = ($errtype == E_NOTICE) ? 'E_NOTICE' : 'E_WARNING';
 				$this->error = array('type' => $errtype, 'error' => $error, 'file'=> $errfile, 'line' => $errline);
 				$this->format_error($errtype);
 
 				$this->error_setting = array('title', 'redirect');
-				
 			break;
-	
+
 			case E_USER_ERROR:
-			
+
 				$code = false;
 
 				if (strpos($error, ':')) // there shouldn't be a 0 position
@@ -222,7 +219,6 @@ class core_error_handler
 				$_CLASS['core_template']->display('message.html');
 
 				$_CLASS['core_display']->display_footer(false);
-	
 			break;
 		}
 	}
