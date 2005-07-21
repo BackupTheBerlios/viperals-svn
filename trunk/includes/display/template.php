@@ -28,6 +28,7 @@ class core_template
 	var $_in_cache = 0;
 	var $_compiled_code;
 	var $_vars = array();
+	var $_tag_holding = array();
 
     function core_template()
     {
@@ -98,6 +99,8 @@ class core_template
     */
 	function display($name, $return = false, $cache = true)
 	{
+		global $_CLASS;
+
 		if (!$this->generate_dirs($name))
 		{
 			return;
@@ -204,8 +207,6 @@ class core_template
 
 	/*
 		Compile the template into a php friendly format
-		
-		Idea Based from phpBB3
 	*/
     function compile($name, $code = false)
     {
@@ -223,8 +224,9 @@ class core_template
 		$content_blocks = preg_split('/\<!--[ ]*(.*?) (.*?)?[ ]*--\>/', $code);
 
 		$size = count($content_blocks);
+
+		$parse_content = $compile = true;
 		$tag_holding = array();
-		$compile = true;
 		$line = 1;
 
 		for ($loop = 0; $loop < $size; $loop++)
@@ -240,8 +242,11 @@ class core_template
 				continue;
 			}
 
-			$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
-						
+			if ($parse_content)
+			{
+				$content_blocks[$loop] = $this->_parse_content($content_blocks[$loop]);
+			}
+
 			if (empty($tag_blocks[1][$loop]))
 			{
 				continue;
@@ -250,82 +255,120 @@ class core_template
 			switch (strtoupper(trim($tag_blocks[1][$loop])))
 			{
 				case 'IF':
-					$tag_holding[] = 'IF';
+					$this->_tag_holding_add('IF', $line);
+
 					$tag_blocks[0][$loop] = $this->_compile_tag_if($tag_blocks[2][$loop]);
-					break;
+				break;
 
 				case 'ELSE':
-					if (end($tag_holding)  != 'IF')
+					$last_tag = $this->_tag_holding_view();
+
+					if (!$last_tag || $last_tag['name'] != 'IF')
 					{
 						// Error here
 					}
 
 					$tag_blocks[0][$loop] = '<?php } else { ?>';
-					break;
+				break;
 
 				case 'ELSEIF':
-					if (end($tag_holding)  != 'IF')
+					$last_tag = $this->_tag_holding_view();
+
+					if (!$last_tag || $last_tag['name'] != 'IF')
 					{
 						// Error here
 					}
 
 					$tag_blocks[0][$loop] = $this->_compile_tag_if($tag_blocks[2][$loop], true);
-					break;
+				break;
 
 				case 'ENDIF':
-					if (array_pop($tag_holding) != 'IF')
+					$last_tag = $this->_tag_holding_get();
+
+					if (!$last_tag || $last_tag['name'] != 'IF')
 					{
 						// Error here
 					}
 
 					$tag_blocks[0][$loop] = '<?php } ?>';
-					break;
+				break;
 				
 				case 'LOOP':
-					$tag_holding[] = 'LOOP';
+					$this->_tag_holding_add('LOOP', $line);
+
 					$tag_blocks[0][$loop] = $this->_compile_tag_loop($tag_blocks[2][$loop]);
-					break;
+				break;
 
 				case 'LOOPELSE':
-					if (array_pop($tag_holding) != 'LOOP')
+					$last_tag = $this->_tag_holding_get();
+
+					if (!$last_tag || $last_tag['name'] != 'LOOP')
 					{
 						// Error here
 					}
 
-					$tag_holding[] = 'LOOPELSE';
+					$this->_tag_holding_add('LOOPELSE', $line);
+
 					$tag_blocks[0][$loop] = '<?php } } else {  ?>';
-					break;
+				break;
 					
 				case 'ENDLOOP':
-					$last_tag = array_pop($tag_holding);
+					$last_tag = $this->_tag_holding_get();
 
-					if ($last_tag != ('LOOP' || 'LOOPELSE'))
+					if (!$last_tag || $last_tag['name'] != ('LOOP' || 'LOOPELSE'))
 					{
 						// Error here
 					}
 
-					$tag_blocks[0][$loop] = $this->_compile_tag_endloop($tag_blocks[2][$loop], $last_tag);
-					break;
+					$tag_blocks[0][$loop] = $this->_compile_tag_endloop($tag_blocks[2][$loop], $last_tag['name']);
+				break;
+
+				case 'PHP':
+					$this->_tag_holding_add('PHP', $line);
+
+					$parse_content = false;
+					$tag_blocks[0][$loop] = '<?php ';
+				break;
+
+				case 'ENDPHP':
+					$last_tag = $this->_tag_holding_get();
+					
+					if (!$last_tag || $last_tag['name'] != 'PHP')
+					{
+						// Error here
+					}
+
+					$parse_content = true;
+					$tag_blocks[0][$loop] = ' ?>';
+				break;
 
 				case 'INCLUDE':
 					$tag_blocks[0][$loop] = $this->_compile_tag_include($tag_blocks[2][$loop]);
-					break;
-					
+				break;
+
+				case 'DISPLAY_HEADER':
+					$tag_blocks[0][$loop] = "<?php echo \$_CLASS['core_display']->display_header(); ?>";
+				break;
+
+				case 'DISPLAY_FOOTER':
+					$tag_blocks[0][$loop] = "<?php echo \$_CLASS['core_display']->display_footer(); ?>";
+				break;
+	
 				case 'IGNORE':
 					$compile = false;
-					break;
+				break;
 
 				case 'DEFINE':
 					$tag_blocks[0][$loop] = $this->_compile_tag_define($tag_blocks[2][$loop]);
-					break;
+				break;
 
 				case 'AREA':
-					$tag_blocks[0][$loop] = $this->_compile_tag_area($tag_blocks[2][$loop]);
-					break;
+					//$tag_blocks[0][$loop] = $this->_compile_tag_area($tag_blocks[2][$loop]);
+				break;
 
 				default:
 					//$tag_blocks[0][$loop] = '<!-- '.$tag_blocks[1][$loop].' '.$tag_blocks[2][$loop].' -->';
-					break;
+				break;
 			}
 		}
 
@@ -343,6 +386,23 @@ class core_template
 	/*
 		Handles template language
 	*/
+	
+	function _tag_holding_add($name, $line)
+	{
+		$this->_tag_holding[] = array('name' => $name, 'line' => $line);
+	}
+
+	function _tag_holding_get($option = 'last')
+	{
+		return array_pop($this->_tag_holding);
+	}
+
+	function _tag_holding_view($option = 'last')
+	{
+		// array_pop kills the array :-(
+		return is_array($this->_tag_holding) ? end($this->_tag_holding) : false;
+	}
+
 	function _get_lang($lang)
 	{
 		global $_CLASS;

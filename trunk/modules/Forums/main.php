@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 if (!defined('VIPERAL'))
 {
-    die();
+    die;
 }
 
 load_class($site_file_root.'includes/forums/auth.php', 'auth');
@@ -97,13 +97,8 @@ $_CLASS['core_template']->assign(array(
 	)
 );
 
-// Output page
-$_CLASS['core_display']->display_head();
-
 page_header();
 
 $_CLASS['core_template']->display('modules/Forums/index_body.html');
-
-$_CLASS['core_display']->display_footer();
 
 ?>

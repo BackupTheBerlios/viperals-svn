@@ -70,7 +70,7 @@ class ucp_prefs extends module
 							'user_allow_viewonline'	=> ($_CLASS['auth']->acl_get('u_hideonline')) ? !$hideonline : $_CLASS['core_user']->data['user_allow_viewonline'], 
 							'user_notify_type'		=> $notifymethod, 
 							'user_notify_pm'		=> $notifypm,
-							'user_options'			=> $_CLASS['core_user']->data['user_options'], 
+							'user_data'				=> serialize($_CLASS['core_user']->data['user_data']), 
 
 							'user_dst'				=> $dst,
 							'user_dateformat'		=> $dateformat,
@@ -86,7 +86,7 @@ class ucp_prefs extends module
 						
 						if ($theme != $_CLASS['core_display']->theme)
 						{
-							$_CLASS['core_user']->kill_data('theme');
+							$_CLASS['core_user']->session_data_remove('user_theme');
 						}
 						
 						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
@@ -211,7 +211,7 @@ class ucp_prefs extends module
 						}
 
 						$sql_ary = array(
-							'user_options'		=> $_CLASS['core_user']->data['user_options'], 
+							'user_data'				=> serialize($_CLASS['core_user']->data['user_data']), 
 							'user_topic_sortby_type'=> $topic_sk,
 							'user_post_sortby_type'	=> $post_sk,
 							'user_topic_sortby_dir'	=> $topic_sd,
@@ -356,7 +356,7 @@ class ucp_prefs extends module
 					if (!sizeof($error))
 					{
 						$sql_ary = array(
-							'user_options'	=> $_CLASS['core_user']->data['user_options'],
+							'user_data'		=> serialize($_CLASS['core_user']->data['user_data']),
 							'user_notify'	=> $notify,
 						);
 

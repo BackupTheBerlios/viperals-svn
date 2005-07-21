@@ -12,7 +12,6 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-// Update/Add Copyright on non orignal code
 
 function check_email($email)
 {
@@ -73,30 +72,69 @@ function check_load_status($return = false)
 
 	$load_status = 0;
 
-	if (file_exists('/proc/loadavg'))
+	if ($load = get_server_load())
 	{
-		if ($load = file('/proc/loadavg'))
+		if ($_CORE_CONFIG['server']['limit_load'] && $load > doubleval($_CORE_CONFIG['server']['limit_load']) && VIPERAL != 'Admin')
 		{
-			list($load_status) = explode(' ', $load[0]);
-
-			if ($_CORE_CONFIG['server']['limit_load'] && $load_status > doubleval($_CORE_CONFIG['server']['limit_load']) && VIPERAL != 'Admin')
+			if (VIPERAL == 'Admin' || (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin))
 			{
-				if (VIPERAL == 'Admin' || (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin))
-				{
-					return $load_status;
-				}
-				
-				if ($return)
-				{
-					return $load_status = true;
-				}
-
-				trigger_error('503:SITE_UNAVAILABLE');
+				return $load_status;
 			}
+			
+			if ($return)
+			{
+				return $load_status = true;
+			}
+
+			trigger_error('503:SITE_UNAVAILABLE');
 		}
 	}
 
 	return $load_status;
+}
+
+if (!function_exists('file_get_contents'))
+{
+	//string file_get_contents ( string filename [, bool use_include_path [, resource context [, int offset [, int maxlen]]]] )
+	function file_get_contents($file)
+	{
+		$handle = fopen($file, 'rb');
+
+		if (!$handle)
+		{
+			return false;
+		}
+
+		$contents = '';
+
+		while (!feof($handle))
+		{
+			$contents .= fread($handle, 8192);
+		}
+
+		fclose($handle);
+	}
+}
+
+function get_server_load()
+{
+	$load = 0;
+
+	if (file_exists('/proc/loadavg'))
+	{
+		if ($file = file_get_contents('/proc/loadavg'))
+		{
+			list($load) = explode(' ', $file);
+		}
+	}
+
+	/*elseif ($load = @exec('uptime'))
+	{
+		$load =  substr($load, stristr('averages?:', $load));
+		list($load) = explode(',', $load);
+	}*/
+
+	return $load;
 }
 
 function check_maintance_status($return = false)
@@ -143,6 +181,11 @@ function check_theme($theme)
 	return false;
 }
 
+function display_confirmation()
+{
+
+}
+
 function encode_password($pure, $encoding = 'md5')
 {
 	switch ($encoding)
@@ -166,6 +209,11 @@ function encode_password($pure, $encoding = 'md5')
 	}
 
 	return false;
+}
+
+function gmtime()
+{
+	$time = (time() - date('Z'));
 }
 
 function get_bots()
@@ -285,7 +333,16 @@ function generate_link($link = false, $link_options = false)
 	if (is_array($link_options))
 	{
 		$options = array_merge($options, $link_options);
-	} 	
+	} 
+
+	if ($link && strpos($link, '#'))
+	{
+		list($link, $what_you_call_this) = explode('#', $link, 2);
+	}
+	else
+	{
+		$what_you_call_this = false;
+	}
 
 	$file = ($options['admin']) ? ADMIN_PAGE : INDEX_PAGE;
 	
@@ -304,7 +361,7 @@ function generate_link($link = false, $link_options = false)
 		{
 			$link = $_CORE_MODULE['title'].$link;
 		}
-		
+
 		$link = $file.'?mod='.$link;
 
 		if ($options['force_sid'] || ($_CLASS['core_user']->sid_link && $options['sid']))
@@ -313,12 +370,12 @@ function generate_link($link = false, $link_options = false)
 		}
     }
 
-    if ($options['full'])
+    if ($what_you_call_this)
     {
-		return generate_base_url().$link;
-    }
+		$link .= '#'.$what_you_call_this;
+	}
 
-    return $link;
+    return ($options['full']) ? generate_base_url().$link : $link;
 }
 
 // to be redone
@@ -330,7 +387,7 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 	$seperator = ' | ';
 
 	$admin_link = (VIPERAL == 'Admin') ? array('admin' => true) : '';
-	
+
 	$total_pages = ceil($num_items/$per_page);
 
 	if ($total_pages == 1 || !$num_items)
@@ -423,8 +480,7 @@ if (!function_exists('html_entity_decode'))
 	//string html_entity_decode ( string string [, int quote_style [, string charset]] )
 	function html_entity_decode($string, $quote_style = ENT_COMPAT, $charset = '')
 	{
-		$translations = array_flip(get_html_translation_table(HTML_ENTITIES, $quote_style));
-		return strtr($string, $translations);
+		return strtr($string, array_flip(get_html_translation_table(HTML_ENTITIES, $quote_style)));
 	}
 }
 
@@ -516,13 +572,13 @@ function script_close($save = true)
 			{
 				if (!empty($_CLASS['core_db']->querylist))
 				{
-					$_CLASS['core_user']->set_data('querylist', $_CLASS['core_db']->querylist);
-					$_CLASS['core_user']->set_data('querydetails', $_CLASS['core_db']->querydetails);
+					$_CLASS['core_user']->session_data_set('querylist', $_CLASS['core_db']->querylist);
+					$_CLASS['core_user']->session_data_set('querydetails', $_CLASS['core_db']->querydetails);
 				}
 				
 				if (isset($_CLASS['core_error_handler']) && (!empty($_CLASS['core_db']->querylist) || !empty($_CLASS['core_error_handler']->error_array)))
 				{
-					$_CLASS['core_user']->set_data('debug', $_CLASS['core_error_handler']->error_array);
+					$_CLASS['core_user']->session_data_set('debug', $_CLASS['core_error_handler']->error_array);
 				}
 			}
 						
@@ -651,18 +707,21 @@ function modify_lines($text, $replacement = ' ')
 function url_redirect($url = false, $save = false)
 {
 	$url = ($url) ? $url : generate_link(false, array('full' => true));
-	$url = str_replace('&amp;', '&', $url);
+	$url = trim(str_replace('&amp;', '&', $url));
 
-	if (preg_match('/IIS|Microsoft|WebSTAR|Xitami/', getenv('SERVER_SOFTWARE')))
-	{
-		header('Refresh: 0; URL=' . $url);
-	}
-	else
-	{
-		header('Location: ' . $url);
-	}
+	header('Location: ' . $url);
 
-	echo 'Something here for bad browers, hehe';
+	echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+	<html>
+		<head>
+			<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+			<meta http-equiv="refresh" content="0; url=' . $url . '">
+			<title>Redirect</title>
+		</head>
+		<body>
+			<div align="center"><a href="' . $url . '">Click here to continue</a></div>
+		</body>
+	</html>';
 
 	script_close($save);
 }

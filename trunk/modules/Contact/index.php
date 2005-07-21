@@ -15,12 +15,10 @@
 
 if (!defined('VIPERAL'))
 {
-    die();
+    die;
 }
 
 $_CLASS['core_user']->add_lang();
-
-$_CLASS['core_display']->display_header($_CLASS['core_user']->lang['FEEDBACK_TITLE']);
 
 function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
@@ -42,7 +40,8 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 		$_CLASS['core_template']->assign('PREVIEW', $body);
 		return;
 	}
-	
+
+	//include_once(
 	//print $body;
 }
 
@@ -101,6 +100,5 @@ $_CLASS['core_template']->assign(array(
 ));
 		
 $_CLASS['core_template']->display('modules/Contact/index.html');
-$_CLASS['core_display']->display_footer();
 
 ?>

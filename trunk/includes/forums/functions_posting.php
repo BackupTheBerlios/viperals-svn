@@ -27,7 +27,7 @@
 function generate_smilies($mode, $forum_id)
 {
 	global $_CLASS;
-
+// add option for all smiles in window
 	$display_link = false;
 	$mode = ($mode == 'window') ? 'window' : 'inline';
 
@@ -50,10 +50,9 @@ function generate_smilies($mode, $forum_id)
 		$smiley = array();
 
 		$sql = 'SELECT *
-			FROM ' . SMILIES_TABLE . 
-			(($mode == 'inline') ? ' WHERE display_on_posting = 1 ' : '') . '
-			GROUP BY smiley_url
-			ORDER BY smiley_order';
+			FROM ' . SMILIES_TABLE .' 
+				WHERE display_on_posting ='.(($mode == 'inline') ? '1' : '0') . '
+					ORDER BY smiley_order';
 		$result = $_CLASS['core_db']->sql_query($sql);
 	
 		while ($row = $_CLASS['core_db']->sql_fetchrow($result))

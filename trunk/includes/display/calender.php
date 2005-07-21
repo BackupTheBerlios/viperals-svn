@@ -1,4 +1,17 @@
 <?php
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
 class calender
 {
@@ -193,18 +206,18 @@ class calender
 				}
 			}
 
-			/*$time = explode(':', $row['start_time']);
+			$time = explode(':', $row['start_time']);
 
-			$row['start_time'] = mktime($time[0], $time[1], 0, $date[0], $date[1], $date[2]);
-			$end_time = $row['start_time'] + $row['duration'];*/
+			$start_time = mktime($time[0], $time[1], 0, $date[0], $date[1], $date[2]);
+			$end_time = $start_time + $row['duration'];
  
 			$_CLASS['core_template']->assign_vars_array($template_name, array(
 					'TITLE'			=> $row['title'],
 					'ID'			=> $row['id'],
 					'DESCRIPTION'	=> $row['description'],
 					'LINK'			=> generate_link("$link&amp;mode=details&amp;id=".$row['id']),
-					'START_TIME'	=> $_CLASS['core_user']->format_date($row['start_time'], 'g:i A'),
-					'END_TIME'		=> $_CLASS['core_user']->format_date($row['end_time'], 'g:i A'),
+					'START_TIME'	=> $_CLASS['core_user']->format_date($start_time, 'g:i A'),
+					'END_TIME'		=> $_CLASS['core_user']->format_date($end_time, 'g:i A'),
 			));
 		}
 		$_CLASS['core_db']->sql_freeresult($result);
@@ -277,10 +290,15 @@ class calender
 		settype($start_date, 'integer');
 		settype($end_time, 'integer');
 		settype($end_date, 'integer');
-		settype($recurring, 'integer');
 
 		// we don't want useless loops if the recurrence less than 1 day
-		$recurring = ($recurring > 86400) ? (int) $recurring : 86400;
+		if (is_numeric($recurring))
+		{
+			$recurring = ($recurring > 86400) ? (int) $recurring : 86400;
+		}
+// Add recurrence for months, years (maybe)..
+// Damit why couldn't there always be 31 days in a month :-(
+
 		$end_time = ($end_time < $end_date) ? (int) $end_time : (int) $end_date;
 
 		// Get the closest time to our start_date, if start_time is before that start_date
@@ -319,6 +337,11 @@ class calender
 		
 		$row = $_CLASS['core_db']->sql_fetchrow($result);
 		$_CLASS['core_db']->sql_freeresult($result);
+		
+		$time = explode(':', $row['start_time']);
+
+		$row['start_time'] = mktime($time[0], $time[1], 0, 0, 0, 0);
+		$row['end_time'] = $row['start_time'] + $row['duration'];
 
 		return $row;
 	}

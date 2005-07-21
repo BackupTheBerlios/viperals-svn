@@ -477,7 +477,7 @@ class ucp_main extends module
 					// Get folder img, topic status/type related informations
 					$folder_img = $folder_alt = $topic_type = '';
 					$unread_topic = topic_status($row, $replies, $mark_time_topic, $mark_time_forum, $folder_img, $folder_alt, $topic_type);
-					$newest_post_img = ($unread_topic) ? '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread".(($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : '').'#unread', array('sid' => false)).'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
+					$newest_post_img = ($unread_topic) ? '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 					$view_topic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id";
 
@@ -505,7 +505,7 @@ class ucp_main extends module
 						'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false,
 						'S_UNREAD_TOPIC'		=> $unread_topic,
 
-						'U_LAST_POST'		=> generate_link($view_topic_url .  '&amp;p=' . $row['topic_last_post_id'] . (($_CLASS['core_user']->need_url_id) ? '&amp;sid='.$_CLASS['core_user']->data['session_id'] : ''). '#' . $row['topic_last_post_id']),
+						'U_LAST_POST'		=> generate_link($view_topic_url .  '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),
 						'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 						'U_VIEW_TOPIC'		=> generate_link($view_topic_url))
 					);

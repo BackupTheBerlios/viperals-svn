@@ -208,11 +208,7 @@ function show_messages($all = false)
 		'Q_TOTAL_MESSAGES'		=> $row['total']
 	));
 	
-	$_CLASS['core_display']->display_head();
-	 
 	$_CLASS['core_template']->display('modules/Quick_Message/index.html');	
-	
-	$_CLASS['core_display']->display_footer();
 }
 
 function delete_message()

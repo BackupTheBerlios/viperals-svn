@@ -4,7 +4,7 @@
 //**************************************************************//
 //																//
 //  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
+//  By Ryan Marshall ( Viperal )								//
 //																//
 //  http://www.viperal.com										//
 //																//
@@ -239,7 +239,7 @@ class core_display
 		$mtime = explode(' ', microtime());
 		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['core_db']->sql_time;
 
-		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->sql_time, 4).'s | ' . $_CLASS['core_db']->sql_num_queries() . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
+		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->sql_time, 4).'s | ' . $_CLASS['core_db']->num_queries . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
 
 		if (function_exists('memory_get_usage'))
 		{

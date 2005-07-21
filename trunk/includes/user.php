@@ -15,19 +15,17 @@ class core_user extends sessions
 	var $timezone;
 	var $dst;
 
+	var $user_data_serialized = true;
+
 	var $lang_name;
 	var $lang_path;
-
-// remove
-	var $keyoptions = array('viewimg' => 0, 'viewflash' => 1, 'viewsmilies' => 2, 'viewsigs' => 3, 'viewavatars' => 4, 'viewcensors' => 5, 'attachsig' => 6, 'html' => 7, 'bbcode' => 8, 'smilies' => 9, 'popuppm' => 10, 'report_pm_notify' => 11);
-	var $keyvalues = array();
 
 	function core_user()
 	{
 		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : getenv('HTTP_USER_AGENT'), 0, 100);
 		$this->url	= (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : getenv('REQUEST_URI');
 		$this->ip	= (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
-		$this->time	= time();
+		$this->time	= gmtime();
 
 		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
 		{
@@ -72,7 +70,7 @@ class core_user extends sessions
 			if (!$bot)
 			{
 				$this->user_setup();
-				trigger_error('SITE_UNAVAILABLE', E_USER_ERROR);
+				trigger_error('SITE_TEMP_UNAVAILABLE', E_USER_ERROR);
 			}
 	
 			header("HTTP/1.0 503 Service Unavailable");
@@ -87,7 +85,7 @@ class core_user extends sessions
 		if (!$this->data)
 		{
 			die;
-// Error here
+// Error here, however this happen
 		}
 
 		if ($bot)
@@ -102,10 +100,13 @@ class core_user extends sessions
 			$this->is_user = ($id == ANONYMOUS) ? false : true;
 			$this->is_bot = false;
 	
-			$auth = new core_auth();
-			$auth->get_data($id, $_CLASS['core_user']->data['group_id']);
+			if (isset($_CLASS['core_auth']))
+			{
+				unset($_CLASS['core_auth']);
+				load_class(false, 'core_auth', 'auth_db');
+			}
 
-			if ($auth->admin_auth())
+			if ($_CLASS['core_auth']->admin_auth())
 			{
 				$this->data['session_admin'] = ($admin_login) ? ADMIN_IS_ADMIN : ADMIN_NOT_LOGGED;
 			}
@@ -113,26 +114,32 @@ class core_user extends sessions
 			{
 				$this->data['session_admin'] = ADMIN_NOT_ADMIN;
 			}
-			
-			unset($auth);
 		}
 			
 		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN) ? true : false;
 		$this->data['session_viewonline'] = $view_online;
-
-		/*if (!$this->is_user && $_CORE_CONFIG['global']['only_registered'])
-		{
-			$this->need_url_id = false;
-			login_box(array('full_screen'	=> true));
-		}*/
 
 		$this->session_create();
 	}
 	
 	function logout()
 	{
+		global $_CLASS;
+
 		$this->session_destroy();
-		// forgot what else I needed to do here :-|
+		
+		$sql = 'SELECT *
+			FROM ' . USERS_TABLE . '
+			WHERE user_id = ' . ANONYMOUS;
+		$result = $_CLASS['core_db']->sql_query($sql);
+	
+		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
+
+		$this->data['session_id'] = '';
+		$this->data['session_time'] = $this->data['session_admin'] = 0;
+
+		$this->sid_link = $this->is_user = $this->is_bot = $this->is_admin = false;
 	}
 
 	function user_setup($theme = false)
@@ -141,7 +148,7 @@ class core_user extends sessions
 
 		// Do the theme
 		$theme_prev = get_variable('theme_preview', 'REQUEST', false);
-		$theme = ($theme) ? $theme : $_CLASS['core_user']->get_data('user_theme');
+		$theme = ($theme) ? $theme : $_CLASS['core_user']->session_data_get('user_theme');
 		
 		if ($theme_prev && ($theme_prev != $theme) && check_theme($theme_prev))
 		{
@@ -149,7 +156,7 @@ class core_user extends sessions
 			
 			if (!get_variable('temp_preview', 'REQUEST', false))
 			{
-				$_CLASS['core_user']->set_data('user_theme', $theme);
+				$_CLASS['core_user']->session_data_set('user_theme', $theme);
 			}
 		}
 		elseif (!$theme || !check_theme($theme))
@@ -185,66 +192,31 @@ class core_user extends sessions
 				}
 			}
 		}
-		
-		require($site_file_root.'themes/'.$theme.'/index.php');
+
+		require_once($site_file_root.'themes/'.$theme.'/index.php');
 		
 		load_class(false, 'core_display', 'theme_display');
 		
 		$_CLASS['core_display']->theme = $theme;
 		
+// Redo by next commit
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
-			$this->lang_name = (file_exists($site_file_root.'language/' . $this->data['user_lang'] . '/common.php')) ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];
+			$this->lang_name = file_exists($site_file_root.'language/' . $this->data['user_lang'] . '/common.php') ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];
 			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 
 			$this->date_format = $this->data['user_dateformat'];
 			$this->timezone = $this->data['user_timezone'] * 3600;
 			$this->dst = $this->data['user_dst'] * 3600;
-		
-			if (VIPERAL != 'Admin' && $_CORE_CONFIG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - ($_CORE_CONFIG['user']['chg_passforce'] * 86400))
-			{
-				global $name;
-
-				if ($name != 'Control_Panel')
-				{
-					url_redirect(generate_link('Control_Panel&i=profile&mode=reg_details'));
-				}
-			}
 		}
 		else
 		{
 			$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
 			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
+
 			$this->date_format = $_CORE_CONFIG['global']['default_dateformat'];
 			$this->timezone = $_CORE_CONFIG['global']['default_timezone'] * 3600;
 			$this->dst = $_CORE_CONFIG['global']['default_dst'] * 3600;
-
-			if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
-			{
-				$accept_lang_ary = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
-				foreach ($accept_lang_ary as $accept_lang)
-				{
-					// Set correct format ... guess full xx_YY form
-					$accept_lang = substr($accept_lang, 0, 2) . '_' . strtoupper(substr($accept_lang, 3, 2));
-					if (file_exists('language/' . $accept_lang . '/common.php'))
-					{
-						$this->lang_name = $_CORE_CONFIG['global']['default_lang'] = $accept_lang;
-						$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
-						break;
-					}
-					else
-					{
-						// No match on xx_YY so try xx
-						$accept_lang = substr($accept_lang, 0, 2);
-						if (file_exists('language/' . $accept_lang . '/common.php'))
-						{
-							$this->lang_name = $_CORE_CONFIG['global']['default_lang'] = $accept_lang;
-							$this->lang_path = $site_file_root.'language/' . $accept_lang . '/';
-							break;
-						}
-					}
-				}
-			}
 		}
 		
 		require($this->lang_path . 'common.php');
@@ -288,81 +260,155 @@ class core_user extends sessions
 		return ucfirst(strtolower(preg_replace('/_/', ' ', $lang)));
 	}
 	
-	function img($img, $alt = '', $width = false, $suffix = '')
+
+	function get_img($img)
 	{
-		static $imgs;
-		
-		if (empty($imgs[$img . $suffix]) || $width !== false)
+		if (empty($this->img[$img]))
 		{
-			if (!isset($this->img[$img]) || !$this->img[$img])
-			{
-				// Do not fill the image to let designers decide what to do if the image is empty
-				$imgs[$img . $suffix] = '';
-				return $imgs[$img . $suffix];
-			}
-			global $_CLASS;
-
-			if ($width === false)
-			{
-				list($imgsrc, $height, $width) = explode('*', $this->img[$img]);
-			}
-			else
-			{
-				list($imgsrc, $height) = explode('*', $this->img[$img]);
-			}
-
-			if ($suffix !== '')
-			{
-				$imgsrc = str_replace('{SUFFIX}', $suffix, $imgsrc);
-			}
-			
-			$imgsrc = '"' . str_replace('{LANG}', $this->lang_name, $imgsrc) . '"';
-			$width = ($width) ? ' width="' . $width . '"' : '';
-			$height = ($height) ? ' height="' . $height . '"' : '';
-			
-			$imgs[$img . $suffix] = $imgsrc . $width . $height;
+			// this or false
+			return $this->img[$img] = array('src' => false, 'width' => false, 'height' => false);
 		}
 		
-		$alt = (!empty($this->lang[$alt])) ? $this->lang[$alt] : $alt;
-		return '<img src=' . $imgs[$img . $suffix] . ' alt="' . $alt . '" title="' . $alt . '" />';
+		if (!is_array($this->img[$img]))
+		{
+			list($src, $height, $width) = explode('*', $this->img[$img]);
+			$src = '"' . str_replace('{LANG}', $this->lang_name, $src) . '"'; // remove once everything is updated
+
+			$this->img[$img] = array('src' => $src, 'width' => $width, 'height' => $height);
+		}
+
+		return $this->img[$img];
 	}
 		
-	function add_lang($langfile = false, $module = false)
+	function add_lang($lang_file = false, $module = false)
 	{
 		global $site_file_root;
 //Need a check for if the lang file exsists
 	
 		//print_r(debug_backtrace());
-		if (is_array($langfile))
+		if (is_array($lang_file))
 		{
-			foreach ($langfile as $key => $lang_file)
+			foreach ($lang_file as $key => $lang)
 			{
-				$this->add_lang($lang_file, $module);
+				$this->add_lang($lang, $module);
 			}
 			
 			unset($lang);
 			return;
 		}
 		
-		if (strpos($langfile, '/') !== false)
+		if ($lang_file)
 		{
-			include($site_file_root."language/$this->lang_name/$langfile");
-			return;
+			if (strpos($lang_file, '/') !== false)
+			{
+				include($site_file_root."language/$this->lang_name/$lang_file");
+
+				return;
+			}
+
+			$lang_file = $lang_file.'.php';
 		}
-		
-		$langfile = ($langfile) ? $langfile.'.php' : 'index.php';
-		
+		else
+		{
+			$lang_file = 'index.php';
+		}
+
 		if (!$module)
 		{
 			global $_CORE_MODULE;
 			
-			include($site_file_root.'modules/'.$_CORE_MODULE['name']."/language/$this->lang_name/$langfile");
+			include($site_file_root.'modules/'.$_CORE_MODULE['name']."/language/$this->lang_name/$lang_file");
+
 			return;
-		} 
+		}
 		
-		include($site_file_root."modules/$module/language/$this->lang_name/$langfile");		
+		include($site_file_root."modules/$module/language/$this->lang_name/$lang_file");		
 	}
 
+	function user_data_get($name)
+	{
+		if ($this->user_data_serialized)
+		{
+			$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : array();
+			$this->user_data_serialized = false;
+		}
+
+		return (empty($this->data['user_data'][$name])) ? false : $this->data['user_data'][$name];
+	}
+
+	function user_data_kill($name)
+	{
+		if ($this->user_data_serialized)
+		{
+			$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : '';
+			$this->user_data_serialized = false;
+		}
+
+		if (empty($this->data['user_data'][$name]))
+		{
+			return;
+		}
+
+		unset($this->data['user_data'][$name]);
+		$this->save_session = true;
+	}
+
+	function user_data_set($name, $value, $save = false)
+	{
+		if ($this->user_data_serialized)
+		{
+			$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : '';
+			$this->user_data_serialized = false;
+		}
+
+		/*if (!empty($this->data['user_data'][$name]) && ($this->data['user_data'][$name] == $value))
+		{
+			return;
+		}*/
+
+		$this->data['user_data'][$name] = $value;
+
+		if ($save)
+		{
+		}
+	}
+
+	function set_cookie($name, $cookiedata, $cookietime)
+	{
+		global $_CORE_CONFIG;
+
+		if ($this->server_local)
+		{
+			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path']);
+		}
+		else
+		{
+			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
+		}
+	}
+	
+///////////////////
+// TO BE REMOVED //
+///////////////////
+	function img($img, $alt = '', $width = false, $suffix = '')
+	{
+		$img = $this->get_img($img);
+
+		$width = ($width || $img['width']) ? ' width="' . (($width) ? $width : $img['width']) . '"' : '';
+		$height = ($img['height']) ? ' height="' . $img['height'] . '"' : '';
+
+		return '<img src=' . $img['src'] .$width . $height .' alt="' . $alt . '" title="' . $alt . '" />';
+	}
+	function optionget($key, $data = false)
+	{
+		return $this->user_data_get($key);
+	}
+
+	function optionset($key, $value, $data = false)
+	{
+		return $this->user_data_set($key, $value);
+	}
+	
 	function format_date($gmepoch, $format = false, $forcedate = false)
 	{
 		static $midnight;
@@ -392,98 +438,13 @@ class core_user extends sessions
 			$format = substr($format, 0, strpos($format, '|')) . '||' . substr(strrchr($format, '|'), 1);
 			return str_replace('||', $this->lang['datetime']['TODAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
 		}
-		else if ($gmepoch > $midnight - 86400 && !$forcedate)
+		elseif ($gmepoch > $midnight - 86400 && !$forcedate)
 		{
 			$format = substr($format, 0, strpos($format, '|')) . '||' . substr(strrchr($format, '|'), 1);
 			return str_replace('||', $this->lang['datetime']['YESTERDAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
 		}
 	}
-	
-	// Get profile fields for user
-	function get_profile_fields($user_id)
-	{
-		global $user, $_CLASS;
 
-		if (isset($this->profile_fields))
-		{
-			return;
-		}
-
-		// TODO: think about adding this to the session code too?
-		// Grabbing all user specific options (all without the need of special complicate adding to the sql query) might be useful...
-		$sql = 'SELECT * FROM ' . PROFILE_DATA_TABLE . "
-			WHERE user_id = $user_id";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-
-		$this->profile_fields = (!($row = $_CLASS['core_db']->sql_fetchrow($result))) ? array() : $row;
-		$_CLASS['core_db']->sql_freeresult($result);
-	}
-	
-	//remove this
-	function get_iso_lang_id()
-	{
-		global $_CLASS;
-
-		if (isset($this->lang_id))
-		{
-			return $this->lang_id;
-		}
-
-		if (!$this->lang_name)
-		{
-			$this->lang_name = $MAIN_CFG['global']['default_lang'];
-		}
-
-		$sql = 'SELECT lang_id
-			FROM ' . LANG_TABLE . "
-			WHERE lang_iso = '{$this->lang_name}'";
-		$result = $_CLASS['core_db']->sql_query($sql);
-		
-		$lang_id = (int) $_CLASS['core_db']->sql_fetchfield('lang_id', 0, $result);
-		$_CLASS['core_db']->sql_freeresult($result);
-		
-		return $lang_id;
-	}
-	
-	// Start code for checking/setting option bit field for user table
-// Replace
-	function optionget($key, $data = false)
-	{
-		if (!isset($this->keyvalues[$key]))
-		{
-			$var = ($data) ? $data : $this->data['user_options'];
-			$this->keyvalues[$key] = ($var & 1 << $this->keyoptions[$key]) ? true : false;
-		}
-		return $this->keyvalues[$key];
-	}
-
-	function optionset($key, $value, $data = false)
-	{
-		$var = ($data) ? $data : $this->data['user_options'];
-
-		if ($value && !($var & 1 << $this->keyoptions[$key]))
-		{
-			$var += 1 << $this->keyoptions[$key];
-		}
-		else if (!$value && ($var & 1 << $this->keyoptions[$key]))
-		{
-			$var -= 1 << $this->keyoptions[$key];
-		}
-		else
-		{
-			return ($data) ? $var : false;
-		}
-
-		if (!$data)
-		{
-			$this->data['user_options'] = $var;
-			return true;
-		}
-		else
-		{
-			return $var;
-		}
-	}
 }
 
 ?>

@@ -37,9 +37,6 @@ define('STRIP', get_magic_quotes_gpc());
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
 
-$phpversion = explode('.', PHP_VERSION);
-$phpversion = intval($phpversion[0].$phpversion[1]);
-
 // Move to index files
 $base_memory_usage = function_exists('memory_get_usage') ? memory_get_usage() : 0;
            
@@ -78,7 +75,6 @@ $_CLASS['core_db']->return_on_error = true;
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
-//remove this config.
 if (($config = $_CLASS['core_cache']->get('config')) !== false)
 {
 	$sql = 'SELECT config_name, config_value
@@ -170,10 +166,17 @@ require($site_file_root.'includes/display/blocks.php');
 require($site_file_root.'includes/display/display.php');
 
 load_class(false, 'core_auth', 'auth_db');
+load_class(false, 'core_blocks');
 load_class(false, 'core_user');
 
 $_CLASS['core_user']->start();
 
+if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['only_registered'])
+{
+	// conformation image 
+	login_box(array('full_screen'	=> true));
+}
+		
 if ($_CLASS['core_user']->is_admin)
 {
 	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options'];	
@@ -188,60 +191,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here
 }
-
-// Do the theme
-$themeprev = get_variable('prevtheme', 'REQUEST', false);
-$theme = $_CLASS['core_user']->get_data('user_theme');
-
-if ($themeprev && ($themeprev != $theme) && check_theme($themeprev))
-{
-	$theme = $themeprev;
-	
-	if (!get_variable('prevtemp', 'REQUEST', false))
-	{
-		$_CLASS['core_user']->set_data('user_theme', $theme);
-	}
-}
-elseif (!$theme || !check_theme($theme))
-{
-	$theme = ($_CLASS['core_user']->data['user_theme']) ? $_CLASS['core_user']->data['user_theme'] : $_CORE_CONFIG['global']['default_theme'];     
-
-	if (!check_theme($theme))
-	{
-		if (check_theme($_CORE_CONFIG['global']['default_theme']))
-		{
-			$theme = $_CORE_CONFIG['global']['default_theme'];
-		}
-		else
-		{
-			// We need a theme, don't we ?
-			$handle = opendir('themes');
-			$theme = false;
-			
-			while ($file = readdir($handle))
-			{
-				if ($file{0} !== '.' && check_theme($file))
-				{
-					$theme = $file;
-					break;
-				}
-			}
-			closedir($handle);
-			
-			if (!$theme)
-			{
-				trigger_error('Something here');
-			}
-		}
-	}
-}
-
-require($site_file_root.'themes/'.$theme.'/index.php');
-
-load_class(false, 'core_display', 'theme_display');
-load_class(false, 'core_blocks');
-
-$_CLASS['core_display']->theme = $theme;
 
 /*
 if ((time() - $config['cache_gc']) > $config['cache_last_gc'])

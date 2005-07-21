@@ -87,8 +87,10 @@ if ($view && !$post_id)
 				AND p.post_time > $topic_last_read
 			ORDER BY p.post_time ASC";
 		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
-		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+		if (!$row)
 		{
 			// Setup user environment so we can process lang string
 			$_CLASS['core_user']->add_lang('viewtopic');
@@ -97,7 +99,6 @@ if ($view && !$post_id)
 			$message = $_CLASS['core_user']->lang['NO_UNREAD_POSTS'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id").'">', '</a>');
 			trigger_error($message);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
 
 		$unread_post_id = $post_id = $row['post_id'];
 		$topic_id = $row['topic_id'];
@@ -115,8 +116,10 @@ if ($view && !$post_id)
 				AND t.topic_last_post_time $sql_condition t2.topic_last_post_time
 			ORDER BY t.topic_last_post_time $sql_ordering";
 		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$_CLASS['core_db']->sql_freeresult($result);
 
-		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+		if (!$row)
 		{
 			$message = ($view == 'next') ? 'NO_NEWER_TOPICS' : 'NO_OLDER_TOPICS';
 			trigger_error($message);
@@ -135,16 +138,6 @@ if ($view && !$post_id)
 				$forum_id = $row['forum_id'];
 			}
 		}
-	}
-
-	// Check for global announcement correctness?
-	if ((!$row || !$row['forum_id']) && !$forum_id)
-	{
-		trigger_error('NO_TOPIC');
-	}
-	else if ($row['forum_id'])
-	{
-		$forum_id = $row['forum_id'];
 	}
 }
 
@@ -256,14 +249,6 @@ if (isset($_GET['e']))
 {
 	$jump_to = request_var('e', 0);
 
-	/* I don't see the point in this
-	$redirect_url = "Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id";
-	
-	if ($_CLASS['core_user']->data['user_id'] == ANONYMOUS)
-	{
-		login_box(array('redirect' => generate_link($redirect_url . "&p=$post_id&e=$jump_to"), 'explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_TOPIC']));
-	}*/
-	
 	if ($jump_to > 0)
 	{
 		$redirect_url = "Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id";
@@ -1370,14 +1355,10 @@ if ($view == 'print')
 	
 }
 
-$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['VIEW_TOPIC'] .' &gt; ' . $topic_title);
-
 page_header();
 
 make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
 $_CLASS['core_template']->display('modules/Forums/viewtopic_body.html');
-
-$_CLASS['core_display']->display_footer();
 
 // FUNCTIONS
 

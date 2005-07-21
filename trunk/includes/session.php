@@ -12,11 +12,6 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-/*
-	Contains Parts Based from phpBB3
-	copyright (c) 2005 phpBB Group 
-	license http://opensource.org/licenses/gpl-license.php GNU Public License 
-*/
 
 class sessions
 {
@@ -202,15 +197,13 @@ class sessions
 		return true;
 	}
 
-	// Destroy a session
-	function session_destroy($session_id = false, $return = false)
+	function session_destroy($session_id = false)
 	{
 		global $_CLASS;
 
 		if (!$session_id)
 		{
 			$session_id = $this->data['session_id'];
-			$id = $this->data['user_id'];
 			
 			$this->set_cookie('data', '', $this->time - 31536000);
 			$this->set_cookie('sid', '', $this->time - 31536000);
@@ -219,7 +212,7 @@ class sessions
 			{
 				$sql = 'UPDATE ' . USERS_TABLE . '
 					SET user_lastvisit = ' . $this->data['session_time'] . '
-					WHERE user_id = ' . $id;
+					WHERE user_id = ' . $this->data['user_id'];
 				$_CLASS['core_db']->sql_query($sql);
 			}
 		}
@@ -228,132 +221,23 @@ class sessions
 			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id)."'";
 
 		$_CLASS['core_db']->sql_query($sql);
-
-		if ($return)
-		{
-			return;
-		}
-
-		// Reset some basic data immediately
-		$sql = 'SELECT *
-			FROM ' . USERS_TABLE . '
-			WHERE user_id = ' . ANONYMOUS;
-		$result = $_CLASS['core_db']->sql_query($sql);
-	
-		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		$this->data['session_id'] = '';
-		$this->data['session_time'] = $this->data['session_admin'] = 0;
-
-		$this->sid_link = $this->is_user = $this->is_bot = $this->is_admin = false;
 	}
 	
-	// Garbage collection
 	function gc($time)
 	{
-		global $_CLASS, $_CORE_CONFIG;
-
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-			WHERE session_user_id = ' . ANONYMOUS . '
-				AND session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
-		$_CLASS['core_db']->sql_query($sql);
+			WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 
-		switch (SQL_LAYER)
-		{
-			case 'mysql4':
-			case 'mysqli':
-			
-				// Keep only the most recent session for each user
-				// Note: if the user is currently browsing the board, his
-				// last_visit field won't be updated, which I believe should be
-				// the normal behavior anyway
-				$_CLASS['core_db']->sql_return_on_error(TRUE);
-
-				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					USING ' . SESSIONS_TABLE . ' s1, ' . SESSIONS_TABLE . ' s2
-					WHERE s1.session_user_id = s2.session_user_id
-						AND s1.session_time < s2.session_time';
-				$_CLASS['core_db']->sql_query($sql);
-
-				$_CLASS['core_db']->sql_return_on_error(FALSE);
-
-				// Update last visit time
-				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
-					SET u.user_lastvisit = s.session_time, u.user_lastpage = s.session_page
-					WHERE s.session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
-						AND u.user_id = s.session_user_id';
-				$_CLASS['core_db']->sql_query($sql);
-
-				// Delete everything else now
-				$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
-				$_CLASS['core_db']->sql_query($sql);
-
-				set_config('session_last_gc', $time);
-				break;
-
-			default:
-// need one for postgres
-
-				// Get expired sessions, only most recent for each user
-				$sql = 'SELECT session_user_id, session_page, MAX(session_time) AS recent_time
-					FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
-						GROUP BY session_user_id, session_page';
-
-				$result = $_CLASS['core_db']->sql_query_limit($sql, 5);
-				$row = $_CLASS['core_db']->sql_fetchrow($result);
-				
-				if (!$row)
-				{
-					return set_config('session_last_gc', $time);
-				}
-				
-				$user_id = array();
-
-				do
-				{
-					$sql = 'UPDATE ' . USERS_TABLE . '
-						SET user_lastvisit = ' . $row['recent_time'] . ", user_lastpage = '" . $_CLASS['core_db']->sql_escape($row['session_page']) . "'
-						WHERE user_id = " . $row['session_user_id'];
-					$_CLASS['core_db']->sql_query($sql);
-
-					$user_id[] = $row['session_user_id'];
-				}
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
-
-				$_CLASS['core_db']->sql_freeresult($result);
-
-
-				if (count($user_id) < 5)
-				{
-					$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-						WHERE session_time < " . ($time - $_CORE_CONFIG['server']['session_length']);
-
-					set_config('session_last_gc', $time);
-				}
-				else
-				{
-					$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-						WHERE session_user_id IN ($del_user_id)
-							AND session_time < " . ($time - $_CORE_CONFIG['server']['session_length']);
-				}
-
-				$_CLASS['core_db']->sql_query($sql);
-
-				break;
-		}
-
-		return;
+		$result = $_CLASS['core_db']->sql_query($sql);
+		$row = $_CLASS['core_db']->sql_fetchrow($result);
 	}
 
-	function get_data($name)
+	function session_data_get($name)
 	{
 		return (empty($this->data['session_data'][$name])) ? false : $this->data['session_data'][$name];
 	}
 
-	function kill_data($name)
+	function session_data_remove($name)
 	{
 		if (empty($this->data['session_data'][$name]))
 		{
@@ -364,7 +248,7 @@ class sessions
 		$this->save_session = true;
 	}
 
-	function set_data($name, $value, $force_save = false)
+	function session_data_set($name, $value, $force_save = false)
 	{
 		if (!empty($this->data['session_data'][$name]) && ($this->data['session_data'][$name] == $value))
 		{
@@ -402,20 +286,6 @@ class sessions
 		$_CLASS['core_db']->sql_query($sql);
 
 		$this->session_save = false;
-	}
-
-	function set_cookie($name, $cookiedata, $cookietime)
-	{
-		global $_CORE_CONFIG;
-
-		if ($this->server_local)
-		{
-			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path']);
-		}
-		else
-		{
-			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
-		}
 	}
 }
 

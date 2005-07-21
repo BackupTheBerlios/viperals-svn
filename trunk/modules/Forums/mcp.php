@@ -27,7 +27,6 @@ if (!defined('VIPERAL'))
     die;
 }
 
-
 require_once($site_file_root.'includes/forums/functions_admin.php');
 
 // ---------

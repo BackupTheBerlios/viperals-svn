@@ -125,24 +125,9 @@ $_CLASS['core_template']->assign(array(
 
 
 $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', ($mode == 'bbcode'));
+
 page_header();
 
-if ($mode == 'bbcode')
-{
-	$_CLASS['core_template']->display('modules/Forums/faq_body.html');
-	
-	script_close();
-	exit;
-}
-else
-{
-	$_CLASS['core_display']->display_head($l_title);
-
-	make_jumpbox(generate_link('Forums&amp;file=viewforum'));
-	
-	$_CLASS['core_template']->display('modules/Forums/faq_body.html');
-	
-	$_CLASS['core_display']->display_footer();
-}
+$_CLASS['core_template']->display('modules/Forums/faq_body.html');
 
 ?>

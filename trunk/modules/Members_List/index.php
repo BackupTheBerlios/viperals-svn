@@ -1152,21 +1152,7 @@ switch ($mode)
 $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', $window);
 page_header();
 
-if (!$window)
-{
-	$_CLASS['core_display']->display_head($page_title);
-
-	$_CLASS['core_template']->display('modules/Members_List/'.$template_html);
-
-	$_CLASS['core_display']->display_footer();
-}
-else
-{
-	$_CLASS['core_template']->display('modules/Members_List/'.$template_html);
-	script_close();
-	
-	exit;
-}
+$_CLASS['core_template']->display('modules/Members_List/'.$template_html);
 
 // ---------
 // FUNCTIONS

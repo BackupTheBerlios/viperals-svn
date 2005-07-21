@@ -480,14 +480,10 @@ else
 
 }
 
-$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['VIEW_FORUM'] . ' &gt; ' . $forum_data['forum_name']);
-
 page_header();
 
 make_jumpbox(generate_link('Forums&amp;file=viewforum', $forum_id));
 
 $_CLASS['core_template']->display('modules/Forums/viewforum_body.html');
-
-$_CLASS['core_display']->display_footer();
 
 ?>

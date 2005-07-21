@@ -321,13 +321,9 @@ if ($report_post)
 	generate_forum_nav($report_data);
 }
 
-$_CLASS['core_display']->display_head(($report_post) ? $_CLASS['core_user']->lang['REPORT_POST'] : $_CLASS['core_user']->lang['REPORT_MESSAGE']);
-
 page_header();
 
 $_CLASS['core_template']->display('modules/Forums/report_body.html');
-
-$_CLASS['core_display']->display_footer();
 
 function report_notification($notify_user, $report_post, $report_data)
 {

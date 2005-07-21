@@ -36,7 +36,7 @@ class core_rss
 		$this->item_tags = (is_array($item_tags)) ? $item_tags : array('title', 'link', 'description', 'author');
 		$this->channel_tags = (is_array($channel_tags)) ? $channel_tags : array('title', 'link', 'description', 'author');
 	}
-	
+
 	function get_rss($url, $items_limit = 10)
 	{
 		return $this->get_rss_array($url, $items_limit);
@@ -48,7 +48,7 @@ class core_rss
 		
 		return array('data' => $this->rss_data, 'rss_other_data' => $this->rss_other_data);
 	}
-	
+
 	function get_rss_data($line = false)
 	{
 		if ($line)
@@ -61,7 +61,7 @@ class core_rss
 		}
 		return array_shift($this->rss_data);
 	}
-	
+
 	function get_rss_array($url, $items_limit = 10, $loop = 1)
 	{
 // add support for other schemes "ftp https"
@@ -70,10 +70,10 @@ class core_rss
 		{
 			return false;
 		}
-		
+
 		$loop++;
 		$this->items_limit = $items_limit - 1;
-		
+
 		$parsed_url = array('host' => '', 'path' => '/', 'port' => 80, 'query' => '', 'user' => false, 'pass' => false);
 		$parsed_url = array_merge($parsed_url, parse_url($url));
 		
@@ -89,8 +89,7 @@ class core_rss
 			return false;
 		}
 
-// Make sure ? doesn't case a problem if there isn't any query
-		fwrite($this->fp, 'GET '.$parsed_url['path'].'?'.$parsed_url['query']." HTTP/1.0\r\n");
+		fwrite($this->fp, 'GET '.$parsed_url['path'].(($parsed_url['query']) ? '?'.$parsed_url['query'] : '')." HTTP/1.0\r\n");
 		fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
 		
 		if (extension_loaded('zlib'))
@@ -136,6 +135,7 @@ class core_rss
 					
 						if ($new_url != $url)
 						{
+							// I don't think I want to do this
 							return $this->get_rss_array($new_url, $items_limit, $loop);
 						}
 						return false;
@@ -191,8 +191,6 @@ class core_rss
 			$data = gzinflate(substr($data,10));
 		}
 		
-		//$data = str_replace('â', '', $data);
-
 		$status = xml_parse($this->rss_parser, $data, true);
 		
 		if (!$status)
@@ -290,8 +288,8 @@ class core_rss
 // Fix Undefined Notice
 		if ($this->title_type)
 		{
-			$cdata = htmlspecialchars(strtr($cdata, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES))));
-			
+			$cdata = htmlspecialchars(html_entity_decode($cdata));
+
 			if ($this->item_open)
 			{
 				if (empty($this->rss_data[$this->item][$this->title_type]))

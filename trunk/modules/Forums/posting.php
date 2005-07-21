@@ -1183,7 +1183,6 @@ else
 }
 
 // Output page ...
-$_CLASS['core_display']->display_head($page_title);
 
 page_header();
 
@@ -1199,8 +1198,6 @@ if ($mode == 'reply' || $mode == 'quote')
 make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 
 $_CLASS['core_template']->display('modules/Forums/posting_body.html');
-
-$_CLASS['core_display']->display_footer();
 
 // ---------
 // FUNCTIONS

@@ -3,14 +3,15 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
 //  of the GNU General Public License version 2					//
-//																//
+//	Ãµ															//
 //**************************************************************//
-// Add output caching remove smarties html caching
 
 class cache
 {

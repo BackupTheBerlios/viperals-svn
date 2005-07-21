@@ -490,238 +490,119 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 // Display Attachments
 function display_attachments($forum_id, $blockname, &$attachment_data, &$update_count, $force_physical = false, $return = false)
 {
-	global $extensions, $site_file_root, $attachment_tpl;
 	global $config, $_CLASS;
 
-//	$starttime = explode(' ', microtime());
-//	$starttime = $starttime[1] + $starttime[0];
 	$return_tpl = array();
 
-	$blocks = array(ATTACHMENT_CATEGORY_WM => 'WM_STREAM', ATTACHMENT_CATEGORY_RM => 'RM_STREAM', ATTACHMENT_CATEGORY_THUMB => 'THUMBNAIL', ATTACHMENT_CATEGORY_IMAGE => 'IMAGE');
-
-	if (!isset($attachment_tpl))
-	{
-		if (($attachment_tpl = $_CLASS['core_cache']->get('attachment_tpl')) === false)
-		{
-			$attachment_tpl = array();
-
-			// Generate Template
-			$template_filename = (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html')) ? 'themes/'.$_CLASS['core_display']->theme.'/template/modules/Forums/attachment.html' : 'includes/templates/modules/Forums/attachment.html';
-			$template_filename = $site_file_root.$template_filename;
-
-			if (!($fp = @fopen($template_filename, 'rb')))
-			{
-				trigger_error('Could not load template file "' . $template_filename . '"');
-			}
-			$attachment_template = fread($fp, filesize($template_filename));
-			@fclose($fp);
-
-			// replace \ with \\ and then ' with \'.
-			$attachment_template = str_replace('\\', '\\\\', $attachment_template);
-			$attachment_template = str_replace("'", "\'", $attachment_template);
-			
-			preg_match_all('#<!-- BEGIN (.*?) -->(.*?)<!-- END (.*?) -->#s', $attachment_template, $tpl);
-			
-			foreach ($tpl[1] as $num => $block_name)
-			{
-				$attachment_tpl[$block_name] = $tpl[2][$num];
-			}
-			unset($tpl);
-
-			$_CLASS['core_cache']->put('attachment_tpl', $attachment_tpl);
-		}
-	}
-	
-	if (empty($extensions) || !is_array($extensions))
-	{
-		$extensions = array();
-		obtain_attach_extensions($extensions);
-	}
+	$extensions = obtain_attach_extensions();
 
 	foreach ($attachment_data as $attachment)
 	{
-		// Some basics...
 		$attachment['extension'] = strtolower(trim($attachment['extension']));
 		$filename = $config['upload_path'] . '/' . basename($attachment['physical_filename']);
+		// to easy isn't it ?
 		$thumbnail_filename = $config['upload_path'] . '/thumb_' . basename($attachment['physical_filename']);
 
-		$upload_image = '';
+		$size_lang = ($attachment['filesize'] >= 1048576) ? $_CLASS['core_user']->lang['MB'] : ( ($attachment['filesize'] >= 1024) ? $_CLASS['core_user']->lang['KB'] : $_CLASS['core_user']->lang['BYTES'] );
+		$filesize = ($attachment['filesize'] >= 1048576) ? round((round($attachment['filesize'] / 1048576 * 100) / 100), 2) : (($attachment['filesize'] >= 1024) ? round((round($attachment['filesize'] / 1024 * 100) / 100), 2) : $attachment['filesize']);
 
-		if ($_CLASS['core_user']->img('icon_attach', '') && !$extensions[$attachment['extension']]['upload_icon'])
-		{
-			$upload_image = $_CLASS['core_user']->img('icon_attach', '');
-		}
-		else if ($extensions[$attachment['extension']]['upload_icon'])
-		{
-			$upload_image = '<img src="' . $config['upload_icons_path'] . '/' . trim($extensions[$attachment['extension']]['upload_icon']) . '" alt="" border="0" />';
-		}
-	
-		$filesize = $attachment['filesize'];
-		$size_lang = ($filesize >= 1048576) ? $_CLASS['core_user']->lang['MB'] : ( ($filesize >= 1024) ? $_CLASS['core_user']->lang['KB'] : $_CLASS['core_user']->lang['BYTES'] );
-
-		$filesize = ($filesize >= 1048576) ? round((round($filesize / 1048576 * 100) / 100), 2) : (($filesize >= 1024) ? round((round($filesize / 1024 * 100) / 100), 2) : $filesize);
-
-		$display_name = basename($attachment['real_filename']);
-		$comment = str_replace("\n", '<br />', censor_text($attachment['comment']));
+		$data['icon'] = ($extensions[$attachment['extension']]['upload_icon']) ? '<img src="' . $config['upload_icons_path'] . '/' . trim($extensions[$attachment['extension']]['upload_icon']) . '" alt="" border="0" />' : false;
+		$data['name'] = basename($attachment['real_filename']);
+		$data['comment'] = str_replace("\n", '<br />', censor_text($attachment['comment']));
 
 		$denied = false;
 			
 		if (!extension_allowed($forum_id, $attachment['extension'], $extensions))
 		{
-			$denied = true;
+			$data['category'] = 'DENIED';
+			$data['lang'] = sprintf($_CLASS['core_user']->get_lang('EXTENSION_DISABLED_AFTER_POSTING'), $attachment['extension']);
 
-			$template_array['VAR'] = array('{L_DENIED}');
-			$template_array['VAL'] = array(sprintf($_CLASS['core_user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
+			continue;
+		}
 
-			$tpl = str_replace($template_array['VAR'], $template_array['VAL'], $attachment_tpl['DENIED']);
+		$display_cat = $extensions[$attachment['extension']]['display_cat'];
 
-			// Replace {L_*} lang strings
-			$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['core_user']->lang['\$1'])) ? \$_CLASS['core_user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
-
-			if (!$return)
+		if ($display_cat == ATTACHMENT_CATEGORY_IMAGE)
+		{
+			if ($attachment['thumbnail'])
 			{
-				$_CLASS['core_template']->assign_vars_array($blockname, array(
-					'DISPLAY_ATTACHMENT' => $tpl)
-				);
+				$display_cat = ATTACHMENT_CATEGORY_THUMB;
 			}
 			else
 			{
-				$return_tpl[] = $tpl;
-			}
-		} 
-
-		if (!$denied)
-		{
-			$l_downloaded_viewed = '';
-			$download_link = '';
-			$additional_array['VAR'] = $additional_array['VAL'] = array();
-				
-			$display_cat = $extensions[$attachment['extension']]['display_cat'];
-
-			if ($display_cat == ATTACHMENT_CATEGORY_IMAGE)
-			{
-				if ($attachment['thumbnail'])
+				if ($config['img_display_inlined'])
 				{
-					$display_cat = ATTACHMENT_CATEGORY_THUMB;
+					if ($config['img_link_width'] || $config['img_link_height'])
+					{
+						list($width, $height) = getimagesize($filename);
+
+						$display_cat = (!$width && !$height) ? ATTACHMENT_CATEGORY_IMAGE : (($width <= $config['img_link_width'] && $height <= $config['img_link_height']) ? ATTACHMENT_CATEGORY_IMAGE : ATTACHMENT_CATEGORY_NONE);
+					}
 				}
 				else
 				{
-					if ($config['img_display_inlined'])
-					{
-						if ($config['img_link_width'] || $config['img_link_height'])
-						{
-							list($width, $height) = getimagesize($filename);
-
-							$display_cat = (!$width && !$height) ? ATTACHMENT_CATEGORY_IMAGE : (($width <= $config['img_link_width'] && $height <= $config['img_link_height']) ? ATTACHMENT_CATEGORY_IMAGE : ATTACHMENT_CATEGORY_NONE);
-						}
-					}
-					else
-					{
-						$display_cat = ATTACHMENT_CATEGORY_NONE;
-					}
+					$display_cat = ATTACHMENT_CATEGORY_NONE;
 				}
 			}
-
-			switch ($display_cat)
-			{
-				// Images
-				case ATTACHMENT_CATEGORY_IMAGE:
-					$img_source = $filename;
-					$update_count[] = $attachment['attach_id'];
-
-					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
-					$download_link = $img_source;
-					break;
-					
-				// Images, but display Thumbnail
-				case ATTACHMENT_CATEGORY_THUMB:
-					$thumb_source = $thumbnail_filename;
-
-					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
-					$download_link = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
-
-					$additional_array['VAR'][] = '{THUMB_IMG}';
-					$additional_array['VAL'][] = $thumb_source;
-					break;
-
-				// Windows Media Streams
-				case ATTACHMENT_CATEGORY_WM:
-					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
-					$download_link = $filename;
-
-					// Viewed/Heared File ... update the download count (download.php is not called here)
-					$update_count[] = $attachment['attach_id'];
-					break;
-
-				// Real Media Streams
-				case ATTACHMENT_CATEGORY_RM:
-					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
-					$download_link = $filename;
-
-					$additional_array['VAR'][] = '{U_FORUM}';
-					$additional_array['VAL'][] = generate_board_url();
-					$additional_array['VAR'][] = '{ATTACH_ID}';
-					$additional_array['VAL'][] = $attachment['attach_id'];
-
-					// Viewed/Heared File ... update the download count (download.php is not called here)
-					$update_count[] = $attachment['attach_id'];
-					break;
-/*			
-				// Macromedia Flash Files
-				case SWF_CAT:
-					list($width, $height) = swf_getdimension($filename);
-
-					$l_downloaded_viewed = $_CLASS['core_user']->lang['VIEWED'];
-					$download_link = $filename;
-					
-					$additional_array = array(
-						'WIDTH' => $width,
-						'HEIGHT' => $height
-					);
-
-					// Viewed/Heared File ... update the download count (download.php is not called here)
-					$update_count[] = $attachment['attach_id'];
-					break;
-*/
-				default:
-					$l_downloaded_viewed = $_CLASS['core_user']->lang['DOWNLOADED'];
-					$download_link = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
-					break;
-			}
-
-			$l_download_count = ($attachment['download_count'] == 0) ? $_CLASS['core_user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
-
-			$current_block = ($display_cat) ? $blocks[$display_cat] : 'FILE';
-			
-			$template_array['VAR'] = array_merge($additional_array['VAR'], array(
-				'{DOWNLOAD_NAME}', '{FILESIZE}', '{SIZE_VAR}', '{COMMENT}', '{U_DOWNLOAD_LINK}', '{UPLOAD_IMG}', '{L_DOWNLOADED_VIEWED}', '{L_DOWNLOAD_COUNT}')
-			);
-
-			$template_array['VAL'] = array_merge($additional_array['VAL'], array(
-				$display_name, $filesize, $size_lang, $comment, $download_link, $upload_image, $l_downloaded_viewed, $l_download_count)
-			);
-
-			$tpl = str_replace($template_array['VAR'], $template_array['VAL'], $attachment_tpl[$current_block]);
-
-			// Replace {L_*} lang strings
-			$tpl = preg_replace('/{L_([A-Z_]+)}/e', "(!empty(\$_CLASS['core_user']->lang['\$1'])) ? \$_CLASS['core_user']->lang['\$1'] : ucwords(strtolower(str_replace('_', ' ', '\$1')))", $tpl);
-
-			if (!$return)
-			{
-				$_CLASS['core_template']->assign_vars_array($blockname, array(
-					'DISPLAY_ATTACHMENT' => $tpl)
-				);
-			}
-			else
-			{
-				$return_tpl[] = $tpl;
-			}
 		}
+
+		switch ($display_cat)
+		{
+			// Images
+			case ATTACHMENT_CATEGORY_IMAGE:
+				$data['category'] = 'IMAGE';
+
+				$data['image_src'] = $filename;
+				$data['link'] = $img_source;
+
+				$update_count[] = $attachment['attach_id'];
+			break;
+				
+			// Images, but display Thumbnail
+			case ATTACHMENT_CATEGORY_THUMB:
+				$data['category'] = 'THUMBNAIL';
+
+				$data['image_src'] = $thumbnail_filename;
+				$data['link'] = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
+			break;
+
+			// Windows Media Streams
+			case ATTACHMENT_CATEGORY_WM:
+				$data['category'] = 'WM_STREAM';
+				$data['link'] = $filename;
+
+				// Viewed/Heared File ... update the download count (download.php is not called here)
+				$update_count[] = $attachment['attach_id'];
+			break;
+
+			// Real Media Streams
+			case ATTACHMENT_CATEGORY_RM:
+				$data['category'] = 'RM_STREAM';
+				$data['link'] = $filename;
+
+				// Viewed/Heared File ... update the download count (download.php is not called here)
+				$update_count[] = $attachment['attach_id'];
+			break;
+
+			default:
+				$data['category'] = 'FILE';
+				$data['link'] = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
+			break;
+
+			$data['lang_count'] = ($attachment['download_count'] == 0) ? $_CLASS['core_user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
+		}
+
+		$datas[] = $data;
 	}
 
-	return $return_tpl;
-//	$mtime = explode(' ', microtime());
-//	$totaltime = $mtime[0] + $mtime[1] - $starttime;
+	if (!$return)
+	{
+		$_CLASS['core_template']->assign_vars_array($blockname, $datas);
+	}
+	else
+	{
+		return $data;
+	}
 }
 
 ?>

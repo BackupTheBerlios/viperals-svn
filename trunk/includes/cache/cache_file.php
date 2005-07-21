@@ -3,12 +3,14 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
 //  of the GNU General Public License version 2					//
-//																//
+//	Ãµ															//
 //**************************************************************//
 
 class cache_file extends cache
@@ -37,7 +39,7 @@ class cache_file extends cache
 			if (empty($this->vars[$name]) || time() > $this->expires[$name])
 			{
 				$this->destroy($name);
-				return $this->vars[$name] = false;
+				return $this->vars[$name] = null;
 			}
 
 			return $this->vars[$name];

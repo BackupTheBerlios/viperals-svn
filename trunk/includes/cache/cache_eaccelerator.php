@@ -3,15 +3,15 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
 //  of the GNU General Public License version 2					//
-//																//
+//	Ãµ															//
 //**************************************************************//
-// Add an error so people know to change the keys, if they have a lucky shared server with this enabled
-// Doesn't matter on dedicated servers but it doesn't hurt.
 
 class cache_eaccelerator extends cache
 {
@@ -29,14 +29,12 @@ class cache_eaccelerator extends cache
 	{
 		$this->vars[$name] = eaccelerator_get($this->key.$name);
 
-		if (is_null($this->vars[$name]))
+		if (!is_null($this->vars[$name]))
 		{
-			return $this->vars[$name] = false;
+			$this->vars[$name] = unserialize($this->vars[$name]);
 		}
-		else
-		{	
-			return unserialize($this->vars[$name]);
-		}
+
+		return $this->vars[$name];
 	}
 
 	function put($name, $data, $ttl = 604800)

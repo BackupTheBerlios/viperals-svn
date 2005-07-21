@@ -16,6 +16,10 @@
 //Stemmers?
 //Find similar?
 //Relevancy?
+if (!defined('VIPERAL'))
+{
+    die;
+}
 
 $_CLASS['core_user']->add_lang('search');
 $_CLASS['core_user']->add_img();
@@ -951,7 +955,6 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 $_CLASS['core_db']->sql_freeresult($result);
 
 // Output the basic page
-$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SEARCH']);
 
 page_header();
 
@@ -959,6 +962,4 @@ make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 
 $_CLASS['core_template']->display('modules/Forums/search_body.html');
  
-$_CLASS['core_display']->display_footer();
-	
 ?>

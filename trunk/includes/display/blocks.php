@@ -4,7 +4,7 @@
 //**************************************************************//
 //																//
 //  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
+//  By Ryan Marshall ( Viperal )								//
 //																//
 //  http://www.viperal.com										//
 //																//

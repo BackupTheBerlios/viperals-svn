@@ -79,7 +79,7 @@ class core_auth
 
 			if (!$error && $_CORE_CONFIG['user']['enable_confirm'])
 			{
-				$code = $_CLASS['core_user']->get_data('confirmation_code');
+				$code = $_CLASS['core_user']->session_data_get('confirmation_code');
 				$confirm_code = get_variable('confirm_code', 'POST');
 	
 				if (!$code || !$confirm_code || $code !== $confirm_code)
@@ -124,7 +124,7 @@ class core_auth
 		if ($_CORE_CONFIG['user']['enable_confirm'])
 		{
 			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
-			$_CLASS['core_user']->set_data('confirmation_code', strtoupper(generate_string(6)));
+			$_CLASS['core_user']->session_data_set('confirmation_code', strtoupper(generate_string(6)));
 		}
 		else
 		{
