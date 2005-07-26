@@ -11,21 +11,25 @@
 //																//
 //**************************************************************//
 
-class db_mysql
+class db_mysqli
 {
 	var $link_identifier;
-	var $db_layer = 'mysql';
+	var $db_layer = 'mysqli';
 
-	var $query_result;
-	var $return_on_error = false;
-	var $transaction = false;
+	var $last_result;
+	var $return_on_error;
+	var $in_transaction;
 
 	var $queries_time = 0;
 	var $num_queries = 0;
 
-	var	$querylist = array();
-	var $querydetails = array();
+	var	$query_list = array();
+	var $query_details = array();
 	var $open_queries = array();
+
+	var $indexs = array();
+	var $fields = array();
+	var $table_name = false;
 
 	function connect($db)
 	{		
@@ -39,11 +43,11 @@ class db_mysql
 			$this->disconnect();
 		}
 
-		$this->link_identifier = ($db['persistency']) ? @mysql_pconnect($db['server'], $db['username'], $db['password']) : @mysql_connect($db['server'], $db['username'], $db['password']);
+		$this->link_identifier = ($db['persistency']) ? @mysqli_pconnect($db['server'], $db['username'], $db['password']) : @mysqli_connect($db['server'], $db['username'], $db['password']);
 
 		if ($this->link_identifier)
 		{
-			if (@mysql_select_db($db['database']))
+			if (@mysqli_select_db($this->link_identifier, $db['database']))
 			{
 				return $this->link_identifier;
 			}
@@ -67,7 +71,7 @@ class db_mysql
 			return;
 		}
 
-		@mysql_close($this->link_identifier);
+		@mysqli_close($this->link_identifier);
 		$this->link_identifier = false;
 	}
 
@@ -93,7 +97,7 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('START TRANSACTION', $this->link_identifier);
+				mysqli_autocommit($this->link_identifier, false);
 				$this->in_transaction = true;
 			break;
 
@@ -104,13 +108,14 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('COMMIT', $this->link_identifier);
-				
+				$result = mysqli_commit($this->link_identifier);
+
 				if (!$result)
 				{
-					mysql_query('ROLLBACK', $this->link_identifier);
+					mysqli_rollback($this->link_identifier);
 				}
-				
+
+				mysqli_autocommit($link, true);
 				$this->in_transaction = false;
 			break;
 
@@ -120,7 +125,9 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('ROLLBACK', $this->link_identifier);
+				$result = mysqli_rollback($this->link_identifier);
+
+				mysqli_autocommit($this->link_identifier, true);
 				$this->in_transaction = false;
 			break;
 		}
@@ -136,7 +143,7 @@ class db_mysql
 		}
 
 		global $_CLASS, $site_file_root;
-			
+
 		$this->num_queries++;
 		$this->last_query = $query;
 
@@ -161,15 +168,10 @@ class db_mysql
 		}
 		elseif (strpos($query, 'SELECT') !== false)
 		{
-			$this->open_queries[(int) $this->last_result] = $this->last_result;
+			$this->open_queries[(string) $this->last_result] = $this->last_result;
 		}
 
 		return $this->last_result;
-	}
-
-	function sql_query($query = false)
-	{
-		return @mysql_query($query, $this->link_identifier);
 	}
 
 	function query_limit($query = false, $total = false, $offset = 0, $backtrace = false) 
@@ -193,67 +195,79 @@ class db_mysql
 
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
-		
+
 		return $this->query($query, $backtrace);
+	}
+
+	function sql_query($query = false)
+	{
+		return mysqli_query($this->link_identifier, $query);
 	}
 
 	/*
 		Boy do I like this but it phpBB's, may have to do something similar
 	*/
-	function sql_build_array($query, $assoc_ary = false)
+	function sql_build_array($query, $array = false)
 	{
-		if (!is_array($assoc_ary))
+		if (!is_array($array))
 		{
 			return false;
 		}
 
-		$fields = array();
-		$values = array();
+		$fields = $values = array();
 
 		if ($query == 'INSERT')
 		{
-			foreach ($assoc_ary as $key => $var)
+			foreach ($array as $key => $value)
 			{
 				$fields[] = $key;
 
-				if (is_null($var))
+				if (is_numeric($value))
+				{
+					$values[] = $value;
+				}
+				elseif (is_string($value))
+				{
+					$values[] = "'" . $this->escape($value) . "'";
+				}
+				elseif (is_null($value))
 				{
 					$values[] = 'NULL';
 				}
-				elseif (is_string($var))
+				elseif (is_bool($value))
 				{
-					$values[] = "'" . $this->escape($var) . "'";
-				}
-				else
-				{
-					$values[] = (is_bool($var)) ? intval($var) : $var;
+					$values[] = ($value) ? 1 : 0;
 				}
 			}
 
-			$query = ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
+			return ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
 		}
-		else if ($query == 'UPDATE' || $query == 'SELECT')
+		elseif ($query == 'UPDATE' || $query == 'SELECT')
 		{
 			$values = array();
-			foreach ($assoc_ary as $key => $var)
+			foreach ($array as $key => $value)
 			{
-				if (is_null($var))
+				if (is_numeric($value))
+				{
+					$values[] = $key.' = '.$value;
+				}
+				elseif (is_string($value))
+				{
+					$values[] = "$key = '" . $this->escape($value) . "'";
+				}
+				elseif (is_null($var))
 				{
 					$values[] = "$key = NULL";
 				}
-				elseif (is_string($var))
+				elseif (is_bool($value))
 				{
-					$values[] = "$key = '" . $this->escape($var) . "'";
+					$values[] = $key.' = '.(($value) ? 1 : 0);
 				}
-				else
-				{
-					$values[] = (is_bool($var)) ? "$key = " . intval($var) : "$key = $var";
-				}
-			}
-			$query = implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
-		}
 
-		return $query;
+			}
+
+			return implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
+		}
 	}
 
 	function num_rows($query_id = false)
@@ -263,7 +277,7 @@ class db_mysql
 			return 0; 
 		}
 
-		return mysql_num_rows($query_id);
+		return mysqli_num_rows($query_id);
 	}
 
 	function affected_rows()
@@ -273,70 +287,68 @@ class db_mysql
 			return 0; 
 		}
 
-		$num = mysql_affected_rows($this->link_identifier);
+		$num = mysqli_affected_rows($this->link_identifier);
 
 		return (!$num || $num == -1) ? 0 : $num;
 	}
 
-	function fetch_row_assoc($query_id = false)
+	function fetch_row_assoc($result = false)
 	{
 		global $_CLASS;
 
-		if (!$query_id || !$this->link_identifier)
+		if (!$result || !$this->link_identifier)
 		{
 			return false;
 		}
 
-		return @mysql_fetch_assoc($query_id);
+		return @mysqli_fetch_assoc($result);
 	}
 
-	function fetch_row_num($query_id = false)
+	function fetch_row_num($result = false)
 	{
-		if (!$query_id || !$this->link_identifier)
+		if (!$result || !$this->link_identifier)
 		{
 			return false;
 		}
 
-		return @mysql_fetch_row($query_id);
+		return @mysqli_fetch_row($result);
 	}
 
-	function fetch_row_both($query_id = false)
+	function fetch_row_both($result = false)
 	{
-		if (!$query_id || !$this->link_identifier)
+		if (!$result || !$this->link_identifier)
 		{
 			return false;
 		}
 
-		return @mysql_fetch_array($query_id);
+		return @mysqli_fetch_array($result);
 	}
-	
-	function next_id()
+
+	function last_insert_id()
 	{
-		return ($this->link_identifier) ? @mysql_insert_id($this->link_identifier) : false;
+		return ($this->link_identifier) ? @mysqli_insert_id($this->link_identifier) : false;
 	}
 
 	function free_result($query_id = false)
 	{
-		if (!$query_id || !isset($this->open_queries[(int) $query_id]) || !$this->link_identifier) 
+		if (!$query_id || !isset($this->open_queries[(string) $query_id]) || !$this->link_identifier) 
 		{ 
 			return false; 
 		}
 
-		unset($this->open_queries[(int) $query_id]);
+		unset($this->open_queries[(string) $query_id]);
 
-		return @mysql_free_result($query_id);
+		return @mysqli_free_result($query_id);
 	}
 
 	function escape($text)
 	{
-		if (function_exists('mysql_real_escape_string')
-		{
-			return mysql_real_escape_string($text);
+		if (!$this->link_identifier)
+		{ 
+			return false; 
 		}
-		else
-		{
-			return mysql_escape_string($text);
-		}
+		
+		return mysqli_real_escape_string($this->link_identifier, $text);
 	}
 
 	function optimize_tables($table = '')
@@ -362,7 +374,7 @@ class db_mysql
 				}
 			}
 
-			$this->sql_freeresult($result);
+			$this->free_result($result);
 		}
 
 		if ($table)
@@ -373,18 +385,18 @@ class db_mysql
 
 	function _error($sql = '', $backtrace)
 	{
-		if (!$this->return_on_error)
+		if ($this->return_on_error)
 		{
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u> [ ' . SQL_LAYER . ' ]<br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
+		$message = '<u>SQL ERROR</u><br /><br />' . @mysqli_error($this->link_identifier) . '<br /><br />File: <br/>'.$backtrace['file'].'<br/><br />Line:<br/>'.$backtrace['line'].'<br /><br /><u>SQL</u><br /><br />' . $sql .'<br />';
 
-		if ($this->transaction)
+		if ($this->in_transaction)
 		{
-			$this->sql_transaction('rollback');
+			$this->transaction('rollback');
 		}
-		
+
 		trigger_error($message, E_USER_ERROR);
 	}
 
@@ -418,17 +430,17 @@ class db_mysql
 
 					if (preg_match('/^SELECT/', $explain_query))
 					{
-						if ($result = mysql_query("EXPLAIN $explain_query", $this->link_identifier))
+						if ($result = @mysqli_query($this->link_identifier, "EXPLAIN $explain_query"))
 						{
-							while ($row = mysql_fetch_assoc($result))
+							while ($row = @mysqli_fetch_assoc($result))
 							{
-								$this->querydetails[$this->num_queries][] = $row;
+								$this->query_details[$this->num_queries][] = $row;
 							}
 						}
 					}
 					else
 					{
-						$this->querydetails[$this->num_queries][] = '';
+						$this->query_details[$this->num_queries][] = '';
 					}
 				}
 
@@ -451,15 +463,14 @@ class db_mysql
 
 						if (preg_match('/^(UPDATE|DELETE|REPLACE)/', $this->last_query))
 						{
-							$affected = $this->affected_rows($this->query_result);
+							$affected = $this->affected_rows($this->last_result);
 						}
 						
-						$this->querylist[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'affected' => $affected, 'time' => ($end_time - $start_time));
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'affected' => $affected, 'time' => ($end_time - $start_time));
 					}
 					else
 					{
-						$error = mysql_error();
-						$this->querylist[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> $error['code'], 'errorcode' => $error['message']);
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> mysqli_error($this->link_identifier));
 					}
 				}
 			break;
@@ -563,9 +574,8 @@ class db_mysql
 		}
 	}
 
-	function add_table_field_text($name, $characters, $null = false)
+	function add_table_field_text($name, $characters = 60000, $null = false)
 	{
-		// Add null
 		if ($characters <= 255)
 		{
 			// TINYTEXT 1 to 255 Characters
@@ -589,7 +599,7 @@ class db_mysql
 
 		$this->fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 	}
-	
+
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
 		if ($padded)
@@ -607,7 +617,7 @@ class db_mysql
 		}
 		else
 		{
-			$this->fields[$name] .= " NOT NULL DEFAULT '$default'";  //NOT NULL "is it needed" ?
+			$this->fields[$name] .= " NOT NULL DEFAULT '$default'";
 		}
 	}
 

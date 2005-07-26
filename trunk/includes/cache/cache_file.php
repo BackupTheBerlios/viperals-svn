@@ -46,7 +46,7 @@ class cache_file extends cache
 		}
 		else
 		{
-			return false;
+			return null;
 		}
 	}
 
@@ -56,7 +56,7 @@ class cache_file extends cache
 		$protection_code = "if (!defined('VIPERAL')) { die('Hello'); }$new_line";
 		$expires = time() + $ttl;
 
-		$file_data = "<?php $protection_code \$this->vars['$name'] = ".$this->format_array($data)."; \n\$this->expires['$name'] = $expires;  ?>";
+		$file_data = "<?php $protection_code \$this->vars['$name'] = ".var_export($data, true)."; \n\$this->expires['$name'] = $expires;  ?>";
 
 		if ($fp = @fopen($this->cache_dir . "cache_$name.php", 'wb'))
 		{

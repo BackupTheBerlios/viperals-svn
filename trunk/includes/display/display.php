@@ -18,11 +18,12 @@ class core_display
 	var $header = array('js'=>'', 'regular'=>'', 'meta'=>'', 'body'=>'');
 	var $displayed = array('header'=> false, 'footer'=> false);
 	var $message = '';
+
 	var $theme = false;
 	var $homepage = false;
 	var $modules = array();
 
-	var $copyright = 'Powered by <a href="http://www.viperal.com">Viperal CMS Pre-Beta</a> (c) 2004 - 2005 Ryan Marshall ( Viperal )';
+	var $copyright = 'Powered by <a href="http://www.viperal.com">CMS alpha-dev</a> (c) 2004 - 2005 Ryan Marshall ( Viperal )';
 
 	/*
 		Handles sorting and auth'ing of modules
@@ -77,14 +78,6 @@ class core_display
 		}
 
 		return false;
-	}
-
-	/*
-		Returns a parsed modules data
-	*/
-	function display_head($title = false)
-	{
-		$this->display_header($title);
 	}
 
 	/*
@@ -184,7 +177,7 @@ class core_display
 			$_CLASS['core_blocks']->display(BLOCK_TOP);
 		}
 
-		$this->theme_header();
+		$this->theme->theme_header();
 	}
 
 	/*
@@ -223,7 +216,7 @@ class core_display
 
 		if ($this->displayed['header'])
 		{
-			$this->theme_footer();
+			$this->theme->theme_footer();
 		}
 		
 		script_close($save);
@@ -237,9 +230,9 @@ class core_display
 		global $_CORE_CONFIG, $SID, $mainindex, $SID, $_CLASS, $starttime;
 
 		$mtime = explode(' ', microtime());
-		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['core_db']->sql_time;
+		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['core_db']->queries_time;
 
-		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->sql_time, 4).'s | ' . $_CLASS['core_db']->num_queries . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
+		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->queries_time, 4).'s | ' . $_CLASS['core_db']->num_queries . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
 
 		if (function_exists('memory_get_usage'))
 		{
@@ -276,6 +269,16 @@ class core_display
 		return $footer.'[ '.$this->footer_debug(). ']<br />';
 	}
 	
+	function load_theme($theme, $path)
+	{
+		$this->theme_name = $theme;
+		$this->theme_path = $path;
+
+		$theme .= '_theme';
+
+		$this->theme = new $theme();
+	}
+
 	function meta_refresh($time, $url = false)
 	{
 		global $_CLASS;

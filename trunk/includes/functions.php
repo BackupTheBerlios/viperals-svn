@@ -181,9 +181,40 @@ function check_theme($theme)
 	return false;
 }
 
-function display_confirmation()
+function display_confirmation($check = false, $hidden = '')
 {
+	global $_CLASS, $SID;
+// Add user entered confirmation code as a choose, maybe ...
+	if ($check)
+	{
+		if (isset($_POST['cancel']))
+		{
+			return false;
+		}
+	
+		if (isset($_POST['confirm']))
+		{
+			$code = $_CLASS['core_user']->session_data_get('confirmation_code');
+			$confirm_code = get_variable('confirm_code', 'POST');
 
+			if ($code && $confirm_code && $code !== $confirm_code)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	$confirmation_code = generate_string(6);
+	$_CLASS['core_user']->session_data_set('confirmation_code', $confirmation_code);
+
+	$_CLASS['core_template']->assign(array(
+		'S_CONFIRM_ACTION'  => generate_link($_CLASS['core_user']->url),
+		'S_HIDDEN_FIELDS'	=> $hidden.'<input type="hidden" name="confirm_code" value="' . $confirmation_code . '" />'
+	));
+
+	$_CLASS['core_template']->display('confirm.html');
 }
 
 function encode_password($pure, $encoding = 'md5')
@@ -213,27 +244,27 @@ function encode_password($pure, $encoding = 'md5')
 
 function gmtime()
 {
-	$time = (time() - date('Z'));
+	return (time() - date('Z'));
 }
 
 function get_bots()
 {
 	global $_CLASS;
 
-	if (($bots = $_CLASS['core_cache']->get('bots')) === false)
+	if (is_null($bots = $_CLASS['core_cache']->get('bots')))
 	{
 		$bots = array();
 		
 		$sql = 'SELECT user_id, username, user_agent, user_ip
 			FROM ' . USERS_TABLE . ' WHERE user_type IN (' . USER_BOT_ACTIVE . ', ' . USER_BOT_INACTIVE . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 			
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$bots[] = $row;
 		}
 		
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		$_CLASS['core_cache']->put('bots', $bots);
 	}
 	
@@ -545,15 +576,6 @@ function script_close($save = true)
 {
 	global $_CORE_CONFIG, $site_file_root, $_CLASS;
 
-	if (defined('SCRIPT_CLOSED'))
-	{
-		return;
-	}
-
-	define('SCRIPT_CLOSED', true);
-
-	$closed = true;
-	
 	if (!empty($_CLASS['core_user']))
 	{
 
@@ -591,15 +613,14 @@ function script_close($save = true)
 		$_CLASS['core_cache']->save();
 	}
 	
+	if (!empty($_CLASS['core_db']))
+	{
+		$_CLASS['core_db']->disconnect();
+	}
+
 	if (!empty($_CLASS['core_error_handler']))
 	{
 		$_CLASS['core_error_handler']->stop();
-//stopped to halt the db sql_close error, look into a fix.
-	}
-	
-	if (!empty($_CLASS['core_db']))
-	{
-		$_CLASS['core_db']->sql_close();
 	}
 
 	die;
@@ -634,11 +655,11 @@ function session_users()
 				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
 					WHERE s.session_time >= ' . (time() - (21600)) .'
 				AND u.user_id = s.session_user_id';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 	
 	$update = false;
 	
-	while($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		// update current user info with current page and url as it is done at the end of script.
 		if (!$update && (($row['user_id'] != ANONYMOUS && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || ($row['user_id'] == ANONYMOUS && $row['session_ip'] == $_CLASS['core_user']->ip)))
@@ -651,7 +672,7 @@ function session_users()
 		$loaded[] = $row;
 	}
 	
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 	return $loaded;
 }
 
@@ -726,4 +747,47 @@ function url_redirect($url = false, $save = false)
 	script_close($save);
 }
 
+if (!function_exists('var_export'))
+{
+	function var_export($variable, $return = false, $tab = false)
+	{
+		$tab = ($tab) ? $tab : chr(9);
+		$lines = array();
+		$new_line = chr(10);
+		//"windows" = "chr(13).chr(10)"  "Mac" = "chr(13)"
+		
+		foreach ($variable as $key => $value)
+		{
+			$formated = is_int($key) ? $key.' => ' : "'$key' => ";
+
+			if (is_array($value))
+			{
+				$formated .= $this->format_array($value, $tab.$tab);
+			}
+			elseif (is_int($value))
+			{
+				$formated .= $value;
+			}
+			elseif (is_bool($value))
+			{
+				$formated .= ($value) ? 'true' : 'false';
+			}
+			else
+			{
+				$formated .= "'".str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
+			}
+
+			$lines[] = $string;
+		}
+
+		if ($return)
+		{
+			return 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
+		}
+		else
+		{
+			echo 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
+		}
+	}
+}
 ?>

@@ -19,48 +19,6 @@ class cache
 	var $var_expires = array();
 	var $sql_rowset = array();
 	
-	function exists($name)
-	{
-		print_r(debug_backtrace());
-		// remove all calls to this
-	}
-	
-	/*
-		Format an array to a file valid format
-	*/
-	function format_array($array, $tab = false)
-	{
-		// based from phpBB www.phpbb.com
-
-		$tab = ($tab) ? $tab : chr(9);
-		$lines = array();
-		$new_line = chr(10);
-		//"windows" = "chr(13).chr(10)"  "Mac" = "chr(13)"
-
-		foreach ($array as $key => $value)
-		{
-			$key = is_int($key) ? $key.' => ' : "'$key' => ";
-
-			if (is_array($value))
-			{
-				$lines[] = $key . $this->format_array($value, $tab.$tab);
-			}
-			elseif (is_int($value))
-			{
-				$lines[] = $key.$value;
-			}
-			elseif (is_bool($value))
-			{
-				$lines[] = $key . (($value) ? 'true' : 'false');
-			}
-			else
-			{
-				$lines[] = $key . "'".str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
-			}
-		}
-		return 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
-	}
-
 	/*
 		Get a cached value
 		Checks if it's loaded to memory before atempting to get from cache

@@ -164,6 +164,8 @@ class core_error_handler
 
 			case E_USER_ERROR:
 
+				$_CLASS['core_user']->user_setup();
+
 				$code = false;
 
 				if (strpos($error, ':')) // there shouldn't be a 0 position
@@ -202,6 +204,7 @@ class core_error_handler
 				break;
 	
 			case E_USER_NOTICE:
+				$_CLASS['core_user']->user_setup();
 
 				$this->error_setting['title'] = (!empty($_CLASS['core_user']->lang[$this->error_setting['title']])) ? $_CLASS['core_user']->lang[$this->error_setting['title']] : $this->error_setting['title'];
 				

@@ -19,12 +19,12 @@ class core_auth
 		global $_CLASS;
 
 		$sql = 'SELECT user_id, username, user_password, user_password_encoding, user_type 
-					FROM ' . USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->sql_escape($user_name) . "'";
+					FROM ' . USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->escape($user_name) . "'";
 
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 		$status = false;
 	
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
 			{
@@ -32,7 +32,7 @@ class core_auth
 			}
 		}
 		
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		return $status;
 	}
@@ -155,9 +155,7 @@ class core_auth
 			script_close();
 		}
 
-		$_CLASS['core_display']->display_head($_CLASS['core_user']->get_lang('LOGIN'));
 		$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
-		$_CLASS['core_display']->display_footer();
 	}
 
 	function get_data($id = false, $g_id = false)
@@ -170,9 +168,9 @@ class core_auth
 
 		$sql = 'SELECT * FROM ' . AUTH_ADMIN_TABLE ." 
 					WHERE user_id = $id OR  group_id = $g_id ORDER BY user_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if ($row['user_id'])
 			{
@@ -185,7 +183,7 @@ class core_auth
 		}
 			
 		$this->got_data = true;
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	function auth_dump()
@@ -286,13 +284,13 @@ class core_auth
 					$sql = 'SELECT user_id
 								FROM ' . USERS_TABLE . " 
 								WHERE username IN ('" . implode("' ,'", $values) . "')";
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 	
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$user_ids[$name][] = $row['user_id'];
 					}
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 				}
 			}
 
@@ -324,15 +322,15 @@ class core_auth
 				FROM ' . USERS_TABLE . '
 				WHERE user_id IN ('.implode(', ', $set_users).')
 					ORDER BY username';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$user_list = (in_array($row['user_id'], $options['users_allowed'])) ? 'allowed_user_list' : 'disallowed_user_list';
 
 				$$user_list .= '<option ' . (($row['user_colour']) ? ' style="color: #'.$row['user_colour'].';"' : '') . ' value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		if (count($set_groups))
@@ -341,29 +339,29 @@ class core_auth
 				FROM ' . GROUPS_TABLE . '
 				WHERE group_id IN ('.implode(', ', $set_groups).')
 					ORDER BY group_type DESC, group_name';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$group_list = (in_array($row['group_id'], $options['groups_allowed'])) ? 'allowed_group_list' : 'disallowed_group_list';
 				
 				$$group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 				
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		$sql = 'SELECT group_id, group_name, group_type 
 			FROM ' . GROUPS_TABLE . 
 				((!empty($set_groups)) ? ' WHERE group_id NOT IN ('.implode(', ', $set_groups).')' : '').'
 					ORDER BY group_type DESC, group_name';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	
 		$_CLASS['core_template']->assign(array(
 			'P_ADD_GROUPS'		=> $group_list,

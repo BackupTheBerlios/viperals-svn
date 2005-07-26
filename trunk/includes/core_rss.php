@@ -64,8 +64,6 @@ class core_rss
 
 	function get_rss_array($url, $items_limit = 10, $loop = 1)
 	{
-// add support for other schemes "ftp https"
-		// return on 3rd try, if any
 		if ($loop == 3)
 		{
 			return false;
@@ -76,7 +74,7 @@ class core_rss
 
 		$parsed_url = array('host' => '', 'path' => '/', 'port' => 80, 'query' => '', 'user' => false, 'pass' => false);
 		$parsed_url = array_merge($parsed_url, parse_url($url));
-		
+
 		if (!$parsed_url['host'])
 		{
 			$this->error = 'Host name error';
@@ -91,17 +89,17 @@ class core_rss
 
 		fwrite($this->fp, 'GET '.$parsed_url['path'].(($parsed_url['query']) ? '?'.$parsed_url['query'] : '')." HTTP/1.0\r\n");
 		fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
-		
+
 		if (extension_loaded('zlib'))
 		{
 			fwrite($this->fp, "Accept-Encoding: gzip;\r\n");
 		}
-		
+
 		if (!empty($parsed_url['user']))
 		{
 			fwrite($this->fp, 'Authorization: BASIC '.base64_encode($parsed_url['user'].':'.$parsed_url['pass'])."\r\n");
 		}
-		
+
 		if ($this->send_cookie && is_array($this->send_cookie))
 		{
 			$cookie = '';
@@ -142,13 +140,13 @@ class core_rss
 					}
 				}
 			}
-			
+
 			$this->Close_connection();
 			return false;
 		}
 
 		$compressed = false;
-	
+
 		while (!empty($data))
 		{
 			$data = strtolower(trim(fgets($this->fp, 300)));
@@ -178,21 +176,21 @@ class core_rss
 
 		$this->item_open = false;
 		$this->title_type = false;
-	
+
 		$data = '';
 
 		while(!feof($this->fp))
 		{
 			$data .= fread($this->fp, 1024);
 		}
-		
+
 		if ($compressed)
 		{
 			$data = gzinflate(substr($data,10));
 		}
-		
+
 		$status = xml_parse($this->rss_parser, $data, true);
-		
+
 		if (!$status)
 		{
 			$error_code = xml_get_error_code($this->rss_parser);
@@ -207,13 +205,13 @@ class core_rss
 				//echo $this->error;
 			}
 		}
-			
+
 		xml_parser_free($this->rss_parser);
-		
+
 		$this->Close_connection();
 		return ($this->error) ? false : true;
 	}
-		
+
 	function tag_open($parser, $element, $attrs)
 	{
 		if ($this->item > $this->items_limit)
@@ -221,15 +219,15 @@ class core_rss
 			$this->title_type = false;
 			return;
 		}
-		
+
 		$element = strtolower($element);
-		
+
 		if (strpos($element, ':'))
 		{
 			$elements = explode(':', $element, 2);
 			$element = $elements[0];
 		}
-			
+
 		if (!$this->feed_type)
 		{
 			switch($element)
@@ -257,7 +255,7 @@ class core_rss
 			$this->rss_info['version'] = (isset($attrs['version'])) ? $attrs['version'] : '';
 			return;
 		}
-		
+
 		if ($element == 'item' || $element == 'entry')
 		{
 			$this->item_open = true;
@@ -268,7 +266,7 @@ class core_rss
 			$this->channel_open = true;
 			return;
 		}
-		
+
 		if ($this->item_open)
 		{
 			if (in_array($element, $this->item_tags))
@@ -282,10 +280,9 @@ class core_rss
 			$this->title_type = $element;
 		}
 	}
-	
+
 	function cdata($parser, $cdata)
 	{
-// Fix Undefined Notice
 		if ($this->title_type)
 		{
 			$cdata = htmlspecialchars(html_entity_decode($cdata));
@@ -308,12 +305,12 @@ class core_rss
 			}
 		}
 	}
-	
+
 	function tag_close($parser, $element)
 	{
 		$element = strtolower($element);
 		
-		if (strpos( $element, ':' ))
+		if (strpos($element, ':' ))
 		{
 			list($element) = explode(':', $element, 2);
 		}
@@ -330,7 +327,7 @@ class core_rss
 		
 		$this->title_type = false;
 	}
-	
+
 	function Close_connection()
 	{
 		fwrite($this->fp, "Connection: close\r\n\r\n");

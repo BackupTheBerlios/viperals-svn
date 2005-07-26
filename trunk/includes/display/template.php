@@ -156,24 +156,19 @@ class core_template
 
 		$set = false;
 
-		if (!empty($_CLASS['core_display']) && file_exists($site_file_root."themes/{$_CLASS['core_display']->theme}/template/$name"))
+		if (!empty($_CLASS['core_display']) && file_exists($_CLASS['core_display']->theme_path.'/template/'.$name))
 		{
-			$this->template_dir = "themes/{$_CLASS['core_display']->theme}/template/";
+			$this->template_dir = $_CLASS['core_display']->theme_path.'/template/';
 			$this->theme_themplate = true;
 			$set = true;
 		}
-		elseif (file_exists($site_file_root."includes/templates/$name"))
+		elseif (file_exists($site_file_root.'includes/templates/'.$name))
 		{
-			$this->template_dir = 'includes/templates/';
+			$this->template_dir = $site_file_root.'includes/templates/';
 			$this->theme_themplate = false;
 			$set = true;
 		}
 		
-		if ($set)
-		{
-			$this->template_dir = $site_file_root.$this->template_dir;
-		}
-
 		return $set;
 	}
 

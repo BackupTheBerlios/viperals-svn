@@ -49,13 +49,13 @@ class sessions
 		{
 			$sql = 'SELECT u.*, s.*
 				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
-				WHERE s.session_id = '" . $_CLASS['core_db']->sql_escape($session_data['session_id']) . "'
+				WHERE s.session_id = '" . $_CLASS['core_db']->escape($session_data['session_id']) . "'
 					AND u.user_id = s.session_user_id";
 					
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
 			if (isset($this->data['user_id']))
 			{
@@ -94,8 +94,7 @@ class sessions
 					check_maintance_status();
 					
 					$this->load = check_load_status();
-					$this->user_setup();
-					
+
 					return true;
 				}
 			}
@@ -118,10 +117,10 @@ class sessions
 			$sql = 'SELECT COUNT(*) AS sessions
 				FROM ' . SESSIONS_TABLE . '
 				WHERE session_time >= ' . ($this->time - 60);
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 		
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 		
 			if ((int) $row['sessions'] > (int) $_CORE_CONFIG['server']['limit_sessions'])
 			{
@@ -148,7 +147,6 @@ class sessions
 			'session_id'			=> (string) $session_id,
 			'session_user_id'		=> (int) $this->data['user_id'],
 			'session_start'			=> (int) $this->time,
-			'session_last_visit'	=> (int) $this->data['session_last_visit'],
 			'session_time'			=> (int) $this->time,
 			'session_browser'		=> (string) $this->browser,
 			'session_page'			=> (string) $this->page,
@@ -160,7 +158,7 @@ class sessions
 			'session_viewonline'	=> (int) $this->data['session_viewonline'],
 		);
 
-		$_CLASS['core_db']->sql_query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
+		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
 
 		$this->new_session =  true;
 
@@ -192,7 +190,6 @@ class sessions
 		$this->sid_link = ($this->is_bot) ? false : 'sid='.$this->data['session_id'];
 
 		$this->data['sessions'] = array();
-		$this->user_setup();
 
 		return true;
 	}
@@ -213,23 +210,26 @@ class sessions
 				$sql = 'UPDATE ' . USERS_TABLE . '
 					SET user_lastvisit = ' . $this->data['session_time'] . '
 					WHERE user_id = ' . $this->data['user_id'];
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 		
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
-			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($session_id)."'";
+			WHERE session_id = '" . $_CLASS['core_db']->escape($session_id)."'";
 
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	
 	function gc($time)
 	{
+		global $_CORE_CONFIG, $_CLASS;
+
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 			WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
+		$result = $_CLASS['core_db']->query($sql);
+
+		$_CLASS['core_db']->optimize_tables('SESSIONS_TABLE');
 	}
 
 	function session_data_get($name)
@@ -281,9 +281,9 @@ class sessions
 		);
 
 		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
-				WHERE session_id = '" . $_CLASS['core_db']->sql_escape($this->data['session_id']) . "'";
+				WHERE session_id = '" . $_CLASS['core_db']->escape($this->data['session_id']) . "'";
 
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		$this->session_save = false;
 	}

@@ -74,19 +74,19 @@ class core_blocks
 		
 		global $_CLASS;
 
-		if (($this->blocks_array = $_CLASS['core_cache']->get('blocks')) === false)
+		if (is_null($this->blocks_array = $_CLASS['core_cache']->get('blocks')))
 		{
-			$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.BLOCKS_TABLE.' WHERE active > 0 ORDER BY weight ASC');
+			$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE active > 0 ORDER BY weight ASC');
 			
 			$this->blocks_array = array();
 			
-			while($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$row['auth'] = ($row['auth']) ? unserialize($row['auth']) : '';
 				$this->blocks_array[$row['position']][] = $row;
 			}
 			
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 			$_CLASS['core_cache']->put('blocks', $this->blocks_array);
 			$_CLASS['core_cache']->save();
 		}
@@ -146,7 +146,7 @@ class core_blocks
 //language check here.
 			if ($this->block['expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['expires']))
 			{
-				$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires > 0 AND expires <='.$_CLASS['core_user']->time);
+				$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires > 0 AND expires <='.$_CLASS['core_user']->time);
 										
 				$_CLASS['core_cache']->destroy('blocks');
 				$expire_updated = true;
@@ -389,11 +389,12 @@ class core_blocks
 			$this->block['rss_expires'] = ($this->block['rss_rate']) ? time() + $this->block['rss_rate'] : 0;
 			
 			$sql = 'UPDATE '.BLOCKS_TABLE."
-				SET content='".$_CLASS['core_db']->sql_escape($this->content)."'
+				SET content='".$_CLASS['core_db']->escape($this->content)."'
 				, rss_expires='".$this->block['rss_expires']."' 
 					WHERE id=".$this->block['id'];
 				
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
+
 			$_CLASS['core_cache']->destroy('blocks');
 		}
 		

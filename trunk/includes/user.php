@@ -16,18 +16,19 @@ class core_user extends sessions
 	var $dst;
 
 	var $user_data_serialized = true;
+	var $user_setup = false;
 
 	var $lang_name;
 	var $lang_path;
 
 	function core_user()
 	{
-		$this->browser = substr((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : getenv('HTTP_USER_AGENT'), 0, 100);
-		$this->url	= (!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : getenv('REQUEST_URI');
+		$this->browser = substr(trim((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : getenv('HTTP_USER_AGENT')), 0, 100);
+		$this->url	= trim((!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : getenv('REQUEST_URI'));
 		$this->ip	= (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
 		$this->time	= gmtime();
 
-		if ($pos = strpos($this->url, INDEX_PAGE.'?mod=') !== false)
+		if (($pos = strpos($this->url, INDEX_PAGE.'?mod=')) !== false)
 		{
 			$pos = $pos + strlen(INDEX_PAGE.'?mod=');
 			$this->url = substr($this->url, $pos);
@@ -57,7 +58,7 @@ class core_user extends sessions
 
 		if (isset($this->data['session_id']) && $this->data['session_id'])
 		{
-			$this->session_destroy(false, true);
+			$this->session_destroy();
 		}
 
 		if ($bot = check_bot_status($this->browser, $this->ip))
@@ -73,14 +74,14 @@ class core_user extends sessions
 				trigger_error('SITE_TEMP_UNAVAILABLE', E_USER_ERROR);
 			}
 	
-			header("HTTP/1.0 503 Service Unavailable");
+			header('HTTP/1.0 503 Service Unavailable');
 			script_close(false);
 			die;
 		}
 
-		$result = $_CLASS['core_db']->sql_query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '.$id);
-		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '.$id);
+		$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		if (!$this->data)
 		{
@@ -131,10 +132,10 @@ class core_user extends sessions
 		$sql = 'SELECT *
 			FROM ' . USERS_TABLE . '
 			WHERE user_id = ' . ANONYMOUS;
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 	
-		$this->data = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$this->data['session_id'] = '';
 		$this->data['session_time'] = $this->data['session_admin'] = 0;
@@ -145,6 +146,13 @@ class core_user extends sessions
 	function user_setup($theme = false)
 	{
 		global $_CLASS, $_CORE_CONFIG, $site_file_root;
+
+		if ($this->user_setup)
+		{
+			return;
+		}
+
+		$this->user_setup = true;
 
 		// Do the theme
 		$theme_prev = get_variable('theme_preview', 'REQUEST', false);
@@ -193,11 +201,10 @@ class core_user extends sessions
 			}
 		}
 
-		require_once($site_file_root.'themes/'.$theme.'/index.php');
-		
-		load_class(false, 'core_display', 'theme_display');
-		
-		$_CLASS['core_display']->theme = $theme;
+		$path = $site_file_root.'themes/'.$theme;
+		require_once($path.'/index.php');
+
+		$_CLASS['core_display']->load_theme($theme, $path);
 		
 // Redo by next commit
 		if ($this->data['user_id'] != ANONYMOUS)
@@ -235,9 +242,9 @@ class core_user extends sessions
 			$module = ($module) ? $module : $_CORE_MODULE['name'];
 			$lang = ($lang) ? $lang : $this->lang_name;
 
-			if (file_exists($site_file_root.'themes/'.$_CLASS['core_display']->theme."/images/modules/$module/$img_file"))
+			if (file_exists($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file"))
 			{
-				include($site_file_root.'themes/'.$_CLASS['core_display']->theme."/images/modules/$module/$img_file");
+				include($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file");
 			}
 			else
 			{
