@@ -28,15 +28,17 @@ class sessions
 		
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 
-		$session_data = (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_data'])) : array();
-		$session_data['session_id'] = get_variable('sid', 'GET', false);
+		$session_data = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_data', 'COOKIE'));
+// should spearate this, since I have to check to make sure the 2 values are in the array, would be easy to not do this
+		$session_data = (is_array($session_data)) ? $session_data : array();
+		$session_data['session_id'] = get_variable('sid', 'GET');
 
-		if (!empty($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']))
+		if ($cookie_sid = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE'))
 		{
 			// session id in url > cookie
-			if (!$session_data['session_id'] || (trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']) === $session_data['session_id']))
+			if (!$session_data['session_id'] || ($cookie_sid === $session_data['session_id']))
 			{
-				$session_data['session_id'] = trim($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_sid']);
+				$session_data['session_id'] = $cookie_sid;
 				$this->sid_link = (defined('NEED_SID')) ? 'sid='.$session_data['session_id'] : false;
 			}
 		}
@@ -66,17 +68,16 @@ class sessions
 					$valid  = false;
 				}
 
-				if ($_CORE_CONFIG['server']['ip_check'])
+				if ($valid && $_CORE_CONFIG['server']['ip_check'])
 				{
-					$s_ip = implode('.', explode('.', $this->data['session_ip'], $_CORE_CONFIG['server']['ip_check']));
-					$u_ip = implode('.', explode('.', $this->ip, $_CORE_CONFIG['server']['ip_check']));
+					$check_ip = implode('.', explode('.', $this->data['session_ip'], $_CORE_CONFIG['server']['ip_check']));
 					
-					if ($u_ip != $s_ip)
+					if ($check_ip != substr($this->ip, 0, strlen($check_ip)))
 					{
 						$valid  = false;
 					}
 				}
-				
+
 				if ($valid)
 				{
 					// Set session update a minute or so after last update or if page changes
@@ -98,10 +99,10 @@ class sessions
 					return true;
 				}
 			}
-			
+
 			$this->data = array();
 		}
-		
+
 		check_maintance_status();
 		$this->load = check_load_status();
 
@@ -139,7 +140,7 @@ class sessions
 		global $_CLASS, $_CORE_CONFIG, $config;
 		$auto_log = false;
 
-		$this->data['session_last_visit'] = ($this->data['user_lastvisit']) ? $this->data['user_lastvisit'] : $this->time;
+		$this->data['session_last_visit'] = ($this->data['user_last_visit']) ? $this->data['user_last_visit'] : $this->time;
 
 		$session_id = (function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
 
@@ -208,7 +209,7 @@ class sessions
 			if ($this->data['session_time'])
 			{
 				$sql = 'UPDATE ' . USERS_TABLE . '
-					SET user_lastvisit = ' . $this->data['session_time'] . '
+					SET user_last_visit = ' . $this->data['session_time'] . '
 					WHERE user_id = ' . $this->data['user_id'];
 				$_CLASS['core_db']->query($sql);
 			}

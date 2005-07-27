@@ -115,7 +115,7 @@ class db_mysqli
 					mysqli_rollback($this->link_identifier);
 				}
 
-				mysqli_autocommit($link, true);
+				mysqli_autocommit($this->link_identifier, true);
 				$this->in_transaction = false;
 			break;
 
@@ -324,7 +324,7 @@ class db_mysqli
 		return @mysqli_fetch_array($result);
 	}
 
-	function last_insert_id()
+	function insert_id()
 	{
 		return ($this->link_identifier) ? @mysqli_insert_id($this->link_identifier) : false;
 	}

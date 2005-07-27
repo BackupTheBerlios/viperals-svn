@@ -338,7 +338,7 @@ class db_postgre
 		return @pg_fetch_array($result);
 	}
 
-	function last_insert_id($table, $column)
+	function insert_id($table, $column)
 	{
 		//SELECT last_value FROM pg_get_serial_sequence('tablename','fieldname')
 		$oid = @pg_last_oid($this->last_result);

@@ -23,9 +23,9 @@ class core_user extends sessions
 
 	function core_user()
 	{
-		$this->browser = substr(trim((!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : getenv('HTTP_USER_AGENT')), 0, 100);
-		$this->url	= trim((!empty($_SERVER['REQUEST_URI'])) ? $_SERVER['REQUEST_URI'] : getenv('REQUEST_URI'));
-		$this->ip	= (!empty($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : getenv('REMOTE_ADDR');
+		$this->browser = substr((empty($_SERVER['HTTP_USER_AGENT']) ? getenv('HTTP_USER_AGENT') : $_SERVER['HTTP_USER_AGENT']), 0, 255);
+		$this->url	= empty($_SERVER['REQUEST_URI']) ? getenv('REQUEST_URI') : $_SERVER['REQUEST_URI'];
+		$this->ip	= empty($_SERVER['REMOTE_ADDR']) ? getenv('REMOTE_ADDR') : $_SERVER['REMOTE_ADDR'];
 		$this->time	= gmtime();
 
 		if (($pos = strpos($this->url, INDEX_PAGE.'?mod=')) !== false)
@@ -38,20 +38,29 @@ class core_user extends sessions
 				$this->url = substr($this->url, 0, $pos - 1);
 			}
 
-			$this->url = htmlspecialchars(strtr($this->url, array_flip(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES))));
-			$this->url = substr($this->url, 0, 100);
+			$this->url = htmlspecialchars(html_entity_decode($this->url, ENT_QUOTES));
+			$this->url = substr($this->url, 0, 255);
 		}
 		else
 		{
 			$this->url = '';
 		}
-
-		if (!isset($_COOKIE))
-		{
-			$_COOKIE = array();
-		}
 	}
 
+	function format_date($gmtime, $format = false)
+	{
+		settype($gmtime, 'integer');
+
+		if (!$gmtime)
+		{
+			$gmtime = gmtime();
+		}
+
+		$format = (!$format) ? $this->date_format : $format;
+
+		return strtr(date($format, $gmtime + $this->timezone + $this->dst), $this->lang['datetime']);
+	}
+	
 	function login($id = ANONYMOUS, $admin_login = false, $view_online = true)
 	{
 		global $_CLASS;
@@ -76,7 +85,6 @@ class core_user extends sessions
 	
 			header('HTTP/1.0 503 Service Unavailable');
 			script_close(false);
-			die;
 		}
 
 		$result = $_CLASS['core_db']->query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '.$id);
@@ -100,7 +108,7 @@ class core_user extends sessions
 		{
 			$this->is_user = ($id == ANONYMOUS) ? false : true;
 			$this->is_bot = false;
-	
+
 			if (isset($_CLASS['core_auth']))
 			{
 				unset($_CLASS['core_auth']);
@@ -122,7 +130,7 @@ class core_user extends sessions
 
 		$this->session_create();
 	}
-	
+
 	function logout()
 	{
 		global $_CLASS;
@@ -161,7 +169,7 @@ class core_user extends sessions
 		if ($theme_prev && ($theme_prev != $theme) && check_theme($theme_prev))
 		{
 			$theme = $theme_prev;
-			
+
 			if (!get_variable('temp_preview', 'REQUEST', false))
 			{
 				$_CLASS['core_user']->session_data_set('user_theme', $theme);
@@ -205,7 +213,7 @@ class core_user extends sessions
 		require_once($path.'/index.php');
 
 		$_CLASS['core_display']->load_theme($theme, $path);
-		
+
 // Redo by next commit
 		if ($this->data['user_id'] != ANONYMOUS)
 		{
@@ -225,7 +233,7 @@ class core_user extends sessions
 			$this->timezone = $_CORE_CONFIG['global']['default_timezone'] * 3600;
 			$this->dst = $_CORE_CONFIG['global']['default_dst'] * 3600;
 		}
-		
+
 		require($this->lang_path . 'common.php');
 	}
 
@@ -267,7 +275,6 @@ class core_user extends sessions
 		return ucfirst(strtolower(preg_replace('/_/', ' ', $lang)));
 	}
 	
-
 	function get_img($img)
 	{
 		if (empty($this->img[$img]))
@@ -415,43 +422,6 @@ class core_user extends sessions
 	{
 		return $this->user_data_set($key, $value);
 	}
-	
-	function format_date($gmepoch, $format = false, $forcedate = false)
-	{
-		static $midnight;
-
-		settype($gmepoch, 'integer');
-
-		if (!$gmepoch)
-		{
-			return;
-		}
-		
-		$format = (!$format) ? $this->date_format : $format;
-
-		if (!$midnight)
-		{
-			list($d, $m, $y) = explode(' ', gmdate('j n Y', time() + $this->timezone + $this->dst));
-			$midnight = gmmktime(0, 0, 0, $m, $d, $y) - $this->timezone - $this->dst;
-		}
-	
-		if (strpos($format, '|') === false || (!($gmepoch > $midnight && !$forcedate) && !($gmepoch > $midnight - 86400 && !$forcedate)))
-		{
-			return strtr(@gmdate(str_replace('|', '', $format), $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']);
-		}
-		
-		if ($gmepoch > $midnight && !$forcedate)
-		{
-			$format = substr($format, 0, strpos($format, '|')) . '||' . substr(strrchr($format, '|'), 1);
-			return str_replace('||', $this->lang['datetime']['TODAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
-		}
-		elseif ($gmepoch > $midnight - 86400 && !$forcedate)
-		{
-			$format = substr($format, 0, strpos($format, '|')) . '||' . substr(strrchr($format, '|'), 1);
-			return str_replace('||', $this->lang['datetime']['YESTERDAY'], strtr(@gmdate($format, $gmepoch + $this->timezone + $this->dst), $this->lang['datetime']));
-		}
-	}
-
 }
 
 ?>

@@ -310,7 +310,7 @@ class db_mysql
 		return @mysql_fetch_array($query_id);
 	}
 	
-	function next_id()
+	function insert_id()
 	{
 		return ($this->link_identifier) ? @mysql_insert_id($this->link_identifier) : false;
 	}
@@ -329,9 +329,9 @@ class db_mysql
 
 	function escape($text)
 	{
-		if (function_exists('mysql_real_escape_string')
+		if (function_exists('mysql_real_escape_string') && $this->link_identifier)
 		{
-			return mysql_real_escape_string($text);
+			return mysql_real_escape_string($text, $this->link_identifier);
 		}
 		else
 		{

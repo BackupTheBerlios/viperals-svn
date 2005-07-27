@@ -99,7 +99,7 @@ class core_blocks
 	*/
 	function add_block($data, $position = false)
 	{
-		$option_array = array('title','position', 'content', 'file' , 'modules', 'time' ,'expires', 'id',	'auth',	'type');
+		$option_array = array('title','position', 'content', 'file' , 'modules', 'start' ,'expires', 'id',	'auth',	'type');
 		
 		foreach($option_array as $option)
 		{
@@ -154,7 +154,7 @@ class core_blocks
 				continue;
 			}
 			
-			if ($this->block['time'] && ($this->block['time'] > $_CLASS['core_user']->time))
+			if ($this->block['start'] && ($this->block['start'] > $_CLASS['core_user']->time))
 			{
 				continue;
 			}

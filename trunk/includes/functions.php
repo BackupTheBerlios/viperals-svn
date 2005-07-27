@@ -13,8 +13,10 @@
 //																//
 //**************************************************************//
 
+// Redo
 function check_email($email)
 {
+	//Code Copyright 2004 phpBB Group - http://www.phpbb.com/
 	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
 }
 
@@ -214,7 +216,7 @@ function display_confirmation($check = false, $hidden = '')
 		'S_HIDDEN_FIELDS'	=> $hidden.'<input type="hidden" name="confirm_code" value="' . $confirmation_code . '" />'
 	));
 
-	$_CLASS['core_template']->display('confirm.html');
+	$_CLASS['core_template']->display('confirm_display.html');
 }
 
 function encode_password($pure, $encoding = 'md5')
@@ -242,11 +244,6 @@ function encode_password($pure, $encoding = 'md5')
 	return false;
 }
 
-function gmtime()
-{
-	return (time() - date('Z'));
-}
-
 function get_bots()
 {
 	global $_CLASS;
@@ -271,7 +268,7 @@ function get_bots()
 	return $bots;
 }
 
-function get_variable($var_name, $type, $default = '', $vartype = 'string')
+function get_variable($var_name, $type, $default = false, $vartype = 'string')
 {
 /*	$type = "_$type";
 
@@ -319,14 +316,25 @@ function get_variable($var_name, $type, $default = '', $vartype = 'string')
 	{
 		switch ($type)
 		{
-		 	Case 'integer':
+		 	case 'integer':
 				$variable = is_numeric($variable) ? (int) $variable : $default;
 			break;
-		
+
+			case 'array':
+				if (!is_array($variable))
+				{
+					return $default;
+				}
+
+// need to add a function here to loop multi... arrays
+				foreach ($variable as $key => $value)
+				{
+					$variable[$key] = strip_slashes(trim(modify_lines(str_replace('\xFF', ' ', $value), "\n")));
+				}
+			break;
+
 			default:
-				$variable = trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n"));
-				//$variable = trim(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $variable));
-				$variable = strip_slashes($variable);
+				$variable = strip_slashes(trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n")));
 			break;
 		}
 
@@ -504,6 +512,12 @@ function generate_string($length)
 	}
 
 	return $string;
+}
+
+function gmtime()
+{
+	// php5.1b3 returns gm time with the time function, atleast with windows
+	return (time() - date('Z'));
 }
 
 if (!function_exists('html_entity_decode'))
@@ -686,7 +700,7 @@ function theme_select($default = false)
 	global $site_file_root, $_CLASS;
 	
 	$themetmp = array();
-	$default = ($default) ? $default : $_CLASS['core_display']->theme;
+	$default = ($default) ? $default : $_CLASS['core_display']->theme_name;
 	
 	$theme = '';
 	$handle = opendir($site_file_root.'themes');
@@ -705,7 +719,7 @@ function theme_select($default = false)
 	
 	$count = count($themetmp);
 	
-	for ($i=0; $i < $count; $i++)
+	for ($i = 0; $i < $count; $i++)
 	{
 		if ($themetmp[$i]['file'] == $default)
 		{

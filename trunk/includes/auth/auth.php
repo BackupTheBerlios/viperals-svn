@@ -151,8 +151,7 @@ class core_auth
 
 		if ($login_array['full_screen'])
 		{
-			$_CLASS['core_template']->display(($template) ? $template : 'login_body_full.html');
-			script_close();
+			$_CLASS['core_template']->display('login_body_full.html');
 		}
 
 		$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
