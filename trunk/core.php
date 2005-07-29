@@ -53,11 +53,11 @@ require($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
 load_class(false, 'core_error_handler');
 load_class(false, 'core_cache', 'cache_'.$acm_type);
 load_class(false, 'core_template');
-load_class(false, 'core_db', 'sql_db');
+load_class(false, 'core_db', 'db_'.$site_db['type']);
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-//$_CLASS['core_error_handler']->stop();
+$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))
@@ -65,8 +65,7 @@ if (function_exists('register_shutdown_function'))
 	register_shutdown_function('script_close');
 }
 
-$_CLASS['core_db']->sql_connect($site_db);
-
+$_CLASS['core_db']->connect($site_db);
 unset($sitedb);
 
 $_CLASS['core_db']->return_on_error = true;
@@ -75,36 +74,19 @@ $_CLASS['core_db']->return_on_error = true;
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
-if (($config = $_CLASS['core_cache']->get('config')) !== false)
-{
-	$sql = 'SELECT config_name, config_value
-		FROM ' . CONFIG_TABLE . '
-		WHERE is_dynamic = 1';
-	$result = $_CLASS['core_db']->sql_query($sql);
-	
-	if (is_array($result))
-	{
-		trigger_error($config_error, E_USER_ERROR);
-	}
-	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-	{
-		$config[$row['config_name']] = $row['config_value'];
-	}
-}
-else
+if (is_null($config = $_CLASS['core_cache']->get('config')))
 {
 	$config = $cached_config = array();
 
 	$sql = 'SELECT config_name, config_value, is_dynamic
 		FROM ' . CONFIG_TABLE;
 			
-	if (!$result = $_CLASS['core_db']->sql_query($sql))
+	if (!$result = $_CLASS['core_db']->query($sql))
 	{
 		trigger_error($config_error, E_USER_ERROR);
 	}
 	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if (!$row['is_dynamic'])
 		{
@@ -113,29 +95,46 @@ else
 
 		$config[$row['config_name']] = $row['config_value'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$_CLASS['core_cache']->put('config', $cached_config);
 
 	unset($cached_config);
 }
+else
+{
+	$sql = 'SELECT config_name, config_value
+		FROM ' . CONFIG_TABLE . '
+		WHERE is_dynamic = 1';
+	$result = $_CLASS['core_db']->query($sql);
+	
+	if (is_array($result))
+	{
+		trigger_error($config_error, E_USER_ERROR);
+	}
+	
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$config[$row['config_name']] = $row['config_value'];
+	}
+}
 
-if (($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')) === false)
+if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 {
 	$_CORE_CONFIG = array();
 
 	$sql = 'SELECT * FROM '.CORE_CONFIG_TABLE;
 		
-	if (!$result = $_CLASS['core_db']->sql_query($sql))
+	if (!$result = $_CLASS['core_db']->query($sql))
 	{
 		trigger_error($config_error, E_USER_ERROR);
 	}
 	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$_CORE_CONFIG[$row['section']][$row['name']] = $row['value'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$_CLASS['core_cache']->put('core_config', $_CORE_CONFIG);
 }
@@ -143,7 +142,6 @@ if (($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')) === false)
 unset($config_error);
 
 $_CLASS['core_db']->return_on_error = false;
-
 $_CLASS['core_cache']->remove('core_config');
 $_CLASS['core_cache']->remove('config');
 
@@ -165,7 +163,7 @@ require($site_file_root.'includes/auth/auth_db.php');
 require($site_file_root.'includes/display/blocks.php');
 require($site_file_root.'includes/display/display.php');
 
-load_class(false, 'core_auth', 'auth_db');
+load_class(false, 'core_display');
 load_class(false, 'core_blocks');
 load_class(false, 'core_user');
 

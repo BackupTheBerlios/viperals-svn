@@ -14,6 +14,7 @@
 //**************************************************************//
 // Add channel support, rss_data[channel][item][item_branch]
 // nested items
+// maybe make this more xml specfic with another rss function?
 
 class core_rss
 {
@@ -224,8 +225,7 @@ class core_rss
 
 		if (strpos($element, ':'))
 		{
-			$elements = explode(':', $element, 2);
-			$element = $elements[0];
+			list($element) = explode(':', $element, 2);
 		}
 
 		if (!$this->feed_type)
@@ -233,26 +233,26 @@ class core_rss
 			switch($element)
 			{
 				Case 'rdf':
-					$this->feed_type = 'RSS';
+					$this->feed_type = 'rss';
 					break;
 				
 				Case 'rss':
-					$this->feed_type = 'RSS';
+					$this->feed_type = 'rss';
 					break;
 				
 				Case 'feed':
-					$this->feed_type = 'ATOM';
+					$this->feed_type = 'atom';
 					break;
 
 				default:
-					$this->Close_connection();
-					die('unhandled type');
+					$this->feed_type = 'generic';
 			}
-			
+
 			$attrs = array_change_key_case($attrs, CASE_LOWER);
 			
 			$this->rss_info['format'] = $element;
 			$this->rss_info['version'] = (isset($attrs['version'])) ? $attrs['version'] : '';
+
 			return;
 		}
 
@@ -309,12 +309,12 @@ class core_rss
 	function tag_close($parser, $element)
 	{
 		$element = strtolower($element);
-		
+
 		if (strpos($element, ':' ))
 		{
 			list($element) = explode(':', $element, 2);
 		}
-			
+
 		if ($element == 'item' || $element == 'entry')
 		{
 			$this->item_open = false;
@@ -324,7 +324,7 @@ class core_rss
 		{
 			$this->channel_open = false;
 		}
-		
+
 		$this->title_type = false;
 	}
 

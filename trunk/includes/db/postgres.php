@@ -27,10 +27,10 @@ class db_postgre
 	var $query_details = array();
 	var $open_queries = array();
 
-	var $indexs = array();
-	var $fields = array();
+	var $_indexs = array();
+	var $_fields = array();
 	var $table_name;
-	var $table_oid;
+	var $_table_oid;
 
 	function connect($db)
 	{		
@@ -350,7 +350,7 @@ class db_postgre
 
 		$return = $this->fetch_row_assoc($result);
 		$this->free_result($result);
-		
+
 		return $return[$column];
 	}
 
@@ -487,14 +487,14 @@ class db_postgre
 	/*
 		Table creation
 	*/
-
 	function table_create($option, $name = false)
 	{
 		switch ($option)
 		{
 			case 'start':
 				$this->table_name = $name;
-				$this->fields = array();
+				$this->_fields = array();
+				$this->_table_oid = false;
 			break;
 
 			case 'commit':
@@ -504,11 +504,12 @@ class db_postgre
 					return;
 				}
 
-				$fields = implode(", \n", $this->fields);
-				$indexs = implode(", \n", $this->indexs);
-	
+				$fields = implode(", \n", $this->_fields);
+				$indexs = ($this->_indexs) ? "\n\n".implode("\n", $this->_indexs) :  '';
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields." \n )";
+				$oid = ($this->_table_oid) = ' WITH OIDS' : ' WITHOUT OIDS';
+
+				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields." \n )\n$oid;$indexs";
 
 				if ($option == 'return')
 				{
@@ -518,8 +519,8 @@ class db_postgre
 				$this->sql_query($table);
 
 			case 'cancel':
-				$this->table_name = false;
-				$this->fields = array();
+				$this->table_name $this->_table_oid = false;
+				$this->_fields = array();
 			break;
 		}
 	}
@@ -531,54 +532,54 @@ class db_postgre
 		if (!$auto_increment && $number_min >= -32768 && $number_max <= 32767)
 		{
 			// SMALLINT -- INT2 ( -32,768 to 32,767 )
-			$this->fields[$name] =  "$name INT2";
+			$this->_fields[$name] =  "$name INT2";
 		}
 		elseif ($number_min >= -2147483648 && $number_max <= 2147483647)
 		{
 			// INTEGER -- INT4 ( -2,147,483,648 to 2,147,483,647 )
-			$this->fields[$name] =   ($auto_increment) ? "$name SERIAL4" : "$name INT4";
+			$this->_fields[$name] =   ($auto_increment) ? "$name SERIAL4" : "$name INT4";
 		}
 		elseif ($number_min >= 9223372036854775808 && $number_max <= 9223372036854775807)
 		{
 			// BIGINT -- INT8  ( 9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 )
-			$this->fields[$name] =  ($auto_increment) ? "$name SERIAL8" : "$name INT8";
+			$this->_fields[$name] =  ($auto_increment) ? "$name SERIAL8" : "$name INT8";
 		}
 
 
 		if ($auto_increment)
 		{
-			$this->table_oid = true;
+			$this->_table_oid = true;
 		}
 		else
 		{
-			$this->fields[$name] .= "NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= "NOT NULL DEFAULT '".(int) $default."'";
 		}
 	}
 
 	function add_table_field_text($name, $characters, $null = false)
 	{
-		$this->fields[$name] =  "$name TEXT".(($null) ? " NULL" : " NOT NULL");
-		//$this->fields[$name] =  "$name TEXT DEFAULT '' ".(($null) ? " NULL" : " NOT NULL");
+		$this->_fields[$name] =  "$name TEXT".(($null) ? " NULL" : " NOT NULL");
+		//$this->_fields[$name] =  "$name TEXT DEFAULT '' ".(($null) ? " NULL" : " NOT NULL");
 	}
 
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
 		if ($padded)
 		{
-			$this->fields[$name] =  "$name CHAR($characters)";
+			$this->_fields[$name] =  "$name CHAR($characters)";
 		}
 		else
 		{
-			$this->fields[$name] =  "$name VARCHAR($characters)";
+			$this->_fields[$name] =  "$name VARCHAR($characters)";
 		}
 
 		if (is_null($default))
 		{
-			$this->fields[$name] .= " NULL";
+			$this->_fields[$name] .= " NULL";
 		}
 		else
 		{
-			$this->fields[$name] .= " NOT NULL DEFAULT '$default'";
+			$this->_fields[$name] .= " NOT NULL DEFAULT '$default'";
 		}
 	}
 
@@ -588,7 +589,7 @@ class db_postgre
 
 		$index_name = ($index_name) ? $index_name : $field;
 
-		if (empty($this->fields[$field]))
+		if (empty($this->_fields[$field]))
 		{
 			return;
 		}
@@ -598,19 +599,18 @@ class db_postgre
 			case 'index':
 			case 'unique':
 				//CREATE INDEX a ON test USING btree (a)
-				$this->indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "INDEX $index_name ON {$this->table_name} ($field)";
+				$this->_indexs[$index_name] = (($type == 'CREATE UNIQUE') ? 'CREATE UNIQUE ' : '') . "INDEX $index_name ON {$this->table_name} ($field);";
 			break;
 
 			case 'primary':
 				if ($primary_key)
 				{
-					//$this->fields[$primary_key] = strtr
 				}
 				$primary_key = $field;
 
-				$this->fields[$field] .= ' PRIMARY KEY';
+				$this->_fields[$field] .= ' PRIMARY KEY';
 
-				//$this->indexs['primary'] = " UNIQUE INDEX {$this->table_name}_pkey ON {$this->table_name} ( $field )";
+				//$this->_indexs['primary'] = " UNIQUE INDEX {$this->table_name}_pkey ON {$this->table_name} ( $field )";
 			break;
 		}
 	}

@@ -49,6 +49,11 @@ class core_user extends sessions
 
 	function format_date($gmtime, $format = false)
 	{
+		return $this->format_time($gmtime, $format);
+	}
+
+	function format_time($gmtime, $format = false)
+	{
 		settype($gmtime, 'integer');
 
 		if (!$gmtime)
@@ -58,9 +63,20 @@ class core_user extends sessions
 
 		$format = (!$format) ? $this->date_format : $format;
 
-		return strtr(date($format, $gmtime + $this->timezone + $this->dst), $this->lang['datetime']);
+		return strtr(date($format, $this->time_convert($gmtime)), $this->lang['datetime']);
 	}
-	
+
+	function time_convert($time, $conversion = 'user')
+	{
+		// user and gmt
+		if ($conversion == 'gmt')
+		{
+			return ($time - $this->timezone - $this->dst);
+		}
+
+		return $time + $this->timezone + $this->dst;
+	}
+
 	function login($id = ANONYMOUS, $admin_login = false, $view_online = true)
 	{
 		global $_CLASS;
@@ -112,8 +128,9 @@ class core_user extends sessions
 			if (isset($_CLASS['core_auth']))
 			{
 				unset($_CLASS['core_auth']);
-				load_class(false, 'core_auth', 'auth_db');
 			}
+			
+			load_class(false, 'core_auth', 'auth_db');
 
 			if ($_CLASS['core_auth']->admin_auth())
 			{
@@ -413,6 +430,7 @@ class core_user extends sessions
 
 		return '<img src=' . $img['src'] .$width . $height .' alt="' . $alt . '" title="' . $alt . '" />';
 	}
+
 	function optionget($key, $data = false)
 	{
 		return $this->user_data_get($key);

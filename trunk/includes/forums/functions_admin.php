@@ -34,7 +34,7 @@ function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl =
 	$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, left_id, right_id
 		FROM ' . FORUMS_TABLE . '
 		ORDER BY left_id ASC';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$right = $iteration = 0;
 	$padding_store = array('0' => '');
@@ -44,7 +44,7 @@ function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl =
 	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
 	// If this happens, the padding could be "broken"
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($row['left_id'] < $right)
 		{
@@ -125,13 +125,13 @@ function get_forum_list($acl_list = 'f_list', $id_only = TRUE, $postable_only = 
 		$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, left_id, right_id
 			FROM ' . FORUMS_TABLE . '
 			ORDER BY left_id ASC';
-		$result = $_CLASS['core_db']->sql_query($sql, $expire_time);
+		$result = $_CLASS['core_db']->query($sql, $expire_time);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$forum_rows[] = $row;
 		}
-		$_CLASS['core_db']->sql_freeresult();
+		$_CLASS['core_db']->free_result();
 	}
 
 	$rowset = array();
@@ -176,9 +176,9 @@ function get_forum_branch($forum_id, $type = 'all', $order = 'descending', $incl
 		LEFT JOIN ' . FORUMS_TABLE . " f2 ON $condition)
 		WHERE f1.forum_id = $forum_id
 		ORDER BY f2.left_id " . (($order == 'descending') ? 'ASC' : 'DESC');
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if (!$include_forum && $row['forum_id'] == $forum_id)
 		{
@@ -187,7 +187,7 @@ function get_forum_branch($forum_id, $type = 'all', $order = 'descending', $incl
 
 		$rows[] = $row;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	return $rows;
 }
@@ -237,20 +237,20 @@ function move_topics($topic_ids, $forum_id, $auto_sync = true)
 	$sql = 'DELETE FROM ' . TOPICS_TABLE . "
 		WHERE topic_moved_id $sql_where
 			AND forum_id = " . $forum_id;
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	if ($auto_sync)
 	{
 		$sql = 'SELECT DISTINCT forum_id
 			FROM ' . TOPICS_TABLE . '
 			WHERE topic_id ' . $sql_where;
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$forum_ids[] = $row['forum_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	
 	$table_ary = array(TOPICS_TABLE, POSTS_TABLE, LOG_TABLE);
@@ -259,7 +259,7 @@ function move_topics($topic_ids, $forum_id, $auto_sync = true)
 		$sql = "UPDATE $table
 			SET forum_id = $forum_id
 			WHERE topic_id " . $sql_where;
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	unset($table_ary);
 
@@ -287,37 +287,37 @@ function move_posts($post_ids, $topic_id, $auto_sync = true)
 		$sql = 'SELECT DISTINCT topic_id, forum_id
 			FROM ' . POSTS_TABLE . '
 			WHERE post_id IN (' . implode(', ', $post_ids) . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$forum_ids[] = $row['forum_id'];
 			$topic_ids[] = $row['topic_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	$sql = 'SELECT forum_id 
 		FROM ' . TOPICS_TABLE . ' 
 		WHERE topic_id = ' . $topic_id;
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
+	if (!$row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		trigger_error('NO_TOPIC');
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$sql = 'UPDATE ' . POSTS_TABLE . '
 		SET forum_id = ' . $row['forum_id'] . ", topic_id = $topic_id
 		WHERE post_id IN (" . implode(', ', $post_ids) . ')';
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	$sql = 'UPDATE ' . ATTACHMENTS_TABLE . "
 		SET topic_id = $topic_id
 			AND in_message = 0
 		WHERE post_msg_id IN (" . implode(', ', $post_ids) . ')';
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	if ($auto_sync)
 	{
@@ -351,14 +351,14 @@ function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
 	$sql = 'SELECT topic_id, forum_id
 		FROM ' . TOPICS_TABLE . "
 		WHERE $where_type " . ((!is_array($where_ids)) ? "= $where_ids" : 'IN (' . implode(', ', $where_ids) . ')');
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$forum_ids[] = $row['forum_id'];
 		$topic_ids[] = $row['topic_id'];
 	}
-	$_CLASS['core_db']->sql_freeresult();
+	$_CLASS['core_db']->free_result();
 
 	$return['topics'] = sizeof($topic_ids);
 
@@ -378,13 +378,13 @@ function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
 	{
 		$sql = "DELETE FROM $table 
 			WHERE topic_id $sql_where";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	unset($table_ary);
 
 	$sql = 'DELETE FROM ' . TOPICS_TABLE . ' 
 		WHERE topic_moved_id' . $sql_where;
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	$_CLASS['core_db']->sql_transaction('commit');
 
@@ -414,9 +414,9 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 	$sql = 'SELECT post_id, topic_id, forum_id
 		FROM ' . POSTS_TABLE . "
 		WHERE $where_type " . ((!is_array($where_ids)) ? "= $where_ids" : 'IN (' . implode(', ', $where_ids) . ')');
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$post_ids[] = $row['post_id'];
 		$topic_ids[] = $row['topic_id'];
@@ -439,7 +439,7 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 	{
 		$sql = "DELETE FROM $table 
 			WHERE post_id IN ($sql_where)";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	unset($table_ary);
 
@@ -485,15 +485,15 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 		$sql = 'SELECT post_msg_id as post_id, topic_id, physical_filename, thumbnail, filesize
 			FROM ' . ATTACHMENTS_TABLE . '
 			WHERE ' . $sql_id . ' IN (' . implode(', ', $ids) . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 			
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$post_ids[] = $row['post_id'];
 			$topic_ids[] = $row['topic_id'];
 			$physical[] = array('filename' => $row['physical_filename'], 'thumbnail' => $row['thumbnail'], 'filesize' => $row['filesize']);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	if ($mode == 'post')
@@ -502,18 +502,18 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 			FROM ' . ATTACHMENTS_TABLE . '
 			WHERE post_msg_id IN (' . implode(', ', $ids) . ')
 				AND in_message = 0';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 			
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$topic_ids[] = $row['topic_id'];
 			$physical[] = array('filename' => $row['physical_filename'], 'thumbnail' => $row['thumbnail'], 'filesize' => $row['filesize']);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	// Delete attachments
-	$_CLASS['core_db']->sql_query('DELETE FROM ' . ATTACHMENTS_TABLE . ' WHERE ' . $sql_id . ' IN (' . implode(', ', $ids) . ')');
+	$_CLASS['core_db']->query('DELETE FROM ' . ATTACHMENTS_TABLE . ' WHERE ' . $sql_id . ' IN (' . implode(', ', $ids) . ')');
 	$num_deleted = $_CLASS['core_db']->sql_affectedrows();
 
 	if (!$num_deleted)
@@ -558,7 +558,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 	{
 		if ($mode == 'post' || $mode == 'topic')
 		{
-			$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . ' 
+			$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . ' 
 				SET post_attachment = 0
 				WHERE post_id IN (' . implode(', ', $post_ids) . ')');
 		}
@@ -571,18 +571,18 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 					FROM ' . ATTACHMENTS_TABLE . ' 
 					WHERE post_msg_id IN (' . implode(', ', $post_ids) . ')
 						AND in_message = 0';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 					
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$remaining[] = $row['post_msg_id'];		
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$unset_ids = array_diff($post_ids, $remaining);
 			if (sizeof($unset_ids))
 			{
-				$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . ' 
+				$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . ' 
 					SET post_attachment = 0
 					WHERE post_id IN (' . implode(', ', $unset_ids) . ')');
 			}
@@ -593,18 +593,18 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 					FROM ' . ATTACHMENTS_TABLE . ' 
 					WHERE post_msg_id IN (' . implode(', ', $post_ids) . ')
 						AND in_message = 1';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 					
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$remaining[] = $row['post_msg_id'];		
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$unset_ids = array_diff($post_ids, $remaining);
 			if (sizeof($unset_ids))
 			{
-				$_CLASS['core_db']->sql_query('UPDATE ' . PRIVMSGS_TABLE . ' 
+				$_CLASS['core_db']->query('UPDATE ' . PRIVMSGS_TABLE . ' 
 					SET message_attachment = 0
 					WHERE msg_id IN (' . implode(', ', $unset_ids) . ')');
 			}
@@ -616,7 +616,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 		// Update topic indicator
 		if ($mode == 'topic')
 		{
-			$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . '
+			$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . '
 				SET topic_attachment = 0
 				WHERE topic_id IN (' . implode(', ', $topic_ids) . ')');
 		}
@@ -628,18 +628,18 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 			$sql = 'SELECT topic_id
 					FROM ' . ATTACHMENTS_TABLE . ' 
 					WHERE topic_id IN (' . implode(', ', $topic_ids) . ')';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$remaining[] = $row['topic_id'];		
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$unset_ids = array_diff($topic_ids, $remaining);
 			if (sizeof($unset_ids))
 			{
-				$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . ' 
+				$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . ' 
 					SET topic_attachment = 0
 					WHERE topic_id IN (' . implode(', ', $unset_ids) . ')');
 			}
@@ -662,7 +662,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 				WHERE t.topic_moved_id = t2.topic_id
 					AND t.topic_time < ' . (time() - $max_age)
 				. $where;
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		break;
 	
 		default:
@@ -671,10 +671,10 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 				WHERE t.topic_moved_id = t2.topic_id
 					AND t.topic_time < ' . (time() - $max_age)
 				. $where;
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 			
 			$topic_ids = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$topic_ids[] = $row['topic_id'];
 			}
@@ -683,7 +683,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 			{
 				$sql = 'DELETE FROM ' . TOPICS_TABLE . '
 					WHERE topic_id IN (' . implode(',', $topic_ids) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 	}
 
@@ -781,7 +781,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 						USING ' . TOPICS_TABLE . ' t1, ' . TOPICS_TABLE . " t2
 						WHERE t1.topic_moved_id = t2.topic_id
 							AND t1.forum_id = t2.forum_id";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				break;
 			
 				default:
@@ -789,23 +789,23 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 						FROM ' .TOPICS_TABLE . ' t1, ' . TOPICS_TABLE . " t2
 						WHERE t1.topic_moved_id = t2.topic_id
 							AND t1.forum_id = t2.forum_id";
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 
-					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$topic_id_ary = array();
 						do
 						{
 							$topic_id_ary[] = $row['topic_id'];
 						}
-						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+						while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 						$sql = 'DELETE FROM ' . TOPICS_TABLE . '
 							WHERE topic_id IN (' . implode(', ', $topic_id_ary) . ')';
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 						unset($topic_id_ary);
 					}
-					$_CLASS['core_db']->sql_freeresult($result);					
+					$_CLASS['core_db']->free_result($result);					
 			}
 			break;
 
@@ -817,7 +817,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$sql = 'UPDATE ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . " p
 						SET t.topic_approved = p.post_approved
 						$where_sql_and t.topic_first_post_id = p.post_id";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				break;
 			
 				default:
@@ -825,14 +825,14 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 						FROM ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . " p
 						$where_sql_and p.post_id = t.topic_first_post_id
 							AND p.post_approved <> t.topic_approved";
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 
 					$topic_ids = array();
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$topic_ids[] = $row['topic_id'];
 					}
-					$_CLASS['core_db']->sql_freeresult();
+					$_CLASS['core_db']->free_result();
 
 					if (!sizeof($topic_ids))
 					{
@@ -842,7 +842,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$sql = 'UPDATE ' . TOPICS_TABLE . '
 						SET topic_approved = 1 - topic_approved
 						WHERE topic_id IN (' . implode(', ', $topic_ids) . ')';
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 			}
 			break;
 
@@ -853,8 +853,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				FROM ' . POSTS_TABLE . " p
 				$where_sql
 				GROUP BY p.post_id, p.post_reported";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$post_ids[$row['post_id']] = $row['post_id'];
 				if ($row['post_reported'])
@@ -866,10 +866,10 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT DISTINCT(post_id)
 				FROM ' . REPORTS_TABLE . '
 				WHERE post_id IN (' . implode(', ', $post_ids) . ')';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$post_ids = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if (!isset($post_reported[$row['post_id']]))
 				{
@@ -893,7 +893,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$sql = 'UPDATE ' . POSTS_TABLE . '
 					SET post_reported = 1 - post_reported
 					WHERE post_id IN (' . implode(', ', $post_ids) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			break;
 
@@ -908,8 +908,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT DISTINCT(t.topic_id)
 				FROM ' . POSTS_TABLE . " t
 				$where_sql_and t.post_reported = 1";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$topic_reported[$row['topic_id']] = 1;
 			}
@@ -917,8 +917,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT t.topic_id, t.topic_reported
 				FROM ' . TOPICS_TABLE . " t
 				$where_sql";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if ($row['topic_reported'] ^ isset($topic_reported[$row['topic_id']]))
 				{
@@ -931,7 +931,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_reported = 1 - topic_reported
 					WHERE topic_id IN (' . implode(', ', $topic_ids) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			break;
 
@@ -942,8 +942,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				FROM ' . POSTS_TABLE . " p
 				$where_sql
 				GROUP BY p.post_id, p.post_attachment";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$post_ids[$row['post_id']] = $row['post_id'];
 				if ($row['post_attachment'])
@@ -958,8 +958,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					AND in_message = 0';
 
 			$post_ids = array();
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if (!isset($post_attachment[$row['post_id']]))
 				{
@@ -983,7 +983,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$sql = 'UPDATE ' . POSTS_TABLE . '
 					SET post_attachment = 1 - post_attachment
 					WHERE post_id IN (' . implode(', ', $post_ids) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			break;
 
@@ -998,8 +998,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT DISTINCT(t.topic_id)
 				FROM ' . POSTS_TABLE . " t
 				$where_sql_and t.post_attachment = 1";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$topic_attachment[$row['topic_id']] = 1;
 			}
@@ -1007,8 +1007,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT t.topic_id, t.topic_attachment
 				FROM ' . TOPICS_TABLE . " t
 				$where_sql";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if ($row['topic_attachment'] ^ isset($topic_attachment[$row['topic_id']]))
 				{
@@ -1021,7 +1021,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_attachment = 1 - topic_attachment
 					WHERE topic_id IN (' . implode(', ', $topic_ids) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			break;
 
@@ -1030,10 +1030,10 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT f.*
 				FROM ' . FORUMS_TABLE . " f
 				$where_sql";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$forum_data = $forum_ids = $post_ids = $last_post_id = $post_info = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if ($row['forum_type'] == FORUM_LINK)
 				{
@@ -1058,8 +1058,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				FROM ' . TOPICS_TABLE . '
 				WHERE forum_id IN (' . implode(', ', $forum_ids) . ')
 				GROUP BY forum_id, topic_approved';
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$forum_id = (int) $row['forum_id'];
 				$forum_data[$forum_id]['topics_real'] += $row['forum_topics'];
@@ -1076,8 +1076,8 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				WHERE forum_id IN (' . implode(', ', $forum_ids) . ')
 					AND post_approved = 1
 				GROUP BY forum_id';
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$forum_id = (int) $row['forum_id'];
 
@@ -1094,12 +1094,12 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 					WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 						AND p.poster_id = u.user_id';
-				$result = $_CLASS['core_db']->sql_query($sql);
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				$result = $_CLASS['core_db']->query($sql);
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$post_info[intval($row['post_id'])] = $row;
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				foreach ($forum_data as $forum_id => $data)
 				{
@@ -1151,7 +1151,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$sql = 'UPDATE ' . FORUMS_TABLE . '
 						SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . '
 						WHERE forum_id = ' . $forum_id;
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 			}
 			break;
@@ -1162,9 +1162,9 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT t.topic_id, t.forum_id, t.topic_approved, ' . (($sync_extra) ? 't.topic_attachment, t.topic_reported, ' : '') . 't.topic_poster, t.topic_time, t.topic_replies, t.topic_replies_real, t.topic_first_post_id, t.topic_first_poster_name, t.topic_last_post_id, t.topic_last_poster_id, t.topic_last_poster_name, t.topic_last_post_time
 				FROM ' . TOPICS_TABLE . " t
 				$where_sql";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$topic_id = (int) $row['topic_id'];
 				$topic_data[$topic_id] = $row;
@@ -1182,7 +1182,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$topic_data[$topic_id]['attachment'] = 0;
 				}
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			// Use "t" as table alias because of the $where_sql clause
          // NOTE: 't.post_approved' in the GROUP BY is causing a major slowdown.
@@ -1190,9 +1190,9 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				FROM ' . POSTS_TABLE . " t
 				$where_sql
 				GROUP BY t.topic_id"; //, t.post_approved";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$topic_id = (int) $row['topic_id'];
 
@@ -1220,7 +1220,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 				}
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			foreach ($topic_data as $topic_id => $row)
 			{
@@ -1260,10 +1260,10 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 				WHERE p.post_id IN (' . implode(',', $post_ids) . ')
 					AND u.user_id = p.poster_id';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$post_ids = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$topic_id = intval($row['topic_id']);
 
@@ -1284,7 +1284,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$topic_data[$topic_id]['last_poster_name'] = ($row['poster_id'] == ANONYMOUS) ? $row['post_username'] : $row['username'];
 				}
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			// approved becomes unapproved, and vice-versa
 			if (sizeof($approved_unapproved_ids))
@@ -1292,7 +1292,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_approved = 1 - topic_approved
 					WHERE topic_id IN (' . implode(', ', $approved_unapproved_ids) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			unset($approved_unapproved_ids);
 
@@ -1308,14 +1308,14 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$where_sql_and p.topic_id = t.topic_id
 						AND p.post_reported = 1
 					GROUP BY t.topic_id";
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
 				$fieldnames[] = 'reported';
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$topic_data[intval($row['topic_id'])]['reported'] = 1;
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				// This routine assumes that post_attachment values are correct
 				// if they are not, use sync('post_attachment') first
@@ -1324,14 +1324,14 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$where_sql_and p.topic_id = t.topic_id
 						AND p.post_attachment = 1
 					GROUP BY t.topic_id";
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
 				$fieldnames[] = 'attachment';
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$topic_data[intval($row['topic_id'])]['attachment'] = 1;
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 			}
 
 			foreach ($topic_data as $topic_id => $row)
@@ -1351,7 +1351,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					$sql = 'UPDATE ' . TOPICS_TABLE . '
 						SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . '
 						WHERE topic_id = ' . $topic_id;
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 
 					$resync_forums[$row['forum_id']] = $row['forum_id'];
 				}
@@ -1399,14 +1399,14 @@ function prune($forum_id, $prune_mode, $prune_date, $prune_flags = 0, $auto_sync
 		WHERE forum_id $sql_forum
 			AND poll_start = 0 
 			$sql_and";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$topic_list = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$topic_list[] = $row['topic_id'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if ($prune_flags & 2)
 	{
@@ -1416,13 +1416,13 @@ function prune($forum_id, $prune_mode, $prune_date, $prune_flags = 0, $auto_sync
 				AND poll_start > 0 
 				AND poll_last_vote < $prune_date 
 				$sql_and";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$topic_list[] = $row['topic_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$topic_list = array_unique($topic_list);
 	}
@@ -1438,9 +1438,9 @@ function auto_prune($forum_id, $prune_mode, $prune_flags, $prune_days, $prune_fr
 	$sql = 'SELECT forum_name
 		FROM ' . FORUMS_TABLE . "
 		WHERE forum_id = $forum_id";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$prune_date = time() - ($prune_days * 86400);
 		$next_prune = time() + ($prune_freq * 86400);
@@ -1450,11 +1450,11 @@ function auto_prune($forum_id, $prune_mode, $prune_flags, $prune_days, $prune_fr
 		$sql = 'UPDATE ' . FORUMS_TABLE . "
 			SET prune_next = $next_prune
 			WHERE forum_id = $forum_id";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		add_log('admin', 'LOG_AUTO_PRUNE', $row['forum_name']);
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	return;
 }
@@ -1595,7 +1595,7 @@ function cache_moderators()
 
 	// Clear table
 	$sql = (SQL_LAYER != 'sqlite') ? 'TRUNCATE ' . MODERATOR_TABLE : 'DELETE FROM ' . MODERATOR_TABLE;
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	// Holding array
 	$m_sql = array();
@@ -1607,14 +1607,14 @@ function cache_moderators()
 			AND a.auth_option_id = o.auth_option_id
 			AND a.auth_setting = " . ACL_YES . ' 
 			AND u.user_id = a.user_id';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$m_sql['f_' . $row['forum_id'] . '_u_' . $row['user_id']] = $row['forum_id'] . ', ' . $row['user_id'] . ", '" . $row['username'] . "', NULL, NULL";
 		$user_id_sql .= (($user_id_sql) ? ', ' : '') . $row['user_id'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	// Remove users who have group memberships with DENY moderator permissions
 	if ($user_id_sql)
@@ -1626,13 +1626,13 @@ function cache_moderators()
 				AND a.auth_setting = " . ACL_NO . " 
 				AND a.group_id = ug.group_id
 				AND ug.user_id IN ($user_id_sql)";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			unset($m_sql['f_' . $row['forum_id'] . '_u_' . $row['user_id']]);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	$sql = 'SELECT a.forum_id, g.group_name, g.group_id
@@ -1642,13 +1642,13 @@ function cache_moderators()
 			AND a.auth_setting = " . ACL_YES . '
 			AND g.group_id = a.group_id
 			AND g.group_type NOT IN (' . GROUP_HIDDEN . ', ' . GROUP_SPECIAL . ')';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$m_sql['f_' . $row['forum_id'] . '_g_' . $row['group_id']] = $row['forum_id'] . ', NULL, NULL, ' . $row['group_id'] . ", '" . $row['group_name'] . "'";
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if (sizeof($m_sql))
 	{
@@ -1658,7 +1658,7 @@ function cache_moderators()
 			
 				$sql = 'INSERT INTO ' . MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, groupname) 
 					VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\1)',  $m_sql));
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 				break;
 
 			case 'mysql4':
@@ -1667,7 +1667,7 @@ function cache_moderators()
 			case 'sqlite':
 				$sql = 'INSERT INTO ' . MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, groupname)
 					 ' . implode(' UNION ALL ', preg_replace('#^(.*)$#', 'SELECT \1',  $m_sql));
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 				break;
 
 			default:
@@ -1675,7 +1675,7 @@ function cache_moderators()
 				{
 					$sql = 'INSERT INTO ' . MODERATOR_TABLE . " (forum_id, user_id, username, group_id, groupname) 
 						VALUES ($sql)";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 		}
 	}
@@ -1721,7 +1721,7 @@ function add_log()
 			return;
 	}
 
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 	return;
 }
 
@@ -1776,11 +1776,11 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 			" . (($limit_days) ? "AND l.log_time >= $limit_days" : '') . "
 			$sql_forum
 		ORDER BY $sort_by";
-	$result = $_CLASS['core_db']->sql_query_limit($sql, $limit, $offset);
+	$result = $_CLASS['core_db']->query_limit($sql, $limit, $offset);
 
 	$i = 0;
 	$log = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($row['topic_id'])
 		{
@@ -1820,7 +1820,7 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 
 		$i++;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if (sizeof($topic_id_list))
 	{
@@ -1831,9 +1831,9 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 		$sql = 'SELECT topic_id, forum_id
 			FROM ' . TOPICS_TABLE . '
 			WHERE topic_id IN (' . implode(', ', array_map('intval', $topic_id_list)) . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if ($_CLASS['auth']->acl_get('f_read', $row['forum_id']))
 			{
@@ -1860,10 +1860,10 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 		WHERE l.log_type = $log_type
 			AND l.log_time >= $limit_days
 			$sql_forum";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	$row = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$log_count =  $row['total_entries'];
 
@@ -1898,25 +1898,25 @@ if (class_exists('auth'))
 
 			$sql = 'SELECT auth_option_id, auth_option
 				FROM ' . ACL_OPTIONS_TABLE;
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$option_ids[$row['auth_option']] = $row['auth_option_id'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$sql_forum = 'AND a.forum_id IN (' . implode(', ', array_map('intval', $forum_id)) . ')';
 
 			$sql = ($ug_type == 'user') ? 'SELECT o.auth_option_id, o.auth_option, a.forum_id, a.auth_setting FROM ' . ACL_USERS_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " o WHERE a.auth_option_id = o.auth_option_id $sql_forum AND a.user_id = $ug_id" : 'SELECT o.auth_option_id, o.auth_option, a.forum_id, a.auth_setting FROM ' . ACL_GROUPS_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " o WHERE a.auth_option_id = o.auth_option_id $sql_forum AND a.group_id = $ug_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$cur_auth = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$cur_auth[$row['forum_id']][$row['auth_option_id']] = $row['auth_setting'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$table = ($ug_type == 'user') ? ACL_USERS_TABLE : ACL_GROUPS_TABLE;
 			$id_field  = $ug_type . '_id';
@@ -1981,7 +1981,7 @@ if (class_exists('auth'))
 								foreach ($sql_subary as $sql)
 								{
 									$sql = "INSERT INTO $table ($id_field, forum_id, auth_option_id, auth_setting) VALUES ($sql)";
-									$_CLASS['core_db']->sql_query($sql);
+									$_CLASS['core_db']->query($sql);
 									$sql = '';
 								}
 						}
@@ -1989,7 +1989,7 @@ if (class_exists('auth'))
 						if ($sql != '')
 						{
 							$sql = "INSERT INTO $table ($id_field, forum_id, auth_option_id, auth_setting) $sql";
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 						}
 						break;
 
@@ -1997,7 +1997,7 @@ if (class_exists('auth'))
 					case 'delete':
 						foreach ($sql_subary as $sql)
 						{
-							$result = $_CLASS['core_db']->sql_query($sql);
+							$result = $_CLASS['core_db']->query($sql);
 							$sql = '';
 						}
 						break;
@@ -2030,7 +2030,7 @@ if (class_exists('auth'))
 					WHERE $id_field = $ug_id
 						AND forum_id = $forum
 						$auth_sql";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 
 			$this->acl_clear_prefetch();
@@ -2056,9 +2056,9 @@ if (class_exists('auth'))
 			$sql = "SELECT auth_option, is_global, is_local
 				FROM " . ACL_OPTIONS_TABLE . "
 				ORDER BY auth_option_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if (!empty($row['is_global']))
 				{
@@ -2070,7 +2070,7 @@ if (class_exists('auth'))
 					$cur_options['local'][] = $row['auth_option'];
 				}
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			// Here we need to insert new options ... this requires discovering whether
 			// an options is global, local or both and whether we need to add an option
@@ -2123,7 +2123,7 @@ if (class_exists('auth'))
 						default:
 							$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
 								VALUES ($option, " . $type_sql[$type] . ")";
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 							$sql = '';
 					}
 				}
@@ -2133,7 +2133,7 @@ if (class_exists('auth'))
 			{
 				$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
 					VALUES $sql";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 
 			$_CLASS['core_cache']->destroy('acl_options');
@@ -2159,10 +2159,10 @@ function update_post_information($type, $ids)
 		WHERE post_approved = 1
 			AND {$type}_id IN (" . implode(', ', $ids) . ")
 		GROUP BY {$type}_id";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$last_post_ids = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($type == 'forum')
 		{
@@ -2171,7 +2171,7 @@ function update_post_information($type, $ids)
 
 		$last_post_ids[] = $row['last_post_id'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if ($type == 'forum')
 	{
@@ -2192,16 +2192,16 @@ function update_post_information($type, $ids)
 			FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 			WHERE p.poster_id = u.user_id
 				AND p.post_id IN (' . implode(', ', $last_post_ids) . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$update_sql[$row["{$type}_id"]][] = $type . '_last_post_id = ' . (int) $row['post_id'];
 			$update_sql[$row["{$type}_id"]][] = $type . '_last_post_time = ' . (int) $row['post_time'];
 			$update_sql[$row["{$type}_id"]][] = $type . '_last_poster_id = ' . (int) $row['poster_id'];
 			$update_sql[$row["{$type}_id"]][] = "{$type}_last_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->sql_escape($row['post_username']) : $_CLASS['core_db']->sql_escape($row['username'])) . "'";
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	unset($empty_forums, $ids, $last_post_ids);
 
@@ -2217,7 +2217,7 @@ function update_post_information($type, $ids)
 		$sql = "UPDATE $table
 			SET " . implode(', ', $update_sql_ary) . "
 			WHERE {$type}_id = $update_id";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 }
 
@@ -2233,11 +2233,11 @@ function tidy_database()
 
 	$sql = 'DELETE FROM ' . FORUMS_TRACK_TABLE . '
 		WHERE mark_time < ' . $remove_date;
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
 		WHERE mark_time < ' . $remove_date;
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	set_config('database_last_gc', time(), true);
 }

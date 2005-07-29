@@ -28,14 +28,14 @@ if (($config = $_CLASS['core_cache']->get('config')) !== false)
 	$sql = 'SELECT config_name, config_value
 		FROM ' . CONFIG_TABLE . '
 		WHERE is_dynamic = 1';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 	
 	if (is_array($result))
 	{
 		trigger_error($config_error, E_USER_ERROR);
 	}
 	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$config[$row['config_name']] = $row['config_value'];
 	}
@@ -47,12 +47,12 @@ else
 	$sql = 'SELECT config_name, config_value, is_dynamic
 		FROM ' . CONFIG_TABLE;
 			
-	if (!$result = $_CLASS['core_db']->sql_query($sql))
+	if (!$result = $_CLASS['core_db']->query($sql))
 	{
 		trigger_error($config_error, E_USER_ERROR);
 	}
 	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if (!$row['is_dynamic'])
 		{
@@ -61,7 +61,7 @@ else
 
 		$config[$row['config_name']] = $row['config_value'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$_CLASS['core_cache']->put('config', $cached_config);
 
@@ -74,17 +74,17 @@ function set_config($config_name, $config_value, $is_dynamic = false)
 	global $_CLASS, $config;
 
 	$sql = 'UPDATE ' . CONFIG_TABLE . "
-		SET config_value = '" . $_CLASS['core_db']->sql_escape($config_value) . "'
-		WHERE config_name = '" . $_CLASS['core_db']->sql_escape($config_name) . "'";
-	$_CLASS['core_db']->sql_query($sql);
+		SET config_value = '" . $_CLASS['core_db']->escape($config_value) . "'
+		WHERE config_name = '" . $_CLASS['core_db']->escape($config_name) . "'";
+	$_CLASS['core_db']->query($sql);
 
-	if (!$_CLASS['core_db']->sql_affectedrows() && !isset($config[$config_name]))
+	if (!$_CLASS['core_db']->affected_rows() && !isset($config[$config_name]))
 	{
 		$sql = 'INSERT INTO ' . CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'config_name'	=> $config_name,
 			'config_value'	=> $config_value,
 			'is_dynamic'	=> ($is_dynamic) ? 1 : 0));
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	$config[$config_name] = $config_value;
@@ -192,10 +192,10 @@ function get_userdata($user)
 	$sql = 'SELECT *
 		FROM ' . USERS_TABLE . '
 		WHERE ';
-	$sql .= ((is_integer($user)) ? "user_id = $user" : "username = '" .  $_CLASS['core_db']->sql_escape($user) . "'") . " AND user_id <> " . ANONYMOUS;
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$sql .= ((is_integer($user)) ? "user_id = $user" : "username = '" .  $_CLASS['core_db']->escape($user) . "'") . " AND user_id <> " . ANONYMOUS;
+	$result = $_CLASS['core_db']->query($sql);
 
-	return ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row : false;
+	return ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row : false;
 }
 
 // Create forum rules for given forum 
@@ -288,20 +288,20 @@ function get_forum_parents(&$forum_data)
 				WHERE left_id < ' . $forum_data['left_id'] . '
 					AND right_id > ' . $forum_data['right_id'] . '
 				ORDER BY left_id ASC';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$forum_parents[$row['forum_id']] = array($row['forum_name'], (int) $row['forum_type']);
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$forum_data['forum_parents'] = serialize($forum_parents);
 
 			$sql = 'UPDATE ' . FORUMS_TABLE . "
-				SET forum_parents = '" . $_CLASS['core_db']->sql_escape($forum_data['forum_parents']) . "'
+				SET forum_parents = '" . $_CLASS['core_db']->escape($forum_data['forum_parents']) . "'
 				WHERE parent_id = " . $forum_data['parent_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 		else
 		{
@@ -337,13 +337,13 @@ function get_moderators(&$forum_moderators, $forum_id = false)
 		FROM ' . MODERATOR_TABLE . "
 		WHERE display_on_index = 1
 			$forum_sql";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$forum_moderators[$row['forum_id']][] = (!empty($row['user_id'])) ? '<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>' : '<a href="' . generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . $row['groupname'] . '</a>';
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	return;
 }
@@ -421,7 +421,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	$sql = 'SELECT forum_id, forum_name, parent_id, forum_type, left_id, right_id
 		FROM ' . FORUMS_TABLE . '
 		ORDER BY left_id ASC';
-	$result = $_CLASS['core_db']->sql_query($sql, 600);
+	$result = $_CLASS['core_db']->query($sql, 600);
 
 	$right = $padding = 0;
 	$padding_store = array('0' => 0);
@@ -431,7 +431,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
 	// If this happens, the padding could be "broken"
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		///  Work on padding ////
 		if ($row['left_id'] < $right)
@@ -488,7 +488,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 			'PADDING'		=> $padding)
 		);
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$_CLASS['core_template']->assign(array(
 		'S_DISPLAY_JUMPBOX'	=> $display_jumpbox,
@@ -507,15 +507,15 @@ function language_select($default = '')
 	$sql = 'SELECT lang_iso, lang_local_name 
 		FROM ' . LANG_TABLE . '
 		ORDER BY lang_english_name';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$lang_options = '';
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$selected = ($row['lang_iso'] == $default) ? ' selected="selected"' : '';
 		$lang_options .= '<option value="' . $row['lang_iso'] . '"' . $selected . '>' . $row['lang_local_name'] . '</option>';
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	return $lang_options;
 }
@@ -558,10 +558,10 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 				FROM $table_sql
 				WHERE $where_sql = $match_id
 					AND user_id = $user_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			$notify_status = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['notify_status'] : NULL;
-			$_CLASS['core_db']->sql_freeresult($result);
+			$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : NULL;
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		if (!is_null($notify_status))
@@ -575,7 +575,7 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 					$sql = 'DELETE FROM ' . $table_sql . "
 						WHERE $where_sql = $match_id
 							AND user_id = $user_id";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 				$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
 				$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
@@ -591,7 +591,7 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 						SET notify_status = 0
 						WHERE $where_sql = $match_id
 							AND user_id = $user_id";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 			}
 		}
@@ -605,7 +605,7 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 
 					$sql = 'INSERT INTO ' . $table_sql . " (user_id, $where_sql, notify_status)
 						VALUES ($user_id, $match_id, 0)";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 				$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
 				$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
@@ -642,6 +642,7 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 // Marks a topic or form as read
 function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 {
+// relook this area.
 	global $config, $_CLASS, $_CORE_CONFIG;
 	
 	if ($_CLASS['core_user']->is_bot)
@@ -656,7 +657,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 
 	// Default tracking type
 	$type = TRACK_NORMAL;
-	$current_time = ($marktime) ? $marktime : time();
+	$current_time = ($marktime) ? $marktime : gmtime();
 	$topic_id = (int) $topic_id;
 
 	switch ($mode)
@@ -668,14 +669,14 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 					FROM ' . FORUMS_TRACK_TABLE . ' 
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 						AND forum_id IN (' . implode(', ', array_map('intval', $forum_id)) . ')';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				
 				$sql_update = array();
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$sql_update[] = $row['forum_id'];
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				if (sizeof($sql_update))
 				{
@@ -683,13 +684,13 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 						SET mark_time = $current_time 
 						WHERE user_id = " . $_CLASS['core_user']->data['user_id'] . '
 							AND forum_id IN (' . implode(', ', $sql_update) . ')';
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 					
 					$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
 						WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 							AND forum_id IN (' . implode(', ', $sql_update) . ')
 							AND mark_type = ' . TRACK_NORMAL;
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 
 				if ($sql_insert = array_diff($forum_id, $sql_update))
@@ -715,21 +716,21 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 							default:
 								$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . ' (user_id, forum_id, mark_time)
 									VALUES (' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $current_time)";
-								$_CLASS['core_db']->sql_query($sql);
+								$_CLASS['core_db']->query($sql);
 								$sql = '';
 						}
 
 						if ($sql)
 						{
 							$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . " (user_id, forum_id, mark_time) $sql";
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 						}
 						
 						$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 								AND forum_id = ' . $forum_id . '
 								AND mark_type = ' . TRACK_NORMAL;
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 					}
 				}
 				unset($sql_update);
@@ -767,15 +768,18 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			if ($_CLASS['core_user']->is_user && ($config['load_db_lastread'] || ($config['load_db_track'] && $type == TRACK_POSTED)))
 			{
 				$track_type = ($type == TRACK_POSTED) ? ', mark_type = ' . $type : '';
+
+				$_CLASS['core_db']->sql_return_on_error(true);
 				
-				$sql = 'UPDATE ' . TOPICS_TRACK_TABLE . "
+				echo ($sql = 'UPDATE ' . TOPICS_TRACK_TABLE . "
 					SET forum_id = $forum_id, mark_time = $current_time $track_type
 					WHERE topic_id = $topic_id
-						AND user_id = {$_CLASS['core_user']->data['user_id']}
-						AND mark_time < $current_time";
-				if (!$_CLASS['core_db']->sql_query($sql) || !$_CLASS['core_db']->sql_affectedrows())
+						AND user_id = {$_CLASS['core_user']->data['user_id']}");
+
+				if (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows())
 				{
-					$_CLASS['core_db']->sql_return_on_error(true);
+	// temp
+					$_CLASS['core_db']->sql_return_on_error(false);
 
 					$sql_ary = array(
 						'user_id'		=> $_CLASS['core_user']->data['user_id'],
@@ -785,7 +789,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 						'mark_time'		=> $current_time
 					);
 					
-					$_CLASS['core_db']->sql_query('INSERT INTO ' . TOPICS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
+					$_CLASS['core_db']->query('INSERT INTO ' . TOPICS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 					
 					$_CLASS['core_db']->sql_return_on_error(false);
 				}
@@ -796,7 +800,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 				$tracking = array();
 				if (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']))
 				{
-					$tracking = unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']));
+					$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
 
 					// If the cookie grows larger than 2000 characters we will remove
 					// the smallest value
@@ -848,16 +852,16 @@ function obtain_word_list(&$censors)
 	{
 		$sql = 'SELECT word, replacement
 			FROM  ' . WORDS_TABLE;
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$censors = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			echo 'test';
 			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
 			$censors['replace'][] = $row['replacement'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		$_CLASS['core_cache']->put('word_censors', $censors);
 	}
 
@@ -875,17 +879,17 @@ function obtain_icons(&$icons)
 		$sql = 'SELECT *
 			FROM ' . ICONS_TABLE . ' 
 			ORDER BY icons_order';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$icons = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$icons[$row['icons_id']]['img'] = $row['icons_url'];
 			$icons[$row['icons_id']]['width'] = (int) $row['icons_width'];
 			$icons[$row['icons_id']]['height'] = (int) $row['icons_height'];
 			$icons[$row['icons_id']]['display'] = (bool) $row['display_on_posting'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_cache']->put('icons', $icons);
 	}
@@ -898,15 +902,15 @@ function obtain_ranks(&$ranks)
 {
 	global $_CLASS;
 
-	if (($ranks = $_CLASS['core_cache']->get('ranks')) === false )
+	if (is_null($ranks = $_CLASS['core_cache']->get('ranks')))
 	{
 		$sql = 'SELECT *
 			FROM ' . RANKS_TABLE . '
 			ORDER BY rank_min DESC';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$ranks = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if ($row['rank_special'])
 			{
@@ -924,7 +928,7 @@ function obtain_ranks(&$ranks)
 				);
 			}
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_cache']->put('ranks', $ranks);
 	}
@@ -944,10 +948,10 @@ function obtain_attach_extensions($forum_id = false)
 			FROM ' . EXTENSIONS_TABLE . ' e, ' . EXTENSION_GROUPS_TABLE . ' g
 			WHERE e.group_id = g.group_id
 				AND g.allow_group = 1';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$extensions = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$extension = strtolower(trim($row['extension']));
 
@@ -966,7 +970,7 @@ function obtain_attach_extensions($forum_id = false)
 			// Store allowed extensions forum wise
 			$extensions['_allowed_'][$extension] = (!sizeof($allowed_forums)) ? 0 : $allowed_forums;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_cache']->put('extensions', $extensions);
 	}
@@ -1072,7 +1076,7 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 			// Reset user_last_confirm_key
 			$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = ''
 				WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 			
 			return true;
 		}
@@ -1100,15 +1104,11 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 	);
 	
 	// Here we update the lastpage of the user, only here
-	$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = '" . $_CLASS['core_db']->sql_escape($confirm_key) . "'
+	$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = '" . $_CLASS['core_db']->escape($confirm_key) . "'
 		WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
-	$_CLASS['core_db']->sql_query($sql);
-	
-	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang[$title]);
-	
-	$_CLASS['core_template']->display('modules/Forums/'.$html_body);
+	$_CLASS['core_db']->query($sql);
 
-	$_CLASS['core_display']->display_footer();	
+	$_CLASS['core_template']->display('modules/Forums/'.$html_body);
 }
 
 // Generate forum login box
@@ -1123,42 +1123,42 @@ function login_forum_box(&$forum_data)
 		WHERE forum_id = '".$forum_data['forum_id']."'
 			AND user_id = '".$_CLASS['core_user']->data['user_id']."'
 			AND session_id = '".$_CLASS['core_user']->session_id."'";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		return true;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if ($password)
 	{
 		// Remove expired authorised sessions
 		$sql = 'SELECT session_id 
 			FROM ' . SESSIONS_TABLE;
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$sql_in = array();
 			do
 			{
-				$sql_in[] = "'" . $_CLASS['core_db']->sql_escape($row['session_id']) . "'";
+				$sql_in[] = "'" . $_CLASS['core_db']->escape($row['session_id']) . "'";
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 			$sql = 'DELETE FROM ' . FORUMS_ACCESS_TABLE . '
 				WHERE session_id NOT IN (' . implode(', ', $sql_in) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if ($password == $forum_data['forum_password'])
 		{
 			$sql = 'INSERT INTO ' . FORUMS_ACCESS_TABLE . ' (forum_id, user_id, session_id)
-				VALUES (' . $forum_data['forum_id'] . ', ' . $_CLASS['core_user']->data['user_id'] . ", '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->session_id) . "')";
-			$_CLASS['core_db']->sql_query($sql);
+				VALUES (' . $forum_data['forum_id'] . ', ' . $_CLASS['core_user']->data['user_id'] . ", '" . $_CLASS['core_db']->escape($_CLASS['core_user']->session_id) . "')";
+			$_CLASS['core_db']->query($sql);
 
 			return true;
 		}
@@ -1243,31 +1243,48 @@ function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_
 {
 	global $config, $_CLASS;
 
-	$attachments = display_attachments($forum_id, NULL, $attachments, $update_count, $preview, true);
+	$unset_array = array();
 	$tpl_size = sizeof($attachments);
 
-	$unset_tpl = array();
-
 	preg_match_all('#<!\-\- ia([0-9]+) \-\->(.*?)<!\-\- ia\1 \-\->#', $text, $matches, PREG_PATTERN_ORDER);
-
-	$replace = array();
-	foreach ($matches[0] as $num => $capture)
+	//print_r($matches);
+	if (count($matches[1]))
 	{
-		// Flip index if we are displaying the reverse way
-		$index = ($config['display_order']) ? ($tpl_size-($matches[1][$num] + 1)) : $matches[1][$num];
+		$matches[1] = array_unique($matches[1]);
 
-		$replace['from'][] = $matches[0][$num];
-		$replace['to'][] = (isset($attachments[$index])) ? $attachments[$index] : sprintf($_CLASS['core_user']->lang['MISSING_INLINE_ATTACHMENT'], $matches[2][array_search($index, $matches[1])]);
+		foreach ($matches[1] as $key => $index)
+		{
+			// Flip index if we are displaying the reverse way
+// whats this display_order all about ?
+			$index = ($config['display_order']) ? ($tpl_size - ($index + 1)) : $index;
 
-		$unset_tpl[] = $index;
+			if (isset($attachments[$index]))
+			{
+				$inline_attachments[$key] = display_attachments($forum_id, array($attachments[$index]), $update_count, $preview, true);
+				$unset_array[] = $index;
+			}
+			else
+			{
+				$inline_attachments[$key] = false;
+			}
+		}
+//print_r($inline_attachments);
+		//$inline_attachments = display_attachments($forum_id, $inline_attachments, $update_count, $preview, true);
+
+		$replace = array();
+		foreach ($matches[1] as $key => $index)
+		{
+			$replace['from'][] = $matches[0][$key];
+			$replace['to'][] = ($inline_attachments[$key]) ? $inline_attachments[$key][0] : sprintf($_CLASS['core_user']->lang['MISSING_INLINE_ATTACHMENT'], $matches[2][array_search($index, $matches[1])]);
+		}
+
+		if (isset($replace['from']))
+		{
+			$text = str_replace($replace['from'], $replace['to'], $text);
+		}
 	}
 
-	if (isset($replace['from']))
-	{
-		$text = str_replace($replace['from'], $replace['to'], $text);
-	}
-
-	return array_unique($unset_tpl);
+	return $unset_array;
 }
 
 // Check if extension is allowed to be posted within forum X (forum_id 0 == private messaging)
@@ -1369,7 +1386,7 @@ function page_header()
 
 					if ($row['user_allow_viewonline'] || $_CLASS['auth']->acl_get('u_viewonline'))
 					{
-						$user_online_link = ($row['user_type'] <> USER_IGNORE) ? "<a href=\"" . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $user_online_link . '</a>' : $user_online_link;
+						$user_online_link = ($row['user_type'] <> USER_BOT_ACTIVE) ? "<a href=\"" . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $user_online_link . '</a>' : $user_online_link;
 						$online_userlist .= ($online_userlist != '') ? ', ' . $user_online_link : $user_online_link;
 					}
 				}

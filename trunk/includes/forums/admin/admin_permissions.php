@@ -205,7 +205,6 @@ switch ($submit)
 				}
 			}
 
-
 			// Do we need to recache the moderator lists? We do if the mode
 			// was mod or auth_settings['mod'] is a non-zero size array
 			if ($mode == 'mod' || (isset($auth_settings['mod']) && sizeof($auth_settings['mod'])))
@@ -223,14 +222,14 @@ switch ($submit)
 			// Logging ... first grab user or groupnames ...
 			$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . USERS_TABLE . ' WHERE user_id';
 			$sql .=  ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$l_ug_list = '';
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$l_ug_list .= (($l_ug_list != '') ? ', ' : '') . ((isset($row['group_type']) && $row['group_type'] == GROUP_SPECIAL) ? '<span class="blue">' . $_CLASS['core_user']->lang['G_' . $row['name']] . '</span>' : $row['name']);
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			foreach (array_keys($auth_settings) as $submode)
 			{
@@ -240,14 +239,14 @@ switch ($submit)
 					$sql = 'SELECT forum_name  
 						FROM ' . FORUMS_TABLE . "
 						WHERE forum_id IN ($sql_forum_id)";
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 
 					$l_forum_list = '';
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$l_forum_list .= (($l_forum_list != '') ? ', ' : '') . $row['forum_name'];
 					}
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 
 					add_log('admin', 'LOG_ACL_' . strtoupper($submode) . '_ADD', $l_forum_list, $l_ug_list);
 				}
@@ -269,16 +268,16 @@ switch ($submit)
 		$sql = "SELECT auth_option_id
 			FROM " . ACL_OPTIONS_TABLE . "
 			WHERE auth_option LIKE '{$sql_option_mode}_%'";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$option_id_ary = array();
 			do
 			{
 				$option_id_ary[] = $row['auth_option_id'];
 			}
-			while($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 			foreach ($ug_data as $id)
 			{
@@ -286,7 +285,7 @@ switch ($submit)
 			}
 			unset($option_id_ary);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 
 		// Do we need to recache the moderator lists? We do if the mode
@@ -300,14 +299,14 @@ switch ($submit)
 		// Logging ... first grab user or groupnames ...
 		$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . USERS_TABLE . ' WHERE user_id';
 		$sql .=  ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$l_ug_list = '';
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$l_ug_list .= (($l_ug_list != '') ? ', ' : '') . ((isset($row['group_type']) && $row['group_type'] == GROUP_SPECIAL) ? '<span class="blue">' . $_CLASS['core_user']->lang['G_' . $row['name']] . '</span>' : $row['name']);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 
 		// Grab the forum details if non-zero forum_id
@@ -316,14 +315,14 @@ switch ($submit)
 			$sql = 'SELECT forum_name  
 				FROM ' . FORUMS_TABLE . "
 				WHERE forum_id IN ($sql_forum_id)";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$l_forum_list = '';
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$l_forum_list .= (($l_forum_list != '') ? ', ' : '') . $row['forum_name'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			add_log('admin', 'LOG_ACL_' . strtoupper($which_mode) . '_DEL', $l_forum_list, $l_ug_list);
 		}
@@ -373,7 +372,7 @@ switch ($submit)
 		if (!empty($sql['preset_name']) || $_POST['presetoption'] != -1)
 		{
 			$sql = ($_POST['presetoption'] == -1) ? 'INSERT INTO ' . ACL_PRESETS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql) : 'UPDATE ' . ACL_PRESETS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . ' WHERE preset_id =' . intval($_POST['presetoption']);
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			add_log('admin', 'LOG_ACL_PRESET_ADD', $sql['preset_name']);
 		}
@@ -388,14 +387,14 @@ switch ($submit)
 			$sql = "SELECT preset_name 
 				FROM " . ACL_PRESETS_TABLE . " 
 				WHERE preset_id = " . intval($_POST['presetoption']);
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$sql = "DELETE FROM " . ACL_PRESETS_TABLE . " 
 				WHERE preset_id = " . intval($_POST['presetoption']);
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			add_log('admin', 'LOG_ACL_PRESET_DEL', $row['preset_name']);
 			unset($row);
@@ -476,18 +475,18 @@ if (in_array($mode, array('user', 'group', 'forum', 'mod')) && empty($submit))
 			$sql = "SELECT group_id, group_name, group_type   
 				FROM " . GROUPS_TABLE . " 
 				ORDER BY group_type DESC";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$group_options = '';
-			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				do
 				{
 					echo '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="blue"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 				}
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 			
 ?></select>&nbsp;</td>
 	</tr>
@@ -536,14 +535,14 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			AND a.forum_id IN ($sql_forum_id)
 			AND u.user_id = a.user_id
 		ORDER BY u.username, u.user_regdate ASC";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$users = '';
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		echo '<option value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 		
 ?></select></td>
 			</tr>
@@ -566,14 +565,14 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			AND a.auth_option_id = o.auth_option_id
 			AND g.group_id = a.group_id
 		ORDER BY g.group_type DESC, g.group_name ASC";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$groups = '';
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		echo '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="blue"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 ?></select></td>
 		</tr>
@@ -607,14 +606,14 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 	$sql = "SELECT group_id, group_name, group_type 
 		FROM " . GROUPS_TABLE . "
 		ORDER BY group_type DESC, group_name";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$group_list = '';
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		echo '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 		
 ?></select></td>
 			</tr>
@@ -655,9 +654,9 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		$sql = 'SELECT forum_id, forum_name, parent_id  
 			FROM ' . FORUMS_TABLE . "
 			WHERE forum_id IN ($sql_forum_id)";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 		{
 			trigger_error($_CLASS['core_user']->lang['NO_FORUM']);
 		}
@@ -672,8 +671,8 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		{
 			$forum_list .= (($forum_list != '') ? ', ' : '') . '<b>' . $row['forum_name'] . '</b>';
 		}
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result));
-		$_CLASS['core_db']->sql_freeresult($result);
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+		$_CLASS['core_db']->free_result($result);
 	}
 
 
@@ -699,9 +698,9 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 			$sql .= (is_array($ug_data)) ? ' IN (' . implode(', ', $ug_data) . ')' : ' = ' . $ug_data;
 			break;
 	}
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
+	if (!$row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		trigger_error($l_no_error);
 	}
@@ -714,8 +713,8 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		$ug_ids .= (($ug_ids != '') ? ', ' : '') . $row['id'];
 		$ug_hidden .= '<input type="hidden" name="ug_data[]" value="' . $row['id'] . '" />';
 	}
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result));
-	$_CLASS['core_db']->sql_freeresult($result);
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+	$_CLASS['core_db']->free_result($result);
 
 
 	// Grab the list of options ... if we're in deps mode we want all options, 
@@ -727,14 +726,14 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		WHERE auth_option LIKE '" . $sql_option_mode . "_%' 
 			$sql_limit_option 
 			$sql_founder";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$auth_options = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$auth_options[] = $row;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	unset($sql_limit_option);
 
@@ -757,9 +756,9 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 				$sql = "SELECT o.auth_option, a.auth_setting FROM " . ACL_USERS_TABLE . " a, " . ACL_OPTIONS_TABLE . " o WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' AND a.auth_option_id = o.auth_option_id AND a.forum_id = " . $forum_data['parent_id'] . " AND a.user_id IN ($ug_ids)";
 				break;
 		}
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			do
 			{
@@ -778,13 +777,13 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 						break;
 				}
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 			//echo ($holding['allow'] = substr($holding['allow'], 0, 3));
 			$preset_options .= '<option value="preset_0">' . $_CLASS['core_user']->lang['INHERIT_PARENT'] . '</option>';
 			$preset_js .= "\tpresets['preset_0'] = new Array();" . "\n";
 			$preset_js .= "\tpresets['preset_0'] = new preset_obj('" . $holding['yes'] . "', '" . $holding['no'] . "', '" . $holding['unset'] . "');\n";
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	$holding['yes'] = $holding['no'] = $holding['unset'] = '';
@@ -794,9 +793,9 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		FROM " . ACL_PRESETS_TABLE . " 
 		WHERE preset_type = '" . (($mode == 'deps') ? 'f' : $sql_option_mode) . "' 
 		ORDER BY preset_id ASC";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		do
 		{
@@ -817,9 +816,9 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new Array();" . "\n";
 			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new preset_obj('" . $holding['yes'] . "', '" . $holding['no'] . "', '" . $holding['unset'] . "');\n";
 		}
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	unset($holding);
 
@@ -850,14 +849,14 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 						AND a.forum_id IN ($sql_forum_id) 
 						AND $sql_join IN ($ug_ids)
 					GROUP BY o.auth_option";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$auth_settings[$which_mode] = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$auth_settings[$which_mode][$row['auth_option']] = $row['min_auth_setting'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 		else
 		{
@@ -1320,7 +1319,7 @@ function update_foes()
 	{
 		$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
 			WHERE zebra_id IN (' . implode(', ', $perms) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	unset($perms);
 }

@@ -130,11 +130,12 @@ class bbcode_firstpass extends bbcode
 			$sql = 'SELECT bbcode_id, bbcode_tag, first_pass_match, first_pass_replace
 				FROM ' . BBCODES_TABLE;
 
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$rowset[] = $row;
 			}
+			$_CLASS['core_db']->free_result($result);
 		}
 		
 		foreach ($rowset as $row)
@@ -941,7 +942,7 @@ class parse_message extends bbcode_firstpass
 			// NOTE: obtain_* function? chaching the table contents?
 			
 			// For now setting the ttl to 10 minutes
-			switch (SQL_LAYER)
+			switch ($_CLASS['core_db']->db_layer)
 			{
 				case 'mssql':
 				case 'mssql-odbc':
@@ -957,9 +958,9 @@ class parse_message extends bbcode_firstpass
 						ORDER BY LENGTH(code) DESC';
 					break;
 			}
-			$result = $_CLASS['core_db']->sql_query($sql, 600);
+			$result = $_CLASS['core_db']->query($sql, 600);
 
-			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$match = $replace = array();
 
@@ -969,13 +970,13 @@ class parse_message extends bbcode_firstpass
 					$match[] = '#(?<=^|[\n ]|\.)' . preg_quote($row['code'], '#') . '#';
 					$replace[] = '<!-- s' . $row['code'] . ' --><img src="{SMILIES_PATH}/' . $row['smiley_url'] . '" border="0" alt="' . $row['emotion'] . '" title="' . $row['emotion'] . '" /><!-- s' . $row['code'] . ' -->';
 				}
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 			}
 			else
 			{
 				$match = $replace = array();
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 			
 		if (sizeof($match))
@@ -1234,7 +1235,7 @@ class fulltext_search
 		// carry on ... it's okay ... I know when I'm not wanted boo hoo
 		if (!$config['load_search_upd'])
 		{
-			return;
+			return array();
 		}
 
 		if (!is_array($drop_char_match))
@@ -1317,45 +1318,39 @@ class fulltext_search
 		}
 
 		// Split old and new post/subject to obtain array of 'words'
-		$split_text = $this->split_words('post', $message);
-		$split_title = ($subject) ? $this->split_words('post', $subject) : array();
+		$words['add']['post'] = $this->split_words('post', $message);
+		$words['add']['title'] = ($subject) ? $this->split_words('post', $subject) : array();
 
-		$words = array();
+		$words['del']['post'] = $words['del']['title'] = array();
+
 		if ($mode == 'edit')
 		{
-			$words['add']['post'] = array();
-			$words['add']['title'] = array();
-			$words['del']['post'] = array();
-			$words['del']['title'] = array();
-			
 			$sql = 'SELECT w.word_id, w.word_text, m.title_match
 				FROM ' . SEARCH_WORD_TABLE . ' w, ' . SEARCH_MATCH_TABLE . " m
 				WHERE m.post_id = $post_id 
 					AND w.word_id = m.word_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$cur_words = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$which = ($row['title_match']) ? 'title' : 'post';
 				$cur_words[$which][$row['word_text']] = $row['word_id'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
-			$words['add']['post'] = array_diff($split_text, array_keys($cur_words['post']));
-			$words['add']['title'] = array_diff($split_title, array_keys($cur_words['title']));
-			$words['del']['post'] = array_diff(array_keys($cur_words['post']), $split_text);
-			$words['del']['title'] = array_diff(array_keys($cur_words['title']), $split_title);
+			if (isset($cur_words['post']))
+			{
+				$words['del']['post'] =  array_diff(array_keys($cur_words['post']), $words['add']['post']);
+				$words['add']['post'] =  array_diff($words['add']['post'], array_keys($cur_words['post']));
+			}
+
+			if (isset($cur_words['title']))
+			{
+				$words['del']['title'] = array_diff(array_keys($cur_words['title']), $words['add']['title']);
+				$words['add']['title'] = array_diff($words['add']['title'], array_keys($cur_words['title']));
+			}
 		}
-		else
-		{
-			$words['add']['post'] = $split_text;
-			$words['add']['title'] = $split_title;
-			$words['del']['post'] = array();
-			$words['del']['title'] = array();
-		}
-		unset($split_text);
-		unset($split_title);
 
 		// Get unique words from the above arrays
 		$unique_add_words = array_unique(array_merge($words['add']['post'], $words['add']['title']));
@@ -1369,26 +1364,26 @@ class fulltext_search
 			$sql = 'SELECT word_id, word_text
 				FROM ' . SEARCH_WORD_TABLE . '
 				WHERE word_text IN (' . implode(', ', preg_replace('#^(.*)$#', '\'$1\'', $unique_add_words)) . ")";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$word_ids = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$word_ids[$row['word_text']] = $row['word_id'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$new_words = array_diff($unique_add_words, array_keys($word_ids));
 			unset($unique_add_words);
 			
 			if (sizeof($new_words))
 			{
-				switch (SQL_LAYER)
+				switch ($_CLASS['core_db']->db_layer)
 				{
 					case 'mysql':
 						$sql = 'INSERT INTO ' . SEARCH_WORD_TABLE . ' (word_text)
 							VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\'$1\')',  $new_words));
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 						break;
 
 					case 'mysql4':
@@ -1396,7 +1391,7 @@ class fulltext_search
 					case 'mssql':
 					case 'sqlite':
 						$sql = 'INSERT INTO ' . SEARCH_WORD_TABLE . ' (word_text) ' . implode(' UNION ALL ', preg_replace('#^(.*)$#', "SELECT '\$1'",  $new_words));
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 						break;
 
 					default:
@@ -1404,7 +1399,7 @@ class fulltext_search
 						{
 							$sql = 'INSERT INTO ' . SEARCH_WORD_TABLE . " (word_text)
 								VALUES ('$word')";
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 						}
 						break;
 				}
@@ -1428,7 +1423,7 @@ class fulltext_search
 					WHERE word_id IN (' . implode(', ', $sql_in) . ') 
 						AND post_id = ' . intval($post_id) . " 
 						AND title_match = $title_match";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 				unset($sql_in);
 			}
 		}
@@ -1443,7 +1438,7 @@ class fulltext_search
 					SELECT $post_id, word_id, $title_match 
 					FROM " . SEARCH_WORD_TABLE . ' 
 					WHERE word_text IN (' . implode(', ', preg_replace('#^(.*)$#', '\'$1\'', $word_ary)) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 
@@ -1472,10 +1467,10 @@ class fulltext_search
 		// Remove common (> 60% of posts ) words
 		$sql = 'SELECT SUM(forum_posts) AS total_posts 
 			FROM ' . FORUMS_TABLE;
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if ($row['total_posts'] >= 100)
 		{
@@ -1483,30 +1478,30 @@ class fulltext_search
 				FROM ' . SEARCH_MATCH_TABLE . '
 				GROUP BY word_id
 				HAVING COUNT(word_id) > ' . floor($row['total_posts'] * 0.6);
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$sql_in = array();
 				do
 				{
 					$sql_in[] = $row['word_id'];
 				}
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 				$sql_in = implode(', ', $sql_in);
 
 				$sql = 'UPDATE ' . SEARCH_WORD_TABLE . "
 					SET word_common = 1
 					WHERE word_id IN ($sql_in)";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
 				$sql = 'DELETE FROM ' . SEARCH_MATCH_TABLE . "
 					WHERE word_id IN ($sql_in)";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 				unset($sql_in);
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		// Remove words with no matches ... this is a potentially nasty query
@@ -1515,23 +1510,23 @@ class fulltext_search
 			LEFT JOIN ' . SEARCH_MATCH_TABLE . ' m ON w.word_id = m.word_id
 				WHERE w.word_common = 0 AND m.word_id IS NULL
 			GROUP BY m.word_id';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$sql_in = array();
 			do
 			{
 				$sql_in[] = $row['word_id'];
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 			$sql = 'DELETE FROM ' . SEARCH_WORD_TABLE . '
 				WHERE word_id IN (' . implode(', ', $sql_in) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 			unset($sql_in);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		set_config('search_last_gc', time());
 	}

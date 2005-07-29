@@ -94,7 +94,7 @@ class core_mailer
 
 	function send()
 	{
-		global $_CORE_CONFIG;
+		global $_CLASS, $_CORE_CONFIG;
 
 		$to = $cc = $bcc = $reply_to = $from = '';
 
@@ -111,20 +111,20 @@ class core_mailer
 			$from = '<' . $_CORE_CONFIG['email']['site_mail'] . '>';
 		}
 
-		$headers = 'Date: ' . gmdate('D, d M Y H:i:s T')) . "\n";
-		$headers .= "From: $from \n";
+		$headers = "From: $from \n";
+		$headers .= 'Date: ' . gmdate('D, d M Y H:i:s T')) . "\n";
 		$headers .= isset($cc) ? "Cc: $cc\n" : '';
 		$headers .= isset($bcc) ? "Bcc: $bcc\n" : ''; 
 		$headers .= isset($reply_to) ? "Reply-to: $reply_to \n" : '';
 		$headers .= 'Return-Path: <' . $_CORE_CONFIG['email']['site_mail'] . ">\n";
 		$headers .= 'Sender: <' .  . ">\n";
 		$headers .= "MIME-Version: 1.0\n";
-		$headers .= 'Message-ID: <' . md5(unique_id()) . "@" . $_CORE_CONFIG['global']['site_name'] . ">\n";
+		$headers .= 'Message-ID: <' . ((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))) . "@" . $_CORE_CONFIG['global']['site_name'] . ">\n";
 
 		if ($this->html)
 		{
 			// multipart
-			$text_boundary = trim('----part_'.md5(unique_id()));
+			$text_boundary = trim('----part_'.((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true)));
 
 			$headers .= "Content-Type: multipart/alternative;\nboundary=$text_boundary\n"; 
 			$headers .= 'Content-Type: text/html; charset='.$this->encoding."\n";
@@ -132,13 +132,13 @@ class core_mailer
 			// Plain text
 			$message = "\n$text_boundary\n";
 			$message .= 'Content-type: text/plain; charset='.$this->encoding."\n"; //format=
-			$message .= "Content-transfer-encoding: 7bit\n";
-			$message .= "\n".strip_tags(preg_replace('/<br[/]?>/', "/n", $this->message)."\n";
+			$message .= "Content-transfer-encoding: 8bit\n";
+			$message .= "\n".html_entity_decode(strip_tags(preg_replace('#<br */?>#i', "/n", $this->message)), ENT_QUOTES)."\n";
 
 			// HTML
 			$message = "\n$text_boundary\n";
 			$message .= 'Content-type: text/html; charset='.$this->encoding."\n";
-			$message .= "Content-transfer-encoding: 7bit\n";
+			$message .= "Content-transfer-encoding: 8bit\n";
 			$message .= "\n".$this->message."\n";
 
 			$message = "\n$text_boundary\n";
@@ -146,14 +146,13 @@ class core_mailer
 		else
 		{
 			$headers .= 'Content-type: text/plain; charset='.$this->encoding."\n";
-			$headers .= "Content-transfer-encoding: 7bit\n";
+			$headers .= "Content-transfer-encoding: 8bit\n";
 			$message .= "\n".strip_tags(preg_replace('/<br[/]?>/', "/n", $this->message)."\n";
 		}
 
 		if (function_exists($_CORE_CONFIG['email']['email_function_name'])
 		{
 			$result = $_CORE_CONFIG['email']['email_function_name']($to, $this->subject, $message, $headers);
-			//ini_set('SMTP', );
 
 			if (!$result)
 			{
@@ -167,4 +166,72 @@ class core_mailer
 	}
 }
 
+class smtp_mailer
+{
+	var $connection;
+	var $host;
+	var $port;
+
+	function connect($host, $port)
+	{
+		
+		$this->connection = fsockopen($host, $port, $errno, $errstr, 15)
+
+		if (!$this->connection)
+		{
+			$this->error = 'Could not connect';
+			return false;
+		}
+		
+		$this->host = $host;
+		return $this->connection;
+	}
+
+	function login($user, $password)
+	{
+		if (!$this->connection)
+		{
+			$this->error = 'No connection';
+			return false;
+		}
+//http://cr.yp.to/smtp/ehlo.html
+		fputs($this->connection, "EHLO {$this->host} \r\n");
+		//fputs($this->connection, "HELO [{$this->host}] \r\n"); // ip format
+		
+//220 heaven.af.mil ESMTP
+		if (!($response = $this->check_response(250)))
+		{
+			fputs($this->connection, "HELO {$this->host} \r\n");
+
+			if (!($response = $this->check_response(250)))
+			{
+				return false;
+			}
+		}
+
+	}
+
+	function check_response($code)
+	{
+		$response = '';
+
+		while ($buffer = fgets($this->connection, 256))
+		{
+			if (substr($buffer, 3, 1) != ' ')
+			{
+				break;
+			}
+			$response .= $buffer;
+		}
+
+		$response = trim($response);
+
+		if ($code && substr($response, 0, 3) != $code)
+		{
+			return false;
+		}
+
+		return $response;
+	}
+}
 ?>

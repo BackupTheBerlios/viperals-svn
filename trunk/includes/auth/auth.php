@@ -1,18 +1,31 @@
 <?php
-/*
-	This should store it's own user_id and group_id
-	Shouldn't use anything directly from $_CLASS['core_user']
-	
-	ALTER TABLE `cms_blocks` CHANGE `auth` `auth` TINYTEXT NOT NULL 
-*/
+//**************************************************************//
+//  Vipeal CMS:													//
+//**************************************************************//
+//																//
+//  Copyright © 2004 by Viperal									//
+//  http://www.viperal.com										//
+//																//
+//  Viperal CMS is released under the terms and conditions		//
+//  of the GNU General Public License version 2					//
+//																//
+//**************************************************************//
 
 class core_auth
 {
-	var $acl = array();
-	var $option = array();
-	var $got_data = false;
-	var $user_permission = array();
-	var $group_permission = array();
+	var $_user_id;
+	var $_group_id;
+
+	var $_got_data = false;
+	var $_admin_permission = array();
+
+	function core_auth($user_id = false, $group_id = false)
+	{
+		global $_CLASS;
+
+		$this->_user_id = ($user_id) ? $user_id : $_CLASS['core_user']->data['user_id'];
+		$this->_group_id = ($group_id) ? $group_id : $_CLASS['core_user']->data['group_id'];
+	}
 
 	function user_auth($user_name, $user_password)
 	{
@@ -28,7 +41,12 @@ class core_auth
 		{
 			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
 			{
-				$status = ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_IGNORE) ? 'ACTIVE_ERROR' : (int) $row['user_id'];
+				if ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_UNACTIVATED)
+				{
+					$status =  ($row['user_type'] == USER_INACTIVE) ? 'ACTIVE_ERROR' : 'unactivated_error';
+				}
+
+				return (int) $row['user_id'];
 			}
 		}
 		
@@ -39,12 +57,66 @@ class core_auth
 
 	function admin_auth()
 	{
-		if (!$this->got_data)
+		if (!$this->_got_data)
 		{
-			$this->get_data();
+			$this->admin_get_data();
 		}
 		
-		return (!empty($this->user_permission) || !empty($this->group_permission));
+		return !empty($this->_admin_permission);
+	}
+
+	function admin_get_data()
+	{
+		global $_CLASS;
+
+		$sql = 'SELECT * FROM ' . AUTH_ADMIN_TABLE ." 
+					WHERE user_id = {$this->_user_id}
+					OR group_id = {$this->_group_id} ORDER BY user_id";
+
+		$result = $_CLASS['core_db']->query($sql);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			if ($row['status'] == STATUS_PENDING)
+			{
+				continue;
+			}
+
+			if (!isset($this->_admin_permission[$row['section']]))
+			{
+				$this->_admin_permission[$row['section']]['core']['status'] = $row['status'];
+
+				if ($row['options'] && is_array($row['options'] = @unserialize($row['options'])))
+				{
+					$this->_admin_permission[$row['section']] = $row['options'];
+				}
+			}
+		}
+	
+		$this->_got_data = true;
+		$_CLASS['core_db']->free_result($result);
+	}
+
+	function admin_power($section, $option = false)
+	{
+		global $_CLASS;
+
+		if (!$_CLASS['core_user']->is_admin || !$this->admin_auth() || !isset($this->_admin_permission[$section]))
+		{
+			if (isset($this->_admin_permission['/all/']))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		if ($option)
+		{
+			return isset($this->_admin_permission[$section][$option]) ? false : $this->_admin_permission[$section][$option];
+		}
+
+		return $this->_admin_permission[$section]['core']['status'];
 	}
 
 	function do_login($login_options, $template)
@@ -157,34 +229,6 @@ class core_auth
 		$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
 	}
 
-	function get_data($id = false, $g_id = false)
-	{
-		global $_CLASS;
-		// take this for now, has alot of work to be done
-
-		$id = ($id) ? $id : $_CLASS['core_user']->data['user_id'];
-		$g_id = ($g_id) ? $g_id : $_CLASS['core_user']->data['group_id'];
-
-		$sql = 'SELECT * FROM ' . AUTH_ADMIN_TABLE ." 
-					WHERE user_id = $id OR  group_id = $g_id ORDER BY user_id";
-		$result = $_CLASS['core_db']->query($sql);
-
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			if ($row['user_id'])
-			{
-				$this->user_permission[$row['section_id']] = $row['status'];
-			}
-			elseif ($row['group_id'] && !isset($this->user_permission[$row['user_id']][$row['section_id']]))
-			{
-				$this->group_permission[$row['section_id']] = $row['status'];
-			}
-		}
-			
-		$this->got_data = true;
-		$_CLASS['core_db']->free_result($result);
-	}
-
 	function auth_dump()
 	{
 
@@ -203,12 +247,12 @@ class core_auth
 		{
 			$return = true;
 
-			if (!empty($data['users_disallowed']) && in_array($_CLASS['core_user']->data['user_id'], $data['users_disallowed']))
+			if (!empty($data['users_disallowed']) && in_array($this->_user_id, $data['users_disallowed']))
 			{
 				$return = false;
 			}
 
-			if ($return && !empty($data['groups_disallowed']) && in_array($_CLASS['core_user']->data['group_id'], $data['groups_disallowed']))
+			if ($return && !empty($data['groups_disallowed']) && in_array($this->_group_id, $data['groups_disallowed']))
 			{
 				$return = false;
 			}
@@ -217,14 +261,14 @@ class core_auth
 		}
 		else
 		{
-			if (!empty($data['users_allowed']) && in_array($_CLASS['core_user']->data['user_id'], $data['users_allowed']))
+			if (!empty($data['users_allowed']) && in_array($this->_user_id, $data['users_allowed']))
 			{
 				return true;
 			}
 	
-			if (!empty($data['groups_allowed']) && in_array($_CLASS['core_user']->data['group_id'], $data['groups_allowed']))
+			if (!empty($data['groups_allowed']) && in_array($this->_group_id, $data['groups_allowed']))
 			{
-				if (empty($data['users_disallowed']) || !in_array($_CLASS['core_user']->data['user_id'], $data['users_disallowed']))
+				if (empty($data['users_disallowed']) || !in_array($this->_user_id, $data['users_disallowed']))
 				{
 					return true;
 				}
@@ -232,18 +276,6 @@ class core_auth
 
 			return false;
 		}
-	}
-
-	function admin_power($section_id = false)
-	{
-		global $_CLASS;
-
-		if (!$_CLASS['core_user']->is_admin)
-		{
-			return false;
-		}
-		// no no no not yet
-		return true;
 	}
 
 	function generate_auth_options($options = array(), $display = false, $return = false)

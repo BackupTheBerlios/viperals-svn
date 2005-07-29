@@ -516,7 +516,6 @@ function generate_string($length)
 
 function gmtime()
 {
-	// php5.1b3 returns gm time with the time function, atleast with windows
 	return (time() - date('Z'));
 }
 
@@ -558,11 +557,11 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 	
 	$_CLASS['core_db']->sql_return_on_error(true);
 
-	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET value ='".$_CLASS['core_db']->sql_escape($value) . "'
-		WHERE (section = '" . $_CLASS['core_db']->sql_escape($section) . "')
-			AND (name = '". $_CLASS['core_db']->sql_escape($name) ."')";
+	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET value ='".$_CLASS['core_db']->escape($value) . "'
+		WHERE (section = '" . $_CLASS['core_db']->escape($section) . "')
+			AND (name = '". $_CLASS['core_db']->escape($name) ."')";
 
-	if (!$_CLASS['core_db']->sql_query($sql) && $auto_add)
+	if (!$_CLASS['core_db']->query($sql) && $auto_add)
 	{
 		$sql_array = array(
 			'section'	=> $section,
@@ -573,7 +572,7 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 		$_CLASS['core_db']->sql_return_on_error(false);
 
 		$sql = 'INSERT INTO ' . CORE_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array);
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	$_CLASS['core_db']->sql_return_on_error(false);

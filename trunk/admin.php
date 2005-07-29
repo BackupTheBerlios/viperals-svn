@@ -19,6 +19,8 @@ define('VIPERAL', 'Admin');
 $site_file_root = '';
 
 require($site_file_root.'core.php');
+
+$_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang('admin/common.php');
 
 $_CORE_MODULE['title'] = $_CLASS['core_user']->lang['ADMIN'];
@@ -46,12 +48,13 @@ if (!$_CLASS['core_user']->is_admin)
 }
 
 $mod = get_variable('mod', 'REQUEST', false);
+$file_path = false;
 
 if ($mod)
 {
-	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE name='".$_CLASS['core_db']->sql_escape($mod)."'");
-	$_CORE_MODULE = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE name='".$_CLASS['core_db']->escape($mod)."'");
+	$_CORE_MODULE = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 }
 
 if (!$mod || !$_CORE_MODULE)
@@ -93,8 +96,8 @@ $_CLASS['core_blocks']->add_block(array(
 		'file'		=> 'block-Admin.php',
 	));
 
-//load_class($site_file_root.'includes/core_editor.php', 'core_editor');
-//$_CLASS['core_editor']->setup();
+load_class($site_file_root.'includes/core_editor.php', 'core_editor');
+$_CLASS['core_editor']->setup();
 require($file_path);
     
 ?>

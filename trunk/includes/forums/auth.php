@@ -36,10 +36,10 @@ class auth
 			$sql = 'SELECT auth_option, is_global, is_local
 				FROM ' . ACL_OPTIONS_TABLE . '
 				ORDER BY auth_option_id';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
 			$global = $local = 0;
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if (!empty($row['is_global']))
 				{
@@ -50,7 +50,7 @@ class auth
 					$this->acl_options['local'][$row['auth_option']] = $local++;
 				}
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$_CLASS['core_cache']->put('acl_options', $this->acl_options);
 			$this->acl_clear_prefetch();
@@ -245,61 +245,73 @@ class auth
 			$userdata['user_permissions'] = rtrim($hold_str);
 
 			$sql = 'UPDATE ' . USERS_TABLE . "
-				SET user_permissions = '" . $_CLASS['core_db']->sql_escape($userdata['user_permissions']) . "'
+				SET user_permissions = '" . $_CLASS['core_db']->escape($userdata['user_permissions']) . "'
 				WHERE user_id = " . $userdata['user_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 		unset($hold_ary);
-
-		return;
 	}
 
 	function acl_raw_data($user_id = false, $opts = false, $forum_id = false)
 	{
 		global $_CLASS;
-		$sql_user = ($user_id) ? ((!is_array($user_id)) ? "user_id = $user_id" : 'user_id IN (' . implode(', ', $user_id) . ')') : '';
-		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
-		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
-		$hold_ary = array();
 
-		$sql = 'SELECT ug.user_id, ao.auth_option, a.forum_id, a.auth_setting
-			FROM ' . USER_GROUP_TABLE . ' ug, ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_GROUPS_TABLE . ' a
-			WHERE ao.auth_option_id = a.auth_option_id
-				AND a.group_id = ug.group_id
-				AND ug.user_status <> '.STATUS_PENDING
-				 . (($sql_user) ? ' AND ug.' . $sql_user : ' ') . "
-				$sql_forum
-				$sql_opts
-			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if (!$user_id)
 		{
-			if ($row['auth_setting'] != ACL_UNSET)
-			{
-				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
-			}
+// not sure if that is needed anywhere. maybe add the others later...
+			return;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
-		
-		$sql = 'SELECT ao.auth_option, a.user_id, a.forum_id, a.auth_setting
-			FROM ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_USERS_TABLE . ' a
-			WHERE ao.auth_option_id = a.auth_option_id
-				' . (($sql_user) ? 'AND a.' . $sql_user : '') . "
-				$sql_forum
-				$sql_opts
-			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		$sql_user = ($user_id) ? (is_array($user_id) ? 'user_id IN (' . implode(', ', $user_id) . ')' : 'user_id = '.$user_id) : '';
+		$sql_forum = ($forum_id) ? (is_array($forum_id) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id = '.$forum_id) : '';
+		$sql_opts = ($opts) ? (is_array($opts) ? ' AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->escape('\\1') . \"'\"", $opts)) . ')' : "AND ao.auth_option = '".$_CLASS['core_db']->escape($opts)."'") : '';
+		$groups = $group_members = $hold_ary = array();
+
+		//$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND user_status <> ".STATUS_PENDING;
+// This is the why phpBB3 seems to be, the why they wanted it to act may have been the above.
+// atleast when you look at the coding....	
+		$sql = 'SELECT group_id, user_id FROM ' . USERS_TABLE .' WHERE '.$sql_user;
+		$result = $_CLASS['core_db']->query($sql);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if ($row['auth_setting'] != ACL_UNSET)
-			{
-				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
-			}
+			$groups[] = $row['group_id'];
+			$group_members[$row['group_id']][] = $row['user_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
 
+// make sure AND ( bla=blaa OR blaa2=baa2 ) works right with all databases
+		$sql_user = empty($groups) ? ' AND a.' . $sql_user :  'AND (a.'.$sql_user.' OR a.group_id IN ('.implode(', ', $groups).'))';
+
+		// Sort by group_id since we want user setting to over right grp..  specific > broad
+		$sql = 'SELECT ao.auth_option, a.user_id, a.group_id, a.forum_id, a.auth_setting
+					FROM ' . ACL_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " ao
+					WHERE a.auth_option_id = ao.auth_option_id 
+						$sql_user $sql_forum $sql_opts
+						ORDER BY a.group_id";
+				
+		$result = $_CLASS['core_db']->query($sql);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+// think about removing the ACL_UNSET from the database. no need for useless stuff being stored
+			if ($row['auth_setting'] == ACL_UNSET)
+			{
+				continue;
+			}
+
+			if ($row['group_id'])
+			{
+				foreach ($group_members[$row['group_id']] as $user_id)
+				{
+					$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+				}
+
+				continue;
+			}
+
+			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+		}
+//print_r($hold_ary);
 		return $hold_ary;
 	}
 
@@ -313,18 +325,18 @@ class auth
 		$sql = 'UPDATE ' . USERS_TABLE . "
 			SET user_permissions = ''
 			$where_sql";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		return;
 	}
-	
+
 	function acl_group_raw_data($group_id = false, $opts = false, $forum_id = false)
 	{
 		global $_CLASS;
 
 		$sql_group = ($group_id) ? ((!is_array($group_id)) ? "group_id = $group_id" : 'group_id IN (' . implode(', ', $group_id) . ')') : '';
 		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
-		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $opts)) . ')') : '';
+		$sql_opts = ($opts) ? ((!is_array($opts)) ? "AND ao.auth_option = '$opts'" : 'AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->escape('\\1') . \"'\"", $opts)) . ')') : '';
 
 		$hold_ary = array();
 
@@ -336,13 +348,13 @@ class auth
 				$sql_forum
 				$sql_opts
 			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		return $hold_ary;
 	}

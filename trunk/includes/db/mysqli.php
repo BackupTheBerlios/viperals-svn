@@ -383,6 +383,16 @@ class db_mysqli
 		}
 	}
 
+	function version()
+	{
+		if (!$this->link_identifier)
+		{
+			return false;
+		}
+
+		return mysqli_get_server_info($this->link_identifier);
+	}
+	
 	function _error($sql = '', $backtrace)
 	{
 		if ($this->return_on_error)
@@ -480,14 +490,13 @@ class db_mysqli
 	/*
 		Table creation
 	*/
-
 	function table_create($option, $name = false)
 	{
 		switch ($option)
 		{
 			case 'start':
 				$this->table_name = $name;
-				$this->fields = array();
+				$this->fields = $this->indexs = array();
 			break;
 
 			case 'commit':
@@ -514,7 +523,7 @@ class db_mysqli
 
 			case 'cancel':
 				$this->table_name = false;
-				$this->fields = array();
+				$this->fields = $this->indexs = array();
 			break;
 		}
 	}
@@ -570,7 +579,7 @@ class db_mysqli
 		}
 		else
 		{
-			$this->fields[$name] .= " DEFAULT '".(int) $default."'";
+			$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
 		}
 	}
 
@@ -611,14 +620,7 @@ class db_mysqli
 			$this->fields[$name] =  "`$name` VARCHAR($characters)";
 		}
 
-		if (is_null($default))
-		{
-			$this->fields[$name] .= " NULL";
-		}
-		else
-		{
-			$this->fields[$name] .= " NOT NULL DEFAULT '$default'";
-		}
+		$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)

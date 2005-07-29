@@ -26,14 +26,14 @@ if (!$mod)
 	$_CLASS['core_display']->homepage = true;
 
 	// Get homepage modules
-	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE homepage > 0 ORDER BY homepage ASC');
+	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE homepage > 0 ORDER BY homepage ASC');
 
-	While ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	While ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$_CLASS['core_display']->add_module($row);
 	}
 
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if (!($_CORE_MODULE = $_CLASS['core_display']->get_module()))
 	{
@@ -55,7 +55,7 @@ else
 	if ($mod == 'system')
 	{
 		include_once($site_file_root.'includes/system.php');
-		
+
 		$mode = get_variable('mode', 'REQUEST', false);
 		if (!$mode || !function_exists($mode))
 		{
@@ -67,9 +67,9 @@ else
 	}
 
 	//Grab module data if it exsits
-	$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE type='.MODULE_NORMAL." AND name='".$_CLASS['core_db']->sql_escape($mod)."'");
-	$row = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE.' WHERE type='.MODULE_NORMAL." AND name='".$_CLASS['core_db']->escape($mod)."'");
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$status = $_CLASS['core_display']->add_module($row);
 	
@@ -84,6 +84,8 @@ else
 $path = $site_file_root.'modules/'.$_CORE_MODULE['name'].'/index.php';
 $_CLASS['core_user']->page = $_CORE_MODULE['name'];
 
-require($path);
+require_once($path);
+
+script_close();
 
 ?>

@@ -85,15 +85,26 @@ class sessions
 					{
 						$this->save_session = true;
 					}
-					
-					$this->data['session_data'] = ($this->data['session_data']) ? unserialize($this->data['session_data']) : array();
-					
+
+					if ($this->data['session_data'])
+					{
+						if (!is_array($this->data['session_data'] = @unserialize($this->data['session_data'])))
+						{
+							$this->data['session_data'] = array();
+						}
+					}
+					else
+					{
+						$this->data['session_data'] = array();
+					}
+
+					load_class(false, 'core_auth', 'auth_db');
+
 					$this->is_user	= ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER));
 					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS);
 					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
 
 					check_maintance_status();
-					
 					$this->load = check_load_status();
 
 					return true;

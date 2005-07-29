@@ -17,9 +17,10 @@ if (!defined('VIPERAL'))
     die;
 }
 
-class theme_display extends core_display
+//class theme_display extends core_display
+class viperal_theme
 {
-	function theme_display()
+	function viperal_theme()
 	{
 		global $_CLASS;
 
@@ -36,12 +37,12 @@ class theme_display extends core_display
 	function theme_header()
 	{
 		global $_CORE_CONFIG, $_CORE_MODULE, $_CLASS;
-	
+
 		$_CLASS['core_template']->assign(array(
 			'THEME_MAININDEX'	=> generate_link(),
 			'THEME_SITENAME'	=> $_CORE_CONFIG['global']['site_name'],
-			'THEME_MARGINRIGHT'		=> ($_CLASS['core_blocks']->check_side(BLOCK_RIGHT)) ? '180px' : '0px',
-			'THEME_MARGINLEFT' 		=> ($_CLASS['core_blocks']->check_side(BLOCK_LEFT)) ? '180px' : '0px'
+			'THEME_MARGINRIGHT'	=> ($_CLASS['core_blocks']->check_side(BLOCK_RIGHT)) ? '180px' : '0px',
+			'THEME_MARGINLEFT' 	=> ($_CLASS['core_blocks']->check_side(BLOCK_LEFT)) ? '180px' : '0px'
 			));
 		
 		if ($_CLASS['core_display']->homepage)

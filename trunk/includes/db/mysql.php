@@ -13,19 +13,23 @@
 
 class db_mysql
 {
-	var $link_identifier;
+	var $link_identifier = false;
 	var $db_layer = 'mysql';
 
-	var $query_result;
-	var $return_on_error = false;
-	var $transaction = false;
+	var $last_result;
+	var $return_on_error;
+	var $in_transaction;
 
 	var $queries_time = 0;
 	var $num_queries = 0;
 
-	var	$querylist = array();
-	var $querydetails = array();
+	var	$query_list = array();
+	var $query_details = array();
 	var $open_queries = array();
+
+	var $_indexs = array();
+	var $_fields = array();
+	var $_table_name = false;
 
 	function connect($db)
 	{		
@@ -371,18 +375,28 @@ class db_mysql
 		}
 	}
 
+	function version($return_dbname = false)
+	{
+		if (!$this->link_identifier)
+		{
+			return false;
+		}
+		
+		return (($return_dbname) ? 'MySQL ' : '').mysql_get_server_info($this->link_identifier);
+	}
+
 	function _error($sql = '', $backtrace)
 	{
-		if (!$this->return_on_error)
+		if ($this->return_on_error)
 		{
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u> [ ' . SQL_LAYER . ' ]<br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
+		$message = '<u>SQL ERROR</u><br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
 
-		if ($this->transaction)
+		if ($this->in_transaction)
 		{
-			$this->sql_transaction('rollback');
+			$this->transaction('rollback');
 		}
 		
 		trigger_error($message, E_USER_ERROR);
@@ -451,7 +465,7 @@ class db_mysql
 
 						if (preg_match('/^(UPDATE|DELETE|REPLACE)/', $this->last_query))
 						{
-							$affected = $this->affected_rows($this->query_result);
+							$affected = $this->affected_rows($this->last_result);
 						}
 						
 						$this->querylist[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'affected' => $affected, 'time' => ($end_time - $start_time));
@@ -469,30 +483,29 @@ class db_mysql
 	/*
 		Table creation
 	*/
-
 	function table_create($option, $name = false)
 	{
 		switch ($option)
 		{
 			case 'start':
-				$this->table_name = $name;
-				$this->fields = array();
+				$this->_table_name = $name;
+				$this->_fields = $this->_indexs = array();
 			break;
 
 			case 'commit':
 			case 'return':
-				if (!$this->table_name)
+				if (!$this->_table_name)
 				{
 					return;
 				}
 
-				$fields = implode(", \n", $this->fields);
-				if ($indexs = implode(", \n", $this->indexs))
+				$fields = implode(", \n", $this->_fields);
+				if ($indexs = implode(", \n", $this->_indexs))
 				{
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=MyISAM;";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=MyISAM;";
 
 				if ($option == 'return')
 				{
@@ -502,8 +515,8 @@ class db_mysql
 				$this->sql_query($table);
 
 			case 'cancel':
-				$this->table_name = false;
-				$this->fields = array();
+				$this->_table_name = false;
+				$this->_fields = $this->_indexs = array();
 			break;
 		}
 	}
@@ -515,107 +528,99 @@ class db_mysql
 		if ($number_min >= -0 && $number_max <= 255)
 		{
 			// TINYINT UNSIGNED ( 0 to 255 )
-			$this->fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
 		}
 		elseif ($number_min >= -128 && $number_max <= 128)
 		{
 			// TINYINT ( -128 to 127 )
-			$this->fields[$name] =  "`$name` TINYINT($length) DEFAULT";
+			$this->_fields[$name] =  "`$name` TINYINT($length) DEFAULT";
 		}
 		elseif ($number_min >= 0 && $number_max <= 65535)
 		{
 			// SMALLINT UNSIGNED ( 0 to 65,535 )
-			$this->fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
 		}
 		elseif ($number_min >= -32768 && $number_max <= 32767)
 		{
 			// SMALLINT ( -32,768 to 32,767 )
-			$this->fields[$name] =  "`$name` SMALLINT($length)";
+			$this->_fields[$name] =  "`$name` SMALLINT($length)";
 		}
 		elseif ($number_min >= 0 && $number_max <= 16777215)
 		{
 			// MEDIUMINT UNSIGNED ( 0 to 16,777,215 )
-			$this->fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
 		}
 		elseif ($number_min >= -8388608 && $number_max <= 8388607)
 		{
 			// MEDIUMINT ( -8,388,608 to 8,388,607 )
-			$this->fields[$name] =  "`$name` MEDIUMINT($length)";
+			$this->_fields[$name] =  "`$name` MEDIUMINT($length)";
 		}
 		elseif ($number_min >= -2147483647 && $number_max <= 2147483647)
 		{
 			// INT ( -2,147,483,647 to 2,147,483,647 )
-			$this->fields[$name] =  "`$name` INT($length)";
+			$this->_fields[$name] =  "`$name` INT($length)";
 		}
 		elseif ($number_min >= 0 && $number_max <= 4294967295) // we'll do this last
 		{
 			// INT UNSIGNED ( 0 to 4,294,967,295 )
-			$this->fields[$name] =  "`$name` INT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` INT($length) UNSIGNED";
 		}
 
 		if ($auto_increment)
 		{
-			$this->fields[$name] .= ' auto_increment';
+			$this->_fields[$name] .= ' auto_increment';
 		}
 		else
 		{
-			$this->fields[$name] .= " DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
 		}
 	}
 
-	function add_table_field_text($name, $characters, $null = false)
+	function add_table_field_text($name, $characters = 60000, $null = false)
 	{
-		// Add null
 		if ($characters <= 255)
 		{
 			// TINYTEXT 1 to 255 Characters
-			$this->fields[$name] =  "`$name` TINYTEXT";
+			$this->_fields[$name] =  "`$name` TINYTEXT";
 		}
 		elseif ($characters <= 65535)
 		{
 			// TEXT 1 to 65535 Characters
-			$this->fields[$name] =  "`$name` TEXT";
+			$this->_fields[$name] =  "`$name` TEXT";
 		}
 		elseif ($characters <= 16777215)
 		{
 			// MEDIUMTEXT 1 to 16,777,215 Characters
-			$this->fields[$name] =  "`$name` MEDIUMTEXT";
+			$this->_fields[$name] =  "`$name` MEDIUMTEXT";
 		}
 		elseif ($characters <= 4294967295)
 		{
 			// LONGTEXT 1 to 4,294,967,295 Characters
-			$this->fields[$name] =  "`$name` LONGTEXT";
+			$this->_fields[$name] =  "`$name` LONGTEXT";
 		}
 
-		$this->fields[$name] .= ($null) ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 	}
-	
+
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
 		if ($padded)
 		{
-			$this->fields[$name] =  "`$name` CHAR($characters)";
+			$this->_fields[$name] =  "`$name` CHAR($characters)";
 		}
 		else
 		{
-			$this->fields[$name] =  "`$name` VARCHAR($characters)";
+			$this->_fields[$name] =  "`$name` VARCHAR($characters)";
 		}
 
-		if (is_null($default))
-		{
-			$this->fields[$name] .= " NULL";
-		}
-		else
-		{
-			$this->fields[$name] .= " NOT NULL DEFAULT '$default'";  //NOT NULL "is it needed" ?
-		}
+		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
 
-		if (empty($this->fields[$field]))
+		if (empty($this->_fields[$field]))
 		{
 			return;
 		}
@@ -624,11 +629,11 @@ class db_mysql
 		{
 			case 'index':
 			case 'unique':
-				$this->indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
 			break;
 
 			case 'primary':
-				$this->indexs['primary'] = "PRIMARY KEY (`$field`)";
+				$this->_indexs['primary'] = "PRIMARY KEY (`$field`)";
 			break;
 		}
 	}

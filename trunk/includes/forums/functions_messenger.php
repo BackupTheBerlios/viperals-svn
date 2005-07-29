@@ -405,7 +405,7 @@ class messenger
 
 			foreach ($addresses as $address)
 			{
-				$this->jabber->send_message($address, 'normal', NULL, array('body' => $msg));
+				$this->jabber->send_message($address, 'normal', NULL, array('body' => $this->msg));
 			}
 
 			sleep(1);
