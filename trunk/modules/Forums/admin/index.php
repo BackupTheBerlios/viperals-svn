@@ -53,8 +53,8 @@ function adm_page_header($sub_title, $meta = '', $table_html = true)
 {
 	global $config, $db, $_CLASS;
 
-	$_CLASS['core_display']->display_head();
-	echo $_CLASS['core_display']->table_open;
+	$_CLASS['core_display']->display_header();
+	echo $_CLASS['core_display']->theme->table_open;
 
 	if ($table_html)
 	{
@@ -94,7 +94,7 @@ function adm_page_footer($copyright_html = true)
 <?php
 	}
 
-	echo $_CLASS['core_display']->table_close;
+	echo $_CLASS['core_display']->theme->table_close;
 	$_CLASS['core_display']->display_footer();
 }
 

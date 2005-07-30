@@ -40,25 +40,16 @@ function display_forums($root_data = '', $display_moderators = true)
 	}
 	else
 	{
-		$sql_where = ' WHERE left_id > ' . $root_data['left_id'] . ' AND left_id < ' . $root_data['right_id'];
+		$sql_where = 'AND left_id > ' . $root_data['left_id'] . ' AND left_id < ' . $root_data['right_id'];
 	}
 
 	// Display list of active topics for this category?
 	$show_active = (isset($root_data['forum_flags']) && $root_data['forum_flags'] & 16) ? true : false;
 
-	if ($config['load_db_lastread'] && $_CLASS['core_user']->is_user)
+	if ($_CLASS['core_user']->is_user &&  $config['load_db_lastread'])
 	{
-		switch ($_CLASS['core_db']->db_layer)
-		{
-			case 'oracle':
-				$lastread_select = $sql_from = '';
-				break;
-
-			default:
-				$sql_from = '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
-				$lastread_select = ', ft.mark_time ';
-				break;
-		}
+		$sql_from = '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id AND ft.topic_id = 0))';
+		$lastread_select = ', ft.mark_time ';
 	}
 	else
 	{
@@ -70,6 +61,7 @@ function display_forums($root_data = '', $display_moderators = true)
 
 	$sql = "SELECT f.* $lastread_select 
 		FROM $sql_from 
+		WHERE forum_status <> ".ITEM_DELETING."
 		$sql_where
 		ORDER BY f.left_id";
 	$result = $_CLASS['core_db']->query($sql);
@@ -392,7 +384,7 @@ function topic_generate_pagination($replies, $url)
 	return $pagination;
 }
 
-function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum, &$folder_img, &$folder_alt, &$topic_type)
+function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_alt, &$topic_type)
 {
 	global $_CLASS, $config;
 	
@@ -450,22 +442,22 @@ function topic_status(&$topic_row, $replies, $mark_time_topic, $mark_time_forum,
 		{
 			$unread_topic = $new_votes = true;
 
-			if ($mark_time_topic >= $topic_row['topic_last_post_time'] || $mark_time_forum >= $topic_row['topic_last_post_time']) //|| ($topic_row['topic_last_post_time'] == $topic_row['poll_last_vote'] && $replies))
+			if ($mark_time >= $topic_row['topic_last_post_time'])
 			{
 				$unread_topic = false;
 			}
 /*
-			if ($topic_row['poll_start'] && ($mark_time_topic >= $topic_row['poll_last_vote'] || $mark_time_forum >= $topic_row['poll_last_vote']))
+			if ($mark_time >= $topic_row['poll_last_vote'])
 			{
 				$new_votes = false;
 			}
 */
 		}
-		else
+		/*else
 		{
 			$unread_topic = false;
 			//$unread_topic = $new_votes = false;
-		}
+		}*/
 	
 //		$folder_new .= ($new_votes) ? '_vote' : '';
 

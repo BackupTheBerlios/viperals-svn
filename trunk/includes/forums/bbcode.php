@@ -230,12 +230,12 @@ class bbcode
 				FROM ' . BBCODES_TABLE . "
 				WHERE bbcode_id IN ($sql)";
 
-			$result = $_CLASS['core_db']->sql_query($sql);
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query($sql);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$rowset[$row['bbcode_id']] = $row;
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		foreach ($bbcode_ids as $bbcode_id)

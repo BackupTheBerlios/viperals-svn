@@ -642,67 +642,73 @@ function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $mat
 // Marks a topic or form as read
 function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 {
-// relook this area.
 	global $config, $_CLASS, $_CORE_CONFIG;
-	
+
 	if ($_CLASS['core_user']->is_bot)
 	{
 		return;
 	}
 
-	if (!is_array($forum_id))
-	{
-		$forum_id = array($forum_id);
-	}
-
 	// Default tracking type
-	$type = TRACK_NORMAL;
-	$current_time = ($marktime) ? $marktime : gmtime();
-	$topic_id = (int) $topic_id;
+	$time = ($marktime) ? $marktime : gmtime();
 
 	switch ($mode)
 	{
-		case 'mark':
+		case 'forum':
+			$forum_id = (is_array($forum_id)) ? array_map('intval', $forum_id) : array($forum_id);
+
 			if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 			{
-				$sql = 'SELECT forum_id 
+				$sql = 'SELECT forum_id, topic_id
 					FROM ' . FORUMS_TRACK_TABLE . ' 
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
-						AND forum_id IN (' . implode(', ', array_map('intval', $forum_id)) . ')';
+						AND forum_id IN (' . implode(', ', $forum_id). ')';
 				$result = $_CLASS['core_db']->query($sql);
-				
-				$sql_update = array();
+
+				$update_array = $delete_array = array();
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					$sql_update[] = $row['forum_id'];
+					if ($row['topic_id'])
+					{
+						$delete_array[] = $row['forum_id'];
+					}
+					else
+					{
+						$update_array[] = $row['forum_id'];
+					}
 				}
 				$_CLASS['core_db']->free_result($result);
 
-				if (sizeof($sql_update))
+				if (!empty($delete_array))
+				{
+					$sql = 'DELETE FROM ' . FORUMS_TRACK_TABLE . '
+						WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
+							AND forum_id IN (' . implode(', ', $delete_array) . ')';
+					$_CLASS['core_db']->query($sql);
+				}
+				unset($delete_array);
+
+				if (!empty($update_array))
 				{
 					$sql = 'UPDATE ' . FORUMS_TRACK_TABLE . "
-						SET mark_time = $current_time 
+						SET mark_time = $time 
 						WHERE user_id = " . $_CLASS['core_user']->data['user_id'] . '
-							AND forum_id IN (' . implode(', ', $sql_update) . ')';
-					$_CLASS['core_db']->query($sql);
-					
-					$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
-						WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 							AND forum_id IN (' . implode(', ', $sql_update) . ')
-							AND mark_type = ' . TRACK_NORMAL;
+							AND topic_id = 0';
 					$_CLASS['core_db']->query($sql);
 				}
 
-				if ($sql_insert = array_diff($forum_id, $sql_update))
+				if ($sql_insert = array_diff($forum_id, $update_array))
 				{
+					$sql = '';
+
 					foreach ($sql_insert as $forum_id)
 					{
-						$sql = '';
-						switch (SQL_LAYER)
+						switch ($_CLASS['core_db']->db_layer)
 						{
 							case 'mysql':
 							
-								$sql .= (($sql != '') ? ', ' : '') . '(' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $current_time)";
+								$sql .= (($sql != '') ? ', ' : '') . '(' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time)";
 								$sql = 'VALUES ' . $sql;
 								break;
 
@@ -710,12 +716,12 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 							case 'mssql':
 							case 'mysqli':
 							case 'sqlite':
-								$sql .= (($sql != '') ? ' UNION ALL ' : '') . ' SELECT ' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $current_time";
+								$sql .= (($sql != '') ? ' UNION ALL ' : '') . ' SELECT ' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time";
 								break;
 
 							default:
 								$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . ' (user_id, forum_id, mark_time)
-									VALUES (' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $current_time)";
+									VALUES (' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time)";
 								$_CLASS['core_db']->query($sql);
 								$sql = '';
 						}
@@ -725,16 +731,8 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 							$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . " (user_id, forum_id, mark_time) $sql";
 							$_CLASS['core_db']->query($sql);
 						}
-						
-						$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
-							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
-								AND forum_id = ' . $forum_id . '
-								AND mark_type = ' . TRACK_NORMAL;
-						$_CLASS['core_db']->query($sql);
 					}
 				}
-				unset($sql_update);
-				unset($sql_insert);
 			}
 			else
 			{
@@ -743,55 +741,44 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 				foreach ($forum_id as $f_id)
 				{
 					unset($tracking[$f_id]);
-					$tracking[$f_id][0] = base_convert($current_time - $config['board_startdate'], 10, 36);
+					$tracking[$f_id][0] = base_convert($time - $config['board_startdate'], 10, 36);
 				}
 
 				$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
 				unset($tracking);
 			}
-			break;
+		break;
 
 		case 'post':
-			// Mark a topic as read and mark it as a topic where the user has made a post.
-			$type = TRACK_POSTED;
-
 		case 'topic':
-		
-			if (!isset($type))
-			{
-				$type = TRACK_NORMAL;
-			}
-			
-			$forum_id =	(int) $forum_id[0];
-	
-			/// Mark a topic as read
-			if ($_CLASS['core_user']->is_user && ($config['load_db_lastread'] || ($config['load_db_track'] && $type == TRACK_POSTED)))
-			{
-				$track_type = ($type == TRACK_POSTED) ? ', mark_type = ' . $type : '';
 
-				$_CLASS['core_db']->sql_return_on_error(true);
-				
-				echo ($sql = 'UPDATE ' . TOPICS_TRACK_TABLE . "
-					SET forum_id = $forum_id, mark_time = $current_time $track_type
-					WHERE topic_id = $topic_id
-						AND user_id = {$_CLASS['core_user']->data['user_id']}");
+			// Mark a topic as read and mark it as a topic where the user has made a post.
+			$type = ($mode == 'post') ? TRACK_POSTED : TRACK_NORMAL;
+
+			settype($topic_id, 'integer');
+			settype($forum_id, 'integer');
+
+//if ($_CLASS['core_user']->is_user && ($config['load_db_lastread'] || ($config['load_db_track'] && $type == TRACK_POSTED)))
+// what is this $config['load_db_track'] ?
+
+			if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
+			{
+				$sql = 'UPDATE ' . FORUMS_TRACK_TABLE . "
+							SET forum_id = $forum_id, mark_time = $time, mark_type = ' . $type : '
+								WHERE topic_id = $topic_id
+								AND user_id = {$_CLASS['core_user']->data['user_id']}";
 
 				if (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows())
 				{
-	// temp
-					$_CLASS['core_db']->sql_return_on_error(false);
-
 					$sql_ary = array(
 						'user_id'		=> $_CLASS['core_user']->data['user_id'],
 						'topic_id'		=> $topic_id,
 						'forum_id'		=> $forum_id,
 						'mark_type'		=> $type,
-						'mark_time'		=> $current_time
+						'mark_time'		=> $time
 					);
-					
-					$_CLASS['core_db']->query('INSERT INTO ' . TOPICS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
-					
-					$_CLASS['core_db']->sql_return_on_error(false);
+
+					$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 				}
 			}
 
@@ -819,20 +806,20 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 					}
 				}
 
-				if (isset($tracking[$forum_id]) && base_convert($tracking[$forum_id][0], 36, 10) < $current_time)
+				if (isset($tracking[$forum_id]) && base_convert($tracking[$forum_id][0], 36, 10) < $time)
 				{
-					$tracking[$forum_id][base_convert($topic_id, 10, 36)] = base_convert($current_time - $config['board_startdate'], 10, 36);
+					$tracking[$forum_id][base_convert($topic_id, 10, 36)] = base_convert($time - $config['board_startdate'], 10, 36);
 
 					$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
 				}
 				else if (!isset($tracking[$forum_id]))
 				{
-					$tracking[$forum_id][0] = base_convert($current_time - $config['board_startdate'], 10, 36);
+					$tracking[$forum_id][0] = base_convert($time - $config['board_startdate'], 10, 36);
 					$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
 				}
 				unset($tracking);
 			}
-			break;
+		break;
 	}
 }
 
@@ -857,7 +844,6 @@ function obtain_word_list(&$censors)
 		$censors = array();
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			echo 'test';
 			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
 			$censors['replace'][] = $row['replacement'];
 		}

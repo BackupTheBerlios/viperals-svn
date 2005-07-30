@@ -14,7 +14,7 @@
 class db_mysql
 {
 	var $link_identifier = false;
-	var $db_layer = 'mysql';
+	var $db_layer = 'mysql4';
 
 	var $last_result;
 	var $return_on_error;

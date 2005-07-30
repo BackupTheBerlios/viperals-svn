@@ -105,7 +105,7 @@ class auth
 		}
 
 		// Needs to change ... check founder status when updating cache?
-		return (!empty($cache[$f][$opt])) ? $cache[$f][$opt] : false;
+		return (isset($cache[$f][$opt])) ? $cache[$f][$opt] : false;
 	}
 
 	function acl_getf($opt)
@@ -267,10 +267,10 @@ class auth
 		$sql_opts = ($opts) ? (is_array($opts) ? ' AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->escape('\\1') . \"'\"", $opts)) . ')' : "AND ao.auth_option = '".$_CLASS['core_db']->escape($opts)."'") : '';
 		$groups = $group_members = $hold_ary = array();
 
-		//$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND user_status <> ".STATUS_PENDING;
+		$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND user_status <> ".STATUS_PENDING;
 // This is the why phpBB3 seems to be, the why they wanted it to act may have been the above.
 // atleast when you look at the coding....	
-		$sql = 'SELECT group_id, user_id FROM ' . USERS_TABLE .' WHERE '.$sql_user;
+		//$sql = 'SELECT group_id, user_id FROM ' . USERS_TABLE .' WHERE '.$sql_user;
 		$result = $_CLASS['core_db']->query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -288,13 +288,12 @@ class auth
 					WHERE a.auth_option_id = ao.auth_option_id 
 						$sql_user $sql_forum $sql_opts
 						ORDER BY a.group_id";
-				
+
 		$result = $_CLASS['core_db']->query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-// think about removing the ACL_UNSET from the database. no need for useless stuff being stored
-			if ($row['auth_setting'] == ACL_UNSET)
+			if ($row['auth_setting'] != ACL_YES)
 			{
 				continue;
 			}

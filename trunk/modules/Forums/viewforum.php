@@ -22,6 +22,8 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+
+// $limit_days and read tracking
 if (!defined('VIPERAL'))
 {
     die;
@@ -49,14 +51,15 @@ if (!$_CLASS['core_user']->is_user)
 {
 	$sql = 'SELECT *
 		FROM ' . FORUMS_TABLE . '
-		WHERE forum_id = ' . $forum_id;
+		WHERE forum_id = ' . $forum_id .'
+		AND forum_status <> '.ITEM_DELETING;
 }
 else
 {
 		if ($config['load_db_lastread'])
 		{
 			$sql_lastread = 'LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
-				AND ft.forum_id = f.forum_id)';
+				AND ft.forum_id = f.forum_id AND ft.topic_id = 0)';
 			$lastread_select = ', ft.mark_time ';
 		}
 		else
@@ -72,40 +75,16 @@ else
 			WHERE f.forum_id = $forum_id";
 }
 
-$result = $_CLASS['core_db']->sql_query($sql);
+$result = $_CLASS['core_db']->query($sql);
+$forum_data = $_CLASS['core_db']->fetch_row_assoc($result);
+$_CLASS['core_db']->free_result($result);
 
-if (!($forum_data = $_CLASS['core_db']->sql_fetchrow($result)))
+if (!$forum_data ||  $forum_data['forum_status'] == ITEM_DELETING)
 {
 	trigger_error('NO_FORUM');
 }
-$_CLASS['core_db']->sql_freeresult($result);
-
-if (!$_CLASS['core_user']->is_user && $config['load_db_lastread'])
-{
-	$forum_data['mark_time'] = 0;
-}
-
-// Is this forum a link? ... User got here either because the 
-// number of clicks is being tracked or they guessed the id
-if ($forum_data['forum_link'])
-{
-	// Does it have click tracking enabled?
-	if ($forum_data['forum_flags'] & 1)
-	{
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
-			SET forum_posts = forum_posts + 1 
-			WHERE forum_id = ' . $forum_id;
-		$_CLASS['core_db']->sql_query($sql);
-	}
-
-	redirect(str_replace('&amp;', '&', $forum_data['forum_link']));
-}
-
-// Configure style, language, etc.
-$_CLASS['core_user']->add_img();
-$_CLASS['core_user']->add_lang('viewforum');
-
-// Permissions check
+//echo $forum_data['mark_time'];
+// Check if links are checked for permission
 if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 {
 	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
@@ -116,20 +95,32 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']));
 }
 
+// Are we a forum link, then redirect
+if ($forum_data['forum_link'])
+{
+	// Does it have click tracking enabled?
+	if ($forum_data['forum_flags'] & 1)
+	{
+		$sql = 'UPDATE ' . FORUMS_TABLE . '
+			SET forum_posts = forum_posts + 1 
+			WHERE forum_id = ' . $forum_id;
+		$_CLASS['core_db']->query($sql);
+	}
+
+	redirect(str_replace('&amp;', '&', $forum_data['forum_link']));
+}
+
+// Configure style, language, etc.
+$_CLASS['core_user']->user_setup();
+$_CLASS['core_user']->add_img();
+$_CLASS['core_user']->add_lang('viewforum');
+
 // Forum is passworded ... check whether access has been granted to this
 // user this session, if not show login box
 if ($forum_data['forum_password'])
 {
 	login_forum_box($forum_data);
 }
-
-/* I don't see the point in this
-// Redirect to login upon emailed notification links
-if (isset($_GET['e']) && $_CLASS['core_user']->data['user_id'] == ANONYMOUS)
-{
-	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']));
-}
-*/
 
 // Build navigation links
 generate_forum_nav($forum_data);
@@ -218,13 +209,13 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				AND topic_type <> " . POST_ANNOUNCE . "  
 				AND topic_last_post_time >= $min_post_time
 			" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND topic_approved = 1');
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		if (isset($_POST['sort']))
 		{
 			$start = 0;
 		}
-		$topics_count = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['num_topics'] : 0;
+		$topics_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['num_topics'] : 0;
 		$sql_limit_time = "AND t.topic_last_post_time >= $min_post_time";
 	}
 	else
@@ -293,8 +284,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Grab all topic data
 	$rowset = $announcement_list = $topic_list = array();
 
-	$sql_from = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . TOPICS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t ';
-
+	$sql_from = ($_CLASS['core_user']->is_user && $config['load_db_lastread']) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t ';
 
 	$sql_approved = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1';
 	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? ', tt.mark_type, tt.mark_time' : '';
@@ -307,14 +297,14 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			WHERE t.forum_id IN ($forum_id, 0)
 				AND t.topic_type IN (" . POST_ANNOUNCE . ', ' . POST_GLOBAL . ')
 			ORDER BY t.topic_time DESC';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$rowset[$row['topic_id']] = $row;
 			$announcement_list[] = $row['topic_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	// If the user is trying to reach late pages, start searching from the end
@@ -349,21 +339,24 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			$sql_approved 
 			$sql_limit_time
 		ORDER BY t.topic_type " . ((!$store_reverse) ? 'DESC' : 'ASC') . ', ' . $sql_sort_order;
-	$result = $_CLASS['core_db']->sql_query_limit($sql, $sql_limit, $sql_start);
+	$result = $_CLASS['core_db']->query_limit($sql, $sql_limit, $sql_start);
 
-	while($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$rowset[$row['topic_id']] = $row;
 		$topic_list[] = $row['topic_id'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$topic_list = ($store_reverse) ? array_merge($announcement_list, array_reverse($topic_list)) : array_merge($announcement_list, $topic_list);
+
+	// set to true so we can test .. we only update the mark if this is made into an (int) time
+	$mark_forum_read = true;
 
 	// Okay, lets dump out the page ...
 	if (sizeof($topic_list))
 	{
-		if ($config['load_db_lastread'])
+		if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 		{
 			$mark_time_forum = $forum_data['mark_time'];
 		}
@@ -372,24 +365,41 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			$mark_time_forum = (isset($tracking_topics[$forum_id][0])) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0;
 		}
 
-		$mark_forum_read = true;
-
 		$s_type_switch = 0;
 		foreach ($topic_list as $topic_id)
 		{
 			$row =& $rowset[$topic_id];
 
-			if ($config['load_db_lastread'])
+			if ($config['load_db_lastread'] && $_CLASS['core_user']->is_user)
 			{
-				$mark_time_topic = ($_CLASS['core_user']->is_user) ? $row['mark_time'] : 0;
+				$mark_time_topic = $row['mark_time'];
 			}
 			else
 			{
 				$topic_id36 = base_convert($topic_id, 10, 36);
 				$forum_id36 = ($row['topic_type'] == POST_GLOBAL) ? 0 : $forum_id;
 				$mark_time_topic = (isset($tracking_topics[$forum_id36][$topic_id36])) ? base_convert($tracking_topics[$forum_id36][$topic_id36], 36, 10) + $config['board_startdate'] : 0;
-			}
 			
+			}
+
+			/*
+				Is the topic mark time that greater than the forums mark time ? 
+					If so, check to see if the topic has any new post/or another topic had a new post.
+						Set $mark_forum_read to the highest topic_last_post_time if there's no new posts
+			*/
+			if (!$mark_time_forum || ($mark_time_forum < $mark_time_topic))
+			{
+				if ($mark_forum_read)
+				{
+					//$mark_forum_read = ($row['topic_last_post_time'] < $mark_time_topic) ? (int) max($mark_time_topic, $row['topic_last_post_time']) : false;
+				}
+				$mark_time = $mark_time_topic;
+			}
+			else
+			{
+				$mark_time = $mark_time_forum;
+			}
+
 			// This will allow the style designer to output a different header
 			// or even seperate the list of announcements from sticky and normal
 			// topics
@@ -405,7 +415,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
  
 			// Get folder img, topic status/type related informations
 			$folder_img = $folder_alt = $topic_type = '';
-			$unread_topic = topic_status($row, $replies, $mark_time_topic, $mark_time_forum, $folder_img, $folder_alt, $topic_type);
+			$unread_topic = topic_status($row, $replies, $mark_time, $folder_img, $folder_alt, $topic_type);
 			
 			$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
@@ -452,21 +462,13 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			);
 
 			$s_type_switch = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
-		
-			if ($mark_time_topic < $row['topic_last_post_time'] && $mark_time_forum < $row['topic_last_post_time'])
-			{
-				$mark_forum_read = false;
-			}
 		}
 	}
 
-	// This is rather a fudge but it's the best I can think of without requiring information
-	// on all topics (as we do in 2.0.x). It looks for unread or new topics, if it doesn't find
-	// any it updates the forum last read cookie. This requires that the user visit the forum
-	// after reading a topic
-	if ($forum_data['forum_type'] == FORUM_POST && count($topic_list) && $mark_forum_read)
+	// Update the marktime only if $mark_forum_read is set to a time
+	if ($forum_data['forum_type'] == FORUM_POST && is_int($mark_forum_read))
 	{
-		markread('mark', $forum_id);
+		markread('forum', $forum_id, 0, $mark_forum_read);
 	}
 }
 else
@@ -482,7 +484,7 @@ else
 
 page_header();
 
-make_jumpbox(generate_link('Forums&amp;file=viewforum', $forum_id));
+make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
 
 $_CLASS['core_template']->display('modules/Forums/viewforum_body.html');
 

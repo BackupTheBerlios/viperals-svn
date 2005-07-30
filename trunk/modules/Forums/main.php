@@ -29,6 +29,7 @@ if (!defined('VIPERAL'))
 
 load_class($site_file_root.'includes/forums/auth.php', 'auth');
 
+$_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_img();
 
 require($site_file_root.'includes/forums/functions_display.php');
@@ -39,14 +40,14 @@ $sql = 'SELECT group_id, group_name, group_colour, group_type
 	FROM ' . GROUPS_TABLE . ' 
 	WHERE group_legend = 1
 		AND group_type <> ' . GROUP_HIDDEN;
-$result = $_CLASS['core_db']->sql_query($sql);
+$result = $_CLASS['core_db']->query($sql);
 
 $legend = '';
-while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
-$_CLASS['core_db']->sql_freeresult($result);
+$_CLASS['core_db']->free_result($result);
 
 
 // Generate birthday list if required ...
@@ -58,9 +59,9 @@ if ($config['load_birthdays'])
 		FROM ' . USERS_TABLE . " 
 		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now['mday'], $now['mon']) . "%'
 			AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$user_colour = ($row['user_colour']) ? ' style="color:#' . $row['user_colour'] .'"' : '';
 		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
@@ -70,7 +71,7 @@ if ($config['load_birthdays'])
 			$birthday_list .= ' (' . ($now['year'] - $age) . ')';
 		}
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 }
 
 $l_total_user_s = ($config['num_users'] == 0) ? 'TOTAL_USERS_ZERO' : 'TOTAL_USERS_OTHER';

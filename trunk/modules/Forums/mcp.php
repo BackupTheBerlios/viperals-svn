@@ -59,10 +59,10 @@ class module
 			WHERE module_type = '{$module_type}'
 				AND module_enabled = 1
 			ORDER BY module_order ASC";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$i = 0;
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			// Authorisation is required for the basic module
 			if ($row['module_acl'])
@@ -160,7 +160,7 @@ class module
 
 			$i++;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (!$module_id)
 		{
@@ -252,7 +252,7 @@ class module
 					FROM ' . TOPICS_TABLE . '
 					WHERE forum_id IN (' . implode(', ', $forum_list) . ')
 						AND topic_approved = 0';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				$total_topics = $_CLASS['core_db']->sql_fetchfield('total', 0, $result);
 
 				return ($total_topics) ? $total_topics : $_CLASS['core_user']->lang['NONE'];
@@ -266,7 +266,7 @@ class module
 							AND p.post_approved = 0
 							AND t.topic_id = p.topic_id
 							AND t.topic_first_post_id <> p.post_id';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				$total_posts = $_CLASS['core_db']->sql_fetchfield('total', 0, $result);
 
 				return ($total_posts) ? $total_posts : $_CLASS['core_user']->lang['NONE'];
@@ -386,9 +386,9 @@ if (!$quickmod)
 		$sql = 'SELECT topic_id, forum_id
 			FROM ' . POSTS_TABLE . "
 			WHERE post_id = $post_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$topic_id = (int) $row['topic_id'];
 		$forum_id = (int) $row['forum_id'];
@@ -399,9 +399,9 @@ if (!$quickmod)
 		$sql = 'SELECT forum_id
 			FROM ' . TOPICS_TABLE . "
 			WHERE topic_id = $topic_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$forum_id = (int) $row['forum_id'];
 	}
@@ -492,9 +492,9 @@ function get_topic_data($topic_ids, $acl_list = false)
 		FROM ' . TOPICS_TABLE . ' t
 			LEFT JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
 		WHERE t.topic_id IN (' . implode(', ', $topic_ids) . ')';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 		
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
 		{
@@ -519,9 +519,9 @@ function get_post_data($post_ids, $acl_list = false)
 		WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 			AND u.user_id = p.poster_id
 			AND t.topic_id = p.topic_id';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 		
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
 		{
@@ -548,9 +548,9 @@ function get_forum_data($forum_id, $acl_list = 'f_list')
 	$sql = 'SELECT *
 		FROM ' . FORUMS_TABLE . '
 		WHERE forum_id ' . ((is_array($forum_id)) ? 'IN (' . implode(', ', $forum_id) . ')' : "= $forum_id");
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 		
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
 		{
@@ -714,8 +714,8 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 
 	if (($sort_days && $mode != 'viewlogs') || $mode == 'reports' || $where_sql != 'WHERE')
 	{
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$total = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['total'] : 0;
+		$result = $_CLASS['core_db']->query($sql);
+		$total = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['total'] : 0;
 	}
 	else
 	{
@@ -740,9 +740,9 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	// With those two queries we make sure all ids are within one forum...
 	$sql = "SELECT forum_id FROM $table
 		WHERE $sql_id = {$ids[0]}";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 	$forum_id = (int) $_CLASS['core_db']->sql_fetchfield('forum_id', 0, $result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if (!$forum_id)
 	{
@@ -763,14 +763,14 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	$sql = "SELECT $sql_id FROM $table
 		WHERE $sql_id IN (" . implode(', ', $ids) . ")
 			AND (forum_id = $forum_id OR forum_id = 0)";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$ids = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$ids[] = $row[$sql_id];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	return $forum_id;
 }

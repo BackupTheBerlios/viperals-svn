@@ -30,27 +30,26 @@ if (!defined('VIPERAL'))
 }
 
 // Initial var setup
-$forum_id	= request_var('f', 0);
 $topic_id	= request_var('t', 0);
 $post_id	= request_var('p', 0);
-$voted_id	= request_var('vote_id', array(0));;
-
-$start		= request_var('start', 0);
-$view		= request_var('view', '');
-
-$sort_days	= request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
-$sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
-$sort_dir	= request_var('sd', ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'a'));
-
-$update		= request_var('update', false);
-
-$hilit_words= request_var('hilit', '');
 
 // Do we have a topic or post id?
 if (!$topic_id && !$post_id)
 {
 	trigger_error('NO_TOPIC');
 }
+
+$forum_id	= request_var('f', 0);
+$voted_id	= request_var('vote_id', array(0));;
+$start		= request_var('start', 0);
+$view		= request_var('view', '');
+$update		= request_var('update', false);
+$hilit_words= request_var('hilit', '');
+$update_mark = false;
+
+$sort_days	= request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
+$sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
+$sort_dir	= request_var('sd', ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'a'));
 
 // Find topic id if user requested a newer or older topic
 $unread_post_id = 0;
@@ -61,9 +60,9 @@ if ($view && !$post_id)
 		$sql = 'SELECT forum_id FROM ' . TOPICS_TABLE . "
 			WHERE topic_id = $topic_id";
 
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if ($row)
 		{
@@ -77,7 +76,7 @@ if ($view && !$post_id)
 
 	if ($view == 'unread')
 	{
-		$topic_last_read = get_topic_last_read($topic_id, $forum_id);
+		$topic_last_read = topic_last_read($topic_id, $forum_id);
 
 		$sql = 'SELECT p.post_id, p.topic_id, p.forum_id
 			FROM (' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . " t)
@@ -86,9 +85,9 @@ if ($view && !$post_id)
 				" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND p.post_approved = 1') . "
 				AND p.post_time > $topic_last_read
 			ORDER BY p.post_time ASC";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (!$row)
 		{
@@ -115,9 +114,9 @@ if ($view && !$post_id)
 				" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1') . "
 				AND t.topic_last_post_time $sql_condition t2.topic_last_post_time
 			ORDER BY t.topic_last_post_time $sql_ordering";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (!$row)
 		{
@@ -183,9 +182,9 @@ $sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_attachment, t.topi
 			" . ((!$forum_id) ? '' : 'OR (t.topic_type = ' . POST_GLOBAL . " AND f.forum_id = $forum_id)") . "
 			)
 		$order_sql";
-$result = $_CLASS['core_db']->sql_query($sql);
+$result = $_CLASS['core_db']->query($sql);
 
-if (!($topic_data = $_CLASS['core_db']->sql_fetchrow($result)))
+if (!($topic_data = $_CLASS['core_db']->fetch_row_assoc($result)) || $topic_data['forum_status'] == ITEM_DELETING)
 {
 	// If post_id was submitted, we try at least to display the topic as a last resort...
 	if ($post_id && $forum_id && $topic_id)
@@ -196,6 +195,7 @@ if (!($topic_data = $_CLASS['core_db']->sql_fetchrow($result)))
 }
 
 // Extract the data
+// Remove this
 extract($topic_data);
 
 // We make this check here because the correct forum_id is determined
@@ -204,7 +204,7 @@ unset($topic_replies_real);
 
 if (!isset($topic_last_read))
 {
-	$topic_last_read = get_topic_last_read($topic_id, $forum_id);
+	$topic_last_read = topic_last_read($topic_id, $forum_id);
 }
 
 // Check sticky/announcement time limit
@@ -213,11 +213,12 @@ if (($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) && $topic_time_
 	$sql = 'UPDATE ' . TOPICS_TABLE . ' 
 		SET topic_type = ' . POST_NORMAL . ', topic_time_limit = 0
 		WHERE topic_id = ' . $topic_id;
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 	$topic_type = POST_NORMAL;
 	$topic_time_limit = 0;
 }
 
+$_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang('viewtopic');
 $_CLASS['core_user']->add_img();
 
@@ -283,13 +284,13 @@ if ($sort_days)
 		WHERE topic_id = $topic_id
 			AND post_time >= $min_post_time
 		" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND post_approved = 1');
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	if (isset($_POST['sort']))
 	{
 		$start = 0;
 	}
-	$total_posts = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['num_posts'] : 0;
+	$total_posts = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['num_posts'] : 0;
 	$limit_posts_time = "AND p.post_time >= $min_post_time ";
 }
 else
@@ -334,7 +335,7 @@ if ($config['allow_bookmarks'] && $_CLASS['core_user']->is_user && request_var('
 			'topic_id'	=> $topic_id,
 			'order_id'	=> 0)
 		);
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		$where_sql = '';
 		$sign = '+';
@@ -344,7 +345,7 @@ if ($config['allow_bookmarks'] && $_CLASS['core_user']->is_user && request_var('
 		$sql = 'DELETE FROM ' . BOOKMARKS_TABLE . " 
 			WHERE user_id = {$_CLASS['core_user']->data['user_id']}
 				AND topic_id = $topic_id";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	
 		// Works because of current order_id selected as bookmark value (please do not change because of simplicity)
 		$where_sql = " AND order_id > $bookmarked";
@@ -356,7 +357,7 @@ if ($config['allow_bookmarks'] && $_CLASS['core_user']->is_user && request_var('
 		SET order_id = order_id $sign 1
 			WHERE user_id = {$_CLASS['core_user']->data['user_id']}
 			$where_sql";
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	$_CLASS['core_display']->meta_refresh(3, generate_link($viewtopic_url, false));
 	$message = (($bookmarked) ? $_CLASS['core_user']->lang['BOOKMARK_REMOVED'] : $_CLASS['core_user']->lang['BOOKMARK_ADDED']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="' . generate_link($viewtopic_url, false) . '">', '</a>');
@@ -487,14 +488,14 @@ if (!empty($poll_start))
 			AND p.post_id = $topic_first_post_id
 			AND p.topic_id = o.topic_id
 		ORDER BY o.poll_option_id";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$poll_info = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$poll_info[] = $row;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$cur_voted_id = array();
 	if ($_CLASS['core_user']->is_user)
@@ -503,13 +504,13 @@ if (!empty($poll_start))
 			FROM ' . POLL_VOTES_TABLE . '
 			WHERE topic_id = ' . $topic_id . '
 				AND vote_user_id = ' . $_CLASS['core_user']->data['user_id'];
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$cur_voted_id[] = $row['poll_option_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	else
 	{
@@ -552,13 +553,13 @@ if (!empty($poll_start))
 				SET poll_option_total = poll_option_total + 1 
 				WHERE poll_option_id = $option 
 					AND topic_id = $topic_id";
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			if ($_CLASS['core_user']->is_user)
 			{
 				$sql = 'INSERT INTO  ' . POLL_VOTES_TABLE . " (topic_id, poll_option_id, vote_user_id, vote_user_ip) 
 					VALUES ($topic_id, $option, " . $_CLASS['core_user']->data['user_id'] . ", '".$_CLASS['core_user']->ip."')";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 
@@ -570,7 +571,7 @@ if (!empty($poll_start))
 					SET poll_option_total = poll_option_total - 1 
 					WHERE poll_option_id = $option 
 						AND topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
 				if ($_CLASS['core_user']->is_user)
 				{
@@ -578,7 +579,7 @@ if (!empty($poll_start))
 						WHERE topic_id = $topic_id
 							AND poll_option_id = $option 
 							AND vote_user_id = " . $_CLASS['core_user']->data['user_id'];
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 			}
 		}
@@ -592,7 +593,7 @@ if (!empty($poll_start))
 			SET poll_last_vote = ' . time() . " 
 			WHERE topic_id = $topic_id";
 			//, topic_last_post_time = ' . time() . " -- for bumping topics with new votes, ignore for now
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		$_CLASS['core_display']->meta_refresh(5, generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id"));
 
@@ -704,17 +705,17 @@ $sql = 'SELECT p.post_id
 		" . (($sort_by_sql[$sort_key]{0} == 'u') ? 'AND u.user_id = p.poster_id': '') . "
 		$limit_posts_time
 	ORDER BY $sql_sort_order";
-$result = $_CLASS['core_db']->sql_query_limit($sql, $sql_limit, $sql_start);
+$result = $_CLASS['core_db']->query_limit($sql, $sql_limit, $sql_start);
 
 $i = ($store_reverse) ? $sql_limit - 1 : 0;
 
-while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	$post_list[$i] = $row['post_id'];
 	($store_reverse) ? --$i : ++$i;
 }
 
-$_CLASS['core_db']->sql_freeresult($result);
+$_CLASS['core_db']->free_result($result);
 
 if (empty($post_list))
 {
@@ -726,11 +727,11 @@ $sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_posts, u.user_from, 
 	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id)), ' . USERS_TABLE . ' u
 	WHERE p.post_id IN (' . implode(', ', $post_list) . ')
 		AND u.user_id = p.poster_id';
-$result = $_CLASS['core_db']->sql_query($sql);
+$result = $_CLASS['core_db']->query($sql);
 
 // Posts are stored in the $rowset array while $attach_list, $user_cache
 // and the global bbcode_bitfield are built
-while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	$poster_id = $row['poster_id'];
 	$poster	= ($poster_id == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST']) : $row['username'];
@@ -943,7 +944,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		}
 	}
 }
-$_CLASS['core_db']->sql_freeresult($result);
+$_CLASS['core_db']->free_result($result);
 
 // Load custom profile fields
 if ($config['load_cpf_viewtopic'])
@@ -962,10 +963,10 @@ if ($config['load_onlinetrack'] && sizeof($id_cache))
 		FROM ' . SESSIONS_TABLE . ' 
 		WHERE session_user_id IN (' . implode(', ', $id_cache) . ')
 		GROUP BY session_user_id';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$update_time = $config['load_online_time'] * 60;
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$user_cache[$row['session_user_id']]['online'] = (time() - $update_time < $row['online_time'] && (($row['viewonline'] && $user_cache[$row['session_user_id']]['viewonline']) || $_CLASS['auth']->acl_get('u_viewonline'))) ? true : false;
 	}
@@ -984,13 +985,13 @@ if (sizeof($attach_list))
 			WHERE post_msg_id IN (' . implode(', ', $attach_list) . ')
 				AND in_message = 0
 			ORDER BY filetime ' . ((!$config['display_order']) ? 'DESC' : 'ASC') . ', post_msg_id ASC';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$attachments[$row['post_msg_id']][] = $row;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		// No attachments exist, but post table thinks they do so go ahead and reset post_attach flags
 		if (!sizeof($attachments))
@@ -998,7 +999,7 @@ if (sizeof($attach_list))
 			$sql = 'UPDATE ' . POSTS_TABLE . ' 
 				SET post_attachment = 0 
 				WHERE post_id IN (' . implode(', ', $attach_list) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			// We need to update the topic indicator too if the complete topic is now without an attachment
 			if (sizeof($rowset) != $total_posts)
@@ -1009,14 +1010,14 @@ if (sizeof($attach_list))
 					WHERE p.topic_id = $topic_id
 						AND p.post_approved = 1
 						AND p.topic_id = a.topic_id";
-				$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+				$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-				if (!$_CLASS['core_db']->sql_fetchrow($result))
+				if (!$_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$sql = 'UPDATE ' . TOPICS_TABLE . " 
 						SET topic_attachment = 0 
 						WHERE topic_id = $topic_id";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 			}
 			else
@@ -1024,7 +1025,7 @@ if (sizeof($attach_list))
 				$sql = 'UPDATE ' . TOPICS_TABLE . " 
 					SET topic_attachment = 0 
 					WHERE topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 		else if ($has_attachments && !$topic_data['topic_attachment'])
@@ -1033,7 +1034,7 @@ if (sizeof($attach_list))
 			$sql = 'UPDATE ' . TOPICS_TABLE . " 
 				SET topic_attachment = 1 
 				WHERE topic_id = $topic_id";
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			$topic_data['topic_attachment'] = 1;
 		}
@@ -1173,12 +1174,12 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 					AND p.post_edit_user <> 0
 					AND p.post_edit_reason <> ''
 					AND p.post_edit_user = u.user_id";
-			$result2 = $_CLASS['core_db']->sql_query($sql);
-			while ($user_edit_row = $_CLASS['core_db']->sql_fetchrow($result2))
+			$result2 = $_CLASS['core_db']->query($sql);
+			while ($user_edit_row = $_CLASS['core_db']->fetch_row_assoc($result2))
 			{
 				$post_edit_list[$user_edit_row['user_id']] = $user_edit_row;
 			}
-			$_CLASS['core_db']->sql_freeresult($result2);
+			$_CLASS['core_db']->free_result($result2);
 			
 			unset($post_storage_list);
 		}
@@ -1230,6 +1231,11 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		}
 	}
 
+	if ($unread = ($row['post_time'] > $topic_last_read))
+	{
+		$update_mark = ($update_mark) ? (int) max($row['post_time'], $update_mark) : $row['post_time'];
+	}
+
 	$postrow = array(
 		'ATTACHMENTS'	=> count($post_attachments) ? $post_attachments : false,
 		'POSTER_NAME' 	=> $row['poster'],
@@ -1248,7 +1254,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'EDIT_REASON'	=> $row['post_edit_reason'],
 		'BUMPED_MESSAGE'=> $l_bumped_by,
 
-		'MINI_POST_IMG'			=> ($_CLASS['core_user']->is_user && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? $_CLASS['core_user']->img('icon_post_new', 'NEW_POST') : $_CLASS['core_user']->img('icon_post', 'POST'),
+		'MINI_POST_IMG'			=> ($unread) ? $_CLASS['core_user']->img('icon_post_new', 'NEW_POST') : $_CLASS['core_user']->img('icon_post', 'POST'),
 		'POST_ICON_IMG'			=> $icons[$row['icon_id']]['img'],
 		'POST_ICON_IMG_WIDTH'   => $icons[$row['icon_id']]['width'],
 		'POST_ICON_IMG_HEIGHT'  => $icons[$row['icon_id']]['height'],
@@ -1287,7 +1293,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'S_POST_REPORTED'	=> ($row['post_reported'] && $_CLASS['auth']->acl_get('m_', $forum_id)) ? TRUE : FALSE,
 		'S_DISPLAY_NOTICE'	=> ($display_notice && $row['post_attachment']) ? true : false, 
 		'S_FRIEND'			=> ($row['friend']) ? true : false,
-		'S_UNREAD_POST'		=> ($_CLASS['core_user']->is_user && $row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $row['post_time'] > $topic_last_read) ? true : false,
+		'S_UNREAD_POST'		=> $unread,
 		'S_FIRST_UNREAD'	=> ($unread_post_id == $row['post_id']) ? true : false,
 		'S_CUSTOM_FIELDS'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false
 	);
@@ -1324,7 +1330,7 @@ if (isset($_CLASS['core_user']->data['session_page']) && !preg_match("#&t=$topic
 	$sql = 'UPDATE ' . TOPICS_TABLE . '
 		SET topic_views = topic_views + 1, topic_last_view_time = ' . time() . "
 		WHERE topic_id = $topic_id";
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	// Update the attachment download counts
 	if (sizeof($update_count))
@@ -1332,13 +1338,72 @@ if (isset($_CLASS['core_user']->data['session_page']) && !preg_match("#&t=$topic
 		$sql = 'UPDATE ' . ATTACHMENTS_TABLE . ' 
 			SET download_count = download_count + 1 
 			WHERE attach_id IN (' . implode(', ', array_unique($update_count)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 }
 
 // Mark topics read
-$mark_forum_id = ($topic_type == POST_GLOBAL) ? 0 : $forum_id;
-markread('topic', $mark_forum_id, $topic_id, $row['post_time']);
+if ($update_mark)
+{
+echo 'test';
+	// Now lets get the all topics that are in the markable range,
+	// with is the max topics displayed on the forum's viewforum page
+// Need forum_topic_per_page along with whatever users have to after listing
+// Global posts make us do this when not needed :-(
+	if ($topic_type == POST_GLOBAL)
+	{
+		// temp
+		markread('topic', 0, $topic_id, $update_mark);
+	}
+	else
+	{
+		// Get the user's last mark time for this forums
+		$sql = 'SELECT mark_time FROM '.FORUMS_TRACK_TABLE . ' 
+			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . " 
+				AND forum_id = $forum_id AND topic_id = 0";
+
+		$result = $_CLASS['core_db']->query($sql);
+		$forum_marktime = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['mark_time'] : 0;
+		$_CLASS['core_db']->free_result($result);
+			
+		$sql = 'SELECT t.topic_id, t.topic_last_post_time, tr.mark_time FROM ' . TOPICS_TABLE . ' t
+				LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tr ON ( tr.topic_id = t.topic_id AND tr.user_id = '.$_CLASS['core_user']->data['user_id'].")
+					WHERE t.forum_id = $forum_id
+						ORDER BY topic_last_post_time DESC";
+		$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page']);
+		$update_forum_mark = true;
+	
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			// DESC order so the first post is the last post
+			$last_forum_post = $row['topic_last_post_time'];
+
+			do
+			{
+				$last_mark_time = max($row['mark_time'], $forum_marktime);
+				if ($row['topic_last_post_time'] > $last_mark_time && $row['topic_id'] != $topic_id)
+				{
+					// We have a winner/loser
+					// Set so the forum isn't marked
+					$update_forum_mark = false;
+					break;
+				}
+			}
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+		}
+		$_CLASS['core_db']->free_result($result);
+
+		// Was this the last unread topic ?
+		if ($update_forum_mark)
+		{
+			markread('forum', $forum_id, 0, $last_forum_post);
+		}
+		else
+		{
+			markread('topic', $forum_id, $topic_id, $update_mark);
+		}
+	}
+}
 
 // Change encoding if appropriate
 if ($force_encoding)
@@ -1360,43 +1425,29 @@ page_header();
 make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
 $_CLASS['core_template']->display('modules/Forums/viewtopic_body.html');
 
-// FUNCTIONS
-
-function get_topic_last_read($topic_id, $forum_id)
+//Move if we can
+function topic_last_read($topic_id, $forum_id)
 {
 	global $config, $_CORE_CONFIG, $_CLASS;
 
-	$topic_last_read = 0;
-
 	if ($_CLASS['core_user']->is_bot)
 	{
-		return $topic_last_read;
+		return gmtime();
 	}
-	
+
 	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 	{
-		$sql = 'SELECT mark_time
-			FROM ' . TOPICS_TRACK_TABLE . '
-			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . "
-			AND topic_id = $topic_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		$topic_last_read = ($row) ? min($row['mark_time'], $_CLASS['core_user']->data['session_last_visit']) : $_CLASS['core_user']->data['session_last_visit'];
-
-		if (!$row)
-		{
-			$sql = 'SELECT mark_time
-				FROM ' . FORUMS_TRACK_TABLE . '
+		$sql = 'SELECT MAX(mark_time) as mark_time
+			FROM ' . FORUMS_TRACK_TABLE . '
 				WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . "
-				AND forum_id = $forum_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
-			$forum_mark_time = (int) $_CLASS['core_db']->sql_fetchfield('mark_time', 0, $result);
-			$_CLASS['core_db']->sql_freeresult($result);
+				AND forum_id = $forum_id
+				AND topic_id IN ($topic_id, 0)";
 
-			$topic_last_read = ($forum_mark_time) ? min($topic_last_read, $forum_mark_time) : $topic_last_read;
-		}
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+
+		return isset($row['mark_time']) ? (int) $row['mark_time'] : 0;
 	}
 	else
 	{

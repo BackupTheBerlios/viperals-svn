@@ -653,7 +653,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 {
 	$where = (is_array($forum_id)) ? 'AND t.forum_id IN (' . implode(', ', $forum_id) . ')' : (($forum_id) ? "AND t.forum_id = $forum_id" : '');
 
-	switch (SQL_LAYER)
+	switch ($_CLASS['core_db']->db_layer)
 	{
 		case 'mysql4':
 		case 'mysqli':
@@ -773,7 +773,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 	switch ($mode)
 	{
 		case 'topic_moved':
-			switch (SQL_LAYER)
+			switch ($_CLASS['core_db']->db_layer)
 			{
 				case 'mysql4':
 				case 'mysqli':
@@ -810,7 +810,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			break;
 
 		case 'topic_approved':
-			switch (SQL_LAYER)
+			switch ($_CLASS['core_db']->db_layer)
 			{
 				case 'mysql4':
 				case 'mysqli':
@@ -1594,7 +1594,7 @@ function cache_moderators()
 	global $_CLASS;
 
 	// Clear table
-	$sql = (SQL_LAYER != 'sqlite') ? 'TRUNCATE ' . MODERATOR_TABLE : 'DELETE FROM ' . MODERATOR_TABLE;
+	$sql = ($_CLASS['core_db']->db_layer != 'sqlite') ? 'TRUNCATE ' . MODERATOR_TABLE : 'DELETE FROM ' . MODERATOR_TABLE;
 	$_CLASS['core_db']->query($sql);
 
 	// Holding array
@@ -1652,7 +1652,7 @@ function cache_moderators()
 
 	if (sizeof($m_sql))
 	{
-		switch (SQL_LAYER)
+		switch ($_CLASS['core_db']->db_layer)
 		{
 			case 'mysql':
 			
@@ -1693,7 +1693,7 @@ function add_log()
 	$forum_id		= ($mode == 'mod') ? intval(array_shift($args)) : '';
 	$topic_id		= ($mode == 'mod') ? intval(array_shift($args)) : '';
 	$action			= array_shift($args);
-	$data			= (!sizeof($args)) ? '' : $_CLASS['core_db']->sql_escape(serialize($args));
+	$data			= (!sizeof($args)) ? '' : $_CLASS['core_db']->escape(serialize($args));
 
 	switch ($mode)
 	{
@@ -1889,10 +1889,17 @@ if (class_exists('auth'))
 			// Set any flags as required
 			foreach ($auth as $auth_option => $setting)
 			{
-				$flag = substr($auth_option, 0, strpos($auth_option, '_') + 1);
-				if (empty($auth[$flag]))
+				$postion = strpos($auth_option, '_');
+				if ($postion == false)
 				{
-					$auth[$flag] = $setting;
+					continue;
+				}
+
+				$flag = substr($auth_option, 0, $postion + 1);
+
+				if (empty($auth[$flag]) && (empty($holding_auth[$flag]) || ($holding_auth[$flag] == ACL_NO && $setting == ACL_YES)))
+				{
+					$holding_auth[$flag] =  $setting;
 				}
 			}
 
@@ -1907,8 +1914,13 @@ if (class_exists('auth'))
 			$_CLASS['core_db']->free_result($result);
 
 			$sql_forum = 'AND a.forum_id IN (' . implode(', ', array_map('intval', $forum_id)) . ')';
+			$id_field  = $ug_type . '_id';
 
-			$sql = ($ug_type == 'user') ? 'SELECT o.auth_option_id, o.auth_option, a.forum_id, a.auth_setting FROM ' . ACL_USERS_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " o WHERE a.auth_option_id = o.auth_option_id $sql_forum AND a.user_id = $ug_id" : 'SELECT o.auth_option_id, o.auth_option, a.forum_id, a.auth_setting FROM ' . ACL_GROUPS_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " o WHERE a.auth_option_id = o.auth_option_id $sql_forum AND a.group_id = $ug_id";
+			$sql =  'SELECT o.auth_option_id, o.auth_option, a.forum_id, a.auth_setting
+						FROM ' . ACL_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " o
+							WHERE a.auth_option_id = o.auth_option_id $sql_forum
+							AND a.$id_field = $ug_id";
+
 			$result = $_CLASS['core_db']->query($sql);
 
 			$cur_auth = array();
@@ -1918,12 +1930,11 @@ if (class_exists('auth'))
 			}
 			$_CLASS['core_db']->free_result($result);
 
-			$table = ($ug_type == 'user') ? ACL_USERS_TABLE : ACL_GROUPS_TABLE;
-			$id_field  = $ug_type . '_id';
-
 			$sql_ary = array();
 			foreach ($forum_id as $forum)
 			{
+				$delete_option_ids = $update_option_ids =array();
+
 				foreach ($auth as $auth_option => $setting)
 				{
 					$auth_option_id = $option_ids[$auth_option];
@@ -1933,10 +1944,7 @@ if (class_exists('auth'))
 						case ACL_UNSET:
 							if (isset($cur_auth[$forum][$auth_option_id]))
 							{
-								$sql_ary['delete'][] = "DELETE FROM $table 
-									WHERE forum_id = $forum
-										AND auth_option_id = $auth_option_id
-										AND $id_field = $ug_id";
+								$delete_option_ids[] = (int) $auth_option_id;
 							}
 							break;
 
@@ -1945,62 +1953,80 @@ if (class_exists('auth'))
 							{
 								$sql_ary['insert'][] = "$ug_id, $forum, $auth_option_id, $setting";
 							}
-							else if ($cur_auth[$forum][$auth_option_id] != $setting)
+							elseif ($cur_auth[$forum][$auth_option_id] != $setting)
 							{
-								$sql_ary['update'][] = "UPDATE " . $table . " 
-									SET auth_setting = $setting 
-									WHERE $id_field = $ug_id 
-										AND forum_id = $forum 
-										AND auth_option_id = $auth_option_id";
+								$update_option_ids[$setting][] = (int) $auth_option_id;
 							}
 					}
+				}
+
+				if (!empty($update_option_ids))
+				{
+					foreach ($update_option_ids as $setting => $option_ids)
+					{
+						$sql_ary['update'][] = 'UPDATE ' . ACL_TABLE . " 
+							SET auth_setting = $setting 
+							WHERE $id_field = $ug_id 
+								AND forum_id = $forum 
+								AND auth_option_id IN (" . implode(', ', $option_ids) . ')';
+					}
+				}
+
+				if (!empty($delete_option_ids))
+				{
+					$sql_ary['delete'][] = 'DELETE FROM '.ACL_TABLE ."
+					WHERE $id_field = $ug_id
+						AND forum_id = $forum
+						AND auth_option_id IN (" . implode(', ', $delete_option_ids) . ')';
 				}
 			}
 			unset($cur_auth);
 
-			$sql = '';
+			
 			foreach ($sql_ary as $sql_type => $sql_subary)
 			{
+				$sql = '';
+
 				switch ($sql_type)
 				{
 					case 'insert':
-						switch (SQL_LAYER)
+						switch ($_CLASS['core_db']->db_layer)
 						{
 							case 'mysql':
 								$sql = 'VALUES ' . implode(', ', preg_replace('#^(.*?)$#', '(\1)', $sql_subary));
-								break;
+							break;
 
 							case 'mysql4':
 							case 'mysqli':
 							case 'mssql':
 							case 'sqlite':
 								$sql = implode(' UNION ALL ', preg_replace('#^(.*?)$#', 'SELECT \1', $sql_subary));
-								break;
+							break;
 
 							default:
 								foreach ($sql_subary as $sql)
 								{
-									$sql = "INSERT INTO $table ($id_field, forum_id, auth_option_id, auth_setting) VALUES ($sql)";
+									$sql = 'INSERT INTO '.ACL_TABLE." ($id_field, forum_id, auth_option_id, auth_setting) VALUES ($sql)";
 									$_CLASS['core_db']->query($sql);
-									$sql = '';
 								}
+								$sql = '';
+							break;
 						}
 
-						if ($sql != '')
+						if ($sql)
 						{
-							$sql = "INSERT INTO $table ($id_field, forum_id, auth_option_id, auth_setting) $sql";
+							$sql = 'INSERT INTO '.ACL_TABLE." ($id_field, forum_id, auth_option_id, auth_setting) $sql";
 							$_CLASS['core_db']->query($sql);
 						}
-						break;
+					break;
 
 					case 'update':
 					case 'delete':
 						foreach ($sql_subary as $sql)
 						{
 							$result = $_CLASS['core_db']->query($sql);
-							$sql = '';
 						}
-						break;
+					break;
 				}
 				unset($sql_ary[$sql_type]);
 			}
@@ -2020,13 +2046,11 @@ if (class_exists('auth'))
 			}
 
 			$auth_sql = ($auth_ids) ? ' AND auth_option_id IN (' . implode(', ', array_map('intval', $auth_ids)) . ')' : '';
-
-			$table = ($mode == 'user') ? ACL_USERS_TABLE : ACL_GROUPS_TABLE;
 			$id_field  = $mode . '_id';
 
 			foreach ($forum_id as $forum)
 			{
-				$sql = "DELETE FROM $table
+				$sql = 'DELETE FROM '.ACL_TABLE."
 					WHERE $id_field = $ug_id
 						AND forum_id = $forum
 						$auth_sql";
@@ -2107,7 +2131,7 @@ if (class_exists('auth'))
 			{
 				foreach ($option_ary as $option)
 				{
-					switch (SQL_LAYER)
+					switch ($_CLASS['core_db']->db_layer)
 					{
 						case 'mysql':
 							$sql .= (($sql != '') ? ', ' : '') . "('$option', " . $type_sql[$type] . ")";
@@ -2199,7 +2223,7 @@ function update_post_information($type, $ids)
 			$update_sql[$row["{$type}_id"]][] = $type . '_last_post_id = ' . (int) $row['post_id'];
 			$update_sql[$row["{$type}_id"]][] = $type . '_last_post_time = ' . (int) $row['post_time'];
 			$update_sql[$row["{$type}_id"]][] = $type . '_last_poster_id = ' . (int) $row['poster_id'];
-			$update_sql[$row["{$type}_id"]][] = "{$type}_last_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->sql_escape($row['post_username']) : $_CLASS['core_db']->sql_escape($row['username'])) . "'";
+			$update_sql[$row["{$type}_id"]][] = "{$type}_last_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->escape($row['post_username']) : $_CLASS['core_db']->escape($row['username'])) . "'";
 		}
 		$_CLASS['core_db']->free_result($result);
 	}

@@ -106,10 +106,10 @@ switch ($mode)
 
 if ($sql)
 {
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	extract($_CLASS['core_db']->sql_fetchrow($result));
-	$_CLASS['core_db']->sql_freeresult($result);
+	extract($_CLASS['core_db']->fetch_row_assoc($result));
+	$_CLASS['core_db']->free_result($result);
 
 	$quote_username = (isset($username)) ? $username : ((isset($post_username)) ? $post_username : '');
 
@@ -159,13 +159,13 @@ if ($sql)
 			FROM ' . POLL_OPTIONS_TABLE . "
 			WHERE topic_id = $topic_id
 			ORDER BY poll_option_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$poll_options[] = trim($row['poll_option_text']);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	
 	$orig_poll_options_size = sizeof($poll_options);
@@ -197,11 +197,11 @@ if ($sql)
 			WHERE post_msg_id = $post_id
 				AND in_message = 0
 			ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->sql_fetchrowset($result));
+		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->fetch_row_assocset($result));
 
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	
 	if ($poster_id == ANONYMOUS || !$poster_id)
@@ -214,14 +214,13 @@ if ($sql)
 	}
 
 	$enable_urls = $enable_magic_url;
-
 	$enable_html = (isset($enable_html)) ? $enable_html : $config['allow_html'];
 	
 	if (!in_array($mode, array('quote', 'edit', 'delete')))
 	{
-		$enable_sig		= ($config['allow_sig'] && $_CLASS['core_user']->optionget('attachsig'));
-		$enable_smilies = ($config['allow_smilies'] && $_CLASS['core_user']->optionget('smilies'));
-		$enable_bbcode	= ($config['allow_bbcode'] && $_CLASS['core_user']->optionget('bbcode'));
+		$enable_sig		= ($config['allow_sig'] && $_CLASS['core_user']->user_data_get('attachsig'));
+		$enable_smilies = ($config['allow_smilies'] && $_CLASS['core_user']->user_data_get('smilies'));
+		$enable_bbcode	= ($config['allow_bbcode'] && $_CLASS['core_user']->user_data_get('bbcode'));
 		$enable_urls	= true;
 	}
 
@@ -235,13 +234,13 @@ if ($sql)
 			WHERE (forum_id = ' . $forum_id . (($topic_id) ? " OR topic_id = $topic_id" : '') . ')
 				AND user_id = ' . $_CLASS['core_user']->data['user_id'] . 
 				(($draft_id) ? " AND draft_id <> $draft_id" : '');
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-		if ($_CLASS['core_db']->sql_fetchrow($result))
+		if ($_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$drafts = true;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	
 	$check_value = (($enable_html+1) << 16) + (($enable_bbcode+1) << 8) + (($enable_smilies+1) << 4) + (($enable_urls+1) << 2) + (($enable_sig+1) << 1);
@@ -254,9 +253,9 @@ if ($mode != 'post' && $_CLASS['core_user']->is_user)
 		FROM ' . TOPICS_WATCH_TABLE . '
 		WHERE topic_id = ' . $topic_id . '
 			AND user_id = ' . $_CLASS['core_user']->data['user_id'];
-	$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-	$notify_set = ($_CLASS['core_db']->sql_fetchrow($result)) ? 1 : 0;
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query_limit($sql, 1);
+	$notify_set = ($_CLASS['core_db']->fetch_row_assoc($result)) ? 1 : 0;
+	$_CLASS['core_db']->free_result($result);
 }
 else
 {
@@ -326,8 +325,6 @@ if ($mode == 'delete')
 
 if ($mode == 'delete' && ($user_deletable || $_CLASS['auth']->acl_get('m_delete', $forum_id)))
 {
-
-	
 	$s_hidden_fields = '<input type="hidden" name="p" value="' . $post_id . '" /><input type="hidden" name="f" value="' . $forum_id . '" /><input type="hidden" name="mode" value="delete" />';
 
 	if (confirm_box(true))
@@ -403,28 +400,28 @@ $quote_status	= ($_CLASS['auth']->acl_get('f_quote', $forum_id));
 // Bump Topic
 if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped, $topic_last_post_time, $topic_poster, $topic_last_poster_id)))
 {
-	$_CLASS['core_db']->sql_transaction();
+	$_CLASS['core_db']->transaction();
 
-	$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . "
+	$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . "
 		SET post_time = $current_time
 		WHERE post_id = $topic_last_post_id
 			AND topic_id = $topic_id");
 
-	$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . "
+	$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . "
 		SET topic_last_post_time = $current_time,
 			topic_bumped = 1,
 			topic_bumper = " . $_CLASS['core_user']->data['user_id'] . "
 		WHERE topic_id = $topic_id");
 
-	$_CLASS['core_db']->sql_query('UPDATE ' . FORUMS_TABLE . '
+	$_CLASS['core_db']->query('UPDATE ' . FORUMS_TABLE . '
 		SET ' . implode(', ', update_last_post_information('forum', $forum_id)) . "
 		WHERE forum_id = $forum_id");
 
-	$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . "
+	$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . "
 		SET user_lastpost_time = $current_time
 		WHERE user_id = " . $_CLASS['core_user']->data['user_id']);
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 	
 	markread('post', $forum_id, $topic_id, $current_time);
 
@@ -436,7 +433,7 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 
 	trigger_error($message);
 }
-else if ($mode == 'bump')
+elseif ($mode == 'bump')
 {
 	trigger_error('BUMP_ERROR');
 }
@@ -457,7 +454,7 @@ if ($save && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedr
 			'save_time'	=> $current_time,
 			'draft_subject' => $subject,
 			'draft_message' => $message));
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	
 		$meta_info = ($mode == 'post') ? generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id) : generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id");
 
@@ -495,9 +492,9 @@ if ($draft_id && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_sa
 		FROM ' . DRAFTS_TABLE . " 
 		WHERE draft_id = $draft_id
 			AND user_id = " . $_CLASS['core_user']->data['user_id'];
-	$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+	$result = $_CLASS['core_db']->query_limit($sql, 1);
 	
-	if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$_REQUEST['subject'] = strtr($row['draft_subject'], array_flip(get_html_translation_table(HTML_ENTITIES)));
 		$_REQUEST['message'] = strtr($row['draft_message'], array_flip(get_html_translation_table(HTML_ENTITIES)));
@@ -540,7 +537,7 @@ if ($submit || $preview || $refresh)
 	$enable_bbcode 		= (!$bbcode_status || isset($_POST['disable_bbcode'])) ? false : true;
 	$enable_smilies		= (!$smilies_status || isset($_POST['disable_smilies'])) ? false : true;
 	$enable_urls 		= (isset($_POST['disable_magic_url'])) ? 0 : 1;
-	$enable_sig			= (!$config['allow_sig']) ? false : ((isset($_POST['attach_sig']) && $_CLASS['core_user']->is_user) ? true : false);
+	$enable_sig			= (!$config['allow_sig']) ? false : (($_CLASS['core_user']->is_user && isset($_POST['attach_sig'])) ? true : false);
 
 	$notify				= (isset($_POST['notify']));
 	$topic_lock			= (isset($_POST['lock_topic']));
@@ -569,17 +566,17 @@ if ($submit || $preview || $refresh)
 			case 'mysqli':
 				$sql = 'DELETE FROM ' . POLL_OPTIONS_TABLE . ', ' . POLL_VOTES_TABLE . "
 					WHERE topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 				break;
 
 			default:
 				$sql = 'DELETE FROM ' . POLL_OPTIONS_TABLE . "
 					WHERE topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
 				$sql = 'DELETE FROM ' . POLL_VOTES_TABLE . "
 					WHERE topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 		}
 		
 		$topic_sql = array(
@@ -594,7 +591,7 @@ if ($submit || $preview || $refresh)
 		$sql = 'UPDATE ' . TOPICS_TABLE . '
 			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $topic_sql) . "
 			WHERE topic_id = $topic_id";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		$poll_title = $poll_option_text = '';
 		$poll_vote_change = $poll_max_options = $poll_length = 0;
@@ -655,12 +652,12 @@ if ($submit || $preview || $refresh)
 				FROM ' . POSTS_TABLE . "
 				WHERE poster_ip = '" . $_CLASS['core_user']->ip . "'
 					AND post_time > " . ($current_time - $config['flood_interval']);
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-			if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
+			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$last_post_time = $row['last_post_time'];
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		if ($last_post_time)
@@ -764,9 +761,9 @@ if ($submit || $preview || $refresh)
 			$sql = 'SELECT topic_type, forum_id
 				FROM ' . TOPICS_TABLE . "
 				WHERE topic_id = $topic_id";
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
 			
 			if ($row && !$row['forum_id'] && $row['topic_type'] == POST_GLOBAL)
 			{
@@ -810,7 +807,7 @@ if ($submit || $preview || $refresh)
 					SET topic_status = $change_topic_status
 					WHERE topic_id = $topic_id
 						AND topic_moved_id = 0";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			
 				$user_lock = ($_CLASS['auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_poster) ? 'USER_' : '';
 
@@ -1030,9 +1027,9 @@ if ($enable_icons)
 
 
 
-$html_checked		= (isset($enable_html)) ? !$enable_html : (($config['allow_html']) ? !$_CLASS['core_user']->optionget('html') : 1);
-$bbcode_checked		= (isset($enable_bbcode)) ? !$enable_bbcode : (($config['allow_bbcode']) ? !$_CLASS['core_user']->optionget('bbcode') : 1);
-$smilies_checked	= (isset($enable_smilies)) ? !$enable_smilies : (($config['allow_smilies']) ? !$_CLASS['core_user']->optionget('smilies') : 1);
+$html_checked		= (isset($enable_html)) ? !$enable_html : (($config['allow_html']) ? !$_CLASS['core_user']->user_data_get('html') : 1);
+$bbcode_checked		= (isset($enable_bbcode)) ? !$enable_bbcode : (($config['allow_bbcode']) ? !$_CLASS['core_user']->user_data_get('bbcode') : 1);
+$smilies_checked	= (isset($enable_smilies)) ? !$enable_smilies : (($config['allow_smilies']) ? !$_CLASS['core_user']->user_data_get('smilies') : 1);
 $urls_checked		= (isset($enable_urls)) ? !$enable_urls : 0;
 $sig_checked		= $enable_sig;
 $notify_checked		= (isset($notify)) ? $notify : ((!$notify_set) ? (($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_notify'] : 0) : 1);
@@ -1213,7 +1210,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 	$sql_data = array();
 	$next_post_id = 0;
 
-	$_CLASS['core_db']->sql_transaction();
+	$_CLASS['core_db']->transaction();
 
 	if (!delete_posts('post_id', array($post_id), false))
 	{
@@ -1225,7 +1222,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 		trigger_error('ALREADY_DELETED');
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 
 	// Collect the necessary informations for updating the tables
 	$sql_data[FORUMS_TABLE] = '';
@@ -1252,10 +1249,10 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 				WHERE p.topic_id = $topic_id 
 					AND p.poster_id = u.user_id 
 				ORDER BY p.post_time ASC";
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
 			if ($data['topic_type'] != POST_GLOBAL)
 			{
@@ -1290,9 +1287,9 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 					FROM ' . POSTS_TABLE . "
 					WHERE topic_id = $topic_id " .
 						((!$_CLASS['auth']->acl_get('m_approve')) ? 'AND post_approved = 1' : '');
-				$result = $_CLASS['core_db']->sql_query($sql);
-				$row = $_CLASS['core_db']->sql_fetchrow($result);
-				$_CLASS['core_db']->sql_freeresult($result);
+				$result = $_CLASS['core_db']->query($sql);
+				$row = $_CLASS['core_db']->fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
 	
 				$next_post_id = (int) $row['last_post_id'];
 			}
@@ -1305,10 +1302,10 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 					((!$_CLASS['auth']->acl_get('m_approve')) ? 'AND post_approved = 1' : '') . '
 					AND post_time > ' . $data['post_time'] . '
 				ORDER BY post_time ASC';
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
 			if ($data['topic_type'] != POST_GLOBAL)
 			{
@@ -1322,7 +1319,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 	$sql_data[USERS_TABLE] = ($_CLASS['auth']->acl_get('f_postcount', $forum_id)) ? 'user_posts = user_posts - 1' : '';
 	set_config('num_posts', $config['num_posts'] - 1, true);
 
-	$_CLASS['core_db']->sql_transaction();
+	$_CLASS['core_db']->transaction();
 
 	$where_sql = array(FORUMS_TABLE => "forum_id = $forum_id", TOPICS_TABLE => "topic_id = $topic_id", USERS_TABLE => 'user_id = ' . $data['poster_id']);
 
@@ -1330,11 +1327,11 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 	{
 		if ($update_sql)
 		{
-			$_CLASS['core_db']->sql_query("UPDATE $table SET $update_sql WHERE " . $where_sql[$table]);
+			$_CLASS['core_db']->query("UPDATE $table SET $update_sql WHERE " . $where_sql[$table]);
 		}
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 
 	return $next_post_id;
 }
@@ -1531,16 +1528,16 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			break;
 	}
 
-	$_CLASS['core_db']->sql_transaction();
+	$_CLASS['core_db']->transaction();
 
 	// Submit new topic
 	if ($post_mode == 'post')
 	{
 		$sql = 'INSERT INTO ' . TOPICS_TABLE . ' ' .
 			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[TOPICS_TABLE]['sql']);
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
-		$data['topic_id'] = $_CLASS['core_db']->sql_nextid();
+		$data['topic_id'] = $_CLASS['core_db']->insert_id();
 
 		$sql_data[POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
 			'topic_id' => $data['topic_id'])
@@ -1560,8 +1557,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 		$sql = 'INSERT INTO ' . POSTS_TABLE . ' ' .
 			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[POSTS_TABLE]['sql']);
-		$_CLASS['core_db']->sql_query($sql);
-		$data['post_id'] = $_CLASS['core_db']->sql_nextid();
+		$_CLASS['core_db']->query($sql);
+		$data['post_id'] = $_CLASS['core_db']->insert_id();
 
 		if ($post_mode == 'post')
 		{
@@ -1585,10 +1582,10 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		$sql = 'SELECT topic_type, topic_replies_real, topic_approved
 			FROM ' . TOPICS_TABLE . '
 			WHERE topic_id = ' . $data['topic_id'];
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		// globalise
 		if ($row['topic_type'] != POST_GLOBAL && $topic_type == POST_GLOBAL)
@@ -1604,7 +1601,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$sql = 'UPDATE ' . POSTS_TABLE . '
 				SET forum_id = 0
 				WHERE topic_id = ' . $data['topic_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 		// unglobalise
 		else if ($row['topic_type'] == POST_GLOBAL && $topic_type != POST_GLOBAL)
@@ -1620,14 +1617,14 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$sql = 'UPDATE ' . POSTS_TABLE . '
 				SET forum_id = ' . $data['forum_id'] . '
 				WHERE topic_id = ' . $data['topic_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 	}
 
 	// Update the topics table
 	if (isset($sql_data[TOPICS_TABLE]['sql']))
 	{
-		$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . '
+		$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . '
 			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[TOPICS_TABLE]['sql']) . '
 			WHERE topic_id = ' . $data['topic_id']);
 	}
@@ -1635,7 +1632,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Update the posts table
 	if (isset($sql_data[POSTS_TABLE]['sql']))
 	{
-		$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . '
+		$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . '
 			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[POSTS_TABLE]['sql']) . '
 			WHERE post_id = ' . $data['post_id']);
 	}
@@ -1650,10 +1647,10 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$sql = 'SELECT * FROM ' . POLL_OPTIONS_TABLE . '
 				WHERE topic_id = ' . $data['topic_id'] . '
 				ORDER BY poll_option_id';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($cur_poll_options[] = $_CLASS['core_db']->sql_fetchrow($result));
-			$_CLASS['core_db']->sql_freeresult($result);
+			while ($cur_poll_options[] = $_CLASS['core_db']->fetch_row_assoc($result));
+			$_CLASS['core_db']->free_result($result);
 		}
 		
 		$size = sizeof($poll['poll_options']);
@@ -1665,7 +1662,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				{
 					$sql = 'INSERT INTO ' . POLL_OPTIONS_TABLE . "  (poll_option_id, topic_id, poll_option_text)
 						VALUES ($i, " . $data['topic_id'] . ", '" . $_CLASS['core_db']->sql_escape($poll['poll_options'][$i]) . "')";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 				else if ($poll['poll_options'][$i] != $cur_poll_options[$i])
 				{
@@ -1673,7 +1670,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 						SET poll_option_text = '" . $_CLASS['core_db']->sql_escape($poll['poll_options'][$i]) . "'
 						WHERE poll_option_id = " . $cur_poll_options[$i]['poll_option_id'] . "
 							AND topic_id = " . $data['topic_id'];
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 			}
 		}
@@ -1683,7 +1680,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$sql = 'DELETE FROM ' . POLL_OPTIONS_TABLE . '
 				WHERE poll_option_id >= ' . sizeof($poll['poll_options']) . '
 					AND topic_id = ' . $data['topic_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 	}
 
@@ -1700,7 +1697,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				$sql = 'UPDATE ' . ATTACHMENTS_TABLE . "
 					SET comment = '" . $_CLASS['core_db']->sql_escape($attach_row['comment']) . "'
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			else
 			{
@@ -1727,7 +1724,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 				$sql = 'INSERT INTO ' . ATTACHMENTS_TABLE . ' ' .
 					$_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
 				$space_taken += $attach_row['filesize'];
 				$files_added++;
@@ -1739,19 +1736,19 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$sql = 'UPDATE ' . POSTS_TABLE . '
 				SET post_attachment = 1
 				WHERE post_id = ' . $data['post_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			$sql = 'UPDATE ' . TOPICS_TABLE . '
 				SET topic_attachment = 1
 				WHERE topic_id = ' . $data['topic_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 
 		set_config('upload_dir_size', $config['upload_dir_size'] + $space_taken, true);
 		set_config('num_files', $config['num_files'] + $files_added, true);
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 
 	if ($post_mode == 'post' || $post_mode == 'reply' || $post_mode == 'edit_last_post')
 	{
@@ -1797,7 +1794,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	}
 
 	// Update forum stats
-	$_CLASS['core_db']->sql_transaction();
+	$_CLASS['core_db']->transaction();
 
 	$where_sql = array(POSTS_TABLE => 'post_id = ' . $data['post_id'], TOPICS_TABLE => 'topic_id = ' . $data['topic_id'], FORUMS_TABLE => 'forum_id = ' . $data['forum_id'], USERS_TABLE => 'user_id = ' . $_CLASS['core_user']->data['user_id']);
 
@@ -1805,14 +1802,14 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	{
 		if (isset($update_ary['stat']) && implode('', $update_ary['stat']))
 		{
-			$_CLASS['core_db']->sql_query("UPDATE $table SET " . implode(', ', $update_ary['stat']) . ' WHERE ' . $where_sql[$table]);
+			$_CLASS['core_db']->query("UPDATE $table SET " . implode(', ', $update_ary['stat']) . ' WHERE ' . $where_sql[$table]);
 		}
 	}
 
 	// Delete topic shadows (if any exist). We do not need a shadow topic for an global announcement
 	if ($make_global)
 	{
-		$_CLASS['core_db']->sql_query('DELETE FROM ' . TOPICS_TABLE . '
+		$_CLASS['core_db']->query('DELETE FROM ' . TOPICS_TABLE . '
 			WHERE topic_moved_id = ' . $data['topic_id']);
 	}
 
@@ -1823,13 +1820,13 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		$result = $search->add($mode, $data['post_id'], $data['message'], $subject);
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 
 	// Delete draft if post was loaded...
 	$draft_id = request_var('draft_loaded', 0);
 	if ($draft_id)
 	{
-		$_CLASS['core_db']->sql_query('DELETE FROM ' . DRAFTS_TABLE . " WHERE draft_id = $draft_id AND user_id = " . $_CLASS['core_user']->data['user_id']);
+		$_CLASS['core_db']->query('DELETE FROM ' . DRAFTS_TABLE . " WHERE draft_id = $draft_id AND user_id = " . $_CLASS['core_user']->data['user_id']);
 	}
 
 	// Topic Notification
@@ -1837,14 +1834,14 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	{
 		$sql = 'INSERT INTO ' . TOPICS_WATCH_TABLE . ' (user_id, topic_id)
 			VALUES (' . $_CLASS['core_user']->data['user_id'] . ', ' . $data['topic_id'] . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	else if ($data['notify_set'] && !$data['notify'])
 	{
 		$sql = 'DELETE FROM ' . TOPICS_WATCH_TABLE . '
 			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND topic_id = ' . $data['topic_id'];
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// Mark this topic as read and posted to.

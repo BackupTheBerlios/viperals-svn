@@ -27,6 +27,7 @@ load_class($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
+$_CLASS['core_user']->user_setup();
 include(dirname(__FILE__)."/$file.php");
 
 ?>

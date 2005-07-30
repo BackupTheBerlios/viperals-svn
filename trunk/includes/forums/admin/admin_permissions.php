@@ -15,6 +15,9 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	die; 
 }
 
+// values need checks
+
+
 // Grab and set some basic parameters
 //
 // 'mode' determines what we're altering; administrators, users, deps, etc.
@@ -182,17 +185,16 @@ switch ($submit)
 			{
 				// Are any entries * ? If so we need to remove them since they
 				// are options the user wishes to ignore
+
 				if (in_array('*', $auth_setting))
 				{
-					$temp = array();
 					foreach ($auth_setting as $option => $setting)
 					{
-						if ($setting != '*')
+						if ($setting == '*')
 						{
-							$temp[$option] = $setting;
+							unset($auth_setting[$option]);
 						}
 					}
-					$auth_setting = $temp;
 				}
 
 				if (sizeof($auth_setting))
@@ -200,7 +202,7 @@ switch ($submit)
 					// Loop through all user/group ids
 					foreach ($ug_data as $id)
 					{
-						$auth_admin->acl_set($ug_type, $forum_id[$auth_submode], intval($id), $auth_setting);
+						$auth_admin->acl_set($ug_type, $forum_id[$auth_submode], $id, $auth_setting);
 					}
 				}
 			}
@@ -528,8 +530,8 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			<tr>
 				<td class="row1" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple" size="5"><?php
 			
-	$sql = "SELECT DISTINCT u.user_id, u.username
-		FROM " . USERS_TABLE . " u, " . ACL_USERS_TABLE . " a, " . ACL_OPTIONS_TABLE . " o
+	$sql = "SELECT u.user_id, u.username
+		FROM " . USERS_TABLE . " u, " . ACL_TABLE . " a, " . ACL_OPTIONS_TABLE . " o
 		WHERE o.auth_option LIKE '" . $sql_option_mode . "_%'
 			AND a.auth_option_id = o.auth_option_id
 			AND a.forum_id IN ($sql_forum_id)
@@ -559,7 +561,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			<td class="row1" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple" size="5"><?php 
 	
 	$sql = "SELECT DISTINCT g.group_id, g.group_name, g.group_type 
-		FROM " . GROUPS_TABLE . " g, " . ACL_GROUPS_TABLE . " a, " . ACL_OPTIONS_TABLE . " o
+		FROM " . GROUPS_TABLE . " g, " . ACL_TABLE . " a, " . ACL_OPTIONS_TABLE . " o
 		WHERE o.auth_option LIKE '" . $sql_option_mode . "_%'
 			AND a.forum_id IN ($sql_forum_id)
 			AND a.auth_option_id = o.auth_option_id
@@ -731,6 +733,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 	$auth_options = array();
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
+		$auth_presets_compare[] = $row['auth_option'];
 		$auth_options[] = $row;
 	}
 	$_CLASS['core_db']->free_result($result);
@@ -746,16 +749,13 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 	{
 		$holding['yes'] = $holding['no'] = $holding['unset'] = '';
 
-		switch ($ug_type)
-		{
-			case 'group':
-				$sql = "SELECT o.auth_option, a.auth_setting FROM " . ACL_GROUPS_TABLE . " a, " . ACL_OPTIONS_TABLE . " o WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' AND a.auth_option_id = o.auth_option_id AND a.forum_id = " . $forum_data['parent_id'] . " AND a.group_id IN ($ug_ids)";
-				break;
+		 
+		$sql = "SELECT o.auth_option, a.auth_setting
+					FROM " . ACL_TABLE . " a, " . ACL_OPTIONS_TABLE . " o 
+					WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' 
+						AND a.auth_option_id = o.auth_option_id AND a.forum_id = " . $forum_data['parent_id'] . '
+						AND a.'.(($ug_type == 'group') ? 'group_id' : 'user_id')." IN ($ug_ids)";
 
-			case 'user':
-				$sql = "SELECT o.auth_option, a.auth_setting FROM " . ACL_USERS_TABLE . " a, " . ACL_OPTIONS_TABLE . " o WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' AND a.auth_option_id = o.auth_option_id AND a.forum_id = " . $forum_data['parent_id'] . " AND a.user_id IN ($ug_ids)";
-				break;
-		}
 		$result = $_CLASS['core_db']->query($sql);
 
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -765,23 +765,22 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 				switch ($row['auth_setting'])
 				{
 					case ACL_YES:
-						$holding['yes'] .= $row['auth_option'] . ', ';
-						break;
+						$holding['yes'][] = $row['auth_option'];
+					break;
 
 					case ACL_NO:
-						$holding['no'] .= $row['auth_option'] . ', ';
-						break;
-
-					case ACL_UNSET:
-						$holding['unset'] .= $row['auth_option'] . ', ';
-						break;
+						$holding['no'][] = $row['auth_option'];
+					break;
 				}
 			}
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-			//echo ($holding['allow'] = substr($holding['allow'], 0, 3));
+
+			$holding['unset'] = array_diff($auth_presets_compare, $holding['yes'], $holding['no']);
+
 			$preset_options .= '<option value="preset_0">' . $_CLASS['core_user']->lang['INHERIT_PARENT'] . '</option>';
 			$preset_js .= "\tpresets['preset_0'] = new Array();" . "\n";
-			$preset_js .= "\tpresets['preset_0'] = new preset_obj('" . $holding['yes'] . "', '" . $holding['no'] . "', '" . $holding['unset'] . "');\n";
+			$preset_js .= "\tpresets['preset_0'] = new preset_obj('" . implode(', ', $holding['yes']) . "', '" . implode(', ', $holding['no']) . "', '" . implode(', ', $holding['unset']) . "');\n";
+
 		}
 		$_CLASS['core_db']->free_result($result);
 	}
@@ -802,25 +801,17 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 			$preset_update_options .= '<option value="' . $row['preset_id'] . '">' . $row['preset_name'] . '</option>';
 			$preset_options .= '<option value="preset_' . $row['preset_id'] . '">' . $row['preset_name'] . '</option>';
 
-			$preset_data = unserialize($row['preset_data']);
-
-			foreach ($preset_data as $preset_type => $preset_type_ary)
-			{
-				$holding[$preset_type] = '';
-				foreach ($preset_type_ary as $preset_option)
-				{
-					$holding[$preset_type] .= "$preset_option, ";
-				}
-			}
+			$holding = unserialize($row['preset_data']);
+			$holding['unset'] = array_diff($auth_presets_compare, $holding['yes'], $holding['no']);
 
 			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new Array();" . "\n";
-			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new preset_obj('" . $holding['yes'] . "', '" . $holding['no'] . "', '" . $holding['unset'] . "');\n";
+			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new preset_obj('" . implode(', ', $holding['yes']) . "', '" . implode(', ', $holding['no']) . "', '" . implode(', ', $holding['unset']) . "');\n";
 		}
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	unset($holding);
+	unset($holding, $auth_presets_compare);
 
 
 	// If we aren't looking @ deps then we try and grab existing sessions for
@@ -829,25 +820,12 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 	{
 		if ($which_mode == $mode)
 		{
-			switch ($ug_type)
-			{
-				case 'group':
-					$sql_table = ACL_GROUPS_TABLE . ' a ';
-					$sql_join = 'a.group_id';
-					break;
-
-				case 'user':
-					$sql_table = ACL_USERS_TABLE . ' a ';
-					$sql_join = 'a.user_id';
-					break;
-			}
-		
-			$sql = "SELECT o.auth_option, MIN(a.auth_setting) AS min_auth_setting 
-					FROM $sql_table, " . ACL_OPTIONS_TABLE . " o 
+			$sql = 'SELECT o.auth_option, MIN(a.auth_setting) AS min_auth_setting 
+					FROM '.ACL_TABLE.' a, ' . ACL_OPTIONS_TABLE . " o 
 					WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' 
 						AND a.auth_option_id = o.auth_option_id 
 						AND a.forum_id IN ($sql_forum_id) 
-						AND $sql_join IN ($ug_ids)
+						AND a.".(($ug_type == 'group') ? 'group_id' : 'user_id')." IN ($ug_ids)
 					GROUP BY o.auth_option";
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -906,10 +884,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 			}
 		}
 	}
-	unset($auth_submode);
-	unset($auth_submode_settings);
-	unset($auth_submode_option);
-	unset($auth_submode_setting);
+	unset($auth_submode, $auth_submode_settings, $auth_submode_option, $auth_submode_setting);
 
 ?>
 
