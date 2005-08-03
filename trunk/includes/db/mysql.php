@@ -493,8 +493,9 @@ class db_mysql
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=MyISAM;";
-
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n );";
+				// Let users choose transaction safe InnoDB or MyISAM
+				// ENGINE=MyISAM
 				if ($option == 'return')
 				{
 					return $table;

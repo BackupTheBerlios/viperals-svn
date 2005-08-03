@@ -85,6 +85,8 @@ class core_user extends sessions
 			$this->session_destroy();
 		}
 
+// remove this later one, we shouldn't do bot checks here
+// Only direct login, we don't even do actived checks leave that for auth
 		if ($bot = check_bot_status($this->browser, $this->ip))
 		{
 			$id = $bot;
@@ -112,25 +114,22 @@ class core_user extends sessions
 // Error here, however this happen
 		}
 
-		if ($bot)
-		{
-			$this->is_user = false;
-			$this->is_bot = true;
+		$this->is_user	= ($this->data['user_type'] & USER_NORMAL);
+		$this->is_bot 	= ($this->data['user_type'] & USER_BOT);
 
+		if (isset($_CLASS['core_auth']))
+		{
+			unset($_CLASS['core_auth']);
+		}
+		
+		load_class(false, 'core_auth', 'auth_db');
+						
+		if ($this->is_bot)
+		{
 			$this->data['session_admin'] = ADMIN_NOT_ADMIN;
 		}
 		else
 		{
-			$this->is_user = ($id == ANONYMOUS) ? false : true;
-			$this->is_bot = false;
-
-			if (isset($_CLASS['core_auth']))
-			{
-				unset($_CLASS['core_auth']);
-			}
-			
-			load_class(false, 'core_auth', 'auth_db');
-
 			if ($_CLASS['core_auth']->admin_auth())
 			{
 				$this->data['session_admin'] = ($admin_login) ? ADMIN_IS_ADMIN : ADMIN_NOT_LOGGED;
@@ -140,8 +139,8 @@ class core_user extends sessions
 				$this->data['session_admin'] = ADMIN_NOT_ADMIN;
 			}
 		}
-			
-		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN) ? true : false;
+
+		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
 		$this->data['session_viewonline'] = $view_online;
 
 		$this->session_create();

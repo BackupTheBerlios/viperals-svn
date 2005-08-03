@@ -568,7 +568,7 @@ class db_postgres
 		//$this->_fields[$name] =  "$name TEXT DEFAULT '' ".(($null) ? " NULL" : " NOT NULL");
 	}
 
-	function add_table_field_char($name, $characters, $default = '', $padded = false)
+	function add_table_field_char($name, $characters, $default = null, $padded = false)
 	{
 		$this->_fields[$name] =  ($padded) ? "$name CHAR($characters)" : "$name VARCHAR($characters)";
 		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";

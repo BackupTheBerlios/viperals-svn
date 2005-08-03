@@ -41,15 +41,15 @@ class core_auth
 		{
 			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
 			{
-				if ($row['user_type'] == USER_INACTIVE || $row['user_type'] == USER_UNACTIVATED)
+				if ($row['user_type'] & USER_INACTIVE || $row['user_type'] & USER_UNACTIVATED)
 				{
-					$status =  ($row['user_type'] == USER_INACTIVE) ? 'ACTIVE_ERROR' : 'unactivated_error';
+					$status =  ($row['user_type'] & USER_INACTIVE) ? 'ACTIVE_ERROR' : 'unactivated_error';
 				}
 
 				return (int) $row['user_id'];
 			}
 		}
-		
+
 		$_CLASS['core_db']->free_result($result);
 		
 		return $status;

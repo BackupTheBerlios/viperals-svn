@@ -19,6 +19,7 @@ if (!defined('VIPERAL'))
 require_once($site_file_root.'includes/forums/functions.php');
 load_class($site_file_root.'includes/forums/auth.php', 'auth');
 
+$_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
 $_CLASS['core_user']->add_img(0, 'Forums');
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
@@ -60,10 +61,10 @@ class module
 			WHERE module_type = '{$module_type}'
 				AND module_enabled = 1
 			ORDER BY module_order ASC";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$i = 0;
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			// Authorisation is required for the basic module
 			if ($row['module_acl'])
@@ -150,7 +151,7 @@ class module
 
 			$i++;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (!isset($module_id) || !$module_id)
 		{
@@ -201,14 +202,11 @@ class module
 	{
 		global $_CLASS;
 
-		$_CLASS['core_display']->display_head($page_title);
-
 		page_header();
 
         $_CLASS['core_template']->display('modules/Control_Panel/'.$tpl_name);
 
-		$_CLASS['core_display']->display_footer();
-		
+		die;
 	}
 
 	// Public methods to be overwritten by modules
@@ -347,18 +345,17 @@ if (!$_CLASS['core_user']->is_user)
 // Output listing of friends online
 $update_time = $config['load_online_time'] * 60;
 
-$sql = 'SELECT DISTINCT u.user_id, u.username, MAX(s.session_time) as online_time, MIN(s.session_viewonline) AS viewonline
-	FROM ((' . ZEBRA_TABLE . ' z 
-	LEFT JOIN ' . SESSIONS_TABLE . ' s ON s.session_user_id = z.zebra_id), ' . USERS_TABLE . ' u)
+$sql = 'SELECT DISTINCT u.user_id, u.username, s.session_time, s.session_viewonline
+	FROM ' . USERS_TABLE . ' u, ' . ZEBRA_TABLE . ' z 
+	LEFT JOIN ' . SESSIONS_TABLE . ' s ON (s.session_user_id = z.zebra_id)
 	WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
 		AND z.friend = 1 
-		AND u.user_id = z.zebra_id  
-	GROUP BY z.zebra_id';
-$result = $_CLASS['core_db']->sql_query($sql);
+		AND u.user_id = z.zebra_id';
+$result = $_CLASS['core_db']->query($sql);
 
-while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
-	$which = (time() - $update_time < $row['online_time']) ? 'online' : 'offline';
+	$which = (time() - $update_time < $row['session_time']) ? 'online' : 'offline';
 
 	$_CLASS['core_template']->assign_vars_array("friends_{$which}", array(
 		'U_PROFILE'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
@@ -367,7 +364,7 @@ while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 		'USERNAME'	=> $row['username'])
 	);
 }
-$_CLASS['core_db']->sql_freeresult($result);
+$_CLASS['core_db']->free_result($result);
 
 /*
 // Output PM_TO box if message composing
@@ -380,14 +377,14 @@ if ($mode == 'compose' && request_var('action', '') != 'edit')
 			WHERE group_type NOT IN (' . GROUP_HIDDEN . ', ' . GROUP_CLOSED . ')
 				AND group_receive_pm = 1
 			ORDER BY group_type DESC';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$group_options = '';
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$group_options .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="blue"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	$_CLASS['core_template']->assign(array(

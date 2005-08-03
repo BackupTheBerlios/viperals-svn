@@ -29,12 +29,14 @@ define('AVATAR_UPLOAD', 1);
 define('AVATAR_REMOTE', 2);
 define('AVATAR_GALLERY', 3);
 
-define('USER_NORMAL', 0);
-define('USER_INACTIVE', 1);
-define('USER_UNACTIVATED', 2);
-define('USER_FOUNDER', 3);
-define('USER_BOT_ACTIVE', 4);
-define('USER_BOT_INACTIVE', 5);
+define('USER_GUEST', 2);
+define('USER_NORMAL', 4);
+define('USER_BOT', 8);
+
+define('USER_ACTIVE', 16);
+define('USER_INACTIVE', 32);
+define('USER_UNACTIVATED', 64);
+define('USER_FOUNDER', 128);
 
 define('ADMIN_NOT_LOGGED', 0);
 define('ADMIN_NOT_ADMIN', 1);

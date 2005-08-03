@@ -144,4 +144,14 @@ function confirmation_image($code = false, $size = false)
 	imagedestroy($im);
 }
 
+function login()
+{
+	global $_CLASS;
+
+	$login_options = array(
+		'full_screen'	=> isset($_REQUEST['full']),
+	);
+		
+	$_CLASS['core_auth']->do_login($login_options, $template);
+}
 ?>

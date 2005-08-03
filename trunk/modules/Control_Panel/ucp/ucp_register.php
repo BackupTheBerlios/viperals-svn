@@ -28,7 +28,7 @@ class ucp_register extends module
 
 		// Do not alter this first one to use request_var!
 		$confirm_id = request_var('confirm_id', '');
-		$coppa		= (isset($_REQUEST['coppa'])) ? ((!empty($_REQUEST['coppa'])) ? 1 : 0) : false;
+		$coppa		= (isset($_REQUEST['coppa'])) ? !empty($_REQUEST['coppa']) : null;
 		$agreed		= (!empty($_POST['agreed'])) ? 1 : 0;
 		$submit		= (isset($_POST['submit'])) ? true : false;
 		$change_lang = request_var('change_lang', '');
@@ -50,11 +50,10 @@ class ucp_register extends module
 
 		if (!$agreed)
 		{
-			if ($coppa === false && $_CORE_CONFIG['user']['coppa_enable'])
+			if ($_CORE_CONFIG['user']['coppa_enable'] && is_null($coppa))
 			{
-				$now = getdate();
-				$coppa_birthday = $_CLASS['core_user']->format_date(mktime($now['hours'] + $_CLASS['core_user']->data['user_dst'], $now['minutes'], $now['seconds'], $now['mon'], $now['mday'] - 1, $now['year'] - 13), $_CLASS['core_user']->lang['DATE_FORMAT']); 
-				unset($now);
+				$now = explode(':', gmdate('m:j:Y'));
+				$coppa_birthday = $_CLASS['core_user']->format_date(mktime(12, 0, 0, $now[0], $now[1] - 1, $now[2] - 13, 0)); 
 
 				$_CLASS['core_template']->assign(array(
 					'L_COPPA_NO'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_BEFORE'], $coppa_birthday),
@@ -76,6 +75,8 @@ class ucp_register extends module
 			}
 			
 			$this->display($_CLASS['core_user']->lang['REGISTER'], 'ucp_agreement.html');
+
+			script_close();
 		}
 		
 		$var_ary = array(
@@ -137,7 +138,7 @@ class ucp_register extends module
 			
 			if ($_CORE_CONFIG['user']['enable_confirm'])
 			{
-				$code = $_CLASS['core_user']->get_data('confirmation_code');
+				$code = $_CLASS['core_user']->session_data_get('confirmation_code');
 
 				if (!$code || !$confirm_code || $code !== $confirm_code)
 				{
@@ -172,7 +173,7 @@ class ucp_register extends module
 					FROM ' . GROUPS_TABLE . " 
 					WHERE group_name = '$group_name'
 						AND group_type = " . GROUP_SPECIAL;
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
 				if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 				{
@@ -197,15 +198,14 @@ class ucp_register extends module
 					$user_type = USER_NORMAL;
 					$user_actkey = '';
 				}
-		
+
 				// Begin transaction ... should this screw up we can rollback
-				$_CLASS['core_db']->sql_transaction();
+				$_CLASS['core_db']->transaction();
 		
 				$sql_ary = array(
 					'username'			=> $username, 
 					'user_password'		=> md5($new_password),
 					'user_email'		=> $email, 
-					'user_email_hash'	=> (int) crc32(strtolower($email)) . strlen($email), 
 					'group_id'			=> (int) $group_id, 
 					'user_timezone'		=> (float) $tz,
 					'user_lang'			=> $lang,
@@ -217,16 +217,16 @@ class ucp_register extends module
 				);
 
 				$sql = 'INSERT INTO ' . USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
-				$user_id = $_CLASS['core_db']->sql_nextid();
+				$user_id = $_CLASS['core_db']->insert_id();
 
 				// Insert Custom Profile Fields
 				/*if (sizeof($cp_data))
 				{
 					$cp_data['user_id'] = (int) $user_id;
 					$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $cp->build_insert_sql_array($cp_data));
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}*/
 
 				// Place into appropriate group, either REGISTERED(_COPPA) or INACTIVE(_COPPA) depending on config
@@ -235,21 +235,21 @@ class ucp_register extends module
 					'group_id'		=> (int) $group_id,
 					'user_pending'	=> 0)
 				);
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
-				$_CLASS['core_db']->sql_transaction('commit');
+				$_CLASS['core_db']->transaction('commit');
 
 				if ($coppa && $_CORE_CONFIG['email']['email_enable'])
 				{
 					$message = $_CLASS['core_user']->lang['ACCOUNT_COPPA'];
 					$email_template = 'coppa_welcome_inactive';
 				}
-				else if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF && $_CORE_CONFIG['email']['email_enable'])
+				elseif ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF && $_CORE_CONFIG['email']['email_enable'])
 				{
 					$message = $_CLASS['core_user']->lang['ACCOUNT_INACTIVE'];
 					$email_template = 'user_welcome_inactive';
 				}
-				else if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN && $_CORE_CONFIG['email']['email_enable'])
+				elseif ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN && $_CORE_CONFIG['email']['email_enable'])
 				{
 					$message = $_CLASS['core_user']->lang['ACCOUNT_INACTIVE_ADMIN'];
 					$email_template = 'admin_welcome_inactive';
@@ -306,7 +306,7 @@ class ucp_register extends module
 						$sql = 'SELECT user_id, username, user_email, user_lang, user_jabber, user_notify_type
 							FROM ' . USERS_TABLE . ' 
 							WHERE user_id IN (' . implode(', ', $admin_ary[0]['a_user']) .')';
-						$result = $_CLASS['core_db']->sql_query($sql);
+						$result = $_CLASS['core_db']->query($sql);
 
 						while ($row = $_CLASS['core_db']->sql_fetchrow($result))
 						{
@@ -352,17 +352,17 @@ class ucp_register extends module
 			{
 				if ($_CORE_CONFIG['user']['max_reg_attempts'])
 				{
-					$attempts = (int) $_CLASS['core_user']->get_data('reg_attempts');
+					$attempts = (int) $_CLASS['core_user']->session_data_get('reg_attempts');
 
 					if ($attempts >= $_CORE_CONFIG['user']['max_reg_attempts'])
 					{
 						trigger_error($_CLASS['core_user']->lang['TOO_MANY_REGISTERS']);
 					}
 
-					$_CLASS['core_user']->set_data('reg_attempts', ($attempts + 1));
+					$_CLASS['core_user']->session_data_get('reg_attempts', ($attempts + 1));
 				}
 				
-				$_CLASS['core_user']->set_data('confirmation_code', generate_string(6));
+				$_CLASS['core_user']->session_data_get('confirmation_code', generate_string(6));
 			}
 
 			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';

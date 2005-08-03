@@ -501,8 +501,9 @@ class db_mysqli
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=MyISAM;";
-
+				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n );";
+				// Let users choose transaction safe InnoDB or MyISAM
+				// ENGINE=MyISAM
 				if ($option == 'return')
 				{
 					return $table;

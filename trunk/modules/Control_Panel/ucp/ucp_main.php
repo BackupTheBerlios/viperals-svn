@@ -23,7 +23,7 @@ class ucp_main extends module
 			'WARNINGS'		=> false,
 			'draftrow'		=> false)
 		);
-		
+		$_CLASS['core_user']->user_setup();
 		switch ($mode)
 		{
 			case 'front':
@@ -38,22 +38,14 @@ class ucp_main extends module
 							FROM ' . FORUMS_TRACK_TABLE . ' 
 							WHERE forum_id = 0
 								AND user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$result = $_CLASS['core_db']->sql_query($sql);
+						$result = $_CLASS['core_db']->query($sql);
 
-						$track_data = $_CLASS['core_db']->sql_fetchrow($result);
-						$_CLASS['core_db']->sql_freeresult($result);
+						$track_data = $_CLASS['core_db']->fetch_row_assoc($result);
+						$_CLASS['core_db']->free_result($result);
 					}
 
-					switch (SQL_LAYER)
-					{
-						case 'oracle':
-							break;
-
-						default:
-							$sql_from = '(' . TOPICS_TABLE . ' t LEFT JOIN ' . TOPICS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))';
-							break;
-					}
-					$sql_select = ', tt.mark_type, tt.mark_time';
+					$sql_from = '(' . TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))';
+					$sql_select = ', tt.mark_time';
 
 				}
 				else
@@ -94,23 +86,23 @@ class ucp_main extends module
 				if (!empty($forum_ary))
 				{
 					$forum_ary = array_unique(array_keys($forum_ary));
-
+// what is this
 					$sql = 'SELECT forum_id 
 						FROM ' . FORUMS_TABLE . '
 						WHERE forum_type = ' . FORUM_POST . '
 							AND forum_id IN (' . implode(', ', $forum_ary) . ')';
-					$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-					$g_forum_id = (int) $_CLASS['core_db']->sql_fetchfield('forum_id', 0, $result);
-					$_CLASS['core_db']->sql_freeresult($result);
+					$result = $_CLASS['core_db']->query_limit($sql, 1);
+					list($g_forum_id) = $_CLASS['core_db']->fetch_row_num($result);
+					$_CLASS['core_db']->free_result($result);
 
 					$sql = "SELECT t.* $sql_select 
 						FROM $sql_from
 						WHERE t.forum_id = 0
 							AND t.topic_type = " . POST_GLOBAL . '
 						ORDER BY t.topic_last_post_time DESC';
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 	
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$forum_id = $row['forum_id'];
 						$topic_id = $row['topic_id'];
@@ -144,11 +136,6 @@ class ucp_main extends module
 						$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
 	
 						// Posted image?
-						if (!empty($row['mark_type']))
-						{
-							$folder_img .= '_posted';
-						}
-	
 						$view_topic_url = generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id");
 	
 						$last_post_img = '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
@@ -168,15 +155,13 @@ class ucp_main extends module
 							'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 							'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', '') : '',
 	
-							'S_USER_POSTED'		=> (!empty($row['mark_type'])) ? true : false, 
-
 							'U_LAST_POST_AUTHOR'	=> ($row['topic_last_poster_id'] != ANONYMOUS) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) : false,
 							'U_VIEW_TOPIC'		=> $view_topic_url)
 						);
 					}
 				}
 
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				$post_count_ary = $_CLASS['auth']->acl_getf('f_postcount');
 				
@@ -202,10 +187,11 @@ class ucp_main extends module
 						WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
 							AND f.forum_id = p.forum_id 
 							$post_count_sql";
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
+					list($num_posts) = $_CLASS['core_db']->fetch_row_num($result);
+					$_CLASS['core_db']->free_result($result);
 
-					$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $_CLASS['core_db']->sql_fetchfield('num_posts', 0, $result));
-					$_CLASS['core_db']->sql_freeresult($result);
+					$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $num_posts);
 
 					$sql = 'SELECT f.forum_id, f.forum_name, COUNT(post_id) AS num_posts   
 						FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . ' f 
@@ -214,10 +200,10 @@ class ucp_main extends module
 							$post_count_sql
 						GROUP BY f.forum_id, f.forum_name  
 						ORDER BY num_posts DESC"; 
-					$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+					$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-					$active_f_row = $_CLASS['core_db']->sql_fetchrow($result);
-					$_CLASS['core_db']->sql_freeresult($result);
+					$active_f_row = $_CLASS['core_db']->fetch_row_assoc($result);
+					$_CLASS['core_db']->free_result($result);
 
 					$sql = 'SELECT t.topic_id, t.topic_title, COUNT(p.post_id) AS num_posts   
 						FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f  
@@ -227,10 +213,10 @@ class ucp_main extends module
 							$post_count_sql
 						GROUP BY t.topic_id, t.topic_title  
 						ORDER BY num_posts DESC";
-					$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+					$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-					$active_t_row = $_CLASS['core_db']->sql_fetchrow($result);
-					$_CLASS['core_db']->sql_freeresult($result);
+					$active_t_row = $_CLASS['core_db']->fetch_row_assoc($result);
+					$_CLASS['core_db']->free_result($result);
 				}
 				else
 				{
@@ -308,7 +294,7 @@ class ucp_main extends module
 							$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
 								WHERE forum_id IN ($forums) 
 									AND user_id = " .$_CLASS['core_user']->data['user_id'];
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 
 							$l_unwatch .= '_FORUMS';
 						}
@@ -318,7 +304,7 @@ class ucp_main extends module
 							$sql = 'DELETE FROM ' . TOPICS_WATCH_TABLE . "
 								WHERE topic_id IN ($topics) 
 									AND user_id = " .$_CLASS['core_user']->data['user_id'];
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 
 							$l_unwatch .= '_TOPICS';
 						}
@@ -332,15 +318,7 @@ class ucp_main extends module
 
 				if ($config['load_db_lastread'])
 				{
-					switch (SQL_LAYER)
-					{
-						case 'oracle':
-							break;
-
-						default:
-							$sql_from = '(' . FORUMS_TABLE . ' f  LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
-							break;
-					}
+					$sql_from = '(' . FORUMS_TABLE . ' f  LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
 					$lastread_select = ', ft.mark_time ';
 				}
 				else
@@ -356,9 +334,9 @@ class ucp_main extends module
 					WHERE fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
 						AND f.forum_id = fw.forum_id 
 					ORDER BY left_id';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$forum_id = $row['forum_id'];
 
@@ -411,7 +389,7 @@ class ucp_main extends module
 						'U_VIEWFORUM'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']))
 					);
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				$sql_f_select = '';
 				
@@ -421,9 +399,9 @@ class ucp_main extends module
 				$sql = 'SELECT COUNT(topic_id) as topics_count
 					FROM ' . TOPICS_WATCH_TABLE . '
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-				$result = $_CLASS['core_db']->sql_query($sql);
-				$topics_count = (int) $_CLASS['core_db']->sql_fetchfield('topics_count', 0, $result);
-				$_CLASS['core_db']->sql_freeresult($result);
+				$result = $_CLASS['core_db']->query($sql);
+				list($topics_count) = $_CLASS['core_db']->fetch_row_num($result);
+				$_CLASS['core_db']->free_result($result);
 
 				if ($topics_count)
 				{
@@ -433,11 +411,11 @@ class ucp_main extends module
 						'TOTAL_TOPICS'	=> ($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count))
 					);
 				}
-				
+// Fix this up
 				$sql_from = ($config['load_db_lastread'] || $config['load_db_track']) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . TOPICS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t';
 				$sql_f_tracking = ($config['load_db_lastread']) ? 'LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.forum_id = t.forum_id AND ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . '), ' : '';
 
-				$sql_t_select = ($config['load_db_lastread'] || $config['load_db_track']) ? ', tt.mark_type, tt.mark_time' : '';
+				$sql_t_select = ($config['load_db_lastread'] || $config['load_db_track']) ? ', tt.mark_time' : '';
 				$sql_f_select = ($config['load_db_lastread']) ? ', ft.mark_time AS forum_mark_time' : '';
 				
 				$sql = "SELECT t.* $sql_f_select $sql_t_select 
@@ -445,9 +423,9 @@ class ucp_main extends module
 					WHERE tw.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 						AND t.topic_id = tw.topic_id 
 					ORDER BY t.topic_last_post_time DESC';
-				$result = $_CLASS['core_db']->sql_query_limit($sql, $config['topics_per_page'], $start);
+				$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
 
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$topic_id = $row['topic_id'];
 					$forum_id = $row['forum_id'];
@@ -476,7 +454,8 @@ class ucp_main extends module
 
 					// Get folder img, topic status/type related informations
 					$folder_img = $folder_alt = $topic_type = '';
-					$unread_topic = topic_status($row, $replies, $mark_time_topic, $mark_time_forum, $folder_img, $folder_alt, $topic_type);
+// TEMP max($mark_time_topic, $mark_time_forum)
+					$unread_topic = topic_status($row, $replies, max($mark_time_topic, $mark_time_forum), $folder_img, $folder_alt, $topic_type);
 					$newest_post_img = ($unread_topic) ? '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 					$view_topic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id";
@@ -502,7 +481,6 @@ class ucp_main extends module
 						'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', sprintf($_CLASS['core_user']->lang['TOTAL_ATTACHMENTS'], $row['topic_attachment'])) : '',
 
 						'S_TOPIC_TYPE'			=> $row['topic_type'],
-						'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false,
 						'S_UNREAD_TOPIC'		=> $unread_topic,
 
 						'U_LAST_POST'		=> generate_link($view_topic_url .  '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),
@@ -511,7 +489,7 @@ class ucp_main extends module
 					);
 					
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				break;
 
@@ -530,9 +508,9 @@ class ucp_main extends module
 
 				$sql = 'SELECT MAX(order_id) as max_order_id FROM ' . BOOKMARKS_TABLE . '
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-				$result = $_CLASS['core_db']->sql_query($sql);
-				$max_order_id = $_CLASS['core_db']->sql_fetchfield('max_order_id', 0, $result);
-				$_CLASS['core_db']->sql_freeresult($result);
+				$result = $_CLASS['core_db']->query($sql);
+				list($max_order_id) = $_CLASS['core_db']->fetch_row_num($result);
+				$_CLASS['core_db']->free_result($result);
 
 				if ($move_up || $move_down)
 				{
@@ -545,7 +523,7 @@ class ucp_main extends module
 							SET order_id = $order_total - order_id
 							WHERE order_id IN ($order, " . (($move_up) ? $order - 1 : $order + 1) . ')
 								AND user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 					}
 				}
 				
@@ -570,24 +548,24 @@ class ucp_main extends module
 						$sql = 'DELETE FROM ' . BOOKMARKS_TABLE . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 								AND topic_id IN (' . implode(', ', $topics) . ')';
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 
 						// Re-Order bookmarks (possible with one query? This query massaker is not really acceptable...)
 						$sql = 'SELECT topic_id FROM ' . BOOKMARKS_TABLE . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 							ORDER BY order_id ASC';
-						$result = $_CLASS['core_db']->sql_query($sql);
+						$result = $_CLASS['core_db']->query($sql);
 
 						$i = 1;
-						while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+						while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 						{
-							$_CLASS['core_db']->sql_query('UPDATE ' . BOOKMARKS_TABLE . "
+							$_CLASS['core_db']->query('UPDATE ' . BOOKMARKS_TABLE . "
 								SET order_id = '$i'
 								WHERE topic_id = '{$row['topic_id']}'
 									AND user_id = '{$_CLASS['core_user']->data['user_id']}'");
 							$i++;
 						}
-						$_CLASS['core_db']->sql_freeresult($result);
+						$_CLASS['core_db']->free_result($result);
 
 						$_CLASS['core_display']->meta_refresh(3, $url);
 						$message = $_CLASS['core_user']->lang['BOOKMARKS_REMOVED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="' . $url . '">', '</a>');
@@ -608,11 +586,11 @@ class ucp_main extends module
 						LEFT JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
 					WHERE b.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 					ORDER BY b.order_id ASC';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				
-				if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+				if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 				{
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 					
 					$_CLASS['core_template']->assign(array(
 							'S_BOOKMARKS'			=> false,
@@ -664,9 +642,9 @@ class ucp_main extends module
 						'U_MOVE_DOWN'		=> ($row['order_id'] != $max_order_id) ? generate_link("Control_Panel&amp;i=main&amp;mode=bookmarks&amp;move_down={$row['order_id']}") : '')
 					);
 				}
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				$_CLASS['core_template']->assign(array(
 					'S_BOOKMARKS'			=> $bookmarks,
@@ -699,7 +677,7 @@ class ucp_main extends module
 						$sql = 'DELETE FROM ' . DRAFTS_TABLE . "
 							WHERE draft_id IN ($drafts) 
 								AND user_id = " .$_CLASS['core_user']->data['user_id'];
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 
 						$message = $_CLASS['core_user']->lang['DRAFTS_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 
@@ -725,7 +703,7 @@ class ucp_main extends module
 							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $draft_row) . " 
 							WHERE draft_id = $draft_id
 								AND user_id = " . $_CLASS['core_user']->data['user_id'];
-						$_CLASS['core_db']->sql_query($sql);
+						$_CLASS['core_db']->query($sql);
 
 						$message = $_CLASS['core_user']->lang['DRAFT_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 
@@ -756,11 +734,11 @@ class ucp_main extends module
 							AND topic_id = 0
 							ORDER BY save_time DESC';
 				}
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				
 				$draftrows = $topic_ids = array();
 
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					if ($row['topic_id'])
 					{
@@ -768,20 +746,20 @@ class ucp_main extends module
 					}
 					$draftrows[] = $row;
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 				
 				if (sizeof($topic_ids))
 				{
 					$sql = 'SELECT topic_id, forum_id, topic_title
 						FROM ' . TOPICS_TABLE . '
 						WHERE topic_id IN (' . implode(',', array_unique($topic_ids)) . ')';
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$topic_rows[$row['topic_id']] = $row;
 					}
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 				}
 				unset($topic_ids);
 				

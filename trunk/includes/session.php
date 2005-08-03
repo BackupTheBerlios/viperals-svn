@@ -59,7 +59,7 @@ class sessions
 			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
 
-			if (isset($this->data['user_id']))
+			if (isset($this->data['user_id']) && ($this->data['user_id'] == ANONYMOUS || $this->data['user_type'] & USER_ACTIVE))
 			{
 				$valid  = true;
 
@@ -91,8 +91,8 @@ class sessions
 
 					load_class(false, 'core_auth', 'auth_db');
 
-					$this->is_user	= ($this->data['user_id'] != ANONYMOUS && ($this->data['user_type'] == USER_NORMAL || $this->data['user_type'] == USER_FOUNDER));
-					$this->is_bot 	= (!$this->is_user && $this->data['user_id'] != ANONYMOUS);
+					$this->is_user	= ($this->data['user_type'] & USER_NORMAL);
+					$this->is_bot 	= ($this->data['user_type'] & USER_BOT);
 					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
 
 					check_maintance_status();

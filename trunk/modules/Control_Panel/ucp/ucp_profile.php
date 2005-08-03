@@ -30,6 +30,7 @@ class ucp_profile extends module
 		$submit		= (!empty($_POST['submit'])) ? true : false;
 		$delete		= (!empty($_POST['delete'])) ? true : false;
 		$module_link	= generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
+		$bday_day = $bday_month = $bday_year = '';
 
 		$error = $data = array();
 		$s_hidden_fields = '';
@@ -103,7 +104,7 @@ class ucp_profile extends module
 							$server_url = generate_board_url();
 
 							$user_actkey = gen_rand_string(10);
-							$key_len = 54 - (strlen($server_url));
+							$key_len = 54 - strlen($server_url);
 							$key_len = ($key_len > 6) ? $key_len : 6;
 							$user_actkey = substr($user_actkey, 0, $key_len);
 
@@ -324,7 +325,7 @@ class ucp_profile extends module
 					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 				}
 
-				if (!isset($bday_day))
+				if (!$bday_day && $_CLASS['core_user']->data['user_birthday'])
 				{
 					list($bday_day, $bday_month, $bday_year) = explode('-', $_CLASS['core_user']->data['user_birthday']);
 				}
@@ -370,13 +371,7 @@ class ucp_profile extends module
 					'S_BIRTHDAY_MONTH_OPTIONS'	=> $s_birthday_month_options, 
 					'S_BIRTHDAY_YEAR_OPTIONS'	=> $s_birthday_year_options,)
 				);
-				
-				// Get additional profile fields and assign them to the template block var 'profile_fields'
-				$_CLASS['core_user']->get_profile_fields($_CLASS['core_user']->data['user_id']);
-
-				$cp->generate_profile_fields('profile', $_CLASS['core_user']->get_iso_lang_id());
-
-				break;
+			break;
 
 			case 'signature':
 

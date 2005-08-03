@@ -68,7 +68,7 @@ if ($config['search_interval'])
 {
 	$sql = 'SELECT MAX(search_time) as last_time
 		FROM ' . SEARCH_TABLE."
-			WHERE session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . '\'';
+			WHERE session_id = '" . $_CLASS['core_db']->escape($_CLASS['core_user']->data['session_id']) . '\'';
 	$result = $_CLASS['core_db']->query($sql);
 
 	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -85,13 +85,11 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 	$post_id_ary = $split_words = $old_split_words = $common_words = array();
 
 	// Which forums can we view?
-	$sql_where = (sizeof($search_forum) && !$search_child) ? 'WHERE f.forum_id IN (' . implode(', ', $search_forum) . ')' : '';
-	$sql = 'SELECT f.forum_id, f.forum_name, f.parent_id, f.forum_type, f.right_id, f.forum_password, fa.user_id
-		FROM (' . FORUMS_TABLE . ' f 
-		LEFT JOIN ' . FORUMS_ACCESS_TABLE . " fa ON  (fa.forum_id = f.forum_id 
-			AND fa.session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "')) 
+	$sql_where = (sizeof($search_forum) && !$search_child) ? 'WHERE forum_id IN (' . implode(', ', $search_forum) . ')' : '';
+	$sql = 'SELECT forum_id, forum_name, parent_id, forum_type, right_id, forum_password
+		FROM ' . FORUMS_TABLE . "
 		$sql_where
-		ORDER BY f.left_id";
+		ORDER BY left_id";
 	$result = $_CLASS['core_db']->query($sql);
 
 	$right_id = 0;
@@ -104,13 +102,14 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 			{
 				$right_id = $row['right_id'];
 			}
-			else if ($row['right_id'] > $right_id)
+			elseif ($row['right_id'] > $right_id)
 			{
 				continue;
 			}
 		}
 
-		if ($_CLASS['auth']->acl_get('f_read', $row['forum_id']) && (!$row['forum_password'] || $row['user_id'] == $_CLASS['core_user']->data['user_id']))
+// Fix password
+		if ($_CLASS['auth']->acl_get('f_read', $row['forum_id']) && (!$row['forum_password']))
 		{
 			$sql_forums[] = $row['forum_id'];
 		}
@@ -139,7 +138,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 		$sql_where = (strstr($search_author, '*') !== false) ? ' LIKE ' : ' = ';
 		$sql = 'SELECT user_id 
 			FROM ' . USERS_TABLE . "
-			WHERE username $sql_where '" . $_CLASS['core_db']->sql_escape(preg_replace('#\*+#', '%', $search_author)) . "'
+			WHERE username $sql_where '" . $_CLASS['core_db']->escape(preg_replace('#\*+#', '%', $search_author)) . "'
 				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -167,7 +166,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 					gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $u_sort_param);
 				}
 
-				$last_post_time = (time() - ($sort_days * 24 * 3600));
+				$last_post_time = (gmtime() - ($sort_days * 24 * 3600));
 
 				$sql = 'SELECT DISTINCT t.topic_id
 					FROM ' . POSTS_TABLE . ' p
@@ -226,7 +225,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 				{
 					$sql = 'SELECT p.post_id 
 						FROM ' . POSTS_TABLE . ' p 
-						WHERE p.post_time > ' . $_CLASS['core_user']->data['user_lastvisit'] . "
+						WHERE p.post_time > ' . $_CLASS['core_user']->data['user_last_visit'] . "
 							$sql_forums";
 					$field = 'post_id';
 				}
@@ -234,7 +233,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 				{
 					$sql = 'SELECT t.topic_id
 						FROM ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . ' p 
-						WHERE p.post_time > ' . $_CLASS['core_user']->data['user_lastvisit'] . " 
+						WHERE p.post_time > ' . $_CLASS['core_user']->data['user_last_visit'] . " 
 							AND t.topic_id = p.topic_id 
 							$sql_forums 
 						GROUP by p.topic_id";
@@ -261,7 +260,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 		$sql = 'SELECT search_array
 			FROM ' . SEARCH_TABLE . "
 			WHERE search_id = $search_session_id
-				AND session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "'";
+				AND session_id = '" . $_CLASS['core_db']->escape($_CLASS['core_user']->data['session_id']) . "'";
 		$result = $_CLASS['core_db']->query($sql);
 
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -354,8 +353,6 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 	
 	if (sizeof($split_words))
 	{
-
-
 		// This "entire" section may be switched out to allow for alternative search systems
 		// such as that built-in to MySQL, MSSQL, etc. or external solutions which provide
 		// an appropriate API
@@ -583,7 +580,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 			$delete_search_ids = array();
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$delete_search_ids[] = "'" . $_CLASS['core_db']->sql_escape($row['session_id']) . "'";
+				$delete_search_ids[] = "'" . $_CLASS['core_db']->escape($row['session_id']) . "'";
 			}
 
 			if (sizeof($delete_search_ids))
@@ -750,7 +747,8 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 	
 					'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
 					'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
-	
+					'S_IGNORE_POST'			=> false,
+
 					'U_LAST_POST'		=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false),
 					'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id'] != ANONYMOUS && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 					'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
@@ -787,7 +785,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 				{
 					// This was shamelessly 'borrowed' from volker at multiartstudio dot de
 					// via php.net's annotated manual
-					$row['post_text'] = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . str_replace('\\', '\\\\', $hilit) . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $row['post_text'] . '<'), 1, -1));
+					$row['post_text'] = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . str_replace('\\', '\\\\', addslashes($hilit)) . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' .  $row['post_text'] . '<'), 1, -1));
 				}
 				
 				$row['post_text'] = smiley_text($row['post_text']);
@@ -800,10 +798,11 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 					'POSTER_NAME'		=> ($row['poster_id'] == ANONYMOUS) ? ((!empty($row['post_username'])) ? $row['post_username'] : $_CLASS['core_user']->lang['GUEST']) : $row['username'], 
 					'POST_SUBJECT'		=> censor_text($row['post_subject']), 
 					'POST_DATE'			=> (!empty($row['post_time'])) ? $_CLASS['core_user']->format_date($row['post_time']) : '', 
-					'MESSAGE' 			=> $row['post_text']
+					'MESSAGE' 			=> $row['post_text'],
+					'S_IGNORE_POST'		=> false
 				);
 			}
-	
+
 			$_CLASS['core_template']->assign_vars_array('searchresults', array_merge($tpl_ary, array(
 				'FORUM_ID' 			=> $forum_id,
 				'TOPIC_ID' 			=> $topic_id,
@@ -824,26 +823,19 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 		$_CLASS['core_template']->assign('S_NO_SEARCH_RESULTS', true);
 	}
 
-	$_CLASS['core_display']->display_head($_CLASS['core_user']->lang['SEARCH']);
-	
 	page_header();
 	
 	make_jumpbox(generate_link('Forums&amp;file=viewforum'));
 	
-	$_CLASS['core_template']->display('modules/Forums/search_results.html');
-	 
-	$_CLASS['core_display']->display_footer();
-
+	$_CLASS['core_display']->display($_CLASS['core_user']->lang['SEARCH'], 'modules/Forums/search_results.html');
 }
 
 
 // Search forum
 $s_forums = '';
-$sql = 'SELECT f.forum_id, f.forum_name, f.parent_id, f.forum_type, f.left_id, f.right_id, f.forum_password, fa.user_id
-	FROM (' . FORUMS_TABLE . ' f 
-	LEFT JOIN ' . FORUMS_ACCESS_TABLE . " fa ON  (fa.forum_id = f.forum_id 
-		AND fa.session_id = '" . $_CLASS['core_db']->sql_escape($_CLASS['core_user']->data['session_id']) . "')) 
-	ORDER BY f.left_id ASC";
+$sql = 'SELECT forum_id, forum_name, parent_id, forum_type, left_id, right_id, forum_password
+	FROM ' . FORUMS_TABLE . '
+	ORDER BY left_id ASC';
 $result = $_CLASS['core_db']->query($sql);
 
 $right = $cat_right = $padding_inc = 0;
@@ -858,7 +850,8 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		continue;
 	}
 
-	if (!$_CLASS['auth']->acl_get('f_list', $row['forum_id']) || $row['forum_type'] == FORUM_LINK || ($row['forum_password'] && !$row['user_id']))
+// fix password
+	if (!$_CLASS['auth']->acl_get('f_list', $row['forum_id']) || $row['forum_type'] == FORUM_LINK || ($row['forum_password']))
 	{
 		// if the user does not have permissions to list this forum skip
 		continue;

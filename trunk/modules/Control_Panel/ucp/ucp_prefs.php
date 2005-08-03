@@ -30,7 +30,7 @@ class ucp_prefs extends module
 					$var_ary = array(
 						'dateformat'		=> (string) $_CORE_CONFIG['global']['default_dateformat'], 
 						'lang'				=> (string) $_CORE_CONFIG['global']['default_lang'], 
-						'tz'				=> (float) $_CORE_CONFIG['global']['default_timezone'],
+						'tz'				=> (float) $_CORE_CONFIG['global']['default_timezone'] / 3600,
 						'theme'				=> (string) $_CORE_CONFIG['global']['default_theme'], 
 						'dst'				=> (bool) $_CORE_CONFIG['global']['default_dst'], 
 						'viewemail'			=> false, 
@@ -75,7 +75,7 @@ class ucp_prefs extends module
 							'user_dst'				=> $dst,
 							'user_dateformat'		=> $dateformat,
 							'user_lang'				=> $lang,
-							'user_timezone'			=> $tz,
+							'user_timezone'			=> $tz * 3600,
 							'user_theme'			=> $theme,
 						);
 
@@ -126,7 +126,7 @@ class ucp_prefs extends module
 				$dateformat = (isset($dateformat)) ? $dateformat : $_CLASS['core_user']->data['user_dateformat'];
 				$lang = (isset($lang)) ? $lang : $_CLASS['core_user']->data['user_lang'];
 				$theme = (isset($theme)) ? $theme : $_CLASS['core_user']->data['user_theme'];
-				$tz = (isset($tz)) ? $tz : $_CLASS['core_user']->data['user_timezone'];
+				$tz = (isset($tz)) ? $tz * 3600 : $_CLASS['core_user']->data['user_timezone'] / 3600;
 
 				$_CLASS['core_template']->assign(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',

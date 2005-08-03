@@ -101,8 +101,8 @@ function set_var(&$result, $var, $type, $multibyte = false)
 
 	if ($type == 'string')
 	{
-		$result = trim(htmlspecialchars(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $result)));
-		$result = (STRIP) ? stripslashes($result) : $result;
+		$result = strip_slashes(trim(htmlspecialchars(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $result))));
+
 		if ($multibyte)
 		{
 			$result = preg_replace('#&amp;(\#[0-9]+;)#', '&\1', $result);
@@ -501,22 +501,6 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 // this need replacing big time
 function language_select($default = '')
 {
-	global $_CLASS;
-
-	$sql = 'SELECT lang_iso, lang_local_name 
-		FROM ' . LANG_TABLE . '
-		ORDER BY lang_english_name';
-	$result = $_CLASS['core_db']->query($sql);
-
-	$lang_options = '';
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		$selected = ($row['lang_iso'] == $default) ? ' selected="selected"' : '';
-		$lang_options .= '<option value="' . $row['lang_iso'] . '"' . $selected . '>' . $row['lang_local_name'] . '</option>';
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	return $lang_options;
 }
 
 // Pick a timezone
@@ -1352,7 +1336,7 @@ function page_header()
 
 					if ($row['user_allow_viewonline'] || $_CLASS['auth']->acl_get('u_viewonline'))
 					{
-						$user_online_link = ($row['user_type'] <> USER_BOT_ACTIVE) ? "<a href=\"" . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $user_online_link . '</a>' : $user_online_link;
+						$user_online_link = ($row['user_type'] & USER_BOT) ? "<a href=\"" . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $user_online_link . '</a>' : $user_online_link;
 						$online_userlist .= ($online_userlist != '') ? ', ' . $user_online_link : $user_online_link;
 					}
 				}

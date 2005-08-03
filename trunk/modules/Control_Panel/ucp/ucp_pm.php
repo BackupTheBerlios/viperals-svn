@@ -142,7 +142,7 @@ class ucp_pm extends module
 				$sql = 'SELECT group_message_limit
 					FROM ' . GROUPS_TABLE . '
 					WHERE group_id = ' . $_CLASS['core_user']->data['group_id'];
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				$message_limit = (int) $_CLASS['core_db']->sql_fetchfield('group_message_limit', 0, $result);
 				$_CLASS['core_db']->sql_freeresult($result);
 				
@@ -169,7 +169,7 @@ class ucp_pm extends module
 				$sql = 'SELECT group_message_limit
 					FROM ' . GROUPS_TABLE . '
 					WHERE group_id = ' . $_CLASS['core_user']->data['group_id'];
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 				$message_limit = (int) $_CLASS['core_db']->sql_fetchfield('group_message_limit', 0, $result);
 				$_CLASS['core_db']->sql_freeresult($result);
 				
@@ -234,7 +234,7 @@ class ucp_pm extends module
 					$num_not_moved = $_CLASS['core_user']->data['user_new_privmsg'];
 				}
 		
-				if (!$msg_id && $folder_id == PRIVMSGS_NO_BOX && $mode != 'unread')
+				if (!$msg_id && $folder_id == PRIVMSGS_NO_BOX && $mode == 'unread')
 				{
 					$folder_id = PRIVMSGS_INBOX;
 				}
@@ -244,7 +244,7 @@ class ucp_pm extends module
 						FROM ' . PRIVMSGS_TO_TABLE . "
 						WHERE msg_id = $msg_id
 							AND user_id = " . $_CLASS['core_user']->data['user_id'];
-					$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+					$result = $_CLASS['core_db']->query_limit($sql, 1);
 					
 					if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 					{
@@ -271,7 +271,7 @@ class ucp_pm extends module
 								AND t.msg_id = p.msg_id
 								AND p.message_time $sql_condition p2.message_time
 							ORDER BY p.message_time $sql_ordering";
-						$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+						$result = $_CLASS['core_db']->query_limit($sql, 1);
 
 						if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
 						{
@@ -291,7 +291,7 @@ class ucp_pm extends module
 							AND t.folder_id = $folder_id
 							AND t.msg_id = p.msg_id
 							AND p.msg_id = $msg_id";
-					$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+					$result = $_CLASS['core_db']->query_limit($sql, 1);
 
 					if (!($message_row = $_CLASS['core_db']->sql_fetchrow($result)))
 					{
