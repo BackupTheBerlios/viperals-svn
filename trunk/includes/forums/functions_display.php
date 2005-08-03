@@ -48,19 +48,19 @@ function display_forums($root_data = '', $display_moderators = true)
 
 	if ($_CLASS['core_user']->is_user &&  $config['load_db_lastread'])
 	{
-		$sql_from = '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id AND ft.topic_id = 0))';
+		$sql_from = ' LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
+				AND ft.forum_id = f.forum_id AND ft.topic_id = 0)';
 		$lastread_select = ', ft.mark_time ';
 	}
 	else
 	{
-		$sql_from = FORUMS_TABLE . ' f ';
-		$lastread_select = $sql_lastread = '';
+		$sql_from = $lastread_select = $sql_lastread = '';
 
 		$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
 	}
 
 	$sql = "SELECT f.* $lastread_select 
-		FROM $sql_from 
+		FROM ". FORUMS_TABLE . " f $sql_from
 		WHERE forum_status <> ".ITEM_DELETING."
 		$sql_where
 		ORDER BY f.left_id";

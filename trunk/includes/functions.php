@@ -427,7 +427,7 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $add
 
 	$admin_link = (VIPERAL == 'Admin') ? array('admin' => true) : '';
 
-	$total_pages = ceil($num_items/$per_page);
+	$total_pages = ceil($num_items / $per_page);
 
 	if ($total_pages == 1 || !$num_items)
 	{
@@ -591,27 +591,25 @@ function script_close($save = true)
 
 	if (!empty($_CLASS['core_user']))
 	{
-
-//Handle email/cron queue. // phpbb 2.1.2 only.
-//if (time() - $config['queue_interval'] >= $config['last_queue_run'] && !defined('IN_ADMIN'))
+		// phpbb 2.1.2 only remove.
 		if (file_exists($site_file_root.'cache/queue.php'))
 		{
 			require_once($site_file_root.'includes/forums/functions_messenger.php');
 			$queue = new queue();
 			$queue->process();
 		}
-		
+
 		if ($save)
 		{
 			if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['server']['error_options'])
 			{
-				if (!empty($_CLASS['core_db']->querylist))
+				if (!empty($_CLASS['core_db']->query_list))
 				{
-					$_CLASS['core_user']->session_data_set('querylist', $_CLASS['core_db']->querylist);
-					$_CLASS['core_user']->session_data_set('querydetails', $_CLASS['core_db']->querydetails);
+					$_CLASS['core_user']->session_data_set('query_list', $_CLASS['core_db']->query_list);
+					$_CLASS['core_user']->session_data_set('query_details', $_CLASS['core_db']->query_details);
 				}
 				
-				if (isset($_CLASS['core_error_handler']) && (!empty($_CLASS['core_db']->querylist) || !empty($_CLASS['core_error_handler']->error_array)))
+				if (isset($_CLASS['core_error_handler']) && !empty($_CLASS['core_error_handler']->error_array))
 				{
 					$_CLASS['core_user']->session_data_set('debug', $_CLASS['core_error_handler']->error_array);
 				}
@@ -745,6 +743,11 @@ function url_redirect($url = false, $save = false)
 
 	header('Location: ' . $url);
 
+	header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
+	header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
+	header('Expires: 0');
+	header('Pragma: no-cache');
+		
 	echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 	<html>
 		<head>

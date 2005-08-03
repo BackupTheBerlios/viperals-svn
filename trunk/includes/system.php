@@ -17,7 +17,7 @@ function confirmation_image($code = false, $size = false)
 {
 	global $_CLASS, $site_file_root;
 
-	if (!$code && !($code = $_CLASS['core_user']->get_data('confirmation_code')))
+	if (!$code && !($code = $_CLASS['core_user']->session_data_get('confirmation_code')))
 	{
 		return;
 	}
@@ -36,8 +36,8 @@ function confirmation_image($code = false, $size = false)
 	{
 		$image_width = 5;
 		$image_height = 0;
-		$font = $site_file_root.'includes/fonts/angltrr.ttf';
-		//$font = $site_file_root.'includes/fonts/tomnr.ttf';
+		//$font = $site_file_root.'includes/fonts/angltrr.ttf';
+		$font = $site_file_root.'includes/fonts/tomnr.ttf';
 
 		$count = strlen($code);
 		for ($loop = 0; $loop < $count; $loop++)
@@ -116,7 +116,7 @@ function confirmation_image($code = false, $size = false)
 		$font_width = imagefontwidth($font);
 	
 		$image_width = strlen($code) * $font_width;
-		$image_height = imagefontheight($font) + 10;
+		$image_height = imagefontheight($font) + 5;
 		$max_y = -($image_height - imagefontheight($font));
 		$min_y = $image_height - imagefontheight($font);
 	}
@@ -140,7 +140,7 @@ function confirmation_image($code = false, $size = false)
 		$x += $font_width * (($width_addition) ? mt_rand(2, 5) : 1);
 	}
 
-	imagepng($im);
+	//imagepng($im);
 	imagedestroy($im);
 }
 

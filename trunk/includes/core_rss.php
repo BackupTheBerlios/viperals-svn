@@ -88,6 +88,12 @@ class core_rss
 			return false;
 		}
 
+		if (version_compare(PHP_VERSION, '4.3.0', '>='))
+		{
+			stream_set_timeout($this->fp, 5);
+		}
+		//socket_set_timeout()
+
 		fwrite($this->fp, 'GET '.$parsed_url['path'].(($parsed_url['query']) ? '?'.$parsed_url['query'] : '')." HTTP/1.0\r\n");
 		fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");
 

@@ -32,6 +32,7 @@ load_class($site_file_root.'includes/forums/auth.php', 'auth');
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
+$_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
 $_CLASS['core_user']->add_img(false, 'Forums');
 
@@ -91,14 +92,14 @@ switch ($mode)
 		$sql = 'SELECT forum_id, forum_name 
 			FROM ' . FORUMS_TABLE . '
 			WHERE forum_type = ' . FORUM_POST;
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 		
 		$forums = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$forums[$row['forum_id']] = $row['forum_name'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$sql = 'SELECT u.user_id, u.username, u.user_colour, u.user_rank, u.user_posts, g.group_id, g.group_name, g.group_colour, g.group_type, ug.user_id as ug_user_id
 			FROM ' . USERS_TABLE . ' u, ' . GROUPS_TABLE . ' g
@@ -106,9 +107,9 @@ switch ($mode)
 			WHERE u.user_id IN (' . implode(', ', $admin_id_ary + $mod_id_ary) . ')
 				AND u.group_id = g.group_id
 			ORDER BY g.group_name ASC, u.username ASC';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$which_row = (in_array($row['user_id'], $admin_id_ary)) ? 'admin' : 'mod';
 
@@ -154,7 +155,7 @@ switch ($mode)
 				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$row['user_id']) : '')
 			);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_template']->assign(array(
 			'PM_IMG'		=> $_CLASS['core_user']->img('btn_pm', $_CLASS['core_user']->lang['MESSAGE']))
@@ -218,13 +219,13 @@ switch ($mode)
 			FROM " . USERS_TABLE . "
 			WHERE user_id = $user_id
 				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 		{
 			trigger_error('NO_USER_DATA');
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		// Post data grab actions
 		switch ($action)
@@ -293,34 +294,34 @@ switch ($mode)
 		}
 
 		// We left join on the session table to see if the user is currently online
-		$sql = 'SELECT username, user_id, user_type, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_lastvisit
+		$sql = 'SELECT username, user_id, user_type, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_last_visit
 			FROM ' . USERS_TABLE . "
 			WHERE user_id = $user_id
 				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ', '.USER_INACTIVE.')';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if (!($member = $_CLASS['core_db']->sql_fetchrow($result)) || $member['user_type'] == USER_INACTIVE)
+		if (!($member = $_CLASS['core_db']->fetch_row_assoc($result)) || $member['user_type'] == USER_INACTIVE)
 		{
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 			trigger_error(($member) ? 'USER_INACTIVE' : 'NO_USER');
 		}
 		
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$sql = 'SELECT g.group_id, g.group_name, g.group_type
 			FROM ' . USER_GROUP_TABLE . ' ug, ' . GROUPS_TABLE . " g
 			WHERE ug.user_id = $user_id
 				AND g.group_id = ug.group_id" . ((!$_CLASS['auth']->acl_gets('a_group')) ? ' AND group_type <> ' . GROUP_HIDDEN : '') . '
 			ORDER BY group_type, group_name';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$group_options = '';
 		
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$group_options .= '<option value="' . $row['group_id'] . '"'.(($member['group_id'] == $row['group_id'])? ' selected="selected"' : '').'>' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		$page_title = sprintf($_CLASS['core_user']->lang['VIEWING_PROFILE'], $member['username']);
 		$template_html = 'memberlist_view.html';
@@ -328,10 +329,10 @@ switch ($mode)
 		$sql = 'SELECT MAX(session_time) AS session_time
 			FROM ' . SESSIONS_TABLE . "
 			WHERE session_user_id = $user_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$member['session_time'] = (isset($row['session_time'])) ? $row['session_time'] : 0;
 		unset($row);
@@ -359,10 +360,11 @@ switch ($mode)
 			WHERE p.poster_id = $user_id
 				AND f.forum_id = p.forum_id
 				$post_count_sql";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
-		$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $_CLASS['core_db']->sql_fetchfield('num_posts', 0, $result));
-		$_CLASS['core_db']->sql_freeresult($result);
+		$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $row['num_posts']);
 
 		// Change post_count_sql to an forum_id array the user is able to see
 		$f_forum_ary = $_CLASS['auth']->acl_getf('f_read');
@@ -388,10 +390,10 @@ switch ($mode)
 					$post_count_sql
 				GROUP BY f.forum_id, f.forum_name
 				ORDER BY num_posts DESC";
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-			$active_f_row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$active_f_row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
 			$sql = 'SELECT t.topic_id, t.topic_title, COUNT(p.post_id) AS num_posts
 				FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f
@@ -401,10 +403,10 @@ switch ($mode)
 					$post_count_sql
 				GROUP BY t.topic_id, t.topic_title
 				ORDER BY num_posts DESC";
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-			$active_t_row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$active_t_row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 		else
 		{
@@ -578,13 +580,13 @@ switch ($mode)
 				FROM ' . USERS_TABLE . "
 				WHERE user_id = $user_id
 					AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 			{
 				trigger_error('NO_USER');
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			// Can we send email to this user?
 			if (!$row['user_allow_viewemail'] && !$_CLASS['auth']->acl_get('a_user'))
@@ -597,13 +599,13 @@ switch ($mode)
 			$sql = 'SELECT forum_id, topic_title
 				FROM ' . TOPICS_TABLE . "
 				WHERE topic_id = $topic_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 			{
 				trigger_error('NO_TOPIC');
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			if (!$_CLASS['auth']->acl_get('f_read', $row['forum_id']))
 			{
@@ -650,7 +652,7 @@ switch ($mode)
 				$sql = 'UPDATE ' . USERS_TABLE . '
 					SET user_emailtime = ' . time() . '
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
 				// Add class loader
 				require_once($site_file_root.'includes/forums/functions_messenger.php');
@@ -735,7 +737,7 @@ switch ($mode)
 
 		// Sorting
 		$sort_key_text = array('a' => $_CLASS['core_user']->lang['SORT_USERNAME'], 'b' => $_CLASS['core_user']->lang['SORT_LOCATION'], 'c' => $_CLASS['core_user']->lang['SORT_JOINED'], 'd' => $_CLASS['core_user']->lang['SORT_POST_COUNT'], 'e' => $_CLASS['core_user']->lang['SORT_EMAIL'], 'f' => $_CLASS['core_user']->lang['WEBSITE'], 'g' => $_CLASS['core_user']->lang['ICQ'], 'h' => $_CLASS['core_user']->lang['AIM'], 'i' => $_CLASS['core_user']->lang['MSNM'], 'j' => $_CLASS['core_user']->lang['YIM'], 'k' => $_CLASS['core_user']->lang['JABBER'], 'l' => $_CLASS['core_user']->lang['SORT_LAST_ACTIVE'], 'm' => $_CLASS['core_user']->lang['SORT_RANK']);
-		$sort_key_sql = array('a' => 'u.username', 'b' => 'u.user_from', 'c' => 'u.user_regdate', 'd' => 'u.user_posts', 'e' => 'u.user_email', 'f' => 'u.user_website', 'g' => 'u.user_icq', 'h' => 'u.user_aim', 'i' => 'u.user_msnm', 'j' => 'u.user_yim', 'k' => 'u.user_jabber', 'l' => 'u.user_lastvisit', 'm' => 'u.user_rank DESC, u.user_posts');
+		$sort_key_sql = array('a' => 'u.username', 'b' => 'u.user_from', 'c' => 'u.user_regdate', 'd' => 'u.user_posts', 'e' => 'u.user_email', 'f' => 'u.user_website', 'g' => 'u.user_icq', 'h' => 'u.user_aim', 'i' => 'u.user_msnm', 'j' => 'u.user_yim', 'k' => 'u.user_jabber', 'l' => 'u.user_last_visit', 'm' => 'u.user_rank DESC, u.user_posts');
 
 		$sort_dir_text = array('a' => $_CLASS['core_user']->lang['ASCENDING'], 'd' => $_CLASS['core_user']->lang['DESCENDING']);
 
@@ -803,16 +805,16 @@ switch ($mode)
 				$s_find_active_time .= '<option value="' . $key . '"' . $selected . '>' . $value . '</option>';
 			}
 
-			$sql_where .= ($username) ? " AND u.username LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($username)) ."'" : '';
-			$sql_where .= ($email) ? " AND u.user_email LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($email)) ."' " : '';
-			$sql_where .= ($icq) ? " AND u.user_icq LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($icq)) ."' " : '';
-			$sql_where .= ($aim) ? " AND u.user_aim LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($aim)) ."' " : '';
-			$sql_where .= ($yahoo) ? " AND u.user_yim LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($yahoo)) ."' " : '';
-			$sql_where .= ($msn) ? " AND u.user_msnm LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($msn)) ."' " : '';
-			$sql_where .= ($jabber) ? " AND u.user_jabber LIKE '" . str_replace('*', '%', $_CLASS['core_db']->sql_escape($jabber)) . "' " : '';
+			$sql_where .= ($username) ? " AND u.username LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($username)) ."'" : '';
+			$sql_where .= ($email) ? " AND u.user_email LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($email)) ."' " : '';
+			$sql_where .= ($icq) ? " AND u.user_icq LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($icq)) ."' " : '';
+			$sql_where .= ($aim) ? " AND u.user_aim LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($aim)) ."' " : '';
+			$sql_where .= ($yahoo) ? " AND u.user_yim LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($yahoo)) ."' " : '';
+			$sql_where .= ($msn) ? " AND u.user_msnm LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($msn)) ."' " : '';
+			$sql_where .= ($jabber) ? " AND u.user_jabber LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($jabber)) . "' " : '';
 			$sql_where .= (is_numeric($count)) ? ' AND u.user_posts ' . $find_key_match[$count_select] . ' ' . (int) $count . ' ' : '';
 			$sql_where .= (sizeof($joined) > 1) ? " AND u.user_regdate " . $find_key_match[$joined_select] . ' ' . gmmktime(0, 0, 0, intval($joined[1]), intval($joined[2]), intval($joined[0])) : '';
-			$sql_where .= (sizeof($active) > 1) ? " AND u.user_lastvisit " . $find_key_match[$active_select] . ' ' . gmmktime(0, 0, 0, $active[1], intval($active[2]), intval($active[0])) : '';
+			$sql_where .= (sizeof($active) > 1) ? " AND u.user_last_visit " . $find_key_match[$active_select] . ' ' . gmmktime(0, 0, 0, $active[1], intval($active[2]), intval($active[0])) : '';
 
 			if ($ipdomain && $_CLASS['auth']->acl_get('m_ip'))
 			{
@@ -821,16 +823,16 @@ switch ($mode)
 				$sql = 'SELECT DISTINCT poster_id
 					FROM ' . POSTS_TABLE . '
 					WHERE poster_ip ' . ((preg_match('#%#', $ips)) ? 'LIKE' : 'IN') . " ($ips)";
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
-				if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$ip_sql = array();
 					do
 					{
 						$ip_sql[] = $row['poster_id'];
 					}
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 					$sql_where .= ' AND u.user_id IN (' . implode(', ', $ip_sql) . ')';
 				}
@@ -854,7 +856,7 @@ switch ($mode)
 		}
 		else if ($first_char)
 		{
-			$sql_where = " AND u.username LIKE '" . $_CLASS['core_db']->sql_escape(substr($first_char, 0, 1)) . "%'";
+			$sql_where = " AND u.username LIKE '" . $_CLASS['core_db']->escape(substr($first_char, 0, 1)) . "%'";
 		}
 
 		// Are we looking at a usergroup? If so, fetch additional info
@@ -868,9 +870,9 @@ switch ($mode)
 				LEFT JOIN ' . USER_GROUP_TABLE . ' ug ON (ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . " AND ug.group_id = $group_id)
 				WHERE g.group_id = $group_id";
 	
-			$result = $_CLASS['core_db']->sql_query($sql);
-			$group_row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
+			$result = $_CLASS['core_db']->query($sql);
+			$group_row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
 			if (!$group_row)
 			{
@@ -958,10 +960,10 @@ switch ($mode)
 				FROM ' . USERS_TABLE . " u$sql_from
 				WHERE u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ")
 				$sql_where";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			$total_users = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['total_users'] : 0;
-			$_CLASS['core_db']->sql_freeresult($result);
+			$total_users = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['total_users'] : 0;
+			$_CLASS['core_db']->free_result($result);
 		}
 		else
 		{
@@ -1028,25 +1030,25 @@ switch ($mode)
 			WHERE session_time >= ' . (time() - $_CORE_CONFIG['server']['session_length']) . '
 				AND session_user_id <> ' . ANONYMOUS . '
 			GROUP BY session_user_id';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$session_times = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$session_times[$row['session_user_id']] = $row['session_time'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		// Do the SQL thang
-		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_lastvisit 
+		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_last_visit 
 			'. $sql_fields .' FROM ' . USERS_TABLE . " u$sql_from
 			WHERE u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ")
 				$sql_where
 			ORDER BY $order_by";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, $config['topics_per_page'], $start);
+		$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
 
 		$id_cache = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if ($mode == 'group' && $row['user_status'] == STATUS_PENDING)
 			{
@@ -1056,7 +1058,7 @@ switch ($mode)
 			$row['session_time'] = (!empty($session_times[$row['user_id']])) ? $session_times[$row['user_id']] : '';
 			$id_cache[$row['user_id']] = $row;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		// Load custom profile fields
 		/*if ($config['load_cpf_memberlist'])
@@ -1150,10 +1152,11 @@ switch ($mode)
 
 // Output the page
 $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', $window);
-page_header();
 
+page_header();
 $_CLASS['core_template']->display('modules/Members_List/'.$template_html);
 
+script_close();
 // ---------
 // FUNCTIONS
 //
@@ -1200,7 +1203,7 @@ function show_profile($data)
 		$email = '';
 	}
 	
-	$last_visit = (!empty($data['session_time'])) ? $data['session_time'] : $data['user_lastvisit'];
+	$last_visit = (!empty($data['session_time'])) ? $data['session_time'] : $data['user_last_visit'];
 
 	// Dump it out to the template
 	// TODO

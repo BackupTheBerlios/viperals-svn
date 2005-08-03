@@ -418,12 +418,12 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 		WHERE forum_id = $forum_id");
 
 	$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . "
-		SET user_lastpost_time = $current_time
+		SET user_last_post_time = $current_time
 		WHERE user_id = " . $_CLASS['core_user']->data['user_id']);
 
 	$_CLASS['core_db']->transaction('commit');
 	
-	markread('post', $forum_id, $topic_id, $current_time);
+	markread('topic', $forum_id, $topic_id, $current_time);
 
 	add_log('mod', $forum_id, $topic_id, sprintf($_CLASS['core_user']->lang['LOGM_BUMP'], $topic_title));
 
@@ -644,7 +644,7 @@ if ($submit || $preview || $refresh)
 
 		if ($_CLASS['core_user']->is_user)
 		{
-			$last_post_time = $_CLASS['core_user']->data['user_lastpost_time'];
+			$last_post_time = $_CLASS['core_user']->data['user_last_post_time'];
 		}
 		else
 		{
@@ -1484,7 +1484,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				);
 			}
 
-			$sql_data[USERS_TABLE]['stat'][] = "user_lastpost_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
+			$sql_data[USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
 
 			if ($topic_type != POST_GLOBAL)
 			{
@@ -1499,7 +1499,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 		case 'reply':
 			$sql_data[TOPICS_TABLE]['stat'][] = 'topic_replies_real = topic_replies_real + 1, topic_bumped = 0, topic_bumper = 0' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', topic_replies = topic_replies + 1' : '');
-			$sql_data[USERS_TABLE]['stat'][] = "user_lastpost_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
+			$sql_data[USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
 			
 			if ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) && $topic_type != POST_GLOBAL)
 			{
@@ -1537,7 +1537,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[TOPICS_TABLE]['sql']);
 		$_CLASS['core_db']->query($sql);
 
-		$data['topic_id'] = $_CLASS['core_db']->insert_id();
+		$data['topic_id'] = $_CLASS['core_db']->insert_id(TOPICS_TABLE, 'topic_id');
 
 		$sql_data[POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
 			'topic_id' => $data['topic_id'])
@@ -1558,7 +1558,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		$sql = 'INSERT INTO ' . POSTS_TABLE . ' ' .
 			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[POSTS_TABLE]['sql']);
 		$_CLASS['core_db']->query($sql);
-		$data['post_id'] = $_CLASS['core_db']->insert_id();
+		$data['post_id'] = $_CLASS['core_db']->insert_id(POSTS_TABLE, 'post_id');
 
 		if ($post_mode == 'post')
 		{
@@ -1845,8 +1845,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	}
 
 	// Mark this topic as read and posted to.
-	$mark_mode = ($mode == 'post' || $mode == 'reply' || $mode == 'quote') ? 'post' : 'topic';
-	markread($mark_mode, $data['forum_id'], $data['topic_id'], $data['post_time']);
+	markread('topic', $data['forum_id'], $data['topic_id'], $data['post_time']);
 
 	// Send Notifications
 	if ($mode != 'edit' && $mode != 'delete' && (!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')))

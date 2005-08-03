@@ -60,8 +60,9 @@ class db_mysql
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 		}
 
+		$this->disconnect();
+
 		trigger_error($error, E_USER_ERROR);
-		die;
 	}
 
 	function disconnect()
@@ -417,32 +418,19 @@ class db_mysql
 			case 'start':
 				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
 				{
-					if (preg_match('/UPDATE ([a-z0-9_]+).*?WHERE(.*)/s', $this->last_query, $m))
+					if (strpos('SELECT', $this->last_query) === 0)
 					{
-						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $this->last_query, $m))
-					{
-						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					else
-					{
-						$explain_query = $this->last_query;
-					}
-
-					if (preg_match('/^SELECT/', $explain_query))
-					{
-						if ($result = mysql_query("EXPLAIN $explain_query", $this->link_identifier))
+						if ($result = @mysql_query('EXPLAIN '.$this->last_query, $this->link_identifier))
 						{
-							while ($row = mysql_fetch_assoc($result))
+							while ($row = @mysql_fetch_assoc($result))
 							{
-								$this->querydetails[$this->num_queries][] = $row;
+								$this->query_details[$this->num_queries][] = $row;
 							}
 						}
 					}
 					else
 					{
-						$this->querydetails[$this->num_queries][] = '';
+						$this->query_details[$this->num_queries][] = '';
 					}
 				}
 
@@ -468,12 +456,12 @@ class db_mysql
 							$affected = $this->affected_rows($this->last_result);
 						}
 						
-						$this->querylist[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'affected' => $affected, 'time' => ($end_time - $start_time));
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'affected' => $affected, 'time' => ($end_time - $start_time));
 					}
 					else
 					{
 						$error = mysql_error();
-						$this->querylist[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> $error['code'], 'errorcode' => $error['message']);
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> $error['code'], 'errorcode' => $error['message']);
 					}
 				}
 			break;
@@ -604,15 +592,8 @@ class db_mysql
 
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
-		if ($padded)
-		{
-			$this->_fields[$name] =  "`$name` CHAR($characters)";
-		}
-		else
-		{
-			$this->_fields[$name] =  "`$name` VARCHAR($characters)";
-		}
 
+		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
 		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 

@@ -227,6 +227,7 @@ class core_auth
 		}
 
 		$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
+		script_close();
 	}
 
 	function auth_dump()

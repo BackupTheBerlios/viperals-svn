@@ -36,10 +36,10 @@ class sessions
 		if ($cookie_sid = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE'))
 		{
 			// session id in url > cookie
-			if (!$session_data['session_id'] || ($cookie_sid === $session_data['session_id']))
+			if (!$session_data['session_id'] || $cookie_sid === $session_data['session_id'])
 			{
 				$session_data['session_id'] = $cookie_sid;
-				$this->sid_link = (defined('NEED_SID')) ? 'sid='.$session_data['session_id'] : false;
+				$this->sid_link = defined('NEED_SID') ? 'sid='.$session_data['session_id'] : false;
 			}
 		}
 		else
@@ -86,17 +86,8 @@ class sessions
 						$this->save_session = true;
 					}
 
-					if ($this->data['session_data'])
-					{
-						if (!is_array($this->data['session_data'] = @unserialize($this->data['session_data'])))
-						{
-							$this->data['session_data'] = array();
-						}
-					}
-					else
-					{
-						$this->data['session_data'] = array();
-					}
+					$this->data['session_data'] = ($this->data['session_data']) ? unserialize($this->data['session_data']) : array();
+					$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : array();
 
 					load_class(false, 'core_auth', 'auth_db');
 
@@ -241,12 +232,12 @@ class sessions
 
 		$result = $_CLASS['core_db']->query($sql);
 
-		$_CLASS['core_db']->optimize_tables('SESSIONS_TABLE');
+		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
 	}
 
-	function session_data_get($name)
+	function session_data_get($name, $default = false)
 	{
-		return (empty($this->data['session_data'][$name])) ? false : $this->data['session_data'][$name];
+		return (empty($this->data['session_data'][$name])) ? $default : $this->data['session_data'][$name];
 	}
 
 	function session_data_remove($name)

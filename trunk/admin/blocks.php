@@ -51,7 +51,7 @@ function get_id($rediret = true)
 		die;
 	}
 
-	return $id;
+	return (int) $id;
 }
 
 switch ($mode)
@@ -95,40 +95,15 @@ switch ($mode)
     break;
 
     case 'auth':
-		$id = get_id();
-
-		$result = $_CLASS['core_db']->sql_query('SELECT position, auth FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-		$block = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
-
-		if (!$block)
-		{
-			trigger_error('BLOCK_NOT_FOUND');
-		}
-
-		$block['auth'] = ($block['auth']) ? unserialize($block['auth']) : '';
-
-		check_position($block['position']);
-
-		if ($auth = $_CLASS['core_auth']->generate_auth_options($block['auth']))
-		{
-			$block['auth'] = ($auth === true) ? '' : $auth;
-			$auth = ($auth === true) ? '' : $_CLASS['core_db']->sql_escape(serialize($auth));
-		
-			$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE." set auth = '$auth' WHERE id = $id");
-			$_CLASS['core_cache']->destroy('blocks');
-		}
-
-		$_CLASS['core_display']->display_head();
-		$_CLASS['core_auth']->generate_auth_options($block['auth'], true);
-		$_CLASS['core_display']->display_footer();
+		block_auth(get_id());
     break;
 
     default:
 		blocks_admin();
-    die;
-    
+    break;
 }
+
+script_close(false);
 
 function blocks_change_position($position, $id)
 {
@@ -136,9 +111,9 @@ function blocks_change_position($position, $id)
 
 	check_position($position);
 
-	$result = $_CLASS['core_db']->sql_query('SELECT position, weight FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-	$block = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query('SELECT position, weight FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+	$block = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
 	check_position($block['position']);
 
@@ -147,12 +122,12 @@ function blocks_change_position($position, $id)
 		return;
 	}
 
-	$result = $_CLASS['core_db']->sql_query('SELECT weight FROM '.BLOCKS_TABLE." WHERE position = $position ORDER BY weight DESC LIMIT 1");
-	$max_weight = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query('SELECT weight FROM '.BLOCKS_TABLE." WHERE position = $position ORDER BY weight DESC LIMIT 1");
+	$max_weight = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
-	$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position = '.$block['position'].' AND weight > '.$block['weight']);
-	$_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE." set position = $position , weight = ".((int) $max_weight['weight'] + 1).' where id ='.$id);
+	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position = '.$block['position'].' AND weight > '.$block['weight']);
+	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE." set position = $position , weight = ".((int) $max_weight['weight'] + 1).' where id ='.$id);
 
 	$_CLASS['core_cache']->destroy('blocks');
 }
@@ -163,19 +138,27 @@ function blocks_admin()
 
 	blocks_block('main');
 
-    $result = $_CLASS['core_db']->sql_query('SELECT id, title, type,  position, weight, active, file, auth
+    $result = $_CLASS['core_db']->query('SELECT id, title, type,  position, weight, active, file, auth
 		FROM '.BLOCKS_TABLE.'
-		WHERE position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY weight DESC');
+		WHERE position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY position, weight ASC');
 
     $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
+	$in_position = false;
+	$blocks = array();
 
-	while($block = $_CLASS['core_db']->sql_fetchrow($result))
+	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
     {
-		if (empty($weigth[$block['position']]))
+		if ($in_position != $row['position'])
 		{
-			$weigth[$block['position']] = $block['weight'];
+			$weigth[$row['position']] = $row['weight'];
+			$in_position == $row['position'];
 		}
+		$blocks[] = $row;
+	}
+	$_CLASS['core_db']->free_result($result);
 
+	foreach ($blocks as $block)
+	{
 		$error = false;
 		switch ($block['type'])
 		{
@@ -200,16 +183,15 @@ function blocks_admin()
 				'TITLE'			=> $block['title'],
 				'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['type']),
 
-				'WEIGHT_UP' 	=> ($block['weight'] < $weigth[$block['position']]),
-				'WEIGHT_DOWN'	=> ($block['weight'] > 1),
+				'WEIGHT_DOWN' 	=> ($block['weight'] < $weigth[$block['position']]),
+				'WEIGHT_UP'		=> ($block['weight'] > 1),
 
-				'WEIGHT_MOVE_UP' 	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
+				'WEIGHT_MOVE_UP' 	=> generate_link('blocks&amp;mode=weight&amp;option=up&amp;id='.$block['id'], array('admin' => true)),
 				'WEIGHT_MOVE_TOP' 	=> generate_link('blocks&amp;mode=weight&amp;option=top&amp;id='.$block['id'], array('admin' => true)),
 				'WEIGHT_MOVE_DOWN'	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
 				'WEIGHT_MOVE_BOTTOM'=> generate_link('blocks&amp;mode=weight&amp;option=bottom&amp;id='.$block['id'], array('admin' => true)),
 		));
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
 
     $_CLASS['core_template']->assign(array(
 		'L_BLOCK_REGULAR'	=> 'Add New regular Block',
@@ -220,9 +202,7 @@ function blocks_admin()
 		'N_BLOCK_HTML'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_HTML, array('admin' => true))
 	));
 
-    $_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/blocks/index.html');
-    $_CLASS['core_display']->display_footer();
 }
 
 function block_add($block = false, $error = false)
@@ -233,9 +213,9 @@ function block_add($block = false, $error = false)
 
 	if (isset($_REQUEST['id']) && $id = get_id())
 	{
-		$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-		$block = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$block = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (!$block)
 		{
@@ -298,13 +278,11 @@ function block_add($block = false, $error = false)
 		'B_RSS_URL'		=> $b_rss_url,
 		'B_ERROR'		=> $error,
 		'B_EXPIRES'		=> is_numeric($block['expires']) ? $_CLASS['core_user']->format_date($block['expires'], 'M d, Y h:i a') : $block['expires'],
-		'B_STARTS'		=> is_numeric($block['time']) ? $_CLASS['core_user']->format_date($block['time'], 'M d, Y h:i a') : $block['time'],
-		'B_CURRENT_TIME'=> $_CLASS['core_user']->format_date(time()),
+		'B_STARTS'		=> is_numeric($block['start']) ? $_CLASS['core_user']->format_date($block['start'], 'M d, Y h:i a') : $block['start'],
+		'B_CURRENT_TIME'=> $_CLASS['core_user']->format_date($_CLASS['core_user']->time),
 	));
 
-	$_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/blocks/edit.html');
-	$_CLASS['core_display']->display_footer();
 }
 
 function blocks_block($mode = false)
@@ -377,15 +355,15 @@ function block_get_data(&$data, &$error, $type = false)
 
 	$data['active'] = (int) get_variable('b_active', 'POST', 0);
 	$data['expires'] = get_variable('b_expires', 'POST', '');
-	$data['time'] = get_variable('b_time', 'POST', '');
+	$data['start'] = get_variable('b_time', 'POST', '');
 
-	$time = $expires = '';
+	$start = $expires = '';
 
-	if ($data['time'])
+	if ($data['start'])
 	{
-		$time = strtotime($data['time']);
+		$start = strtotime($data['start']);
 
-		if (!$time || $time == -1)
+		if (!$start || $start == -1)
 		{
 			$error .= $_CLASS['core_user']->lang['ERROR_START_TIME'].'<br />';
 		}
@@ -434,11 +412,11 @@ function block_get_data(&$data, &$error, $type = false)
 			$data['rss_rate'] = get_variable('b_refresh', 'POST', '');
 		break;
 	}
-	
+
 	if (!$error)
 	{
-		$data['time'] = $time;
-		$data['expires'] = $expires;
+		$data['start'] = ($start) ? $_CLASS['core_user']->time_convert($start, 'gmt') : 0;
+		$data['expires'] = ($expires) ? $_CLASS['core_user']->time_convert($expires, 'gmt') : 0;
 	}
 }
 
@@ -479,9 +457,9 @@ function block_save()
 	
 	if (isset($_REQUEST['id']) && $id = get_id())
 	{
-		$result = $_CLASS['core_db']->sql_query('SELECT weight, position, type FROM '.BLOCKS_TABLE.' WHERE id = '.$id);
-		$block = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT weight, position, type FROM '.BLOCKS_TABLE.' WHERE id = '.$id);
+		$block = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		if (!$block)
 		{	
@@ -515,16 +493,16 @@ function block_save()
 			return block_add($data, $error);
 		}
 		
-		$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
-		$maxweight = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
+		$maxweight = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 				
 		$data['weight'] = (int) $maxweight['weight'] + 1;
 		
 		$sql = 'INSERT INTO '.BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
 	}
 
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 	$_CLASS['core_cache']->destroy('blocks');
 
 	$_CLASS['core_display']->meta_refresh('3', generate_link('blocks', array('admin' => true)));

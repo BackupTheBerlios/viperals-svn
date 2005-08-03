@@ -82,7 +82,6 @@ if ($update)
 				'forum_rules'			=> request_var('forum_rules', ''),
 				'forum_rules_link'		=> request_var('forum_rules_link', ''),
 				'forum_image'			=> request_var('forum_image', ''),
-				'forum_style'			=> request_var('forum_style', 0),
 				'display_on_index'		=> request_var('display_on_index', FALSE),
 				'forum_topics_per_page'	=> request_var('topics_per_page', 0), 
 				'enable_indexing'		=> request_var('enable_indexing',true), 
@@ -239,8 +238,6 @@ switch ($mode)
 		{
 			$forum_type_options .= '<option value="' . $value . '"' . (($value == $forum_type) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['TYPE_' . $lang] . '</option>';
 		}
-
-		//$styles_list = style_select($forum_style, true);
 
 		$statuslist = '<option value="' . ITEM_UNLOCKED . '"' . (($forum_status == ITEM_UNLOCKED) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['UNLOCKED'] . '</option><option value="' . ITEM_LOCKED . '"' . (($forum_status == ITEM_LOCKED) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['LOCKED'] . '</option>';
 
@@ -678,7 +675,7 @@ switch ($mode)
 		$_CLASS['core_db']->free_result($result);
 
 		// Start transaction
-		$_CLASS['core_db']->sql_transaction('begin');
+		$_CLASS['core_db']->transaction();
 
 		$sql = 'UPDATE ' . FORUMS_TABLE . '
 			SET left_id = left_id + ' . ($diff_up + 1) . ', right_id = right_id + ' . ($diff_up + 1) . '
@@ -704,7 +701,7 @@ switch ($mode)
 			WHERE forum_id = ' . $down_id;
 		$_CLASS['core_db']->query($sql);
 
-		$_CLASS['core_db']->sql_transaction('commit');
+		$_CLASS['core_db']->transaction('commit');
 
 		$forum_data = get_forum_info($forum_id);
 
@@ -961,7 +958,7 @@ function update_forum_data(&$forum_data)
 	{
 		// no forum_id means we're creating a new forum
 
-		$_CLASS['core_db']->sql_transaction('begin');
+		$_CLASS['core_db']->transaction();
 
 		if ($forum_data['parent_id'])
 		{
@@ -1005,9 +1002,9 @@ function update_forum_data(&$forum_data)
 		$sql = 'INSERT INTO ' . FORUMS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $forum_data);
 		$_CLASS['core_db']->query($sql);
 		
-		$_CLASS['core_db']->sql_transaction('commit');
+		$_CLASS['core_db']->transaction('commit');
 
-		$forum_data['forum_id'] = $_CLASS['core_db']->sql_nextid();
+		$forum_data['forum_id'] = $_CLASS['core_db']->insert_id(FORUMS_TABLE, 'forum_id');
 		add_log('admin', 'LOG_FORUM_ADD', $forum_data['forum_name']);
 	}
 	else
@@ -1389,7 +1386,7 @@ function delete_forum_content($forum_id)
 	global $_CLASS, $site_file_root;
 	require_once($site_file_root.'includes/forums/functions_posting.php');
 
-	$_CLASS['core_db']->sql_transaction('begin');
+	$_CLASS['core_db']->transaction();
 
 	switch (SQL_LAYER)
 	{
@@ -1537,7 +1534,7 @@ function delete_forum_content($forum_id)
 			$_CLASS['core_db']->optimize_tables($tables);
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 	
 	return array();
 }

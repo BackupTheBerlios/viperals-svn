@@ -22,25 +22,8 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
-/*
-if (($config = $_CLASS['core_cache']->get('config')) !== false)
-{
-	$sql = 'SELECT config_name, config_value
-		FROM ' . CONFIG_TABLE . '
-		WHERE is_dynamic = 1';
-	$result = $_CLASS['core_db']->query($sql);
-	
-	if (is_array($result))
-	{
-		trigger_error($config_error, E_USER_ERROR);
-	}
-	
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		$config[$row['config_name']] = $row['config_value'];
-	}
-}
-else
+
+if (is_null($config = $_CLASS['core_cache']->get('config')))
 {
 	$config = $cached_config = array();
 
@@ -67,7 +50,23 @@ else
 
 	unset($cached_config);
 }
-*/
+else
+{
+	$sql = 'SELECT config_name, config_value
+		FROM ' . CONFIG_TABLE . '
+		WHERE is_dynamic = 1';
+	$result = $_CLASS['core_db']->query($sql);
+	
+	if (is_array($result))
+	{
+		trigger_error($config_error, E_USER_ERROR);
+	}
+	
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$config[$row['config_name']] = $row['config_value'];
+	}
+}
 
 function set_config($config_name, $config_value, $is_dynamic = false)
 {
@@ -313,7 +312,7 @@ function get_forum_parents(&$forum_data)
 }
 
 // Obtain list of moderators of each forum
-function get_moderators(&$forum_moderators, $forum_id = false)
+function get_moderators($forum_id = false)
 {
 	global $config, $_CLASS;
 
@@ -321,16 +320,14 @@ function get_moderators(&$forum_moderators, $forum_id = false)
 	// from whence we came ... 
 	if (empty($config['load_moderators']))
 	{
-		return;
+		return array();
 	}
 
-	if (!empty($forum_id) && is_array($forum_id))
+	$forum_sql = '';
+
+	if ($forum_id)
 	{
-		$forum_sql = 'AND forum_id IN (' . implode(', ', $forum_id) . ')';
-	}
-	else
-	{
-		$forum_sql = ($forum_id) ? 'AND forum_id = ' . $forum_id : '';
+		$forum_sql = is_array($forum_id) ? 'AND forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND forum_id = ' . $forum_id;
 	}
 
 	$sql = 'SELECT *
@@ -339,13 +336,15 @@ function get_moderators(&$forum_moderators, $forum_id = false)
 			$forum_sql";
 	$result = $_CLASS['core_db']->query($sql);
 
+	$forum_moderators = array();
+
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$forum_moderators[$row['forum_id']][] = (!empty($row['user_id'])) ? '<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>' : '<a href="' . generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . $row['groupname'] . '</a>';
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	return;
+	return $forum_moderators;
 }
 
 // User authorisation levels output
@@ -539,104 +538,89 @@ function tz_select($default = '')
 }
 
 // Topic and forum watching common code
-function watch_topic_forum($mode, &$s_watching, &$s_watching_img, $user_id, $match_id, $notify_status = 'unset', $start = 0)
+function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_status = 'unset', $start = 0)
 {
-	global $_CLASS, $_CLASS, $start;
+	global $_CLASS, $_CLASS, $_CORE_CONFIG;
 
-	$table_sql = ($mode == 'forum') ? FORUMS_WATCH_TABLE : TOPICS_WATCH_TABLE;
+	if (!$_CLASS['core_user']->is_user || $_CORE_CONFIG['email']['email_enable'] || $config['allow_topic_notify'])
+	{
+		return array('link' => '', 'title' => '', 'watching' => false);
+	}
+
 	$where_sql = ($mode == 'forum') ? 'forum_id' : 'topic_id';
 	$u_url = ($mode == 'forum') ? 'f' : 't';
 
-	// Is user watching this thread?
-	if ($user_id != ANONYMOUS)
+	$is_watching = false;
+
+	if ($notify_status == 'unset')
 	{
-		$can_watch = TRUE;
+		// Is user watching this thread?
+		$sql = 'SELECT notify_status
+			FROM '.FORUMS_WATCH_TABLE."
+			WHERE $where_sql = $match_id
+				AND user_id = $user_id";
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($notify_status == 'unset')
+		$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : NULL;
+		$_CLASS['core_db']->free_result($result);
+	}
+
+	if (is_null($notify_status))
+	{
+		if (isset($_GET['watch']))
 		{
-			$sql = "SELECT notify_status
-				FROM $table_sql
-				WHERE $where_sql = $match_id
-					AND user_id = $user_id";
-			$result = $_CLASS['core_db']->query($sql);
-
-			$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : NULL;
-			$_CLASS['core_db']->free_result($result);
-		}
-
-		if (!is_null($notify_status))
-		{
-			if (isset($_GET['unwatch']))
+			if ($_GET['watch'] == $mode)
 			{
-				if ($_GET['unwatch'] == $mode)
-				{
-					$is_watching = 0;
+				$is_watching = true;
+	
+				$sql = 'INSERT INTO ' . FORUMS_WATCH_TABLE . " (user_id, $where_sql, notify_status)
+					VALUES ($user_id, $match_id, 0)";
+				$_CLASS['core_db']->query($sql);
+			}
 
-					$sql = 'DELETE FROM ' . $table_sql . "
-						WHERE $where_sql = $match_id
-							AND user_id = $user_id";
-					$_CLASS['core_db']->query($sql);
-				}
-				$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
-				$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
-				trigger_error($message);
-			}
-			else
-			{
-				$is_watching = TRUE;
-
-				if ($notify_status)
-				{
-					$sql = 'UPDATE ' . $table_sql . "
-						SET notify_status = 0
-						WHERE $where_sql = $match_id
-							AND user_id = $user_id";
-					$_CLASS['core_db']->query($sql);
-				}
-			}
-		}
-		else
-		{
-			if (isset($_GET['watch']))
-			{
-				if ($_GET['watch'] == $mode)
-				{
-					$is_watching = TRUE;
-
-					$sql = 'INSERT INTO ' . $table_sql . " (user_id, $where_sql, notify_status)
-						VALUES ($user_id, $match_id, 0)";
-					$_CLASS['core_db']->query($sql);
-				}
-				$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
-				$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
-				trigger_error($message);
-			}
-			else
-			{
-				$is_watching = 0;
-			}
+			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
+			$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
+			trigger_error($message);
 		}
 	}
 	else
 	{
-		if (isset($_GET['unwatch']) && $_GET['unwatch'] == $mode)
+		if (isset($_GET['unwatch']))
 		{
-			login_box();
+			if ($_GET['unwatch'] == $mode)
+			{
+				$is_watching = false;
+
+				$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
+					WHERE $where_sql = $match_id
+						AND user_id = $user_id";
+				$_CLASS['core_db']->query($sql);
+			}
+
+			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
+			$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
+			trigger_error($message);
 		}
 		else
 		{
-			$can_watch = 0;
-			$is_watching = 0;
+			$is_watching = true;
+
+			if ($notify_status)
+			{
+				$sql = 'UPDATE ' . FORUMS_WATCH_TABLE . "
+					SET notify_status = 0
+					WHERE $where_sql = $match_id
+						AND user_id = $user_id";
+				$_CLASS['core_db']->query($sql);
+			}
 		}
 	}
 
-	if ($can_watch)
-	{
-		$s_watching['link'] = generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start");
-		$s_watching['title'] = $_CLASS['core_user']->lang[(($is_watching) ? 'STOP' : 'START') . '_WATCHING_' . strtoupper($mode)];
-	}
-
-	return;
+	return array(
+			'watching' => true,
+			'link' => generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start"),
+			'title' => $_CLASS['core_user']->lang[(($is_watching) ? 'STOP' : 'START') . '_WATCHING_' . strtoupper($mode)],
+		);
 }
 
 // Marks a topic or form as read
@@ -749,12 +733,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			}
 		break;
 
-		case 'post':
 		case 'topic':
-
-			// Mark a topic as read and mark it as a topic where the user has made a post.
-			$type = ($mode == 'post') ? TRACK_POSTED : TRACK_NORMAL;
-
 			settype($topic_id, 'integer');
 			settype($forum_id, 'integer');
 
@@ -764,7 +743,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 			{
 				$sql = 'UPDATE ' . FORUMS_TRACK_TABLE . "
-							SET forum_id = $forum_id, mark_time = $time, mark_type = ' . $type : '
+							SET forum_id = $forum_id, mark_time = $time
 								WHERE topic_id = $topic_id
 								AND user_id = {$_CLASS['core_user']->data['user_id']}";
 
@@ -774,7 +753,6 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 						'user_id'		=> $_CLASS['core_user']->data['user_id'],
 						'topic_id'		=> $topic_id,
 						'forum_id'		=> $forum_id,
-						'mark_type'		=> $type,
 						'mark_time'		=> $time
 					);
 
@@ -826,7 +804,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 // Obtain list of naughty words and build preg style replacement arrays for use by the
 // calling script, note that the vars are passed as references this just makes it easier
 // to return both sets of arrays
-function obtain_word_list(&$censors)
+function obtain_word_list()
 {
 	global $_CLASS;
 
@@ -835,39 +813,42 @@ function obtain_word_list(&$censors)
 		return;
 	}
 
-	if (($censors = $_CLASS['core_cache']->get('word_censors')) === false)
+	if (is_null($censors = $_CLASS['core_cache']->get('word_censors')))
 	{
 		$sql = 'SELECT word, replacement
 			FROM  ' . WORDS_TABLE;
 		$result = $_CLASS['core_db']->query($sql);
 
 		$censors = array();
+
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
 			$censors['replace'][] = $row['replacement'];
 		}
+
 		$_CLASS['core_db']->free_result($result);
+
 		$_CLASS['core_cache']->put('word_censors', $censors);
 	}
 
-	return true;
+	return $censors;
 }
 
-// Obtain currently listed icons, re-caching if necessary
-function obtain_icons(&$icons)
+// Obtain icons
+function obtain_icons()
 {
 	global $_CLASS;
 
-	if (($icons = $_CLASS['core_cache']->get('icons')) === false )
+	if (is_null($icons = $_CLASS['core_cache']->get('icons')))
 	{
-		// Topic icons
 		$sql = 'SELECT *
 			FROM ' . ICONS_TABLE . ' 
 			ORDER BY icons_order';
 		$result = $_CLASS['core_db']->query($sql);
 
 		$icons = array();
+
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$icons[$row['icons_id']]['img'] = $row['icons_url'];
@@ -875,16 +856,17 @@ function obtain_icons(&$icons)
 			$icons[$row['icons_id']]['height'] = (int) $row['icons_height'];
 			$icons[$row['icons_id']]['display'] = (bool) $row['display_on_posting'];
 		}
+
 		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_cache']->put('icons', $icons);
 	}
 
-	return;
+	return $icons;
 }
 
 // Obtain ranks
-function obtain_ranks(&$ranks)
+function obtain_ranks()
 {
 	global $_CLASS;
 
@@ -918,6 +900,8 @@ function obtain_ranks(&$ranks)
 
 		$_CLASS['core_cache']->put('ranks', $ranks);
 	}
+
+	return $ranks;
 }
 
 // Obtain allowed extensions
@@ -1195,20 +1179,16 @@ function bump_topic_allowed($forum_id, $topic_bumped, $last_post_time, $topic_po
 // Censoring
 function censor_text($text)
 {
-	global $censors, $_CLASS;
+	global $_CLASS;
 
-	if (!isset($censors))
+	if ($_CLASS['core_user']->is_user && !$_CLASS['core_user']->optionget('viewcensors'))
 	{
-		$censors = array();
-
-		// For ANONYMOUS, this option should be enabled by default
-		if ($_CLASS['core_user']->optionget('viewcensors'))
-		{
-			obtain_word_list($censors);
-		}
+		return $text;
 	}
 
-	if (sizeof($censors) && $_CLASS['core_user']->optionget('viewcensors'))
+	$censors = obtain_word_list();
+
+	if (!empty($censors))
 	{
 		return preg_replace($censors['match'], $censors['replace'], $text);
 	}
@@ -1484,9 +1464,6 @@ function page_header()
 	// The following assigns all _common_ variables that may be used at any point
 	// in a template.
 	$_CLASS['core_template']->assign(array(
-		'SITENAME' 					=> $_CORE_CONFIG['global']['site_name'],
-		'SITE_DESCRIPTION' 			=> $_CORE_CONFIG['global']['slogan'],
-		'SCRIPT_NAME'                => substr($_CLASS['core_user']->url, 0, strpos($_CLASS['core_user']->url, '.')),
 		'LAST_VISIT_DATE' 			=> sprintf($_CLASS['core_user']->lang['YOU_LAST_VISIT'], $s_last_visit),
 		'CURRENT_TIME'				=> sprintf($_CLASS['core_user']->lang['CURRENT_TIME'], $_CLASS['core_user']->format_date(time(), false, true)),
 		'TOTAL_USERS_ONLINE' 		=> $l_online_users,
@@ -1526,7 +1503,9 @@ function page_header()
 		'S_CONTENT_ENCODING' 	=> $_CLASS['core_user']->lang['ENCODING'],
 		'S_CONTENT_DIR_LEFT' 	=> $_CLASS['core_user']->lang['LEFT'],
 		'S_CONTENT_DIR_RIGHT' 	=> $_CLASS['core_user']->lang['RIGHT'],
-		'S_TIMEZONE'			=> ($_CLASS['core_user']->data['user_dst'] || (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['default_dst'])) ? sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], $_CLASS['core_user']->lang['tz']['dst']) : sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], ''),
+		//'S_TIMEZONE'			=> ($_CLASS['core_user']->data['user_dst'] || (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['default_dst'])) ? sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], $_CLASS['core_user']->lang['tz']['dst']) : sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], ''),
+		'S_TIMEZONE'			=> sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], ''),
+
 		'S_DISPLAY_ONLINE_LIST'	=> ($config['load_online']) ? 1 : 0, 
 		'S_DISPLAY_SEARCH'		=> ($config['load_search']) ? 1 : 0, 
 		'S_DISPLAY_PM'			=> ($config['allow_privmsg']) ? 1 : 0, 

@@ -192,9 +192,9 @@ class calender
 					WHERE start_date <= '. $day['end'] .' 
 					AND end_date >= '. $day['start'];
 					
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 		
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if ($row['recur'] && ($row['start_date'] < $day['start']))
 			{
@@ -220,7 +220,7 @@ class calender
 					'END_TIME'		=> $_CLASS['core_user']->format_date($end_time, 'g:i A'),
 			));
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		
 	}
 	
@@ -241,11 +241,11 @@ class calender
 					WHERE start_date <= '. $month['end'] .' 
 					AND end_date >= '. $month['start'];
 		
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$this->month_data_array = array_fill(1, $date[1], '');
 		
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			// Does time between start and end span more than one day ?
 			if (($row['end_date'] - $row['start_date']) >= 86400)
@@ -278,7 +278,7 @@ class calender
 			}
 		}
 		
-		$_CLASS['core_db']->sql_freeresult($result);		
+		$_CLASS['core_db']->free_result($result);		
 	}
 
 	function generate_days($start_time, $end_time, $start_date, $end_date, $recurring = 86400)
@@ -333,14 +333,16 @@ class calender
 		$sql = 'SELECT * FROM '. $this->table .'
 					WHERE id = '.$id;
 					
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 		
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		$time = explode(':', $row['start_time']);
-
-		$row['start_time'] = mktime($time[0], $time[1], 0, 0, 0, 0);
+		//echo $row['start_time'];
+// Needs fixing
+		$row['start_time'] = mktime($time[0], $time[1], 0, 0, 0, 2005);
+		//echo $row['start_time'];
 		$row['end_time'] = $row['start_time'] + $row['duration'];
 
 		return $row;

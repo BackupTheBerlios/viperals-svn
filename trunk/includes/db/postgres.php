@@ -11,7 +11,7 @@
 //																//
 //**************************************************************//
 
-class db_postgre
+class db_postgres
 {
 	var $link_identifier;
 	var $db_layer = 'postgre';
@@ -35,7 +35,7 @@ class db_postgre
 	function connect($db)
 	{		
 		$connection_string = array();
-//host, hostaddr, port, dbname, user, password, connect_timeout, options, tty
+
 		if ($db['server'])
 		{
 			if ($db['port'])
@@ -63,7 +63,7 @@ class db_postgre
 			$this->disconnect();
 		}
 
-		$connection_string = explode(' ', $connection_string);
+		$connection_string = implode(' ', $connection_string);
 
 		$this->link_identifier = ($db['persistency']) ? @pg_pconnect($connection_string) : @pg_connect($connection_string);
 
@@ -73,6 +73,8 @@ class db_postgre
 		}
 
 		$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
+
+		$this->disconnect();
 		trigger_error($error, E_USER_ERROR);
 
 		die;
@@ -170,7 +172,7 @@ class db_postgre
 
 		if ($this->last_result === false)
 		{
-			$this->_error($query);
+			$this->_error($query, $backtrace);
 		}
 		elseif (strpos($query, 'SELECT') !== false)
 		{
@@ -182,10 +184,10 @@ class db_postgre
 
 	function sql_query($query = false)
 	{
-		return @pg_query($this->link_identifier, $query);
+		return pg_query($this->link_identifier, $query);
 	}
 
-	function query_limit($query = false, $total = false, $offset = 0) 
+	function query_limit($query = false, $total = false, $offset = 0, $backtrace = false) 
 	{
 		if (!$query || !$total || !$this->link_identifier) 
 		{
@@ -194,7 +196,7 @@ class db_postgre
 
 		global $site_file_root;
 
-		$query .= ' LIMIT ' . (($offset) ? $offset . ', ' : '') . $total;
+		$query .= ' LIMIT '. $total . (($offset) ? ' OFFSET '.$offset : '');
 
 		if (!$backtrace)
 		{
@@ -206,7 +208,6 @@ class db_postgre
 
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
-		$query .= ' LIMIT '. $total . (($offset) ? ' OFFSET '.$offset : '');
 
 		return $this->query($query, $backtrace);
 	}
@@ -291,7 +292,7 @@ class db_postgre
 			return 0;
 		}
 
-		return $row;
+		return (int) $row;
 	}
 
 	function affected_rows()
@@ -301,9 +302,7 @@ class db_postgre
 			return 0; 
 		}
 
-		$num = mysql_affected_rows($this->link_identifier);
-
-		return (!$num || $num == -1) ? 0 : $num;
+		return (int) pg_affected_rows($this->last_result);
 	}
 
 	function fetch_row_assoc($result = false)
@@ -340,11 +339,23 @@ class db_postgre
 
 	function insert_id($table, $column)
 	{
-		//SELECT last_value FROM pg_get_serial_sequence('tablename','fieldname')
 		$oid = @pg_last_oid($this->last_result);
 	
-		if ($oid === false || (!($result = $this->query("SELECT $column FROM $table WHERE oid = $oid")))
+		if ($oid === false || !($result = $this->query("SELECT $column FROM $table WHERE oid = $oid")))
 		{
+			/* 
+			Shouldn't be need, but incase they don't have oid ( not sure why they wouldn't )
+			They can fall back to the less acurrate method, totally not recommended for active sites
+
+			if ($result = $this->query("SELECT last_value FROM pg_get_serial_sequence($table, $column)"))
+			{
+				$return = $this->fetch_row_assoc($result);
+				$this->free_result($result);
+				
+				$return['last_value'];
+			}
+			*/
+			
 			return false;
 		}
 
@@ -370,7 +381,7 @@ class db_postgre
 	{
 		return pg_escape_string($text);
 	}
-	
+
 	function optimize_tables($table = '')
 	{
 		global $_CORE_CONFIG;
@@ -407,6 +418,17 @@ class db_postgre
 		trigger_error($message, E_USER_ERROR);
 	}
 
+	function version()
+	{
+		if (!$this->link_identifier)
+		{
+			return false;
+		}
+
+		//$version = pg_version($this->link_identifier);
+		//return $version['client'];
+	}
+
 	function _debug($mode, $backtrace)
 	{
 		global $_CLASS, $_CORE_CONFIG;
@@ -422,27 +444,16 @@ class db_postgre
 			case 'start':
 				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
 				{
-					if (preg_match('/UPDATE ([a-z0-9_]+).*?WHERE(.*)/s', $this->last_query, $m))
+					if (strpos('SELECT', $this->last_query) === 0)
 					{
-						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $this->last_query, $m))
-					{
-						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					else
-					{
-						$explain_query = $this->last_query;
-					}
-
-					if (preg_match('/^SELECT/', $explain_query))
-					{
-						if ($result = @pg_query("EXPLAIN $explain_query", $this->link_identifier))
+						if ($result = @pg_query($this->link_identifier, 'EXPLAIN '.$this->last_query))
 						{
 							while ($row = @pg_fetch_assoc($result))
 							{
 								$this->query_details[$this->num_queries][] = $row;
 							}
+
+							@pg_free_result($result);
 						}
 					}
 					else
@@ -466,18 +477,13 @@ class db_postgre
 				{
 					if ($this->last_result !== false)
 					{
-						$affected = false;
+						$affected = preg_match('/^(UPDATE|DELETE|REPLACE)/', $this->last_query) ? $this->affected_rows() : 0;
 
-						if (preg_match('/^(UPDATE|DELETE|REPLACE)/', $this->last_query))
-						{
-							$affected = $this->affected_rows($this->last_result);
-						}
-						
 						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'affected' => $affected, 'time' => ($end_time - $start_time));
 					}
 					else
 					{
-						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> mysqli_error($this->link_identifier));
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> pg_last_error($this->link_identifier));
 					}
 				}
 			break;
@@ -493,7 +499,7 @@ class db_postgre
 		{
 			case 'start':
 				$this->table_name = $name;
-				$this->_fields = array();
+				$this->_fields = $this->_indexs = array();
 				$this->_table_oid = false;
 			break;
 
@@ -507,7 +513,7 @@ class db_postgre
 				$fields = implode(", \n", $this->_fields);
 				$indexs = ($this->_indexs) ? "\n\n".implode("\n", $this->_indexs) :  '';
 
-				$oid = ($this->_table_oid) = ' WITH OIDS' : ' WITHOUT OIDS';
+				$oid = ($this->_table_oid) ? ' WITH OIDS' : ' WITHOUT OIDS';
 
 				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields." \n )\n$oid;$indexs";
 
@@ -519,8 +525,8 @@ class db_postgre
 				$this->sql_query($table);
 
 			case 'cancel':
-				$this->table_name $this->_table_oid = false;
-				$this->_fields = array();
+				$this->table_name = $this->_table_oid = false;
+				$this->_fields = $this->_indexs = array();
 			break;
 		}
 	}
@@ -552,11 +558,11 @@ class db_postgre
 		}
 		else
 		{
-			$this->_fields[$name] .= "NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= " NOT NULL DEFAULT '".(int) $default."'";
 		}
 	}
 
-	function add_table_field_text($name, $characters, $null = false)
+	function add_table_field_text($name, $characters, $null = true)
 	{
 		$this->_fields[$name] =  "$name TEXT".(($null) ? " NULL" : " NOT NULL");
 		//$this->_fields[$name] =  "$name TEXT DEFAULT '' ".(($null) ? " NULL" : " NOT NULL");
@@ -564,30 +570,16 @@ class db_postgre
 
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
-		if ($padded)
-		{
-			$this->_fields[$name] =  "$name CHAR($characters)";
-		}
-		else
-		{
-			$this->_fields[$name] =  "$name VARCHAR($characters)";
-		}
-
-		if (is_null($default))
-		{
-			$this->_fields[$name] .= " NULL";
-		}
-		else
-		{
-			$this->_fields[$name] .= " NOT NULL DEFAULT '$default'";
-		}
+		$this->_fields[$name] =  ($padded) ? "$name CHAR($characters)" : "$name VARCHAR($characters)";
+		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		static $primary_key = false;
 
-		$index_name = ($index_name) ? $index_name : $field;
+		$index_name = $this->table_name.'_'.(($index_name) ? $index_name : $field) ;
+		//$index_name = ($index_name) ? $index_name : $field ;
 
 		if (empty($this->_fields[$field]))
 		{
@@ -599,7 +591,7 @@ class db_postgre
 			case 'index':
 			case 'unique':
 				//CREATE INDEX a ON test USING btree (a)
-				$this->_indexs[$index_name] = (($type == 'CREATE UNIQUE') ? 'CREATE UNIQUE ' : '') . "INDEX $index_name ON {$this->table_name} ($field);";
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->table_name} ($field);";
 			break;
 
 			case 'primary':

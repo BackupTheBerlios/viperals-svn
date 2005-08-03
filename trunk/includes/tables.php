@@ -31,7 +31,7 @@ define('AVATAR_GALLERY', 3);
 
 define('USER_NORMAL', 0);
 define('USER_INACTIVE', 1);
-define('USER_IGNORE', 2);
+define('USER_UNACTIVATED', 2);
 define('USER_FOUNDER', 3);
 define('USER_BOT_ACTIVE', 4);
 define('USER_BOT_INACTIVE', 5);
@@ -76,7 +76,7 @@ define('GROUP_HIDDEN', 2);
 define('GROUP_SPECIAL', 3);
 define('GROUP_FREE', 4);
 
-// Group status settings
+// status settings
 define('STATUS_PENDING', 0);
 define('STATUS_NORMAL', 1);
 define('STATUS_LEADER', 2);
@@ -89,6 +89,7 @@ define('FORUM_LINK', 2);
 define('ITEM_UNLOCKED', 0);
 define('ITEM_LOCKED', 1);
 define('ITEM_MOVED', 2);
+define('ITEM_DELETING', 3);
 
 // Topic types
 define('POST_NORMAL', 0);
@@ -155,73 +156,76 @@ define('FIELD_DROPDOWN', 5);
 define('FIELD_DATE', 6);
 
 
-define('AUTH_ADMIN_TABLE', $prefix.'_admins');
-define('BLOCKS_TABLE', $prefix.'_blocks');
-define('MODULE_TABLE', $prefix.'_blocks');
+define('AUTH_ADMIN_TABLE', $prefix.'admins');
+define('BLOCKS_TABLE', $prefix.'blocks');
+define('USER_GROUP_TABLE', $prefix.'groups_users');
+define('CORE_CONFIG_TABLE', $prefix.'config');
+define('CORE_MODULES_TABLE', $prefix.'modules');
+
 
 // Table names
-define('ACL_GROUPS_TABLE', $prefix.'_bb2auth_groups');
-define('ACL_OPTIONS_TABLE', $prefix.'_bb2auth_options');
-define('ACL_DEPS_TABLE', $prefix.'_bb2auth_deps');
-define('ACL_PRESETS_TABLE', $prefix.'_bb2auth_presets');
-define('ACL_USERS_TABLE', $prefix.'_bb2auth_users');
-define('ATTACHMENTS_TABLE', $prefix.'_bb2attachments');
-define('BANLIST_TABLE', $prefix.'_bb2banlist');
-define('BBCODES_TABLE', $prefix.'_bb2bbcodes');
-define('BOOKMARKS_TABLE', $prefix.'_bb2bookmarks');
-define('BOTS_TABLE', $prefix.'_bb2bots');
-define('CACHE_TABLE', $prefix.'_bb2cache');
-define('CONFIG_TABLE', $prefix.'_bb2config');
-define('CORE_CONFIG_TABLE', $prefix.'_core_config');
-define('CORE_MODULES_TABLE', $prefix.'_modules');
-define('CONFIRM_TABLE', $prefix.'_bb2confirm');
-define('PROFILE_FIELDS_TABLE', $prefix.'_bb2profile_fields');
-define('PROFILE_LANG_TABLE', $prefix.'_bb2profile_lang');
-define('PROFILE_DATA_TABLE', $prefix.'_bb2profile_fields_data');
-define('PROFILE_FIELDS_LANG_TABLE', $prefix.'_bb2profile_fields_lang');
-define('DISALLOW_TABLE', $prefix.'_bb2disallow');
-define('DRAFTS_TABLE', $prefix.'_bb2drafts');
-define('EXTENSIONS_TABLE', $prefix.'_bb2extensions');
-define('EXTENSION_GROUPS_TABLE', $prefix.'_bb2extension_groups');
-define('FORUMS_TABLE', $prefix.'_bb2forums');
-define('FORUMS_ACCESS_TABLE', $prefix.'_bb2forum_access');
-define('FORUMS_TRACK_TABLE', $prefix.'_bb2forums_marking');
-define('FORUMS_WATCH_TABLE', $prefix.'_bb2forums_watch');
-define('GROUPS_TABLE', $prefix.'_groups');
-define('ICONS_TABLE', $prefix.'_bb2icons');
-define('LANG_TABLE', $prefix.'_bb2lang');
-define('LOG_TABLE', $prefix.'_bb2log');
-define('MODERATOR_TABLE', $prefix.'_bb2moderator_cache');
-define('MODULES_TABLE', $prefix . '_bb2modules');
-define('POSTS_TABLE', $prefix.'_bb2posts');
-define('PRIVMSGS_TABLE', $prefix.'_bb2privmsgs');
-define('PRIVMSGS_TO_TABLE', $prefix.'_bb2privmsgs_to');
-define('PRIVMSGS_FOLDER_TABLE', $prefix.'_bb2privmsgs_folder');
-define('PRIVMSGS_RULES_TABLE', $prefix.'_bb2privmsgs_rules');
-define('RANKS_TABLE', $prefix.'_bb2ranks');
-define('RATINGS_TABLE', $prefix.'_bb2ratings');
-define('REPORTS_TABLE', $prefix.'_bb2reports');
-define('REASONS_TABLE', $prefix.'_bb2reports_reasons');
-define('SEARCH_TABLE', $prefix.'_bb2search_results');
-define('SEARCH_WORD_TABLE', $prefix.'_bb2search_wordlist');
-define('SEARCH_MATCH_TABLE', $prefix.'_bb2search_wordmatch');
-define('SESSIONS_TABLE', $prefix.'_sessions');
-define('SITELIST_TABLE', $prefix.'_bb2sitelist');
-define('SMILIES_TABLE', $prefix.'_smilies');
-define('STYLES_TABLE', $prefix.'_bb2styles');
-define('STYLES_TPL_TABLE', $prefix.'_bb2styles_template');
-define('STYLES_TPLDATA_TABLE', $prefix.'_bb2styles_template_data');
-define('STYLES_CSS_TABLE', $prefix.'_bb2styles_theme');
-define('STYLES_IMAGE_TABLE', $prefix.'_bb2styles_imageset');
-define('TOPICS_TABLE', $prefix.'_bb2topics');
-define('TOPICS_TRACK_TABLE', $prefix.'_bb2topics_marking');
-define('TOPICS_WATCH_TABLE', $prefix.'_bb2topics_watch');
-define('USER_GROUP_TABLE', $prefix.'_user_group');
-define('USERS_TABLE', $prefix.'_users');
-define('USERS_NOTES_TABLE', $prefix.'_bb2users_notes');
-define('WORDS_TABLE', $prefix.'_bb2words');
-define('POLL_OPTIONS_TABLE', $prefix.'_bb2poll_results');
-define('POLL_VOTES_TABLE', $prefix.'_bb2poll_voters');
-define('ZEBRA_TABLE', $prefix.'_bb2zebra');
+//define('ACL_GROUPS_TABLE', $prefix.'forums_auth_groups');
+define('ACL_TABLE', $prefix.'forums_auth');
+
+define('ACL_OPTIONS_TABLE', $prefix.'forums_auth_options');
+define('ACL_DEPS_TABLE', $prefix.'forums_auth_deps');
+define('ACL_PRESETS_TABLE', $prefix.'forums_auth_presets');
+//define('ACL_USERS_TABLE', $prefix.'forums_auth_users');
+define('ATTACHMENTS_TABLE', $prefix.'forums_attachments');
+define('BANLIST_TABLE', $prefix.'forums_banlist');
+define('BBCODES_TABLE', $prefix.'forums_bbcodes');
+define('BOOKMARKS_TABLE', $prefix.'forums_bookmarks');
+define('BOTS_TABLE', $prefix.'forums_bots');
+define('CACHE_TABLE', $prefix.'forums_cache');
+define('CONFIG_TABLE', $prefix.'forums_config');
+define('CONFIRM_TABLE', $prefix.'forums_confirm');
+define('PROFILE_FIELDS_TABLE', $prefix.'forums_profile_fields');
+define('PROFILE_LANG_TABLE', $prefix.'forums_profile_lang');
+define('PROFILE_DATA_TABLE', $prefix.'forums_profile_fields_data');
+define('PROFILE_FIELDS_LANG_TABLE', $prefix.'forums_profile_fields_lang');
+define('DISALLOW_TABLE', $prefix.'forums_disallow');
+define('DRAFTS_TABLE', $prefix.'forums_drafts');
+define('EXTENSIONS_TABLE', $prefix.'forums_extensions');
+define('EXTENSION_GROUPS_TABLE', $prefix.'forums_extension_groups');
+define('FORUMS_TABLE', $prefix.'forums_forums');
+define('FORUMS_ACCESS_TABLE', $prefix.'forums_access');
+define('GROUPS_TABLE', $prefix.'groups');
+define('ICONS_TABLE', $prefix.'forums_icons');
+define('LANG_TABLE', $prefix.'forums_lang');
+define('LOG_TABLE', $prefix.'forums_log');
+define('MODERATOR_TABLE', $prefix.'forums_moderator_cache');
+define('MODULES_TABLE', $prefix . 'forums_modules');
+define('POSTS_TABLE', $prefix.'forums_posts');
+define('PRIVMSGS_TABLE', $prefix.'forums_privmsgs');
+define('PRIVMSGS_TO_TABLE', $prefix.'forums_privmsgs_to');
+define('PRIVMSGS_FOLDER_TABLE', $prefix.'forums_privmsgs_folder');
+define('PRIVMSGS_RULES_TABLE', $prefix.'forums_privmsgs_rules');
+define('RANKS_TABLE', $prefix.'forums_ranks');
+define('RATINGS_TABLE', $prefix.'forums_ratings');
+define('REPORTS_TABLE', $prefix.'forums_reports');
+define('REASONS_TABLE', $prefix.'forums_reports_reasons');
+define('SEARCH_TABLE', $prefix.'forums_search_results');
+define('SEARCH_WORD_TABLE', $prefix.'forums_search_wordlist');
+define('SEARCH_MATCH_TABLE', $prefix.'forums_search_wordmatch');
+define('SESSIONS_TABLE', $prefix.'sessions');
+define('SITELIST_TABLE', $prefix.'forums_sitelist');
+define('SMILIES_TABLE', $prefix.'smilies');
+define('STYLES_TABLE', $prefix.'forums_styles');
+define('STYLES_TPL_TABLE', $prefix.'forums_styles_template');
+define('STYLES_TPLDATA_TABLE', $prefix.'forums_styles_template_data');
+define('STYLES_CSS_TABLE', $prefix.'forums_styles_theme');
+define('STYLES_IMAGE_TABLE', $prefix.'forums_styles_imageset');
+define('TOPICS_TABLE', $prefix.'forums_topics');
+define('USERS_TABLE', $prefix.'users');
+define('USERS_NOTES_TABLE', $prefix.'forums_users_notes');
+define('WORDS_TABLE', $prefix.'forums_words');
+define('POLL_OPTIONS_TABLE', $prefix.'forums_poll_results');
+define('POLL_VOTES_TABLE', $prefix.'forums_poll_voters');
+define('ZEBRA_TABLE', $prefix.'forums_zebra');
+
+//define('TOPICS_WATCH_TABLE', $prefix.'forums_topics_watch');
+
+define('FORUMS_WATCH_TABLE', $prefix.'forums_watch');
+define('FORUMS_TRACK_TABLE', $prefix.'forums_tracking');
 
 ?>

@@ -101,6 +101,20 @@ class core_display
 		Handles displaying of the Basic top section of site ( Top messages and blocks ).
 		Also calls themes header $this->headers(); with should handle side blocks extra.
 	*/
+	function display($title, $template = false)
+	{
+		global $_CLASS, $_CORE_MODULE;
+
+		$_CORE_MODULE['title'] = $title;
+		
+		if ($template)
+		{
+			$_CLASS['core_template']->display($template);
+		}
+
+		script_close();
+	}
+
 	function display_header($title = false)
 	{
 		global $_CLASS, $_CORE_CONFIG, $_CORE_MODULE;
@@ -138,11 +152,6 @@ class core_display
 		}
 
 		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'backend.php?feed=rdf" />';
-
-		if ($_CORE_CONFIG['global']['block_frames'])
-		{
-			$this->header['js'] .= '<script type="text/javascript">if (self != top) top.location.replace(self.location)</script>';
-		}
 
 		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['start'] < time())
 		{
@@ -265,8 +274,10 @@ class core_display
 	{
 		$this->theme_name = $theme;
 		$this->theme_path = $path;
-
+		
 		$theme .= '_theme';
+	
+		require_once($path.'/index.php');
 
 		$this->theme = new $theme();
 	}

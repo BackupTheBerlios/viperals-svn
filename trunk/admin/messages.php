@@ -89,25 +89,32 @@ switch (get_variable('mode', 'GET', false))
 		message_admin();
 }
 
-die;
+script_close(false);
 
 function message_admin()
 {
     global $prefix, $_CLASS;
 
-    $result = $_CLASS['core_db']->sql_query('SELECT id, position, title, time, weight, active, expires FROM '.BLOCKS_TABLE.'
+    $result = $_CLASS['core_db']->query('SELECT id, position, title, start, weight, active, expires FROM '.BLOCKS_TABLE.'
 					WHERE position IN ('.BLOCK_MESSAGE_TOP.', '.BLOCK_MESSAGE_BOTTOM.') 
-						ORDER BY weight DESC');
+						ORDER BY weight ASC');
 	$block_position = array(BLOCK_MESSAGE_TOP => 'top', BLOCK_MESSAGE_BOTTOM => 'bottom');
-	$weigth = array();
+	$in_position = false;
+	$messages = array();
 
-    while($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
     {
-		if (empty($weigth[$row['position']]))
+		if ($in_position != $row['position'])
 		{
 			$weigth[$row['position']] = $row['weight'];
+			$in_position == $row['position'];
 		}
-		
+		$messages[] = $row;
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	foreach ($messages as $row)
+	{
 		$_CLASS['core_template']->assign_vars_array($block_position[$row['position']].'_admin_messages', array(
 			'ACTIVE'		=> ($row['active']) ? true : false,
 			'CHANGE'		=> ($row['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
@@ -118,20 +125,20 @@ function message_admin()
 			'EDIT_LINK'		=> generate_link('messages&amp;mode=edit&amp;id='.$row['id'], array('admin' => true)),
 			'DELETE_LINK' 	=> generate_link('messages&amp;mode=delete&amp;id='.$row['id'], array('admin' => true)),
 
-			'EXPIRES'		=> ($row['expires']) ? $_CLASS['core_user']->format_date($row['expires']) : false,
-			'STARTS'		=> ($row['time'] > time()) ? $_CLASS['core_user']->format_date($row['time']) : false,
+			'EXPIRES'		=> ($row['expires'] && ($row['expires'] < $_CLASS['core_user']->time)) ? $_CLASS['core_user']->format_date($row['expires']) : false,
+			'STARTS'		=> ($row['start'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['start']) : false,
 			'TITLE'			=> $row['title'],
 
-			'WEIGHT_UP' 		=> ($row['weight'] < $weigth[$row['position']]) ? true : false,
-			'WEIGHT_DOWN'		=> ($row['weight'] > 1) ? true : false,
+			'WEIGHT_DOWN' 		=> ($row['weight'] < $weigth[$row['position']]),
+			'WEIGHT_UP'		=> ($row['weight'] > 1),
 
-			'WEIGHT_MOVE_UP' 	=> generate_link('messages&amp;mode=weight&amp;option=down&amp;bid='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_TOP' 	=> generate_link('messages&amp;mode=weight&amp;option=top&amp;bid='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_DOWN'	=> generate_link('messages&amp;mode=weight&amp;option=down&amp;bid='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_BOTTOM'=> generate_link('messages&amp;mode=weight&amp;option=bottom&amp;bid='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_UP' 	=> generate_link('messages&amp;mode=weight&amp;option=up&amp;id='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_TOP' 	=> generate_link('messages&amp;mode=weight&amp;option=top&amp;id='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_DOWN'	=> generate_link('messages&amp;mode=weight&amp;option=down&amp;id='.$row['id'], array('admin' => true)),
+			'WEIGHT_MOVE_BOTTOM'=> generate_link('messages&amp;mode=weight&amp;option=bottom&amp;id='.$row['id'], array('admin' => true)),
 		));
     }
-    $_CLASS['core_db']->sql_freeresult($result);
+    $_CLASS['core_db']->free_result($result);
 
     $_CLASS['core_template']->assign(array(
 		'L_ADD_NEW'			=> 'New Message',
@@ -140,9 +147,7 @@ function message_admin()
 		'B_ACTION'			=> generate_link('messages&amp;mode=add', array('admin' => true))
 	));
 
-    $_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/messages/index.html');
-	$_CLASS['core_display']->display_footer();
 }
 
 function message_delete($id)
@@ -151,9 +156,9 @@ function message_delete($id)
 
     if (get_variable('ok', 'GET', false))
     {
-		$result = $_CLASS['core_db']->sql_query('SELECT weight, position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-		$block = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT weight, position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$block = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (!$block)
 		{
@@ -162,8 +167,8 @@ function message_delete($id)
 		
 		check_position($block['position']);
 				
-        $result = $_CLASS['core_db']->sql_query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
-        $_CLASS['core_db']->sql_query('DELETE from '.BLOCKS_TABLE.' where id='.$id);
+        $result = $_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
+        $_CLASS['core_db']->query('DELETE from '.BLOCKS_TABLE.' where id='.$id);
 
         $_CLASS['core_cache']->destroy('blocks');
 		url_redirect(generate_link('messages', array('admin' => true)));
@@ -187,9 +192,9 @@ function message_edit($block = false, $error = false)
 
 	if (isset($_REQUEST['id']) && $id = get_id())
 	{
-		$result = $_CLASS['core_db']->sql_query('SELECT * FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-		$block = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$block = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		if (!$block)
 		{
@@ -214,8 +219,8 @@ function message_edit($block = false, $error = false)
 		'B_ACTIVE'			=> $block['active'],
 		'B_EXPIRES'			=> is_numeric($block['expires']) ? $_CLASS['core_user']->format_date($block['expires'], 'M d, Y h:i a') : $block['expires'],
 		'B_ERROR'			=> $error,
-		'B_STARTS'			=> is_numeric($block['time']) ? $_CLASS['core_user']->format_date($block['time'], 'M d, Y h:i a') : $block['time'],
-		'B_CURRENT_TIME'	=> $_CLASS['core_user']->format_date(time()),
+		'B_STARTS'			=> is_numeric($block['start']) ? $_CLASS['core_user']->format_date($block['start'], 'M d, Y h:i a') : $block['start'],
+		'B_CURRENT_TIME'	=> $_CLASS['core_user']->format_date($_CLASS['core_user']->time),
 		'B_POSITION'		=> message_position_select($block['position']),
 		'B_TYPE'			=> message_type_select($block['type']),
 		'B_DELETE_LINK'		=> ($id) ? generate_link('messages&amp;mode=delete&amp;id='.$id, array('admin' => true)) : false,
@@ -223,9 +228,7 @@ function message_edit($block = false, $error = false)
 		)		
 	);
 	
-	$_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/messages/edit.html');
-	$_CLASS['core_display']->display_footer();		
 }
 
 function messages_get_data(&$data, &$error)
@@ -253,7 +256,7 @@ function messages_get_data(&$data, &$error)
 	
 	$data['active']		= get_variable('active', 'POST', 0);
 	$data['expires']	= get_variable('expires', 'POST', 0);
-	$data['time']		= get_variable('time', 'POST', '');
+	$data['start']		= get_variable('time', 'POST', '');
 	$data['position']	= get_variable('b_position', 'POST', BLOCK_MESSAGE_TOP, 'integer');
 	$data['type'] 		= (int) get_variable('b_type', 'REQUEST', BLOCKTYPE_MESSAGE);
 
@@ -269,13 +272,13 @@ function messages_get_data(&$data, &$error)
 		$data['position'] = BLOCK_MESSAGE_TOP;
 	}
 	
-	$time = $expires = '';
+	$start = $expires = '';
 
-	if ($data['time'])
+	if ($data['start'])
 	{
-		$time = strtotime($data['time']);
+		$start = strtotime($data['start']);
 
-		if (!$time || $time == -1)
+		if (!$start || $start == -1)
 		{
 			$error .= $_CLASS['core_user']->lang['ERROR_START_TIME'].'<br />';
 		}
@@ -293,8 +296,8 @@ function messages_get_data(&$data, &$error)
 	
 	if (!$error)
 	{
-		$data['time'] = $time;
-		$data['expires'] = $expires;
+		$data['start'] = ($start) ? $_CLASS['core_user']->time_convert($start, 'gmt') : 0;
+		$data['expires'] = ($expires) ? $_CLASS['core_user']->time_convert($expires, 'gmt') : 0;
 	}
 }
 
@@ -304,9 +307,9 @@ function message_save()
     
 	if (isset($_REQUEST['id']) && $id = get_id())
 	{
-		$result = $_CLASS['core_db']->sql_query('SELECT position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-		$block = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$block = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		if (!$block)
 		{
@@ -324,7 +327,7 @@ function message_save()
 	
 		$sql = 'UPDATE '.BLOCKS_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE id='.$id;
 
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 	else
 	{
@@ -335,15 +338,15 @@ function message_save()
 			return message_edit($data, $error);
 		}
 
-		$result = $_CLASS['core_db']->sql_query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
-		$maxweight = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
+		$maxweight = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$data['weight'] = (int) $maxweight['weight'] + 1;
 
 		$sql = 'INSERT INTO '.BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
 
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	$_CLASS['core_cache']->destroy('blocks');

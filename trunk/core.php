@@ -74,51 +74,6 @@ $_CLASS['core_db']->return_on_error = true;
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
-if (is_null($config = $_CLASS['core_cache']->get('config')))
-{
-	$config = $cached_config = array();
-
-	$sql = 'SELECT config_name, config_value, is_dynamic
-		FROM ' . CONFIG_TABLE;
-			
-	if (!$result = $_CLASS['core_db']->query($sql))
-	{
-		trigger_error($config_error, E_USER_ERROR);
-	}
-	
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		if (!$row['is_dynamic'])
-		{
-			$cached_config[$row['config_name']] = $row['config_value'];
-		}
-
-		$config[$row['config_name']] = $row['config_value'];
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	$_CLASS['core_cache']->put('config', $cached_config);
-
-	unset($cached_config);
-}
-else
-{
-	$sql = 'SELECT config_name, config_value
-		FROM ' . CONFIG_TABLE . '
-		WHERE is_dynamic = 1';
-	$result = $_CLASS['core_db']->query($sql);
-	
-	if (is_array($result))
-	{
-		trigger_error($config_error, E_USER_ERROR);
-	}
-	
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		$config[$row['config_name']] = $row['config_value'];
-	}
-}
-
 if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 {
 	$_CORE_CONFIG = array();

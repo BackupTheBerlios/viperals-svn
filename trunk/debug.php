@@ -26,112 +26,58 @@ if (!$_CLASS['core_user']->is_admin)
 }
 
 $_CLASS['core_error_handler']->stop();
+$_CLASS['core_user']->user_setup();
 error_reporting(E_ALL);
 
-$_CLASS['core_debug'] = new debug();
-$_CLASS['core_debug']->display();
-	
-class debug
+$mode = get_variable('mode', 'GET', false);
+
+$_CLASS['core_template']->assign(array(
+	'MODE'				=>	$mode,
+	'L_NOTICES'			=>	'NOTICE ERRORS',
+	'L_WARNINGS'		=>	'WARNING ERRORS',
+	'L_QUERIES'			=>	'DB QUERY DETAILS',
+	'bottomblock'		=>	false,
+	'MAIN_CONTENT'		=>	false,
+));
+
+switch ($mode)
 {
-	function display()
-	{
+	case 'warning':
 		global $_CLASS;
-		$mode = get_variable('mode', 'GET', false);
-
-		switch ($mode)
+		
+		$debug_data = $_CLASS['core_user']->session_data_get('debug');
+		
+		if (empty($debug_data['E_WARNING']))
 		{
-			case 'notice':
-				$this->display_notice();
-				break;
-				
-			case 'warning':
-				$this->display_warning();
-				break;
-				
-			case 'queries':
-				$this->display_queries();
-				break;
-				
-			default:
-				$mode = 'notice';
-				$this->display_notice();
+			 break;
+		}
+
+		$size = count($debug_data['E_WARNING']);
+	
+		for ($i=0; $i<$size; $i++)
+		{
+			$_CLASS['core_template']->assign_vars_array('error_warnings', array(
+				'errfile'	=> $debug_data['E_WARNING'][$i]['file'],
+				'errline'	=> $debug_data['E_WARNING'][$i]['line'], 
+				'msg_text' => $debug_data['E_WARNING'][$i]['error']
+			));
 		}
 		
-	    $_CLASS['core_template']->assign(array(
-			'MODE'				=>	$mode,
-			'L_NOTICES'			=>	'NOTICE ERRORS',
-			'L_WARNINGS'		=>	'WARNING ERRORS',
-			'L_QUERIES'			=>	'DB QUERY DETAILS',
-			'bottomblock'		=>	false,
-			'MAIN_CONTENT'		=>	false,
-		));
-	
-		$_CLASS['core_template']->display('debug.html');
-		script_close(false);
-	}
-	
-	function display_notice()
-	{
-		global $_CLASS;
-		
-		$this->debug_data = $_CLASS['core_user']->get_data('debug');
+	break;
 
-		if (!empty($this->debug_data['E_NOTICE']))
-		{
+	case 'queries':
+		$query_details = $_CLASS['core_user']->session_data_get('query_details', array());
+		$query_list = $_CLASS['core_user']->session_data_get('query_list', array());
 
-			$size = count($this->debug_data['E_NOTICE']);
-			
-			for ($i = 0; $i < $size; $i++)
-			{
-				$_CLASS['core_template']->assign_vars_array('error_notice', array(
-					'errfile'	=> $this->debug_data['E_NOTICE'][$i]['file'],
-					'errline'	=> $this->debug_data['E_NOTICE'][$i]['line'], 
-					'msg_text' => $this->debug_data['E_NOTICE'][$i]['error']
-				));
-			}
-			
-			return;
-		}
-	}
-	
-	function display_warning()
-	{
-		global $_CLASS;
-		
-		$this->debug_data = $_CLASS['core_user']->get_data('debug');
-
-		if (!empty($this->debug_data['E_WARNING']))
-		{
-		
-			$size = count($this->debug_data['E_WARNING']);
-		
-			for ($i=0; $i<$size; $i++)
-			{
-				$_CLASS['core_template']->assign_vars_array('error_warnings', array(
-					'errfile'	=> $this->debug_data['E_WARNING'][$i]['file'],
-					'errline'	=> $this->debug_data['E_WARNING'][$i]['line'], 
-					'msg_text' => $this->debug_data['E_WARNING'][$i]['error']
-				));
-			}
-		}
-	}
-	
-	function display_queries()
-	{
-		global $_CLASS;
-		
-		$this->querydetails = $_CLASS['core_user']->get_data('querydetails');
-		$this->querylist = $_CLASS['core_user']->get_data('querylist');
-
-		foreach ($this->querylist as $key => $value)
+		foreach ($query_list as $key => $value)
 		{
 			$tempid = $first = false;
 			$header = array();
-
-			foreach ($this->querydetails[$key] as $value2)
+		
+			foreach ($query_details[$key] as $value2)
 			{
 				$queries = array();
-
+		
 				if (!is_array($value2))
 				{
 					continue;
@@ -163,12 +109,34 @@ class debug
 					}
 				}
 			}
-
+		
 			$value['query'] = preg_replace('/\t(AND|OR)(\W)/', "\$1\$2", htmlspecialchars(preg_replace('/[\s]*[\n\r\t]+[\n\r\s\t]*/', "\n", $value['query'])));
 
 			$_CLASS['core_template']->assign_vars_array('query', array('row' => $key, 'query' => $value['query'], 'header' => $header, 'queries' => $queries, 'file' => $value['file'], 'line' => $value['line'], 'affected' => $value['affected'], 'time' => round($value['time'], 4)));
 		}
-	}
+	break;
+	
+	default:
+	case 'notice':
+		$debug_data = $_CLASS['core_user']->session_data_get('debug');
+		
+		if (empty($debug_data['E_NOTICE']))
+		{
+			break;
+		}
+		$size = count($debug_data['E_NOTICE']);
+		
+		for ($i = 0; $i < $size; $i++)
+		{
+			$_CLASS['core_template']->assign_vars_array('error_notice', array(
+				'errfile'	=> $debug_data['E_NOTICE'][$i]['file'],
+				'errline'	=> $debug_data['E_NOTICE'][$i]['line'], 
+				'msg_text' => $debug_data['E_NOTICE'][$i]['error']
+			));
+		}
+	break;
 }
 
+$_CLASS['core_template']->display('debug.html');
+script_close(false);
 ?>

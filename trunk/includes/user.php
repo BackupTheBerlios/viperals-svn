@@ -15,7 +15,6 @@ class core_user extends sessions
 	var $timezone;
 	var $dst;
 
-	var $user_data_serialized = true;
 	var $user_setup = false;
 
 	var $lang_name;
@@ -58,7 +57,7 @@ class core_user extends sessions
 
 		if (!$gmtime)
 		{
-			$gmtime = gmtime();
+			return false;;
 		}
 
 		$format = (!$format) ? $this->date_format : $format;
@@ -178,7 +177,7 @@ class core_user extends sessions
 		}
 
 		$this->user_setup = true;
-
+		$this->data['user_unread_privmsg'] = 0; // TEMP
 		// Do the theme
 		$theme_prev = get_variable('theme_preview', 'REQUEST', false);
 		$theme = ($theme) ? $theme : $_CLASS['core_user']->session_data_get('user_theme');
@@ -227,29 +226,14 @@ class core_user extends sessions
 		}
 
 		$path = $site_file_root.'themes/'.$theme;
-		require_once($path.'/index.php');
-
+		
 		$_CLASS['core_display']->load_theme($theme, $path);
 
-// Redo by next commit
-		if ($this->data['user_id'] != ANONYMOUS)
-		{
-			$this->lang_name = file_exists($site_file_root.'language/' . $this->data['user_lang'] . '/common.php') ? $this->data['user_lang'] : $_CORE_CONFIG['global']['default_lang'];
-			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
+		$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
+		$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 
-			$this->date_format = $this->data['user_dateformat'];
-			$this->timezone = $this->data['user_timezone'] * 3600;
-			$this->dst = $this->data['user_dst'] * 3600;
-		}
-		else
-		{
-			$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
-			$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
-
-			$this->date_format = $_CORE_CONFIG['global']['default_dateformat'];
-			$this->timezone = $_CORE_CONFIG['global']['default_timezone'] * 3600;
-			$this->dst = $_CORE_CONFIG['global']['default_dst'] * 3600;
-		}
+		$this->date_format = ($this->data['user_dateformat']) ? $this->data['user_dateformat'] : $_CORE_CONFIG['global']['default_dateformat'];
+		$this->timezone = ($this->data['user_timezone']) ? $this->data['user_timezone'] : $_CORE_CONFIG['global']['default_timezone'];
 
 		require($this->lang_path . 'common.php');
 	}
@@ -356,25 +340,13 @@ class core_user extends sessions
 		include($site_file_root."modules/$module/language/$this->lang_name/$lang_file");		
 	}
 
-	function user_data_get($name)
+	function user_data_get($name, $default = false)
 	{
-		if ($this->user_data_serialized)
-		{
-			$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : array();
-			$this->user_data_serialized = false;
-		}
-
-		return (empty($this->data['user_data'][$name])) ? false : $this->data['user_data'][$name];
+		return (empty($this->data['user_data'][$name])) ? $default : $this->data['user_data'][$name];
 	}
 
 	function user_data_kill($name)
 	{
-		if ($this->user_data_serialized)
-		{
-			$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : '';
-			$this->user_data_serialized = false;
-		}
-
 		if (empty($this->data['user_data'][$name]))
 		{
 			return;
@@ -386,12 +358,6 @@ class core_user extends sessions
 
 	function user_data_set($name, $value, $save = false)
 	{
-		if ($this->user_data_serialized)
-		{
-			$this->data['user_data'] = ($this->data['user_data']) ? unserialize($this->data['user_data']) : '';
-			$this->user_data_serialized = false;
-		}
-
 		/*if (!empty($this->data['user_data'][$name]) && ($this->data['user_data'][$name] == $value))
 		{
 			return;

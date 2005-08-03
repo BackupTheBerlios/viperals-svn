@@ -60,6 +60,8 @@ class db_mysqli
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 		}
 
+		$this->disconnect();
+
 		trigger_error($error, E_USER_ERROR);
 		die;
 	}
@@ -425,22 +427,9 @@ class db_mysqli
 			case 'start':
 				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
 				{
-					if (preg_match('/UPDATE ([a-z0-9_]+).*?WHERE(.*)/s', $this->last_query, $m))
+					if (strpos('SELECT', $this->last_query) === 0)
 					{
-						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					elseif (preg_match('/DELETE FROM ([a-z0-9_]+).*?WHERE(.*)/s', $this->last_query, $m))
-					{
-						$explain_query = 'SELECT * FROM ' . $m[1] . ' WHERE ' . $m[2];
-					}
-					else
-					{
-						$explain_query = $this->last_query;
-					}
-
-					if (preg_match('/^SELECT/', $explain_query))
-					{
-						if ($result = @mysqli_query($this->link_identifier, "EXPLAIN $explain_query"))
+						if ($result = @mysqli_query($this->link_identifier, 'EXPLAIN '.$this->last_query))
 						{
 							while ($row = @mysqli_fetch_assoc($result))
 							{
@@ -611,21 +600,15 @@ class db_mysqli
 
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
-		if ($padded)
-		{
-			$this->fields[$name] =  "`$name` CHAR($characters)";
-		}
-		else
-		{
-			$this->fields[$name] =  "`$name` VARCHAR($characters)";
-		}
-
+		$this->fields[$name] =  ($padded) ? "`$name` CHAR($characters)" : "`$name` VARCHAR($characters)";
 		$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
+
+		//$field = (is_array($field)) ? $field : array($field);
 
 		if (empty($this->fields[$field]))
 		{

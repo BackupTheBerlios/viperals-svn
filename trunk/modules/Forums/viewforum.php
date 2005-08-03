@@ -68,10 +68,8 @@ else
 			$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
 		}
 
-		$sql_from = ($sql_lastread) ? '((' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ")) $sql_lastread)" : '(' . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))';
-
 		$sql = "SELECT f.*, fw.notify_status $lastread_select 
-			FROM $sql_from 
+			FROM " . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ") $sql_lastread
 			WHERE f.forum_id = $forum_id";
 }
 
@@ -79,11 +77,11 @@ $result = $_CLASS['core_db']->query($sql);
 $forum_data = $_CLASS['core_db']->fetch_row_assoc($result);
 $_CLASS['core_db']->free_result($result);
 
-if (!$forum_data ||  $forum_data['forum_status'] == ITEM_DELETING)
+if (!$forum_data || $forum_data['forum_status'] == ITEM_DELETING)
 {
 	trigger_error('NO_FORUM');
 }
-//echo $forum_data['mark_time'];
+
 // Check if links are checked for permission
 if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 {
@@ -287,7 +285,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	$sql_from = ($_CLASS['core_user']->is_user && $config['load_db_lastread']) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t ';
 
 	$sql_approved = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1';
-	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? ', tt.mark_type, tt.mark_time' : '';
+	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? ', tt.mark_time' : '';
 
 	if ($forum_data['forum_type'] == FORUM_POST)
 	{
@@ -417,10 +415,10 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			$folder_img = $folder_alt = $topic_type = '';
 			$unread_topic = topic_status($row, $replies, $mark_time, $folder_img, $folder_alt, $topic_type);
 			
-			$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
+			$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 			// Generate all the URIs ...
-			$view_topic_url = 'Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . "&amp;t=$topic_id";
+			$view_topic_url = 'Forums&amp;file=viewtopic&amp;t='.$topic_id;
 
 			// Send vars to template
 			$_CLASS['core_template']->assign_vars_array('topicrow', array(
@@ -431,7 +429,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
 				'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
 				'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
-				'PAGINATION'		=> topic_generate_pagination($replies, 'Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . "&amp;t=$topic_id"),
+				'PAGINATION'		=> topic_generate_pagination($replies, 'Forums&amp;file=viewtopic&amp;&amp;t='.$topic_id),
 				'REPLIES' 			=> $replies,
 				'VIEWS' 			=> $row['topic_views'],
 				'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
@@ -447,7 +445,6 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 
 				'S_TOPIC_TYPE'			=> $row['topic_type'], 
-				'S_USER_POSTED'			=> (!empty($row['mark_type'])) ? true : false, 
 				'S_UNREAD_TOPIC'		=> $unread_topic,
 
 				'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
