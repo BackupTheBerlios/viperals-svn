@@ -240,6 +240,25 @@ switch ($mode)
 		}
 
 		$statuslist = '<option value="' . ITEM_UNLOCKED . '"' . (($forum_status == ITEM_UNLOCKED) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['UNLOCKED'] . '</option><option value="' . ITEM_LOCKED . '"' . (($forum_status == ITEM_LOCKED) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['LOCKED'] . '</option>';
+$enable_icons = isset($enable_icons) ? $enable_icons : 0;
+$enable_indexing = isset($enable_indexing) ? $enable_indexing : 0;
+$enable_prune = isset($enable_prune) ? $enable_prune : 0;
+$display_on_index = isset($display_on_index) ? $display_on_index : 0;
+$forum_flags = isset($forum_flags) ? $forum_flags : 0;
+
+$bbcode_checked = isset($bbcode_checked) ? $bbcode_checked : false;
+$smilies_checked = isset($smilies_checked) ? $smilies_checked : false;
+$urls_checked = isset($urls_checked) ? $urls_checked : false;
+
+$old_forum_type = isset($old_forum_type) ? $old_forum_type : '';
+$forum_image = isset($forum_image) ? $forum_image : '';
+$prune_freq = isset($prune_freq) ? $prune_freq : '';
+$prune_days = isset($prune_days) ? $prune_days : '';
+$prune_viewed = isset($prune_viewed) ? $prune_viewed : '';
+$forum_link = isset($forum_link) ? $forum_link : '';
+
+$forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
+
 
 		$indexing_yes = ($enable_indexing) ? ' checked="checked"' : '';
 		$indexing_no = (!$enable_indexing) ? ' checked="checked"' : '';
@@ -413,7 +432,7 @@ switch ($mode)
 		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['FORUM_IMAGE']; ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['FORUM_IMAGE_EXPLAIN']; ?></span></td>
 		<td class="row2"><input class="post" type="text" size="40" name="forum_image" value="<?php echo $forum_image ?>" /><br /><?php
 	
-		if ($forum_image != '')
+		if ($forum_image)
 		{
 			echo '<img src="' . $forum_image . '" alt="" />';
 		}

@@ -49,7 +49,7 @@ class ucp_prefs extends module
 					}
 
 					$var_ary = array(
-						'dateformat'	=> array('string', false, 3, 15), 
+						//'dateformat'	=> array('string', false, 3, 15), 
 						'lang'			=> array('match', false, '#^[a-z_]{2,}$#i'),
 						'tz'			=> array('num', false, -13, 13),
 					);

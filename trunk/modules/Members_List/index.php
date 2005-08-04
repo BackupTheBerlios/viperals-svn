@@ -57,7 +57,7 @@ $sort_dir	= request_var('sd', 'a');
 $window		= false;
 
 // Grab rank information for later
-obtain_ranks($ranks);
+$ranks = obtain_ranks();
 
 // What do you want to do today? ... oops, I think that line is taken ...
 switch ($mode)

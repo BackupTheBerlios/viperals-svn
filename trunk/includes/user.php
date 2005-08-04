@@ -114,6 +114,10 @@ class core_user extends sessions
 // Error here, however this happen
 		}
 
+/*
+	Change to user_type user_status
+	Bitfields will not work for query purposes
+*/
 		$this->is_user	= ($this->data['user_type'] & USER_NORMAL);
 		$this->is_bot 	= ($this->data['user_type'] & USER_BOT);
 

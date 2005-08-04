@@ -282,7 +282,8 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Grab all topic data
 	$rowset = $announcement_list = $topic_list = array();
 
-	$sql_from = ($_CLASS['core_user']->is_user && $config['load_db_lastread']) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t ';
+	$sql_from = TOPICS_TABLE.' t ';
+	$sql_from .= ($_CLASS['core_user']->is_user && $config['load_db_lastread']) ? ' LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')' : '';
 
 	$sql_approved = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1';
 	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? ', tt.mark_time' : '';

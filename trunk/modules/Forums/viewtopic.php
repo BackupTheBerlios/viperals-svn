@@ -170,7 +170,7 @@ if ($_CLASS['core_user']->is_user)
 {
 	$extra_fields .= ', tw.notify_status';
 	$join_sql_table .= ' LEFT JOIN ' . FORUMS_WATCH_TABLE . ' tw ON (tw.user_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-		AND tw.forum_id = $forum_id AND tw.topic_id IN (t.topic_id, 0) )";
+		AND tw.forum_id = $forum_id AND tw.topic_id IN ($topic_id, 0) )";
 
 	if ($config['allow_bookmarks'])
 	{
@@ -691,10 +691,11 @@ if (empty($post_list))
 }
 
 $sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_regdate, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, z.friend, z.foe, p.*
-	FROM (' . POSTS_TABLE . ' p
-	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id)), ' . USERS_TABLE . ' u
+	FROM ' . POSTS_TABLE . ' p
+	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id), ' . USERS_TABLE . ' u
 	WHERE p.post_id IN (' . implode(', ', $post_list) . ')
 		AND u.user_id = p.poster_id';
+
 $result = $_CLASS['core_db']->query($sql);
 
 // Posts are stored in the $rowset array while $attach_list, $user_cache

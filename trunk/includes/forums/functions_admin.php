@@ -172,8 +172,8 @@ function get_forum_branch($forum_id, $type = 'all', $order = 'descending', $incl
 	$rows = array();
 
 	$sql = 'SELECT f2.*
-		FROM (' . FORUMS_TABLE . ' f1
-		LEFT JOIN ' . FORUMS_TABLE . " f2 ON $condition)
+		FROM ' . FORUMS_TABLE . ' f1
+		LEFT JOIN ' . FORUMS_TABLE . " f2 ON $condition
 		WHERE f1.forum_id = $forum_id
 		ORDER BY f2.left_id " . (($order == 'descending') ? 'ASC' : 'DESC');
 	$result = $_CLASS['core_db']->query($sql);

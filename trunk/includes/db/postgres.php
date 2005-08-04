@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -29,7 +31,7 @@ class db_postgres
 
 	var $_indexs = array();
 	var $_fields = array();
-	var $table_name;
+	var $_table_name;
 	var $_table_oid;
 
 	function connect($db)
@@ -65,7 +67,8 @@ class db_postgres
 
 		$connection_string = implode(' ', $connection_string);
 
-		$this->link_identifier = ($db['persistency']) ? @pg_pconnect($connection_string) : @pg_connect($connection_string);
+
+		$this->link_identifier = ($db['persistent']) ? @pg_pconnect($connection_string) : @pg_connect($connection_string);
 
 		if ($this->link_identifier)
 		{
@@ -263,7 +266,7 @@ class db_postgres
 				{
 					$values[] = "$key = '" . $this->escape($value) . "'";
 				}
-				elseif (is_null($var))
+				elseif (is_null($value))
 				{
 					$values[] = "$key = NULL";
 				}
@@ -498,14 +501,14 @@ class db_postgres
 		switch ($option)
 		{
 			case 'start':
-				$this->table_name = $name;
+				$this->_table_name = $name;
 				$this->_fields = $this->_indexs = array();
 				$this->_table_oid = false;
 			break;
 
 			case 'commit':
 			case 'return':
-				if (!$this->table_name)
+				if (!$this->_table_name)
 				{
 					return;
 				}
@@ -515,7 +518,7 @@ class db_postgres
 
 				$oid = ($this->_table_oid) ? ' WITH OIDS' : ' WITHOUT OIDS';
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields." \n )\n$oid;$indexs";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields." \n )\n$oid;$indexs";
 
 				if ($option == 'return')
 				{
@@ -525,7 +528,7 @@ class db_postgres
 				$this->sql_query($table);
 
 			case 'cancel':
-				$this->table_name = $this->_table_oid = false;
+				$this->_table_name = $this->_table_oid = false;
 				$this->_fields = $this->_indexs = array();
 			break;
 		}
@@ -578,20 +581,19 @@ class db_postgres
 	{
 		static $primary_key = false;
 
-		$index_name = $this->table_name.'_'.(($index_name) ? $index_name : $field) ;
-		//$index_name = ($index_name) ? $index_name : $field ;
-
 		if (empty($this->_fields[$field]))
 		{
 			return;
 		}
+
+		$index_name = $this->_table_name.'_'.(($index_name) ? $index_name : $field) ;
 
 		switch ($type)
 		{
 			case 'index':
 			case 'unique':
 				//CREATE INDEX a ON test USING btree (a)
-				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->table_name} ($field);";
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->_table_name} ($field);";
 			break;
 
 			case 'primary':
@@ -602,7 +604,7 @@ class db_postgres
 
 				$this->_fields[$field] .= ' PRIMARY KEY';
 
-				//$this->_indexs['primary'] = " UNIQUE INDEX {$this->table_name}_pkey ON {$this->table_name} ( $field )";
+				//$this->_indexs['primary'] = " UNIQUE INDEX {$this->_table_name}_pkey ON {$this->_table_name} ( $field )";
 			break;
 		}
 	}

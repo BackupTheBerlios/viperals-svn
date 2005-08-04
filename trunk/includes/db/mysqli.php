@@ -3,7 +3,9 @@
 //  Vipeal CMS:													//
 //**************************************************************//
 //																//
-//  Copyright © 2004 by Viperal									//
+//  Copyright 2004 - 2005										//
+//  By Ryan Marshall ( Viperal )								//
+//																//
 //  http://www.viperal.com										//
 //																//
 //  Viperal CMS is released under the terms and conditions		//
@@ -43,7 +45,7 @@ class db_mysqli
 			$this->disconnect();
 		}
 
-		$this->link_identifier = ($db['persistency']) ? @mysqli_pconnect($db['server'], $db['username'], $db['password']) : @mysqli_connect($db['server'], $db['username'], $db['password']);
+		$this->link_identifier = ($db['persistent']) ? @mysqli_pconnect($db['server'], $db['username'], $db['password']) : @mysqli_connect($db['server'], $db['username'], $db['password']);
 
 		if ($this->link_identifier)
 		{
@@ -272,14 +274,14 @@ class db_mysqli
 		}
 	}
 
-	function num_rows($query_id = false)
+	function num_rows($result = false)
 	{
-		if (!$query_id || !$this->link_identifier) 
+		if (!$result || !$this->link_identifier) 
 		{ 
 			return 0; 
 		}
 
-		return mysqli_num_rows($query_id);
+		return mysqli_num_rows($result);
 	}
 
 	function affected_rows()
@@ -331,16 +333,16 @@ class db_mysqli
 		return ($this->link_identifier) ? @mysqli_insert_id($this->link_identifier) : false;
 	}
 
-	function free_result($query_id = false)
+	function free_result($result = false)
 	{
-		if (!$query_id || !isset($this->open_queries[(string) $query_id]) || !$this->link_identifier) 
+		if (!$result || !isset($this->open_queries[(string) $result]) || !$this->link_identifier) 
 		{ 
 			return false; 
 		}
 
-		unset($this->open_queries[(string) $query_id]);
+		unset($this->open_queries[(string) $result]);
 
-		return @mysqli_free_result($query_id);
+		return @mysqli_free_result($result);
 	}
 
 	function escape($text)
@@ -501,7 +503,7 @@ class db_mysqli
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n );";
+				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')

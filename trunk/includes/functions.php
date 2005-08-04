@@ -689,7 +689,7 @@ function session_users()
 
 function strip_slashes($str)
 {
-	return (STRIP) ? stripslashes($str) : $str ;
+	return (STRIP_SLASHES) ? stripslashes($str) : $str ;
 }
 
 function theme_select($default = false)

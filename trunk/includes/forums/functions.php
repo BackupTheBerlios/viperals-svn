@@ -1487,8 +1487,7 @@ function page_header()
 		'S_CONTENT_ENCODING' 	=> $_CLASS['core_user']->lang['ENCODING'],
 		'S_CONTENT_DIR_LEFT' 	=> $_CLASS['core_user']->lang['LEFT'],
 		'S_CONTENT_DIR_RIGHT' 	=> $_CLASS['core_user']->lang['RIGHT'],
-		//'S_TIMEZONE'			=> ($_CLASS['core_user']->data['user_dst'] || (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['default_dst'])) ? sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], $_CLASS['core_user']->lang['tz']['dst']) : sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], ''),
-		'S_TIMEZONE'			=> sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz], ''),
+		'S_TIMEZONE'			=> ($_CLASS['core_user']->data['user_dst'] || (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['default_dst'])) ? sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz/3600], $_CLASS['core_user']->lang['tz']['dst']) : sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz/3600], ''),
 
 		'S_DISPLAY_ONLINE_LIST'	=> ($config['load_online']) ? 1 : 0, 
 		'S_DISPLAY_SEARCH'		=> ($config['load_search']) ? 1 : 0, 

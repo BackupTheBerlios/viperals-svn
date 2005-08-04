@@ -44,7 +44,7 @@ class ucp_main extends module
 						$_CLASS['core_db']->free_result($result);
 					}
 
-					$sql_from = '(' . TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))';
+					$sql_from = TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')';
 					$sql_select = ', tt.mark_time';
 
 				}
