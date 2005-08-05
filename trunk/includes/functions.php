@@ -12,7 +12,6 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-
 // Redo
 function check_email($email)
 {
@@ -47,7 +46,7 @@ function check_bot_status($browser, $ip)
 		
 		if ($is_bot)
 		{
-			if ($bot['user_type'] == USER_BOT_INACTIVE)
+			if ($bot['user_status'] == USER_DISABLE)
 			{
 				// How would this affect indexing ?
 				header("HTTP/1.0 503 Service Unavailable");
@@ -253,7 +252,7 @@ function get_bots()
 		$bots = array();
 		
 		$sql = 'SELECT user_id, username, user_agent, user_ip
-			FROM ' . USERS_TABLE . ' WHERE user_type IN (' . USER_BOT_ACTIVE . ', ' . USER_BOT_INACTIVE . ')';
+			FROM ' . USERS_TABLE . ' WHERE user_type = ' . USER_BOT;
 		$result = $_CLASS['core_db']->query($sql);
 			
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -268,25 +267,8 @@ function get_bots()
 	return $bots;
 }
 
-function get_variable($var_name, $type, $default = false, $vartype = 'string')
+function get_variable($var_name, $type, $default = false, $var_type = 'string')
 {
-/*	$type = "_$type";
-
-	global $$type;
-	
-// If linking works the way I think  it should be ok, else it could slow things down
-	$type =& $$type;
-	
-	if (isset($type[$var_name]) && !is_array($type[$var_name]))
-	{
-		return check_variable($type[$var_name], $default, $vartype);
-	}
-	else
-	{
-		return $default;
-	}
-	
-*/	
 	$variable = null;
 
 	switch ($type)
@@ -314,7 +296,7 @@ function get_variable($var_name, $type, $default = false, $vartype = 'string')
 	}
 	else
 	{
-		switch ($type)
+		switch ($var_type)
 		{
 		 	case 'integer':
 				$variable = is_numeric($variable) ? (int) $variable : $default;

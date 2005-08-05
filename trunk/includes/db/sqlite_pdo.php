@@ -13,10 +13,12 @@
 //																//
 //**************************************************************//
 
-class db_mysql
+// http://sourceforge.net/projects/sqlitemanager/
+class db_sqlite_pdo
 {
 	var $link_identifier = false;
-	var $db_layer = 'mysql4';
+	var $persistent;
+	var $db_layer = 'sqlite';
 
 	var $last_result;
 	var $return_on_error;
@@ -27,7 +29,6 @@ class db_mysql
 
 	var	$query_list = array();
 	var $query_details = array();
-	var $open_queries = array();
 
 	var $_indexs = array();
 	var $_fields = array();
@@ -35,46 +36,32 @@ class db_mysql
 
 	function connect($db)
 	{		
-		if ($db['port'])
-		{
-			$db['server'] .= ':' . $port;
-		}
-
 		if ($this->link_identifier)
 		{
 			$this->disconnect();
 		}
 
-		$this->link_identifier = ($db['persistent']) ? @mysql_pconnect($db['server'], $db['username'], $db['password']) : @mysql_connect($db['server'], $db['username'], $db['password']);
-
-		if ($this->link_identifier)
+		try
 		{
-			if (@mysql_select_db($db['database']))
-			{
-				return $this->link_identifier;
-			}
-
-			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
+			$this->link_identifier = new PDO('sqlite:'.$db['file'], '', '');
 		}
-		
-		if (!$error)
+		catch (PDOException $e)
 		{
-			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
+			trigger_error('Connection failed: ' . $e->getMessage());
 		}
 
-		$this->disconnect();
-
-		trigger_error($error, E_USER_ERROR);
+		//$this->sql_query('PRAGMA short_column_names = 1;');
+		//$this->sql_query('PRAGMA full_column_names = 0;');
 	}
 
 	function disconnect()
 	{
-		if (!$this->link_identifier)
+		if (!$this->link_identifier || $this->persistent)
 		{
 			return;
 		}
 
-		@mysql_close($this->link_identifier);
+		unset($this->link_identifier);
 		$this->link_identifier = false;
 	}
 
@@ -100,7 +87,8 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('START TRANSACTION', $this->link_identifier);
+				$result = $this->link_identifier->beginTransaction();
+
 				$this->in_transaction = true;
 			break;
 
@@ -111,11 +99,11 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('COMMIT', $this->link_identifier);
-				
+				$result = $this->link_identifier->commit();
+
 				if (!$result)
 				{
-					mysql_query('ROLLBACK', $this->link_identifier);
+					$this->link_identifier->rollBack();
 				}
 				
 				$this->in_transaction = false;
@@ -127,7 +115,7 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('ROLLBACK', $this->link_identifier);
+				$result = $this->link_identifier->rollBack();
 				$this->in_transaction = false;
 			break;
 		}
@@ -166,17 +154,13 @@ class db_mysql
 		{
 			$this->_error($query, $backtrace);
 		}
-		elseif (strpos($query, 'SELECT') !== false)
-		{
-			$this->open_queries[(int) $this->last_result] = $this->last_result;
-		}
 
 		return $this->last_result;
 	}
 
-	function sql_query($query = false)
+	function sql_query($query)
 	{
-		return @mysql_query($query, $this->link_identifier);
+		return $this->link_identifier->query($query);
 	}
 
 	function query_limit($query = false, $total = false, $offset = 0, $backtrace = false) 
@@ -270,7 +254,7 @@ class db_mysql
 			return 0; 
 		}
 
-		return mysql_num_rows($result);
+		return $this->link_identifier->columnCount();
 	}
 
 	function affected_rows()
@@ -280,9 +264,7 @@ class db_mysql
 			return 0; 
 		}
 
-		$num = mysql_affected_rows($this->link_identifier);
-
-		return (!$num || $num == -1) ? 0 : $num;
+		return (int) $this->last_result->rowCount();
 	}
 
 	function fetch_row_assoc($result = false)
@@ -294,7 +276,9 @@ class db_mysql
 			return false;
 		}
 
-		return @mysql_fetch_assoc($result);
+		$this->new_array = false;
+
+		return $result->fetch(PDO_FETCH_ASSOC);
 	}
 
 	function fetch_row_num($result = false)
@@ -304,7 +288,7 @@ class db_mysql
 			return false;
 		}
 
-		return @mysql_fetch_row($result);
+		return $result->fetch(PDO_FETCH_NUM);
 	}
 
 	function fetch_row_both($result = false)
@@ -314,73 +298,32 @@ class db_mysql
 			return false;
 		}
 
-		return @mysql_fetch_array($result);
+		return $result->fetch(PDO_FETCH_BOTH);
 	}
-	
+
 	function insert_id()
 	{
-		return ($this->link_identifier) ? @mysql_insert_id($this->link_identifier) : false;
+		return ($this->link_identifier) ? (int) $this->link_identifier->lastInsertId() : 0;
 	}
 
 	function free_result($result = false)
 	{
-		if (!$result || !isset($this->open_queries[(int) $result]) || !$this->link_identifier) 
-		{ 
-			return false; 
-		}
-
-		unset($this->open_queries[(int) $result]);
-
-		return @mysql_free_result($result);
+		return true;
 	}
 
-	function escape($test)
+	function escape($text)
 	{
-		if (function_exists('mysql_real_escape_string') && $this->link_identifier)
-		{
-			return mysql_real_escape_string($test, $this->link_identifier);
-		}
-		else
-		{
-			return mysql_escape_string($test);
-		}
+		$text = $this->link_identifier->quote($text);
+		$length = strlen($text) - 2;
+
+		return substr($text, 1, $length);
 	}
 
-	function escape_array($value)
-	{
-		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
-	}
-		
 	function optimize_tables($table = '')
 	{
 		global $_CORE_CONFIG;
-	
-		if ($table)
-		{
-			if (is_array($table))
-			{
-				$table = implode(',', $table);
-			}
-		}
-		else
-		{
-			$result = $this->query('SHOW TABLES');
 
-			while ($row = $this->fetch_row_num($result))
-			{
-				if ($table)
-				{
-					$table .= ', ' . $row[0];
-				}
-			}
-
-			$this->sql_freeresult($result);
-		}
-
-		if ($table)
-		{
-			$this->query('OPTIMIZE TABLE '. $table);
-		}
+		$this->sql_query('VACUUM');
 	}
 
 	function version($return_dbname = false)
@@ -390,7 +333,7 @@ class db_mysql
 			return false;
 		}
 		
-		return (($return_dbname) ? 'MySQL ' : '').mysql_get_server_info($this->link_identifier);
+		//return (($return_dbname) ? 'SQLITE ' : '').sqlite_libversion();
 	}
 
 	function _error($sql = '', $backtrace)
@@ -400,7 +343,9 @@ class db_mysql
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u><br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
+		$error = $this->link_identifier->errorInfo();
+
+		$message = '<u>SQL ERROR</u><br /><br />' . $error[2] . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
 
 		if ($this->in_transaction)
 		{
@@ -425,20 +370,8 @@ class db_mysql
 			case 'start':
 				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
 				{
-					if (strpos('SELECT', $this->last_query) === 0)
-					{
-						if ($result = @mysql_query('EXPLAIN '.$this->last_query, $this->link_identifier))
-						{
-							while ($row = @mysql_fetch_assoc($result))
-							{
-								$this->query_details[$this->num_queries][] = $row;
-							}
-						}
-					}
-					else
-					{
-						$this->query_details[$this->num_queries][] = '';
-					}
+					
+					$this->query_details[$this->num_queries][] = '';
 				}
 
 				$start_time = explode(' ', microtime());
@@ -467,8 +400,8 @@ class db_mysql
 					}
 					else
 					{
-						$error = mysql_error();
-						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> $error['code'], 'errorcode' => $error['message']);
+						$error = $this->link_identifier->errorInfo();
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> $error[2], 'errorcode' => $error[0]);
 					}
 				}
 			break;
@@ -495,20 +428,23 @@ class db_mysql
 				}
 
 				$fields = implode(", \n", $this->_fields);
-				if ($indexs = implode(", \n", $this->_indexs))
-				{
-					$fields .= ", \n";
-				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
-				// Let users choose transaction safe InnoDB or MyISAM
-				// ENGINE=MyISAM
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields." \n );";
+
 				if ($option == 'return')
 				{
-					return $table;
+					$indexs = ($this->_indexs) ? "\n\n".implode("\n", $this->_indexs) :  '';
+					return $table.$indexs;
 				}
 
+				// Have to create the table first then do the indexs
+				// I guess it's ....
 				$this->sql_query($table);
+
+				foreach ($this->_indexs as $query)
+				{
+					$this->sql_query($query);
+				}
 
 			case 'cancel':
 				$this->_table_name = false;
@@ -517,54 +453,15 @@ class db_mysql
 		}
 	}
 
-	function add_table_field_int($name, $number_min, $number_max = false, $default = 0, $auto_increment = false)
+	function add_table_field_int($name, $number_min, $number_max = false, $default = null, $auto_increment = false)
 	{
 		$length = max(strlen($number_min), strlen($number_max));
 
-		if ($number_min >= -0 && $number_max <= 255)
-		{
-			// TINYINT UNSIGNED ( 0 to 255 )
-			$this->_fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
-		}
-		elseif ($number_min >= -128 && $number_max <= 128)
-		{
-			// TINYINT ( -128 to 127 )
-			$this->_fields[$name] =  "`$name` TINYINT($length) DEFAULT";
-		}
-		elseif ($number_min >= 0 && $number_max <= 65535)
-		{
-			// SMALLINT UNSIGNED ( 0 to 65,535 )
-			$this->_fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
-		}
-		elseif ($number_min >= -32768 && $number_max <= 32767)
-		{
-			// SMALLINT ( -32,768 to 32,767 )
-			$this->_fields[$name] =  "`$name` SMALLINT($length)";
-		}
-		elseif ($number_min >= 0 && $number_max <= 16777215)
-		{
-			// MEDIUMINT UNSIGNED ( 0 to 16,777,215 )
-			$this->_fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
-		}
-		elseif ($number_min >= -8388608 && $number_max <= 8388607)
-		{
-			// MEDIUMINT ( -8,388,608 to 8,388,607 )
-			$this->_fields[$name] =  "`$name` MEDIUMINT($length)";
-		}
-		elseif ($number_min >= -2147483647 && $number_max <= 2147483647)
-		{
-			// INT ( -2,147,483,647 to 2,147,483,647 )
-			$this->_fields[$name] =  "`$name` INT($length)";
-		}
-		elseif ($number_min >= 0 && $number_max <= 4294967295) // we'll do this last
-		{
-			// INT UNSIGNED ( 0 to 4,294,967,295 )
-			$this->_fields[$name] =  "`$name` INT($length) UNSIGNED";
-		}
+		$this->_fields[$name] =  $name .' INTEGER';
 
 		if ($auto_increment)
 		{
-			$this->_fields[$name] .= ' auto_increment';
+			$this->_fields[$name] .= ' AUTOINCREMENT';
 		}
 		else
 		{
@@ -572,57 +469,46 @@ class db_mysql
 		}
 	}
 
-	function add_table_field_text($name, $characters = 60000, $null = false)
+	function add_table_field_text($name, $characters = 60000, $null = true)
 	{
-		if ($characters <= 255)
-		{
-			// TINYTEXT 1 to 255 Characters
-			$this->_fields[$name] =  "`$name` TINYTEXT";
-		}
-		elseif ($characters <= 65535)
-		{
-			// TEXT 1 to 65535 Characters
-			$this->_fields[$name] =  "`$name` TEXT";
-		}
-		elseif ($characters <= 16777215)
-		{
-			// MEDIUMTEXT 1 to 16,777,215 Characters
-			$this->_fields[$name] =  "`$name` MEDIUMTEXT";
-		}
-		elseif ($characters <= 4294967295)
-		{
-			// LONGTEXT 1 to 4,294,967,295 Characters
-			$this->_fields[$name] =  "`$name` LONGTEXT";
-		}
-
+		$this->_fields[$name] =  $name.' TEXT';
 		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 	}
 
-	function add_table_field_char($name, $characters, $default = '', $padded = false)
+	function add_table_field_char($name, $characters, $default = null, $padded = false)
 	{
 
-		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
+		$this->_fields[$name] =  $name.' TEXT';
 		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
-		$index_name = ($index_name) ? $index_name : $field;
-
 		if (empty($this->_fields[$field]))
 		{
 			return;
 		}
 
+		$index_name = $this->_table_name.'_'.(($index_name) ? $index_name : $field) ;
+
 		switch ($type)
 		{
 			case 'index':
-			case 'unique':
-				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
+			case 'unique'://CREATE INDEX group_id ON test_admins ( group_id ) ; 
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->_table_name} ( $field );";
 			break;
 
-			case 'primary':
-				$this->_indexs['primary'] = "PRIMARY KEY (`$field`)";
+			case 'primary'://13
+			
+				if ($pos = stripos($this->_fields[$field], ' AUTOINCREMENT'))
+				{
+					$this->_fields[$field] = substr($this->_fields[$field], 0, $pos);
+					$this->_fields[$field] .= ' PRIMARY KEY AUTOINCREMENT'; // AUTOINCREMENT isn't needed
+
+					break;
+				}
+
+				$this->_fields[$field] .= ' PRIMARY KEY';
 			break;
 		}
 	}

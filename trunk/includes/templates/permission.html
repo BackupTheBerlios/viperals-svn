@@ -2,21 +2,20 @@
 <form method="post" action="">
 	<table class="tablebg" border="0" cellpadding="0" cellspacing="1" width="100%">
 		<tbody>
+			<!-- IF { $P_CURRENT_GROUPS } || { $P_DCURRENT_GROUPS } -->
 			<tr>
-				<th colspan="2">{ $L_ALLOWED }</th>
+				<th colspan="2">{ $L_GROUPS }</th>
 			</tr>
 			<tr>
-				<td class="spacer" colspan="8" height="7"></td>
+				<td  class="row1" align="center">{ $L_DISALLOWED }</td>
+				<td  class="row1" align="center">{ $L_ALLOWED }</ttd>
 			</tr>
 			<tr>
-				<td>
+				<td align="center">
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
 							<tr>
-								<th>{ $L_REMOVE_USERS }</th>
-							</tr>
-							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="u_remove[]" multiple="multiple" size="5">{ $P_CURRENT_USERS }</select></td>
+								<td class="row1" align="center"><select style="width: 280px;" name="dg_current[]" multiple="multiple" size="5">{ $P_DCURRENT_GROUPS }</select></td>
 							</tr>
 						</tbody>
 					</table>
@@ -24,46 +23,47 @@
 				<td align="center">
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
+
 							<tr>
-								<th>{ $L_REMOVE_GROUPS }</th>
-							</tr>
-							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="g_remove[]" multiple="multiple" size="5">{ $P_CURRENT_GROUPS }</select></td>
+								<td class="row1" align="center"><select style="width: 280px;" name="g_current[]" multiple="multiple" size="5">{ $P_CURRENT_GROUPS }</select></td>
 							</tr>
 						</tbody>
 					</table>
 				</td>
 			</tr>
-			<tr>	
-				<td>
-					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
-						<tbody>
-							<tr>
-								<th>{ $L_ADD_USERS }</th>
-							</tr>
-							<tr>
-								<td class="row1" align="center"><textarea style="height: 68px;" cols="40" rows="4" name="u_add"></textarea></td>
-							</tr>
-		
-						</tbody>
-					</table>
-				</td>
-				<td>
-					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
-						<tbody>
-							<tr>
-								<th>{ $L_ADD_GROUPS }</th>
-							</tr>
-							<tr>
-								<td class="row1" style="height: 100%;" align="center"><select style="width: 280px;" name="g_add[]" multiple="multiple" size="6">{ $P_ADD_GROUPS }</select></td>
-							</tr>
-						</tbody>
-					</table>
-				</td>
+			<!-- ENDIF -->
+			<tr>
+				<th colspan="2">{ $L_USERS }</th>
+			</tr>
+			<!-- IF { $P_CURRENT_USERS } || { $P_DCURRENT_USERS } -->
+			<tr>
+				<td  class="row1" align="center">{ $L_DISALLOWED }</td>
+				<td  class="row1" align="center">{ $L_ALLOWED }</ttd>
 			</tr>
 			<tr>
+				<td>
+					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
+						<tbody>
+							<tr>
+								<td class="row1" align="center"><select style="width: 280px;" name="du_current[]" multiple="multiple" size="5">{ $P_DCURRENT_USERS }</select></td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+				<td>
+					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
+						<tbody>
+							<tr>
+								<td class="row1" align="center"><select style="width: 280px;" name="u_current[]" multiple="multiple" size="5">{ $P_CURRENT_USERS }</select></td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+			<!-- ENDIF -->
+			<tr>
 				<td class="cat" colspan="3" align="center" height="28">
-					<input class="btnmain" name="submit" value="Submit" type="submit" />&nbsp;&nbsp;<input class="button" value="Reset" name="reset" type="reset" />
+					<input class="btnmain" name="set" value="Set Options" type="submit" />&nbsp;&nbsp;<input class="button" name="remove" value="Remove" type="submit" />&nbsp;&nbsp;<input class="button" value="Reset" name="reset" type="reset" />
 				</td>
 			</tr>
 		</tbody>
@@ -73,38 +73,7 @@
 
 	<table class="tablebg" border="0" cellpadding="0" cellspacing="1" width="100%">
 		<tbody>
-			<tr>
-				<th colspan="2">{ $L_DISALLOWED }</th>
-			</tr>
-			<tr>
-				<td class="spacer" colspan="8" height="7"></td>
-			</tr>
-			<tr>
-				<td>
-					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
-						<tbody>
-							<tr>
-								<th>{ $L_REMOVE_USERS }</th>
-							</tr>
-							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="du_remove[]" multiple="multiple" size="5">{ $P_DCURRENT_USERS }</select></td>
-							</tr>
-						</tbody>
-					</table>
-				</td>
-				<td align="center">
-					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
-						<tbody>
-							<tr>
-								<th>{ $L_REMOVE_GROUPS }</th>
-							</tr>
-							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="dg_remove[]" multiple="multiple" size="5">{ $P_DCURRENT_GROUPS }</select></td>
-							</tr>
-						</tbody>
-					</table>
-				</td>
-			</tr>
+
 			<tr>	
 				<td>
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -113,7 +82,7 @@
 								<th>{ $L_ADD_USERS }</th>
 							</tr>
 							<tr>
-								<td class="row1" align="center"><textarea style="height: 68px;" cols="40" rows="4" name="du_add"></textarea></td>
+								<td class="row1" align="center"><textarea style="height: 68px;" cols="40" rows="4" name="users_add"></textarea></td>
 							</tr>
 		
 						</tbody>
@@ -126,7 +95,7 @@
 								<th>{ $L_ADD_GROUPS }</th>
 							</tr>
 							<tr>
-								<td class="row1" style="height: 100%;" align="center"><select style="width: 280px;" name="dg_add[]" multiple="multiple" size="6">{ $P_ADD_GROUPS }</select></td>
+								<td class="row1" style="height: 100%;" align="center"><select style="width: 280px;" name="groups_add[]" multiple="multiple" size="6">{ $P_ADD_GROUPS }</select></td>
 							</tr>
 						</tbody>
 					</table>
@@ -134,7 +103,7 @@
 			</tr>
 			<tr>
 				<td class="cat" colspan="3" align="center" height="28">
-					<input class="btnmain" name="submit" value="Submit" type="submit" />&nbsp;&nbsp;<input class="button" value="Reset" name="reset" type="reset" />
+					<input class="btnmain" name="add" value="Submit" type="submit" />&nbsp;&nbsp;<input class="button" value="Reset" name="reset" type="reset" />
 				</td>
 			</tr>
 		</tbody>

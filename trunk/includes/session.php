@@ -59,7 +59,7 @@ class sessions
 			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
 //print_R($this->data);die;
-			if (isset($this->data['user_id']) && ($this->data['user_id'] == ANONYMOUS || $this->data['user_type'] & USER_ACTIVE))
+			if (isset($this->data['user_id']) && ($this->data['user_id'] == ANONYMOUS || $this->data['user_status'] == USER_ACTIVE))
 			{
 				$valid  = true;
 
@@ -91,12 +91,8 @@ class sessions
 
 					load_class(false, 'core_auth', 'auth_db');
 
-/*
-	Change to user_type user_status
-	Bitfields will not work for query purposes
-*/
-					$this->is_user	= ($this->data['user_type'] & USER_NORMAL);
-					$this->is_bot 	= ($this->data['user_type'] & USER_BOT);
+					$this->is_user	= ($this->data['user_type'] == USER_NORMAL);
+					$this->is_bot 	= ($this->data['user_type'] == USER_BOT);
 					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
 
 					check_maintance_status();

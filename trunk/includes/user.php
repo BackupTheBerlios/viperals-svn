@@ -85,8 +85,6 @@ class core_user extends sessions
 			$this->session_destroy();
 		}
 
-// remove this later one, we shouldn't do bot checks here
-// Only direct login, we don't even do actived checks leave that for auth
 		if ($bot = check_bot_status($this->browser, $this->ip))
 		{
 			$id = $bot;
@@ -99,7 +97,7 @@ class core_user extends sessions
 				$this->user_setup();
 				trigger_error('SITE_TEMP_UNAVAILABLE', E_USER_ERROR);
 			}
-	
+
 			header('HTTP/1.0 503 Service Unavailable');
 			script_close(false);
 		}
@@ -114,20 +112,16 @@ class core_user extends sessions
 // Error here, however this happen
 		}
 
-/*
-	Change to user_type user_status
-	Bitfields will not work for query purposes
-*/
-		$this->is_user	= ($this->data['user_type'] & USER_NORMAL);
-		$this->is_bot 	= ($this->data['user_type'] & USER_BOT);
+		$this->is_user	= (!$bot && $this->data['user_type'] == USER_NORMAL);
+		$this->is_bot 	= ($bot);
 
 		if (isset($_CLASS['core_auth']))
 		{
 			unset($_CLASS['core_auth']);
 		}
-		
+
 		load_class(false, 'core_auth', 'auth_db');
-						
+		
 		if ($this->is_bot)
 		{
 			$this->data['session_admin'] = ADMIN_NOT_ADMIN;

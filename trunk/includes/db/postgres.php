@@ -541,19 +541,18 @@ class db_postgres
 		if (!$auto_increment && $number_min >= -32768 && $number_max <= 32767)
 		{
 			// SMALLINT -- INT2 ( -32,768 to 32,767 )
-			$this->_fields[$name] =  "$name INT2";
+			$this->_fields[$name] =  "$name SMALLINT";
 		}
 		elseif ($number_min >= -2147483648 && $number_max <= 2147483647)
 		{
-			// INTEGER -- INT4 ( -2,147,483,648 to 2,147,483,647 )
-			$this->_fields[$name] =   ($auto_increment) ? "$name SERIAL4" : "$name INT4";
+			// INTEGER -- INT4 ( +auto_increment => SERIAL4 ) ( -2,147,483,648 to 2,147,483,647 )
+			$this->_fields[$name] =   ($auto_increment) ? "$name SERIAL" : "$name INTEGER";
 		}
 		elseif ($number_min >= 9223372036854775808 && $number_max <= 9223372036854775807)
 		{
-			// BIGINT -- INT8  ( 9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 )
-			$this->_fields[$name] =  ($auto_increment) ? "$name SERIAL8" : "$name INT8";
+			// BIGINT -- INT8 ( +auto_increment => SERIAL8 ) ( 9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 )
+			$this->_fields[$name] =  ($auto_increment) ? "$name BIGSERIAL" : "$name BIGINT";
 		}
-
 
 		if ($auto_increment)
 		{
@@ -568,12 +567,11 @@ class db_postgres
 	function add_table_field_text($name, $characters, $null = true)
 	{
 		$this->_fields[$name] =  "$name TEXT".(($null) ? " NULL" : " NOT NULL");
-		//$this->_fields[$name] =  "$name TEXT DEFAULT '' ".(($null) ? " NULL" : " NOT NULL");
 	}
 
 	function add_table_field_char($name, $characters, $default = null, $padded = false)
 	{
-		$this->_fields[$name] =  ($padded) ? "$name CHAR($characters)" : "$name VARCHAR($characters)";
+		$this->_fields[$name] =  ($padded) ? "$name CHARACTER($characters)" : "$name CHARACTER VARYING($characters)";
 		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
@@ -603,8 +601,6 @@ class db_postgres
 				$primary_key = $field;
 
 				$this->_fields[$field] .= ' PRIMARY KEY';
-
-				//$this->_indexs['primary'] = " UNIQUE INDEX {$this->_table_name}_pkey ON {$this->_table_name} ( $field )";
 			break;
 		}
 	}

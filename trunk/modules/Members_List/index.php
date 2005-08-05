@@ -218,7 +218,7 @@ switch ($mode)
 		$sql = "SELECT user_id, username, user_email, user_lang, $sql_field
 			FROM " . USERS_TABLE . "
 			WHERE user_id = $user_id
-				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
+				AND user_type = " . USER_NORMAL;
 		$result = $_CLASS['core_db']->query($sql);
 
 		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
@@ -294,19 +294,21 @@ switch ($mode)
 		}
 
 		// We left join on the session table to see if the user is currently online
-		$sql = 'SELECT username, user_id, user_type, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_last_visit
+		$sql = 'SELECT username, user_id, user_type, user_status, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_last_visit
 			FROM ' . USERS_TABLE . "
 			WHERE user_id = $user_id
-				AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ', '.USER_INACTIVE.')';
+				AND user_type = " . USER_NORMAL;
 		$result = $_CLASS['core_db']->query($sql);
+		$member = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
-		if (!($member = $_CLASS['core_db']->fetch_row_assoc($result)) || $member['user_type'] == USER_INACTIVE)
+		if (!$member || (!$_CLASS['core_auth']->admin_power('users') && $member['user_status'] != USER_ACTIVE))
 		{
 			$_CLASS['core_db']->free_result($result);
 			trigger_error(($member) ? 'USER_INACTIVE' : 'NO_USER');
 		}
 		
-		$_CLASS['core_db']->free_result($result);
+		
 
 		$sql = 'SELECT g.group_id, g.group_name, g.group_type
 			FROM ' . USER_GROUP_TABLE . ' ug, ' . GROUPS_TABLE . " g
@@ -470,17 +472,6 @@ switch ($mode)
 
 		$_CLASS['core_template']->assign(show_profile($member));
 		
-		// Custom Profile Fields
-		$profile_fields = array();
-		/*if ($config['load_cpf_viewprofile'])
-		{
-			require_once($site_file_root.'includes/forums/functions_profile_fields.php');
-			$cp = new custom_profile();
-			$profile_fields = $cp->generate_profile_fields_template('grab', $user_id);
-
-			$profile_fields = (isset($profile_fields[$user_id])) ? $cp->generate_profile_fields_template('show', false, $profile_fields[$user_id]) : array();
-		}*/
-
 		$_CLASS['core_template']->assign(array(
 			'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),
 			'POSTS_PCT'			=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $percentage),
@@ -579,7 +570,7 @@ switch ($mode)
 			$sql = 'SELECT username, user_email, user_allow_viewemail, user_lang, user_jabber, user_notify_type
 				FROM ' . USERS_TABLE . "
 				WHERE user_id = $user_id
-					AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
+					AND user_type = ". USER_NORMAL;
 			$result = $_CLASS['core_db']->query($sql);
 
 			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
@@ -958,7 +949,7 @@ switch ($mode)
 		{
 			$sql = 'SELECT COUNT(u.user_id) AS total_users
 				FROM ' . USERS_TABLE . " u$sql_from
-				WHERE u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ")
+				WHERE u.user_type = " . USER_NORMAL ."
 				$sql_where";
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -1042,7 +1033,7 @@ switch ($mode)
 		// Do the SQL thang
 		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_last_visit 
 			'. $sql_fields .' FROM ' . USERS_TABLE . " u$sql_from
-			WHERE u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ")
+			WHERE u.user_type = " . USER_NORMAL . "
 				$sql_where
 			ORDER BY $order_by";
 		$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
@@ -1060,52 +1051,18 @@ switch ($mode)
 		}
 		$_CLASS['core_db']->free_result($result);
 		
-		// Load custom profile fields
-		/*if ($config['load_cpf_memberlist'])
-		{
-			include($site_file_root. 'includes/forums/functions_profile_fields.php');
-			$cp = new custom_profile();
-			// Grab all profile fields from users in id cache for later use - similar to the poster cache
-			$profile_fields_cache = $cp->generate_profile_fields_template('grab', array_keys($id_cache));
-		}*/
-		
 		foreach ($id_cache as $user_id => $row)
 		{
-			$cp_row = array();
-
-			if ($config['load_cpf_memberlist'])
-			{
-				$cp_row = (isset($profile_fields_cache[$user_id])) ? $cp->generate_profile_fields_template('show', false, $profile_fields_cache[$user_id]) : array();
-			}
-
 			$option_row = ($mode == 'group' && $row['user_status'] == STATUS_LEADER) ? 'leader_row' : 'member_row';
 
 			$$option_row = array_merge(show_profile($row), array(
-				'S_CUSTOM_PROFILE'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false,
 				'U_VIEWPROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']))
 			);
 
-			if (isset($cp_row['row']) && sizeof($cp_row['row']))
-			{
-				$$option_row = array_merge($$option_row, $cp_row['row']);
-			}
-			
 			$_CLASS['core_template']->assign_vars_array($option_row, $$option_row);
 			
-			/*if (isset($cp_row['blockrow']) && sizeof($cp_row['blockrow']))
-			{
-				foreach ($cp_row['blockrow'] as $field_data)
-				{
-					////////////
-					// Need to be fixed
-					////////////
-					$_CLASS['core_template']->assign_vars_array('memberrow.custom_fields', $field_data);
-				}
-			}*/
-			$i++;
 			unset($id_cache[$user_id]);
 	}
-		
 
 	// Generate page
 	$_CLASS['core_template']->assign(array(

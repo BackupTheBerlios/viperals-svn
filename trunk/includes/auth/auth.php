@@ -31,7 +31,7 @@ class core_auth
 	{
 		global $_CLASS;
 
-		$sql = 'SELECT user_id, username, user_password, user_password_encoding, user_type 
+		$sql = 'SELECT user_id, username, user_password, user_password_encoding, user_status 
 					FROM ' . USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->escape($user_name) . "'";
 
 		$result = $_CLASS['core_db']->query($sql);
@@ -39,11 +39,11 @@ class core_auth
 	
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
+			if (encode_password($user_password, $row['user_password_encoding']) == $row['user_password'])
 			{
-				if ($row['user_type'] & USER_INACTIVE || $row['user_type'] & USER_UNACTIVATED)
+				if ($row['user_status'] == USER_DISABLE || $row['user_status'] == USER_UNACTIVATED)
 				{
-					$status =  ($row['user_type'] & USER_INACTIVE) ? 'ACTIVE_ERROR' : 'unactivated_error';
+					$status =  ($row['user_type'] == USER_INACTIVE) ? 'ACTIVE_ERROR' : 'UNACTIVATED_ERROR';
 				}
 
 				return (int) $row['user_id'];
@@ -156,7 +156,7 @@ class core_auth
 	
 				if (!$code || !$confirm_code || $code !== $confirm_code)
 				{
-					$error = 'CONFIRM_CODE_WRONG';
+				//	$error = 'CONFIRM_CODE_WRONG';
 				}
 			}
 
@@ -279,70 +279,97 @@ class core_auth
 		}
 	}
 
-	function generate_auth_options($options = array(), $display = false, $return = false)
+	function generate_auth_options($options = array(), $options_extend = false, $return_link = false)
 	{
-		global $_CLASS;
+		global $_CLASS, $site_file_root;
 
 		$options['groups_allowed'] = empty($options['groups_allowed']) ? array() : $options['groups_allowed'];
 		$options['users_allowed'] = empty($options['users_allowed']) ? array() : $options['users_allowed'];
 		$options['groups_disallowed'] = empty($options['groups_disallowed']) ? array() : $options['groups_disallowed'];
 		$options['users_disallowed'] = empty($options['users_disallowed']) ? array() : $options['users_disallowed'];
 
-		if (!$display)
+		$mode = $return = false;
+		$checks = array('add', 'remove', 'set');
+		
+		foreach ($checks as $check)
 		{
-			if (empty($_POST['submit']))
+			if (isset($_POST[$check]))
 			{
-				return false;
+				$mode = $check;
+				break;
 			}
+		}
 
-			$user_ids = array('disallowed' => array(), 'allowed' => array());
+		if ($mode)
+		{
+			require_once($site_file_root.'includes/functions_user.php');
+			$ids = array('groups' => array(), 'users' => array());
 
-			// Allowed
-			$g_remove = empty($_POST['g_remove']) ? array() : $_POST['g_remove'];
-			$u_remove = empty($_POST['u_remove']) ? array() : $_POST['u_remove'];
-			$u_add['allowed'] = ($_POST['u_add']) ? explode("\n", modify_lines($_POST['u_add'], "\n")) : array();
-			$g_add = empty($_POST['g_add']) ? array() : $_POST['g_add'];
-
-			// Disallowed
-			$dg_remove = empty($_POST['dg_remove']) ? array() : $_POST['dg_remove'];
-			$du_remove = empty($_POST['du_remove']) ? array() : $_POST['du_remove'];
-			$u_add['disallowed'] = ($_POST['du_add']) ? explode("\n", modify_lines($_POST['du_add'], "\n")) : array();
-			$dg_add = empty($_POST['dg_add']) ? array() : $_POST['dg_add'];
-
-			foreach ($u_add as $name => $values)
+			switch ($mode)
 			{
-				if (count($values))
-				{
-					$sql = 'SELECT user_id
-								FROM ' . USERS_TABLE . " 
-								WHERE username IN ('" . implode("' ,'", $values) . "')";
-					$result = $_CLASS['core_db']->query($sql);
-	
-					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+				case 'add':
+					// Allowed
+					$setup['groups'] = get_variable('groups_add', 'POST', array(), 'array');
+					$setup['users'] = explode("\n", get_variable('users_add', 'POST'));
+		
+					if (count($setup['users']))
 					{
-						$user_ids[$name][] = $row['user_id'];
+						$ids['users'] = user_get_id($setup['users']);
 					}
-					$_CLASS['core_db']->free_result($result);
-				}
+		
+					if (count($setup['groups']))
+					{
+						$sql = 'SELECT group_id
+							FROM ' . GROUPS_TABLE . '
+							WHERE group_id IN ('.implode(', ', array_map('intval', $setup['groups'])).')';
+						$result = $_CLASS['core_db']->query($sql);
+		
+						while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+						{
+							$ids['groups'][] = $row['group_id'];
+						}
+						$_CLASS['core_db']->free_result($result);
+					}
+
+					$function = (true) ? 'array_merge' : 'array_diff';
+
+					$options['groups_allowed'] = $function($options['groups_allowed'], $ids['groups']);
+					$options['users_allowed'] = $function($options['users_allowed'], $ids['users']);
+				break;
+			
+				case 'ss':
+					$options['groups_disallowed'] = array_diff(array_merge($options['groups_disallowed'], $dg_add), $dg_remove, $options['groups_allowed']);
+					$options['users_disallowed'] = array_diff(array_merge($options['users_disallowed'], $user_ids['disallowed']), $du_remove, $options['users_allowed']);
+		
+					print_r($ids);
+					die;
+					$current['groups_allowed'] = get_variable('g_current', 'POST', array(), 'array');
+					$current['users_allowed'] = get_variable('u_current', 'POST', array(), 'array');
+					$current['groups_disallowed'] = get_variable('dg_current', 'POST', array(), 'array');
+					$current['users_disallowed'] = get_variable('du_current', 'POST', array(), 'array');
+		
+			
+		
+					$options['groups_allowed'] = array_diff(array_merge($options['groups_allowed'], $g_add), $g_remove);
+					$options['users_allowed'] = array_diff(array_merge($options['users_allowed'], $user_ids['allowed']), $u_remove);
+			
+					$options['groups_disallowed'] = array_diff(array_merge($options['groups_disallowed'], $dg_add), $dg_remove, $options['groups_allowed']);
+					$options['users_disallowed'] = array_diff(array_merge($options['users_disallowed'], $user_ids['disallowed']), $du_remove, $options['users_allowed']);
+		
+					$return = null;
+					
+				break;
 			}
-
-			$options['groups_allowed'] = array_diff(array_merge($options['groups_allowed'], $g_add), $g_remove);
-			$options['users_allowed'] = array_diff(array_merge($options['users_allowed'], $user_ids['allowed']), $u_remove);
-
-			$options['groups_disallowed'] = array_diff(array_merge($options['groups_disallowed'], $dg_add), $dg_remove, $options['groups_allowed']);
-			$options['users_disallowed'] = array_diff(array_merge($options['users_disallowed'], $user_ids['disallowed']), $du_remove, $options['users_allowed']);
 
 			foreach ($options as $option)
 			{
 				if (!empty($option))
 				{
-					return $options;
+					$return =& $options;
+					break;
 				}
 			}
-
-			return true;
 		}
-
 		$group_list = $allowed_group_list = $disallowed_group_list = $allowed_user_list = $disallowed_user_list = '';
 
 		$set_users = array_merge($options['users_allowed'], $options['users_disallowed']);
@@ -402,8 +429,10 @@ class core_auth
 			'P_CURRENT_GROUPS'	=> $allowed_group_list,
 			'P_DCURRENT_GROUPS'	=> $disallowed_group_list,
 		));
-	
-		return $_CLASS['core_template']->display('permission.html', $return);
+
+		$_CLASS['core_template']->display('permission.html');
+
+		return ($return !== false) ? $return : false;
 	}
 }
 

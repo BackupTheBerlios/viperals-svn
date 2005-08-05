@@ -31,7 +31,7 @@ class auth
 	{
 		global $_CLASS;
 
-		if (!($this->acl_options = $_CLASS['core_cache']->get('acl_options')))
+		if (is_null($this->acl_options = $_CLASS['core_cache']->get('acl_options')))
 		{
 			$sql = 'SELECT auth_option, is_global, is_local
 				FROM ' . ACL_OPTIONS_TABLE . '
@@ -53,6 +53,7 @@ class auth
 			$_CLASS['core_db']->free_result($result);
 
 			$_CLASS['core_cache']->put('acl_options', $this->acl_options);
+
 			$this->acl_clear_prefetch();
 			$this->acl_cache($userdata);
 		}
@@ -104,8 +105,7 @@ class auth
 			}
 		}
 
-		// Needs to change ... check founder status when updating cache?
-		return (isset($cache[$f][$opt])) ? $cache[$f][$opt] : false;
+		return isset($cache[$f][$opt]) ? $cache[$f][$opt] : false;
 	}
 
 	function acl_getf($opt)
@@ -132,28 +132,21 @@ class auth
 		return $cache;
 	}
 
-	function acl_gets()
+	function acl_gets($opts, $f = 0)
 	{
-		$args = func_get_args();
-		$f = array_pop($args);
-
-		if (!is_numeric($f))
-		{
-			$args[] = $f;
-			$f = 0;
-		}
-
-		// alternate syntax: acl_gets(array('m_', 'a_'), $forum_id)
-		if (is_array($args[0]))
-		{
-			$args = $args[0];
-		}
-
 		$acl = 0;
-		foreach ($args as $opt)
+
+		if (is_array($opts))
 		{
-			$acl |= $this->acl_get($opt, $f);
+			foreach ($opts as $opt)
+			{
+				$acl |= $this->acl_get($opt, $f);
+			}
 		}
+		else
+		{
+			$acl |= $this->acl_get($opts, $f);
+		}		
 
 		return $acl;
 	}
@@ -186,17 +179,13 @@ class auth
 		global $_CLASS;
 
 		$hold_ary = $this->acl_raw_data($userdata['user_id'], false, false);
-		$hold_ary = !empty($hold_ary[$userdata['user_id']]) ? $hold_ary[$userdata['user_id']] : '';
+		$hold_ary = empty($hold_ary[$userdata['user_id']]) ? '' : $hold_ary[$userdata['user_id']];
 
-		// If this user is founder we're going to force fill the admin options ...
-		if ($userdata['user_type'] == USER_FOUNDER)
+		foreach ($this->acl_options['global'] as $opt => $id)
 		{
-			foreach ($this->acl_options['global'] as $opt => $id)
+			if (strstr($opt, 'a_'))
 			{
-				if (strstr($opt, 'a_'))
-				{
-					$hold_ary[0][$opt] = 1;
-				}
+				$hold_ary[0][$opt] = 1;
 			}
 		}
 

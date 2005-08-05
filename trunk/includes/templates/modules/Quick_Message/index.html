@@ -1,3 +1,5 @@
+<!-- DISPLAY_HEADER -->
+
 { $A_TABLE_OPEN }
 
 <table class="tablebg" width="100%" cellpadding="1" cellspacing="1">
@@ -40,7 +42,7 @@
 			</tr>
 		<!-- ENDLOOP -->
 		<!-- IF { $Q_MESSAGE_PAGINATION } -->
-		<tr class="row3">
+		<tr class="row2">
 			<td style="padding: 5px;" valign="middle" colspan="2">
 				<div style="padding-right: 5px; text-align: right;" class="numbering">[ <!-- IF { $Q_MESSAGE_PREVIOUS_PAGE } --><a href="{ $Q_MESSAGE_PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;|&nbsp;<!-- ENDIF --> { $Q_MESSAGE_PAGINATION } <!-- IF { $Q_MESSAGE_NEXT_PAGE } -->&nbsp;|&nbsp;<a href="{ $Q_MESSAGE_NEXT_PAGE }">{ $L_NEXT }</a><!-- ENDIF --> ]</div>
 			</td>
@@ -50,3 +52,5 @@
 </table>
 
 { $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

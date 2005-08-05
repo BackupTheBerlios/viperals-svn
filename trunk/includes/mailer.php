@@ -166,15 +166,30 @@ class core_mailer
 	}
 }
 
+/*
+	Protocol resources:
+
+	http://cr.yp.to/smtp.html
+	http://www.faqs.org/rfcs/rfc821.html
+*/
 class smtp_mailer
 {
 	var $connection;
 	var $host;
 	var $port;
 
-	function connect($host, $port)
+	/*
+		PHP5 destructor
+	*/
+	function __destruct()
 	{
-		
+		$this->disconnect();
+	}
+   
+	function connect($host, $port = 25)
+	{
+		$port = ((int) $port) ? (int) $port : 25;
+
 		$this->connection = fsockopen($host, $port, $errno, $errstr, 15)
 
 		if (!$this->connection)
@@ -187,6 +202,20 @@ class smtp_mailer
 		return $this->connection;
 	}
 
+	function disconnect()
+	{
+		if (!$this->connection)
+		{
+			return;
+		}
+
+		fwrite($this->connection, "QUIT\r\n");
+		fclose($this->connection);
+
+		$this->connection = false;
+	}
+	
+	// If login fails we disconnect, may do it differently later on
 	function login($user, $password)
 	{
 		if (!$this->connection)
@@ -194,44 +223,145 @@ class smtp_mailer
 			$this->error = 'No connection';
 			return false;
 		}
-//http://cr.yp.to/smtp/ehlo.html
-		fputs($this->connection, "EHLO {$this->host} \r\n");
-		//fputs($this->connection, "HELO [{$this->host}] \r\n"); // ip format
-		
-//220 heaven.af.mil ESMTP
-		if (!($response = $this->check_response(250)))
-		{
-			fputs($this->connection, "HELO {$this->host} \r\n");
+ 	    
+  	    $this_host = gethostbyaddr(($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : gethostbyname($_SERVER['SERVER_NAME']));
 
-			if (!($response = $this->check_response(250)))
+		//fputs($this->connection, "HELO [{$this->host}] \r\n"); // ip format
+		fwrite($this->connection, "EHLO $this_host \r\n");
+
+		if (!$this->check_response(250))
+		{
+			fwrite($this->connection, "HELO $this_host \r\n");
+
+			if (!$this->check_response(250))
 			{
+				$this->disconnect();
 				return false;
 			}
 		}
 
+		fwrite($this->connection, "AUTH LOGIN\r\n");
+
+		if (!$this->check_response(334))
+		{
+			// 503 AUTH previously succeeded
+			if (substr($this->response, 0, 3) == 503)
+			{
+				return true;
+			}
+
+			$this->disconnect();
+			return false;
+		}
+
+		fwrite($this->connection, base64_encode($user)."\r\n");
+
+		if (!$this->check_response(334))
+		{
+			$this->disconnect();
+			return false;
+		}
+
+		fwrite($this->connection, base64_encode($password)."\r\n");
+
+		if (!$this->check_response(235))
+		{
+			$this->disconnect();
+			return false;
+		}
+
+		return true;
 	}
 
-	function check_response($code)
+	function send_mail()
 	{
-		$response = '';
+		global $_CORE_CONFIG;
+
+		fwrite($this->connection, 'MAIL FROM: <'.$_CORE_CONFIG['email']['site_mail'].'>'."\r\n");
+
+		if (!$this->check_response(250))
+		{
+			$this->disconnect();
+			return false;
+		}
+
+		$to_header = array();
+
+		// Let tell the server who to send this to.
+		foreach ($this->recipients as $email)
+		{
+			$email = trim($email);
+			$name = false;
+			
+			if (is_array($email))
+			{
+				$name = $email['name'];
+				$email = $email['address'];
+			}
+
+			fwrite($this->connection, 'RCPT TO: <'.$email.">\r\n");
+
+			if (!$this->check_response(250))
+			{
+				$to_header[] = ($name) ? "$name <$email>" : "<$email>";
+			}
+		}
+
+		// Was any recipients accepted ?
+		if (empty($to_header))
+		{
+			$this->disconnect();
+			return false;
+		}
+
+		// We start sending from here
+		fwrite($this->connection, "DATA\r\n");
+
+		if (!$this->check_response(354))
+		{
+			$this->disconnect();
+			return false;
+		}
+
+		//fwrite($this->connection, "To: ".implode(', ', $to_header)."\r\n");
+		$sending_header = ($this->subject) ? 'Subject: '.$this->subject."\r\n" : ''; // should add something here
+		$sending_header .= "To: ".implode(', ', $to_header)."\r\n";
+		$sending_header .= $this->headers."\r\n\r\n";
+
+// Do my html and plain text mail thing, change it to a function maybe ?
+		fwrite($this->connection, $sending_header.$this->message."\r\n");
+
+		fwrite($this->connection, '.'."\r\n");
+
+		$status = $this->check_response(250)
+		$this->disconnect();
+
+		return $status;
+	}
+
+	function check_response($code, $full = false)
+	{
+		$this->response = '';
 
 		while ($buffer = fgets($this->connection, 256))
 		{
-			if (substr($buffer, 3, 1) != ' ')
+			$this->response .= $buffer;
+
+			//$buffer{strlen($this->response) - 1} == ' ' .... .maybe just check the ending ?
+			if ((!$full && strlen($this->response) >= 3) || substr($buffer, 3, 1) != ' ')
 			{
 				break;
 			}
-			$response .= $buffer;
 		}
 
-		$response = trim($response);
+		$this->response = trim($this->response);
 
-		if ($code && substr($response, 0, 3) != $code)
+		if ($code && substr($this->response, 0, 3) != $code)
 		{
 			return false;
 		}
 
-		return $response;
+		return true;
 	}
 }
 ?>

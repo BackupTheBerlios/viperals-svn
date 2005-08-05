@@ -13,6 +13,10 @@
 //																//
 //**************************************************************//
 
+// Try to download an load dll -- dl()is user chooses too for windows server
+// LOL ya right windows, rofl ....  Maybe it's a test server :-)
+
+// http://snaps.php.net/win32/PECL_STABLE/php_sqlite.dll
 // http://sourceforge.net/projects/sqlitemanager/
 class db_sqlite
 {
@@ -70,7 +74,7 @@ class db_sqlite
 			return;
 		}
 
-		@mysql_close($this->link_identifier);
+		@sqlite_close($this->link_identifier);
 		$this->link_identifier = false;
 	}
 
@@ -298,10 +302,17 @@ class db_sqlite
 
 		if ($array = @sqlite_fetch_array($result, SQLITE_ASSOC))
 		{
-			array_walk($array, array($this, 'filter_feild_name'));
+			foreach ($array as $key => $value)
+			{
+				if ($pos = strpos($key, '.'))
+				{
+					$key = substr($key, $pos + 1);
+				}
+		
+				$this->new_array[$key] = $value;
+			}
 		}
-			//$array = $this->new_array;
-			//unset($this->new_array);
+		
 		return $this->new_array;
 	}
 
@@ -323,16 +334,6 @@ class db_sqlite
 		}
 
 		return @sqlite_fetch_array($result, SQLITE_BOTH);
-	}
-
-	function filter_feild_name($value, &$key)
-	{
-		if ($pos = strpos($key, '.'))
-		{
-			$key = substr($key, $pos + 1);
-		}
-
-		$this->new_array[$key] = $value;
 	}
 
 	function insert_id()
@@ -555,6 +556,14 @@ class db_sqlite
 			break;
 
 			case 'primary':
+				if ($pos = stripos($this->_fields[$field], ' AUTOINCREMENT'))
+				{
+					$this->_fields[$field] = substr($this->_fields[$field], 0, $pos);
+					$this->_fields[$field] .= ' PRIMARY KEY AUTOINCREMENT'; // AUTOINCREMENT isn't needed
+
+					break;
+				}
+
 				$this->_fields[$field] .= ' PRIMARY KEY';
 			break;
 		}

@@ -1,3 +1,5 @@
+<!-- DISPLAY_HEADER -->
+
 <!-- INCLUDE modules/Control_Panel/ucp_header.html -->
 
 <form action="{ $S_PROFILE_ACTION }" method="post">
@@ -15,8 +17,14 @@
 		<td class="row2"><input type="text" class="post" name="email" size="25" maxlength="255" value="{ $EMAIL }" /></td>
 	</tr>
 	<tr> 
-	<td class="cat" colspan="2" align="center" height="28">{ $S_HIDDEN_FIELDS }<input type="submit" name="submit" value="{ $L_SUBMIT }" class="btnmain" />&nbsp;&nbsp;<input type="reset" value="{ $L_RESET }" name="reset" class="btnlite" /></td>
+		<td class="cat" colspan="2" align="center" height="28">
+			{ $S_HIDDEN_FIELDS }
+			<input type="submit" name="submit" value="{ $L_SUBMIT }" class="btnmain" />&nbsp;&nbsp;<input type="reset" value="{ $L_RESET }" name="reset" class="btnlite" />
+		</td>
 	</tr>
-</table></form>
+</table>
+</form>
 
 <!-- INCLUDE modules/Control_Panel/ucp_footer.html -->
+
+<!-- DISPLAY_FOOTER -->

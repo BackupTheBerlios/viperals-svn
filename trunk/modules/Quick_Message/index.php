@@ -44,13 +44,13 @@ function add_message()
 	{
 		return show_messages();
 	}
-	
+
+	global $_CLASS, $prefix, $_CORE_CONFIG;
+
 	if ($_CLASS['core_user']->is_bot)
 	{
 		url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
 	}
-	
-	global $_CLASS, $prefix, $_CORE_CONFIG;
 		
 	$_CLASS['core_user']->add_lang();
 	$_CORE_CONFIG['quick_message']['lastpost_check'] = 300;
@@ -87,14 +87,14 @@ function add_message()
     {
         trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['lastpost_check'] / 60));
     }
-    
+
     $_CLASS['core_db']->free_result($result);
 
 	$sql = 'INSERT INTO '.$prefix.'quick_message ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 		'user_name'	=> (string) $user_name,
 		'user_id'	=> (int) $user_id ,
 		'message'	=> (string) $message,
-		'time'		=> (int)  gmtime(),
+		'time'		=> (int)  $_CLASS['core_user']->time,
 		'ip'		=> (string) $_CLASS['core_user']->ip));
 		
 	$_CLASS['core_db']->query($sql);

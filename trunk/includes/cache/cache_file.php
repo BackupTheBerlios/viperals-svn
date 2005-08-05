@@ -36,7 +36,7 @@ class cache_file extends cache
 		{
 			require($this->cache_dir . "cache_$name.php");
 
-			if (empty($this->vars[$name]) || time() > $this->expires[$name])
+			if (!isset($this->vars[$name]) || gmtime() > $this->expires[$name])
 			{
 				$this->destroy($name);
 				return $this->vars[$name] = null;
@@ -54,7 +54,7 @@ class cache_file extends cache
 	{
 		$new_line = chr(10);
 		$protection_code = "if (!defined('VIPERAL')) { die('Hello'); }$new_line";
-		$expires = time() + $ttl;
+		$expires = gmtime() + $ttl;
 
 		$file_data = "<?php $protection_code \$this->vars['$name'] = ".var_export($data, true)."; \n\$this->expires['$name'] = $expires;  ?>";
 

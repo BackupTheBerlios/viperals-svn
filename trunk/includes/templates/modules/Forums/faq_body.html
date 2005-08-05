@@ -1,8 +1,8 @@
 <!-- IF { $DISPLAY_STYLESHEET_LINK } -->
-<!-- INCLUDE modules/Forums/simple_header.html -->
-{ $A_TABLE_OPEN }
+	<!-- INCLUDE modules/Forums/simple_header.html -->
 <!-- ELSE -->
-<!-- INCLUDE modules/Forums/overall_header.html -->
+	<!-- DISPLAY_HEADER -->
+	<!-- INCLUDE modules/Forums/overall_header.html -->
 <!-- ENDIF -->
 
 <a name="Top"></a>
@@ -38,7 +38,7 @@
 	</tr>
 	<!-- LOOP $faq_block:faq_row -->
 	<tr>
-		<!-- IF { $faq_block:faq_row:#index } % 2 -->
+		<!-- IF { $faq_block:faq_row:#LOOP_INDEX } % 2 -->
 		<td class="row1" valign="top">
 		<!-- ELSE -->
 		<td class="row2" valign="top">
@@ -60,8 +60,7 @@
 <!-- ENDLOOP -->
 
 <!-- IF { $DISPLAY_STYLESHEET_LINK } -->
-{ $A_TABLE_CLOSE }
-<!-- INCLUDE modules/Forums/simple_footer.html -->
+	<!-- INCLUDE modules/Forums/simple_footer.html -->
 <!-- ELSE -->
 <table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
 	<tr>
@@ -74,8 +73,8 @@
 
 <br clear="all" />
 
-<div align="right"><!-- IF { $S_DISPLAY_JUMPBOX } --><!-- INCLUDE modules/Forums/jumpbox.html --><!-- ENDIF --></div>
-
 <!-- INCLUDE modules/Forums/overall_footer.html -->
+
+<!-- DISPLAY_FOOTER -->
 
 <!-- ENDIF -->

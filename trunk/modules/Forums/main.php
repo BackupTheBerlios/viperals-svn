@@ -55,10 +55,12 @@ $birthday_list = '';
 if ($config['load_birthdays'])
 {
 	$now = getdate();
+	$now = explode(':', gmdate('j:m'));
+
 	$sql = 'SELECT user_id, username, user_colour, user_birthday 
 		FROM ' . USERS_TABLE . " 
-		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now['mday'], $now['mon']) . "%'
-			AND user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')';
+		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now[0], $now[1]) . "%'
+			AND user_type = ".USER_NORMAL;
 	$result = $_CLASS['core_db']->query($sql);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))

@@ -790,7 +790,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 // to return both sets of arrays
 function obtain_word_list()
 {
-	global $_CLASS;
+	global $_CLASS, $config;
 
 	if (!$_CLASS['core_user']->optionget('viewcensors') && $config['allow_nocensors'])
 	{
@@ -1009,60 +1009,7 @@ function redirect($url)
 // something is wrong with $check in this function
 function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_body.html')
 {
-	global $_CLASS, $SID;
 
-	if ($check)
-	{
-		if (isset($_POST['cancel']))
-		{
-			return false;
-		}
-	
-		if (isset($_POST['confirm']) && $_POST['confirm'] == $_CLASS['core_user']->lang['YES'])
-		{
-			$confirm_key = request_var('confirm_key', '');
-
-			if (!$confirm_key || !$_CLASS['core_user']->data['user_last_confirm_key'] || $confirm_key != $_CLASS['core_user']->data['user_last_confirm_key'])
-			{
-				return false;
-			}
-			
-			// Reset user_last_confirm_key
-			$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = ''
-				WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
-			$_CLASS['core_db']->query($sql);
-			
-			return true;
-		}
-
-		return false;
-	}
-	
-	$s_hidden_fields = '<input type="hidden" name="user_id" value="' . $_CLASS['core_user']->data['user_id'] . '" /><input type="hidden" name="sess" value="' . $_CLASS['core_user']->data['session_id'] . '" /><input type="hidden" name="sid" value="' . $SID . '" />';
-
-	// generate activation key
-	$confirm_key = gen_rand_string(10);
-
-	if (request_var('confirm_key', ''))
-	{
-		return false;
-	}
-
-	$_CLASS['core_template']->assign(array(
-		'MESSAGE_TITLE'		=> $_CLASS['core_user']->lang[$title],
-		'MESSAGE_TEXT'		=> $_CLASS['core_user']->lang[$title . '_CONFIRM'],
-		'L_NO'	 			=> $_CLASS['core_user']->lang['NO'],
-		'YES_VALUE'			=> $_CLASS['core_user']->lang['YES'],
-		'S_CONFIRM_ACTION'  => generate_link($_CLASS['core_user']->url.'&amp;confirm_key=' . $confirm_key),
-		'S_HIDDEN_FIELDS'	=> $hidden . $s_hidden_fields)
-	);
-	
-	// Here we update the lastpage of the user, only here
-	$sql = 'UPDATE ' . USERS_TABLE . " SET user_last_confirm_key = '" . $_CLASS['core_db']->escape($confirm_key) . "'
-		WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
-	$_CLASS['core_db']->query($sql);
-
-	$_CLASS['core_template']->display('modules/Forums/'.$html_body);
 }
 
 // Generate forum login box
