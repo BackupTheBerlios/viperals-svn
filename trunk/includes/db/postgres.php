@@ -111,7 +111,7 @@ class db_postgres
 					break;
 				}
 
-				$result = @pg_query($this->db_connect_id, 'START TRANSACTION');
+				$result = @pg_query($this->db_connect_id, 'BEGIN TRANSACTION');
 				$this->in_transaction = true;
 			break;
 
@@ -194,7 +194,8 @@ class db_postgres
 	{
 		if (!$query || !$total || !$this->link_identifier) 
 		{
-			return false; 
+			// no need to check for query or link_id, it's checked in db::query()
+			return $this->query($query);
 		}
 
 		global $site_file_root;
@@ -383,6 +384,11 @@ class db_postgres
 	function escape($text)
 	{
 		return pg_escape_string($text);
+	}
+
+	function escape_array($value)
+	{
+		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
 
 	function optimize_tables($table = '')

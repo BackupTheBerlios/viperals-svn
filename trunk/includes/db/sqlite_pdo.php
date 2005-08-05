@@ -167,7 +167,8 @@ class db_sqlite_pdo
 	{
 		if (!$query || !$total || !$this->link_identifier) 
 		{
-			return false; 
+			// no need to check for query or link_id, it's checked in db::query()
+			return $this->query($query);
 		}
 
 		global $site_file_root;
@@ -317,6 +318,11 @@ class db_sqlite_pdo
 		$length = strlen($text) - 2;
 
 		return substr($text, 1, $length);
+	}
+
+	function escape_array($value)
+	{
+		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
 
 	function optimize_tables($table = '')

@@ -100,7 +100,8 @@ class db_mysql
 					break;
 				}
 
-				$result = mysql_query('START TRANSACTION', $this->link_identifier);
+				//$result = mysql_query('SET AUTOCOMMIT=0', $this->db_connect_id);
+				$result = mysql_query('BEGIN TRANSACTION', $this->link_identifier);
 				$this->in_transaction = true;
 			break;
 
@@ -183,7 +184,8 @@ class db_mysql
 	{
 		if (!$query || !$total || !$this->link_identifier) 
 		{
-			return false; 
+			// no need to check for query or link_id, it's checked in db::query()
+			return $this->query($query);
 		}
 
 		global $site_file_root;
@@ -334,15 +336,15 @@ class db_mysql
 		return @mysql_free_result($result);
 	}
 
-	function escape($test)
+	function escape($text)
 	{
 		if (function_exists('mysql_real_escape_string') && $this->link_identifier)
 		{
-			return mysql_real_escape_string($test, $this->link_identifier);
+			return mysql_real_escape_string($text, $this->link_identifier);
 		}
 		else
 		{
-			return mysql_escape_string($test);
+			return mysql_escape_string($text);
 		}
 	}
 

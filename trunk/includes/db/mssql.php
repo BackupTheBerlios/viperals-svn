@@ -13,10 +13,10 @@
 //																//
 //**************************************************************//
 
-class db_mysqli
+class db_mssql
 {
-	var $link_identifier;
-	var $db_layer = 'mysqli';
+	var $link_identifier = false;
+	var $db_layer = 'mssql';
 
 	var $last_result;
 	var $return_on_error;
@@ -29,9 +29,12 @@ class db_mysqli
 	var $query_details = array();
 	var $open_queries = array();
 
-	var $indexs = array();
-	var $fields = array();
-	var $table_name = false;
+	var $_indexs = array();
+	var $_fields = array();
+	var $_table_name = false;
+	
+	var $_limit_last_key = 0;
+	var $_limit_result = array();
 
 	function connect($db)
 	{		
@@ -45,18 +48,18 @@ class db_mysqli
 			$this->disconnect();
 		}
 
-		$this->link_identifier = ($db['persistent']) ? @mysqli_pconnect($db['server'], $db['username'], $db['password']) : @mysqli_connect($db['server'], $db['username'], $db['password']);
+		$this->link_identifier = ($db['persistent']) ? mssql_pconnect($db['server'], $db['username'], $db['password']) : mssql_connect($db['server'], $db['username'], $db['password']);
 
 		if ($this->link_identifier)
 		{
-			if (@mysqli_select_db($this->link_identifier, $db['database']))
+			if (mssql_select_db($db['database']))
 			{
 				return $this->link_identifier;
 			}
 
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
-		
+
 		if (!$error)
 		{
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
@@ -65,7 +68,6 @@ class db_mysqli
 		$this->disconnect();
 
 		trigger_error($error, E_USER_ERROR);
-		die;
 	}
 
 	function disconnect()
@@ -75,7 +77,7 @@ class db_mysqli
 			return;
 		}
 
-		@mysqli_close($this->link_identifier);
+		@mssql_close($this->link_identifier);
 		$this->link_identifier = false;
 	}
 
@@ -101,7 +103,7 @@ class db_mysqli
 					break;
 				}
 
-				mysqli_autocommit($this->link_identifier, false);
+				$result = mysql_query('BEGIN  TRANSACTION', $this->link_identifier);
 				$this->in_transaction = true;
 			break;
 
@@ -112,14 +114,13 @@ class db_mysqli
 					break;
 				}
 
-				$result = mysqli_commit($this->link_identifier);
-
+				$result = mysql_query('COMMIT', $this->link_identifier);
+				
 				if (!$result)
 				{
-					mysqli_rollback($this->link_identifier);
+					mysql_query('ROLLBACK', $this->link_identifier);
 				}
-
-				mysqli_autocommit($this->link_identifier, true);
+				
 				$this->in_transaction = false;
 			break;
 
@@ -129,9 +130,7 @@ class db_mysqli
 					break;
 				}
 
-				$result = mysqli_rollback($this->link_identifier);
-
-				mysqli_autocommit($this->link_identifier, true);
+				$result = mysql_query('ROLLBACK', $this->link_identifier);
 				$this->in_transaction = false;
 			break;
 		}
@@ -147,7 +146,7 @@ class db_mysqli
 		}
 
 		global $_CLASS, $site_file_root;
-
+			
 		$this->num_queries++;
 		$this->last_query = $query;
 
@@ -172,10 +171,15 @@ class db_mysqli
 		}
 		elseif (strpos($query, 'SELECT') !== false)
 		{
-			$this->open_queries[(string) $this->last_result] = $this->last_result;
+			$this->open_queries[(int) $this->last_result] = $this->last_result;
 		}
 
 		return $this->last_result;
+	}
+
+	function sql_query($query = false)
+	{
+		return mssql_query($query, $this->link_identifier);
 	}
 
 	function query_limit($query = false, $total = false, $offset = 0, $backtrace = false) 
@@ -183,12 +187,10 @@ class db_mysqli
 		if (!$query || !$total || !$this->link_identifier) 
 		{
 			// no need to check for query or link_id, it's checked in db::query()
-			return $this->query($query);
+			return $this->query($query);; 
 		}
 
 		global $site_file_root;
-
-		$query .= ' LIMIT ' . (($offset) ? $offset . ', ' : '') . $total;
 
 		if (!$backtrace)
 		{
@@ -201,78 +203,109 @@ class db_mysqli
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
 
-		return $this->query($query, $backtrace);
-	}
+		$query = substr(trim($query));
+		
+		if (!$offset)
+		{
+			return $this->query("SELECT TOP($total) $query");
+		}
+		
+		/*
+			Welcome to hell
 
-	function sql_query($query = false)
-	{
-		return mysqli_query($this->link_identifier, $query);
+			We'll do two query and get the diffence in php to make sure things work right
+			Other why needs us to know the a unique feild/key or primary key
+		*/
+		
+		// here we go, get the all data up to the offset row. offset row = total need + offset
+		$result = $this->query('SELECT TOP('.$total + $offset.") $query");
+
+		// need to test dataseek, if it resets after the a fetch do mssql_next_result loop
+		if (!$result || !mssql_data_seek($offset))
+		{
+			$this->free_result($result);
+
+			return false;
+		}
+
+		/*
+			change mssql_data_seek to mssql_num_rows < $offset above if this is used
+			for ($i = 1; $i <= $offset; $i++)
+			{
+				mssql_next_result($result);
+			}
+		*/
+
+		// we fetch array so both assoc and num can be used, May change later on
+
+		$this->_limit_last_key ++;
+		$result_id = 'LIMIT_'.$this->_limit_last_key;
+		
+		while ($row = mssql_fetch_array($result))
+		{
+			$this->_limit_result[$result_id][] = $row;
+		}
+
+		return $result_id;
 	}
 
 	/*
 		Boy do I like this but it phpBB's, may have to do something similar
 	*/
-	function sql_build_array($query, $array = false)
+	function sql_build_array($query, $assoc_ary = false)
 	{
-		if (!is_array($array))
+		if (!is_array($assoc_ary))
 		{
 			return false;
 		}
 
-		$fields = $values = array();
+		$fields = array();
+		$values = array();
 
 		if ($query == 'INSERT')
 		{
-			foreach ($array as $key => $value)
+			foreach ($assoc_ary as $key => $var)
 			{
 				$fields[] = $key;
 
-				if (is_numeric($value))
-				{
-					$values[] = $value;
-				}
-				elseif (is_string($value))
-				{
-					$values[] = "'" . $this->escape($value) . "'";
-				}
-				elseif (is_null($value))
+				if (is_null($var))
 				{
 					$values[] = 'NULL';
 				}
-				elseif (is_bool($value))
+				elseif (is_string($var))
 				{
-					$values[] = ($value) ? 1 : 0;
+					$values[] = "'" . $this->escape($var) . "'";
+				}
+				else
+				{
+					$values[] = (is_bool($var)) ? intval($var) : $var;
 				}
 			}
 
-			return ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
+			$query = ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
 		}
-		elseif ($query == 'UPDATE' || $query == 'SELECT')
+		else if ($query == 'UPDATE' || $query == 'SELECT')
 		{
 			$values = array();
-			foreach ($array as $key => $value)
+			foreach ($assoc_ary as $key => $var)
 			{
-				if (is_numeric($value))
-				{
-					$values[] = $key.' = '.$value;
-				}
-				elseif (is_string($value))
-				{
-					$values[] = "$key = '" . $this->escape($value) . "'";
-				}
-				elseif (is_null($var))
+				if (is_null($var))
 				{
 					$values[] = "$key = NULL";
 				}
-				elseif (is_bool($value))
+				elseif (is_string($var))
 				{
-					$values[] = $key.' = '.(($value) ? 1 : 0);
+					$values[] = "$key = '" . $this->escape($var) . "'";
 				}
-
+				else
+				{
+					$values[] = (is_bool($var)) ? "$key = " . intval($var) : "$key = $var";
+				}
 			}
-
-			return implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
+			$query = implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
 		}
+
+		return $query;
 	}
 
 	function num_rows($result = false)
@@ -282,7 +315,12 @@ class db_mysqli
 			return 0; 
 		}
 
-		return mysqli_num_rows($result);
+		if (strpos($result, 'LIMIT_') === 0)
+		{
+			return (empty($this->_limit_result[$result]) ? 0 : count($this->_limit_result[$result]));
+		}
+
+		return mssql_num_rows($result);
 	}
 
 	function affected_rows()
@@ -292,8 +330,9 @@ class db_mysqli
 			return 0; 
 		}
 
-		$num = mysqli_affected_rows($this->link_identifier);
+		$num = mssql_rows_affected($this->link_identifier);
 
+		// not sure what it returns one fail, test maybe ?
 		return (!$num || $num == -1) ? 0 : $num;
 	}
 
@@ -306,7 +345,16 @@ class db_mysqli
 			return false;
 		}
 
-		return @mysqli_fetch_assoc($result);
+		if (strpos($result, 'LIMIT_') === 0)
+		{
+			if (empty($this->_limit_result[$result]) || !($value = each($this->_limit_result[$result])))
+			{
+				return false;
+			}
+			return $value['value'];
+		}
+
+		return @mssql_fetch_assoc($result);
 	}
 
 	function fetch_row_num($result = false)
@@ -316,7 +364,16 @@ class db_mysqli
 			return false;
 		}
 
-		return @mysqli_fetch_row($result);
+		if (strpos($result, 'LIMIT_') === 0)
+		{
+			if (empty($this->_limit_result[$result]) || !($value = each($this->_limit_result[$result])))
+			{
+				return false;
+			}
+			return $value['value'];
+		}
+
+		return @mssql_fetch_row($result);
 	}
 
 	function fetch_row_both($result = false)
@@ -326,83 +383,77 @@ class db_mysqli
 			return false;
 		}
 
-		return @mysqli_fetch_array($result);
-	}
+		if (strpos($result, 'LIMIT_') === 0)
+		{
+			if (empty($this->_limit_result[$result]) || !($value = each($this->_limit_result[$result])))
+			{
+				return false;
+			}
+			return $value['value'];
+		}
 
+		return @mssql_fetch_array($result);
+	}
+	
 	function insert_id()
 	{
-		return ($this->link_identifier) ? @mysqli_insert_id($this->link_identifier) : false;
+		if (!$this->link_identifier)
+		{
+			return false;
+		}
+		
+		//@@IDENTITY
+		if ($result = mssql_query('SELECT SCOPE_IDENTITY() AS Identity', $this->db_connect_id))
+		{
+			$row = mssql_fetch_assoc($result);
+			mssql_free_result($result);
+		}
+
+		return (isset($row['Identity']) && !is_null($row['Identity'])) ? $row['Identity'] : false;
 	}
 
 	function free_result($result = false)
 	{
-		if (!$result || !isset($this->open_queries[(string) $result]) || !$this->link_identifier) 
-		{ 
-			return false; 
+		if ($result && strpos($result, 'LIMIT_') === 0)
+		{
+			if (isset($this->_limit_result[$result]))
+			{
+				unset($this->_limit_result[$result]);
+			}
+			return;
 		}
 
-		unset($this->open_queries[(string) $result]);
+		if (!$result || !isset($this->open_queries[(int) $result]) || !$this->link_identifier) 
+		{ 
+			return; 
+		}
 
-		return @mysqli_free_result($result);
+		unset($this->open_queries[(int) $result]);
+
+		@mssql_free_result($result);
 	}
 
 	function escape($text)
 	{
-		if (!$this->link_identifier)
-		{ 
-			return false; 
-		}
-		
-		return mysqli_real_escape_string($this->link_identifier, $text);
+		return str_replace("'", "''", str_replace('\\', '\\\\', $text));
 	}
 
 	function escape_array($value)
 	{
 		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
-
-	function optimize_tables($table = '')
+		
+	function optimize_tables()
 	{
-		global $_CORE_CONFIG;
-	
-		if ($table)
-		{
-			if (is_array($table))
-			{
-				$table = implode(',', $table);
-			}
-		}
-		else
-		{
-			$result = $this->query('SHOW TABLES');
 
-			while ($row = $this->fetch_row_num($result))
-			{
-				if ($table)
-				{
-					$table .= ', ' . $row[0];
-				}
-			}
-
-			$this->free_result($result);
-		}
-
-		if ($table)
-		{
-			$this->query('OPTIMIZE TABLE '. $table);
-		}
 	}
 
 	function version()
 	{
-		if (!$this->link_identifier)
-		{
-			return false;
-		}
-
-		return mysqli_get_server_info($this->link_identifier);
+		//add later, more important things to do
+		//@@VERSION
 	}
-	
+
 	function _error($sql = '', $backtrace)
 	{
 		if ($this->return_on_error)
@@ -410,13 +461,14 @@ class db_mysqli
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u><br /><br />' . @mysqli_error($this->link_identifier) . '<br /><br />File: <br/>'.$backtrace['file'].'<br/><br />Line:<br/>'.$backtrace['line'].'<br /><br /><u>SQL</u><br /><br />' . $sql .'<br />';
+		// should we use the long error getting why ?
+		$message = '<u>SQL ERROR</u><br /><br />' . @mssql_get_last_message() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
 
 		if ($this->in_transaction)
 		{
 			$this->transaction('rollback');
 		}
-
+		
 		trigger_error($message, E_USER_ERROR);
 	}
 
@@ -433,23 +485,7 @@ class db_mysqli
 		switch ($mode)
 		{
 			case 'start':
-				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
-				{
-					if (strpos('SELECT', $this->last_query) === 0)
-					{
-						if ($result = @mysqli_query($this->link_identifier, 'EXPLAIN '.$this->last_query))
-						{
-							while ($row = @mysqli_fetch_assoc($result))
-							{
-								$this->query_details[$this->num_queries][] = $row;
-							}
-						}
-					}
-					else
-					{
-						$this->query_details[$this->num_queries][] = '';
-					}
-				}
+				$this->query_details[$this->num_queries][] = '';
 
 				$start_time = explode(' ', microtime());
 				$start_time = $start_time[0] + $start_time[1];
@@ -477,7 +513,8 @@ class db_mysqli
 					}
 					else
 					{
-						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> mysqli_error($this->link_identifier));
+						// should we use the long error getting why ?
+						$this->query_list[$this->num_queries] = array('query' => $this->last_query, 'file' => $backtrace['file'], 'line'=> $backtrace['line'], 'error'=> 1, 'errorcode' => mssql_get_last_message());
 					}
 				}
 			break;
@@ -492,24 +529,24 @@ class db_mysqli
 		switch ($option)
 		{
 			case 'start':
-				$this->table_name = $name;
-				$this->fields = $this->indexs = array();
+				$this->_table_name = $name;
+				$this->_fields = $this->_indexs = array();
 			break;
 
 			case 'commit':
 			case 'return':
-				if (!$this->table_name)
+				if (!$this->_table_name)
 				{
 					return;
 				}
 
-				$fields = implode(", \n", $this->fields);
-				if ($indexs = implode(", \n", $this->indexs))
+				$fields = implode(", \n", $this->_fields);
+				if ($indexs = implode(", \n", $this->_indexs))
 				{
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')
@@ -520,8 +557,8 @@ class db_mysqli
 				$this->sql_query($table);
 
 			case 'cancel':
-				$this->table_name = false;
-				$this->fields = $this->indexs = array();
+				$this->_table_name = false;
+				$this->_fields = $this->_indexs = array();
 			break;
 		}
 	}
@@ -533,51 +570,51 @@ class db_mysqli
 		if ($number_min >= -0 && $number_max <= 255)
 		{
 			// TINYINT UNSIGNED ( 0 to 255 )
-			$this->fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
 		}
 		elseif ($number_min >= -128 && $number_max <= 128)
 		{
 			// TINYINT ( -128 to 127 )
-			$this->fields[$name] =  "`$name` TINYINT($length) DEFAULT";
+			$this->_fields[$name] =  "`$name` TINYINT($length) DEFAULT";
 		}
 		elseif ($number_min >= 0 && $number_max <= 65535)
 		{
 			// SMALLINT UNSIGNED ( 0 to 65,535 )
-			$this->fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
 		}
 		elseif ($number_min >= -32768 && $number_max <= 32767)
 		{
 			// SMALLINT ( -32,768 to 32,767 )
-			$this->fields[$name] =  "`$name` SMALLINT($length)";
+			$this->_fields[$name] =  "`$name` SMALLINT($length)";
 		}
 		elseif ($number_min >= 0 && $number_max <= 16777215)
 		{
 			// MEDIUMINT UNSIGNED ( 0 to 16,777,215 )
-			$this->fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
 		}
 		elseif ($number_min >= -8388608 && $number_max <= 8388607)
 		{
 			// MEDIUMINT ( -8,388,608 to 8,388,607 )
-			$this->fields[$name] =  "`$name` MEDIUMINT($length)";
+			$this->_fields[$name] =  "`$name` MEDIUMINT($length)";
 		}
 		elseif ($number_min >= -2147483647 && $number_max <= 2147483647)
 		{
 			// INT ( -2,147,483,647 to 2,147,483,647 )
-			$this->fields[$name] =  "`$name` INT($length)";
+			$this->_fields[$name] =  "`$name` INT($length)";
 		}
 		elseif ($number_min >= 0 && $number_max <= 4294967295) // we'll do this last
 		{
 			// INT UNSIGNED ( 0 to 4,294,967,295 )
-			$this->fields[$name] =  "`$name` INT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` INT($length) UNSIGNED";
 		}
 
 		if ($auto_increment)
 		{
-			$this->fields[$name] .= ' auto_increment';
+			$this->_fields[$name] .= ' auto_increment';
 		}
 		else
 		{
-			$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
 		}
 	}
 
@@ -586,40 +623,39 @@ class db_mysqli
 		if ($characters <= 255)
 		{
 			// TINYTEXT 1 to 255 Characters
-			$this->fields[$name] =  "`$name` TINYTEXT";
+			$this->_fields[$name] =  "`$name` TINYTEXT";
 		}
 		elseif ($characters <= 65535)
 		{
 			// TEXT 1 to 65535 Characters
-			$this->fields[$name] =  "`$name` TEXT";
+			$this->_fields[$name] =  "`$name` TEXT";
 		}
 		elseif ($characters <= 16777215)
 		{
 			// MEDIUMTEXT 1 to 16,777,215 Characters
-			$this->fields[$name] =  "`$name` MEDIUMTEXT";
+			$this->_fields[$name] =  "`$name` MEDIUMTEXT";
 		}
 		elseif ($characters <= 4294967295)
 		{
 			// LONGTEXT 1 to 4,294,967,295 Characters
-			$this->fields[$name] =  "`$name` LONGTEXT";
+			$this->_fields[$name] =  "`$name` LONGTEXT";
 		}
 
-		$this->fields[$name] .= ($null) ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 	}
 
 	function add_table_field_char($name, $characters, $default = '', $padded = false)
 	{
-		$this->fields[$name] =  ($padded) ? "`$name` CHAR($characters)" : "`$name` VARCHAR($characters)";
-		$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
+
+		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
+		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
 
-		//$field = (is_array($field)) ? $field : array($field);
-
-		if (empty($this->fields[$field]))
+		if (empty($this->_fields[$field]))
 		{
 			return;
 		}
@@ -628,11 +664,11 @@ class db_mysqli
 		{
 			case 'index':
 			case 'unique':
-				$this->indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
 			break;
 
 			case 'primary':
-				$this->indexs['primary'] = "PRIMARY KEY (`$field`)";
+				$this->_indexs['primary'] = "PRIMARY KEY (`$field`)";
 			break;
 		}
 	}
