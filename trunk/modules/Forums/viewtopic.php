@@ -190,8 +190,6 @@ $sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_attachment, t.topi
 		FROM ' . FORUMS_TABLE . ' f, ' . TOPICS_TABLE . " t  $join_sql_table 
 		WHERE t.topic_id = $topic_id";
 
-//echo $sql;
-
 $result = $_CLASS['core_db']->query($sql);
 $topic_data = $_CLASS['core_db']->fetch_row_assoc($result);
 $_CLASS['core_db']->free_result($result);
@@ -200,6 +198,8 @@ if (!$topic_data || $topic_data['forum_status'] == ITEM_DELETING || (!$topic_dat
 {
 	trigger_error('NO_TOPIC');
 }
+
+$topic_data['notify_status'] = isset($topic_data['notify_status']) ? $topic_data['notify_status'] : 0;
 
 //Check for read permission
 if (!$_CLASS['auth']->acl_get('f_read', $forum_id) && !$_CLASS['auth']->acl_get('m_', $forum_id))

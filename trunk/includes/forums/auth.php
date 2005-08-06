@@ -96,6 +96,7 @@ class auth
 					$cache[$f][$opt] = $this->acl[0]{$this->acl_options['global'][$opt]};
 				}
 			}
+
 			if (isset($this->acl_options['local'][$opt]))
 			{
 				if (isset($this->acl[$f]))

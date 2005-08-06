@@ -212,15 +212,10 @@ class ucp_profile extends module
 
 			case 'profile_info':
 
-				include($site_file_root.'includes/forums/functions_profile_fields.php');
 				include($site_file_root.'includes/forums/message_parser.php');
 				// TODO: The posting file is included because $message_parser->decode_message() relies on decode_message() in the posting functions.
 				include($site_file_root.'includes/forums/functions_posting.php');
 				 
-				$cp = new custom_profile();
-
-				$cp_data = $cp_error = array();
-
 				if ($submit)
 				{
 					$var_ary = array(
@@ -267,14 +262,6 @@ class ucp_profile extends module
 					$error = validate_data($data, $var_ary);
 					extract($data);
 					unset($data);
-
-					// validate custom profile fields
-					$cp->submit_cp_field('profile', $_CLASS['core_user']->get_iso_lang_id(), $cp_data, $cp_error);
-
-					if (sizeof($cp_error))
-					{
-						$error = array_merge($error, $cp_error);
-					}
 					
 					if (!sizeof($error))
 					{
@@ -295,27 +282,6 @@ class ucp_profile extends module
 							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 						$_CLASS['core_db']->sql_query($sql);
-
-						// Update Custom Fields
-						if (sizeof($cp_data))
-						{
-							$sql = 'UPDATE ' . PROFILE_DATA_TABLE . ' 
-								SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $cp_data) . '
-								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-							$_CLASS['core_db']->sql_query($sql);
-
-							if (!$_CLASS['core_db']->sql_affectedrows())
-							{
-								$cp_data['user_id'] = (int) $_CLASS['core_user']->data['user_id'];
-
-								$_CLASS['core_db']->return_on_error = true;
-
-								$sql = 'INSERT INTO ' . PROFILE_DATA_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $cp_data);
-								$_CLASS['core_db']->sql_query($sql);
-
-								$_CLASS['core_db']->return_on_error = false;
-							}
-						}
 
 						$_CLASS['core_display']->meta_refresh(3, $module_link);
 						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'">', '</a>');
@@ -345,9 +311,12 @@ class ucp_profile extends module
 				}
 				$s_birthday_year_options = '';
 
-				$now = getdate();
+				$now = explode(':', gmdate('Y'));
+
 				$s_birthday_year_options = '<option value="0"' . ((!$bday_year) ? ' selected="selected"' : '') . '>--</option>';
-				for ($i = $now['year'] - 100; $i < $now['year']; $i++)
+				$i = $now[0] - 100;
+
+				for ($i; $i < $now[0]; $i++)
 				{
 					$selected = ($i == $bday_year) ? ' selected="selected"' : '';
 					$s_birthday_year_options .= "<option value=\"$i\"$selected>$i</option>";

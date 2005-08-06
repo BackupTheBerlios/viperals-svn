@@ -70,99 +70,74 @@ class ucp_main extends module
 				$folder = 'folder_announce';
 				$folder_new = $folder . '_new';
 
-				// Determine first forum the user is able to read into - for global announcement link
-				$forum_ary = $_CLASS['auth']->acl_getf('f_read');
-				$g_forum_id = 0;
+				$sql = "SELECT t.* $sql_select 
+					FROM $sql_from
+					WHERE t.forum_id = 0
+						AND t.topic_type = " . POST_GLOBAL . '
+					ORDER BY t.topic_last_post_time DESC';
+				$result = $_CLASS['core_db']->query($sql);
 
-				foreach ($forum_ary as $forum_id => $allowed)
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					if (!$allowed['f_read'])
+					$forum_id = $row['forum_id'];
+					$topic_id = $row['topic_id'];
+
+					if ($row['topic_status'] == ITEM_LOCKED)
 					{
-						unset($forum_ary[$forum_id]);
+						$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_LOCKED'];
+						$folder = 'folder_locked';
+						$folder_new = 'folder_locked_new';
 					}
-				}
-// Bypass this for now until we have a way to view globals without a '0' forum id
-// Extend for news and messages
-				if (!empty($forum_ary))
-				{
-					$forum_ary = array_unique(array_keys($forum_ary));
-// what is this
-					$sql = 'SELECT forum_id 
-						FROM ' . FORUMS_TABLE . '
-						WHERE forum_type = ' . FORUM_POST . '
-							AND forum_id IN (' . implode(', ', $forum_ary) . ')';
-					$result = $_CLASS['core_db']->query_limit($sql, 1);
-					list($g_forum_id) = $_CLASS['core_db']->fetch_row_num($result);
-					$_CLASS['core_db']->free_result($result);
 
-					$sql = "SELECT t.* $sql_select 
-						FROM $sql_from
-						WHERE t.forum_id = 0
-							AND t.topic_type = " . POST_GLOBAL . '
-						ORDER BY t.topic_last_post_time DESC';
-					$result = $_CLASS['core_db']->query($sql);
-	
-					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+					$unread_topic = true;
+
+					if ($config['load_db_lastread'])
 					{
-						$forum_id = $row['forum_id'];
-						$topic_id = $row['topic_id'];
-	
-						if ($row['topic_status'] == ITEM_LOCKED)
-						{
-							$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_LOCKED'];
-							$folder = 'folder_locked';
-							$folder_new = 'folder_locked_new';
-						}
-	
-						$unread_topic = true;
-	
-						if ($config['load_db_lastread'])
-						{
-							$topic_check = $row['mark_time'];
-						}
-						else
-						{
-							$topic_id36 = base_convert($topic_id, 10, 36);
-							$topic_check = (isset($tracking_topics[0][$topic_id36])) ? base_convert($tracking_topics[0][$topic_id36], 36, 10) + $config['board_startdate'] : 0;
-						}
-	
-						if ($topic_check >= $row['topic_last_post_time'] || $forum_check >= $row['topic_last_post_time'])
-						{
-							$unread_topic = false;
-						}
-	
-						$newest_post_img = ($unread_topic) ? '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
-						$folder_img = ($unread_topic) ? $folder_new : $folder;
-						$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
-	
-						// Posted image?
-						$view_topic_url = generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id");
-	
-						$last_post_img = '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$g_forum_id&amp;t=$topic_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
-	
-						$_CLASS['core_template']->assign_vars_array('topicrow', array(
-							'FORUM_ID'			=> $forum_id,
-							'TOPIC_ID'			=> $topic_id,
-							'GOTO_PAGE'			=> '',
-							'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
-							'LAST_POST_AUTHOR'	=> ($row['topic_last_poster_name']) ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
-
-							'TOPIC_TITLE'		=> censor_text($row['topic_title']),
-							'TOPIC_TYPE'		=> $topic_type,
-	
-							'LAST_POST_IMG'		=> $last_post_img,
-							'NEWEST_POST_IMG'	=> $newest_post_img,
-							'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
-							'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', '') : '',
-	
-							'U_LAST_POST_AUTHOR'	=> ($row['topic_last_poster_id'] != ANONYMOUS) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) : false,
-							'U_VIEW_TOPIC'		=> $view_topic_url)
-						);
+						$topic_check = $row['mark_time'];
 					}
-				}
+					else
+					{
+						$topic_id36 = base_convert($topic_id, 10, 36);
+						$topic_check = (isset($tracking_topics[0][$topic_id36])) ? base_convert($tracking_topics[0][$topic_id36], 36, 10) + $config['board_startdate'] : 0;
+					}
 
+					if ($topic_check >= $row['topic_last_post_time'] || $forum_check >= $row['topic_last_post_time'])
+					{
+						$unread_topic = false;
+					}
+
+					$newest_post_img = ($unread_topic) ? '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
+					$folder_img = ($unread_topic) ? $folder_new : $folder;
+					$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
+
+					// Posted image?
+					$view_topic_url = generate_link("Forums&amp;file=viewtopic&amp;&amp;t=$topic_id");
+
+					$last_post_img = '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';
+
+					$_CLASS['core_template']->assign_vars_array('topicrow', array(
+						'FORUM_ID'			=> $forum_id,
+						'TOPIC_ID'			=> $topic_id,
+						'GOTO_PAGE'			=> '',
+						'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
+						'LAST_POST_AUTHOR'	=> ($row['topic_last_poster_name']) ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
+
+						'TOPIC_TITLE'		=> censor_text($row['topic_title']),
+						'TOPIC_TYPE'		=> $topic_type,
+
+						'LAST_POST_IMG'		=> $last_post_img,
+						'NEWEST_POST_IMG'	=> $newest_post_img,
+						'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
+						'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', '') : '',
+
+						'U_LAST_POST_AUTHOR'	=> ($row['topic_last_poster_id'] != ANONYMOUS) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['topic_last_poster_id']) : false,
+						'U_VIEW_TOPIC'		=> $view_topic_url)
+					);
+				}
 				$_CLASS['core_db']->free_result($result);
 
+/// 
+				$_CLASS['auth']->acl_getf('f_read');
 				$post_count_ary = $_CLASS['auth']->acl_getf('f_postcount');
 				
 				$forum_ary = array();
@@ -318,7 +293,7 @@ class ucp_main extends module
 
 				if ($config['load_db_lastread'])
 				{
-					$sql_from = '(' . FORUMS_TABLE . ' f  LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id))';
+					$sql_from = FORUMS_TABLE . ' f  LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id)';
 					$lastread_select = ', ft.mark_time ';
 				}
 				else
@@ -328,21 +303,32 @@ class ucp_main extends module
 
 					$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
 				}
+		
+				$_CLASS['core_db']->free_result($result);
 
 				$sql = "SELECT f.*$lastread_select 
 					FROM $sql_from, " . FORUMS_WATCH_TABLE . ' fw
 					WHERE fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
 						AND f.forum_id = fw.forum_id 
 					ORDER BY left_id';
+
 				$result = $_CLASS['core_db']->query($sql);
+				$topics_count = $_CLASS['core_db']->num_rows($result);
 
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$forum_id = $row['forum_id'];
 
 					$unread_forum = false;
-					$tracking_topics[$forum_id][0] = (isset($tracking_topics[$forum_id][0])) ? $tracking_topics[$forum_id][0] : '';
-					$forum_check = (!$config['load_db_lastread']) ? $tracking_topics[$forum_id][0] : $row['mark_time'];
+					
+					if ($config['load_db_lastread'])
+					{
+						$forum_check = $row['mark_time'];
+					}
+					else
+					{
+						$forum_check = isset($tracking_topics[$forum_id][0]) ? $tracking_topics[$forum_id][0] : 0;
+					}
 
 					if ($forum_check < $row['forum_last_post_time'])
 					{
@@ -395,13 +381,6 @@ class ucp_main extends module
 				
 				// Subscribed Topics
 				$start = request_var('start', 0);
-	
-				$sql = 'SELECT COUNT(topic_id) as topics_count
-					FROM ' . TOPICS_WATCH_TABLE . '
-					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-				$result = $_CLASS['core_db']->query($sql);
-				list($topics_count) = $_CLASS['core_db']->fetch_row_num($result);
-				$_CLASS['core_db']->free_result($result);
 
 				if ($topics_count)
 				{
@@ -412,14 +391,15 @@ class ucp_main extends module
 					);
 				}
 // Fix this up
-				$sql_from = ($config['load_db_lastread'] || $config['load_db_track']) ? '(' . TOPICS_TABLE . ' t LEFT JOIN ' . TOPICS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . '))' : TOPICS_TABLE . ' t';
+				$sql_from = ($config['load_db_lastread'] || $config['load_db_track']) ? TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')' : TOPICS_TABLE . ' t';
 				$sql_f_tracking = ($config['load_db_lastread']) ? 'LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.forum_id = t.forum_id AND ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . '), ' : '';
 
 				$sql_t_select = ($config['load_db_lastread'] || $config['load_db_track']) ? ', tt.mark_time' : '';
 				$sql_f_select = ($config['load_db_lastread']) ? ', ft.mark_time AS forum_mark_time' : '';
-				
+
+//
 				$sql = "SELECT t.* $sql_f_select $sql_t_select 
-					FROM $sql_from $sql_f_tracking " . TOPICS_WATCH_TABLE . ' tw
+					FROM $sql_from $sql_f_tracking " . FORUMS_WATCH_TABLE . ' tw
 					WHERE tw.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 						AND t.topic_id = tw.topic_id 
 					ORDER BY t.topic_last_post_time DESC';

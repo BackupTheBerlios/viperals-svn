@@ -818,6 +818,9 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 // User Notification
 function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id, $topic_id, $post_id)
 {
+	// Going to rewite this
+	return; 
+	
 	global $config, $_CORE_CONFIG, $_CLASS, $site_file_root;
 
 	$topic_notification = ($mode == 'reply' || $mode == 'quote');

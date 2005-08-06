@@ -94,29 +94,6 @@ function check_load_status($return = false)
 	return $load_status;
 }
 
-if (!function_exists('file_get_contents'))
-{
-	//string file_get_contents ( string filename [, bool use_include_path [, resource context [, int offset [, int maxlen]]]] )
-	function file_get_contents($file)
-	{
-		$handle = fopen($file, 'rb');
-
-		if (!$handle)
-		{
-			return false;
-		}
-
-		$contents = '';
-
-		while (!feof($handle))
-		{
-			$contents .= fread($handle, 8192);
-		}
-
-		fclose($handle);
-	}
-}
-
 function get_server_load()
 {
 	$load = 0;
@@ -399,6 +376,60 @@ function generate_link($link = false, $link_options = false)
     return ($options['full']) ? generate_base_url().$link : $link;
 }
 
+function generate_pagination_formated($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
+{
+
+}
+
+function generate_pagination_array($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
+{
+	global $_CLASS;
+
+	if ($total < $per_page)
+	{
+		return false;
+	}
+
+	$total_pages = ceil($total / $per_page);
+	$current_page = ($start) ? ceil($start / $per_page) : 1;
+
+	//1 2 (3) 4 5 … 15
+	//1 …  7 8 (9) 10 11
+	if ($total_pages > 8)
+	{
+		if (($start = $current_page - 2) < 1)
+		{
+			$start = 2;
+			$end = 6;
+			$display[] = array('page' => 1, 'link' => false, 'seperator' => 'after');
+		}
+		else
+		{
+			$display[] = array('page' => 1, 'link' => generate_link($base_url, $admin_link), 'seperator' => false);
+			$end = min($total_pages, $current_page + 2);
+		}
+	}
+	else
+	{
+		$start = 1;
+		$end = $total_pages;
+	}
+
+	for($i = $start; $i < $end; $i++)
+	{
+		//$link = ($i == $current_page) ? false : generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), $admin_link);
+		$link = ($i == $current_page) ? false : generate_link($base_url.'&amp;p='.$i, $admin_link);
+		$display[] = array('page' => $i, 'link' => $link);
+	}
+	
+	if ($end != $total_pages)
+	{
+		$display[] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;p='.$total_pages, $admin_link), 'seperator' => 'before');
+	}
+	
+	return $display;
+}
+
 // to be redone
 function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = false, $tpl_prefix = '')
 {
@@ -499,15 +530,6 @@ function generate_string($length)
 function gmtime()
 {
 	return (time() - date('Z'));
-}
-
-if (!function_exists('html_entity_decode'))
-{
-	//string html_entity_decode ( string string [, int quote_style [, string charset]] )
-	function html_entity_decode($string, $quote_style = ENT_COMPAT, $charset = '')
-	{
-		return strtr($string, array_flip(get_html_translation_table(HTML_ENTITIES, $quote_style)));
-	}
 }
 
 function load_class($file, $name, $class = false)
@@ -745,6 +767,73 @@ function url_redirect($url = false, $save = false)
 	script_close($save);
 }
 
+if (!function_exists('file_get_contents'))
+{
+	//string file_get_contents ( string filename [, bool use_include_path [, resource context [, int offset [, int maxlen]]]] )
+	function file_get_contents($file, $use_include_path = false)
+	{
+		$handle = fopen($file, 'rb', $use_include_path);
+
+		if (!$handle)
+		{
+			return false;
+		}
+
+		$contents = '';
+
+		while (!feof($handle))
+		{
+			$contents .= fread($handle, 8192);
+		}
+
+		fclose($handle);
+	}
+}
+
+if (!function_exists('file_put_contents'))
+{
+	//int file_put_contents ( string filename, mixed data [, int flags [, resource context]] )
+	function file_put_contents($file, $file_data)
+	{
+		$bytes = false;
+
+		if (is_array($file_data))
+		{
+			$file_data = implode('', $file_data);
+		}
+
+		if ($fp = @fopen($file, 'wb'))
+		{
+			@flock($fp, LOCK_EX);
+			$bytes = fwrite($fp, $file_data);
+			@flock($fp, LOCK_UN);
+			fclose($fp);
+		}
+		return $bytes;
+	}
+}
+
+if (!function_exists('html_entity_decode'))
+{
+	//string html_entity_decode ( string string [, int quote_style [, string charset]] )
+	function html_entity_decode($string, $quote_style = ENT_COMPAT, $charset = '')
+	{
+		return strtr($string, array_flip(get_html_translation_table(HTML_ENTITIES, $quote_style)));
+	}
+}
+
+
+// Should 4.3 be the min, or 4.2 ?
+// Move seperate file, if someone has a pre 4.3 they'll have to include that file
+if (!function_exists('debug_backtrace'))
+{
+	function debug_backtrace()
+	{
+	}
+}
+
+// Should 4.3 be the min, or 4.2 ?
+// Move seperate file, if someone has a pre 4.3 they'll have to include that file
 if (!function_exists('var_export'))
 {
 	function var_export($variable, $return = false, $tab = false)
@@ -753,38 +842,50 @@ if (!function_exists('var_export'))
 		$lines = array();
 		$new_line = chr(10);
 		//"windows" = "chr(13).chr(10)"  "Mac" = "chr(13)"
-		
-		foreach ($variable as $key => $value)
+
+		if (is_array($variable))
 		{
-			$formated = is_int($key) ? $key.' => ' : "'$key' => ";
-
-			if (is_array($value))
+			foreach ($variable as $key => $value)
 			{
-				$formated .= $this->format_array($value, $tab.$tab);
+				$string = is_int($key) ? $key.' => ' : "'$key' => ";
+	
+				if (is_array($value))
+				{
+					$string .= $this->format_array($value, $tab.$tab);
+				}
+				elseif (is_int($value))
+				{
+					$string .= $value;
+				}
+				elseif (is_bool($value))
+				{
+					$string .= ($value) ? 'true' : 'false';
+				}
+				else
+				{
+					$string .= "'".str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
+				}
+	
+				$lines[] = $string;
 			}
-			elseif (is_int($value))
-			{
-				$formated .= $value;
-			}
-			elseif (is_bool($value))
-			{
-				$formated .= ($value) ? 'true' : 'false';
-			}
-			else
-			{
-				$formated .= "'".str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
-			}
-
-			$lines[] = $string;
+			$formated = 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
+		}
+		elseif (is_int($variable))
+		{
+			$formated = (string) $array;
+		}
+		elseif (is_string($array))
+		{
+			$formated .= "'".str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
 		}
 
 		if ($return)
 		{
-			return 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
+			return $formated;
 		}
 		else
 		{
-			echo 'array('.$new_line. $tab . implode(','.$new_line. $tab, $lines) . ')';
+			echo $formated;
 		}
 	}
 }

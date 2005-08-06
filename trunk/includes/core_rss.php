@@ -92,7 +92,10 @@ class core_rss
 		{
 			stream_set_timeout($this->fp, 5);
 		}
-		//socket_set_timeout()
+		else
+		{
+			socket_set_timeout($this->fp, 5);
+		}
 
 		fwrite($this->fp, 'GET '.$parsed_url['path'].(($parsed_url['query']) ? '?'.$parsed_url['query'] : '')." HTTP/1.0\r\n");
 		fwrite($this->fp, "User-Agent: Viperal CMS RSS Reader\r\n");

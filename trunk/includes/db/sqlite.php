@@ -294,12 +294,12 @@ class db_sqlite
 			return false;
 		}
 
-		$this->new_array = false;
 		/*
 			I don't see anything better right now. 
 			PRAGMA short_column_names = 1; Nor PRAGMA full_column_names = 0; works with AS / multiple tables
 				Atleast that's the case with version 2.x with php5 uses
 		*/
+		$new_array = false;
 
 		if ($array = @sqlite_fetch_array($result, SQLITE_ASSOC))
 		{
@@ -309,12 +309,11 @@ class db_sqlite
 				{
 					$key = substr($key, $pos + 1);
 				}
-		
-				$this->new_array[$key] = $value;
+				$new_array[$key] = $value;
 			}
 		}
-		
-		return $this->new_array;
+
+		return $new_array;
 	}
 
 	function fetch_row_num($result = false)
@@ -334,7 +333,21 @@ class db_sqlite
 			return false;
 		}
 
-		return @sqlite_fetch_array($result, SQLITE_BOTH);
+		$new_array = false;
+
+		if ($array = @sqlite_fetch_array($result, SQLITE_BOTH))
+		{
+			foreach ($array as $key => $value)
+			{
+				if ($pos = strpos($key, '.'))
+				{
+					$key = substr($key, $pos + 1);
+				}
+				$new_array[$key] = $value;
+			}
+		}
+
+		return $new_array;
 	}
 
 	function insert_id()

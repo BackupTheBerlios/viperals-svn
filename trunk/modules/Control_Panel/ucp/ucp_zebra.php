@@ -40,10 +40,10 @@ class ucp_zebra extends module
 					FROM ' . ZEBRA_TABLE . ' z, ' . USERS_TABLE . ' u 
 					WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 						AND u.user_id = z.zebra_id";
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 
 				$friends = $foes = array();
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					if ($row['friend'])
 					{
@@ -54,7 +54,7 @@ class ucp_zebra extends module
 						$foes[] = $row['username'];
 					}
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 
 				$data['add'] = array_diff($data['add'], $friends, $foes, array($_CLASS['core_user']->data['username']));
 				unset($friends, $foes);
@@ -66,9 +66,9 @@ class ucp_zebra extends module
 					$sql = 'SELECT user_id, user_type
 						FROM ' . USERS_TABLE . ' 
 						WHERE username IN (' . $data['add'] . ')';
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 
-					if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$user_id_ary = array();
 						do
@@ -78,7 +78,7 @@ class ucp_zebra extends module
 								$user_id_ary[] = $row['user_id'];
 							}
 						}
-						while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+						while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
 						// Remove users from foe list if they are admins or moderators
 						if ($mode == 'foes')
@@ -103,7 +103,7 @@ class ucp_zebra extends module
 
 							$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
 								VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-							$_CLASS['core_db']->sql_query($sql);
+							$_CLASS['core_db']->query($sql);
 						}
 						else
 						{
@@ -116,7 +116,7 @@ class ucp_zebra extends module
 						$error[] = 'USER_NOT_FOUND';
 					}
 					
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 				}
 			}
 			else if ($data['usernames'] && !sizeof($error))
@@ -127,7 +127,7 @@ class ucp_zebra extends module
 				$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
 						AND zebra_id IN (' . implode(', ', $data['usernames']) . ')';
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			
 			if (!sizeof($error))
@@ -148,14 +148,14 @@ class ucp_zebra extends module
 			WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 				AND $sql_and 
 				AND u.user_id = z.zebra_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$s_username_options = '';
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$s_username_options .= '<option value="' . $row['zebra_id'] . '">' . $row['username'] . '</option>';
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_template']->assign(array( 
 			'L_TITLE'				=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
