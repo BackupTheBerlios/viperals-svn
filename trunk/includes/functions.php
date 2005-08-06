@@ -378,35 +378,35 @@ function generate_link($link = false, $link_options = false)
 
 function generate_pagination_formated($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
 {
-
-}
-
-function generate_pagination_array($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
-{
 	global $_CLASS;
 
-	if ($total < $per_page)
+	if ($total <= $per_page)
 	{
 		return false;
 	}
 
-	$total_pages = ceil($total / $per_page);
-	$current_page = ($start) ? ceil($start / $per_page) : 1;
+	$wrapper['normal'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
+	$wrapper['current'] = '<span class="page_link_normal">%2$d</span>';
+	$wrapper['first'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
+	$wrapper['last'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
 
-	//1 2 (3) 4 5 … 15
-	//1 …  7 8 (9) 10 11
+	$total_pages = ceil($total / $per_page);
+	$current_page = ($start) ? floor($start / $per_page) + 1 : 1;
+	$display = '';
+
 	if ($total_pages > 8)
 	{
-		if (($start = $current_page - 2) < 1)
+		if ($current_page < 4)
 		{
-			$start = 2;
-			$end = 6;
-			$display[] = array('page' => 1, 'link' => false, 'seperator' => 'after');
+			$start = 1;
+			$end = 5;
 		}
 		else
 		{
-			$display[] = array('page' => 1, 'link' => generate_link($base_url, $admin_link), 'seperator' => false);
 			$end = min($total_pages, $current_page + 2);
+			$start = ($end > $total_pages - 2) ? $total_pages - 4 : $current_page - 2;
+
+			$display = sprintf($wrapper['first'], generate_link($base_url, $admin_link), 1);
 		}
 	}
 	else
@@ -415,116 +415,66 @@ function generate_pagination_array($base_url, $total, $per_page = 10, $start = 0
 		$end = $total_pages;
 	}
 
-	for($i = $start; $i < $end; $i++)
+	for($i = $start; $i <= $end; $i++)
 	{
-		//$link = ($i == $current_page) ? false : generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), $admin_link);
-		$link = ($i == $current_page) ? false : generate_link($base_url.'&amp;p='.$i, $admin_link);
-		$display[] = array('page' => $i, 'link' => $link);
+		$this_wrapper = ($current_page == $i) ? $wrapper['current'] : $wrapper['normal'];
+		$display .= sprintf($this_wrapper, generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), $i);
 	}
-	
+
 	if ($end != $total_pages)
 	{
-		$display[] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;p='.$total_pages, $admin_link), 'seperator' => 'before');
+		$display .= sprintf($wrapper['last'], generate_link($base_url.'&amp;start='.(($total_pages - 1)  * $per_page), $admin_link), $total_pages);
 	}
-	
+
 	return $display;
 }
 
-// to be redone
-function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = false, $tpl_prefix = '')
+function generate_pagination_array($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
 {
-	//Code Copyright 2004 phpBB Group - http://www.phpbb.com/
 	global $_CLASS;
 
-	$seperator = ' | ';
-
-	$admin_link = (VIPERAL == 'Admin') ? array('admin' => true) : '';
-
-	$total_pages = ceil($num_items / $per_page);
-
-	if ($total_pages == 1 || !$num_items)
+	if ($total <= $per_page)
 	{
 		return false;
 	}
 
-	$on_page = floor($start_item / $per_page) + 1;
+	$total_pages = ceil($total / $per_page);
+	$current_page = ($start) ? floor($start / $per_page) + 1 : 1;
+	$display = array();
 
-	$page_string = ($on_page == 1) ? '<strong>1</strong>' : '<a href="' . generate_link($base_url, $admin_link) . '">1</a>';
-	
-	if ($total_pages > 5)
+	if ($total_pages > 8)
 	{
-		$start_cnt = min(max(1, $on_page - 4), $total_pages - 5);
-		$end_cnt = max(min($total_pages, $on_page + 4), 6);
-
-		$page_string .= ($start_cnt > 1) ? ' ... ' : $seperator;
-
-		for($i = $start_cnt + 1; $i < $end_cnt; $i++)
+		if ($current_page < 4)
 		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . generate_link($base_url . "&amp;start=" . (($i - 1) * $per_page), $admin_link) . '">' . $i . '</a>';
-			if ($i < $end_cnt - 1)
-			{
-				$page_string .= $seperator;
-			}
+			$start = 1;
+			$end = 5;
 		}
+		else
+		{
+			$start = $current_page - 2;
+			$end = min($total_pages, $current_page + 2);
 
-		$page_string .= ($end_cnt < $total_pages) ? ' ... ' : $seperator;
+			$display[] = array('page' => 1, 'link' => generate_link($base_url, $admin_link), 'seperator' => 'after');
+		}
 	}
 	else
 	{
-		$page_string .= $seperator;
-
-		for($i = 2; $i < $total_pages; $i++)
-		{
-			$page_string .= ($i == $on_page) ? '<strong>' . $i . '</strong>' : '<a href="' . generate_link($base_url . "&amp;start=" . (($i - 1) * $per_page), $admin_link) . '">' . $i . '</a>';
-			if ($i < $total_pages)
-			{
-				$page_string .= $seperator;
-			}
-		}
+		$start = 1;
+		$end = $total_pages;
 	}
 
-	$page_string .= ($on_page == $total_pages) ? '<strong>' . $total_pages . '</strong>' : '<a href="' . generate_link($base_url . '&amp;start=' . (($total_pages - 1) * $per_page), $admin_link) . '">' . $total_pages . '</a>';
-
-	if ($add_prevnext_text)
+	for($i = $start; $i <= $end; $i++)
 	{
-		if ($on_page != 1) 
-		{
-			$page_string = '<a href="' . generate_link($base_url . '&amp;start=' . (($on_page - 2) * $per_page), $admin_link) . '">' . $_CLASS['core_user']->lang['PREVIOUS'] . '</a>&nbsp;&nbsp;' . $page_string;
-		}
-
-		if ($on_page != $total_pages)
-		{
-			$page_string .= '&nbsp;&nbsp;<a href="' . generate_link($base_url . '&amp;start=' . ($on_page * $per_page), $admin_link) . '">' . $_CLASS['core_user']->lang['NEXT'] . '</a>';
-		}
+		$link = ($i == $current_page) ? false : generate_link($base_url.'&amp;start='.(($i - 1) * $per_page), $admin_link);
+		$display[] = array('page' => $i, 'link' => $link, 'seperator' => false);
 	}
 	
-	$_CLASS['core_template']->assign(array(
-		$tpl_prefix . 'BASE_URL'	=> generate_link($base_url),
-		$tpl_prefix . 'PER_PAGE'	=> $per_page,
-		
-		$tpl_prefix . 'PREVIOUS_PAGE'	=> ($on_page == 1) ? '' : generate_link($base_url . '&amp;start=' . (($on_page - 2) * $per_page), $admin_link),
-		$tpl_prefix . 'NEXT_PAGE'	=> ($on_page == $total_pages) ? '' : generate_link($base_url . '&amp;start=' . ($on_page * $per_page), $admin_link))
-	);
-	return $page_string;
-}
-
-/*
-	Generates random strings
-*/
-function generate_string($length)
-{
-	// Add type
-	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-	$string = '';
-	$num_chars = strlen($chars) - 1;
-
-	for ($i = 0; $i < $length; ++$i)
+	if ($end != $total_pages)
 	{
-		$string .= substr($chars, mt_rand(0, $num_chars), 1);
+		$display[] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;start='.(($total_pages - 1) * $per_page), $admin_link), 'seperator' => 'before');
 	}
-
-	return $string;
+	
+	return $display;
 }
 
 function gmtime()
@@ -888,5 +838,17 @@ if (!function_exists('var_export'))
 			echo $formated;
 		}
 	}
+}
+
+//REMOVE
+function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = false, $tpl_prefix = '')
+{
+	global $_CLASS;
+		$_CLASS['core_template']->assign(array(
+		$tpl_prefix . 'PREVIOUS_PAGE'	=>  '',
+		$tpl_prefix . 'NEXT_PAGE'	=> '')
+	);
+
+	return generate_pagination_formated($base_url, $num_items, $per_page, $start_item, false);
 }
 ?>
