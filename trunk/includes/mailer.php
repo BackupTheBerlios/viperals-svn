@@ -4,7 +4,7 @@
 //**************************************************************//
 //																//
 //  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
+//  By Ryan Marshall ( Viperal©	)								//
 //																//
 //  http://www.viperal.com										//
 //																//
@@ -15,15 +15,14 @@
 
 class core_mailer
 {
-	var $from;
-	var $reply_to;
 	var $message;
 	var $subject;
-	var $bcc;
-	var $to;
+	var $address_arrays;
 	var $extra_headers;
 
-	function setup()
+	var $encoding = 'UTF-8';
+
+	function core_mailer()
 	{	
 		$this->html = false;
 		$this->message = $this->subject = '';
@@ -33,7 +32,7 @@ class core_mailer
 	function to($address, $name = '')
 	{
 		$this->address_arrays['to'][] = array(
-				'address'	=> $address
+				'address'	=> $address,
 				'name'		=> $name
 			);
 	}
@@ -41,7 +40,7 @@ class core_mailer
 	function cc($address, $name = '')
 	{
 		$this->address_arrays['cc'][] = array(
-				'address'	=> $address
+				'address'	=> $address,
 				'name'		=> $name
 			);
 	}
@@ -49,7 +48,7 @@ class core_mailer
 	function bcc($address, $name = '')
 	{
 		$this->address_arrays['bcc'][] = array(
-				'address'	=> $address
+				'address'	=> $address,
 				'name'		=> $name
 			);
 	}
@@ -57,7 +56,7 @@ class core_mailer
 	function reply_to($address, $name = '')
 	{
 		$this->address_arrays['reply_to'] = array(
-			'address'	=> $address
+			'address'	=> $address,
 			'name'		=> $name
 		);
 	}
@@ -65,7 +64,7 @@ class core_mailer
 	function from($address, $name = '')
 	{
 		$this->address_arrays['from'] = array(
-			'address'	=> $address
+			'address'	=> $address,
 			'name'		=> $name
 		);
 	}
@@ -96,14 +95,14 @@ class core_mailer
 	{
 		global $_CLASS, $_CORE_CONFIG;
 
-		$to = $cc = $bcc = $reply_to = $from = '';
+		$to = $cc = $bcc = $reply_to = $from = false;
 
 		foreach ($this->address_arrays as $type => $address)
 		{
-			$$type = format_address($address);
+			$$type = $this->format_address($address);
 		}
 
-		$_CORE_CONFIG['email']['site_mail'] = trim($_CORE_CONFIG['email']['site_mail'])
+		$_CORE_CONFIG['email']['site_mail'] = trim($_CORE_CONFIG['email']['site_mail']);
 
 		if (!$from)
 		{
@@ -111,24 +110,42 @@ class core_mailer
 			$from = '<' . $_CORE_CONFIG['email']['site_mail'] . '>';
 		}
 
-		$headers = "From: $from \n";
-		$headers .= 'Date: ' . gmdate('D, d M Y H:i:s T')) . "\n";
-		$headers .= isset($cc) ? "Cc: $cc\n" : '';
-		$headers .= isset($bcc) ? "Bcc: $bcc\n" : ''; 
-		$headers .= isset($reply_to) ? "Reply-to: $reply_to \n" : '';
-		$headers .= 'Return-Path: <' . $_CORE_CONFIG['email']['site_mail'] . ">\n";
-		$headers .= 'Sender: <' .  . ">\n";
-		$headers .= "MIME-Version: 1.0\n";
-		$headers .= 'Message-ID: <' . ((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))) . "@" . $_CORE_CONFIG['global']['site_name'] . ">\n";
+		$headers[] = "From: $from";
+		$headers[] = 'Date: ' . gmdate('D, d M Y H:i:s T');
+
+		if (!$_CORE_CONFIG['email']['smtp'])
+		{
+			if ($cc)
+			{
+				$headers[] = "Cc: $cc";
+			}
+
+			if ($bcc)
+			{
+				$headers[] = "Bcc: $bcc";
+			}
+		}
+
+		if ($reply_to)
+		{
+			$headers[] = "Reply-to: $reply_to";
+		}
+
+		$headers[] = 'Return-Path: <' . $_CORE_CONFIG['email']['site_mail'] . ">";
+		$headers[] = 'Sender: <' . $_CORE_CONFIG['email']['site_mail'] . ">";
+		$headers[] = "MIME-Version: 1.0";
+		$headers[] = 'Message-ID: <' . ((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))) . "@" . $_CORE_CONFIG['global']['site_name'] . ">";
 
 		if ($this->html)
 		{
 			// multipart
-			$text_boundary = trim('----part_'.((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true)));
+			$text_boundary = trim('----part_'.((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))));
 
-			$headers .= "Content-Type: multipart/alternative;\nboundary=$text_boundary\n"; 
-			$headers .= 'Content-Type: text/html; charset='.$this->encoding."\n";
+			$headers[] = 'Content-Type: multipart/alternative;'; 
+			$headers[] = 'boundary="'.$text_boundary.'"';
 			
+			//$message = 'This is a multi-part message in MIME format'.
+
 			// Plain text
 			$message = "\n$text_boundary\n";
 			$message .= 'Content-type: text/plain; charset='.$this->encoding."\n"; //format=
@@ -145,14 +162,43 @@ class core_mailer
 		}
 		else
 		{
-			$headers .= 'Content-type: text/plain; charset='.$this->encoding."\n";
-			$headers .= "Content-transfer-encoding: 8bit\n";
-			$message .= "\n".strip_tags(preg_replace('/<br[/]?>/', "/n", $this->message)."\n";
+			$headers[] = 'Content-type: text/plain; charset='.$this->encoding;
+			$headers[] = 'Content-transfer-encoding: 8bit';
+			$message = "\n".strip_tags(preg_replace('#<br */?>#i', "/n", $this->message))."\n";
 		}
 
-		if (function_exists($_CORE_CONFIG['email']['email_function_name'])
+		if ($_CORE_CONFIG['email']['smtp'])
 		{
-			$result = $_CORE_CONFIG['email']['email_function_name']($to, $this->subject, $message, $headers);
+			$smtp = new smtp_mailer;
+
+			if ($connect = $smtp->connect($_CORE_CONFIG['email']['smtp_host'], $_CORE_CONFIG['email']['smtp_port']))
+			{
+				$login = $smtp->login($_CORE_CONFIG['email']['smtp_username'], $_CORE_CONFIG['email']['smtp_password']);
+			}
+
+			if (!$connect || !$login)
+			{
+				$this->error = $smtp->error;
+				return false;
+			}
+		
+			$smtp->subject = $this->subject;
+			$smtp->headers = $headers;
+			$smtp->message = $message;
+			$this->recipients = array_merge($this->address_arrays['to'], $this->address_arrays['cc'] , $this->address_arrays['bcc']);
+
+			if (!$smtp->send_mail())
+			{
+				$this->error = $smtp->error;
+				return false;
+			}
+
+			return true;			
+		}
+
+		if (function_exists($_CORE_CONFIG['email']['email_function_name']))
+		{
+			$result = $_CORE_CONFIG['email']['email_function_name']($to, $this->subject, $message, implode("\n", $headers));
 
 			if (!$result)
 			{
@@ -177,6 +223,7 @@ class smtp_mailer
 	var $connection;
 	var $host;
 	var $port;
+	var $error;
 
 	/*
 		PHP5 destructor
@@ -190,7 +237,7 @@ class smtp_mailer
 	{
 		$port = ((int) $port) ? (int) $port : 25;
 
-		$this->connection = fsockopen($host, $port, $errno, $errstr, 15)
+		$this->connection = fsockopen($host, $port, $errno, $errstr, 15);
 
 		if (!$this->connection)
 		{
@@ -236,6 +283,7 @@ class smtp_mailer
 			if (!$this->check_response(250))
 			{
 				$this->disconnect();
+				$this->error = "Server doesn't like you";
 				return false;
 			}
 		}
@@ -251,6 +299,7 @@ class smtp_mailer
 			}
 
 			$this->disconnect();
+			$this->error = "Auth not supported";
 			return false;
 		}
 
@@ -259,6 +308,7 @@ class smtp_mailer
 		if (!$this->check_response(334))
 		{
 			$this->disconnect();
+			$this->error = "User name denied";
 			return false;
 		}
 
@@ -267,6 +317,7 @@ class smtp_mailer
 		if (!$this->check_response(235))
 		{
 			$this->disconnect();
+			$this->error = "Password denied";
 			return false;
 		}
 
@@ -323,23 +374,22 @@ class smtp_mailer
 			return false;
 		}
 
-		//fwrite($this->connection, "To: ".implode(', ', $to_header)."\r\n");
-		$sending_header = ($this->subject) ? 'Subject: '.$this->subject."\r\n" : ''; // should add something here
-		$sending_header .= "To: ".implode(', ', $to_header)."\r\n";
-		$sending_header .= $this->headers."\r\n\r\n";
+		fwrite($this->connection, 'Subject: '.$this->subject."\r\n");
+		fwrite($this->connection, 'To: '.implode(', ', $to_header)."\r\n");
+		fwrite($this->connection, implode("\r\n", $this->headers)."\r\n\r\n");
 
 // Do my html and plain text mail thing, change it to a function maybe ?
-		fwrite($this->connection, $sending_header.$this->message."\r\n");
+		fwrite($this->connection, $this->message."\r\n");
 
 		fwrite($this->connection, '.'."\r\n");
 
-		$status = $this->check_response(250)
+		$status = $this->check_response(250);
 		$this->disconnect();
 
 		return $status;
 	}
 
-	function check_response($code, $full = false)
+	function check_response($code, $full = true)
 	{
 		$this->response = '';
 
@@ -355,6 +405,7 @@ class smtp_mailer
 		}
 
 		$this->response = trim($this->response);
+		echo $this->response.'<br/>';
 
 		if ($code && substr($this->response, 0, 3) != $code)
 		{
@@ -364,4 +415,5 @@ class smtp_mailer
 		return true;
 	}
 }
+
 ?>
