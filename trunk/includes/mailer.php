@@ -17,16 +17,19 @@ class core_mailer
 {
 	var $message;
 	var $subject;
-	var $address_arrays;
+	var $address_arrays = array('to' => array(), 'cc' => array(), 'bcc' => array());
 	var $extra_headers;
 
 	var $encoding = 'UTF-8';
+	
+	// Needed for some windows sendmail emulator/ SMTP
+	// Set to false is you have problems sending
+	var $named_addresses = true;
+	var $error = '';
 
-	function core_mailer()
+	function core_mailer($html = false)
 	{	
 		$this->html = false;
-		$this->message = $this->subject = '';
-		$this->bcc = $this->to = $this->from = $this->reply_to = $this->extra_headers = array();
 	}
 
 	function to($address, $name = '')
@@ -84,10 +87,9 @@ class core_mailer
 		foreach ($address as $array)
 		{
 			$array['name'] = trim($array['name']);
-
-			$formatted[] = (($array['name']) ? $array['name'] : '') . ' <' . trim($array['address']) . '> ';
+//"=?UTF-8?B?VmlwZXJhbA==?="
+			$formatted[] = ($array['name'] && $this->named_addresses) ?  '"' . mail_encode($array['name'], $this->encoding) . '" <' . $array['address'] . '>' : $array['address'];
 		}
-
 		return implode(', ', $formatted);
 	}
 
@@ -99,6 +101,11 @@ class core_mailer
 
 		foreach ($this->address_arrays as $type => $address)
 		{
+			if (empty($address))
+			{
+				continue;
+			}
+
 			$$type = $this->format_address($address);
 		}
 
@@ -138,39 +145,38 @@ class core_mailer
 
 		if ($this->html)
 		{
+			// Seems a bit bugged, or it could be Mercury mailer :-(
 			// multipart
-			$text_boundary = trim('----part_'.((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))));
+			$text_boundary = trim('--'.((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))));
 
-			$headers[] = 'Content-Type: multipart/alternative;'; 
-			$headers[] = 'boundary="'.$text_boundary.'"';
-			
-			//$message = 'This is a multi-part message in MIME format'.
+			$headers[] = "Content-Type: multipart/alternative;\n\t boundary=\"$text_boundary\";";
+
+			$message = 'This is a multi-part message in MIME format, Please use a MIME-compatible client';
 
 			// Plain text
-			$message = "\n$text_boundary\n";
-			$message .= 'Content-type: text/plain; charset='.$this->encoding."\n"; //format=
-			$message .= "Content-transfer-encoding: 8bit\n";
-			$message .= "\n".html_entity_decode(strip_tags(preg_replace('#<br */?>#i', "/n", $this->message)), ENT_QUOTES)."\n";
+			$message .= "\n\n$text_boundary\n";
+			$message .= 'Content-Type: text/plain; charset='.$this->encoding."\n"; //format=
+			$message .= "Content-Transfer-Encoding: 8bit\n";
+			$message .= "\n".html_entity_decode(strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message))), ENT_QUOTES)."\n";
 
 			// HTML
-			$message = "\n$text_boundary\n";
-			$message .= 'Content-type: text/html; charset='.$this->encoding."\n";
-			$message .= "Content-transfer-encoding: 8bit\n";
+			$message .= "$text_boundary\n";
+			$message .= 'Content-Type: text/html; charset='.$this->encoding."\n";
+			$message .= "Content-Transfer-Encoding: 8bit\n";
 			$message .= "\n".$this->message."\n";
 
-			$message = "\n$text_boundary\n";
+			$message .= "\n$text_boundary--\n";
 		}
 		else
 		{
-			$headers[] = 'Content-type: text/plain; charset='.$this->encoding;
-			$headers[] = 'Content-transfer-encoding: 8bit';
-			$message = "\n".strip_tags(preg_replace('#<br */?>#i', "/n", $this->message))."\n";
+			$headers[] = 'Content-Type: text/plain; charset='.$this->encoding;
+			$headers[] = 'Content-Transfer-Encoding: 8bit';
+			$message = "\n".strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message)))."\n";
 		}
 
 		if ($_CORE_CONFIG['email']['smtp'])
 		{
 			$smtp = new smtp_mailer;
-
 			if ($connect = $smtp->connect($_CORE_CONFIG['email']['smtp_host'], $_CORE_CONFIG['email']['smtp_port']))
 			{
 				$login = $smtp->login($_CORE_CONFIG['email']['smtp_username'], $_CORE_CONFIG['email']['smtp_password']);
@@ -181,11 +187,11 @@ class core_mailer
 				$this->error = $smtp->error;
 				return false;
 			}
-		
+
 			$smtp->subject = $this->subject;
 			$smtp->headers = $headers;
 			$smtp->message = $message;
-			$this->recipients = array_merge($this->address_arrays['to'], $this->address_arrays['cc'] , $this->address_arrays['bcc']);
+			$smtp->recipients = array_merge($this->address_arrays['to'], $this->address_arrays['cc'] , $this->address_arrays['bcc']);
 
 			if (!$smtp->send_mail())
 			{
@@ -197,7 +203,7 @@ class core_mailer
 		}
 
 		if (function_exists($_CORE_CONFIG['email']['email_function_name']))
-		{
+		{			
 			$result = $_CORE_CONFIG['email']['email_function_name']($to, $this->subject, $message, implode("\n", $headers));
 
 			if (!$result)
@@ -237,15 +243,21 @@ class smtp_mailer
 	{
 		$port = ((int) $port) ? (int) $port : 25;
 
-		$this->connection = fsockopen($host, $port, $errno, $errstr, 15);
+		//$host = 'tls://smtp.gmail.com';
+		//$port = 587;
 
-		if (!$this->connection)
+		$this->connection = fsockopen($host, $port, $errno, $errstr, 5);
+
+		if (!$this->connection || !$this->check_response(220))
 		{
+			$this->disconnect();
+
 			$this->error = 'Could not connect';
 			return false;
 		}
 		
 		$this->host = $host;
+		
 		return $this->connection;
 	}
 
@@ -265,6 +277,7 @@ class smtp_mailer
 	// If login fails we disconnect, may do it differently later on
 	function login($user, $password)
 	{
+		$user = ''; $password='';
 		if (!$this->connection)
 		{
 			$this->error = 'No connection';
@@ -287,7 +300,13 @@ class smtp_mailer
 				return false;
 			}
 		}
+		
+		if (!$user || !$password)
+		{
+			return true;
+		}
 
+		//base64_encode($username . " " . bin2hex(mhash(MHASH_MD5,$challenge,$password));
 		fwrite($this->connection, "AUTH LOGIN\r\n");
 
 		if (!$this->check_response(334))
@@ -341,7 +360,6 @@ class smtp_mailer
 		// Let tell the server who to send this to.
 		foreach ($this->recipients as $email)
 		{
-			$email = trim($email);
 			$name = false;
 			
 			if (is_array($email))
@@ -350,9 +368,11 @@ class smtp_mailer
 				$email = $email['address'];
 			}
 
+			$email = trim($email);
+
 			fwrite($this->connection, 'RCPT TO: <'.$email.">\r\n");
 
-			if (!$this->check_response(250))
+			if ($this->check_response(250))
 			{
 				$to_header[] = ($name) ? "$name <$email>" : "<$email>";
 			}
@@ -361,6 +381,7 @@ class smtp_mailer
 		// Was any recipients accepted ?
 		if (empty($to_header))
 		{
+			$this->error = 'Nothing to send';
 			$this->disconnect();
 			return false;
 		}
@@ -389,16 +410,15 @@ class smtp_mailer
 		return $status;
 	}
 
-	function check_response($code, $full = true)
+	function check_response($code)
 	{
 		$this->response = '';
 
-		while ($buffer = fgets($this->connection, 256))
+		while ($buffer = fgets($this->connection, 515))
 		{
 			$this->response .= $buffer;
 
-			//$buffer{strlen($this->response) - 1} == ' ' .... .maybe just check the ending ?
-			if ((!$full && strlen($this->response) >= 3) || substr($buffer, 3, 1) != ' ')
+			if (substr($buffer, 3, 1) == ' ')
 			{
 				break;
 			}
@@ -414,6 +434,33 @@ class smtp_mailer
 
 		return true;
 	}
+}
+
+// Encodes the given string for proper display for this encoding ... nabbed 
+// from php.net and modified by phpBB.
+function mail_encode($str, $encoding)
+{
+	if ($encoding == '')
+	{
+		return $str;
+	}
+
+	// define start delimimter, end delimiter and spacer
+	$end = "?=";
+	$start = "=?$encoding?B?";
+	$spacer = "$end\r\n $start";
+
+	// determine length of encoded text within chunks and ensure length is even
+	$length = 75 - strlen($start) - strlen($end);
+	$length = floor($length / 2) * 2;
+
+	// encode the string and split it into chunks with spacers after each chunk
+	$str = chunk_split(base64_encode($str), $length, $spacer);
+
+	// remove trailing spacer and add start and end delimiters
+	$str = preg_replace('#' . preg_quote($spacer) . '$#', '', $str);
+
+	return $start . $str . $end;
 }
 
 ?>
