@@ -1,25 +1,7 @@
 // Collapse Code by Ryan Marshall ( viperal1@gmail.com )
 
-var collapsed_cookie = get_cookie('blocks_collapsed');
-
-if (collapsed_cookie != null)
-{
-	var collapsed_cookie = collapsed_cookie.split(':');
-	//blocks_collapsed.sort();
-	//for (var i in blocks_collapsed)
-	
-	var length = collapsed_cookie.length
-
-	for (var i = 0; i < length; i++)
-	{
-		blocks_collapsed[i] = blocks_collapsed.shift();
-	}
-}
-else
-{
-	var blocks_collapsed = new Array();
-}
-
+// If we use this on news, we need some kind of true gc.
+// May not be possible tho without some php stuff
 
 function get_cookie(Name)
 {
@@ -34,7 +16,7 @@ function get_cookie(Name)
 		{
 			offset += cookie_name.length;
 			var end = document.cookie.indexOf(';', offset);
-			
+
 			if (end == -1)
 			{
 				end = cookie_length;
@@ -69,60 +51,82 @@ function array_search(needle, haystack, strict)
 	return null;
 }
 
-function switch_collapse(id, min, max)
+function switch_collapse_area(id, name)
 {
-	var img = document.getElementById(id);
+	var area = document.getElementById(id);
 
-	if (img.style.display == 'none')
+	if (area.style.display == 'none')
 	{
-		img.style.display = '';
+		area.style.display = '';
 		var value = null;
 	}
 	else
 	{
-		img.style.display = '';
+		area.style.display = 'none';
 		var value = id;
 	}
 
-	var key = array_search(id, blocks_collapsed, false);
+	// typeof name == 'undefined'
+	if (!name)
+	{
+		name = 'collapsed_items';
+	}
+
+	// Best why to do it, if we don't want var name
+	// it's a small script, shouldn't have any noticable speed impact
+	var collapsed_cookie = get_cookie(name);
+	var collapsed_items = new Array();
+
+	if (collapsed_cookie != null)
+	{
+		collapsed_cookie = collapsed_cookie.split(':');
+	
+		for (var i in collapsed_cookie)
+		{
+			collapsed_items[i] = collapsed_cookie[i];
+		}
+	}
+
+	var key = array_search(id, collapsed_items, false);
 
 	if (key != null)
 	{
 		if (value != null)
 		{
-			blocks_collapsed[key] == key;
+			collapsed_items[key] == key;
 		}
 		else
 		{
-			var tmp = new array();
+			var tmp = new Array();
 	
-			for (var i in blocks_collapsed)
+			for (var i in collapsed_items)
 			{
-				// We do it like this to get any duplicate values
-				if (blocks_collapsed[i] != id)
+				// We do it like this to get any duplicate values ( simple gc -- well not really )
+				if (collapsed_items[i] != id)
 				{
-					tmp.push(id);
+					tmp.push(collapsed_items[i]);
 				}
 			}
 
-			// not sure if this works
-			blocks_collapsed = tmp;
+			collapsed_items = tmp;
 		}
 	}
 	else
 	{
-		blocks_collapsed.push(id);
+		collapsed_items.push(id);
 	}
 
-	if (blocks_collapsed.length)
+	//alert(collapsed_items.join(':'));
+
+	if (collapsed_items.length)
 	{
 		var expires = new Date()
 
 		expires.setTime(expires.getTime() + 31536000000);
-		set_cookie('blocks_collapsed', blocks_collapsed.join(':'), expires)
+		set_cookie(name, collapsed_items.join(':'), expires)
 	}
 	else
 	{
-		delete_cookie('blocks_collapsed')
+		delete_cookie(name)
 	}
 }
