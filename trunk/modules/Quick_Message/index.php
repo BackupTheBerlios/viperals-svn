@@ -63,7 +63,7 @@ function add_message()
 		trigger_error($_CLASS['core_user']->lang['NO_MESSAGE']); 
     }
     
-    $length = strlen($message);
+    $length = mb_strlen($message);
     
     if($length < 2)
     {
@@ -74,11 +74,11 @@ function add_message()
     { 
 		trigger_error($_CLASS['core_user']->lang['LONG_MESSAGE']);
     }
-   
+
 	$message 	= htmlentities($message, ENT_QUOTES, 'UTF-8');
 	$user_name 	= htmlentities($user_name, ENT_QUOTES, 'UTF-8');
 
-    $result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.$prefix."quick_message WHERE message='".$_CLASS['core_db']->escape($message)."' AND time >= '".(time() - $_CORE_CONFIG['quick_message']['lastpost_check'])."' LIMIT 1");
+    $result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.$prefix."quick_message WHERE message='".$_CLASS['core_db']->escape($message)."' AND time >= '".(time() - $_CORE_CONFIG['quick_message']['lastpost_check'])."'");
 	$count = $_CLASS['core_db']->fetch_row_assoc($result);
     $_CLASS['core_db']->free_result($result);
 
@@ -95,14 +95,14 @@ function add_message()
 		'user_id'	=> (int) $user_id ,
 		'message'	=> (string) $message,
 		'time'		=> (int)  $_CLASS['core_user']->time,
-		'ip'		=> (string) $_CLASS['core_user']->ip));
+		'ip'		=> (string) $_CLASS['core_user']->ip
+	));
 		
 	$_CLASS['core_db']->query($sql);
 	
 	url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
 }
 
-    
 function show_messages($all = false)
 {
     global $prefix, $_CLASS, $config, $_CORE_CONFIG;
@@ -110,13 +110,12 @@ function show_messages($all = false)
 	$_CLASS['core_user']->add_lang();
 	$_CLASS['core_user']->add_img(false, 'Forums');
 
-	$start = ($all) ? '' : get_variable('start', 'GET', '', 'integer');
+	$start = ($all) ? '' : get_variable('start', 'GET', 0, 'integer');
 	$limit = ($all) ? '' : $_CORE_CONFIG['quick_message']['number'];
 	
-	$sql = 'SELECT * FROM '.$prefix.'quick_message ORDER BY time DESC';
 	//$sql = 'SELECT s.*, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height FROM '.$prefix.'quick_message s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
 	
-	$result = $_CLASS['core_db']->query_limit($sql, $limit, $start);
+	$result = $_CLASS['core_db']->query_limit('SELECT * FROM '.$prefix.'quick_message ORDER BY time DESC', $limit, $start);
 	$error = (!$row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $_CLASS['core_user']->lang['NO_POSTS'] : false;
 
 	$_CLASS['core_template']->assign(array(
@@ -215,6 +214,7 @@ function delete_message()
 	
 	$id = (int) get_variable('id', 'GET');
 	
+// we should only delete last message
 	$result = $_CLASS['core_db']->query('SELECT user_id, time, ip FROM '.$prefix.'quick_message WHERE id='.$id);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
@@ -264,7 +264,7 @@ function get_username()
 		}
 	}
 	
-	$length = strlen($user_name);
+	$length = mb_strlen($user_name);
 	
 	if ($length < 2)
 	{

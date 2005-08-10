@@ -545,8 +545,11 @@ class db_mssql
 				{
 					$fields .= ", \n";
 				}
+				
+				//#MyTempTable -- local temp tables
+				//##MyTempTable -- Global temp tables
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
+				$table = 'CREATE TABLE ['.$this->_table_name."] ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')

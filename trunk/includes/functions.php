@@ -59,6 +59,19 @@ function check_bot_status($browser, $ip)
 	return $is_bot;
 }
 
+function check_collapsed_status($marker, $cookie = 'collapsed_items') 
+{
+    static $collapsed_items_array = array();
+
+    if (!isset($collapsed_items_array[$cookie]))
+    {
+		$cookie_data = get_variable($cookie, 'COOKIE');
+		$collapsed_items_array[$cookie] = ($cookie_data) ? explode(':', $cookie_data) : array();
+    }
+
+    return in_array($marker, $collapsed_items_array[$cookie]);
+}
+
 /*
 */
 function check_load_status($return = false)
@@ -247,6 +260,8 @@ function get_bots()
 function get_variable($var_name, $type, $default = false, $var_type = 'string')
 {
 	$variable = null;
+	
+	$type = strtoupper($type);
 
 	switch ($type)
 	{
@@ -376,7 +391,7 @@ function generate_link($link = false, $link_options = false)
     return ($options['full']) ? generate_base_url().$link : $link;
 }
 
-function generate_pagination_formated($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
+function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
 {
 	global $_CLASS;
 
@@ -392,7 +407,9 @@ function generate_pagination_formated($base_url, $total, $per_page = 10, $start 
 
 	$total_pages = ceil($total / $per_page);
 	$current_page = ($start) ? floor($start / $per_page) + 1 : 1;
-	$display = '';
+
+	$display['formated'] = '';
+	$display['array'] = array();
 
 	if ($total_pages > 8)
 	{
@@ -406,7 +423,8 @@ function generate_pagination_formated($base_url, $total, $per_page = 10, $start 
 			$end = min($total_pages, $current_page + 2);
 			$start = ($end > $total_pages - 2) ? $total_pages - 4 : $current_page - 2;
 
-			$display = sprintf($wrapper['first'], generate_link($base_url, $admin_link), 1);
+			$display['array'][] = array('page' => 1, 'link' => generate_link($base_url, $admin_link), 'seperator' => 'after');
+			$display['formated'] = sprintf($wrapper['first'], generate_link($base_url, $admin_link), 1);
 		}
 	}
 	else
@@ -417,64 +435,39 @@ function generate_pagination_formated($base_url, $total, $per_page = 10, $start 
 
 	for($i = $start; $i <= $end; $i++)
 	{
+		$display['array'][] = array('page' => $i, 'link' => generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), 'seperator' => false);
+		
 		$this_wrapper = ($current_page == $i) ? $wrapper['current'] : $wrapper['normal'];
-		$display .= sprintf($this_wrapper, generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), $i);
+		$display['formated'] .= sprintf($this_wrapper, generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), $i);
 	}
 
 	if ($end != $total_pages)
 	{
-		$display .= sprintf($wrapper['last'], generate_link($base_url.'&amp;start='.(($total_pages - 1)  * $per_page), $admin_link), $total_pages);
+		$display['array'][] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;start='.(($total_pages - 1) * $per_page), $admin_link), 'seperator' => 'before');
+		$display['formated'] .= sprintf($wrapper['last'], generate_link($base_url.'&amp;start='.(($total_pages - 1)  * $per_page), $admin_link), $total_pages);
 	}
 
-	return $display;
+//TMP
+	return $display['formated'];
 }
 
-function generate_pagination_array($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
+/*
+	Generates random strings
+*/
+function generate_string($length)
 {
-	global $_CLASS;
+	// Add type
+	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-	if ($total <= $per_page)
+	$string = '';
+	$num_chars = strlen($chars) - 1;
+
+	for ($i = 0; $i < $length; ++$i)
 	{
-		return false;
+		$string .= substr($chars, mt_rand(0, $num_chars), 1);
 	}
 
-	$total_pages = ceil($total / $per_page);
-	$current_page = ($start) ? floor($start / $per_page) + 1 : 1;
-	$display = array();
-
-	if ($total_pages > 8)
-	{
-		if ($current_page < 4)
-		{
-			$start = 1;
-			$end = 5;
-		}
-		else
-		{
-			$start = $current_page - 2;
-			$end = min($total_pages, $current_page + 2);
-
-			$display[] = array('page' => 1, 'link' => generate_link($base_url, $admin_link), 'seperator' => 'after');
-		}
-	}
-	else
-	{
-		$start = 1;
-		$end = $total_pages;
-	}
-
-	for($i = $start; $i <= $end; $i++)
-	{
-		$link = ($i == $current_page) ? false : generate_link($base_url.'&amp;start='.(($i - 1) * $per_page), $admin_link);
-		$display[] = array('page' => $i, 'link' => $link, 'seperator' => false);
-	}
-	
-	if ($end != $total_pages)
-	{
-		$display[] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;start='.(($total_pages - 1) * $per_page), $admin_link), 'seperator' => 'before');
-	}
-	
-	return $display;
+	return $string;
 }
 
 function gmtime()
@@ -685,7 +678,7 @@ function theme_select($default = false)
 	return $theme;
 }
 
-function modify_lines($text, $replacement = ' ')
+function modify_lines($text, $replacement = '')
 {
 	return str_replace(array("\r\n", "\r", "\n"), $replacement, $text);
 }
@@ -840,15 +833,4 @@ if (!function_exists('var_export'))
 	}
 }
 
-//REMOVE
-function generate_pagination($base_url, $num_items, $per_page, $start_item, $add_prevnext_text = false, $tpl_prefix = '')
-{
-	global $_CLASS;
-		$_CLASS['core_template']->assign(array(
-		$tpl_prefix . 'PREVIOUS_PAGE'	=>  '',
-		$tpl_prefix . 'NEXT_PAGE'	=> '')
-	);
-
-	return generate_pagination_formated($base_url, $num_items, $per_page, $start_item, false);
-}
 ?>

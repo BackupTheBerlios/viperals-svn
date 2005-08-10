@@ -61,7 +61,7 @@ class ucp_profile extends module
 							array('username', $data['username'])),
 						'password_confirm'	=> array('string', true, $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
 						'new_password'		=> array('string', true, $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
-						'cur_password'		=> array('string', true, $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
+						//'cur_password'		=> array('string', true, $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
 						'email'				=> array(
 							array('string', false, 6, 60), 
 							array('email', $data['email'])),
@@ -77,7 +77,7 @@ class ucp_profile extends module
 						$error[] = 'NEW_PASSWORD_ERROR';
 					}
 
-					if (($new_password || ($_CLASS['auth']->acl_get('u_chgemail') && $email != $_CLASS['core_user']->data['user_email']) || ($username != $_CLASS['core_user']->data['username'] && $_CLASS['auth']->acl_get('u_chgname') && $_CORE_CONFIG['user']['allow_namechange'])) && md5($cur_password) != $_CLASS['core_user']->data['user_password'])
+					if (($new_password || ($_CLASS['auth']->acl_get('u_chgemail') && $email != $_CLASS['core_user']->data['user_email']) || ($username != $_CLASS['core_user']->data['username'] && $_CLASS['auth']->acl_get('u_chgname') && $_CORE_CONFIG['user']['allow_namechange'])) && encode_password($cur_password, $_CLASS['core_user']->data['user_password_encoding']) != $_CLASS['core_user']->data['user_password'])
 					{
 						$error[] = 'CUR_PASSWORD_ERROR';
 					}
@@ -90,33 +90,21 @@ class ucp_profile extends module
 					if (!sizeof($error))
 					{
 						$sql_ary = array(
-							'username'			=> ($_CLASS['auth']->acl_get('u_chgname') && $_CORE_CONFIG['user']['allow_namechange']) ? $username : $_CLASS['core_user']->data['username'], 
+							//'username'			=> ($_CLASS['auth']->acl_get('u_chgname') && $_CORE_CONFIG['user']['allow_namechange']) ? $username : $_CLASS['core_user']->data['username'], 
 							'user_email'		=> ($_CLASS['auth']->acl_get('u_chgemail')) ? $email : $_CLASS['core_user']->data['user_email'], 
-							'user_email_hash'	=> ($_CLASS['auth']->acl_get('u_chgemail')) ? crc32(strtolower($email)) . strlen($email) : $_CLASS['core_user']->data['user_email_hash'], 
-							'user_password'		=> ($_CLASS['auth']->acl_get('u_chgpasswd') && $new_password) ? md5($new_password) : $_CLASS['core_user']->data['user_password'], 
-							'user_passchg'		=> time(), 
+							//'user_password'		=> ($_CLASS['auth']->acl_get('u_chgpasswd') && $new_password) ? md5($new_password) : $_CLASS['core_user']->data['user_password'], 
+							//'user_passchg'		=> time(), 
 						);
 
 						if ($_CORE_CONFIG['email']['email_enable'] && $email != $_CLASS['core_user']->data['user_email'] && ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN))
 						{
-							require_once($site_file_root.'includes/forums/functions_messenger.php');
+							$template_file = ($config['require_activation'] == USER_ACTIVATION_ADMIN) ? 'user_activate_inactive.html' : 'user_activate.html';
+							$mailer = new core_mailer;
 
-							$server_url = generate_board_url();
-
-							$user_actkey = gen_rand_string(10);
-							$key_len = 54 - strlen($server_url);
-							$key_len = ($key_len > 6) ? $key_len : 6;
-							$user_actkey = substr($user_actkey, 0, $key_len);
-
-							$messenger = new messenger();
-
-							$template_file = ($config['require_activation'] == USER_ACTIVATION_ADMIN) ? 'user_activate_inactive' : 'user_activate';
 							$messenger->template($template_file, $_CLASS['core_user']->data['user_lang']);
-							$messenger->subject($subject);
+							$mailer->subject($subject);
 
-							$messenger->replyto($config['board_contact']);
 							$messenger->to($email, $username);
-
 							$messenger->headers('X-AntiAbuse: Board servername - ' . $config['server_name']);
 							$messenger->headers('X-AntiAbuse: User_id - ' . $_CLASS['core_user']->data['user_id']);
 							$messenger->headers('X-AntiAbuse: Username - ' . $_CLASS['core_user']->data['username']);
@@ -128,6 +116,8 @@ class ucp_profile extends module
 								'EMAIL_SIG'		=> str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']),
 								'U_ACTIVATE'    => generate_link("Control_Panel&amp;mode=activate&u={$_CLASS['core_user']->data['user_id']}&k=$user_actkey", array('full' => true)))
 							);
+
+							$body = trim($_CLASS['core_template']->display('modules/Contact/email/index.html', true));
 
 							$messenger->send(NOTIFY_EMAIL);
 

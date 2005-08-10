@@ -38,7 +38,7 @@ if (!$topic_id && !$post_id)
 	trigger_error('NO_TOPIC');
 }
 
-$voted_id	= request_var('vote_id', array(0));;
+$voted_id	= request_var('vote_id', array(0));
 $start		= request_var('start', 0);
 $view		= request_var('view', '');
 $update		= request_var('update', false);
@@ -747,7 +747,6 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		'post_approved'		=> $row['post_approved'],
 		'post_reported'		=> $row['post_reported'],
 		'post_text'			=> $row['post_text'],
-		'post_encoding'		=> $row['post_encoding'],
 		'bbcode_uid'		=> $row['bbcode_uid'],
 		'bbcode_bitfield'	=> $row['bbcode_bitfield'],
 		'enable_html'		=> $row['enable_html'],

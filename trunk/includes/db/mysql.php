@@ -16,7 +16,7 @@
 class db_mysql
 {
 	var $link_identifier = false;
-	var $db_layer = 'mysql4';
+	var $db_layer = 'mysql';
 
 	var $last_result;
 	var $return_on_error;
@@ -46,11 +46,22 @@ class db_mysql
 		}
 
 		$this->link_identifier = ($db['persistent']) ? @mysql_pconnect($db['server'], $db['username'], $db['password']) : @mysql_connect($db['server'], $db['username'], $db['password']);
-
 		if ($this->link_identifier)
 		{
 			if (@mysql_select_db($db['database']))
 			{
+				mysql_query('SET NAMES utf8',$this->link_identifier);
+
+				//mysql_query('SET character_set_results = NULL', $this->link_identifier);
+
+				/*
+				$result = mysql_query("show variables like 'col%'",$this->link_identifier);
+				while ($value = mysql_fetch_assoc($result))
+				{
+					print_r($value);
+					echo '<br>';
+				}
+				*/
 				return $this->link_identifier;
 			}
 
@@ -177,7 +188,7 @@ class db_mysql
 
 	function sql_query($query = false)
 	{
-		return @mysql_query($query, $this->link_identifier);
+		return mysql_query($query, $this->link_identifier);
 	}
 
 	function query_limit($query = false, $total = false, $offset = 0, $backtrace = false) 
@@ -319,7 +330,7 @@ class db_mysql
 		return @mysql_fetch_array($result);
 	}
 	
-	function insert_id()
+	function insert_id($table, $column)
 	{
 		return ($this->link_identifier) ? @mysql_insert_id($this->link_identifier) : false;
 	}
@@ -502,7 +513,7 @@ class db_mysql
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')

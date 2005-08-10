@@ -497,8 +497,6 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	return;
 }
 
-// Pick a language, any language ...
-// this need replacing big time
 function language_select($default = '')
 {
 }
@@ -1013,11 +1011,9 @@ function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_bo
 }
 
 // Generate forum login box
-function login_forum_box(&$forum_data)
+function login_forum_box($forum_data)
 {
 	global $config, $_CLASS;
-
-	$password = request_var('password', '');
 
 	$sql = 'SELECT forum_id
 		FROM ' . FORUMS_ACCESS_TABLE ."
@@ -1032,6 +1028,8 @@ function login_forum_box(&$forum_data)
 		return true;
 	}
 	$_CLASS['core_db']->free_result($result);
+
+	$password = request_var('password', '');
 
 	if ($password)
 	{
@@ -1067,14 +1065,11 @@ function login_forum_box(&$forum_data)
 		$_CLASS['core_template']->assign('LOGIN_ERROR', $_CLASS['core_user']->lang['WRONG_PASSWORD']);
 	}
 	
-	$_CLASS['core_display']->display_head();
-
 	page_header();
 	
 	$_CLASS['core_template']->display('modules/Forums/login_forum.html');
 
-	$_CLASS['core_display']->display_footer();
-
+	script_close();
 }
 
 // Bump Topic Check - used by posting and viewtopic
@@ -1431,7 +1426,7 @@ function page_header()
 		'S_USER_LANG'			=> $_CLASS['core_user']->data['user_lang'], 
 		'S_USER_BROWSER' 		=> ($_CLASS['core_user']->data['session_browser']) ? $_CLASS['core_user']->data['session_browser'] : $_CLASS['core_user']->lang['UNKNOWN_BROWSER'],
 		'S_CONTENT_DIRECTION' 	=> $_CLASS['core_user']->lang['DIRECTION'],
-		'S_CONTENT_ENCODING' 	=> $_CLASS['core_user']->lang['ENCODING'],
+		'S_CONTENT_ENCODING' 	=> 'UTF-8',
 		'S_CONTENT_DIR_LEFT' 	=> $_CLASS['core_user']->lang['LEFT'],
 		'S_CONTENT_DIR_RIGHT' 	=> $_CLASS['core_user']->lang['RIGHT'],
 		'S_TIMEZONE'			=> ($_CLASS['core_user']->data['user_dst'] || (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['default_dst'])) ? sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz/3600], $_CLASS['core_user']->lang['tz']['dst']) : sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz/3600], ''),
@@ -1454,37 +1449,7 @@ function page_header()
 		'TRANSLATION_INFO'	=> 'Ported by <a href="http://www.viperal.com/" target="viperal">Viperal</a>',
 		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
-		)
-	);
-	
-/*	// Call cron-type script
-	if (!defined('IN_CRON'))
-	{
-		$cron_type = '';
-
-		if (time() - $config['queue_interval'] > $config['last_queue_run'] && !defined('IN_ADMIN') && file_exists($phpbb_root_path . 'cache/queue.' . $phpEx))
-		{
-			// Process email queue
-			$cron_type = 'queue';
-		}
-		else if (method_exists($cache, 'tidy') && time() - $config['cache_gc'] > $config['cache_last_gc'])
-		{
-			// Tidy the cache
-			$cron_type = 'tidy_cache';
-		}
-		else if (time() - (7 * 24 * 3600) > $config['database_last_gc'])
-		{
-			// Tidy some table rows every week
-			$cron_type = 'tidy_database';
-		}
-
-		if ($cron_type)
-		{
-			echo 'test';
-			$_CLASS['core_template']->assign('RUN_CRON_TASK', '<img src="'.generate_link('Forums&file=cron&cron_type=' . $cron_type).'" width="1" height="1" />');
-		}
-	}
-	return;*/
+	));
 }
 
 ?>

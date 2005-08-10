@@ -86,7 +86,7 @@ for ($i = 0, $size; $i < $size; $i++)
 		$_size = sizeof($help_block[$i]);
 		$faq_row_link = $faq_row = array();
 		
-		for ($j = 0, $_size; $j < $_size; $j++)
+		for ($j = 0; $j < $_size; $j++)
 		{
 			$faq_row[] = array(
 				'FAQ_SECTION' 		=> $i,

@@ -22,23 +22,23 @@ class core_user extends sessions
 
 	function core_user()
 	{
-		$this->browser = substr((empty($_SERVER['HTTP_USER_AGENT']) ? getenv('HTTP_USER_AGENT') : $_SERVER['HTTP_USER_AGENT']), 0, 255);
+		$this->browser = mb_substr((empty($_SERVER['HTTP_USER_AGENT']) ? getenv('HTTP_USER_AGENT') : $_SERVER['HTTP_USER_AGENT']), 0, 255);
 		$this->url	= empty($_SERVER['REQUEST_URI']) ? getenv('REQUEST_URI') : $_SERVER['REQUEST_URI'];
 		$this->ip	= empty($_SERVER['REMOTE_ADDR']) ? getenv('REMOTE_ADDR') : $_SERVER['REMOTE_ADDR'];
 		$this->time	= gmtime();
 
-		if (($pos = strpos($this->url, INDEX_PAGE.'?mod=')) !== false)
+		if (($pos = mb_strpos($this->url, INDEX_PAGE.'?mod=')) !== false)
 		{
-			$pos = $pos + strlen(INDEX_PAGE.'?mod=');
-			$this->url = substr($this->url, $pos);
+			$pos = $pos + mb_strlen(INDEX_PAGE.'?mod=');
+			$this->url = mb_substr($this->url, $pos);
 			
-			if (($pos = strpos($this->url, 'sid')) !== false)
+			if (($pos = mb_strpos($this->url, 'sid')) !== false)
 			{
-				$this->url = substr($this->url, 0, $pos - 1);
+				$this->url = mb_substr($this->url, 0, $pos - 1);
 			}
 
 			$this->url = htmlspecialchars(html_entity_decode($this->url, ENT_QUOTES));
-			$this->url = substr($this->url, 0, 255);
+			$this->url = mb_substr($this->url, 0, 255);
 		}
 		else
 		{
@@ -269,8 +269,9 @@ class core_user extends sessions
 		{
 			return $this->lang[$lang];
 		}
-		
-		return ucfirst(strtolower(preg_replace('/_/', ' ', $lang)));
+
+		//return ucfirst(mb_strtolower(preg_replace('/_/', ' ', $lang)));
+		return mb_convert_case(preg_replace('/_/', ' ', $lang), MB_CASE_TITLE);
 	}
 	
 	function get_img($img)
@@ -311,7 +312,7 @@ class core_user extends sessions
 		
 		if ($lang_file)
 		{
-			if (strpos($lang_file, '/') !== false)
+			if (mb_strpos($lang_file, '/') !== false)
 			{
 				include($site_file_root."language/$this->lang_name/$lang_file");
 

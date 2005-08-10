@@ -72,6 +72,8 @@ class db_postgres
 
 		if ($this->link_identifier)
 		{
+			pg_set_client_encoding($this->link_identifier, 'UNICODE');
+			//pg_query($this->link_identifier, "SET CLIENT_ENCODING TO 'value'"); SET NAMES 'value'
 			return $this->link_identifier;
 		}
 
@@ -522,10 +524,10 @@ class db_postgres
 				$fields = implode(", \n", $this->_fields);
 				$indexs = ($this->_indexs) ? "\n\n".implode("\n", $this->_indexs) :  '';
 
-				$oid = ($this->_table_oid) ? ' WITH OIDS' : ' WITHOUT OIDS';
+				$oid = ($this->_table_oid) ? 'WITH OIDS' : 'WITHOUT OIDS';
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields." \n )\n$oid;$indexs";
-
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields." \n )\n $oid;$indexs";
+//WITH ENCODING='UNICODE'  ( for create table )
 				if ($option == 'return')
 				{
 					return $table;

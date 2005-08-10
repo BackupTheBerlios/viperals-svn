@@ -43,21 +43,14 @@ if ($_CLASS['core_user']->is_bot || $cancel)
 	url_redirect($redirect);
 }
 
-if (in_array($mode, array('post', 'reply', 'quote', 'edit', 'delete', 'popup')) && !$forum_id)
-{
-	trigger_error('NO_FORUM');
-}
-
-require_once($site_file_root.'includes/forums/message_parser.php');
-require($site_file_root.'includes/forums/functions_admin.php');
-require($site_file_root.'includes/forums/functions_posting.php');
-
-// What is all this following SQL for? Well, we need to know
-// some basic information in all cases before we do anything.
-
 switch ($mode)
 {
 	case 'post':
+		if (!$forum_id)
+		{
+			trigger_error('NO_FORUM');
+		}
+
 		$sql = 'SELECT *
 			FROM ' . FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
@@ -75,7 +68,7 @@ switch ($mode)
 			WHERE t.topic_id = $topic_id
 				AND f.forum_id = t.forum_id";
 	break;
-	
+
 	case 'quote':
 	case 'edit':
 	case 'delete':
@@ -95,11 +88,11 @@ switch ($mode)
 
 	case 'smilies':
 		generate_smilies('window', $forum_id);
-		die;
 	break;
 
 	default:
 		trigger_error('NO_POST_MODE');
+	break;
 }
 
 $result = $_CLASS['core_db']->query($sql);
@@ -111,6 +104,10 @@ if (!$posting_data)
 {
 	trigger_error('NO_POST');
 }
+
+require_once($site_file_root.'includes/forums/message_parser.php');
+require_once($site_file_root.'includes/forums/functions_admin.php');
+require_once($site_file_root.'includes/forums/functions_posting.php');
 
 extract($posting_data);
 
@@ -1391,7 +1388,6 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'post_subject'		=> $subject,
 				'post_text' 		=> $data['message'],
 				'post_checksum'		=> $data['message_md5'],
-				'post_encoding'		=> $_CLASS['core_user']->lang['ENCODING'],
 				'post_attachment'	=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],
@@ -1442,7 +1438,6 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'post_edit_reason'	=> $data['post_edit_reason'],
 				'post_edit_user'	=> (int) $data['post_edit_user'],
 				'post_checksum'		=> $data['message_md5'],
-				'post_encoding'		=> $_CLASS['core_user']->lang['ENCODING'],
 				'post_attachment'	=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],

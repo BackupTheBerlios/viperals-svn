@@ -145,27 +145,27 @@ class core_mailer
 
 		if ($this->html)
 		{
-			// Seems a bit bugged, or it could be Mercury mailer :-(
 			// multipart
 			$text_boundary = trim('--'.((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))));
 
-			$headers[] = "Content-Type: multipart/alternative;\n\t boundary=\"$text_boundary\";";
+			$headers[] = 'Content-Type: multipart/alternative;';
+			$headers[] = "\tboundary=\"$text_boundary\"";
 
-			$message = 'This is a multi-part message in MIME format, Please use a MIME-compatible client';
+			$message .= 'This is a multi-part message in MIME format, Please use a MIME-compatible client';
 
 			// Plain text
 			$message .= "\n\n$text_boundary\n";
 			$message .= 'Content-Type: text/plain; charset='.$this->encoding."\n"; //format=
-			$message .= "Content-Transfer-Encoding: 8bit\n";
-			$message .= "\n".html_entity_decode(strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message))), ENT_QUOTES)."\n";
+			$message .= "Content-Transfer-Encoding: 8bit\n\n";
+			$message .= html_entity_decode(strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message))), ENT_QUOTES);
 
 			// HTML
-			$message .= "$text_boundary\n";
+			$message .= "\n\n$text_boundary\n";
 			$message .= 'Content-Type: text/html; charset='.$this->encoding."\n";
-			$message .= "Content-Transfer-Encoding: 8bit\n";
-			$message .= "\n".$this->message."\n";
+			$message .= "Content-Transfer-Encoding: 8bit\n\n";
+			$message .= $this->message;
 
-			$message .= "\n$text_boundary--\n";
+			$message .= "\n\n$text_boundary--\n";
 		}
 		else
 		{
@@ -203,7 +203,7 @@ class core_mailer
 		}
 
 		if (function_exists($_CORE_CONFIG['email']['email_function_name']))
-		{			
+		{//mb_send_mail
 			$result = $_CORE_CONFIG['email']['email_function_name']($to, $this->subject, $message, implode("\n", $headers));
 
 			if (!$result)
@@ -399,7 +399,6 @@ class smtp_mailer
 		fwrite($this->connection, 'To: '.implode(', ', $to_header)."\r\n");
 		fwrite($this->connection, implode("\r\n", $this->headers)."\r\n\r\n");
 
-// Do my html and plain text mail thing, change it to a function maybe ?
 		fwrite($this->connection, $this->message."\r\n");
 
 		fwrite($this->connection, '.'."\r\n");

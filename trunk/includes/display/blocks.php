@@ -283,16 +283,14 @@ class core_blocks
 		$postion = ($this->block['position'] == BLOCK_MESSAGE_TOP) ? 'top' : 'bottom';
 		
 		$_CLASS['core_template']->assign_vars_array('message_block_'.$postion, array(
-				'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
-				'TITLE'		=> $this->block['title'],
-				'CONTENT'	=> $this->block['content'],
-				'EXPIRES'	=> $expires,
-				'EDIT_LINK'	=> $edit_link,
-				'L_EDIT'	=> $_CLASS['core_user']->lang['EDIT'],
-				'HIDE'		=> hideblock($this->block['id']) ? 'style="display: none"' : '',
-				'ID'		=> $this->block['id'],
-			)
-		);
+				//'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
+				'title'		=> $this->block['title'],
+				'collapsed'	=> collapsed_items('block_'.$this->block['id']),
+				'content'	=> $this->block['content'],
+				'expires'	=> $expires,
+				'edit_link'	=> $edit_link,
+				'id'		=> $this->block['id'],
+		));
 	}
 	
 	function block_side()
@@ -302,14 +300,12 @@ class core_blocks
 		$position = ($this->block['position'] == BLOCK_RIGHT) ? 'right' : 'left';
 		
 		$_CLASS['core_template']->assign_vars_array('block_'.$position, array(
-			'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
-			'TITLE'		=> $this->block['title'],
-			'CONTENT'	=> $this->content,
-			'ID'		=> $this->block['id'],
-			'COLLAPSE'	=> hideblock($this->block['id']) ? 'style="display: none"' : '',
-			'TEMPLATE'	=> $this->template,
-			)
-		);
+			//'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['title']),
+			'title'		=> $this->block['title'],
+			'content'	=> $this->content,
+			'collapsed'	=> collapsed_items('block_'.$this->block['id']),
+			'id'		=> $this->block['id'],
+		));
 	}
 	
 	function block_html()
@@ -389,8 +385,7 @@ class core_blocks
 			$this->block['rss_expires'] = ($this->block['rss_rate']) ? time() + $this->block['rss_rate'] : 0;
 			
 			$sql = 'UPDATE '.BLOCKS_TABLE."
-				SET content='".$_CLASS['core_db']->escape($this->content)."'
-				, rss_expires='".$this->block['rss_expires']."' 
+				SET content='".$_CLASS['core_db']->escape($this->content)."', rss_expires='".$this->block['rss_expires']."' 
 					WHERE id=".$this->block['id'];
 				
 			$_CLASS['core_db']->query($sql);

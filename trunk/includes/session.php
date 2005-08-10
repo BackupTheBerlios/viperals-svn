@@ -28,9 +28,6 @@ class sessions
 
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 
-		$session_data = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_data', 'COOKIE'));
-// should spearate this, since I have to check to make sure the 2 values are in the array, would be easy to not do this
-		$session_data = (is_array($session_data)) ? $session_data : array();
 		$session_data['session_id'] = get_variable('sid', 'GET');
 
 		if ($cookie_sid = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE'))
@@ -58,7 +55,7 @@ class sessions
 
 			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
-//print_R($this->data);die;
+
 			if (isset($this->data['user_id']) && ($this->data['user_id'] == ANONYMOUS || $this->data['user_status'] == USER_ACTIVE))
 			{
 				$valid  = true;
@@ -72,7 +69,7 @@ class sessions
 				{
 					$check_ip = implode('.', explode('.', $this->data['session_ip'], $_CORE_CONFIG['server']['ip_check']));
 					
-					if ($check_ip != substr($this->ip, 0, strlen($check_ip)))
+					if ($check_ip != mb_substr($this->ip, 0, mb_strlen($check_ip)))
 					{
 						$valid  = false;
 					}

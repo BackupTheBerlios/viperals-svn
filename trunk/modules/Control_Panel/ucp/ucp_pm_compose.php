@@ -180,15 +180,15 @@ function compose_pm($id, $mode, $action)
 
 	if ($sql)
 	{
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 		{
 			trigger_error('NO_MESSAGE');
 		}
 
 		extract($row);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		$msg_id = (int) $msg_id;
 		$enable_urls = $enable_magic_url;
@@ -299,11 +299,11 @@ function compose_pm($id, $mode, $action)
 			WHERE post_msg_id = $msg_id
 				AND in_message = 1
 				ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->sql_fetchrowset($result));
+		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->fetch_row_assocset($result));
 		
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	
 	if (!in_array($action, array('quote', 'edit', 'delete', 'forward')))
@@ -324,13 +324,13 @@ function compose_pm($id, $mode, $action)
 			WHERE (forum_id = 0 AND topic_id = 0)
 				AND user_id = ' . $_CLASS['core_user']->data['user_id'] . 
 				(($draft_id) ? " AND draft_id <> $draft_id" : '');
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-		if ($_CLASS['core_db']->sql_fetchrow($result))
+		if ($_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$drafts = true;
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	if ($action == 'edit' || $action == 'forward')
@@ -360,7 +360,7 @@ function compose_pm($id, $mode, $action)
 				'save_time'	=> $current_time,
 				'draft_subject' => $subject,
 				'draft_message' => $message));
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 	
 			$_CLASS['core_display']->meta_refresh(3, generate_link('Control_Panel&i=pm&mode='.$mode));
 
@@ -382,9 +382,9 @@ function compose_pm($id, $mode, $action)
 				AND topic_id = 0
 				AND forum_id = 0
 				AND user_id = " . $_CLASS['core_user']->data['user_id'];
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 	
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$_REQUEST['subject'] = $row['draft_subject'];
 			$_POST['message'] = $row['draft_message'];
@@ -629,14 +629,14 @@ function compose_pm($id, $mode, $action)
 		$result = array();
 		if (isset($address_list['u']) && sizeof($address_list['u']))
 		{
-			$result['u'] = $_CLASS['core_db']->sql_query('SELECT user_id as id, username as name, user_colour as colour 
+			$result['u'] = $_CLASS['core_db']->query('SELECT user_id as id, username as name, user_colour as colour 
 				FROM ' . USERS_TABLE . ' 
 				WHERE user_id IN (' . implode(', ', array_map('intval', array_keys($address_list['u']))) . ')');
 		}
 		
 		if (isset($address_list['g']) && sizeof($address_list['g']))
 		{
-			$result['g'] = $_CLASS['core_db']->sql_query('SELECT group_id as id, group_name as name, group_colour as colour 
+			$result['g'] = $_CLASS['core_db']->query('SELECT group_id as id, group_name as name, group_colour as colour 
 				FROM ' . GROUPS_TABLE . ' 
 				WHERE group_receive_pm = 1 AND group_id IN (' . implode(', ', array_map('intval', array_keys($address_list['g']))) . ')');
 		}
@@ -646,11 +646,11 @@ function compose_pm($id, $mode, $action)
 		{
 			if (isset($result[$type]) && $result[$type])
 			{
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result[$type]))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result[$type]))
 				{
 					${$type}[$row['id']] = array('name' => $row['name'], 'colour' => $row['colour']);
 				}
-				$_CLASS['core_db']->sql_freeresult($result[$type]);
+				$_CLASS['core_db']->free_result($result[$type]);
 			}
 		}
 

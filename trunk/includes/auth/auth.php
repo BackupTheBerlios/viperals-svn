@@ -283,10 +283,8 @@ class core_auth
 	{
 		global $_CLASS, $site_file_root;
 
-		$options['groups_allowed'] = empty($options['groups_allowed']) ? array() : $options['groups_allowed'];
-		$options['users_allowed'] = empty($options['users_allowed']) ? array() : $options['users_allowed'];
-		$options['groups_disallowed'] = empty($options['groups_disallowed']) ? array() : $options['groups_disallowed'];
-		$options['users_disallowed'] = empty($options['users_disallowed']) ? array() : $options['users_disallowed'];
+		$options['groups'] = empty($options['groups']) ? array() : $options['groups'];
+		$options['users'] = empty($options['users']) ? array() : $options['users'];
 
 		$mode = $return = false;
 		$checks = array('add', 'remove', 'set');
@@ -308,56 +306,71 @@ class core_auth
 			switch ($mode)
 			{
 				case 'add':
-					// Allowed
 					$setup['groups'] = get_variable('groups_add', 'POST', array(), 'array');
 					$setup['users'] = explode("\n", get_variable('users_add', 'POST'));
-		
+
 					if (count($setup['users']))
 					{
-						$ids['users'] = user_get_id($setup['users']);
+						$setup['users'] = user_get_id($setup['users']);
 					}
-		
+
 					if (count($setup['groups']))
 					{
 						$sql = 'SELECT group_id
 							FROM ' . GROUPS_TABLE . '
 							WHERE group_id IN ('.implode(', ', array_map('intval', $setup['groups'])).')';
 						$result = $_CLASS['core_db']->query($sql);
-		
+
+						$setup['groups'] = array();
+
 						while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 						{
-							$ids['groups'][] = $row['group_id'];
+							$setup['groups'][] = $row['group_id'];
 						}
 						$_CLASS['core_db']->free_result($result);
 					}
 
-					$function = (true) ? 'array_merge' : 'array_diff';
+					foreach ($setup['groups'] as $id)
+					{
+						$options['groups'][$id] = array('status' => 1);
+					}
 
-					$options['groups_allowed'] = $function($options['groups_allowed'], $ids['groups']);
-					$options['users_allowed'] = $function($options['users_allowed'], $ids['users']);
+					foreach ($setup['users'] as $id)
+					{
+						$options['users'][$id] = array('status' => 1);
+					}
+
+					unset($setup);
+					//print_r($options);
+				break;
+
+				case 'remove':
+					$ids['groups'] = array_map('intval', get_variable('groups_current', 'POST', array(), 'array'));
+					$ids['users'] = array_map('intval', get_variable('users_current', 'POST', array(), 'array'));
+					
+					$function = ($mode == 'add') ? 'array_merge' : 'array_diff';
+
+					foreach ($options['groups'] as $key => $ignore)
+					{
+						if (in_array($key, $ids['groups']))
+						{
+							unset($options['groups'][$key]);
+						}
+					}
+
+					foreach ($options['users'] as $key => $ignore)
+					{
+						if (in_array($key, $ids['users']))
+						{
+							unset($options['users'][$key]);
+						}
+					}
+
+					//print_r($options);
 				break;
 			
-				case 'ss':
-					$options['groups_disallowed'] = array_diff(array_merge($options['groups_disallowed'], $dg_add), $dg_remove, $options['groups_allowed']);
-					$options['users_disallowed'] = array_diff(array_merge($options['users_disallowed'], $user_ids['disallowed']), $du_remove, $options['users_allowed']);
-		
-					print_r($ids);
-					die;
-					$current['groups_allowed'] = get_variable('g_current', 'POST', array(), 'array');
-					$current['users_allowed'] = get_variable('u_current', 'POST', array(), 'array');
-					$current['groups_disallowed'] = get_variable('dg_current', 'POST', array(), 'array');
-					$current['users_disallowed'] = get_variable('du_current', 'POST', array(), 'array');
-		
-			
-		
-					$options['groups_allowed'] = array_diff(array_merge($options['groups_allowed'], $g_add), $g_remove);
-					$options['users_allowed'] = array_diff(array_merge($options['users_allowed'], $user_ids['allowed']), $u_remove);
-			
-					$options['groups_disallowed'] = array_diff(array_merge($options['groups_disallowed'], $dg_add), $dg_remove, $options['groups_allowed']);
-					$options['users_disallowed'] = array_diff(array_merge($options['users_disallowed'], $user_ids['disallowed']), $du_remove, $options['users_allowed']);
-		
-					$return = null;
-					
+				case 'set':
+
 				break;
 			}
 
@@ -370,39 +383,38 @@ class core_auth
 				}
 			}
 		}
+
 		$group_list = $allowed_group_list = $disallowed_group_list = $allowed_user_list = $disallowed_user_list = '';
+		$groups_ids = array_keys($options['users']);
 
-		$set_users = array_merge($options['users_allowed'], $options['users_disallowed']);
-		$set_groups = array_merge($options['groups_allowed'], $options['groups_disallowed']);
-
-		if (count($set_users))
+		if (!empty($options['users']))
 		{
 			$sql = 'SELECT user_id, username, user_colour
 				FROM ' . USERS_TABLE . '
-				WHERE user_id IN ('.implode(', ', $set_users).')
+				WHERE user_id IN ('.implode(', ', array_keys($options['users'])).')
 					ORDER BY username';
 			$result = $_CLASS['core_db']->query($sql);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$user_list = (in_array($row['user_id'], $options['users_allowed'])) ? 'allowed_user_list' : 'disallowed_user_list';
+				$user_list = ($options['users'][$row['user_id']]['status'] === 1) ? 'allowed_user_list' : 'disallowed_user_list';
 
 				$$user_list .= '<option ' . (($row['user_colour']) ? ' style="color: #'.$row['user_colour'].';"' : '') . ' value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
 			}
 			$_CLASS['core_db']->free_result($result);
 		}
 
-		if (count($set_groups))
+		if (!empty($groups_ids))
 		{
 			$sql = 'SELECT group_id, group_name, group_type 
 				FROM ' . GROUPS_TABLE . '
-				WHERE group_id IN ('.implode(', ', $set_groups).')
+				WHERE group_id IN ('.implode(', ', array_keys($options['groups'])).')
 					ORDER BY group_type DESC, group_name';
 			$result = $_CLASS['core_db']->query($sql);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$group_list = (in_array($row['group_id'], $options['groups_allowed'])) ? 'allowed_group_list' : 'disallowed_group_list';
+				$group_list = ($options['groups'][$row['group_id']]['status'] === 1) ? 'allowed_group_list' : 'disallowed_group_list';
 				
 				$$group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 				
@@ -412,7 +424,7 @@ class core_auth
 
 		$sql = 'SELECT group_id, group_name, group_type 
 			FROM ' . GROUPS_TABLE . 
-				((!empty($set_groups)) ? ' WHERE group_id NOT IN ('.implode(', ', $set_groups).')' : '').'
+				(empty($groups_ids) ? '' : ' WHERE group_id NOT IN ('.implode(', ', $groups_ids).')').'
 					ORDER BY group_type DESC, group_name';
 		$result = $_CLASS['core_db']->query($sql);
 

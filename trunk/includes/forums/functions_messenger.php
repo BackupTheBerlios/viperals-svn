@@ -1198,6 +1198,7 @@ class smtp_class
 // from php.net and modified. There is an alternative encoding method which 
 // may produce less output but it's questionable as to its worth in this 
 // scenario IMO
+/*
 function mail_encode($str, $encoding)
 {
 	if ($encoding == '')
@@ -1221,6 +1222,6 @@ function mail_encode($str, $encoding)
 	$str = preg_replace('#' . preg_quote($spacer) . '$#', '', $str);
 
 	return $start . $str . $end;
-}
+}*/
 
 ?>

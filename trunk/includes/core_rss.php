@@ -125,17 +125,17 @@ class core_rss
 
 		$data = strtolower(trim(fgets($this->fp, 300)));
 
-		if (strpos($data, '200') === false)
+		if (mb_strpos($data, '200') === false)
 		{
 			echo $data;
 
-			if (strpos($data, '301') === true || strpos($data, '301') === true)
+			if (mb_strpos($data, '301') === true || mb_strpos($data, '301') === true)
 			{
 				while (!empty($data))
 				{
 					$data = strtolower(trim(fgets($this->fp, 300)));
 
-					if (strpos('location:', $data) == true)
+					if (mb_strpos('location:', $data) == true)
 					{
 						$new_url = trim(eregi_replace('location:', '', $data));
 						
@@ -161,19 +161,19 @@ class core_rss
 		{
 			$data = strtolower(trim(fgets($this->fp, 300)));
 			
-			if (strpos($data, 'content-type') !== false && strpos($data, 'xml') === false)
+			if (mb_strpos($data, 'content-type') !== false && mb_strpos($data, 'xml') === false)
 			{
 				$this->Close_connection();
 				$this->error = 'Document type is invalid';
 				return false;
 			}
 			
-			if (strpos($data, 'last-modified') !== false)
+			if (mb_strpos($data, 'last-modified') !== false)
 			{
 				//
 			}
 
-			if (strpos($data, 'content-encoding') !== false && strpos($data, 'gzip') !== false)
+			if (mb_strpos($data, 'content-encoding') !== false && mb_strpos($data, 'gzip') !== false)
 			{
 				$compressed = true;
 			}
@@ -232,7 +232,7 @@ class core_rss
 
 		$element = strtolower($element);
 
-		if (strpos($element, ':'))
+		if (mb_strpos($element, ':'))
 		{
 			list($element) = explode(':', $element, 2);
 		}
@@ -319,7 +319,7 @@ class core_rss
 	{
 		$element = strtolower($element);
 
-		if (strpos($element, ':' ))
+		if (mb_strpos($element, ':' ))
 		{
 			list($element) = explode(':', $element, 2);
 		}

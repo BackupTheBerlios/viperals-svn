@@ -51,73 +51,88 @@ function array_search(needle, haystack, strict)
 	return null;
 }
 
-function switch_collapse_area(id, name)
+function switch_collapse(id, name)
 {
 	var area = document.getElementById(id);
 
 	if (area.style.display == 'none')
 	{
 		area.style.display = '';
-		var value = null;
+		switch_collapse_save(id, false, name);
 	}
 	else
 	{
 		area.style.display = 'none';
-		var value = id;
+		switch_collapse_save(id, id, name);
 	}
+}
 
+function switch_collapse_img(id, img_show, img_hide, name)
+{
+	var area = document.getElementById(id);
+	var img = document.getElementById(id+'_img');
+
+	if (area.style.display == 'none')
+	{
+		area.style.display = '';
+		img.src = img_show;
+
+		switch_collapse_save(id, false, name);
+	}
+	else
+	{
+		area.style.display = 'none';
+		img.src = img_hide;
+
+		switch_collapse_save(id, id, name);
+	}
+}
+
+function switch_collapse_save(id, save, name)
+{
 	// typeof name == 'undefined'
 	if (!name)
 	{
 		name = 'collapsed_items';
 	}
 
-	// Best why to do it, if we don't want var name
-	// it's a small script, shouldn't have any noticable speed impact
+	//alert(name);
+
 	var collapsed_cookie = get_cookie(name);
 	var collapsed_items = new Array();
+	var set = false;
 
 	if (collapsed_cookie != null)
 	{
 		collapsed_cookie = collapsed_cookie.split(':');
-	
+
 		for (var i in collapsed_cookie)
 		{
-			collapsed_items[i] = collapsed_cookie[i];
-		}
-	}
-
-	var key = array_search(id, collapsed_items, false);
-
-	if (key != null)
-	{
-		if (value != null)
-		{
-			collapsed_items[key] == key;
-		}
-		else
-		{
-			var tmp = new Array();
-	
-			for (var i in collapsed_items)
+			if (collapsed_cookie[i] == id)
 			{
-				// We do it like this to get any duplicate values ( simple gc -- well not really )
-				if (collapsed_items[i] != id)
+				if (set == false)
 				{
-					tmp.push(collapsed_items[i]);
+					set = true;
+
+					if (save != false)
+					{
+						collapsed_items.push(id);
+					}
 				}
 			}
-
-			collapsed_items = tmp;
+			else
+			{
+				collapsed_items.push(collapsed_cookie[i]);
+			}
 		}
 	}
-	else
+
+	if (set == false && save != false)
 	{
 		collapsed_items.push(id);
 	}
 
 	//alert(collapsed_items.join(':'));
-
 	if (collapsed_items.length)
 	{
 		var expires = new Date()

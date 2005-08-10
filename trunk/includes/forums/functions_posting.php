@@ -86,6 +86,8 @@ function generate_smilies($mode, $forum_id)
 
 		$_CLASS['core_template']->assign('T_SMILIES_PATH', "{$config['smilies_path']}/");
 		$_CLASS['core_template']->display('modules/Forums/posting_smilies.html');
+
+		script_close();
 	}
 }
 

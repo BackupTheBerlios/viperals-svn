@@ -128,15 +128,15 @@ $global_rule_conditions = array(
 		WHERE user_id = $user_id
 			AND folder_id <> " . PRIVMSGS_NO_BOX . '
 		GROUP BY folder_id';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$num_messages = $num_unread = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$num_messages[(int) $row['folder_id']] = $row['num_messages'];
 		$num_unread[(int) $row['folder_id']] = $row['num_unread'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	// Make sure the default boxes are defined
 	foreach (array(PRIVMSGS_INBOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX) as $default_folder)
@@ -161,13 +161,13 @@ $global_rule_conditions = array(
 	$sql = 'SELECT folder_id, folder_name, pm_count
 		FROM ' . PRIVMSGS_FOLDER_TABLE . "
 			WHERE user_id = $user_id";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 			
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$folder[$row['folder_id']] = array('folder_name' => $row['folder_name'], 'num_messages' => $row['pm_count'], 'unread_messages' => ((isset($num_unread[$row['folder_id']])) ? $num_unread[$row['folder_id']] : 0));
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$folder[PRIVMSGS_OUTBOX] = array('folder_name' => $_CLASS['core_user']->lang['PM_OUTBOX'], 'num_messages' => $num_messages[PRIVMSGS_OUTBOX], 'unread_messages' => $num_unread[PRIVMSGS_OUTBOX]);
 	$folder[PRIVMSGS_SENTBOX] = array('folder_name' => $_CLASS['core_user']->lang['PM_SENTBOX'], 'num_messages' => $num_messages[PRIVMSGS_SENTBOX], 'unread_messages' => $num_unread[PRIVMSGS_SENTBOX]);
@@ -207,14 +207,14 @@ function clean_sentbox($num_sentbox_messages)
 				AND t.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND t.folder_id = ' . PRIVMSGS_SENTBOX . '
 			ORDER BY p.message_time ASC';
-		$result = $_CLASS['core_db']->sql_query_limit($sql, ($num_sentbox_messages - $message_limit));
+		$result = $_CLASS['core_db']->query_limit($sql, ($num_sentbox_messages - $message_limit));
 
 		$delete_ids = array();
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$delete_ids[] = $row['msg_id'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 		delete_pm($_CLASS['core_user']->data['user_id'], $delete_ids, PRIVMSGS_SENTBOX);
 	}
 }
@@ -284,23 +284,23 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 		$sql = 'SELECT * 
 			FROM ' . PRIVMSGS_RULES_TABLE . "
 			WHERE user_id = $user_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$user_rules = $_CLASS['core_db']->sql_fetchrowset($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$user_rules = $_CLASS['core_db']->fetch_row_assocset($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (sizeof($user_rules))
 		{
 			$sql = 'SELECT zebra_id, friend, foe
 				FROM ' . ZEBRA_TABLE . "
 				WHERE user_id = $user_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$zebra[$row['zebra_id']] = $row;
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 	}
 
@@ -310,7 +310,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			SET folder_id = ' . PRIVMSGS_NO_BOX . '
 			WHERE folder_id = ' . PRIVMSGS_HOLD_BOX . "
 				AND user_id = $user_id";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// Get those messages not yet placed into any box
@@ -321,10 +321,10 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			AND p.author_id = u.user_id
 			AND t.folder_id = " . PRIVMSGS_NO_BOX . '
 			AND t.msg_id = p.msg_id';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$action_ary = $move_into_folder = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$row['to']		= explode(':', $row['to_address']);
 		$row['bcc']		= explode(':', $row['bcc_address']);
@@ -349,7 +349,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			$move_into_folder[PRIVMSGS_INBOX][] = $row['msg_id'];
 		}
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	// We place actions into arrays, to save queries.
 	$num_new = $num_unread = 0;
@@ -424,7 +424,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			WHERE msg_id IN (' . implode(', ', $unread_ids) . ")
 				AND user_id = $user_id
 				AND folder_id = " . PRIVMSGS_NO_BOX;
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// mark messages as important
@@ -435,7 +435,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			WHERE folder_id = ' . PRIVMSGS_NO_BOX . "
 				AND user_id = $user_id
 				AND msg_id IN (" . implode(', ', $important_ids) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// Move into folder
@@ -450,13 +450,13 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			FROM ' . PRIVMSGS_FOLDER_TABLE . '
 			WHERE folder_id IN (' . implode(', ', array_keys($move_into_folder)) . (($full_folder_action >= 0) ? ', ' . $full_folder_action : '') . ")
 				AND user_id = $user_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$folder[(int) $row['folder_id']] = (int) $row['pm_count'];
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if (in_array(PRIVMSGS_INBOX, array_keys($move_into_folder)))
 		{
@@ -465,10 +465,10 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 				WHERE user_id = $user_id
 					AND folder_id = " . PRIVMSGS_INBOX . "
 				GROUP BY folder_id";
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
 			
 			$folder[PRIVMSGS_INBOX] = (int) $_CLASS['core_db']->sql_fetchfield('num_messages', 0, $result);
-			$_CLASS['core_db']->sql_freeresult($result);			
+			$_CLASS['core_db']->free_result($result);			
 		}
 	}
 
@@ -506,14 +506,14 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 						AND t.user_id = $user_id
 						AND t.folder_id = $dest_folder
 					ORDER BY p.message_time ASC";
-				$result = $_CLASS['core_db']->sql_query_limit($sql, (($folder[$dest_folder] + sizeof($msg_ary)) - $message_limit));
+				$result = $_CLASS['core_db']->query_limit($sql, (($folder[$dest_folder] + sizeof($msg_ary)) - $message_limit));
 
 				$delete_ids = array();
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$delete_ids[] = $row['msg_id'];
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 				delete_pm($user_id, $delete_ids, $dest_folder);
 			}
 		}
@@ -526,7 +526,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 				WHERE folder_id = ' . PRIVMSGS_NO_BOX . "
 					AND user_id = $user_id
 					AND msg_id IN (" . implode(', ', $msg_ary) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 		else
 		{
@@ -536,7 +536,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 					AND user_id = $user_id
 					AND new = 1
 					AND msg_id IN (" . implode(', ', $msg_ary) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			if ($dest_folder != PRIVMSGS_INBOX)
 			{
@@ -544,7 +544,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 					SET pm_count = pm_count + ' . (int) $_CLASS['core_db']->sql_affectedrows() . "
 					WHERE folder_id = $dest_folder
 						AND user_id = $user_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			else
 			{
@@ -561,7 +561,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			SET folder_id = ' . PRIVMSGS_SENTBOX . '
 			WHERE folder_id = ' . PRIVMSGS_OUTBOX . '
 				AND msg_id IN (' . implode(', ', array_keys($action_ary)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// Update unread and new status field
@@ -574,7 +574,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			$set_sql .= 'user_new_privmsg = user_new_privmsg - ' . $num_new;
 		}
 		
-		$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
+		$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
 		$_CLASS['core_user']->data['user_new_privmsg'] -= $num_new;
 		$_CLASS['core_user']->data['user_unread_privmsg'] -= $num_unread;
 	}
@@ -604,13 +604,13 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 				FROM ' . PRIVMSGS_FOLDER_TABLE . "
 				WHERE folder_id = $dest_folder
 					AND user_id = $user_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 			{
 				trigger_error('NOT_AUTHORIZED');
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 
 			if ($row['pm_count'] + sizeof($move_msg_ids) > $message_limit)
 			{
@@ -625,7 +625,7 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 				FROM ' . PRIVMSGS_TO_TABLE . '
 				WHERE folder_id = ' . PRIVMSGS_INBOX . "
 					AND user_id = $user_id";
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 			if ($_CLASS['core_db']->sql_fetchfield('num_messages', 0, $result) + sizeof($move_msg_ids) > $message_limit)
 			{
 				$message = sprintf($_CLASS['core_user']->lang['NOT_ENOUGH_SPACE_FOLDER'], $_CLASS['core_user']->lang['PM_INBOX']) . '<br /><br />';
@@ -639,7 +639,7 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 			WHERE folder_id = $cur_folder_id
 				AND user_id = $user_id
 				AND msg_id IN (" . implode(', ', $move_msg_ids) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 		$num_moved = $_CLASS['core_db']->sql_affectedrows();
 
 		// Update pm counts
@@ -651,7 +651,7 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 					SET pm_count = pm_count - $num_moved
 					WHERE folder_id = $cur_folder_id
 						AND user_id = $user_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 
 			if ($dest_folder != PRIVMSGS_INBOX)
@@ -660,7 +660,7 @@ function move_pm($user_id, $message_limit, $move_msg_ids, $dest_folder, $cur_fol
 					SET pm_count = pm_count + $num_moved
 					WHERE folder_id = $dest_folder
 						AND user_id = $user_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 	}
@@ -683,12 +683,12 @@ function update_unread_status($unread, $msg_id, $user_id, $folder_id)
 		WHERE msg_id = $msg_id
 			AND user_id = $user_id
 			AND folder_id = $folder_id";
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 
 	$sql = 'UPDATE ' . USERS_TABLE . " 
 		SET user_unread_privmsg = user_unread_privmsg - 1
 		WHERE user_id = $user_id";
-	$_CLASS['core_db']->sql_query($sql);
+	$_CLASS['core_db']->query($sql);
 }
 
 // Handle all actions possible with marked messages
@@ -714,7 +714,7 @@ function handle_mark_actions($user_id, $mark_action)
 				WHERE folder_id = $cur_folder_id
 					AND user_id = $user_id
 					AND msg_id IN (" . implode(', ', $msg_ids) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			break;
 
@@ -802,18 +802,18 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 		WHERE msg_id IN (' . implode(', ', array_map('intval', $msg_ids)) . ")
 			AND folder_id = $folder_id
 			AND user_id = $user_id";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$delete_rows = array();
 	$num_unread = $num_new = $num_deleted = 0;
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$num_unread += (int) $row['unread'];
 		$num_new += (int) $row['new'];
 
 		$delete_rows[$row['msg_id']] = 1;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 	unset($msg_ids);
 
 	if (!sizeof($delete_rows))
@@ -829,19 +829,19 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 		$sql = 'DELETE FROM ' . PRIVMSGS_TO_TABLE . "
 			WHERE user_id = $user_id AND folder_id = " . PRIVMSGS_OUTBOX . '
 				AND msg_id IN (' . implode(', ', array_keys($delete_rows)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		// Update PM Information for safety
 		$sql = 'UPDATE ' . PRIVMSGS_TABLE . " SET message_text = ''
 			WHERE msg_id IN (" . implode(', ', array_keys($delete_rows)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		// Set delete flag for those intended to receive the PM
 		// We do not remove the message actually, to retain some basic informations (sent time for example)
 		$sql = 'UPDATE ' . PRIVMSGS_TO_TABLE . '
 			SET deleted = 1
 			WHERE msg_id IN (' . implode(', ', array_keys($delete_rows)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		$num_deleted = $_CLASS['core_db']->sql_affectedrows();
 	}
@@ -852,7 +852,7 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 			WHERE user_id = $user_id
 				AND folder_id = $folder_id
 				AND msg_id IN (" . implode(', ', array_keys($delete_rows)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 		$num_deleted = $_CLASS['core_db']->sql_affectedrows();
 	}
 
@@ -862,7 +862,7 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 		$sql = 'UPDATE ' . PRIVMSGS_FOLDER_TABLE . " 
 			SET pm_count = pm_count - $num_deleted 
 			WHERE folder_id = $folder_id";
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// Update unread and new status field
@@ -875,20 +875,20 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 			$set_sql .= 'user_new_privmsg = user_new_privmsg - ' . $num_new;
 		}
 		
-		$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
+		$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
 	}
 	
 	// Now we have to check which messages we can delete completely	
 	$sql = 'SELECT msg_id 
 		FROM ' . PRIVMSGS_TO_TABLE . '
 		WHERE msg_id IN (' . implode(', ', array_keys($delete_rows)) . ')';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		unset($delete_rows[$row['msg_id']]);
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$delete_ids = implode(', ', array_keys($delete_rows));
 
@@ -896,7 +896,7 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 	{
 		$sql = 'DELETE FROM ' . PRIVMSGS_TABLE . '
 			WHERE msg_id IN (' . $delete_ids . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 }
 
@@ -955,10 +955,10 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 			$sql = 'SELECT user_id, username, user_colour 
 				FROM ' . USERS_TABLE . '
 				WHERE user_id IN (' . implode(', ', $u) . ')
-					AND user_type IN (' . USER_NORMAL . ', ' . USER_FOUNDER . ')';
-			$result = $_CLASS['core_db']->sql_query($sql);
+					AND user_type = ' . USER_NORMAL;
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				if ($check_type == 'to' || $author_id == $_CLASS['core_user']->data['user_id'] || $row['user_id'] == $_CLASS['core_user']->data['user_id'])
 				{
@@ -972,7 +972,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 					}
 				}
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		if (sizeof($g))
@@ -982,16 +982,16 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 				$sql = 'SELECT group_name
 					FROM ' . GROUPS_TABLE . ' 
 						WHERE group_id IN (' . implode(', ', $g) . ')';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 		
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					if ($check_type == 'to' || $author_id == $_CLASS['core_user']->data['user_id'] || $row['user_id'] == $_CLASS['core_user']->data['user_id'])
 					{
 						$address[] = $row['group_name'];
 					}
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 			}
 			else
 			{
@@ -1000,9 +1000,9 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 						WHERE g.group_id IN (' . implode(', ', $g) . ')
 						AND g.group_id = ug.group_id
 						AND ug.user_pending = 0';
-				$result = $_CLASS['core_db']->sql_query($sql);
+				$result = $_CLASS['core_db']->query($sql);
 		
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					if (!isset($address['group'][$row['group_id']]))
 					{
@@ -1017,7 +1017,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 						$address['user'][$row['user_id']]['in_group'] = $row['group_id'];
 					}
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 			}
 		}
 
@@ -1126,14 +1126,14 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				FROM ' . USER_GROUP_TABLE . '
 				WHERE group_id IN (' . implode(', ', array_keys($data['address_list']['g'])) . ')
 					AND user_pending = 0';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 	
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$field = ($data['address_list']['g'][$row['group_id']] == 'to') ? 'to' : 'bcc';
 				$recipients[$row['user_id']] = $field;
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		if (!sizeof($recipients))
@@ -1172,7 +1172,6 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'message_subject'	=> $subject,
 				'message_text' 		=> $data['message'],
 				'message_checksum'	=> $data['message_md5'],
-				'message_encoding'	=> $_CLASS['core_user']->lang['ENCODING'],
 				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],
@@ -1193,7 +1192,6 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'message_subject'	=> $subject,
 				'message_text' 		=> $data['message'],
 				'message_checksum'	=> $data['message_md5'],
-				'message_encoding'	=> $_CLASS['core_user']->lang['ENCODING'],
 				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid']
@@ -1201,35 +1199,35 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			break;
 	}
 
+	$_CLASS['core_db']->transaction();
+
 	if (sizeof($sql_data))
 	{
 		if ($mode == 'post' || $mode == 'reply' || $mode == 'quote' || $mode == 'forward')
 		{
-			$_CLASS['core_db']->sql_query('INSERT INTO ' . PRIVMSGS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_data));
-			$data['msg_id'] = $_CLASS['core_db']->sql_nextid();
+			$_CLASS['core_db']->query('INSERT INTO ' . PRIVMSGS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_data));
+			$data['msg_id'] = $_CLASS['core_db']->insert_id(PRIVMSGS_TABLE, 'msg_id');
 		}
 		else if ($mode == 'edit')
 		{
 			$sql = 'UPDATE ' . PRIVMSGS_TABLE . ' 
 				SET message_edit_count = message_edit_count + 1, ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data) . ' 
 				WHERE msg_id = ' . $data['msg_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 	}
 	
 	if ($mode != 'edit')
 	{
-		$_CLASS['core_db']->sql_transaction();
-	
 		if ($sql)
 		{
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 		unset($sql);
 
 		foreach ($recipients as $user_id => $type)
 		{
-			$_CLASS['core_db']->sql_query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+			$_CLASS['core_db']->query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 				'msg_id'	=> $data['msg_id'],
 				'user_id'	=> $user_id,
 				'author_id'	=> $_CLASS['core_user']->data['user_id'],
@@ -1243,12 +1241,12 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		$sql = 'UPDATE ' . USERS_TABLE . ' 
 			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1, user_last_privmsg = ' . time() . '
 			WHERE user_id IN (' . implode(', ', array_keys($recipients)) . ')';
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		// Put PM into outbox
 		if ($put_in_outbox)
 		{
-			$_CLASS['core_db']->sql_query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+			$_CLASS['core_db']->query('INSERT INTO ' . PRIVMSGS_TO_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 				'msg_id'	=> (int) $data['msg_id'],
 				'user_id'	=> (int) $_CLASS['core_user']->data['user_id'],
 				'author_id'	=> (int) $_CLASS['core_user']->data['user_id'],
@@ -1258,8 +1256,6 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'forwarded'	=> ($mode == 'forward') ? 1 : 0))
 			);
 		}
-
-		$_CLASS['core_db']->sql_transaction('commit');
 	}
 
 	// Set user last post time
@@ -1268,10 +1264,8 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		$sql = 'UPDATE ' . USERS_TABLE . "
 			SET user_lastpost_time = $current_time
 			WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
-
-	$_CLASS['core_db']->sql_transaction();
 
 	// Submit Attachments
 	if (sizeof($data['attachment_data']) && $data['msg_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit', 'forward')))
@@ -1286,7 +1280,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				$sql = 'UPDATE ' . ATTACHMENTS_TABLE . " 
 					SET comment = '" . $_CLASS['core_db']->sql_escape($attach_row['comment']) . "' 
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 			else
 			{
@@ -1308,7 +1302,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 
 				$sql = 'INSERT INTO ' . ATTACHMENTS_TABLE . ' ' . 
 					$_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 
 				$space_taken += $attach_row['filesize'];
 				$files_added++;
@@ -1320,7 +1314,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			$sql = 'UPDATE ' . PRIVMSGS_TABLE . '
 				SET message_attachment = 1
 				WHERE msg_id = ' . $data['msg_id'];
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 
 		if ($space_taken && $files_added)
@@ -1330,7 +1324,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		}
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 
 	// Delete draft if post was loaded...
 	$draft_id = request_var('draft_loaded', 0);
@@ -1339,7 +1333,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		$sql = 'DELETE FROM ' . DRAFTS_TABLE . " 
 			WHERE draft_id = $draft_id 
 				AND user_id = " . $_CLASS['core_user']->data['user_id'];
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 	}
 
 	// Send Notifications
@@ -1361,18 +1355,18 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 	// Get banned User ID's
 	$sql = 'SELECT ban_userid 
 		FROM ' . BANLIST_TABLE;
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	unset($recipients[ANONYMOUS], $recipients[$_CLASS['core_user']->data['user_id']]);
 	
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if (isset($row['ban_userid']))
 		{
 			unset($recipients[$row['ban_userid']]);
 		}
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if (!sizeof($recipients))
 	{
@@ -1384,10 +1378,10 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 	$sql = 'SELECT user_id, username, user_email, user_lang, user_notify_pm, user_notify_type, user_jabber
 		FROM ' . USERS_TABLE . "
 		WHERE user_id IN ($recipient_list)";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	$msg_list_ary = array();
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($row['user_notify_pm'] == 1 && trim($row['user_email']))
 		{
@@ -1400,7 +1394,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 			);
 		}
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 	
 	if (!sizeof($msg_list_ary))
 	{

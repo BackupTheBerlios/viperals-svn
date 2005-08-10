@@ -20,7 +20,8 @@ if (!defined('VIPERAL'))
 
 set_magic_quotes_runtime(0);
 error_reporting(E_ALL);
-//error_reporting(0);
+mb_internal_encoding('UTF-8');
+//mb_http_output('UTF-8');
 
 // Remove registered globals
 if ((bool) ini_get('register_globals'))
@@ -29,21 +30,21 @@ if ((bool) ini_get('register_globals'))
 	{
 		unset($$var_name);
 	}
-	unset($variable, $value);
 }
 
-define('STRIP', get_magic_quotes_gpc());
+define('STRIP_SLASHES', get_magic_quotes_gpc());
 
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
 
 // Move to index files
 $base_memory_usage = function_exists('memory_get_usage') ? memory_get_usage() : 0;
-           
+
 require($site_file_root.'includes/functions.php');
 require($site_file_root.'config.php');
 require($site_file_root.'includes/tables.php');
 require($site_file_root.'includes/handler.php');
+require($site_file_root.'includes/mailer.php');
 require($site_file_root.'includes/db/'.$site_db['type'].'.php');
 require($site_file_root.'includes/display/template.php');
 require($site_file_root.'includes/cache/cache.php');
@@ -57,7 +58,7 @@ load_class(false, 'core_db', 'db_'.$site_db['type']);
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-$_CLASS['core_error_handler']->stop();
+//$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))
@@ -145,18 +146,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 	// error here
 }
 
-/*
-if ((time() - $config['cache_gc']) > $config['cache_last_gc'])
-{
-	//$_CLASS['core_cache']->gc();
-	set_config('cache_last_gc', time(), true);
-}
-
-// maybe add to register_shutdown_function()
-If ($_CORE_CONFIG['server']['optimize_rate'] && ($_CORE_CONFIG['server']['optimize_last'] + $_CORE_CONFIG['server']['optimize_rate']) < time())
-{
-	set_core_config('server', 'optimize_last', time());
-	$_CLASS['core_db']->sql_optimize_tables();
-	//optimize_cache();
-}*/
 ?>

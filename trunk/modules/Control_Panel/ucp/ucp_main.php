@@ -303,8 +303,6 @@ class ucp_main extends module
 
 					$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
 				}
-		
-				$_CLASS['core_db']->free_result($result);
 
 				$sql = "SELECT f.*$lastread_select 
 					FROM $sql_from, " . FORUMS_WATCH_TABLE . ' fw
@@ -377,8 +375,6 @@ class ucp_main extends module
 				}
 				$_CLASS['core_db']->free_result($result);
 
-				$sql_f_select = '';
-				
 				// Subscribed Topics
 				$start = request_var('start', 0);
 

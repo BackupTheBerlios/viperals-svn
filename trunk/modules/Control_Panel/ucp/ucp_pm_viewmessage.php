@@ -93,13 +93,13 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 				WHERE post_msg_id = $msg_id
 					AND in_message = 1
 				ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC') . ', post_msg_id ASC';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$attachments[] = $row;
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 	
 			// No attachments exist, but message table thinks they do so go ahead and reset attach flags
 			if (!sizeof($attachments))
@@ -107,7 +107,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 				$sql = 'UPDATE ' . PRIVMSGS_TABLE . " 
 					SET message_attachment = 0 
 					WHERE msg_id = $msg_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 		else
@@ -247,9 +247,9 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 	$sort_dir = (!empty($_CLASS['core_user']->data['user_sortby_dir'])) ? $_CLASS['core_user']->data['user_sortby_dir'] : 'd';
 	$sql .= ($sort_dir == 'd') ? 'ASC' : 'DESC';
 
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+	if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 	{
 		return false;
 	}
@@ -275,8 +275,8 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 			$bbcode_bitfield |= $row['bbcode_bitfield'];
 		}
 	}
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result));
-	$_CLASS['core_db']->sql_freeresult($result);
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+	$_CLASS['core_db']->free_result($result);
 
 	$title = ($sort_dir == 'a') ? $row['message_subject'] : $title;
 
@@ -382,10 +382,10 @@ function get_user_informations($user_id, $user_row)
 			FROM ' . SESSIONS_TABLE . " 
 			WHERE session_user_id = $user_id
 			GROUP BY session_user_id";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
 		$update_time = $config['load_online_time'] * 60;
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$user_row['online'] = (time() - $update_time < $row['online_time'] && ($row['viewonline'] && $user_row['user_allow_viewonline'])) ? true : false;
 		} else {

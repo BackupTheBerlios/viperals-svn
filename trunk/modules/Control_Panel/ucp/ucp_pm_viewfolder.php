@@ -51,14 +51,14 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 	$sql = 'SELECT * 
 		FROM ' . ZEBRA_TABLE . ' 
 		WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$friend[$row['zebra_id']] = $row['friend'];
 		$foe[$row['zebra_id']] = $row['foe'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$_CLASS['core_template']->assign(array(
 		'S_UNREAD'		=> ($type == 'unread'),
@@ -97,13 +97,13 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 					$sql = ($ug_type == 'u') ? 'SELECT user_id as id, username as name, user_colour as colour FROM ' . USERS_TABLE . ' WHERE user_id' : 'SELECT group_id as id, group_name as name, group_colour as colour FROM ' . GROUPS_TABLE . ' WHERE group_id';
 					$sql .= ' IN (' . implode(', ', array_keys($recipient_list[$ug_type])) . ')';
 	
-					$result = $_CLASS['core_db']->sql_query($sql);
+					$result = $_CLASS['core_db']->query($sql);
 
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$recipient_list[$ug_type][$row['id']] = array('name' => $row['name'], 'colour' => $row['colour']);
 					}
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 				}
 			}		
 
@@ -229,15 +229,15 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 				AND t.user_id = $user_id
 				AND t.msg_id = p.msg_id
 				AND p.message_time >= $min_post_time";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
 		if (isset($_POST['sort']))
 		{
 			$start = 0;
 		}
 
-		$pm_count = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['pm_count'] : 0;
-		$_CLASS['core_db']->sql_freeresult($result);
+		$pm_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['pm_count'] : 0;
+		$_CLASS['core_db']->free_result($result);
 
 		$sql_limit_time = "AND p.message_time >= $min_post_time";
 	}
@@ -264,9 +264,9 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 					WHERE folder_id = $folder_id
 						AND user_id = $user_id";
 			}
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-			$pm_count = ($row = $_CLASS['core_db']->sql_fetchrow($result)) ? $row['pm_count'] : 0;
-			$_CLASS['core_db']->sql_freeresult($result);
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
+			$pm_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['pm_count'] : 0;
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		$sql_limit_time = '';
@@ -327,14 +327,14 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 			$sql_limit_time
 		ORDER BY $sql_sort_order";
 
-	$result = $_CLASS['core_db']->sql_query_limit($sql, $sql_limit, $sql_start);
+	$result = $_CLASS['core_db']->query_limit($sql, $sql_limit, $sql_start);
 
-	while($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$rowset[$row['msg_id']] = $row;
 		$pm_list[] = $row['msg_id'];
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$pm_list = ($store_reverse) ? array_reverse($pm_list) : $pm_list;
 

@@ -88,7 +88,7 @@ class core_display
 	{
 		global $_CLASS;
 
-		header('Content-Type: text/html; charset='.$_CLASS['core_user']->lang['ENCODING']);
+		header('Content-Type: text/html; charset=UTF-8');
 		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
 
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
@@ -162,7 +162,7 @@ class core_display
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
 			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.$_CORE_MODULE['title'],
 			'SITE_BASE'			=>	generate_base_url(),
-			'SITE_CHARSET'		=>	$_CLASS['core_user']->lang['ENCODING'],
+			'SITE_CHARSET'		=>	'UTF-8',
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
 			'SITE_URL'			=>	$_CORE_CONFIG['global']['site_url'],
 			'HEADER_MESSAGE'	=>	$this->message,
@@ -196,7 +196,6 @@ class core_display
 		if (!$this->displayed['header'])
 		{
 			script_close($save);
-			die;
 		}
 
 		if ($_CORE_MODULE = $this->get_module())
@@ -228,7 +227,7 @@ class core_display
 	*/
 	function footer_debug()
 	{
-		global $_CORE_CONFIG, $SID, $mainindex, $SID, $_CLASS, $starttime;
+		global $_CORE_CONFIG, $_CLASS, $starttime;
 
 		$mtime = explode(' ', microtime());
 		$totaltime = ($mtime[0] + $mtime[1] - $starttime) - $_CLASS['core_db']->queries_time;
@@ -288,6 +287,19 @@ class core_display
 
 		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(array('full' => true))) . '">';
 	}
+}
+
+function collapsed_items($marker, $cookie = 'collapsed_items') 
+{
+    static $collapsed_items_array = array();
+
+    if (!isset($collapsed_items_array[$cookie]))
+    {
+		$cookie_data = get_variable($cookie, 'COOKIE');
+		$collapsed_items_array[$cookie] = ($cookie_data) ? explode(':', $cookie_data) : array();
+    }
+
+    return in_array($marker, $collapsed_items_array[$cookie]);
 }
 
 function hideblock($id) 

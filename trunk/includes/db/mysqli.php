@@ -51,6 +51,11 @@ class db_mysqli
 		{
 			if (@mysqli_select_db($this->link_identifier, $db['database']))
 			{
+				mysqli_query($this->link_identifier, 'SET NAMES utf8');
+
+				//mysqli_query($this->link_identifier, 'SET character_set_results = NULL');
+				//mysqli_set_charset($this->link_identifier, "utf8");
+
 				return $this->link_identifier;
 			}
 
@@ -260,7 +265,7 @@ class db_mysqli
 				{
 					$values[] = "$key = '" . $this->escape($value) . "'";
 				}
-				elseif (is_null($var))
+				elseif (is_null($value))
 				{
 					$values[] = "$key = NULL";
 				}
@@ -329,7 +334,7 @@ class db_mysqli
 		return @mysqli_fetch_array($result);
 	}
 
-	function insert_id()
+	function insert_id($table, $column)
 	{
 		return ($this->link_identifier) ? @mysqli_insert_id($this->link_identifier) : false;
 	}
@@ -509,7 +514,7 @@ class db_mysqli
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
+				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')

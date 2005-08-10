@@ -58,13 +58,7 @@ class cache_file extends cache
 
 		$file_data = "<?php $protection_code \$this->vars['$name'] = ".var_export($data, true)."; \n\$this->expires['$name'] = $expires;  ?>";
 
-		if ($fp = @fopen($this->cache_dir . "cache_$name.php", 'wb'))
-		{
-			@flock($fp, LOCK_EX);
-			fwrite($fp, $file_data);
-			@flock($fp, LOCK_UN);
-			fclose($fp);
-		}
+		file_put_contents($this->cache_dir."cache_$name.php", $file_data);
 
 		$this->vars[$name] = $data;
 		$this->expires[$name] = $expires;

@@ -115,9 +115,8 @@ class ucp_pm extends module
 					'U_JS_RETURN_INBOX'	=> $indox_link,
 					'S_NOT_LOGGED_IN'	=> ($_CLASS['core_user']->data['user_id'] == ANONYMOUS) ? true : false,
 					'CLICK_TO_VIEW'		=> sprintf($_CLASS['core_user']->lang['CLICK_VIEW_PRIVMSG'], '<a href="' . $indox_link . '" onclick="jump_to_inbox();return false;" target="_new">', '</a>'),
-					'U_INBOX'			=> $indox_link)
-					
-				);
+					'U_INBOX'			=> $indox_link
+				));
 
 				break;
 			
@@ -143,10 +142,12 @@ class ucp_pm extends module
 					FROM ' . GROUPS_TABLE . '
 					WHERE group_id = ' . $_CLASS['core_user']->data['group_id'];
 				$result = $_CLASS['core_db']->query($sql);
-				$message_limit = (int) $_CLASS['core_db']->sql_fetchfield('group_message_limit', 0, $result);
-				$_CLASS['core_db']->sql_freeresult($result);
+
+				list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
+
+				$_CLASS['core_db']->free_result($result);
 				
-				$_CLASS['core_user']->data['message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
+				(int) $_CLASS['core_user']->data['message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
 				
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 
@@ -161,7 +162,7 @@ class ucp_pm extends module
 				$module = new ucp_main($id, $mode);
 				unset($module);
 				exit;
-				break;
+			break;
 
 			case 'unread':
 			case 'view_messages':
@@ -170,8 +171,8 @@ class ucp_pm extends module
 					FROM ' . GROUPS_TABLE . '
 					WHERE group_id = ' . $_CLASS['core_user']->data['group_id'];
 				$result = $_CLASS['core_db']->query($sql);
-				$message_limit = (int) $_CLASS['core_db']->sql_fetchfield('group_message_limit', 0, $result);
-				$_CLASS['core_db']->sql_freeresult($result);
+				list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
+				$_CLASS['core_db']->free_result($result);
 				
 				$_CLASS['core_user']->data['message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
 				
@@ -199,7 +200,7 @@ class ucp_pm extends module
 					trigger_error('NO_AUTH_READ_MESSAGE');
 				}
 
-				// First Handle Mark actions and moving messages
+// First Handle Mark actions and moving messages
 
 				// Move PM
 				if (isset($_REQUEST['move_pm']))
@@ -246,7 +247,7 @@ class ucp_pm extends module
 							AND user_id = " . $_CLASS['core_user']->data['user_id'];
 					$result = $_CLASS['core_db']->query_limit($sql, 1);
 					
-					if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+					if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 					{
 						trigger_error('NO_MESSAGE');
 					}					
@@ -273,7 +274,7 @@ class ucp_pm extends module
 							ORDER BY p.message_time $sql_ordering";
 						$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-						if (!($row = $_CLASS['core_db']->sql_fetchrow($result)))
+						if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 						{
 							$message = ($view == 'next') ? 'NO_NEWER_PM' : 'NO_OLDER_PM';
 							trigger_error($message);
@@ -293,7 +294,7 @@ class ucp_pm extends module
 							AND p.msg_id = $msg_id";
 					$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-					if (!($message_row = $_CLASS['core_db']->sql_fetchrow($result)))
+					if (!($message_row = $_CLASS['core_db']->fetch_row_assoc($result)))
 					{
 						trigger_error('NO_MESSAGE');
 					}
