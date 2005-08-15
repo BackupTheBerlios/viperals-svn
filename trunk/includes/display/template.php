@@ -1,17 +1,24 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
+
 /*
 	To-do cache daa.
 	Area code for content
@@ -39,20 +46,29 @@ class core_template
     /*
 		Assign variable to be used in template
     */
-    function assign($var, $value = false)
+// rewmove array from here
+	function assign($var, $value = false)
     {
-        if (is_array($var))
-        {
+		if (is_array($var))
+		{
 			foreach ($var as $name => $value)
-            {
+			{
 				$this->_vars[$name] = $value;
 			}
-        }
-        else
-        {
+		}
+		else
+		{
 			$this->_vars[$var] = $value;
 		}
-    }
+	}
+
+    function assign_array($var, $value = false)
+	{
+		foreach ($var as $name => $value)
+		{
+			$this->_vars[$name] = $value;
+		}
+	}
 
 	/*
 		Assign variable that are part of a Loop
@@ -178,7 +194,7 @@ class core_template
 
 		$file_name = str_replace(array('.', '/'), '#', $name);
 
-		return (($this->theme_themplate) ? $_CLASS['core_display']->theme.'#' : '') . "$file_name.php";
+		return ($this->theme_themplate ? $_CLASS['core_display']->theme_name.'#' : '') . "$file_name.php";
 	}
 
     function is_compiled($name)

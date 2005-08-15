@@ -1,5 +1,25 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 
+// sessions should extend this
 class core_user extends sessions
 {
 	var $browser;
@@ -76,14 +96,9 @@ class core_user extends sessions
 		return $time + $this->timezone + $this->dst;
 	}
 
-	function login($id = ANONYMOUS, $admin_login = false, $view_online = true)
+	function login($id = ANONYMOUS, $admin_login = false, $hidden = false, $auto_log = false)
 	{
 		global $_CLASS;
-
-		if (isset($this->data['session_id']) && $this->data['session_id'])
-		{
-			$this->session_destroy();
-		}
 
 		if ($bot = check_bot_status($this->browser, $this->ip))
 		{
@@ -139,9 +154,9 @@ class core_user extends sessions
 		}
 
 		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
-		$this->data['session_viewonline'] = $view_online;
+		$this->data['session_hidden'] = $hidden;
 
-		$this->session_create();
+		$this->session_create($auto_log);
 	}
 
 	function logout()
@@ -149,7 +164,7 @@ class core_user extends sessions
 		global $_CLASS;
 
 		$this->session_destroy();
-		
+// do last visit update here
 		$sql = 'SELECT *
 			FROM ' . USERS_TABLE . '
 			WHERE user_id = ' . ANONYMOUS;

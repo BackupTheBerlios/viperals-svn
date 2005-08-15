@@ -50,7 +50,7 @@ if (!$forum_id)
 if (!$_CLASS['core_user']->is_user)
 {
 	$sql = 'SELECT *
-		FROM ' . FORUMS_TABLE . '
+		FROM ' . FORUMS_FORUMS_TABLE . '
 		WHERE forum_id = ' . $forum_id .'
 		AND forum_status <> '.ITEM_DELETING;
 }
@@ -69,7 +69,7 @@ else
 		}
 
 		$sql = "SELECT f.*, fw.notify_status $lastread_select 
-			FROM " . FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ") $sql_lastread
+			FROM " . FORUMS_FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ") $sql_lastread
 			WHERE f.forum_id = $forum_id";
 }
 
@@ -99,7 +99,7 @@ if ($forum_data['forum_link'])
 	// Does it have click tracking enabled?
 	if ($forum_data['forum_flags'] & 1)
 	{
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET forum_posts = forum_posts + 1 
 			WHERE forum_id = ' . $forum_id;
 		$_CLASS['core_db']->query($sql);
@@ -202,7 +202,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 		$min_post_time = time() - ($sort_days * 86400);
 
 		$sql = 'SELECT COUNT(topic_id) AS num_topics
-			FROM ' . TOPICS_TABLE . "
+			FROM ' . FORUMS_TOPICS_TABLE . "
 			WHERE forum_id = $forum_id
 				AND topic_type <> " . POST_ANNOUNCE . "  
 				AND topic_last_post_time >= $min_post_time
@@ -232,12 +232,14 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 
 	// Basic pagewide vars
 	$post_alt = ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->lang['FORUM_LOCKED'] : $_CLASS['core_user']->lang['POST_NEW_TOPIC'];
+	$pagination = generate_pagination("Forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param", $topics_count, $config['topics_per_page'], $start);
 
-	$_CLASS['core_template']->assign(array(
-		'PAGINATION'	=> generate_pagination(generate_link("Forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param"), $topics_count, $config['topics_per_page'], $start),
-		'PAGE_NUMBER'	=> on_page($topics_count, $config['topics_per_page'], $start),
-		'TOTAL_TOPICS'	=> ($forum_data['forum_flags'] & 16) ? false : (($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count)),
-		'MODERATORS'	=> (!empty($moderators[$forum_id])) ? implode(', ', $moderators[$forum_id]) : '',
+	$_CLASS['core_template']->assign_array(array(
+		'PAGINATION'		=> $pagination['formated'],
+		'PAGINATION_ARRAY'	=> $pagination['array'],
+		'PAGE_NUMBER'		=> on_page($topics_count, $config['topics_per_page'], $start),
+		'TOTAL_TOPICS'		=> ($forum_data['forum_flags'] & 16) ? false : (($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count)),
+		'MODERATORS'		=> (!empty($moderators[$forum_id])) ? implode(', ', $moderators[$forum_id]) : '',
 
 		'POST_IMG' 				=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', $post_alt) : $_CLASS['core_user']->img('btn_post', $post_alt),
 		'FOLDER_IMG' 			=> $_CLASS['core_user']->img('folder', 'NO_NEW_POSTS'),
@@ -276,13 +278,12 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	);
 
 	// Grab icons
-	$icons = array();
-	obtain_icons($icons);
+	$icons = obtain_icons();
 
 	// Grab all topic data
 	$rowset = $announcement_list = $topic_list = array();
 
-	$sql_from = TOPICS_TABLE.' t ';
+	$sql_from = FORUMS_TOPICS_TABLE.' t ';
 	$sql_from .= ($_CLASS['core_user']->is_user && $config['load_db_lastread']) ? ' LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')' : '';
 
 	$sql_approved = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1';
@@ -421,6 +422,8 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			// Generate all the URIs ...
 			$view_topic_url = 'Forums&amp;file=viewtopic&amp;t='.$topic_id;
 
+			$pagination = generate_pagination('Forums&amp;file=viewtopic&amp;&amp;t='.$topic_id, $replies, $config['posts_per_page']);
+
 			// Send vars to template
 			$_CLASS['core_template']->assign_vars_array('topicrow', array(
 				'FORUM_ID' 			=> $forum_id,
@@ -430,7 +433,8 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
 				'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
 				'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
-				'PAGINATION'		=> topic_generate_pagination($replies, 'Forums&amp;file=viewtopic&amp;&amp;t='.$topic_id),
+				'PAGINATION'		=> $pagination['formated'],
+				'PAGINATION_ARRAY'	=> $pagination['array'],
 				'REPLIES' 			=> $replies,
 				'VIEWS' 			=> $row['topic_views'],
 				'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
@@ -471,7 +475,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 }
 else
 {
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_IS_POSTABLE'			=> false,
 		'S_DISPLAY_ACTIVE'		=> false,
 		'S_DISPLAY_SEARCHBOX'	=> false,

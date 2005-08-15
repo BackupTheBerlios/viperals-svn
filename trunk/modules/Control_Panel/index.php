@@ -32,14 +32,14 @@ $ucp = new module();
 require($site_file_root.'includes/forums/functions_user.php');
 
 //define the undefineds
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 	'S_DISPLAY_FORM'		=> true,
 	'S_SHOW_PM_BOX'			=> false,
 	'S_SHOW_COLOUR_LEGEND'	=> false,
 	'USERNAME'				=> '',
 	'friends_online'		=> false,
 	'friends_offline' 		=> false,
-	));
+));
 
 // ---------
 // FUNCTIONS
@@ -57,7 +57,7 @@ class module
 		global $_CLASS, $config;
 
 		$sql = 'SELECT module_id, module_title, module_filename, module_subs, module_acl
-			FROM ' . MODULES_TABLE . "
+			FROM ' . FORUMS_MODULES_TABLE . "
 			WHERE module_type = '{$module_type}'
 				AND module_enabled = 1
 			ORDER BY module_order ASC";
@@ -206,7 +206,7 @@ class module
 
         $_CLASS['core_template']->display('modules/Control_Panel/'.$tpl_name);
 
-		die;
+		script_close();
 	}
 
 	// Public methods to be overwritten by modules
@@ -261,7 +261,7 @@ switch ($mode)
 	case 'register':
 		if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS || isset($_REQUEST['not_agreed']))
 		{
-			url_redirect();
+			redirect();
 		}
 
 		$ucp->load('ucp', 'register');
@@ -276,7 +276,7 @@ switch ($mode)
 	case 'login':
 		if ($_CLASS['core_user']->is_user || $_CLASS['core_user']->is_bot)
 		{
-			url_redirect();
+			redirect();
 		}
 
 		login_box();
@@ -326,7 +326,7 @@ switch ($mode)
 			confirm_box(false, 'DELETE_COOKIES', '');
 		}
 		
-		url_redirect();
+		redirect();
 		break;
 }
 
@@ -345,7 +345,7 @@ if (!$_CLASS['core_user']->is_user)
 // Output listing of friends online
 $update_time = $config['load_online_time'] * 60;
 
-$sql = 'SELECT DISTINCT u.user_id, u.username, s.session_time, s.session_viewonline
+$sql = 'SELECT DISTINCT u.user_id, u.username, s.session_time, s.session_hidden
 	FROM ' . USERS_TABLE . ' u, ' . ZEBRA_TABLE . ' z 
 	LEFT JOIN ' . SESSIONS_TABLE . ' s ON (s.session_user_id = z.zebra_id)
 	WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 

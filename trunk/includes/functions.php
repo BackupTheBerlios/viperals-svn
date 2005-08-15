@@ -1,17 +1,24 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
+
 // Redo
 function check_email($email)
 {
@@ -172,26 +179,23 @@ function check_theme($theme)
 	return false;
 }
 
-function display_confirmation($check = false, $hidden = '')
+function display_confirmation($message = '', $hidden = '')
 {
 	global $_CLASS, $SID;
 // Add user entered confirmation code as a choose, maybe ...
-	if ($check)
+	if (isset($_POST['cancel']))
 	{
-		if (isset($_POST['cancel']))
-		{
-			return false;
-		}
-	
-		if (isset($_POST['confirm']))
-		{
-			$code = $_CLASS['core_user']->session_data_get('confirmation_code');
-			$confirm_code = get_variable('confirm_code', 'POST');
+		return false;
+	}
 
-			if ($code && $confirm_code && $code !== $confirm_code)
-			{
-				return true;
-			}
+	if (isset($_POST['confirm']))
+	{
+		$code = $_CLASS['core_user']->session_data_get('confirmation_code');
+		$confirm_code = get_variable('confirm_code', 'POST');
+
+		if ($code && $confirm_code && $code == $confirm_code)
+		{
+			return true;
 		}
 
 		return false;
@@ -200,12 +204,15 @@ function display_confirmation($check = false, $hidden = '')
 	$confirmation_code = generate_string(6);
 	$_CLASS['core_user']->session_data_set('confirmation_code', $confirmation_code);
 
-	$_CLASS['core_template']->assign(array(
-		'S_CONFIRM_ACTION'  => generate_link($_CLASS['core_user']->url),
-		'S_HIDDEN_FIELDS'	=> $hidden.'<input type="hidden" name="confirm_code" value="' . $confirmation_code . '" />'
+	$_CLASS['core_template']->assign_array(array(
+		'MESSAGE'		=> ($message) ? $message : 'Are you sure you want to perform this action ?',
+		'CONFIRM_ACTION'=> generate_link($_CLASS['core_user']->url),
+		'HIDDEN_FIELDS'	=> $hidden.'<input type="hidden" name="confirm_code" value="' . $confirmation_code . '" />'
 	));
 
-	$_CLASS['core_template']->display('confirm_display.html');
+	$_CLASS['core_template']->display('confirmation.html');
+
+	script_close();
 }
 
 function encode_password($pure, $encoding = 'md5')
@@ -290,6 +297,7 @@ function get_variable($var_name, $type, $default = false, $var_type = 'string')
 	{
 		switch ($var_type)
 		{
+		 	case 'int':
 		 	case 'integer':
 				$variable = is_numeric($variable) ? (int) $variable : $default;
 			break;
@@ -372,7 +380,7 @@ function generate_link($link = false, $link_options = false)
 	{
 		if ($link{0} == '&')
 		{
-			$link = $_CORE_MODULE['title'].$link;
+			$link = $_CORE_MODULE['name'].$link;
 		}
 
 		$link = $file.'?mod='.$link;
@@ -447,8 +455,7 @@ function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $adm
 		$display['formated'] .= sprintf($wrapper['last'], generate_link($base_url.'&amp;start='.(($total_pages - 1)  * $per_page), $admin_link), $total_pages);
 	}
 
-//TMP
-	return $display['formated'];
+	return $display;
 }
 
 /*
@@ -498,34 +505,32 @@ function login_box($login_options = false, $template = false)
 	$_CLASS['core_auth']->do_login($login_options, $template);
 }
 
-function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false)
+function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false, $cache = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
 	
-	$_CLASS['core_db']->sql_return_on_error(true);
+	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET config_value ='".$_CLASS['core_db']->escape($value) . "'
+		WHERE config_section = '" . $_CLASS['core_db']->escape($section) . "'
+			AND config_name = '". $_CLASS['core_db']->escape($name) ."'";
 
-	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET value ='".$_CLASS['core_db']->escape($value) . "'
-		WHERE (section = '" . $_CLASS['core_db']->escape($section) . "')
-			AND (name = '". $_CLASS['core_db']->escape($name) ."')";
-
-	if (!$_CLASS['core_db']->query($sql) && $auto_add)
+	if ($auto_add && (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows()))
 	{
 		$sql_array = array(
-			'section'	=> $section,
-			'name'		=> $name,
-			'value'		=> $value
+			'config_section'	=> (string) $section,
+			'config_name'		=> (string) $name,
+			'config_value'		=> (string) $value,
+			'config_cache'		=> (int) $cache,
 		);
-		
-		$_CLASS['core_db']->sql_return_on_error(false);
 
-		$sql = 'INSERT INTO ' . CORE_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array);
-		$_CLASS['core_db']->query($sql);
+		$_CLASS['core_db']->return_on_error(true);
+
+		$_CLASS['core_db']->query('INSERT INTO ' . CORE_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
+		
+		$_CLASS['core_db']->return_on_error(false);
 	}
 
-	$_CLASS['core_db']->sql_return_on_error(false);
-	
 	$_CORE_CONFIG[$section][$name] = $value;
-	
+
 	if ($clear_cache)
 	{
 		$_CLASS['core_cache']->destroy('core_config');
@@ -683,7 +688,7 @@ function modify_lines($text, $replacement = '')
 	return str_replace(array("\r\n", "\r", "\n"), $replacement, $text);
 }
 
-function url_redirect($url = false, $save = false)
+function redirect($url = false, $save = false)
 {
 	$url = ($url) ? $url : generate_link(false, array('full' => true));
 	$url = trim(str_replace('&amp;', '&', $url));
@@ -708,6 +713,11 @@ function url_redirect($url = false, $save = false)
 	</html>';
 
 	script_close($save);
+}
+
+function url_redirect($url = false, $save = false)
+{
+	redirect($url = false, $save = false);
 }
 
 if (!function_exists('file_get_contents'))

@@ -52,7 +52,7 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT *
-			FROM ' . FORUMS_TABLE . "
+			FROM ' . FORUMS_FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
 		break;
 
@@ -64,7 +64,7 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT t.*, f.* 
-			FROM ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f
+			FROM ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . " f
 			WHERE t.topic_id = $topic_id
 				AND f.forum_id = t.forum_id";
 	break;
@@ -78,7 +78,7 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT f.*, t.*, p.*, u.username, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield
-			FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f, ' . USERS_TABLE . " u
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . ' f, ' . FORUMS_USERS_TABLE . " u
 			WHERE p.post_id = $post_id
 				AND t.topic_id = p.topic_id
 				AND u.user_id = p.poster_id
@@ -166,7 +166,7 @@ if (!isset($icon_id) || in_array($mode, array('quote', 'reply')))
 if ($poll_start)
 {
 	$sql = 'SELECT poll_option_text 
-		FROM ' . POLL_OPTIONS_TABLE . "
+		FROM ' . FORUMS_POLL_OPTIONS_TABLE . "
 		WHERE topic_id = $topic_id
 		ORDER BY poll_option_id";
 	$result = $_CLASS['core_db']->query($sql);
@@ -203,7 +203,7 @@ unset($uninit, $var_name, $default_value);
 if ($post_attachment && !$submit && !$refresh && !$preview && $mode == 'edit')
 {
 	$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
-		FROM ' . ATTACHMENTS_TABLE . "
+		FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 		WHERE post_msg_id = $post_id
 			AND in_message = 0
 		ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
@@ -240,7 +240,7 @@ $enable_magic_url = $drafts = false;
 if ($_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedrafts') && $mode != 'delete')
 {
 	$sql = 'SELECT draft_id
-		FROM ' . DRAFTS_TABLE . '
+		FROM ' . FORUMS_DRAFTS_TABLE . '
 		WHERE (forum_id = ' . $forum_id . (($topic_id) ? " OR topic_id = $topic_id" : '') . ')
 			AND user_id = ' . $_CLASS['core_user']->data['user_id'] . 
 			(($draft_id) ? " AND draft_id <> $draft_id" : '');
@@ -400,18 +400,18 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 {
 	$_CLASS['core_db']->transaction();
 
-	$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . "
+	$_CLASS['core_db']->query('UPDATE ' . FORUMS_POSTS_TABLE . "
 		SET post_time = $current_time
 		WHERE post_id = $topic_last_post_id
 			AND topic_id = $topic_id");
 
-	$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . "
+	$_CLASS['core_db']->query('UPDATE ' . FORUMS_TOPICS_TABLE . "
 		SET topic_last_post_time = $current_time,
 			topic_bumped = 1,
 			topic_bumper = " . $_CLASS['core_user']->data['user_id'] . "
 		WHERE topic_id = $topic_id");
 
-	$_CLASS['core_db']->query('UPDATE ' . FORUMS_TABLE . '
+	$_CLASS['core_db']->query('UPDATE ' . FORUMS_FORUMS_TABLE . '
 		SET ' . implode(', ', update_last_post_information('forum', $forum_id)) . "
 		WHERE forum_id = $forum_id");
 
@@ -445,7 +445,7 @@ if ($save && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedr
 
 	if ($subject && $message)
 	{
-		$sql = 'INSERT INTO ' . DRAFTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+		$sql = 'INSERT INTO ' . FORUMS_DRAFTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'user_id'	=> $_CLASS['core_user']->data['user_id'],
 			'topic_id'	=> $topic_id,
 			'forum_id'	=> $forum_id,
@@ -470,7 +470,7 @@ if ($save && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedr
 }
 
 // Move to where they should be
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 		'S_DRAFT_LOADED'	=> false,
 		'S_SHOW_DRAFTS'		=> false,
 		'S_POST_REVIEW'		=> false,
@@ -487,7 +487,7 @@ $_CLASS['core_template']->assign(array(
 if ($draft_id && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedrafts'))
 {
 	$sql = 'SELECT draft_subject, draft_message 
-		FROM ' . DRAFTS_TABLE . " 
+		FROM ' . FORUMS_DRAFTS_TABLE . " 
 		WHERE draft_id = $draft_id
 			AND user_id = " . $_CLASS['core_user']->data['user_id'];
 	$result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -758,7 +758,7 @@ if ($submit || $preview || $refresh)
 		if ($topic_type != POST_GLOBAL)
 		{
 			$sql = 'SELECT topic_type, forum_id
-				FROM ' . TOPICS_TABLE . "
+				FROM ' . FORUMS_TOPICS_TABLE . "
 				WHERE topic_id = $topic_id";
 			$result = $_CLASS['core_db']->query_limit($sql, 1);
 
@@ -770,7 +770,7 @@ if ($submit || $preview || $refresh)
 	
 				if (!$to_forum_id)
 				{
-					$_CLASS['core_template']->assign(array(
+					$_CLASS['core_template']->assign_array(array(
 						'S_FORUM_SELECT'	=> make_forum_select(false, false, false, true, true),
 						'S_UNGLOBALISE'		=> true) 
 					);
@@ -906,7 +906,7 @@ if (!sizeof($error) && $preview)
 
 		$parse_poll->format_display($enable_html, $enable_bbcode, $enable_urls, $enable_smilies);
 		
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_HAS_POLL_OPTIONS'=> (sizeof($poll_options)),
 			'S_IS_MULTI_CHOICE'	=> ($poll_max_options > 1) ? true : false,
 
@@ -954,7 +954,7 @@ if (!sizeof($error) && $preview)
 
 	if (!sizeof($error))
 	{
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'PREVIEW_SUBJECT'		=> $preview_subject,
 			'PREVIEW_MESSAGE'		=> $preview_message,
 			'PREVIEW_SIGNATURE'		=> $preview_signature,
@@ -1085,7 +1085,7 @@ $s_hidden_fields .= ($draft_id || isset($_REQUEST['draft_loaded'])) ? '<input ty
 $form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_attachments'] || !$_CLASS['auth']->acl_gets('f_attach', 'u_attach', $forum_id)) ? '' : ' enctype="multipart/form-data"';
 
 // Start assigning vars for main posting page ...
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 	'L_POST_A'				=> $page_title,
 	'L_ICON'				=> ($mode == 'reply' || $mode == 'quote') ? $_CLASS['core_user']->lang['POST_ICON'] : $_CLASS['core_user']->lang['TOPIC_ICON'], 
 	'L_MESSAGE_BODY_EXPLAIN'=> (intval($config['max_post_chars'])) ? sprintf($_CLASS['core_user']->lang['MESSAGE_BODY_EXPLAIN'], intval($config['max_post_chars'])) : '',
@@ -1144,7 +1144,7 @@ $_CLASS['core_template']->assign(array(
 if (($mode == 'post' || ($mode == 'edit' && $post_id == $topic_first_post_id && (!$poll_last_vote || $_CLASS['auth']->acl_get('m_edit', $forum_id))))
 	&& $_CLASS['auth']->acl_get('f_poll', $forum_id))
 {
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_SHOW_POLL_BOX'		=> true,
 		'S_POLL_VOTE_CHANGE'    => ($_CLASS['auth']->acl_get('f_votechg', $forum_id)),
 		'S_POLL_DELETE'			=> ($mode == 'edit' && $poll_options && ((!$poll_last_vote && $poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id))),
@@ -1159,7 +1159,7 @@ if (($mode == 'post' || ($mode == 'edit' && $post_id == $topic_first_post_id && 
 }
 else
 {
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_SHOW_POLL_BOX'		=> false,
 		'S_POLL_DELETE'			=> false,
 	));
@@ -1372,7 +1372,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	{
 		case 'post':
 		case 'reply':
-			$sql_data[POSTS_TABLE]['sql'] = array(
+			$sql_data[FORUMS_POSTS_TABLE]['sql'] = array(
 				'forum_id' 			=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
 				'poster_id' 		=> (int) $_CLASS['core_user']->data['user_id'],
 				'icon_id'			=> $data['icon_id'],
@@ -1399,11 +1399,11 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		case 'edit':
 			if (!$_CLASS['auth']->acl_gets('m_', 'a_') || $data['post_edit_reason'])
 			{
-				$sql_data[POSTS_TABLE]['sql'] = array(
+				$sql_data[FORUMS_POSTS_TABLE]['sql'] = array(
 					'post_edit_time'	=> $current_time
 				);
 
-				$sql_data[POSTS_TABLE]['stat'][] = 'post_edit_count = post_edit_count + 1';
+				$sql_data[FORUMS_POSTS_TABLE]['stat'][] = 'post_edit_count = post_edit_count + 1';
 			}
 
 		case 'edit_last_post':
@@ -1411,19 +1411,19 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 			if (($post_mode == 'edit_last_post' || $post_mode == 'edit_topic') && $data['post_edit_reason'])
 			{
-				$sql_data[POSTS_TABLE]['sql'] = array(
+				$sql_data[FORUMS_POSTS_TABLE]['sql'] = array(
 					'post_edit_time'	=> $current_time
 				);
 
-				$sql_data[POSTS_TABLE]['stat'][] = 'post_edit_count = post_edit_count + 1';
+				$sql_data[FORUMS_POSTS_TABLE]['stat'][] = 'post_edit_count = post_edit_count + 1';
 			}
 
-			if (!isset($sql_data[POSTS_TABLE]['sql']))
+			if (!isset($sql_data[FORUMS_POSTS_TABLE]['sql']))
 			{
-				$sql_data[POSTS_TABLE]['sql'] = array();
+				$sql_data[FORUMS_POSTS_TABLE]['sql'] = array();
 			}
 
-			$sql_data[POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
+			$sql_data[FORUMS_POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
 				'forum_id' 			=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
 				'poster_id' 		=> $data['poster_id'],
 				'icon_id'			=> $data['icon_id'],
@@ -1446,7 +1446,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 			if ($update_message)
 			{
-				$sql_data[POSTS_TABLE]['sql']['post_text'] = $data['message'];
+				$sql_data[FORUMS_POSTS_TABLE]['sql']['post_text'] = $data['message'];
 			}
 
 			break;
@@ -1456,7 +1456,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	switch ($post_mode)
 	{
 		case 'post':
-			$sql_data[TOPICS_TABLE]['sql'] = array(
+			$sql_data[FORUMS_TOPICS_TABLE]['sql'] = array(
 				'topic_poster'		=> (int) $_CLASS['core_user']->data['user_id'],
 				'topic_time'		=> $current_time,
 				'forum_id' 			=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
@@ -1471,7 +1471,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 			if (isset($poll['poll_options']) && !empty($poll['poll_options']))
 			{
-				$sql_data[TOPICS_TABLE]['sql'] = array_merge($sql_data[TOPICS_TABLE]['sql'], array(
+				$sql_data[FORUMS_TOPICS_TABLE]['sql'] = array_merge($sql_data[TOPICS_TABLE]['sql'], array(
 					'poll_title'		=> $poll['poll_title'],
 					'poll_start'		=> ($poll['poll_start']) ? $poll['poll_start'] : $current_time,
 					'poll_max_options'	=> $poll['poll_max_options'],
@@ -1486,27 +1486,27 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			{
 				if (!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve'))
 				{
-					$sql_data[FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + 1';
+					$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + 1';
 				}
-				$sql_data[FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real + 1' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', forum_topics = forum_topics + 1' : '');
+				$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real + 1' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', forum_topics = forum_topics + 1' : '');
 			}
 			
 			break;
 
 		case 'reply':
-			$sql_data[TOPICS_TABLE]['stat'][] = 'topic_replies_real = topic_replies_real + 1, topic_bumped = 0, topic_bumper = 0' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', topic_replies = topic_replies + 1' : '');
+			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = 'topic_replies_real = topic_replies_real + 1, topic_bumped = 0, topic_bumper = 0' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', topic_replies = topic_replies + 1' : '');
 			$sql_data[USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
 			
 			if ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) && $topic_type != POST_GLOBAL)
 			{
-				$sql_data[FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + 1';
+				$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + 1';
 			}
 			break;
 
 		case 'edit_topic':
 		case 'edit_first_post':
 
-			$sql_data[TOPICS_TABLE]['sql'] = array(
+			$sql_data[FORUMS_TOPICS_TABLE]['sql'] = array(
 				'forum_id' 					=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
 				'icon_id'					=> $data['icon_id'],
 				'topic_approved'			=> ($_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) && !$_CLASS['auth']->acl_get('m_approve')) ? 0 : 1,
@@ -1529,16 +1529,16 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Submit new topic
 	if ($post_mode == 'post')
 	{
-		$sql = 'INSERT INTO ' . TOPICS_TABLE . ' ' .
-			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[TOPICS_TABLE]['sql']);
+		$sql = 'INSERT INTO ' . FORUMS_TOPICS_TABLE . ' ' .
+			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[FORUMS_TOPICS_TABLE]['sql']);
 		$_CLASS['core_db']->query($sql);
 
-		$data['topic_id'] = $_CLASS['core_db']->insert_id(TOPICS_TABLE, 'topic_id');
+		$data['topic_id'] = $_CLASS['core_db']->insert_id(FORUMS_TOPICS_TABLE, 'topic_id');
 
-		$sql_data[POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
+		$sql_data[FORUMS_POSTS_TABLE]['sql'] = array_merge($sql_data[FORUMS_POSTS_TABLE]['sql'], array(
 			'topic_id' => $data['topic_id'])
 		);
-		unset($sql_data[TOPICS_TABLE]['sql']);
+		unset($sql_data[FORUMS_TOPICS_TABLE]['sql']);
 	}
 
 	// Submit new post
@@ -1546,19 +1546,19 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	{
 		if ($post_mode == 'reply')
 		{
-			$sql_data[POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
+			$sql_data[FORUMS_POSTS_TABLE]['sql'] = array_merge($sql_data[FORUMS_POSTS_TABLE]['sql'], array(
 				'topic_id' => $data['topic_id'])
 			);
 		}
 
-		$sql = 'INSERT INTO ' . POSTS_TABLE . ' ' .
-			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[POSTS_TABLE]['sql']);
+		$sql = 'INSERT INTO ' . FORUMS_POSTS_TABLE . ' ' .
+			$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[FORUMS_POSTS_TABLE]['sql']);
 		$_CLASS['core_db']->query($sql);
-		$data['post_id'] = $_CLASS['core_db']->insert_id(POSTS_TABLE, 'post_id');
+		$data['post_id'] = $_CLASS['core_db']->insert_id(FORUMS_POSTS_TABLE, 'post_id');
 
 		if ($post_mode == 'post')
 		{
-			$sql_data[TOPICS_TABLE]['sql'] = array(
+			$sql_data[FORUMS_TOPICS_TABLE]['sql'] = array(
 				'topic_first_post_id' => $data['post_id'],
 				'topic_last_post_id' => $data['post_id'],
 				'topic_last_post_time' => $current_time,
@@ -1567,7 +1567,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			);
 		}
 
-		unset($sql_data[POSTS_TABLE]['sql']);
+		unset($sql_data[FORUMS_POSTS_TABLE]['sql']);
 	}
 
 	$make_global = false;
@@ -1576,7 +1576,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	if ($post_mode == 'edit_first_post' || $post_mode == 'edit_topic')
 	{
 		$sql = 'SELECT topic_type, topic_replies_real, topic_approved
-			FROM ' . TOPICS_TABLE . '
+			FROM ' . FORUMS_TOPICS_TABLE . '
 			WHERE topic_id = ' . $data['topic_id'];
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -1588,10 +1588,10 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		{
 			// Decrement topic/post count
 			$make_global = true;
-			$sql_data[FORUMS_TABLE]['stat'] = array();
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'] = array();
 
-			$sql_data[FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts - ' . ($row['topic_replies_real'] + 1);
-			$sql_data[FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real - 1' . (($row['topic_approved']) ? ', forum_topics = forum_topics - 1' : '');
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts - ' . ($row['topic_replies_real'] + 1);
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real - 1' . (($row['topic_approved']) ? ', forum_topics = forum_topics - 1' : '');
 
 			// Update forum_ids for all posts
 			$sql = 'UPDATE ' . POSTS_TABLE . '
@@ -1604,13 +1604,13 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		{
 			// Increment topic/post count
 			$make_global = true;
-			$sql_data[FORUMS_TABLE]['stat'] = array();
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'] = array();
 
-			$sql_data[FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + ' . ($row['topic_replies_real'] + 1);
-			$sql_data[FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real + 1' . (($row['topic_approved']) ? ', forum_topics = forum_topics + 1' : '');
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + ' . ($row['topic_replies_real'] + 1);
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real + 1' . (($row['topic_approved']) ? ', forum_topics = forum_topics + 1' : '');
 
 			// Update forum_ids for all posts
-			$sql = 'UPDATE ' . POSTS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 				SET forum_id = ' . $data['forum_id'] . '
 				WHERE topic_id = ' . $data['topic_id'];
 			$_CLASS['core_db']->query($sql);
@@ -1618,18 +1618,18 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	}
 
 	// Update the topics table
-	if (isset($sql_data[TOPICS_TABLE]['sql']))
+	if (isset($sql_data[FORUMS_TOPICS_TABLE]['sql']))
 	{
-		$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . '
-			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[TOPICS_TABLE]['sql']) . '
+		$_CLASS['core_db']->query('UPDATE ' . FORUMS_TOPICS_TABLE . '
+			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[FORUMS_TOPICS_TABLE]['sql']) . '
 			WHERE topic_id = ' . $data['topic_id']);
 	}
 
 	// Update the posts table
-	if (isset($sql_data[POSTS_TABLE]['sql']))
+	if (isset($sql_data[FORUMS_POSTS_TABLE]['sql']))
 	{
-		$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . '
-			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[POSTS_TABLE]['sql']) . '
+		$_CLASS['core_db']->query('UPDATE ' . FORUMS_POSTS_TABLE . '
+			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[FORUMS_POSTS_TABLE]['sql']) . '
 			WHERE post_id = ' . $data['post_id']);
 	}
 
@@ -1640,7 +1640,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 		if ($poll['poll_start'] && $mode == 'edit')
 		{
-			$sql = 'SELECT * FROM ' . POLL_OPTIONS_TABLE . '
+			$sql = 'SELECT * FROM ' . FORUMS_POLL_OPTIONS_TABLE . '
 				WHERE topic_id = ' . $data['topic_id'] . '
 				ORDER BY poll_option_id';
 			$result = $_CLASS['core_db']->query($sql);
@@ -1656,13 +1656,13 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			{
 				if (!$cur_poll_options[$i])
 				{
-					$sql = 'INSERT INTO ' . POLL_OPTIONS_TABLE . "  (poll_option_id, topic_id, poll_option_text)
+					$sql = 'INSERT INTO ' . FORUMS_POLL_OPTIONS_TABLE . "  (poll_option_id, topic_id, poll_option_text)
 						VALUES ($i, " . $data['topic_id'] . ", '" . $_CLASS['core_db']->sql_escape($poll['poll_options'][$i]) . "')";
 					$_CLASS['core_db']->query($sql);
 				}
 				else if ($poll['poll_options'][$i] != $cur_poll_options[$i])
 				{
-					$sql = "UPDATE " . POLL_OPTIONS_TABLE . "
+					$sql = "UPDATE " . FORUMS_POLL_OPTIONS_TABLE . "
 						SET poll_option_text = '" . $_CLASS['core_db']->sql_escape($poll['poll_options'][$i]) . "'
 						WHERE poll_option_id = " . $cur_poll_options[$i]['poll_option_id'] . "
 							AND topic_id = " . $data['topic_id'];
@@ -1673,7 +1673,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 		if (sizeof($poll['poll_options']) < sizeof($cur_poll_options))
 		{
-			$sql = 'DELETE FROM ' . POLL_OPTIONS_TABLE . '
+			$sql = 'DELETE FROM ' . FORUMS_POLL_OPTIONS_TABLE . '
 				WHERE poll_option_id >= ' . sizeof($poll['poll_options']) . '
 					AND topic_id = ' . $data['topic_id'];
 			$_CLASS['core_db']->query($sql);
@@ -1690,7 +1690,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			if ($attach_row['attach_id'])
 			{
 				// update entry in db if attachment already stored in db and filespace
-				$sql = 'UPDATE ' . ATTACHMENTS_TABLE . "
+				$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . "
 					SET comment = '" . $_CLASS['core_db']->sql_escape($attach_row['comment']) . "'
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
 				$_CLASS['core_db']->query($sql);
@@ -1718,7 +1718,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					'thumbnail'			=> $attach_row['thumbnail']
 				);
 
-				$sql = 'INSERT INTO ' . ATTACHMENTS_TABLE . ' ' .
+				$sql = 'INSERT INTO ' . FORUMS_ATTACHMENTS_TABLE . ' ' .
 					$_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
 				$_CLASS['core_db']->query($sql);
 
@@ -1729,12 +1729,12 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 		if (sizeof($data['attachment_data']))
 		{
-			$sql = 'UPDATE ' . POSTS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 				SET post_attachment = 1
 				WHERE post_id = ' . $data['post_id'];
 			$_CLASS['core_db']->query($sql);
 
-			$sql = 'UPDATE ' . TOPICS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 				SET topic_attachment = 1
 				WHERE topic_id = ' . $data['topic_id'];
 			$_CLASS['core_db']->query($sql);
@@ -1750,19 +1750,19 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	{
 		if ($topic_type != POST_GLOBAL)
 		{
-			$sql_data[FORUMS_TABLE]['stat'][] = implode(', ', update_last_post_information('forum', $data['forum_id']));
+			$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = implode(', ', update_last_post_information('forum', $data['forum_id']));
 		}
 
 		$update = update_last_post_information('topic', $data['topic_id']);
 		if (sizeof($update))
 		{
-			$sql_data[TOPICS_TABLE]['stat'][] = implode(', ', $update);
+			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = implode(', ', $update);
 		}
 	}
 
 	if ($make_global)
 	{
-		$sql_data[FORUMS_TABLE]['stat'][] = implode(', ', update_last_post_information('forum', $data['forum_id']));
+		$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = implode(', ', update_last_post_information('forum', $data['forum_id']));
 	}
 
 	if ($post_mode == 'edit_topic')
@@ -1770,7 +1770,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		$update = update_last_post_information('topic', $data['topic_id']);
 		if (sizeof($update))
 		{
-			$sql_data[TOPICS_TABLE]['stat'][] = implode(', ', $update);
+			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = implode(', ', $update);
 		}
 	}
 
@@ -1792,7 +1792,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Update forum stats
 	$_CLASS['core_db']->transaction();
 
-	$where_sql = array(POSTS_TABLE => 'post_id = ' . $data['post_id'], TOPICS_TABLE => 'topic_id = ' . $data['topic_id'], FORUMS_TABLE => 'forum_id = ' . $data['forum_id'], USERS_TABLE => 'user_id = ' . $_CLASS['core_user']->data['user_id']);
+	$where_sql = array(FORUMS_POSTS_TABLE => 'post_id = ' . $data['post_id'], FORUMS_TOPICS_TABLE => 'topic_id = ' . $data['topic_id'], FORUMS_FORUMS_TABLE => 'forum_id = ' . $data['forum_id'], USERS_TABLE => 'user_id = ' . $_CLASS['core_user']->data['user_id']);
 
 	foreach ($sql_data as $table => $update_ary)
 	{
@@ -1805,7 +1805,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Delete topic shadows (if any exist). We do not need a shadow topic for an global announcement
 	if ($make_global)
 	{
-		$_CLASS['core_db']->query('DELETE FROM ' . TOPICS_TABLE . '
+		$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_TOPICS_TABLE . '
 			WHERE topic_moved_id = ' . $data['topic_id']);
 	}
 
@@ -1828,13 +1828,13 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Topic Notification
 	if (!$data['notify_set'] && $data['notify'])
 	{
-		$sql = 'INSERT INTO ' . TOPICS_WATCH_TABLE . ' (user_id, topic_id)
+		$sql = 'INSERT INTO ' . FORUMS_TOPICS_WATCH_TABLE . ' (user_id, topic_id)
 			VALUES (' . $_CLASS['core_user']->data['user_id'] . ', ' . $data['topic_id'] . ')';
 		$_CLASS['core_db']->query($sql);
 	}
 	else if ($data['notify_set'] && !$data['notify'])
 	{
-		$sql = 'DELETE FROM ' . TOPICS_WATCH_TABLE . '
+		$sql = 'DELETE FROM ' . FORUMS_TOPICS_WATCH_TABLE . '
 			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND topic_id = ' . $data['topic_id'];
 		$_CLASS['core_db']->query($sql);

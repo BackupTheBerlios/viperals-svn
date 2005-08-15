@@ -18,58 +18,30 @@ if (!defined('VIPERAL'))
     die;
 }
 
+$_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
-
-function send_feedback($sender_name, $sender_email, $message, $preview = false)
-{
-	global $_CLASS, $_CORE_CONFIG;
-
-	$_CLASS['core_template']->assign(array(
-		'SENT_FROM'		=> $sender_name,
-		'SENDER_NAME'	=> $sender_name,
-		'SENDER_EMAIL'	=> $sender_email,
-		'SENDER_IP'		=> $_CLASS['core_user']->ip,
-
-		'MESSAGE' 		=> $message,
-	));
-	
-	$body = $_CLASS['core_template']->display('modules/Contact/email/index.html', true);
-
-	if ($preview)
-	{
-		$_CLASS['core_template']->assign('PREVIEW', $body);
-		return;
-	}
-
-	//include_once(
-	//print $body;
-}
-
 
 $error = '';
 
-If (!empty($_POST['preview']) || !empty($_POST['contact']))
+if (!empty($_POST['preview']) || !empty($_POST['contact']))
 {
 	$data['MESSAGE']= get_variable('message', 'POST', '');
 	$data['NAME']	= get_variable('sender_name', 'POST', '');
 	$data['EMAIL']	= get_variable('sender_email', 'POST', '');
-    
 
 	foreach ($data as $field => $value)
 	{
 		if (!$value)
 		{
-				$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
-				unset($field, $value, $lang);
-				
+			$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
+			unset($field, $value, $lang);
         }
         elseif ($field == 'EMAIL' && !check_email($value))
         {
-        
 			$error .= $_CLASS['core_user']->lang['BAD_EMAIL'].'<br />';
 		}
 	} 
-	
+
 	if (!empty($_POST['preview']) && $data['MESSAGE'])
 	{
 		send_feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $preview = true);
@@ -90,15 +62,42 @@ else
 	$message = '';
 }
 
-	
-$_CLASS['core_template']->assign(array( 
+$_CLASS['core_template']->assign_array(array( 
 	'ERROR' 				=> $error,
 	'MESSAGE' 				=> $message,
 	'ACTION' 				=> generate_link($_CORE_MODULE['name']),
 	'SENDER_EMAIL' 			=> $sender_email,
 	'SENDER_NAME' 			=> $sender_name,
 ));
-		
+
 $_CLASS['core_template']->display('modules/Contact/index.html');
 
+function send_feedback($sender_name, $sender_email, $message, $preview = false)
+{
+	global $_CLASS, $_CORE_CONFIG;
+
+	$_CLASS['core_template']->assign_array(array(
+		'SENT_FROM'		=> $sender_name,
+		'SENDER_NAME'	=> $sender_name,
+		'SENDER_EMAIL'	=> $sender_email,
+		'SENDER_IP'		=> $_CLASS['core_user']->ip,
+		'MESSAGE' 		=> $message,
+	));
+
+	$body = trim($_CLASS['core_template']->display('modules/Contact/email/index.html', true));
+
+	if ($preview)
+	{
+		$_CLASS['core_template']->assign('PREVIEW', $body);
+		return;
+	}
+
+	$mailer = new core_mailer;
+	$mailer->to('newuser@localhost', 'Viperal');
+	$mailer->subject('New Feedback');
+
+	$mailer->message = $body;
+
+	trigger_error($mailer->send() ? 'SEND_SUCCESSFULL' : $mailer->error);
+}
 ?>

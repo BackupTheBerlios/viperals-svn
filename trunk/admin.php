@@ -91,13 +91,13 @@ $_CORE_MODULE['title'] = $_CLASS['core_user']->lang['ADMIN'].' &gt; '.$_CORE_MOD
 $_CORE_MODULE['sides'] = BLOCK_ALL;
 	
 $_CLASS['core_blocks']->add_block(array(
-		'title'		=> 'Administration',
-		'position'	=> BLOCK_LEFT,
-		'file'		=> 'block-Admin.php',
+		'block_title'		=> 'Administration',
+		'block_position'	=> BLOCK_LEFT,
+		'block_file'		=> 'block-Admin.php',
 	));
 
-load_class($site_file_root.'includes/core_editor.php', 'core_editor');
-$_CLASS['core_editor']->setup();
+//load_class($site_file_root.'includes/core_editor.php', 'core_editor');
+//$_CLASS['core_editor']->setup();
 require($file_path);
     
 ?>

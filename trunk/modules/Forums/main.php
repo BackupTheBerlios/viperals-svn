@@ -81,7 +81,7 @@ $l_total_post_s = ($config['num_posts'] == 0) ? 'TOTAL_POSTS_ZERO' : 'TOTAL_POST
 $l_total_topic_s = ($config['num_topics'] == 0) ? 'TOTAL_TOPICS_ZERO' : 'TOTAL_TOPICS_OTHER';
 
 // Assign index specific vars
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_post_s), $config['num_posts']),
 	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_topic_s), $config['num_topics']),
 	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_user_s), $config['num_users']),

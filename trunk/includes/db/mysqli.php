@@ -1,17 +1,23 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 
 class db_mysqli
 {
@@ -497,24 +503,24 @@ class db_mysqli
 		switch ($option)
 		{
 			case 'start':
-				$this->table_name = $name;
-				$this->fields = $this->indexs = array();
+				$this->_table_name = $name;
+				$this->_fields = $this->_indexs = array();
 			break;
 
 			case 'commit':
 			case 'return':
-				if (!$this->table_name)
+				if (!$this->_table_name)
 				{
 					return;
 				}
 
-				$fields = implode(", \n", $this->fields);
-				if ($indexs = implode(", \n", $this->indexs))
+				$fields = implode(", \n", $this->_fields);
+				if ($indexs = implode(", \n", $this->_indexs))
 				{
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')
@@ -525,64 +531,68 @@ class db_mysqli
 				$this->sql_query($table);
 
 			case 'cancel':
-				$this->table_name = false;
-				$this->fields = $this->indexs = array();
+				$this->_table_name = false;
+				$this->_fields = $this->_indexs = array();
 			break;
 		}
 	}
 
-	function add_table_field_int($name, $number_min, $number_max = false, $default = 0, $auto_increment = false)
+	function add_table_field_int($name, $setting_sent)
 	{
-		$length = max(strlen($number_min), strlen($number_max));
+		$setting = array('default' => null, 'min' => 0, 'max' => 0, 'auto_increment' => false, 'null' => false);
+		$setting = array_merge($setting, $setting_sent);
 
-		if ($number_min >= -0 && $number_max <= 255)
+		$length = max(strlen($setting['min']), strlen($setting['max']));
+
+		if ($setting['min'] >= 0 && $setting['max'] <= 255)
 		{
 			// TINYINT UNSIGNED ( 0 to 255 )
-			$this->fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
 		}
-		elseif ($number_min >= -128 && $number_max <= 128)
+		elseif ($setting['min'] >= -128 && $setting['max'] <= 128)
 		{
 			// TINYINT ( -128 to 127 )
-			$this->fields[$name] =  "`$name` TINYINT($length) DEFAULT";
+			$this->_fields[$name] =  "`$name` TINYINT($length) DEFAULT";
 		}
-		elseif ($number_min >= 0 && $number_max <= 65535)
+		elseif ($setting['min'] >= 0 && $setting['max'] <= 65535)
 		{
 			// SMALLINT UNSIGNED ( 0 to 65,535 )
-			$this->fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
 		}
-		elseif ($number_min >= -32768 && $number_max <= 32767)
+		elseif ($setting['min'] >= -32768 && $setting['max'] <= 32767)
 		{
 			// SMALLINT ( -32,768 to 32,767 )
-			$this->fields[$name] =  "`$name` SMALLINT($length)";
+			$this->_fields[$name] =  "`$name` SMALLINT($length)";
 		}
-		elseif ($number_min >= 0 && $number_max <= 16777215)
+		elseif ($setting['min'] >= 0 && $setting['max'] <= 16777215)
 		{
 			// MEDIUMINT UNSIGNED ( 0 to 16,777,215 )
-			$this->fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
 		}
-		elseif ($number_min >= -8388608 && $number_max <= 8388607)
+		elseif ($setting['min'] >= -8388608 && $setting['max'] <= 8388607)
 		{
 			// MEDIUMINT ( -8,388,608 to 8,388,607 )
-			$this->fields[$name] =  "`$name` MEDIUMINT($length)";
+			$this->_fields[$name] =  "`$name` MEDIUMINT($length)";
 		}
-		elseif ($number_min >= -2147483647 && $number_max <= 2147483647)
+		elseif ($setting['min'] >= -2147483647 && $setting['max'] <= 2147483647)
 		{
 			// INT ( -2,147,483,647 to 2,147,483,647 )
-			$this->fields[$name] =  "`$name` INT($length)";
+			$this->_fields[$name] =  "`$name` INT($length)";
 		}
-		elseif ($number_min >= 0 && $number_max <= 4294967295) // we'll do this last
+		elseif ($setting['min'] >= 0 && $setting['max'] <= 4294967295) // we'll do this last
 		{
 			// INT UNSIGNED ( 0 to 4,294,967,295 )
-			$this->fields[$name] =  "`$name` INT($length) UNSIGNED";
+			$this->_fields[$name] =  "`$name` INT($length) UNSIGNED";
 		}
 
-		if ($auto_increment)
+		if ($setting['auto_increment'])
 		{
-			$this->fields[$name] .= ' auto_increment';
+			$this->_fields[$name] .= ' auto_increment';
 		}
 		else
 		{
-			$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= ($setting['null']) ? " NULL" : " NOT NULL";
+			$this->_fields[$name] .= is_null($setting['default']) ? '' : " DEFAULT '".(int) $setting['default']."'";
 		}
 	}
 
@@ -591,56 +601,57 @@ class db_mysqli
 		if ($characters <= 255)
 		{
 			// TINYTEXT 1 to 255 Characters
-			$this->fields[$name] =  "`$name` TINYTEXT";
+			$this->_fields[$name] =  "`$name` TINYTEXT";
 		}
 		elseif ($characters <= 65535)
 		{
 			// TEXT 1 to 65535 Characters
-			$this->fields[$name] =  "`$name` TEXT";
+			$this->_fields[$name] =  "`$name` TEXT";
 		}
 		elseif ($characters <= 16777215)
 		{
 			// MEDIUMTEXT 1 to 16,777,215 Characters
-			$this->fields[$name] =  "`$name` MEDIUMTEXT";
+			$this->_fields[$name] =  "`$name` MEDIUMTEXT";
 		}
 		elseif ($characters <= 4294967295)
 		{
 			// LONGTEXT 1 to 4,294,967,295 Characters
-			$this->fields[$name] =  "`$name` LONGTEXT";
+			$this->_fields[$name] =  "`$name` LONGTEXT";
 		}
 
-		$this->fields[$name] .= ($null) ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 	}
 
-	function add_table_field_char($name, $characters, $default = '', $padded = false)
+	function add_table_field_char($name, $characters, $null = false, $default = null, $padded = false)
 	{
-		$this->fields[$name] =  ($padded) ? "`$name` CHAR($characters)" : "`$name` VARCHAR($characters)";
-		$this->fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
+		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
+		$this->_fields[$name] .= $null ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= is_null($default) ? '' : "DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
-
-		//$field = (is_array($field)) ? $field : array($field);
-
-		if (empty($this->fields[$field]))
+		
+		/*if (empty($this->_fields[$field]))
 		{
 			return;
-		}
+		}*/
+		$field = is_array($field) ? implode(',', $field) : $field;
 
 		switch ($type)
 		{
 			case 'index':
 			case 'unique':
-				$this->indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'UNIQUE ' : '') . "KEY `$index_name` (`$field`)";
 			break;
 
 			case 'primary':
-				$this->indexs['primary'] = "PRIMARY KEY (`$field`)";
+				$this->_indexs['primary'] = "PRIMARY KEY (`$field`)";
 			break;
 		}
 	}
+
 }
 
 ?>

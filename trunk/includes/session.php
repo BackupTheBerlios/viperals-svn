@@ -1,17 +1,23 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 
 class sessions
 {
@@ -28,27 +34,28 @@ class sessions
 
 		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 
-		$session_data['session_id'] = get_variable('sid', 'GET');
+		$session_id = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE');
+		$session_id_url = get_variable('sid', 'GET');
 
-		if ($cookie_sid = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE'))
+		if ($session_id_url)
 		{
 			// session id in url > cookie
-			if (!$session_data['session_id'] || $cookie_sid === $session_data['session_id'])
+			if (!$session_id || $session_id_url !== $session_id)
 			{
-				$session_data['session_id'] = $cookie_sid;
-				$this->sid_link = defined('NEED_SID') ? 'sid='.$session_data['session_id'] : false;
+				$session_id = $session_id_url;
+				$this->sid_link = 'sid='.$session_id;
 			}
 		}
 		else
 		{
-			$this->sid_link = 'sid='.$session_data['session_id'];
+			$this->sid_link = defined('NEED_SID') ? 'sid='.$session_id : false;
 		}
 
-		if ($session_data['session_id'])
+		if ($session_id)
 		{
 			$sql = 'SELECT u.*, s.*
 				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
-				WHERE s.session_id = '" . $_CLASS['core_db']->escape($session_data['session_id']) . "'
+				WHERE s.session_id = '" . $_CLASS['core_db']->escape($session_id) . "'
 					AND u.user_id = s.session_user_id";
 					
 			$result = $_CLASS['core_db']->query($sql);
@@ -69,7 +76,7 @@ class sessions
 				{
 					$check_ip = implode('.', explode('.', $this->data['session_ip'], $_CORE_CONFIG['server']['ip_check']));
 					
-					if ($check_ip != mb_substr($this->ip, 0, mb_strlen($check_ip)))
+					if ($check_ip != substr($this->ip, 0, strlen($check_ip)))
 					{
 						$valid  = false;
 					}
@@ -102,10 +109,23 @@ class sessions
 			$this->data = array();
 		}
 
+		$user_id = ANONYMOUS;
+
+		$ali = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_ali', 'COOKIE', false, 'int');
+		$alc = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_alc', 'COOKIE');
+
+		if ($ali && $ali)
+		{
+			if ($id = $this->autologin_retrieve($ali, $alc))
+			{
+				$user_id = $id;
+			}
+		}
+
 		check_maintance_status();
 		$this->load = check_load_status();
 
-		return $this->login();
+		return $this->login($user_id);
 	}
 
 	function can_create()
@@ -134,28 +154,32 @@ class sessions
 	}
 
 	// Create a new session
-	function session_create()
+	function session_create($auto_log = false)
 	{
 		global $_CLASS, $_CORE_CONFIG, $config;
-		$auto_log = false;
+
+		if (isset($this->data['session_id']) && $this->data['session_id'])
+		{
+			$this->session_destroy(false, false);
+		}
 
 		$this->data['session_last_visit'] = ($this->data['user_last_visit']) ? $this->data['user_last_visit'] : $this->time;
 
-		$session_id = (function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
+		$session_id = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
 
 		$session_data = array(
-			'session_id'			=> (string) $session_id,
-			'session_user_id'		=> (int) $this->data['user_id'],
-			'session_start'			=> (int) $this->time,
-			'session_time'			=> (int) $this->time,
-			'session_browser'		=> (string) $this->browser,
-			'session_page'			=> (string) $this->page,
-			'session_url'			=> (string) $this->url,
-			'session_ip'			=> (string) $this->ip,
-			'session_user_type'		=> (string) $this->data['user_type'],
-			'session_admin'			=> (int) $this->data['session_admin'],
-			'session_auth'			=> (int) serialize($_CLASS['core_auth']->auth_dump()),
-			'session_viewonline'	=> (int) $this->data['session_viewonline'],
+			'session_id'		=> (string) $session_id,
+			'session_user_id'	=> (int) $this->data['user_id'],
+			'session_start'		=> (int) $this->time,
+			'session_time'		=> (int) $this->time,
+			'session_browser'	=> (string) $this->browser,
+			'session_page'		=> (string) $this->page,
+			'session_url'		=> (string) $this->url,
+			'session_ip'		=> (string) $this->ip,
+			'session_user_type'	=> (int) $this->data['user_type'],
+			'session_admin'		=> (int) $this->data['session_admin'],
+			'session_auth'		=> (int) serialize($_CLASS['core_auth']->auth_dump()),
+			'session_hidden'	=> (int) $this->data['session_hidden'],
 		);
 
 		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
@@ -174,17 +198,10 @@ class sessions
 		{
 			if ($auto_log && $this->is_user)
 			{
-				$cookie_data['login_code'] = $session_data['user_password'];
-				$cookie_data['user_id'] = $this->data['user_id'];
-				
-				$this->set_cookie('data', serialize($cookie_data), $this->time + 31536000);
-			}
-			elseif ($this->new_session)
-			{
-				$this->set_cookie('data', '', 0);
+				$this->autologin_generate();
 			}
 
-			$this->set_cookie('sid', $this->data['session_id'], 0);
+			$this->set_cookie('sid', $session_id, 0);
 		}
 
 		$this->sid_link = ($this->is_bot) ? false : 'sid='.$this->data['session_id'];
@@ -194,7 +211,43 @@ class sessions
 		return true;
 	}
 
-	function session_destroy($session_id = false)
+	function autologin_generate()
+	{
+		global $_CLASS;
+// make this useable outside sessions
+		$code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
+
+		$data_array = array(
+			'user_id'				=> (int) $this->data['user_id'],
+			'auto_login_browser'	=> (string) $this->browser,
+			'auto_login_code'		=> $code,
+			'auto_login_time'		=> (int) $this->time,
+		);
+		
+		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_AUTOLOGIN_TABLE . ' '.	$_CLASS['core_db']->sql_build_array('INSERT', $data_array));
+	
+		$this->set_cookie('ali', $this->data['user_id'], $this->time + 31536000);
+		$this->set_cookie('alc', $code, $this->time + 31536000);
+	}
+
+	function autologin_retrieve($user_id, $code)
+	{
+		global $_CLASS;
+		
+		$sql = 'SELECT *
+			FROM ' . SESSIONS_AUTOLOGIN_TABLE . " 
+			WHERE user_id = $user_id
+			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
+				
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+
+		// This is about all you can validate other than the code, and user_id
+		return ($row && $row['auto_login_browser'] == $this->browser) ? $user_id : false;
+	}
+
+	function session_destroy($session_id = false, $remove_cookie = true)
 	{
 		global $_CLASS;
 
@@ -202,9 +255,11 @@ class sessions
 		{
 			$session_id = $this->data['session_id'];
 			
-			$this->set_cookie('data', '', $this->time - 31536000);
-			$this->set_cookie('sid', '', $this->time - 31536000);
-			
+			if ($remove_cookie)
+			{
+				$this->set_cookie('sid', '', $this->time - 31536000);
+			}
+
 			if ($this->data['session_time'])
 			{
 				$sql = 'UPDATE ' . USERS_TABLE . '
@@ -219,9 +274,11 @@ class sessions
 
 		$_CLASS['core_db']->query($sql);
 	}
-	
+
 	function gc($time)
 	{
+// Add auto login cleaning
+// Move to cron
 		global $_CORE_CONFIG, $_CLASS;
 
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '

@@ -21,8 +21,6 @@ if (VIPERAL !== 'Admin')
 require($site_file_root.'admin/functions/block_functions.php');
 $_CLASS['core_user']->add_lang('admin/blocks.php');
 
-$mode = get_variable('mode', 'GET', false);
-
 function check_position($position, $redirect = true)
 {
 	$appoved_blocks = array(BLOCK_RIGHT, BLOCK_TOP, BLOCK_BOTTOM, BLOCK_LEFT);
@@ -41,68 +39,119 @@ function check_position($position, $redirect = true)
 	return true;
 }
 
-function get_id($rediret = true)
+if (isset($_REQUEST['mode']))
 {
-	$id = get_variable('id', 'GET', false, 'integer');
-
-	if (!$id && $rediret)
+	if ($id = get_variable('id', 'REQUEST', false, 'integer'))
 	{
-		url_redirect(generate_link('blocks', array('admin' => true)));
-		die;
+		switch ($_REQUEST['mode'])
+		{
+			case 'change':
+				block_change($id);
+			break;
+	
+			case 'order':
+				block_order($id, get_variable('option', 'GET', false));
+			break;
+	
+			case 'delete':
+				block_delete($id);
+			break;
+	
+			case 'position':
+				if ($position = get_variable('option', 'GET', false, 'integer'))
+				{
+					blocks_change_position($position, $id);
+				}
+			break;
+	
+			case 'auth':
+				block_auth($id);
+			break;
+		}
+	}
+	
+	switch ($_REQUEST['mode'])
+	{
+		case 'add':
+		case 'edit':
+			block_add($id);
+			script_close(false);
+		break;
+		   
+		case 'save':
+			block_save($id);
+		break;
+	}
+}
+
+blocks_block('main');
+
+$result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_file, block_auth
+	FROM '.BLOCKS_TABLE.'
+	WHERE block_position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY block_position, block_order ASC');
+
+$block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
+$in_position = false;
+$blocks = array();
+
+while($row = $_CLASS['core_db']->fetch_row_assoc($result))
+{
+	if ($in_position != $row['block_position'])
+	{
+		$weigth[$row['block_position']] = $row['block_order'];
+		$in_position == $row['block_position'];
+	}
+	$blocks[] = $row;
+}
+$_CLASS['core_db']->free_result($result);
+
+foreach ($blocks as $block)
+{
+	$error = false;
+	switch ($block['block_type'])
+	{
+		case BLOCKTYPE_FILE:
+			if (!$block['block_file'] || !file_exists($site_file_root.'blocks/'.$block['block_file']))
+			{
+				$error = 'File_MISSING';
+			}
+		break;
 	}
 
-	return (int) $id;
+	$_CLASS['core_template']->assign_vars_array($block_position[$block['block_position']].'_admin_blocks', array(
+			'ACTIVE'		=> ($block['block_status']),
+			'ACTIVE_LINK'	=> generate_link('blocks&amp;mode=change&amp;id='.$block['block_id'], array('admin' => true)),
+			'CHANGE'		=> ($block['block_status']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+			'ERROR'			=> ($error) ? $_CLASS['core_user']->get_lang($error) : false,
+
+			'EDIT_LINK'		=> generate_link('blocks&amp;mode=edit&amp;id='.$block['block_id'], array('admin' => true)),
+			'AUTH_LINK'		=> generate_link('blocks&amp;mode=auth&amp;id='.$block['block_id'], array('admin' => true)),
+
+			'DELETE_LINK' 	=> ($block['block_type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['block_id'], array('admin' => true)) : '',
+			'TITLE'			=> $block['block_title'],
+			'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['block_type']),
+
+			'ORDER_DOWN' 	=> ($block['block_order'] < $weigth[$block['block_position']]),
+			'ORDER_UP'		=> ($block['block_order'] > 1),
+
+			'LINK_ORDER_UP' 	=> generate_link('blocks&amp;mode=order&amp;option=up&amp;id='.$block['block_id'], array('admin' => true)),
+			'LINK_ORDER_TOP' 	=> generate_link('blocks&amp;mode=order&amp;option=top&amp;id='.$block['block_id'], array('admin' => true)),
+			'LINK_ORDER_DOWN'	=> generate_link('blocks&amp;mode=order&amp;option=down&amp;id='.$block['block_id'], array('admin' => true)),
+			'LINK_ORDER_BOTTOM'	=> generate_link('blocks&amp;mode=order&amp;option=bottom&amp;id='.$block['block_id'], array('admin' => true)),
+	));
 }
 
-switch ($mode)
-{
-	case 'change':
-		block_change(get_id());
-		url_redirect(generate_link('blocks', array('admin' => true, 'full' => true)));
-    break;
-    
-    case 'weight':
-		block_weight(get_id(), get_variable('option', 'GET', false));
-		url_redirect(generate_link('blocks', array('admin' => true, 'full' => true)));
-    break;
-    	
-    case 'delete':
-		block_delete(get_id());
-		url_redirect(generate_link('blocks', array('admin' => true, 'full' => true)));
-    break;
-    
-    case 'position':
-		$position = get_variable('option', 'GET', false, 'integer');
+$_CLASS['core_template']->assign_array(array(
+	'L_BLOCK_REGULAR'	=> 'Add New Regular Block',
+	'L_BLOCK_HTML'		=> 'Add New HTML Block',
+	'L_BLOCK_FEED'		=> 'Add New Feed Block',
+	'N_BLOCK_FILE'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_FILE, array('admin' => true)),
+	'N_BLOCK_FEED'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_FEED, array('admin' => true)),
+	'N_BLOCK_HTML'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_HTML, array('admin' => true))
+));
 
-		// Would cause problems is $data['position'] = (int) 0
-		if (!$position)
-		{
-			url_redirect(generate_link('blocks', array('admin' => true, 'full' => true)));
-		}
-
-		blocks_change_position($position, get_id());
-
-		url_redirect(generate_link('blocks', array('admin' => true, 'full' => true)));
-    break;
-
-    case 'add':
-    case 'edit':
-		block_add();
-    break;
-       
-    case 'save':
-		block_save();
-    break;
-
-    case 'auth':
-		block_auth(get_id());
-    break;
-
-    default:
-		blocks_admin();
-    break;
-}
-
+$_CLASS['core_template']->display('admin/blocks/index.html');
+	
 script_close(false);
 
 function blocks_change_position($position, $id)
@@ -111,123 +160,50 @@ function blocks_change_position($position, $id)
 
 	check_position($position);
 
-	$result = $_CLASS['core_db']->query('SELECT position, weight FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+	$result = $_CLASS['core_db']->query('SELECT block_position, block_order FROM '.BLOCKS_TABLE.' WHERE block_id = '.$id);
 	$block = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
-	check_position($block['position']);
-
-	if ($block['position'] == $position)
+	if (!$block || $block['block_position'] == $position)
 	{
 		return;
 	}
 
-	$result = $_CLASS['core_db']->query('SELECT weight FROM '.BLOCKS_TABLE." WHERE position = $position ORDER BY weight DESC LIMIT 1");
-	$max_weight = $_CLASS['core_db']->fetch_row_assoc($result);
+	check_position($block['block_position']);
+
+	$result = $_CLASS['core_db']->query('SELECT max(block_order) as max_order FROM '.BLOCKS_TABLE.' WHERE block_position = '.$position);
+	list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 	$_CLASS['core_db']->free_result($result);
 
-	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position = '.$block['position'].' AND weight > '.$block['weight']);
-	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE." set position = $position , weight = ".((int) $max_weight['weight'] + 1).' where id ='.$id);
+	$new_order = (int) $max_order + 1;
+
+	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE." SET block_position = $position , block_order = $new_order where block_id = $id");
+	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET block_order = block_order - 1 WHERE block_position = '.$block['block_position'].' AND block_order > '.$block['block_order']);
 
 	$_CLASS['core_cache']->destroy('blocks');
 }
 
-function blocks_admin()
-{
-    global $_CLASS, $site_file_root;
-
-	blocks_block('main');
-
-    $result = $_CLASS['core_db']->query('SELECT id, title, type,  position, weight, active, file, auth
-		FROM '.BLOCKS_TABLE.'
-		WHERE position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY position, weight ASC');
-
-    $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
-	$in_position = false;
-	$blocks = array();
-
-	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
-    {
-		if ($in_position != $row['position'])
-		{
-			$weigth[$row['position']] = $row['weight'];
-			$in_position == $row['position'];
-		}
-		$blocks[] = $row;
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	foreach ($blocks as $block)
-	{
-		$error = false;
-		switch ($block['type'])
-		{
-			case BLOCKTYPE_FILE:
-				if (!$block['file'] || !file_exists($site_file_root.'blocks/'.$block['file']))
-				{
-					$error = 'File_MISSING';
-				}
-			break;
-		}
-
-		$_CLASS['core_template']->assign_vars_array($block_position[$block['position']].'_admin_blocks', array(
-				'ACTIVE'		=> ($block['active']),
-				'ACTIVE_LINK'	=> generate_link('blocks&amp;mode=change&amp;id='.$block['id'], array('admin' => true)),
-				'CHANGE'		=> ($block['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
-				'ERROR'			=> ($error) ? $_CLASS['core_user']->get_lang($error) : false,
-
-				'EDIT_LINK'		=> generate_link('blocks&amp;mode=edit&amp;id='.$block['id'], array('admin' => true)),
-				'AUTH_LINK'		=> generate_link('blocks&amp;mode=auth&amp;id='.$block['id'], array('admin' => true)),
-
-				'DELETE_LINK' 	=> ($block['type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['id'], array('admin' => true)) : '',
-				'TITLE'			=> $block['title'],
-				'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['type']),
-
-				'WEIGHT_DOWN' 	=> ($block['weight'] < $weigth[$block['position']]),
-				'WEIGHT_UP'		=> ($block['weight'] > 1),
-
-				'WEIGHT_MOVE_UP' 	=> generate_link('blocks&amp;mode=weight&amp;option=up&amp;id='.$block['id'], array('admin' => true)),
-				'WEIGHT_MOVE_TOP' 	=> generate_link('blocks&amp;mode=weight&amp;option=top&amp;id='.$block['id'], array('admin' => true)),
-				'WEIGHT_MOVE_DOWN'	=> generate_link('blocks&amp;mode=weight&amp;option=down&amp;id='.$block['id'], array('admin' => true)),
-				'WEIGHT_MOVE_BOTTOM'=> generate_link('blocks&amp;mode=weight&amp;option=bottom&amp;id='.$block['id'], array('admin' => true)),
-		));
-	}
-
-    $_CLASS['core_template']->assign(array(
-		'L_BLOCK_REGULAR'	=> 'Add New regular Block',
-		'L_BLOCK_HTML'		=> 'Add New HTML Block',
-		'L_BLOCK_FEED'		=> 'Add New Feed Block',
-		'N_BLOCK_FILE'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_FILE, array('admin' => true)),
-		'N_BLOCK_FEED'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_FEED, array('admin' => true)),
-		'N_BLOCK_HTML'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_HTML, array('admin' => true))
-	));
-
-	$_CLASS['core_template']->display('admin/blocks/index.html');
-}
-
-function block_add($block = false, $error = false)
+function block_add($id = false, $block = false, $error = false)
 {
     global $_CLASS;
 
-    $id = false;
-
-	if (isset($_REQUEST['id']) && $id = get_id())
+	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_id = '.$id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
 		if (!$block)
 		{
-			url_redirect(generate_link('blocks', array('admin' => true)));
+			return;
 		}
 
-		check_position($block['position']);
+		check_position($block['block_position']);
 
 		if (isset($_POST['submit']))
 		{
 			// need to re-validate data with the db type
-			block_get_data($block_post, $error, $block['type']);
+			block_get_data($block_post, $error, $block['block_type']);
 			$block = array_merge($block, $block_post);
 		}
 
@@ -247,38 +223,38 @@ function block_add($block = false, $error = false)
 	$b_show_content = $b_file = $b_rss_show = $b_rss_rate = $b_rss_url = false;
 	$b_header = $_CLASS['core_user']->lang['ADD_NEW'];
 
-	switch ($block['type'])
+	switch ($block['block_type'])
 	{
 		case BLOCKTYPE_HTML:
 			$b_show_content = true;
 		break;
 
 		case BLOCKTYPE_FILE:
-			$b_file = block_select($block['file']);
+			$b_file = block_select($block['block_file']);
 		break;
 
 		case BLOCKTYPE_FEED:
 			$b_rss_show = true;
-			$b_rss_rate = ($block['rss_rate']) ? $block['rss_rate'] : 3600; // 1hr defualt
-			$b_rss_url = ($block['rss_url']) ? $block['rss_url'] : '';
+			$b_rss_rate = ($block['block_rss_rate']) ? $block['block_rss_rate'] : 3600; // 1hr defualt
+			$b_rss_url = ($block['block_rss_url']) ? $block['block_rss_url'] : '';
 		break;
 	}
 
-	$_CLASS['core_template']->assign(array(
-		'B_ACTION'		=> generate_link('blocks&amp;mode=save&amp;type='.$block['type'].(($id) ? '&amp;id='.$id : ''), array('admin' => true)),
+	$_CLASS['core_template']->assign_array(array(
+		'B_ACTION'		=> generate_link('blocks&amp;mode=save&amp;type='.$block['block_type'].(($id) ? '&amp;id='.$id : ''), array('admin' => true)),
 		'B_HEADER'		=> $b_header,
-		'B_TITLE'		=> $block['title'],
+		'B_TITLE'		=> $block['block_title'],
 		'B_FILE' 		=> $b_file,
-		'B_POSITION'	=> block_position_select($block['position']),
-		'B_ACTIVE'		=> $block['active'],
+		'B_POSITION'	=> block_position_select($block['block_position']),
+		'B_ACTIVE'		=> $block['block_status'],
 		'B_SHOW_CONTENT'=> $b_show_content,
-		'B_CONTENT'		=> $block['content'],
+		'B_CONTENT'		=> $block['block_content'],
 		'B_RSS_SHOW'	=> $b_rss_show,
 		'B_RSS_REFRESH'	=> $b_rss_rate,
 		'B_RSS_URL'		=> $b_rss_url,
 		'B_ERROR'		=> $error,
-		'B_EXPIRES'		=> is_numeric($block['expires']) ? $_CLASS['core_user']->format_date($block['expires'], 'M d, Y h:i a') : $block['expires'],
-		'B_STARTS'		=> is_numeric($block['start']) ? $_CLASS['core_user']->format_date($block['start'], 'M d, Y h:i a') : $block['start'],
+		'B_EXPIRES'		=> is_numeric($block['block_expires']) ? $_CLASS['core_user']->format_date($block['block_expires'], 'M d, Y h:i a') : $block['block_expires'],
+		'B_STARTS'		=> is_numeric($block['block_starts']) ? $_CLASS['core_user']->format_date($block['block_starts'], 'M d, Y h:i a') : $block['block_starts'],
 		'B_CURRENT_TIME'=> $_CLASS['core_user']->format_date($_CLASS['core_user']->time),
 	));
 
@@ -335,33 +311,33 @@ function block_get_data(&$data, &$error, $type = false)
 	$error = '';
 	$data = array();
 
-	$data['title'] = get_variable('b_title', 'POST', '');
+	$data['block_title'] = get_variable('b_title', 'POST', '');
 
 	// leave here for mods, maybe !
 	foreach ($data as $field => $value)
 	{
 		if (!$value)
 		{
-			$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
+			$error .= $_CLASS['core_user']->get_lang('ERROR_'.$field).'<br />';
 		}
 	}
 
-	$data['position'] = get_variable('b_position', 'POST', false, 'integer');
+	$data['block_position'] = get_variable('b_position', 'POST', false, 'integer');
 
-	if (!$data['position'] || !check_position($data['position'], false))
+	if (!$data['block_position'] || !check_position($data['block_position'], false))
 	{
-		$data['position'] = BLOCK_RIGHT;
+		$data['block_position'] = BLOCK_RIGHT;
 	}
 
-	$data['active'] = (int) get_variable('b_active', 'POST', 0);
-	$data['expires'] = get_variable('b_expires', 'POST', '');
-	$data['start'] = get_variable('b_time', 'POST', '');
+	$data['block_status'] = (int) get_variable('b_active', 'POST', 0);
+	$data['block_expires'] = get_variable('b_expires', 'POST', '');
+	$data['block_starts'] = get_variable('b_time', 'POST', '');
 
 	$start = $expires = '';
 
-	if ($data['start'])
+	if ($data['block_starts'])
 	{
-		$start = strtotime($data['start']);
+		$start = strtotime($data['block_starts']);
 
 		if (!$start || $start == -1)
 		{
@@ -369,9 +345,9 @@ function block_get_data(&$data, &$error, $type = false)
 		}
 	}
 
-	if ($data['expires'])
+	if ($data['block_expires'])
 	{
-		$expires = strtotime($data['expires']);
+		$expires = strtotime($data['block_expires']);
 
 		if (!$expires || $expires == -1)
 		{
@@ -380,22 +356,22 @@ function block_get_data(&$data, &$error, $type = false)
 	}
 
 	$appoved_types = array(BLOCKTYPE_FILE, BLOCKTYPE_FEED, BLOCKTYPE_HTML, BLOCKTYPE_SYSTEM);
-	$data['type'] = ($type) ? (int) $type : (int) get_variable('b_type', 'REQUEST', BLOCKTYPE_FILE);
+	$data['block_type'] = ($type) ? (int) $type : (int) get_variable('b_type', 'REQUEST', BLOCKTYPE_FILE);
 
-	if (!in_array($data['type'], $appoved_types, true))
+	if (!in_array($data['block_type'], $appoved_types, true))
 	{
-		$data['type'] = BLOCKTYPE_FILE;
+		$data['block_type'] = BLOCKTYPE_FILE;
 	}
 
-	$data['content'] = '';
+	$data['block_content'] = '';
 
-	switch ($data['type'])
+	switch ($data['block_type'])
 	{
 		case BLOCKTYPE_HTML:
 			//$data['content'] = modify_lines(trim(get_variable('b_content', 'POST', '')), '<br/>');
-			$data['content'] = modify_lines(trim(get_variable('b_content', 'POST', '')), '');
+			$data['block_content'] = modify_lines(trim(get_variable('b_content', 'POST', '')), '');
 
-			if (strlen($data['content']) < 6)
+			if (mb_strlen($data['block_content']) < 6)
 			{
 				$error .= $_CLASS['core_user']->lang['ERROR_content'].'<br />';
 			}
@@ -403,20 +379,20 @@ function block_get_data(&$data, &$error, $type = false)
 		
 		case BLOCKTYPE_FILE:
 			// Add a file check here
-			$data['file'] = trim(get_variable('b_file', 'POST', ''));
+			$data['block_file'] = trim(get_variable('b_file', 'POST', ''));
 		break;
 		
 		case BLOCKTYPE_FEED:
 			// Add an url rss check here
-			$data['rss_url'] = get_variable('b_url', 'POST', '');
-			$data['rss_rate'] = get_variable('b_refresh', 'POST', '');
+			$data['block_rss_url'] = get_variable('b_url', 'POST', '');
+			$data['block_rss_rate'] = get_variable('b_refresh', 'POST', '');
 		break;
 	}
 
 	if (!$error)
 	{
-		$data['start'] = ($start) ? $_CLASS['core_user']->time_convert($start, 'gmt') : 0;
-		$data['expires'] = ($expires) ? $_CLASS['core_user']->time_convert($expires, 'gmt') : 0;
+		$data['block_starts'] = ($start) ? $_CLASS['core_user']->time_convert($start, 'gmt') : 0;
+		$data['block_expires'] = ($expires) ? $_CLASS['core_user']->time_convert($expires, 'gmt') : 0;
 	}
 }
 
@@ -451,38 +427,38 @@ function block_position_select($default = false)
 	return $block_position;
 }
 
-function block_save()
+function block_save($id = false)
 {
 	global $_CLASS;
 	
-	if (isset($_REQUEST['id']) && $id = get_id())
+	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT weight, position, type FROM '.BLOCKS_TABLE.' WHERE id = '.$id);
+		$result = $_CLASS['core_db']->query('SELECT block_order, block_position, block_type FROM '.BLOCKS_TABLE.' WHERE block_id = '.$id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
 		if (!$block)
 		{	
-			url_redirect(generate_link('blocks', array('admin' => true)));
+			return;
 		}
 
-		check_position($block['position']);
+		check_position($block['block_position']);
 		// need to validate data with the db type
-		block_get_data($data, $error, $block['type']);
-		
+		block_get_data($data, $error, $block['block_type']);
+
 		if ($error)
 		{
-			return block_add($data, $error);
+			return block_add($id, $data, $error);
 		}
 
-		//update old position weight if new position is not the same
-		if ($block['position'] != $data['position'])
+		//update old position order if new position is not the same
+		if ($block['block_position'] != $data['block_position'])
 		{
 			// Make an error msg, just incase this fails for some reason
-			blocks_change_position($data['position'], $id);
+			blocks_change_position($data['block_position'], $id);
 		}
 		
-		$sql = 'UPDATE '.BLOCKS_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE id = '.$id;
+		$sql = 'UPDATE '.BLOCKS_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE block_id = '.$id;
 	}
 	else
 	{
@@ -490,14 +466,14 @@ function block_save()
 
 		if ($error)
 		{
-			return block_add($data, $error);
+			return block_add(false, $data, $error);
 		}
-		
-		$result = $_CLASS['core_db']->query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
-		$maxweight = $_CLASS['core_db']->fetch_row_assoc($result);
+
+		$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM '.BLOCKS_TABLE.' WHERE block_position = '.$data['block_position']);
+		list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 		$_CLASS['core_db']->free_result($result);
 				
-		$data['weight'] = (int) $maxweight['weight'] + 1;
+		$data['block_order'] = (int) $max_order + 1;
 		
 		$sql = 'INSERT INTO '.BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
 	}

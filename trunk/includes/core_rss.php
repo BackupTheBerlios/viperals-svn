@@ -1,17 +1,23 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 // Add channel support, rss_data[channel][item][item_branch]
 // nested items
 // maybe make this more xml specfic with another rss function?
@@ -127,7 +133,7 @@ class core_rss
 
 		if (mb_strpos($data, '200') === false)
 		{
-			echo $data;
+			//echo $data;
 
 			if (mb_strpos($data, '301') === true || mb_strpos($data, '301') === true)
 			{
@@ -165,13 +171,16 @@ class core_rss
 			{
 				$this->Close_connection();
 				$this->error = 'Document type is invalid';
+
 				return false;
 			}
 			
+			/*
 			if (mb_strpos($data, 'last-modified') !== false)
 			{
 				//
 			}
+			*/
 
 			if (mb_strpos($data, 'content-encoding') !== false && mb_strpos($data, 'gzip') !== false)
 			{
@@ -180,7 +189,7 @@ class core_rss
 		}
 
 		$this->rss_parser = xml_parser_create();
-		xml_set_object( $this->rss_parser, $this );
+		xml_set_object($this->rss_parser, $this);
 		xml_set_element_handler($this->rss_parser, 'tag_open', 'tag_close');
 		xml_set_character_data_handler($this->rss_parser, 'cdata');
 
@@ -196,7 +205,7 @@ class core_rss
 
 		if ($compressed)
 		{
-			$data = gzinflate(substr($data,10));
+			$data = gzinflate(substr($data, 10));
 		}
 
 		$status = xml_parse($this->rss_parser, $data, true);

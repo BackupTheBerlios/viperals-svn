@@ -1,21 +1,25 @@
+<!-- DISPLAY_HEADER -->
+
 <div class="newsblock">
-<!-- LOOP $news -->
-	<div class="title" onclick="blockswitch2('{ $news:ID }');" style="cursor:pointer">{ $news:TITLE }</div>
-	<div class="content"<!-- IF { $news:COLLAPSE } --> style="display: none"<!-- ENDIF --> id="pe{ $news:ID }">
-	{ $news:CONTENT }
+	<!-- LOOP $news -->
+	<div class="title" onclick="switch_collapse('article_{ $news:id }');" style="cursor:pointer">{ $news:title }</div>
+		<div class="content"<!-- IF { $news:collapse } --> style="display: none"<!-- ENDIF --> id="article_{ $news:id }">
+			{ $news:content }
+			<br clear="all">
+			<p>
+				<!-- IF { $news:full_story } --><a href="{ $news:link_content }" > { $L_READMORE } ..</a><!-- ENDIF -->
+				<hr />
+				<div style="float: left; Top: -2.5em;">
+					<a onclick="window.open('{ $news:link_print }', 'print{ $news:id }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600,height=400'); return false;" href="{ $news:link_print }" ><img src="themes/viperal/images/print.png" alt="" /></a>
+					<a onclick="window.open('{ $news:link_send }', 'send{ $news:id }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600'); return false;" href="{ $news:link_send }" ><img src="themes/viperal/images/mail.png" alt="" /></a>
+				</div>
+				<div style="float: right; Top: -2.5em;">{ $L_POSTED } { $news:time }<br/>
+					<!-- IF { $news:link_poster } -->By: <a href="{ $news:link_poster }">{ $news:poster } </a><!-- ELSE -->By: { $news:poster } <!-- ENDIF -->
+				</div>
+			</p>
+		</div>
 	<br /><br />
-	<!-- IF { $news:FULL_STORY } --><a href="{ $news:CONTENT_LINK }" > Readmore ..</a><!-- ENDIF -->
-	<hr />
-	
-	 <div style="float: left; Top: -2.5em;"><a onclick="window.open('{ $news:PRINT_LINK }', 'print{ $news:ID }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600');return false;" href="{ $news:PRINT_LINK }" >
-	 <img src="themes/viperal/images/print.gif" alt="" /></a></div>
-	 <div style="float: right; Top: -2.5em;">Posted: { $news:TIME }<br/>
-	<!-- IF { $news:POSTER_LINK } -->By: <a href="{ $news:POSTER_LINK }">{ $news:POSTER } </a><!-- ELSE -->By: { $news:POSTER } <!-- ENDIF --></div></div>
-	<br />
-	<br />
-	<br />
-<!-- ENDLOOP  -->
-<!-- IF { $NEWS_PAGINATION } --><div class="numbering">[ <!-- IF { $NEWS_PREVIOUS_PAGE } --><a href="{ $NEWS_PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;|&nbsp;<!-- ENDIF --> { $NEWS_PAGINATION }
-<!-- IF { $NEWS_NEXT_PAGE } -->&nbsp;|&nbsp;<a href="{ $NEWS_NEXT_PAGE }">{$L_NEXT}</a><!-- ENDIF --> ]</div><br /><!-- ENDIF -->
+	<!-- ENDLOOP  -->
+	<p align="center"> { $NEWS_PAGINATION }</p>
 </div>
-<br />
+<!-- DISPLAY_FOOTER -->

@@ -24,8 +24,6 @@ class ucp_register extends module
 			trigger_error('UCP_REGISTER_DISABLE');
 		}
 
-		//require($site_file_root.'includes/forums/functions_profile_fields.php');
-
 		// Do not alter this first one to use request_var!
 		$confirm_id = request_var('confirm_id', '');
 		$coppa		= (isset($_REQUEST['coppa'])) ? !empty($_REQUEST['coppa']) : null;
@@ -55,7 +53,7 @@ class ucp_register extends module
 				$now = explode(':', gmdate('m:j:Y'));
 				$coppa_birthday = $_CLASS['core_user']->format_date(mktime(12, 0, 0, $now[0], $now[1] - 1, $now[2] - 13, 0)); 
 
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'L_COPPA_NO'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_BEFORE'], $coppa_birthday),
 					'L_COPPA_YES'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_ON_AFTER'], $coppa_birthday),
 
@@ -68,7 +66,7 @@ class ucp_register extends module
 			}
 			else
 			{
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'S_SHOW_COPPA'		=> false, 
 					'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register'))
 				);
@@ -362,7 +360,7 @@ class ucp_register extends module
 					$_CLASS['core_user']->session_data_get('reg_attempts', ($attempts + 1));
 				}
 				
-				$_CLASS['core_user']->session_data_get('confirmation_code', generate_string(6));
+				$_CLASS['core_user']->session_data_set('confirmation_code', generate_string(6));
 			}
 
 			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';

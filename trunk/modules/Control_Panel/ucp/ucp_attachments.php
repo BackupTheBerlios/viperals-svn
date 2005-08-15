@@ -34,7 +34,7 @@ class ucp_attachments extends module
 				$s_hidden_fields .= '<input type="hidden" name="attachment[' . $attachment_id . ']" value="1" />';
 			}
 
-			if (confirm_box(true))
+			if (display_confirmation($_CLASS['core_user']->get_lang((count($delete_ids) == 1) ? 'DELETE_ATTACHMENT' : 'DELETE_ATTACHMENTS'), $s_hidden_fields))
 			{
 				require($site_file_root.'includes/forums/functions_admin.php');
 				delete_attachments('attach', $delete_ids);
@@ -43,10 +43,6 @@ class ucp_attachments extends module
 				$_CLASS['core_display']->meta_refresh(3, $refresh_url);
 				$message = ((sizeof($delete_ids) == 1) ? $_CLASS['core_user']->lang['ATTACHMENT_DELETED'] : $_CLASS['core_user']->lang['ATTACHMENTS_DELETED']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="' . $refresh_url . '">', '</a>');
 				trigger_error($message);
-			}
-			else
-			{
-				confirm_box(false, (sizeof($delete_ids) == 1) ? 'DELETE_ATTACHMENT' : 'DELETE_ATTACHMENTS', $s_hidden_fields);
 			}
 		}
 		
@@ -76,24 +72,24 @@ class ucp_attachments extends module
 		$order_by = $sort_key_sql[$sort_key] . '  ' . (($sort_dir == 'a') ? 'ASC' : 'DESC');
 		
 		$sql = 'SELECT COUNT(*) as num_attachments
-			FROM ' . ATTACHMENTS_TABLE . '
+			FROM ' . FORUMS_ATTACHMENTS_TABLE . '
 			WHERE poster_id = ' . $_CLASS['core_user']->data['user_id'];
-		$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-		$num_attachments = $_CLASS['core_db']->sql_fetchfield('num_attachments', 0, $result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
+		list($num_attachments) = $_CLASS['core_db']->fetch_row_num($result);
+		$_CLASS['core_db']->free_result($result);
 		
 		$sql = 'SELECT a.*, t.topic_title, p.message_subject as message_title
-			FROM ' . ATTACHMENTS_TABLE . ' a 
-				LEFT JOIN ' . TOPICS_TABLE . ' t ON (a.topic_id = t.topic_id
+			FROM ' . FORUMS_ATTACHMENTS_TABLE . ' a 
+				LEFT JOIN ' . FORUMS_TOPICS_TABLE . ' t ON (a.topic_id = t.topic_id
 					AND a.in_message = 0)
-				LEFT JOIN ' . PRIVMSGS_TABLE . ' p ON (a.post_msg_id = p.msg_id
+				LEFT JOIN ' . FORUMS_PRIVMSGS_TABLE . ' p ON (a.post_msg_id = p.msg_id
 					AND a.in_message = 1)
 			WHERE a.poster_id = ' . $_CLASS['core_user']->data['user_id'] . "
 			ORDER BY $order_by";
-		$result = $_CLASS['core_db']->sql_query_limit($sql, $config['posts_per_page'], $start);
+		$result = $_CLASS['core_db']->query_limit($sql, $config['posts_per_page'], $start);
 
 		$row_count = 0;
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$_CLASS['core_template']->assign('S_ATTACHMENT_ROWS', true);
 
@@ -130,9 +126,9 @@ class ucp_attachments extends module
 
 				$row_count++;
 			} 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_template']->assign(array( 
 			'PAGE_NUMBER'			=> on_page($num_attachments, $config['posts_per_page'], $start),

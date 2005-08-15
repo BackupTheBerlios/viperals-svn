@@ -1,15 +1,23 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 // Add saving reports to a log file and its define ..
 // this will be core_handlers
 
@@ -168,7 +176,7 @@ class core_error_handler
 
 				$code = false;
 
-				if (strpos($error, ':')) // there shouldn't be a 0 position
+				if (mb_strpos($error, ':')) // there shouldn't be a 0 position
 				{
 					list($code, $error) = explode(':', $error, 2);
 					
@@ -195,33 +203,25 @@ class core_error_handler
 				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
 
 				$_CLASS['core_template']->assign('MESSAGE_TEXT',  $error);
-						
-				$_CLASS['core_template']->display('error.html');
-					
-				script_close(false);
-				die;
-				
-				break;
-	
+
+				$_CLASS['core_display']->display(false, 'error.html');
+			break;
+
 			case E_USER_NOTICE:
 				$_CLASS['core_user']->user_setup();
 
-				$this->error_setting['title'] = (!empty($_CLASS['core_user']->lang[$this->error_setting['title']])) ? $_CLASS['core_user']->lang[$this->error_setting['title']] : $this->error_setting['title'];
-				
-				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
-				
-				$_CLASS['core_display']->display_head($this->error_setting['title']);
+				$this->error_setting['title'] = empty($_CLASS['core_user']->lang[$this->error_setting['title']]) ? $this->error_setting['title'] : $_CLASS['core_user']->lang[$this->error_setting['title']];
 
-				$_CLASS['core_template']->assign(array(
+				$error = empty($_CLASS['core_user']->lang[$error]) ? $error : $_CLASS['core_user']->lang[$error];
+
+				$_CLASS['core_template']->assign_array(array(
 					'MESSAGE_TITLE'	=> $this->error_setting['title'],
 					'MESSAGE_TEXT'	=> $error
 				));
-				
+
 				$this->error_setting = array('title', 'redirect');
 				
-				$_CLASS['core_template']->display('message.html');
-
-				$_CLASS['core_display']->display_footer(false);
+				$_CLASS['core_display']->display($this->error_setting['title'], 'message.html');
 			break;
 		}
 	}

@@ -224,7 +224,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 		$min_post_time = time() - ($sort_days * 86400);
 
 		$sql = 'SELECT COUNT(t.msg_id) AS pm_count
-			FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . " p
+			FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . " p
 			WHERE $folder_sql
 				AND t.user_id = $user_id
 				AND t.msg_id = p.msg_id
@@ -252,7 +252,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 			if (in_array($folder_id, array(PRIVMSGS_INBOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX)))
 			{
 				$sql = 'SELECT COUNT(t.msg_id) AS pm_count
-					FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . " p
+					FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . " p
 					WHERE $folder_sql
 						AND t.user_id = $user_id
 						AND t.msg_id = p.msg_id";
@@ -260,7 +260,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 			else
 			{
 				$sql = 'SELECT pm_count 
-					FROM ' . PRIVMSGS_FOLDER_TABLE . " 
+					FROM ' . FORUMS_PRIVMSGS_FOLDER_TABLE . " 
 					WHERE folder_id = $folder_id
 						AND user_id = $user_id";
 			}
@@ -319,7 +319,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	}
 
 	$sql = 'SELECT t.*, p.author_id, p.root_level, p.message_time, p.message_subject, p.icon_id, p.message_reported, p.to_address, p.message_attachment, p.bcc_address, u.username 
-		FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
 		WHERE t.user_id = $user_id
 			AND p.author_id = u.user_id
 			AND $folder_sql

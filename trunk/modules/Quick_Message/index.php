@@ -10,240 +10,226 @@
 //  of the GNU General Public License version 2					//
 //																//
 //**************************************************************//
-$_CORE_CONFIG['quick_message']['delete_time'] = 18000;
 
 if (!defined('VIPERAL'))
 {
     die;
 }
 
-$_CLASS['core_user']->user_setup();
+if (!defined('QUICK_MESSAGE_TABLE'))
+{
+	define('QUICK_MESSAGE_TABLE', 'test_quick_message');
+}
 
 switch (get_variable('mode', 'GET', false))
 {
 	case 'add':
-		add_message();
-		break;
-		
-	case 'all':
-		show_messages(true);
-		
-	case 'delete':
-		delete_message();
-	
-	default:
-		show_messages();
-		break;
-}
-
-script_close(false);
-
-function add_message()
-{
-	if (empty($_POST['submit']))
-	{
-		return show_messages();
-	}
-
-	global $_CLASS, $prefix, $_CORE_CONFIG;
-
-	if ($_CLASS['core_user']->is_bot)
-	{
-		url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
-	}
-		
-	$_CLASS['core_user']->add_lang();
-	$_CORE_CONFIG['quick_message']['lastpost_check'] = 300;
-
-	$user_id = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_id'] : '';
-	$user_name = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['username'] : get_username();
-	
-    if(!$message = get_variable('message', 'POST', false))
-    {
-		trigger_error($_CLASS['core_user']->lang['NO_MESSAGE']); 
-    }
-    
-    $length = mb_strlen($message);
-    
-    if($length < 2)
-    {
-		trigger_error($_CLASS['core_user']->lang['SHORT_MESSAGE']); 
-    }
-    
-    if($length > $_CORE_CONFIG['quick_message']['maxlength'])
-    { 
-		trigger_error($_CLASS['core_user']->lang['LONG_MESSAGE']);
-    }
-
-	$message 	= htmlentities($message, ENT_QUOTES, 'UTF-8');
-	$user_name 	= htmlentities($user_name, ENT_QUOTES, 'UTF-8');
-
-    $result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.$prefix."quick_message WHERE message='".$_CLASS['core_db']->escape($message)."' AND time >= '".(time() - $_CORE_CONFIG['quick_message']['lastpost_check'])."'");
-	$count = $_CLASS['core_db']->fetch_row_assoc($result);
-    $_CLASS['core_db']->free_result($result);
-
-// add a count check here so it admin ajustable
-    if ($count['count'] > 0)
-    {
-        trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['lastpost_check'] / 60));
-    }
-
-    $_CLASS['core_db']->free_result($result);
-
-	$sql = 'INSERT INTO '.$prefix.'quick_message ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
-		'user_name'	=> (string) $user_name,
-		'user_id'	=> (int) $user_id ,
-		'message'	=> (string) $message,
-		'time'		=> (int)  $_CLASS['core_user']->time,
-		'ip'		=> (string) $_CLASS['core_user']->ip
-	));
-		
-	$_CLASS['core_db']->query($sql);
-	
-	url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
-}
-
-function show_messages($all = false)
-{
-    global $prefix, $_CLASS, $config, $_CORE_CONFIG;
-	
-	$_CLASS['core_user']->add_lang();
-	$_CLASS['core_user']->add_img(false, 'Forums');
-
-	$start = ($all) ? '' : get_variable('start', 'GET', 0, 'integer');
-	$limit = ($all) ? '' : $_CORE_CONFIG['quick_message']['number'];
-	
-	//$sql = 'SELECT s.*, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height FROM '.$prefix.'quick_message s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
-	
-	$result = $_CLASS['core_db']->query_limit('SELECT * FROM '.$prefix.'quick_message ORDER BY time DESC', $limit, $start);
-	$error = (!$row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $_CLASS['core_user']->lang['NO_POSTS'] : false;
-
-	$_CLASS['core_template']->assign(array(
-		'L_POSTER'			=> $_CLASS['core_user']->lang['POSTER'],
-		'L_POSTED'			=> $_CLASS['core_user']->lang['POSTED'],
-		'L_MESSAGE'			=> $_CLASS['core_user']->lang['MESSAGE'],
-		'L_DELETE'			=> $_CLASS['core_user']->get_lang('DELETE'),
-		'ERROR'				=> $error, 
-		)
-	);
-	
-	if ($error)
-	{
-		$_CLASS['core_template']->display('modules/Quick_Message/index.html');	
-	}
-	
-	do {
-	
-		if ($row['user_name'])
+		if (empty($_POST['submit']) || $_CLASS['core_user']->is_bot)
 		{
-			$user_name = $row['user_name'];
-			$userlink = ($row['user_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) : false;
+			url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+		}
+	
+		$_CLASS['core_user']->user_setup();
+		$_CLASS['core_user']->add_lang();
+
+		$message = trim(get_variable('message', 'POST', false));
+		$_CORE_CONFIG['quick_message']['lastpost_check'] = 300;
+
+		if (!$message)
+		{
+			trigger_error('NO_MESSAGE'); 
+		}
+
+		$length = mb_strlen($message);
+
+		if ($length > $_CORE_CONFIG['quick_message']['length_max'])
+		{ 
+			trigger_error('LONG_MESSAGE');
+		}
+
+		$message 	= htmlentities($message, ENT_QUOTES, 'UTF-8');
+
+	// use limit
+		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['lastpost_check']));
+		$count = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+
+	// add a count check here so it admin ajustable
+		if ($count['count'] > 0)
+		{
+			trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['lastpost_check'] / 60));
+		}
+
+		$_CLASS['core_db']->free_result($result);
+
+		if ($_CLASS['core_user']->is_user)
+		{
+			$user_id =  $_CLASS['core_user']->data['user_id'];
+			$user_name = $_CLASS['core_user']->data['username'];
 		}
 		else
 		{
-			$user_name = $_CLASS['core_user']->lang['ANONYMOUS'];
-			$userlink = false;
-		}
-		
-		$delete_link = '';
-		
-		if ($row['time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
-		{
-			if (($row['user_id'] && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['user_id'] && $row['ip'] == $_CLASS['core_user']->ip))
-			{
-				$delete_link = generate_link('Quick_Message&amp;mode=delete&amp;id='.$row['id']);
-			}
+			$user_id = 0;
+			$user_name = get_username();
 		}
 
-		$avatar = false;
-		/*if ($row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
-		{
-			$avatar_img = '';
-			
-			switch ($row['user_avatar_type'])
-			{
-				case AVATAR_UPLOAD:
-					$avatar_img = $config['avatar_path'] . '/';
-					break;
-				case AVATAR_GALLERY:
-					$avatar_img = $config['avatar_gallery_path'] . '/';
-					break;
-			}
-			
-			$avatar_img .= $row['user_avatar'];
-			$avatar = '<img src="' . $avatar_img . '" width="' . $row['user_avatar_width'] . '" height="' . $row['user_avatar_height'] . '" border="0" alt="" />';
-			
-		}
-*/
+		htmlentities($user_name, ENT_QUOTES, 'UTF-8');
 
-		if ($row['user_id'])
-		{
-			$row['message'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['message']);
-		}
-		
-		$_CLASS['core_template']->assign_vars_array('quick_message', array(
-			'USER_NAME'		=> $user_name,
-			'USER_LINK'		=> $userlink,
-			'DELETE_LINK'	=> $delete_link,
-			'MESSAGE'		=> modify_lines($row['message'], '<br />'),
-			'TIME'			=> $_CLASS['core_user']->format_date($row['time']),
-			'POSTER_AVATAR' => $avatar,
-			'U_PROFILE' 	=> ($row['user_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']) : false,
+		$sql = 'INSERT INTO '.QUICK_MESSAGE_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+			'poster_name'	=> (string) $user_name,
+			'poster_id'		=> (int) $user_id,
+			'poster_ip'		=> (string) $_CLASS['core_user']->ip,
+			'message_text'	=> (string) $message,
+			'message_time'	=> (int) $_CLASS['core_user']->time,
 		));
+
+		$_CLASS['core_db']->query($sql);
+
+		redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+	break;
+
+	case 'delete':
+		global $_CORE_CONFIG, $_CLASS;
+
+		$id = get_variable('id', 'GET', false, 'integer');
+
+		if (!$id)
+		{
+			die;
+		}
+
+		$result = $_CLASS['core_db']->query_limit('SELECT message_id, poster_id, poster_name, poster_ip, message_time FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time', 1);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		
-	}
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+		if (!$row)
+		{
+			trigger_error('NO_MESSAGE');
+		}
 
-	$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '.$prefix.'quick_message');
-	$row = $_CLASS['core_db']->fetch_row_assoc($result);
-	$_CLASS['core_db']->free_result($result);	
+		$return = true;
 
-	$_CLASS['core_template']->assign(array(
+		if ($row['message_id'] != $id)
+		{
+			if ($row['message_time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
+			{
+				if (($row['poster_id'] && $row['poster_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['poster_id'] && $row['poster_ip'] == $_CLASS['core_user']->ip))
+				{
+					$return = false;
+				}
+			}
+		}
+
+		if ($return)
+		{
+			trigger_error('MESSAGE_NOT_DELETABLE');
+		}
+
+		$sql = 'DELETE FROM ' . QUICK_MESSAGE_TABLE . ' WHERE message_id = '.$id;
+		$_CLASS['core_db']->query($sql);
+
+		//trigger_error('MESSAGE_DELETED');
+		redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+	break;
+}
+
+$_CLASS['core_user']->user_setup();
+$_CLASS['core_user']->add_lang();
+
+$start = get_variable('start', 'GET', 0, 'integer');
+$limit = 20;
+
+//$sql = 'SELECT s.*, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height FROM '.$prefix.'quick_message s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
+$result = $_CLASS['core_db']->query_limit('SELECT * FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time DESC', $limit, $start);
+$row = $_CLASS['core_db']->fetch_row_assoc($result);
+
+if (!$row)
+{
+	$_CLASS['core_template']->assign_array(array(
 		'Q_MESSAGE_PAGINATION'	=> generate_pagination('Quick_Message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
 		'Q_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
 		'Q_TOTAL_MESSAGES'		=> $row['total']
 	));
-	
-	$_CLASS['core_template']->display('modules/Quick_Message/index.html');
+
+	$_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
+	script_close();
 }
 
-function delete_message()
+$delete_link = '';
+
+if ($row['message_time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
 {
-
-	global $_CORE_CONFIG, $_CLASS, $prefix;
-	
-	$id = (int) get_variable('id', 'GET');
-	
-// we should only delete last message
-	$result = $_CLASS['core_db']->query('SELECT user_id, time, ip FROM '.$prefix.'quick_message WHERE id='.$id);
-	$row = $_CLASS['core_db']->fetch_row_assoc($result);
-	$_CLASS['core_db']->free_result($result);
-	
-	if (!$row)
+	if (($row['poster_id'] && $row['poster_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['poster_id'] && $row['poster_ip'] == $_CLASS['core_user']->ip))
 	{
-		trigger_error('MESSAGE_NOT_FOUND');
+		$delete_link = generate_link('Quick_Message&amp;mode=delete&amp;id='.$row['message_id']);
 	}
-	
-	$return = true;
-	
-	if ($row['time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
-	{
-		if (($row['user_id'] && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['user_id'] && $row['ip'] == $_CLASS['core_user']->ip))
-		{
-			$return = false;
-		}
-	}
-	
-	if ($return)
-	{
-		trigger_error('MESSAGE_NOT_DELETABLE');
-	}
-	
-	$sql = 'DELETE FROM '.$prefix.'quick_message WHERE id='.$id;
-	$_CLASS['core_db']->query($sql);
-	
-	trigger_error('MESSAGE_DELETED');
 }
+
+do
+{
+	if ($row['poster_name'])
+	{
+		$user_name = $row['poster_name'];
+		$userlink = ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']) : false;
+	}
+	else
+	{
+		$user_name = $_CLASS['core_user']->lang['ANONYMOUS'];
+		$userlink = false;
+	}
+
+	$avatar = false;
+	/*if ($row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
+	{
+		$avatar_img = '';
+		
+		switch ($row['user_avatar_type'])
+		{
+			case AVATAR_UPLOAD:
+				$avatar_img = $config['avatar_path'] . '/';
+				break;
+			case AVATAR_GALLERY:
+				$avatar_img = $config['avatar_gallery_path'] . '/';
+				break;
+		}
+		
+		$avatar_img .= $row['user_avatar'];
+		$avatar = '<img src="' . $avatar_img . '" width="' . $row['user_avatar_width'] . '" height="' . $row['user_avatar_height'] . '" border="0" alt="" />';
+		
+	}*/
+
+	if ($row['poster_id'])
+	{
+		$row['message'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['message_text']);
+	}
+	
+	$_CLASS['core_template']->assign_vars_array('quick_message', array(
+		'USER_NAME'		=> $user_name,
+		'USER_LINK'		=> $userlink,
+		'DELETE_LINK'	=> $delete_link,
+		'MESSAGE'		=> modify_lines($row['message_text'], '<br />'),
+		'TIME'			=> $_CLASS['core_user']->format_date($row['message_time']),
+		'POSTER_AVATAR' => $avatar,
+		'U_PROFILE' 	=> ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['poster_id']) : false,
+	));
+	
+	$delete_link = '';
+}
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+
+$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '.QUICK_MESSAGE_TABLE);
+$row = $_CLASS['core_db']->fetch_row_assoc($result);
+$_CLASS['core_db']->free_result($result);	
+
+$_CLASS['core_template']->assign_array(array(
+	'Q_MESSAGE_PAGINATION'	=> generate_pagination('Quick_Message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
+	'Q_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
+	'Q_TOTAL_MESSAGES'		=> $row['total']
+));
+
+$_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
+	
+script_close();
 
 function get_username()
 {
@@ -254,7 +240,7 @@ function get_username()
 
 	if (!$user_name)
 	{
-		if ($_CORE_CONFIG['quick_message']['allow_anonymous'] == '2')
+		if ($_CORE_CONFIG['quick_message']['anonymous_posting'] == '2')
 		{
 			return false;
 			
@@ -277,6 +263,7 @@ function get_username()
 	}
 	
 	require($site_file_root.'includes/forums/functions_user.php');
+
 	if ($error = validate_username($user_name))
 	{
 		trigger_error($error);

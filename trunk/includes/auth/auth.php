@@ -1,20 +1,29 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 
 class core_auth
 {
 	var $_user_id;
-	var $_group_id;
+	var $_group_ids = array();
+	var $_group_default_id;
 
 	var $_got_data = false;
 	var $_admin_permission = array();
@@ -24,7 +33,7 @@ class core_auth
 		global $_CLASS;
 
 		$this->_user_id = ($user_id) ? $user_id : $_CLASS['core_user']->data['user_id'];
-		$this->_group_id = ($group_id) ? $group_id : $_CLASS['core_user']->data['group_id'];
+		$this->_group_default_id = ($group_id) ? $group_id : $_CLASS['core_user']->data['group_id'];
 	}
 
 	function user_auth($user_name, $user_password)
@@ -69,30 +78,31 @@ class core_auth
 	{
 		global $_CLASS;
 
-		$sql = 'SELECT * FROM ' . AUTH_ADMIN_TABLE ." 
-					WHERE user_id = {$this->_user_id}
-					OR group_id = {$this->_group_id} ORDER BY user_id";
+// should this be extended for defualt groups only, and all in group ?
+		$sql = 'SELECT * FROM ' . ADMIN_AUTH_TABLE ." 
+					WHERE member_user_id = {$this->_user_id}
+					OR member_group_id = {$this->_group_default_id} ORDER BY member_user_id";
 
 		$result = $_CLASS['core_db']->query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if ($row['status'] == STATUS_PENDING)
+			if ($row['admin_status'] == STATUS_PENDING)
 			{
 				continue;
 			}
 
-			if (!isset($this->_admin_permission[$row['section']]))
+			if (!isset($this->_admin_permission[$row['admin_section']]))
 			{
-				$this->_admin_permission[$row['section']]['core']['status'] = $row['status'];
+				$this->_admin_permission[$row['admin_section']]['core']['status'] = $row['admin_status'];
 
-				if ($row['options'] && is_array($row['options'] = @unserialize($row['options'])))
+				if (trim($row['admin_options']) && is_array($row['admin_options'] = @unserialize($row['admin_options'])))
 				{
 					$this->_admin_permission[$row['section']] = $row['options'];
 				}
 			}
 		}
-	
+
 		$this->_got_data = true;
 		$_CLASS['core_db']->free_result($result);
 	}
@@ -166,13 +176,7 @@ class core_auth
 
 				if (is_numeric($result))
 				{
-					$data = array(
-						'admin_login'		=> $login_array['admin_login'],
-						'auto_log'			=> (!empty($_POST['autologin'])) ? true : false,
-						'show_online'		=> (!empty($_POST['viewonline'])) ? 0 : 1,
-					);
-			
-					$_CLASS['core_user']->login($result, $data['admin_login'], $data['show_online']);
+					$_CLASS['core_user']->login($result, $login_array['admin_login'], !empty($_POST['hidden']), !empty($_POST['auto_login']));
 
 					$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $data['admin_login']));	
 
@@ -203,7 +207,7 @@ class core_auth
 			$confirm_image = false;
 		}
 
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'LOGIN_ERROR'			=> $_CLASS['core_user']->get_lang($error),
 			'LOGIN_EXPLAIN'			=> $_CLASS['core_user']->get_lang($login_array['explain']), 
 
@@ -221,9 +225,9 @@ class core_auth
 			'S_HIDDEN_FIELDS' 		=> $s_hidden_fields,
 		));
 
-		if ($login_array['full_screen'])
+		if (!$template && $login_array['full_screen'])
 		{
-			$_CLASS['core_template']->display('login_body_full.html');
+			$template = 'login_body_full.html';
 		}
 
 		$_CLASS['core_template']->display(($template) ? $template : 'login_body.html');
@@ -235,56 +239,63 @@ class core_auth
 
 	}
 
-	function auth($data)
+	function auth($options_array, $option = 'core_status')
 	{
 		global $_CLASS;
 
-		if (!$data)
+		if (!$options_array || (empty($options_array['groups']) && empty($options_array['users'])))
 		{
 			return true;
 		}
 
-		if (empty($data['users_allowed']) && empty($data['groups_allowed']))
+		if (isset($options_array['users'][$this->_user_id]))
+		{
+			return (isset($options_array['users'][$this->_user_id][$option]) ? $options_array['users'][$this->_user_id][$option] : false);
+		}
+
+		if (!empty($options_array['groups'][1]))
 		{
 			$return = true;
 
-			if (!empty($data['users_disallowed']) && in_array($this->_user_id, $data['users_disallowed']))
+			// need to sort/seperate this so that Only Default goups are first
+			foreach ($options_array['groups'][1] as $id => $group_options)
 			{
-				$return = false;
-			}
-
-			if ($return && !empty($data['groups_disallowed']) && in_array($this->_group_id, $data['groups_disallowed']))
-			{
-				$return = false;
-			}
-
-			return $return;
-		}
-		else
-		{
-			if (!empty($data['users_allowed']) && in_array($this->_user_id, $data['users_allowed']))
-			{
-				return true;
-			}
-	
-			if (!empty($data['groups_allowed']) && in_array($this->_group_id, $data['groups_allowed']))
-			{
-				if (empty($data['users_disallowed']) || !in_array($this->_user_id, $data['users_disallowed']))
+				if ($id == $this->_group_default_id)
 				{
-					return true;
+					return (isset($group_options[$option]) ? $group_options[$option] : false);
 				}
 			}
-
-			return false;
 		}
+
+		if (!empty($options_array['groups'][0]))
+		{
+			//get the ids for all the groups
+			$ids = array_keys($options_array['groups'][0]);
+			//remove the groups that the user isn't a member of
+			$ids = array_intersect($ids, $this->__group_ids);
+			// need to sort/seperate this so that Only Default goups are first
+			foreach ($ids as $id)
+			{
+// will need some sort of ordering if the option is not regular  true/false (0/1)
+				// if the option is not false, return it. The user has permission
+				if (!empty($options_array['groups'][0][$id][$option]))
+				{
+					return $group_options[$option];
+				}
+			}
+		}
+
+		return false;
 	}
 
-	function generate_auth_options($options = array(), $options_extend = false, $return_link = false)
+	function generate_auth_options($auth_options = array(), $options_extend = false, $return_link = false)
 	{
 		global $_CLASS, $site_file_root;
 
-		$options['groups'] = empty($options['groups']) ? array() : $options['groups'];
-		$options['users'] = empty($options['users']) ? array() : $options['users'];
+		$auth_options['groups'][0] = empty($auth_options['groups'][0]) ? array() : $auth_options['groups'][0];
+		$auth_options['groups'][1] = empty($auth_options['groups'][1]) ? array() : $auth_options['groups'][1];
+
+		$auth_options['users'] = empty($auth_options['users']) ? array() : $auth_options['users'];
 
 		$mode = $return = false;
 		$checks = array('add', 'remove', 'set');
@@ -309,6 +320,8 @@ class core_auth
 					$setup['groups'] = get_variable('groups_add', 'POST', array(), 'array');
 					$setup['users'] = explode("\n", get_variable('users_add', 'POST'));
 
+					$submited_options = get_variable('auth_options', 'POST', array(), 'array');
+
 					if (count($setup['users']))
 					{
 						$setup['users'] = user_get_id($setup['users']);
@@ -332,16 +345,16 @@ class core_auth
 
 					foreach ($setup['groups'] as $id)
 					{
-						$options['groups'][$id] = array('status' => 1);
+						$auth_options['groups'][$submited_options['core_auth_type']][$id] = array('core_status' => $submited_options['core_status']);
 					}
 
 					foreach ($setup['users'] as $id)
 					{
-						$options['users'][$id] = array('status' => 1);
+						$auth_options['users'][$id] = array('core_status' => $submited_options['core_status']);
 					}
 
 					unset($setup);
-					//print_r($options);
+					//print_r($auth_options); die;
 				break;
 
 				case 'remove':
@@ -350,23 +363,30 @@ class core_auth
 					
 					$function = ($mode == 'add') ? 'array_merge' : 'array_diff';
 
-					foreach ($options['groups'] as $key => $ignore)
+// We need to tell with is only group and with is in group.
+
+					foreach ($ids['groups'] as $groups_id)
 					{
-						if (in_array($key, $ids['groups']))
+						if (isset($auth_options['groups'][1][$groups_id]))
 						{
-							unset($options['groups'][$key]);
+							unset($auth_options['groups'][1][$groups_id]);
+						}
+
+						if (isset($auth_options['groups'][0][$groups_id]))
+						{
+							unset($auth_options['groups'][0][$groups_id]);
 						}
 					}
 
-					foreach ($options['users'] as $key => $ignore)
+					foreach ($auth_options['users'] as $key => $ignore)
 					{
 						if (in_array($key, $ids['users']))
 						{
-							unset($options['users'][$key]);
+							unset($auth_options['users'][$key]);
 						}
 					}
 
-					//print_r($options);
+					//print_r($auth_options);
 				break;
 			
 				case 'set':
@@ -374,49 +394,53 @@ class core_auth
 				break;
 			}
 
-			foreach ($options as $option)
+			$return = null;
+
+			foreach ($auth_options as $test)
 			{
-				if (!empty($option))
+				if (!empty($test))
 				{
-					$return =& $options;
+					$return =& $auth_options;
 					break;
 				}
 			}
 		}
 
 		$group_list = $allowed_group_list = $disallowed_group_list = $allowed_user_list = $disallowed_user_list = '';
-		$groups_ids = array_keys($options['users']);
 
-		if (!empty($options['users']))
+		if (!empty($auth_options['users']))
 		{
 			$sql = 'SELECT user_id, username, user_colour
 				FROM ' . USERS_TABLE . '
-				WHERE user_id IN ('.implode(', ', array_keys($options['users'])).')
+				WHERE user_id IN ('.implode(', ', array_keys($auth_options['users'])).')
 					ORDER BY username';
 			$result = $_CLASS['core_db']->query($sql);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$user_list = ($options['users'][$row['user_id']]['status'] === 1) ? 'allowed_user_list' : 'disallowed_user_list';
+				$user_list = ($auth_options['users'][$row['user_id']]['core_status'] == 1) ? 'allowed_user_list' : 'disallowed_user_list';
 
 				$$user_list .= '<option ' . (($row['user_colour']) ? ' style="color: #'.$row['user_colour'].';"' : '') . ' value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
 			}
 			$_CLASS['core_db']->free_result($result);
 		}
+// this can be removed, when everthing else is updated
+		$groups_ids = array_merge(array_keys($auth_options['groups'][0]), array_keys($auth_options['groups'][1]));
 
 		if (!empty($groups_ids))
 		{
 			$sql = 'SELECT group_id, group_name, group_type 
 				FROM ' . GROUPS_TABLE . '
-				WHERE group_id IN ('.implode(', ', array_keys($options['groups'])).')
+				WHERE group_id IN ('.implode(', ', $groups_ids).')
 					ORDER BY group_type DESC, group_name';
 			$result = $_CLASS['core_db']->query($sql);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$group_list = ($options['groups'][$row['group_id']]['status'] === 1) ? 'allowed_group_list' : 'disallowed_group_list';
+				$group_auth_type = isset($auth_options['groups'][1][$row['group_id']]['core_status']) ? 1 : 0;
+				$group_list = ($auth_options['groups'][$group_auth_type][$row['group_id']]['core_status']) ? 'allowed_group_list' : 'disallowed_group_list';
 				
-				$$group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+				$$group_list .= '<option' . (($group_auth_type == 1) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 				
 			}
 			$_CLASS['core_db']->free_result($result);
@@ -430,7 +454,7 @@ class core_auth
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$group_list .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+			$group_list .= '<option value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
 		$_CLASS['core_db']->free_result($result);
 	
@@ -444,7 +468,7 @@ class core_auth
 
 		$_CLASS['core_template']->display('permission.html');
 
-		return ($return !== false) ? $return : false;
+		return $return;
 	}
 }
 

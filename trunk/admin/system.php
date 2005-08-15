@@ -9,57 +9,34 @@ global $_CLASS;
 
 $_CLASS['core_user']->add_lang('admin/system.php');
 
-$_CLASS['core_template']->assign(array(
-	'A_L_SITE'		=> generate_link('system&amp;mode=site', array('admin' => true)),
-	'A_L_WYSIWYG'	=> generate_link('system&amp;mode=wysiwyg', array('admin' => true)),
-	'A_L_SYSTEM'	=> generate_link('system&amp;mode=system', array('admin' => true)),
-	'A_L_USERS'		=> generate_link('system&amp;mode=users', array('admin' => true)),
-));
-
-$option = array(
-	'Site' => array(
-			'lang' => $_CLASS['core_user']->get_lang('SITE')),
-	'system' => array(
-			'lang' => $_CLASS['core_user']->get_lang('SYSTEM')),
-	'users' => array(
-			'lang' => $_CLASS['core_user']->get_lang('USERS_OPTIONS')),
-);
-
 $mode =	get_variable('mode', 'GET', false);
 
-if (!$mode || !in_array($mode, array_keys($option)))
+if (!$mode || !in_array($mode, array('Site', 'system')))
 {
-	$mode = 'Site';
+	$mode = 'site';
 }
 
-foreach ($option as $option_mode => $settings)
-{
-	$_CLASS['core_template']->assign_vars_array('a_options', array(
-		'ACTIVE'	=> ($option_mode == $mode) ? true : false,
-		'LANG'		=> $settings['lang'],
-		'LINK'		=> generate_link('system&amp;mode='.$option_mode, array('admin' => true)),
-	));
-}
+$_CLASS['core_template']->assign_array(array(
+	'LINK_SITE'		=> generate_link('system&amp;mode=site', array('admin' => true)),
+	'LINK_SYSTEM'	=> generate_link('system&amp;mode=system', array('admin' => true)),
+	'SYSTEM_MODE'	=> $mode,
+));
 
 $save = (isset($_POST['submit'])) ? true : false;
 
 switch ($mode)
 {
-	case 'Site':
+	case 'site':
 		admin_site($save);
-		break;
-
-	case 'wysiwyg':
-		admin_wysiwyg($save);
-		break;
+	break;
 
 	case 'users':
-		admin_users($save);
-		break;
+		//admin_users($save);
+	break;
 
 	case 'system':
 		admin_system($save);
-		break;
+	break;
 }
 
 function admin_save($data)
@@ -71,14 +48,14 @@ function admin_save($data)
 		foreach ($option AS $db_name => $data_op)
 		{
 			$value = get_variable($data_op['post_name'], 'POST', false);
-	
+
 			if ($value != $_CORE_CONFIG[$section][$db_name])
 			{
-				//echo $data_op['post_name'].' : '. $db_name.' : '.$value.'<br/>';
 				set_core_config($section, $db_name, $value, false);
 			}
 		}
     }
+
 	$_CLASS['core_cache']->destroy('core_config');
 }
 
@@ -101,17 +78,15 @@ function admin_site($save)
 
 	global $_CLASS, $_CORE_CONFIG;
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'A_OPTION'		=> 'site',
 		'ACTION'		=> generate_link('system', array('admin' => true)),
 		
 		'DEFAULT_THEME' 	=> $_CORE_CONFIG['global']['default_theme'],
 		'LINK_OPTIMIZATION' => $_CORE_CONFIG['global']['link_optimization'],
-		'SITE_LOGO'			=> $_CORE_CONFIG['global']['site_logo'],
 		'SITE_NAME'			=> $_CORE_CONFIG['global']['site_name'],
 		'SITE_URL'			=> $_CORE_CONFIG['global']['site_url'],
-		'SLOGAN'			=> $_CORE_CONFIG['global']['slogan'],
-		'START_DATE'		=> $_CORE_CONFIG['global']['startdate'],
+		'START_DATE'		=> $_CORE_CONFIG['global']['start_date'],
 
 		'FOOTER_FIRST' 		=> $_CORE_CONFIG['global']['foot1'],
 		'FOOTER_SECOND' 	=> $_CORE_CONFIG['global']['foot2'],
@@ -136,9 +111,7 @@ function admin_site($save)
 	
 	closedir($handle);
 
-	$_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/system/index.html');
-	$_CLASS['core_display']->display_footer();
 }
 
 function admin_system($save)
@@ -174,7 +147,7 @@ function admin_system($save)
 	
 	global $_CLASS, $_CORE_CONFIG;
    
-    $_CLASS['core_template']->assign(array(
+    $_CLASS['core_template']->assign_array(array(
 		'A_OPTION' 			=> 'system',
 		'ACTION'			=> generate_link('system&amp;mode=system', array('admin' => true)),
 		
@@ -197,9 +170,7 @@ function admin_system($save)
 		
 		));
 
-	$_CLASS['core_display']->display_head();
 	$_CLASS['core_template']->display('admin/system/index.html');
-	$_CLASS['core_display']->display_footer();
 }
 
 function admin_users($save)
@@ -229,7 +200,7 @@ function admin_users($save)
 
 	global $_CLASS, $_CORE_CONFIG;
 
-    $_CLASS['core_template']->assign(array(
+    $_CLASS['core_template']->assign_array(array(
 		'A_OPTION' => 'users',
 		'ACTION' => generate_link('system&amp;mode=users', array('admin' => true)),
 		'L_EDITOR_OPTION' => $_CLASS['core_user']->lang['EDITOR_OPTION'],
@@ -270,9 +241,7 @@ function admin_users($save)
 			))
 		));
 
-		$_CLASS['core_display']->display_head();
 		$_CLASS['core_template']->display('admin/system/index.html');
-		$_CLASS['core_display']->display_footer();
 }
 
 ?>

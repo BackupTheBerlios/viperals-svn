@@ -1,17 +1,23 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 
 class core_display
 {
@@ -158,7 +164,7 @@ class core_display
 			$this->message = '<b>System is in maintenance mode</b><br />';
 		}
 
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
 			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.$_CORE_MODULE['title'],
 			'SITE_BASE'			=>	generate_base_url(),
@@ -234,17 +240,14 @@ class core_display
 
 		$debug_output = 'Code Time : '.round($totaltime, 4).'s | Queries Time '.round($_CLASS['core_db']->queries_time, 4).'s | ' . $_CLASS['core_db']->num_queries . ' Queries  ] <br /> [ GZIP : ' .  ((in_array('ob_gzhandler' , ob_list_handlers())) ? 'On' : 'Off' ) . ' | Load : '  . (($_CLASS['core_user']->load) ? $_CLASS['core_user']->load : 'N/A');
 
-		if (function_exists('memory_get_usage'))
+		if ($memory_usage = get_memory_usage())
 		{
-			if ($memory_usage = memory_get_usage())
-			{
-				global $base_memory_usage;
-				
-				$memory_usage -= $base_memory_usage;
-				$memory_usage = ($memory_usage >= 1048576) ? round((round($memory_usage / 1048576 * 100) / 100), 2) . ' ' . $_CLASS['core_user']->lang['MB'] : (($memory_usage >= 1024) ? round((round($memory_usage / 1024 * 100) / 100), 2) . ' ' . $_CLASS['core_user']->lang['KB'] : $memory_usage . ' ' . $_CLASS['core_user']->lang['BYTES']);
+			global $base_memory_usage;
+			
+			$memory_usage -= $base_memory_usage;
+			$memory_usage = ($memory_usage >= 1048576) ? round((round($memory_usage / 1048576 * 100) / 100), 2) . ' ' . $_CLASS['core_user']->lang['MB'] : (($memory_usage >= 1024) ? round((round($memory_usage / 1024 * 100) / 100), 2) . ' ' . $_CLASS['core_user']->lang['KB'] : $memory_usage . ' ' . $_CLASS['core_user']->lang['BYTES']);
 
-				$debug_output .= ' | Memory Usage: ' . $memory_usage;	
-			}
+			$debug_output .= ' | Memory Usage: ' . $memory_usage;	
 		}
 
 		return $debug_output;
@@ -287,41 +290,6 @@ class core_display
 
 		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(array('full' => true))) . '">';
 	}
-}
-
-function collapsed_items($marker, $cookie = 'collapsed_items') 
-{
-    static $collapsed_items_array = array();
-
-    if (!isset($collapsed_items_array[$cookie]))
-    {
-		$cookie_data = get_variable($cookie, 'COOKIE');
-		$collapsed_items_array[$cookie] = ($cookie_data) ? explode(':', $cookie_data) : array();
-    }
-
-    return in_array($marker, $collapsed_items_array[$cookie]);
-}
-
-function hideblock($id) 
-{
-    // From cpgnuke - http://dragonflycms.org/
-    static $hiddenblocks = false;
-
-    if (!$hiddenblocks) 
-    {
-		$hiddenblocks = array();
-
-        if (isset($_COOKIE['hiddenblocks']))
-        {
-            $tmphidden = explode(':', $_COOKIE['hiddenblocks']);
-			foreach ($tmphidden as $value)
-			{
-                $hiddenblocks[$value] = true;
-            }
-        }
-    }
-
-    return (empty($hiddenblocks[$id])) ? false : true;
 }
 
 ?>

@@ -46,15 +46,15 @@ if (!$config['allow_attachments'] && !$config['allow_pm_attach'])
 }
 
 $sql = 'SELECT attach_id, in_message, post_msg_id, extension
-	FROM ' . ATTACHMENTS_TABLE . "
+	FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
-$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-if (!($attachment = $_CLASS['core_db']->sql_fetchrow($result)))
+if (!($attachment = $_CLASS['core_db']->fetch_row_assoc($result)))
 {
 	trigger_error('ERROR_NO_ATTACHMENT');
 }
-$_CLASS['core_db']->sql_freeresult($result);
+$_CLASS['core_db']->free_result($result);
 
 if ((!$attachment['in_message'] && !$config['allow_attachments']) || ($attachment['in_message'] && !$config['allow_pm_attach']))
 {
@@ -64,14 +64,13 @@ if ((!$attachment['in_message'] && !$config['allow_attachments']) || ($attachmen
 $row = array();
 if (!$attachment['in_message'])
 {
-	// 
 	$sql = 'SELECT p.forum_id, f.forum_password, f.parent_id
-		FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . ' f
+		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f
 		WHERE p.post_id = ' . $attachment['post_msg_id'] . '
 			AND p.forum_id = f.forum_id';
-	$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-	$row = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query_limit($sql, 1);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if ($_CLASS['auth']->acl_gets('f_download', 'u_download', $row['forum_id']))
 	{
@@ -83,7 +82,7 @@ if (!$attachment['in_message'])
 	}
 	else
 	{
-		trigger_error('SORRY_AUTH_VIEW_ATTACH');
+		//trigger_error('SORRY_AUTH_VIEW_ATTACH');
 	}
 }
 else
@@ -111,15 +110,15 @@ $download_mode = (int) $extensions[$attachment['extension']]['download_mode'];
 
 // Fetching filename here to prevent sniffing of filename
 $sql = 'SELECT attach_id, in_message, post_msg_id, extension, physical_filename, real_filename, mimetype
-	FROM ' . ATTACHMENTS_TABLE . "
+	FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
-$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
+$result = $_CLASS['core_db']->query_limit($sql, 1);
 
-if (!($attachment = $_CLASS['core_db']->sql_fetchrow($result)))
+if (!($attachment = $_CLASS['core_db']->fetch_row_assoc($result)))
 {
 	trigger_error('ERROR_NO_ATTACHMENT');
 }
-$_CLASS['core_db']->sql_freeresult($result);
+$_CLASS['core_db']->free_result($result);
 
 $attachment['physical_filename'] = basename($attachment['physical_filename']);
 
@@ -131,7 +130,7 @@ if ($thumbnail)
 else
 {
 	// Update download count
-	$sql = 'UPDATE ' . ATTACHMENTS_TABLE . ' 
+	$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
 		SET download_count = download_count + 1 
 		WHERE attach_id = ' . $attachment['attach_id'];
 	$_CLASS['core_db']->sql_query($sql);
@@ -297,7 +296,7 @@ function download_allowed()
 			FROM ' . SITELIST_TABLE;
 		$result = $_CLASS['core_db']->sql_query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$site_ip = trim($row['site_ip']);
 			$site_hostname = trim($row['site_hostname']);
@@ -338,7 +337,7 @@ function download_allowed()
 			}
 		}
 
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 	
 	return $allowed;

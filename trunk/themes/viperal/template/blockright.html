@@ -1,19 +1,13 @@
 <!-- IF isset({ $block_right }) -->
 <div id="blocksright">
-  <!-- LOOP $block_right -->
+	<!-- LOOP $block_right -->
 	<div class="blocks">
-       
-        <div class="top" onclick="blockswitch2('{ $block_right:ID }');" style="cursor:pointer">&nbsp;{ $block_right:TITLE }&nbsp;</div>
-                    
-		<div class="content" id="pe{ $block_right:ID }" { $block_right:COLLAPSE }>
-
-        { $block_right:CONTENT }
-        
-        </div>
-
-	</div>
-  <br />
-  <!-- ENDLOOP $block_right -->
-
+		<div class="top" onclick="switch_collapse('block_{ $block_right:id }');" style="cursor:pointer">&nbsp;{ $block_right:title }&nbsp;</div>
+			<div<!-- IF { $block_right:collapsed } --> style="display: none;"<!-- ENDIF --> class="content" id="block_{ $block_right:id }">
+			{ $block_right:content }
+			</div>
+		</div>
+	<br />
+	<!-- ENDLOOP $block_right -->
 </div>
 <!-- ENDIF -->

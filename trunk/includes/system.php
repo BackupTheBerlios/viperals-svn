@@ -1,17 +1,23 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+*/
 
 function confirmation_image($code = false, $size = false)
 {
@@ -140,18 +146,78 @@ function confirmation_image($code = false, $size = false)
 		$x += $font_width * (($width_addition) ? mt_rand(2, 5) : 1);
 	}
 
-	//imagepng($im);
+	imagepng($im);
 	imagedestroy($im);
+}
+
+function activate()
+{
+	global $_CLASS;
+
+	$user_id = get_variable('user_id', 'GET', 0, 'integer');
+	$key = get_variable('key', 'GET', false);
+
+	if (!$user_id || !$key)
+	{
+		trigger_error('CANT_ACTIVATED');
+	}
+	
+	$sql = 'SELECT username, user_status, user_email, user_new_password, user_new_password_encoding, user_act_key
+		FROM ' . USERS_TABLE . " WHERE user_id = $user_id AND user_type = ".USER_NORMAL;
+
+	$result = $_CLASS['core_db']->sql_query($sql);
+	$row = $_CLASS['core_db']->sql_fetchrow($result);
+	$_CLASS['core_db']->sql_freeresult($result);
+
+	if (!$row)
+	{
+		trigger_error('NO_USER');
+	}
+	
+	if ($row['user_status'] != USER_UNACTIVATED && !$row['user_new_password'])
+	{
+		trigger_error(($row['user_status'] == USER_ACTIVE) ? 'ALREADY_ACTIVATED' : 'CANT_ACTIVATED');
+	}
+	
+	if ($row['user_act_key'] != $key)
+	{
+		trigger_error('WRONG_ACTIVATION_KEY');
+	}
+
+	$sql_ary = array(
+		'user_act_key'				=> null,
+		'user_new_password'			=> null,
+		'user_new_password_encoding'=> null
+	);
+
+	if ($row['user_new_password'])
+	{
+		$sql_ary += array(
+			'user_password'				=> $row['user_new_password'],
+			'user_password_encoding'	=> $row['user_new_password_encoding'],
+		);
+	}
+	else
+	{
+		include_once($site_file_root.'includes/functions_user.php');
+		user_activate($user_id);
+		
+		set_core_config('user', 'newest_user_id', $row['user_id'], false);
+		set_core_config('user', 'newest_username', $row['username'], false);
+	}
+
+	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
+		WHERE user_id = ' . $row['user_id'];
+	$result = $_CLASS['core_db']->sql_query($sql);
 }
 
 function login()
 {
 	global $_CLASS;
 
-	$login_options = array(
-		'full_screen'	=> isset($_REQUEST['full']),
-	);
+	$login_options = array('full_screen' => isset($_REQUEST['full']));
 		
-	$_CLASS['core_auth']->do_login($login_options, $template);
+	$_CLASS['core_auth']->do_login($login_options, false);
 }
+
 ?>

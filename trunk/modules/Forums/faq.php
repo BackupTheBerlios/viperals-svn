@@ -120,8 +120,8 @@ $_CLASS['core_template']->assign(array(
 	'L_BACK_TO_TOP'			=> $_CLASS['core_user']->lang['BACK_TO_TOP'],
 	'L_JUMP_TO'				=> $_CLASS['core_user']->lang['JUMP_TO'],
 	'L_GO'					=> $_CLASS['core_user']->lang['GO'],
-	'S_BACK_TO_TOP'			=> generate_link('Forums&amp;file=faq'.$link.'#Top'))
-);
+	'S_BACK_TO_TOP'			=> generate_link('Forums&amp;file=faq'.$link.'#Top')
+));
 
 
 $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', ($mode == 'bbcode'));

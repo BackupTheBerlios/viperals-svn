@@ -183,7 +183,7 @@ class ucp_pm extends module
 				}
 				else
 				{
-					$folder_id = request_var('f', PRIVMSGS_NO_BOX);
+					$folder_id = request_var('f', PRIVMSGS_INBOX);
 					$action = request_var('action', 'view_folder');
 				}
 
@@ -242,7 +242,7 @@ class ucp_pm extends module
 				else if ($msg_id && $folder_id == PRIVMSGS_NO_BOX)
 				{
 					$sql = 'SELECT folder_id
-						FROM ' . PRIVMSGS_TO_TABLE . "
+						FROM ' . FORUMS_PRIVMSGS_TO_TABLE . "
 						WHERE msg_id = $msg_id
 							AND user_id = " . $_CLASS['core_user']->data['user_id'];
 					$result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -265,7 +265,7 @@ class ucp_pm extends module
 						$sql_ordering = ($view == 'next') ? 'ASC' : 'DESC';
 
 						$sql = 'SELECT t.msg_id
-							FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . PRIVMSGS_TABLE . " p2
+							FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_PRIVMSGS_TABLE . " p2
 							WHERE p2.msg_id = $msg_id
 								AND t.folder_id = $folder_id
 								AND t.user_id = " . $_CLASS['core_user']->data['user_id'] . "
@@ -286,7 +286,7 @@ class ucp_pm extends module
 					}
 	
 					$sql = 'SELECT t.*, p.*, u.*
-						FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . ' u
+						FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_USERS_TABLE . ' u
 						WHERE t.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 							AND p.author_id = u.user_id
 							AND t.folder_id = $folder_id

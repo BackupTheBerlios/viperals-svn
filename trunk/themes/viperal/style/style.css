@@ -2,11 +2,12 @@ body
 {
     font-family: Verdana, Helvetica, sans-serif;
     font-size: 10px;
-    /*font: 7pt "Bitstream Vera Sans", verdana, geneva, lucida, 'lucida grande', arial, helvetica, sans-serif;*/
-    margin: 0px;
+
+    /* Needed for opera */
+    margin: 0px; 
+
     padding: 0px;
-    background-color: white;
-    background: url(images/bg.gif);
+    background: url(/images/bg.gif);
 }
 
 .logo
@@ -14,10 +15,10 @@ body
 	position:fixed;
 	top: -1px;
 	left: -1px;
-	z-index:	1;
+	z-index: 1;
 }
 
-#nav li a, .active
+#nav li a
 {
 	display: block;
 	padding: 5px 10px 5px 5px; 
@@ -25,7 +26,7 @@ body
 	color: black;
 }
 
-#nav li a:hover, .active
+#nav li a:hover
 {
 	background-color: #FFFFFF;
 	color: black;
@@ -39,21 +40,22 @@ body
 #page
 {
 	position: relative;
-	height:15px;
+	height: 15px;
 	background: url(images/curve.gif) top left no-repeat;
 	background-color: #eee;
 	color: #999;
-	padding: 0.25em 0 0.25em 2em;
+	padding: 2px;
+	padding-left: 20px;
 }
 
 
 #header
 {
 	position: relative;
-	height:138px;
+	height: 138px;
 	width: 100%;
 	background: url(images/background.gif);
-	border-bottom:1px solid #ccc;
+	border-bottom: 1px solid #ccc;
 }
 	
 #blocksleft
@@ -61,18 +63,18 @@ body
 	position:absolute;
 	top: 137px;
 	left:0px;
-	width:180px;
+	width: 180px;
 	height:100%;
-	margin:0px 0px 10px 0px;
+	margin: 0px 0px 10px 0px;
 }
 	
 #blocksright
 {
 	position:absolute;
 	top: 160px;
-	right:0px;
-	width:180px;
-	margin:0px 0px 10px 0px;
+	right: 0px;
+	width: 180px;
+	margin: 0px 0px 10px 0px;
 }
 
 /* 
@@ -80,8 +82,8 @@ body
 */
 .mainbody
 {
-	position:relative;
-	height:100%;
+	position: relative;
+	height: 100%;
 	border-left:1px solid #ccc;
 	border-top:1px solid #ccc;
 	background-color:white;
@@ -89,10 +91,10 @@ body
 	
 .bodymain
 {
-	position:relative;
-	border-top:1px solid #ccc;
-	height:100%;
-	min-height:1500px;
+	position: relative;
+	border-top: 1px solid #ccc;
+	height: 100%;
+	min-height: 1500px;
 	border-right:1px dashed #ccc;
 }
 
@@ -259,6 +261,22 @@ img
 	background-color: #ECECEC; padding: 4px;
 }
 
+.page_link_normal
+{
+	background: #F2F1ED;
+	border: 1px solid #A9B8C2;
+	padding: 1px 3px 1px 3px;
+	margin: 2px
+}
+
+.page_link_current
+{
+	background: #F2F1ED;
+	border: 1px solid #A9B8C2;
+	padding: 1px 3px 1px 3px;
+	margin: 2px
+}
+
 /* 
 	TEXT
 */
@@ -328,26 +346,41 @@ th
 
 .catdiv
 {
-	height: 28px; margin: 0px; padding: 0px; border: 0px; background-color: white; background-image: url('./images/cellpic2.jpg'); background-repeat: repeat-y;
+	height: 28px;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	background-color:white;
+	background-image: url('./images/cellpic2.jpg');
+	background-repeat: repeat-y;
 }
 
 .cat
 {
-	height: 28px; margin: 0px; padding: 0px; border: 0px; background-color: #C7D0D7; background-image: url('../images/cellpic1.gif'); text-indent: 4px;
+	height: 28px;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	background-color: #C7D0D7;
+	background-image: url('../images/cellpic1.gif');
+	text-indent: 4px;
 }
 
 .row1
 {
-	background-color: #ECECEC; padding: 4px;
+	background-color: #ECECEC;
+	padding: 4px;
 }
 .row2
 {
-	background-color: #DCE1E5; padding: 4px;
+	background-color: #DCE1E5;
+	padding: 4px;
 }
 
 .row3
 {
-background-color: #C0C8D0; padding: 4px;
+	background-color: #C0C8D0;
+	padding: 4px;
 }
 
 .spacer
@@ -408,28 +441,33 @@ input
 	font-size: 100%; color: black; font-family: Verdana, serif; font-weight: normal;
 }
 
-input:focus
-{
-	background-color: #C7D0D7;
-	border:1px solid #999;
-}
-
 textarea
 {
-	background-color: white; color: black; font-family: Verdana, serif; font-size: 110%; font-weight: normal;
-	border:1px solid #999; 
+	background-color: white;
+	font-family: Verdana, serif;
+	font-size: 110%; font-weight: normal;
+	border:1px solid #999;
+	padding: 3px;
 }
 
 select
 {
-	background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal;;
+	background-color: white;
+	font-family: Verdana, serif;
+	font-size: 100%;
+	font-weight: normal;;
 }
 
-.button, .btnbbcode
+.button, .btnbbcode, .button_main
 {
 	background-color: #FAFAFA;
 	border: 1px solid #ccc;
 	color: black;
+}
+
+.button_main
+{
+	font-weight: bold;
 }
 
 /* Rename this */
@@ -438,16 +476,13 @@ select
 	background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;
 }
 
-02.helpline
+.helpline
 {
 	background-color: #DEE3E7; border-style: none;
 }
 
 /* Rename this */
-.btnmain
-{
-	font-weight: bold; background-color: #FAFAFA; border-style: solid; border-width: 1px;
-}
+
 
 /* 
 	BBCODE 
