@@ -19,13 +19,17 @@
 ||**************************************************************||
 
 $Id$
+$Id:$
+$Date:$
+$Rev:$
+$Author:$
 */
 
 class sessions
 {
 	var $load;
 	var $new_session = false;
-	var $save_session = false;
+	var $save  _session = false;
 
 	var $sid_link_prefex = 'sid';
 	var $sid_link = false;
