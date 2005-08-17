@@ -17,6 +17,13 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
+
+$Id:$
+$Date:$
+$Rev:$
+$Revision:$
 */
 
 class sessions
