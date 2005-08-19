@@ -1,17 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 if (VIPERAL !== 'Admin') 
 {
@@ -30,8 +38,7 @@ function check_position($position, $redirect = true)
 	{
 		if ($redirect)
 		{
-			url_redirect(generate_link('messages', array('admin' => true)));
-			die;
+			redirect(generate_link('messages', array('admin' => true, 'full' => true)));
 		}
 		return false;
 	}
@@ -39,160 +46,108 @@ function check_position($position, $redirect = true)
 	return true;
 }
 
-function get_id($rediret = true)
+if (isset($_REQUEST['mode']))
 {
-	$id = get_variable('id', 'GET', false, 'integer');
-
-	if (!$id && $rediret)
+	if ($id = get_variable('id', 'GET', false, 'integer'))
 	{
-		url_redirect(generate_link('messages', array('admin' => true)));
-		die;
-	}
-	
-	return $id;
-}
-
-switch (get_variable('mode', 'GET', false))
-{
-	case 'change':
-		block_change(get_id());
-		url_redirect(generate_link('messages', array('admin' => true)));
-    break;
-    
-    case 'weight':
-		block_weight(get_id(), get_variable('option', 'GET', false));
-		url_redirect(generate_link('messages', array('admin' => true)));
-    break;
-
-    case 'delete':
-		block_delete(get_id());
-		url_redirect(generate_link('messages', array('admin' => true)));
-    break;
-  
-    case 'edit':
-		message_edit(get_id());
-    break;
-    
-    case 'add':
-		message_edit(false);
-    break;
-       
-    case 'save':
-		message_save();
-    break;
-
-    case 'auth':
-		block_auth(get_id());
-    break;
-
-    default:
-		message_admin();
-}
-
-script_close(false);
-
-function message_admin()
-{
-    global $prefix, $_CLASS;
-
-    $result = $_CLASS['core_db']->query('SELECT id, position, title, start, weight, active, expires FROM '.BLOCKS_TABLE.'
-					WHERE position IN ('.BLOCK_MESSAGE_TOP.', '.BLOCK_MESSAGE_BOTTOM.') 
-						ORDER BY weight ASC');
-	$block_position = array(BLOCK_MESSAGE_TOP => 'top', BLOCK_MESSAGE_BOTTOM => 'bottom');
-	$in_position = false;
-	$messages = array();
-
-	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
-    {
-		if ($in_position != $row['position'])
+		switch ($_REQUEST['mode'])
 		{
-			$weigth[$row['position']] = $row['weight'];
-			$in_position == $row['position'];
+			case 'change':
+				block_change($id);
+			break;
+			
+			case 'order':
+				block_order($id, get_variable('option', 'GET', false));
+			break;
+		
+			case 'delete':
+				block_delete($id, generate_link('messages', array('admin' => true)));
+			break;
+		  
+			case 'auth':
+				block_auth($id);
+			break;
 		}
-		$messages[] = $row;
 	}
-	$_CLASS['core_db']->free_result($result);
 
-	foreach ($messages as $row)
+	switch ($_REQUEST['mode'])
 	{
-		$_CLASS['core_template']->assign_vars_array($block_position[$row['position']].'_admin_messages', array(
-			'ACTIVE'		=> ($row['active']) ? true : false,
-			'CHANGE'		=> ($row['active']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+		case 'add':
+		case 'edit':
+			message_edit($id);
+			script_close(false);
+		break;
 
-			'AUTH_LINK'		=> generate_link('messages&amp;mode=auth&amp;id='.$row['id'], array('admin' => true)),
-			'ACTIVE_LINK'	=> generate_link('messages&amp;mode=change&amp;id='.$row['id'], array('admin' => true)),
-			'VIEW_LINK' 	=> generate_link('messages&amp;mode=show&amp;id='.$row['id'], array('admin' => true)),
-			'EDIT_LINK'		=> generate_link('messages&amp;mode=edit&amp;id='.$row['id'], array('admin' => true)),
-			'DELETE_LINK' 	=> generate_link('messages&amp;mode=delete&amp;id='.$row['id'], array('admin' => true)),
+		case 'save':
+			message_save($id);
+		break;
+	}
+}
 
-			'EXPIRES'		=> ($row['expires'] && ($row['expires'] < $_CLASS['core_user']->time)) ? $_CLASS['core_user']->format_date($row['expires']) : false,
-			'STARTS'		=> ($row['start'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['start']) : false,
-			'TITLE'			=> $row['title'],
+$result = $_CLASS['core_db']->query('SELECT block_id, block_position, block_title, block_starts, block_expires, block_order, block_status FROM ' . BLOCKS_TABLE . '
+				WHERE block_position IN ('.BLOCK_MESSAGE_TOP.', '.BLOCK_MESSAGE_BOTTOM.') 
+					 ORDER BY block_position, block_order ASC');
 
-			'WEIGHT_DOWN' 		=> ($row['weight'] < $weigth[$row['position']]),
-			'WEIGHT_UP'		=> ($row['weight'] > 1),
+$block_position = array(BLOCK_MESSAGE_TOP => 'top', BLOCK_MESSAGE_BOTTOM => 'bottom');
+$in_position = false;
+$messages = array();
 
-			'WEIGHT_MOVE_UP' 	=> generate_link('messages&amp;mode=weight&amp;option=up&amp;id='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_TOP' 	=> generate_link('messages&amp;mode=weight&amp;option=top&amp;id='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_DOWN'	=> generate_link('messages&amp;mode=weight&amp;option=down&amp;id='.$row['id'], array('admin' => true)),
-			'WEIGHT_MOVE_BOTTOM'=> generate_link('messages&amp;mode=weight&amp;option=bottom&amp;id='.$row['id'], array('admin' => true)),
-		));
-    }
-    $_CLASS['core_db']->free_result($result);
+while($row = $_CLASS['core_db']->fetch_row_assoc($result))
+{
+	if ($in_position != $row['block_position'])
+	{
+		$weigth[$row['block_position']] = $row['block_order'];
+		$in_position == $row['block_position'];
+	}
+	$messages[] = $row;
+}
 
-    $_CLASS['core_template']->assign(array(
-		'L_ADD_NEW'			=> 'New Message',
-		'L_BLOCK_HTML'		=> 'Add HTML block',
-		'L_BLOCK_RSS'		=> 'Add RSS block',
-		'B_ACTION'			=> generate_link('messages&amp;mode=add', array('admin' => true))
+$_CLASS['core_db']->free_result($result);
+
+foreach ($messages as $row)
+{
+	$_CLASS['core_template']->assign_vars_array($block_position[$row['block_position']].'_admin_messages', array(
+		'ACTIVE'		=> ($row['block_status']) ? true : false,
+		'CHANGE'		=> ($row['block_status']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+
+		'AUTH_LINK'		=> generate_link('messages&amp;mode=auth&amp;id='.$row['block_id'], array('admin' => true)),
+		'ACTIVE_LINK'	=> generate_link('messages&amp;mode=change&amp;id='.$row['block_id'], array('admin' => true)),
+		'VIEW_LINK' 	=> generate_link('messages&amp;mode=show&amp;id='.$row['block_id'], array('admin' => true)),
+		'EDIT_LINK'		=> generate_link('messages&amp;mode=edit&amp;id='.$row['block_id'], array('admin' => true)),
+		'DELETE_LINK' 	=> generate_link('messages&amp;mode=delete&amp;id='.$row['block_id'], array('admin' => true)),
+
+		'EXPIRES'		=> ($row['block_expires'] && $row['block_expires'] < $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['block_expires']) : false,
+		'STARTS'		=> ($row['block_starts'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['block_starts']) : false,
+		'TITLE'			=> $row['block_title'],
+
+		'ORDER_DOWN' 	=> ($row['block_order'] < $weigth[$row['block_position']]),
+		'ORDER_UP'		=> ($row['block_order'] > 1),
+
+		'LINK_ORDER_UP' 	=> generate_link('messages&amp;mode=order&amp;option=up&amp;id='.$row['block_id'], array('admin' => true)),
+		'LINK_ORDER_TOP' 	=> generate_link('messages&amp;mode=order&amp;option=top&amp;id='.$row['block_id'], array('admin' => true)),
+		'LINK_ORDER_DOWN'	=> generate_link('messages&amp;mode=order&amp;option=down&amp;id='.$row['block_id'], array('admin' => true)),
+		'LINK_ORDER_BOTTOM'	=> generate_link('messages&amp;mode=order&amp;option=bottom&amp;id='.$row['block_id'], array('admin' => true)),
 	));
-
-	$_CLASS['core_template']->display('admin/messages/index.html');
 }
 
-function message_delete($id)
+$_CLASS['core_template']->assign_array(array(
+	'L_ADD_NEW'			=> 'New Message',
+	'L_BLOCK_HTML'		=> 'Add HTML block',
+	'L_BLOCK_RSS'		=> 'Add RSS block',
+	'B_ACTION'			=> generate_link('messages&amp;mode=add', array('admin' => true))
+));
+
+$_CLASS['core_template']->display('admin/messages/index.html');
+
+script_close();
+
+function message_edit($id = false, $block = false, $error = false)
 {
     global $_CLASS;
 
-    if (get_variable('ok', 'GET', false))
-    {
-		$result = $_CLASS['core_db']->query('SELECT weight, position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
-		$block = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-		if (!$block)
-		{
-			url_redirect(generate_link('messages', array('admin' => true)));
-		}
-		
-		check_position($block['position']);
-				
-        $result = $_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET weight= weight - 1 WHERE position='.$block['position'].' AND weight > '.$block['weight']);
-        $_CLASS['core_db']->query('DELETE from '.BLOCKS_TABLE.' where id='.$id);
-
-        $_CLASS['core_cache']->destroy('blocks');
-		url_redirect(generate_link('messages', array('admin' => true)));
-    }
-    else
-    {
-		$_CLASS['core_display']->display_head();
-		OpenTable();
-		echo '<center>Remove Message ?';
-		echo '<br /><br />[ <a href="'.generate_link("messages&amp;mode=delete&amp;id=$id&amp;ok=1", array('admin' => true)).'">Yes</a> | <a href="'.generate_link('messages', array('admin' => true)).'">No</a> ]</center>';
-		CloseTable();
-        $_CLASS['core_display']->display_footer();
-    }
-}
-
-function message_edit($block = false, $error = false)
-{
-    global $_CLASS;
-    
-    $id = false;
-
-	if (isset($_REQUEST['id']) && $id = get_id())
+	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_id = ' . $id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
@@ -201,7 +156,7 @@ function message_edit($block = false, $error = false)
 			url_redirect(generate_link('messages', array('admin' => true)));
 		}
 		
-		check_position($block['position']);
+		check_position($block['block_position']);
 
 		if (isset($_POST['submit']))
 		{
@@ -213,20 +168,19 @@ function message_edit($block = false, $error = false)
 		unset($block_post);
 	}
 	
-	$_CLASS['core_template']->assign(array(
-		'B_TITLE'			=> $block['title'],
-		'B_CONTENT'			=> $block['content'],
-		'B_ACTIVE'			=> $block['active'],
-		'B_EXPIRES'			=> is_numeric($block['expires']) ? $_CLASS['core_user']->format_date($block['expires'], 'M d, Y h:i a') : $block['expires'],
+	$_CLASS['core_template']->assign_array(array(
+		'B_TITLE'			=> $block['block_title'],
+		'B_CONTENT'			=> $block['block_content'],
+		'B_ACTIVE'			=> $block['block_status'],
+		'B_EXPIRES'			=> is_numeric($block['block_expires']) ? $_CLASS['core_user']->format_date($block['block_expires'], 'M d, Y h:i a') : $block['block_expires'],
 		'B_ERROR'			=> $error,
-		'B_STARTS'			=> is_numeric($block['start']) ? $_CLASS['core_user']->format_date($block['start'], 'M d, Y h:i a') : $block['start'],
-		'B_CURRENT_TIME'	=> $_CLASS['core_user']->format_date($_CLASS['core_user']->time),
-		'B_POSITION'		=> message_position_select($block['position']),
-		'B_TYPE'			=> message_type_select($block['type']),
+		'B_STARTS'			=> is_numeric($block['block_starts']) ? $_CLASS['core_user']->format_date($block['block_starts'], 'M d, Y h:i a') : $block['block_starts'],
+		'B_POSITION'		=> message_position_select($block['block_position']),
+		'B_TYPE'			=> message_type_select($block['block_type']),
 		'B_DELETE_LINK'		=> ($id) ? generate_link('messages&amp;mode=delete&amp;id='.$id, array('admin' => true)) : false,
-		'B_ACTION'			=> generate_link('messages&amp;mode=save'.(($id) ? '&amp;id='.$id : ''), array('admin' => true))
-		)		
-	);
+		'B_ACTION'			=> generate_link('messages&amp;mode=save'.(($id) ? '&amp;id='.$id : ''), array('admin' => true)),
+		'B_CURRENT_TIME'=> $_CLASS['core_user']->format_date($_CLASS['core_user']->time)
+	));
 	
 	$_CLASS['core_template']->display('admin/messages/edit.html');
 }
@@ -243,40 +197,40 @@ function messages_get_data(&$data, &$error)
 		return;
 	}
 
-	$data['title'] = get_variable('title', 'POST', '');
-	$data['content'] = trim(get_variable('content', 'POST', ''));
+	$data['block_title'] = get_variable('title', 'POST', '');
+	$data['block_content'] = trim(get_variable('content', 'POST', ''));
 	
 	foreach ($data as $field => $value)
 	{
 		if (!$value)
 		{
-			$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
+			$error .= $_CLASS['core_user']->get_lang('ERROR_'.$field).'<br />';
 		}
 	}
 	
-	$data['active']		= get_variable('active', 'POST', 0);
-	$data['expires']	= get_variable('expires', 'POST', 0);
-	$data['start']		= get_variable('time', 'POST', '');
-	$data['position']	= get_variable('b_position', 'POST', BLOCK_MESSAGE_TOP, 'integer');
-	$data['type'] 		= (int) get_variable('b_type', 'REQUEST', BLOCKTYPE_MESSAGE);
+	$data['block_status']	= get_variable('active', 'POST', 0);
+	$data['block_expires']	= get_variable('expires', 'POST', 0);
+	$data['block_starts']	= get_variable('time', 'POST', '');
+	$data['block_position']	= get_variable('b_position', 'POST', BLOCK_MESSAGE_TOP, 'integer');
+	$data['block_type'] 	= get_variable('b_type', 'REQUEST', BLOCKTYPE_MESSAGE, 'integer');
 
 	$appoved_types = array(BLOCKTYPE_MESSAGE, BLOCKTYPE_MESSAGE_GLOBAL);
 
-	if (!in_array($data['type'], $appoved_types, true))
+	if (!in_array($data['block_type'], $appoved_types, true))
 	{
-		$data['type'] = BLOCKTYPE_MESSAGE;
+		$data['block_type'] = BLOCKTYPE_MESSAGE;
 	}
 	
-	if (!$data['position'] || !check_position($data['position'], false))
+	if (!$data['block_position'] || !check_position($data['block_position'], false))
 	{
-		$data['position'] = BLOCK_MESSAGE_TOP;
+		$data['block_position'] = BLOCK_MESSAGE_TOP;
 	}
 	
 	$start = $expires = '';
 
-	if ($data['start'])
+	if ($data['block_starts'])
 	{
-		$start = strtotime($data['start']);
+		$start = strtotime($data['block_start']);
 
 		if (!$start || $start == -1)
 		{
@@ -284,9 +238,9 @@ function messages_get_data(&$data, &$error)
 		}
 	}
 
-	if ($data['expires'])
+	if ($data['block_expires'])
 	{
-		$expires = strtotime($data['expires']);
+		$expires = strtotime($data['block_expires']);
 
 		if (!$expires || $expires == -1)
 		{
@@ -296,36 +250,36 @@ function messages_get_data(&$data, &$error)
 	
 	if (!$error)
 	{
-		$data['start'] = ($start) ? $_CLASS['core_user']->time_convert($start, 'gmt') : 0;
-		$data['expires'] = ($expires) ? $_CLASS['core_user']->time_convert($expires, 'gmt') : 0;
+		$data['block_starts'] = ($start) ? $_CLASS['core_user']->time_convert($start, 'gmt') : 0;
+		$data['block_expires'] = ($expires) ? $_CLASS['core_user']->time_convert($expires, 'gmt') : 0;
 	}
 }
 
-function message_save()
+function message_save($id = false)
 {
     global $_CLASS;
     
-	if (isset($_REQUEST['id']) && $id = get_id())
+	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT position FROM '.BLOCKS_TABLE.' WHERE id='.$id);
+		$result = $_CLASS['core_db']->query('SELECT block_position FROM ' . BLOCKS_TABLE . ' WHERE block_id = '. $id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
-		
+
 		if (!$block)
 		{
 			url_redirect(generate_link('messages', array('admin' => true)));
 		}
-		
-		check_position($block['position']);
+
+		check_position($block['block_position']);
 		// need to validate data with the db type
 		messages_get_data($data, $error);
 		
 		if ($error)
 		{
-			return message_edit($data, $error);
+			return message_edit($id, $data, $error);
 		}
 	
-		$sql = 'UPDATE '.BLOCKS_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE id='.$id;
+		$sql = 'UPDATE ' . BLOCKS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE block_id = '.$id;
 
 		$_CLASS['core_db']->query($sql);
 	}
@@ -335,18 +289,16 @@ function message_save()
 
 		if ($error)
 		{
-			return message_edit($data, $error);
+			return message_edit(false, $data, $error);
 		}
 
-		$result = $_CLASS['core_db']->query('SELECT MAX(weight) as weight FROM '.BLOCKS_TABLE.' WHERE position = '.$data['position']);
-		$maxweight = $_CLASS['core_db']->fetch_row_assoc($result);
+		$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM ' . BLOCKS_TABLE . ' WHERE block_position = '.$data['block_position']);
+		list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 		$_CLASS['core_db']->free_result($result);
 
-		$data['weight'] = (int) $maxweight['weight'] + 1;
+		$data['block_order'] = (int) $max_order + 1;
 
-		$sql = 'INSERT INTO '.BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
-
-		$_CLASS['core_db']->query($sql);
+		$_CLASS['core_db']->query('INSERT INTO ' . BLOCKS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data));
 	}
 
 	$_CLASS['core_cache']->destroy('blocks');

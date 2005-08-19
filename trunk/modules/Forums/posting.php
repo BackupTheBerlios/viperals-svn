@@ -420,7 +420,7 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 		WHERE user_id = " . $_CLASS['core_user']->data['user_id']);
 
 	$_CLASS['core_db']->transaction('commit');
-	
+
 	markread('topic', $forum_id, $topic_id, $current_time);
 
 	add_log('mod', $forum_id, $topic_id, sprintf($_CLASS['core_user']->lang['LOGM_BUMP'], $topic_title));

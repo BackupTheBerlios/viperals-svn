@@ -19,10 +19,6 @@
 ||**************************************************************||
 
 $Id$
-$Id$
-$Date$
-$Rev$
-$Author$
 */
 
 class sessions
@@ -69,11 +65,11 @@ class sessions
 			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
 
-			if (isset($this->data['user_id']) && ($this->data['user_id'] == ANONYMOUS || $this->data['user_status'] == USER_ACTIVE))
+			if (isset($this->data['user_id']) && ($this->data['user_id'] == ANONYMOUS || $this->data['user_status'] == STATUS_ACTIVE))
 			{
 				$valid  = true;
 
-				if ($_CORE_CONFIG['server']['browser_check'] && ($this->data['session_browser'] != $this->browser))
+				if ($this->data['session_browser'] != $this->browser)
 				{
 					$valid  = false;
 				}

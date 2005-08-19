@@ -1,23 +1,31 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 function block_auth($id)
 {
 	global $_CLASS;
 
-	$result = $_CLASS['core_db']->query('SELECT position, auth FROM ' . BLOCKS_TABLE . ' WHERE id='.$id);
+	$result = $_CLASS['core_db']->query('SELECT block_position, block_auth FROM ' . BLOCKS_TABLE . ' WHERE block_id = '.$id);
 	$block = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 	
@@ -26,27 +34,27 @@ function block_auth($id)
 		trigger_error('BLOCK_NOT_FOUND');
 	}
 	
-	$block['auth'] = ($block['auth']) ? unserialize($block['auth']) : '';
+	$block['block_auth'] = ($block['block_auth']) ? unserialize($block['block_auth']) : '';
 	
-	check_position($block['position']);
+	check_position($block['block_position']);
 	
 	$_CLASS['core_display']->display_header();
 
-	$auth = $_CLASS['core_auth']->generate_auth_options($block['auth']);
+	$auth = $_CLASS['core_auth']->generate_auth_options($block['block_auth']);
 
 	if ($auth !== false)
 	{
 		if (is_null($auth))
 		{
-			$block['auth'] = $auth = '';
+			$block['block_auth'] = $auth = '';
 		}
 		else
 		{
-			$block['auth'] = $auth;
+			$block['block_auth'] = $auth;
 			$auth = $_CLASS['core_db']->escape(serialize($auth));
 		}
 
-		$_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . " SET auth = '$auth' WHERE id = $id");
+		$_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . " SET block_auth = '$auth' WHERE block_id = $id");
 		$_CLASS['core_cache']->destroy('blocks');
 	}
 	
@@ -107,35 +115,35 @@ function block_order($id, $option)
 			{
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = block_order-1 WHERE block_position = '.$block['block_position'].' AND block_order='.($block['block_order'] + 1));
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = '.($block['block_order'] + 1).' WHERE block_id ='. $id);
-			}
 
-			$_CLASS['core_cache']->destroy('blocks');
+				$_CLASS['core_cache']->destroy('blocks');
+			}
 		break;
 
 		case 'bottom':
 
-			$result = $_CLASS['core_db']->query('SELECT MAX(weight) as block_order FROM ' . BLOCKS_TABLE . ' WHERE block_position='.$block['block_position']);
-			list($max_order) = $_CLASS['core_db']->fetch_row_($result);
+			$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM ' . BLOCKS_TABLE . ' WHERE block_position='.$block['block_position']);
+			list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 			$_CLASS['core_db']->free_result($result);
 
 			if ($block['block_order'] < $max_order)
 			{
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = block_order-1 WHERE block_position='.$block['block_position'].' AND block_order > '.$block['block_order']);
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = '.$max_order.' WHERE block_id = '.$id);
-			}
 
-			$_CLASS['core_cache']->destroy('blocks');
+				$_CLASS['core_cache']->destroy('blocks');
+			}
 		break;
 
 		case 'up':
 
-			if ($block['block_order'] && $block['weight'] != 1)
+			if ($block['block_order'] && $block['block_order'] != 1)
 			{
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = block_order+1 WHERE block_position='.$block['block_position'].' AND block_order = '.($block['block_order'] - 1));
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order='.($block['block_order'] -1 ).' WHERE block_id ='. $id);
-			}
 
-			$_CLASS['core_cache']->destroy('blocks');
+				$_CLASS['core_cache']->destroy('blocks');
+			}
 		break;
 
 		case 'top':
@@ -144,9 +152,9 @@ function block_order($id, $option)
 			{
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = block_order+1 WHERE block_position='.$block['block_position'].' AND block_order < '.$block['block_order']);
 				$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = 1 WHERE block_id = '.$id);
-			}
 
-			$_CLASS['core_cache']->destroy('blocks');
+				$_CLASS['core_cache']->destroy('blocks');
+			}
 		break;
 	}
 }

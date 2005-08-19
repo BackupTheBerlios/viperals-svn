@@ -1,17 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 if (VIPERAL !== 'Admin') 
 {
@@ -63,18 +71,22 @@ if (isset($_REQUEST['mode']))
 					blocks_change_position($position, $id);
 				}
 			break;
-	
+
+			case 'edit':
+				block_add($id);
+				script_close(false);
+			break;
+
 			case 'auth':
 				block_auth($id);
 			break;
 		}
 	}
-	
+
 	switch ($_REQUEST['mode'])
 	{
 		case 'add':
-		case 'edit':
-			block_add($id);
+			block_add(false);
 			script_close(false);
 		break;
 		   
@@ -88,7 +100,7 @@ blocks_block('main');
 
 $result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_file, block_auth
 	FROM '.BLOCKS_TABLE.'
-	WHERE block_position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.')  ORDER BY block_position, block_order ASC');
+	WHERE block_position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.') ORDER BY block_position, block_order ASC');
 
 $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
 $in_position = false;
@@ -329,9 +341,9 @@ function block_get_data(&$data, &$error, $type = false)
 		$data['block_position'] = BLOCK_RIGHT;
 	}
 
-	$data['block_status'] = (int) get_variable('b_active', 'POST', 0);
-	$data['block_expires'] = get_variable('b_expires', 'POST', '');
-	$data['block_starts'] = get_variable('b_time', 'POST', '');
+	$data['block_status']	= get_variable('b_active', 'POST', 0, 'integer');
+	$data['block_expires']	= get_variable('b_expires', 'POST', '');
+	$data['block_starts']	= get_variable('b_time', 'POST', '');
 
 	$start = $expires = '';
 

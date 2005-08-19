@@ -111,8 +111,11 @@ class core_display
 	{
 		global $_CLASS, $_CORE_MODULE;
 
-		$_CORE_MODULE['title'] = $title;
-		
+		if ($title)
+		{
+			$_CORE_MODULE['title'] = $title;
+		}
+
 		if ($template)
 		{
 			$_CLASS['core_template']->display($template);
@@ -166,7 +169,7 @@ class core_display
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
-			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.$_CORE_MODULE['title'],
+			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.(is_array($_CORE_MODULE['title']) ? implode(' &gt; ', $_CORE_MODULE['title']) : $_CORE_MODULE['title']),
 			'SITE_BASE'			=>	generate_base_url(),
 			'SITE_CHARSET'		=>	'UTF-8',
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],

@@ -1,17 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 class core_mailer
 {
@@ -24,7 +32,7 @@ class core_mailer
 	
 	// Needed for some windows sendmail emulator/ SMTP
 	// Set to false is you have problems sending
-	var $named_addresses = true;
+	var $named_addresses = false;
 	var $error = '';
 
 	function core_mailer($html = false)
@@ -174,7 +182,7 @@ class core_mailer
 			$message = "\n".strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message)))."\n";
 		}
 
-		if ($_CORE_CONFIG['email']['smtp'])
+		if (!$_CORE_CONFIG['email']['smtp'])
 		{
 			$smtp = new smtp_mailer;
 			if ($connect = $smtp->connect($_CORE_CONFIG['email']['smtp_host'], $_CORE_CONFIG['email']['smtp_port']))

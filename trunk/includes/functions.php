@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 // Redo
@@ -371,7 +373,7 @@ function generate_link($link = false, $link_options = false)
 	{
 		$link = $file;
 
-		if ($options['force_sid'] || ($_CLASS['core_user']->sid_link && $options['sid']))
+		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->sid_link))
 		{
 			$link .= '?'.$_CLASS['core_user']->sid_link;
 		}
@@ -385,7 +387,7 @@ function generate_link($link = false, $link_options = false)
 
 		$link = $file.'?mod='.$link;
 
-		if ($options['force_sid'] || ($_CLASS['core_user']->sid_link && $options['sid']))
+		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->sid_link))
 		{
 			$link .= '&amp;'.$_CLASS['core_user']->sid_link;
 		}
@@ -509,17 +511,17 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 {
 	global $_CLASS, $_CORE_CONFIG;
 	
-	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET config_value ='".$_CLASS['core_db']->escape($value) . "'
+	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET config_value = '".$_CLASS['core_db']->escape($value) . "'
 		WHERE config_section = '" . $_CLASS['core_db']->escape($section) . "'
 			AND config_name = '". $_CLASS['core_db']->escape($name) ."'";
 
 	if ($auto_add && (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows()))
 	{
 		$sql_array = array(
-			'config_section'	=> (string) $section,
-			'config_name'		=> (string) $name,
-			'config_value'		=> (string) $value,
-			'config_cache'		=> (int) $cache,
+			'config_section'=> (string) $section,
+			'config_name'	=> (string) $name,
+			'config_value'	=> (string) $value,
+			'config_cache'	=> (int) $cache,
 		);
 
 		$_CLASS['core_db']->return_on_error(true);
@@ -690,8 +692,7 @@ function modify_lines($text, $replacement = '')
 
 function redirect($url = false, $save = false)
 {
-	$url = ($url) ? $url : generate_link(false, array('full' => true));
-	$url = trim(str_replace('&amp;', '&', $url));
+	$url = ($url) ? str_replace('&amp;', '&', $url) : generate_link();
 
 	header('Location: ' . $url);
 

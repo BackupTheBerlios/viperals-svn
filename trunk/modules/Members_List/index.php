@@ -36,7 +36,7 @@ $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
 $_CLASS['core_user']->add_img(false, 'Forums');
 
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 	'S_SEARCH_USER'	=> false,
 	'S_SHOW_GROUP'	=> false
 	));
@@ -157,13 +157,11 @@ switch ($mode)
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign(array(
-			'PM_IMG'		=> $_CLASS['core_user']->img('btn_pm', $_CLASS['core_user']->lang['MESSAGE']))
-		);
+		$_CLASS['core_template']->assign('PM_IMG', $_CLASS['core_user']->img('btn_pm', $_CLASS['core_user']->lang['MESSAGE']));
 		break;
 
 	case 'contact':
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_SEND_ICQ'	=> false,
 			'S_SEND_AIM'	=> false,
 			'S_SEND_JABBER' => false,
@@ -218,7 +216,7 @@ switch ($mode)
 		$sql = "SELECT user_id, username, user_email, user_lang, $sql_field
 			FROM " . USERS_TABLE . "
 			WHERE user_id = $user_id
-				AND user_type = " . USER_NORMAL;
+				AND user_type = " . USER_NORMAL .' AND user_status = ' . STATUS_ACTIVE;
 		$result = $_CLASS['core_db']->query($sql);
 
 		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
@@ -267,8 +265,7 @@ switch ($mode)
 				break;
 		}
 
-		$_CLASS['core_template']->assign(array(
-		
+		$_CLASS['core_template']->assign_array(array(
 			'CONTACT_NAME'	=> $row[$sql_field],
 			'IM_CONTACT'	=> $row[$sql_field],
 			'USERNAME'		=> addslashes($row['username']),
@@ -302,14 +299,12 @@ switch ($mode)
 		$member = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
-		if (!$member || (!$_CLASS['core_auth']->admin_power('users') && $member['user_status'] != USER_ACTIVE))
+		if (!$member || (!$_CLASS['core_auth']->admin_power('users') && $member['user_status'] != STATUS_ACTIVE))
 		{
 			$_CLASS['core_db']->free_result($result);
 			trigger_error(($member) ? 'USER_INACTIVE' : 'NO_USER');
 		}
 		
-		
-
 		$sql = 'SELECT g.group_id, g.group_name, g.group_type
 			FROM ' . USER_GROUP_TABLE . ' ug, ' . GROUPS_TABLE . " g
 			WHERE ug.user_id = $user_id
@@ -358,7 +353,7 @@ switch ($mode)
 
 		// Grab all the relevant data
 		$sql = 'SELECT COUNT(p.post_id) AS num_posts
-			FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . " f
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . " f
 			WHERE p.poster_id = $user_id
 				AND f.forum_id = p.forum_id
 				$post_count_sql";
@@ -386,7 +381,7 @@ switch ($mode)
 		if ($post_count_sql)
 		{
 			$sql = 'SELECT f.forum_id, f.forum_name, COUNT(post_id) AS num_posts
-				FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . " f
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . " f
 				WHERE p.poster_id = $user_id
 					AND f.forum_id = p.forum_id
 					$post_count_sql
@@ -398,7 +393,7 @@ switch ($mode)
 			$_CLASS['core_db']->free_result($result);
 
 			$sql = 'SELECT t.topic_id, t.topic_title, COUNT(p.post_id) AS num_posts
-				FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . " f
 				WHERE p.poster_id = $user_id
 					AND t.topic_id = p.topic_id
 					AND f.forum_id = t.forum_id
@@ -470,9 +465,9 @@ switch ($mode)
 			$poster_avatar = '<img src="' . $poster_avatar . '" width="' . $member['user_avatar_width'] . '" height="' . $member['user_avatar_height'] . '" border="0" alt="" />';
 		}
 
-		$_CLASS['core_template']->assign(show_profile($member));
+		$_CLASS['core_template']->assign_array(show_profile($member));
 		
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),
 			'POSTS_PCT'			=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $percentage),
 			'ACTIVE_FORUM'		=> $active_f_name,
@@ -529,7 +524,7 @@ switch ($mode)
 		$page_title = $_CLASS['core_user']->lang['SEND_EMAIL'];
 		$template_html = 'memberlist_email.html';
 		
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'MESSAGE' => false,
 			'SUBJECT' => false)
 		);
@@ -570,7 +565,7 @@ switch ($mode)
 			$sql = 'SELECT username, user_email, user_allow_viewemail, user_lang, user_jabber, user_notify_type
 				FROM ' . USERS_TABLE . "
 				WHERE user_id = $user_id
-					AND user_type = ". USER_NORMAL;
+					AND user_type = ". USER_NORMAL . ' AND u.user_status = ' . STATUS_ACTIVE;
 			$result = $_CLASS['core_db']->query($sql);
 
 			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
@@ -588,7 +583,7 @@ switch ($mode)
 		else
 		{
 			$sql = 'SELECT forum_id, topic_title
-				FROM ' . TOPICS_TABLE . "
+				FROM ' . FORUMS_TOPICS_TABLE . "
 				WHERE topic_id = $topic_id";
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -641,7 +636,7 @@ switch ($mode)
 			if (!sizeof($error))
 			{
 				$sql = 'UPDATE ' . USERS_TABLE . '
-					SET user_emailtime = ' . time() . '
+					SET user_emailtime = ' . gmtime() . '
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 				$result = $_CLASS['core_db']->query($sql);
 
@@ -697,7 +692,7 @@ switch ($mode)
 
 		if ($topic_id)
 		{
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'EMAIL'			=> htmlspecialchars($email),
 				'NAME'			=> htmlspecialchars($name),
 				'TOPIC_TITLE'	=> $row['topic_title'],
@@ -706,7 +701,7 @@ switch ($mode)
 				'S_LANG_OPTIONS'=> ($topic_id) ? language_select($email_lang) : '')
 			);
 		}
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'USERNAME'		=> (!$topic_id) ? addslashes($row['username']) : '',
 			'ERROR_MESSAGE'	=> (sizeof($error)) ? implode('<br />', $error) : '',
 
@@ -812,7 +807,7 @@ switch ($mode)
 				$ips = (preg_match('#[a-z]#', $ipdomain)) ? implode(', ', preg_replace('#([0-9]{1,3}\.[0-9]{1,3}[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})#', "'\\1'", gethostbynamel($ipdomain))) : "'" . str_replace('*', '%', $ipdomain) . "'";
 
 				$sql = 'SELECT DISTINCT poster_id
-					FROM ' . POSTS_TABLE . '
+					FROM ' . FORUMS_POSTS_TABLE . '
 					WHERE poster_ip ' . ((preg_match('#%#', $ips)) ? 'LIKE' : 'IN') . " ($ips)";
 				$result = $_CLASS['core_db']->query($sql);
 
@@ -859,7 +854,8 @@ switch ($mode)
 			$sql = 'SELECT g.*, ug.user_id
 				FROM ' . GROUPS_TABLE . ' g
 				LEFT JOIN ' . USER_GROUP_TABLE . ' ug ON (ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . " AND ug.group_id = $group_id)
-				WHERE g.group_id = $group_id";
+				WHERE g.group_id = $group_id
+				AND group_status = ".STATUS_ACTIVE;
 	
 			$result = $_CLASS['core_db']->query($sql);
 			$group_row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -872,13 +868,14 @@ switch ($mode)
 
 			switch ($group_row['group_type'])
 			{
-				case GROUP_OPEN:
+// rename the lang names
+				case GROUP_REQUEST:
 					$group_row['group_type'] = 'OPEN';
-					break;
+				break;
 
 				case GROUP_CLOSED:
 					$group_row['group_type'] = 'CLOSED';
-					break;
+				break;
 
 				case GROUP_HIDDEN:
 					$group_row['group_type'] = 'HIDDEN';
@@ -888,13 +885,14 @@ switch ($mode)
 					{
 						trigger_error('NO_GROUP');
 					}
-					break;
+				break;
 
+				case GROUP_SYSTEM:
 				case GROUP_SPECIAL:
 					$group_row['group_type'] = 'SPECIAL';
-					break;
+				break;
 
-				case GROUP_FREE:
+				case GROUP_UNRESTRAINED:
 					$group_row['group_type'] = 'FREE';
 					break;
 			}
@@ -917,13 +915,14 @@ switch ($mode)
 			}
 
 			$rank_title = $rank_img = '';
-			if ($group_row['group_rank'] != -1)
+	
+			if (isset($ranks['special'][$group_row['group_rank']]))
 			{
 				$rank_title = $ranks['special'][$group_row['group_rank']]['rank_title'];
-				$rank_img = (!empty($ranks['special'][$group_row['group_rank']]['rank_image'])) ? '<img src="' . $config['ranks_path'] . '/' . $ranks['special'][$group_row['group_rank']]['rank_image'] . '" border="0" alt="' . $ranks['special'][$group_row['group_rank']]['rank_title'] . '" title="' . $ranks['special'][$group_row['group_rank']]['rank_title'] . '" /><br />' : '';	
+				$rank_img = empty($ranks['special'][$group_row['group_rank']]['rank_image']) ? '' : '<img src="' . $config['ranks_path'] . '/' . $ranks['special'][$group_row['group_rank']]['rank_image'] . '" border="0" alt="' . $ranks['special'][$group_row['group_rank']]['rank_title'] . '" title="' . $ranks['special'][$group_row['group_rank']]['rank_title'] . '" /><br />';	
 			}
 
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'GROUP_DESC'    => $group_row['group_description'],
 				'GROUP_NAME'    => $group_row['group_name'],
 				'GROUP_COLOR'   => $group_row['group_colour'],
@@ -936,7 +935,7 @@ switch ($mode)
 				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $group_row['group_receive_pm'] && $config['allow_mass_pm']) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;g='.$group_id) : '',)
 			);
 
-			$sql_fields = ', ug.user_status';
+			$sql_fields = ', ug.member_status';
 			$sql_from = ', ' . USER_GROUP_TABLE . ' ug ';
 			$sql_where .= " AND u.user_id = ug.user_id AND ug.group_id = $group_id";
 		}
@@ -949,7 +948,7 @@ switch ($mode)
 		{
 			$sql = 'SELECT COUNT(u.user_id) AS total_users
 				FROM ' . USERS_TABLE . " u$sql_from
-				WHERE u.user_type = " . USER_NORMAL ."
+				WHERE u.user_type = " . USER_NORMAL .' AND u.user_status = ' . STATUS_ACTIVE ."
 				$sql_where";
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -974,6 +973,7 @@ switch ($mode)
 
 		// Build a relevant pagination_url
 		$global_var = ($submit) ? '_POST' : '_GET';
+
 		foreach ($$global_var as $key => $var)
 		{
 			// what don't we need ?
@@ -992,7 +992,7 @@ switch ($mode)
 		// Some search user specific data
 		if ($mode == 'searchuser' && ($config['load_search'] || $_CLASS['auth']->acl_get('a_')))
 		{
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'USERNAME'	=> $username,
 				'EMAIL'		=> $email,
 				'ICQ'		=> $icq,
@@ -1033,7 +1033,7 @@ switch ($mode)
 		// Do the SQL thang
 		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_last_visit 
 			'. $sql_fields .' FROM ' . USERS_TABLE . " u$sql_from
-			WHERE u.user_type = " . USER_NORMAL . "
+			WHERE u.user_type = " . USER_NORMAL . ' AND u.user_status = ' . STATUS_ACTIVE ."
 				$sql_where
 			ORDER BY $order_by";
 		$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
@@ -1041,7 +1041,7 @@ switch ($mode)
 		$id_cache = array();
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if ($mode == 'group' && $row['user_status'] == STATUS_PENDING)
+			if ($mode == 'group' && $row['member_status'] == STATUS_PENDING)
 			{
 				 continue;
 			}
@@ -1053,7 +1053,7 @@ switch ($mode)
 		
 		foreach ($id_cache as $user_id => $row)
 		{
-			$option_row = ($mode == 'group' && $row['user_status'] == STATUS_LEADER) ? 'leader_row' : 'member_row';
+			$option_row = ($mode == 'group' && $row['member_status'] == STATUS_LEADER) ? 'leader_row' : 'member_row';
 
 			$$option_row = array_merge(show_profile($row), array(
 				'U_VIEWPROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']))
@@ -1065,7 +1065,7 @@ switch ($mode)
 	}
 
 	// Generate page
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'PAGINATION' 	=> generate_pagination($pagination_url2, $total_users, $config['topics_per_page'], $start),
 		'PAGE_NUMBER' 	=> on_page($total_users, $config['topics_per_page'], $start),
 		'TOTAL_USERS'	=> ($total_users == 1) ? $_CLASS['core_user']->lang['LIST_USER'] : sprintf($_CLASS['core_user']->lang['LIST_USERS'], $total_users),
@@ -1109,9 +1109,9 @@ switch ($mode)
 
 // Output the page
 $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', $window);
-
 page_header();
-$_CLASS['core_template']->display('modules/Members_List/'.$template_html);
+
+$_CLASS['core_display']->display($page_title, 'modules/Members_List/'.$template_html);
 
 script_close();
 // ---------

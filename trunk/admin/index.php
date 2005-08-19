@@ -61,13 +61,13 @@ if ($_CLASS['core_auth']->admin_power('users'))
 	$sql = 'SELECT user_id, username, user_regdate
 		FROM ' . USERS_TABLE . '
 			WHERE user_type = '.USER_NORMAL.'
-			AND user_status IN (' . USER_DISABLE . ',  '.USER_UNACTIVATED.')';
+			AND user_status IN (' . STATUS_PENDING . ',  ' . STATUS_DISABLED . ')';
 		
 	$result = $_CLASS['core_db']->query_limit($sql, 20);
 	
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$type = ($row['user_id'] == USER_DISABLE) ? 'users_disabled' : 'users_unactivated';
+		$type = ($row['user_id'] == STATUS_DISABLED) ? 'users_disabled' : 'users_unactivated';
 	
 		$_CLASS['core_template']->assign_vars_array($type, array(
 				'user_id'		=> $row['user_id'],

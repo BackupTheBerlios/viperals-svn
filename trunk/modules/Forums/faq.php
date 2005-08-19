@@ -1,128 +1,105 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
 
-// -------------------------------------------------------------
-//
-// $Id: faq.php,v 1.27 2004/07/08 22:40:42 acydburn Exp $
-//
-// FILENAME  : faq.php 
-// STARTED   : Mon Jul 8, 2001
-// COPYRIGHT : © 2001, 2003 phpBB Group
-// WWW       : http://www.phpbb.com/
-// LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
-// 
-// -------------------------------------------------------------
+$Id$
+*/
 
 if (!defined('VIPERAL'))
 {
-    die();
+    die;
 }
 
-$mode = request_var('mode', '');
-
-// Load the appropriate faq file
-switch ($mode)
+if (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'bbcode')
 {
-	case 'bbcode':
-		$_CLASS['core_user']->add_lang('help_bbcode','Forums');
-		$l_title = $_CLASS['core_user']->get_lang('BBCODE_GUIDE');
-		$link = '&amp;mode=bbcode';
-	break;
-
-	default:
-		$_CLASS['core_user']->add_lang('help_faq','Forums');
-		$l_title = $_CLASS['core_user']->get_lang('FAQ');
-		$link = '';
-	break;
+	$_CLASS['core_user']->add_lang('help_bbcode','Forums');
+	$l_title = $_CLASS['core_user']->get_lang('BBCODE_GUIDE');
+	$link = '&amp;mode=bbcode';
+	$mode = 'bbcode';
+}
+else
+{
+	$_CLASS['core_user']->add_lang('help_faq','Forums');
+	$l_title = $_CLASS['core_user']->get_lang('FAQ');
+	$link = $mode = '';
 }
 
-// Pull the array data from the lang pack
-$j = 0;
-$counter = 0;
-$counter_2 = 0;
-$help_block = array();
-$help_block_titles = array();
+$_CLASS['core_template']->assign_array(array(
+	'L_FAQ_TITLE'	=> $l_title,
+	'S_BACK_TO_TOP'	=> generate_link('Forums&amp;file=faq'.$link.'#Top')
+));
 
-foreach ($_CLASS['core_user']->lang['help'] as $help_ary)
+$id = 0;
+$next_title = false;
+
+$size = count($_CLASS['core_user']->lang['help']);
+
+for ($i = 0; $i < $size; $i++)
 {
-	if ($help_ary[0] != '--')
+	if ($_CLASS['core_user']->lang['help'][$i][0] == '--')
 	{
-		$help_block[$j][$counter]['id'] = $counter_2;
-		$help_block[$j][$counter]['question'] = $help_ary[0];
-		$help_block[$j][$counter]['answer'] = $help_ary[1];
-
-		$counter++;
-		$counter_2++;
+		if ($next_title !== false)
+		{
+			$_CLASS['core_template']->assign_vars_array('faq_block', array(
+				'BLOCK_TITLE'	=> $_CLASS['core_user']->lang['help'][$next_title][1],
+				'faq_row'		=> $faq_row
+			));
+	
+			$_CLASS['core_template']->assign_vars_array('faq_block_link', array(
+				'BLOCK_TITLE'		=> $_CLASS['core_user']->lang['help'][$next_title][1],
+				'faq_row_link'		=> $faq_row_link
+			));
+		}
+		
+		$next_title = $i;
+		$faq_row = $faq_row_link = array();
 	}
 	else
 	{
-		$j = ($counter != 0) ? $j + 1 : 0;
+		$id ++;
 
-		$help_block_titles[$j] = $help_ary[1];
+		$faq_row[] = array(
+			'FAQ_QUESTION' 		=> $_CLASS['core_user']->lang['help'][$i][0],
+			'FAQ_ANSWER'		=> $_CLASS['core_user']->lang['help'][$i][1],
 
-		$counter = 0;
+			'U_FAQ_ID' 			=> $id
+		);
+
+		$faq_row_link[] = array(
+			'FAQ_LINK' 			=> $_CLASS['core_user']->lang['help'][$i][0],
+			'U_FAQ_LINK'		=> generate_link('Forums&amp;file=faq'.$link.'#' . $id)
+		);
 	}
 }
 
-//
-// Lets build a page ...
-$_CLASS['core_template']->assign('L_FAQ_TITLE', $l_title);
-
-$size = sizeof($help_block);
-for ($i = 0, $size; $i < $size; $i++)
+if ($next_title !== false)
 {
-	if (sizeof($help_block[$i]))
-	{
-		$_size = sizeof($help_block[$i]);
-		$faq_row_link = $faq_row = array();
-		
-		for ($j = 0; $j < $_size; $j++)
-		{
-			$faq_row[] = array(
-				'FAQ_SECTION' 		=> $i,
-				'FAQ_QUESTION' 		=> $help_block[$i][$j]['question'],
-				'FAQ_ANSWER'		=> $help_block[$i][$j]['answer'],
-
-				'U_FAQ_ID' 			=> $help_block[$i][$j]['id']
-			);
-
-			$faq_row_link[] = array(
-				'FAQ_LINK' 			=> $help_block[$i][$j]['question'],
-				'FAQ_SECTION' 		=> $i,
-				'U_FAQ_LINK'		=> generate_link('Forums&amp;file=faq'.$link.'#' . $help_block[$i][$j]['id'])
-			);
-		}
-		
-		$_CLASS['core_template']->assign_vars_array('faq_block', array(
-			'BLOCK_TITLE'	=> $help_block_titles[$i],
-			'faq_row'		=> $faq_row
-		));
-
-		$_CLASS['core_template']->assign_vars_array('faq_block_link', array(
-			'BLOCK_TITLE'		=> $help_block_titles[$i],
-			'faq_row_link'		=> $faq_row_link
-		));
-		
-	}
+	$_CLASS['core_template']->assign_vars_array('faq_block', array(
+		'BLOCK_TITLE'	=> $_CLASS['core_user']->lang['help'][$next_title][1],
+		'faq_row'		=> $faq_row
+	));
+	
+	$_CLASS['core_template']->assign_vars_array('faq_block_link', array(
+		'BLOCK_TITLE'		=> $_CLASS['core_user']->lang['help'][$next_title][1],
+		'faq_row_link'		=> $faq_row_link
+	));
 }
-
-$_CLASS['core_template']->assign(array(
-	'L_BACK_TO_TOP'			=> $_CLASS['core_user']->lang['BACK_TO_TOP'],
-	'L_JUMP_TO'				=> $_CLASS['core_user']->lang['JUMP_TO'],
-	'L_GO'					=> $_CLASS['core_user']->lang['GO'],
-	'S_BACK_TO_TOP'			=> generate_link('Forums&amp;file=faq'.$link.'#Top')
-));
-
 
 $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', ($mode == 'bbcode'));
 

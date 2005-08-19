@@ -58,9 +58,6 @@ $sort_days	= request_var('st', ((!empty($_CLASS['core_user']->data['user_post_sh
 $sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
 $sort_dir	= request_var('sd', ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'a'));
 
-// Find topic id if user requested a newer or older topic
-$unread_post_id = 0;
-
 if ($topic_id)
 {
 	$sql = 'SELECT forum_id, topic_last_post_time FROM ' . FORUMS_TOPICS_TABLE . '
@@ -85,80 +82,48 @@ $forum_id = $row['forum_id'];
 $topic_id = ($topic_id) ? $topic_id : $row['topic_id'];
 $topic_last_post_time = isset($row['topic_last_post_time']) ? $row['topic_last_post_time'] : false;
 
-if ($view)
+if ($view == 'next' || $view == 'previous')
 {
-	if ($view == 'unread')
+	if ($view == 'next')
 	{
-		$topic_last_read = topic_last_read($topic_id, $forum_id);
-
-		$sql = 'SELECT p.post_id, p.topic_id, p.forum_id
-			FROM (' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . " t)
-			WHERE t.topic_id = $topic_id
-				AND p.topic_id = t.topic_id
-				" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND p.post_approved = 1') . "
-				AND p.post_time > $topic_last_read
-			ORDER BY p.post_time ASC";
-		$result = $_CLASS['core_db']->query_limit($sql, 1);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-		if (!$row)
-		{
-			// Setup user environment so we can process lang string
-			$_CLASS['core_user']->add_lang('viewtopic');
-
-			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id"));
-			$message = $_CLASS['core_user']->lang['NO_UNREAD_POSTS'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id").'">', '</a>');
-			trigger_error($message);
-		}
-
-		$unread_post_id = $post_id = $row['post_id'];
-		$topic_id = $row['topic_id'];
+		$sql_condition = '>';
+		$sql_ordering = 'ASC';
 	}
-	elseif ($view == 'next' || $view == 'previous')
+	else
 	{
-		if ($view == 'next')
-		{
-			$sql_condition = '>';
-			$sql_ordering = 'ASC';
-		}
-		else
-		{
-			$sql_condition = '<';
-			$sql_ordering = 'DESC';
-		}
+		$sql_condition = '<';
+		$sql_ordering = 'DESC';
+	}
 
-		if (!$topic_last_post_time)
-		{
-			$sql = 'SELECT topic_last_post_time FROM ' . FORUMS_TOPICS_TABLE . '
-						WHERE topic_id = '.$topic_id;
+	if (!$topic_last_post_time)
+	{
+		$sql = 'SELECT topic_last_post_time FROM ' . FORUMS_TOPICS_TABLE . '
+					WHERE topic_id = '.$topic_id;
 
-			$result = $_CLASS['core_db']->query($sql);
-			list($topic_last_post_time) = $_CLASS['core_db']->fetch_row_num($result);
-			$_CLASS['core_db']->free_result($result);
-		}
-
-// should we only find the next topic with in the forum ?
-		$sql = 'SELECT topic_id, forum_id
-			FROM ' . FORUMS_TOPICS_TABLE . "
-			 WHERE forum_id = $forum_id AND topic_last_post_time $sql_condition $topic_last_post_time"
-			 . ($_CLASS['auth']->acl_get('m_approve', $forum_id) ? '' : ' AND topic_approved = 1') . "
-			ORDER BY topic_last_post_time $sql_ordering";
-	
-		$result = $_CLASS['core_db']->query_limit($sql, 1);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$result = $_CLASS['core_db']->query($sql);
+		list($topic_last_post_time) = $_CLASS['core_db']->fetch_row_num($result);
 		$_CLASS['core_db']->free_result($result);
+	}
 
-		if (!$row)
-		{
-			$message = ($view == 'next') ? 'NO_NEWER_TOPICS' : 'NO_OLDER_TOPICS';
-			trigger_error($message);
-		}
-		else
-		{
-			$topic_id = $row['topic_id'];
-			$forum_id = $row['forum_id'];
-		}
+	$sql = 'SELECT topic_id, forum_id
+		FROM ' . FORUMS_TOPICS_TABLE . "
+		 WHERE forum_id = $forum_id AND topic_last_post_time $sql_condition $topic_last_post_time"
+		 . ($_CLASS['auth']->acl_get('m_approve', $forum_id) ? '' : ' AND topic_approved = 1') . "
+		ORDER BY topic_last_post_time $sql_ordering";
+
+	$result = $_CLASS['core_db']->query_limit($sql, 1);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
+
+	if (!$row)
+	{
+		$message = ($view == 'next') ? 'NO_NEWER_TOPICS' : 'NO_OLDER_TOPICS';
+		trigger_error($message);
+	}
+	else
+	{
+		$topic_id = $row['topic_id'];
+		$forum_id = $row['forum_id'];
 	}
 }
 
@@ -384,87 +349,6 @@ generate_forum_rules($topic_data);
 
 
 gen_forum_auth_level('topic', $forum_id);
-
-// Quick mod tools
-$topic_mod = '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_lock', $forum_id) || ($_CLASS['auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->data['user_id'] != ANONYMOUS && $_CLASS['core_user']->data['user_id'] == $topic_data['topic_poster'])) ? (($topic_data['topic_status'] == ITEM_UNLOCKED) ? '<option value="lock">' . $_CLASS['core_user']->lang['LOCK_TOPIC'] . '</option>' : '<option value="unlock">' . $_CLASS['core_user']->lang['UNLOCK_TOPIC'] . '</option>') : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_delete', $forum_id)) ? '<option value="delete_topic">' . $_CLASS['core_user']->lang['DELETE_TOPIC'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_move', $forum_id)) ? '<option value="move">' . $_CLASS['core_user']->lang['MOVE_TOPIC'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_split', $forum_id)) ? '<option value="split">' . $_CLASS['core_user']->lang['SPLIT_TOPIC'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_merge', $forum_id)) ? '<option value="merge">' . $_CLASS['core_user']->lang['MERGE_TOPIC'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id)) ? '<option value="fork">' . $_CLASS['core_user']->lang['FORK_TOPIC'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id) && $topic_data['topic_type'] != POST_NORMAL) ? '<option value="make_normal">' . $_CLASS['core_user']->lang['MAKE_NORMAL'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('f_sticky', $forum_id) && $topic_data['topic_type'] != POST_STICKY) ? '<option value="make_sticky">' . $_CLASS['core_user']->lang['MAKE_STICKY'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data['topic_type'] != POST_ANNOUNCE) ? '<option value="make_announce">' . $_CLASS['core_user']->lang['MAKE_ANNOUNCE'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data['topic_type'] != POST_GLOBAL) ? '<option value="make_global">' . $_CLASS['core_user']->lang['MAKE_GLOBAL'] . '</option>' : '';
-$topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id)) ? '<option value="viewlogs">' . $_CLASS['core_user']->lang['VIEW_TOPIC_LOGS'] . '</option>' : '';
-
-$pagination = generate_pagination("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : ''), $total_posts, $config['posts_per_page'], $start);
-
-// Send vars to template
-$_CLASS['core_template']->assign_array(array(
-	'FORUM_ID' 		=> $forum_id,
-	'FORUM_NAME' 	=> $topic_data['forum_name'],
-	'FORUM_DESC'	=> $topic_data['forum_desc'],
-	'TOPIC_ID' 		=> $topic_id,
-	'TOPIC_TITLE' 	=> censor_text($topic_data['topic_title']),
-	'PAGINATION'		=> $pagination['formated'],
-	'PAGINATION_ARRAY'	=> $pagination['array'],
-	'PAGE_NUMBER' 	=> on_page($total_posts, $config['posts_per_page'], $start),
-	'TOTAL_POSTS'	=> ($total_posts == 1) ? $_CLASS['core_user']->lang['VIEW_TOPIC_POST'] : sprintf($_CLASS['core_user']->lang['VIEW_TOPIC_POSTS'], $total_posts), 
-	'U_MCP' 		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;mode=topic_view&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
-
-	'MODERATORS'	=> (isset($forum_moderators[$forum_id]) && sizeof($forum_moderators[$forum_id])) ? implode(', ', $forum_moderators[$forum_id]) : '',
-
-	'POST_IMG' 		=> ($topic_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', 'FORUM_LOCKED') : $_CLASS['core_user']->img('btn_post', 'POST_NEW_TOPIC'),
-	'QUOTE_IMG' 	=> $_CLASS['core_user']->img('btn_quote', 'REPLY_WITH_QUOTE'),
-	'REPLY_IMG'		=> ($topic_data['forum_status'] == ITEM_LOCKED || $topic_data['topic_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', 'TOPIC_LOCKED') : $_CLASS['core_user']->img('btn_reply', 'REPLY_TO_TOPIC'),
-	'EDIT_IMG' 		=> $_CLASS['core_user']->img('btn_edit', 'EDIT_POST'),
-	'DELETE_IMG' 	=> $_CLASS['core_user']->img('btn_delete', 'DELETE_POST'),
-	'INFO_IMG'		=> $_CLASS['core_user']->img('btn_info', 'VIEW_INFO'),
-	'PROFILE_IMG'	=> $_CLASS['core_user']->img('btn_profile', 'READ_PROFILE'), 
-	'SEARCH_IMG'	=> $_CLASS['core_user']->img('btn_search', 'SEARCH_USER_POSTS'),
-	'PM_IMG'		=> $_CLASS['core_user']->img('btn_pm', 'SEND_PRIVATE_MESSAGE'),
-	'EMAIL_IMG' 	=> $_CLASS['core_user']->img('btn_email', 'SEND_EMAIL'),
-	'WWW_IMG' 		=> $_CLASS['core_user']->img('btn_www', 'VISIT_WEBSITE'),
-	'ICQ_IMG' 		=> $_CLASS['core_user']->img('btn_icq', 'ICQ'),
-	'AIM_IMG' 		=> $_CLASS['core_user']->img('btn_aim', 'AIM'),
-	'MSN_IMG' 		=> $_CLASS['core_user']->img('btn_msnm', 'MSNM'),
-	'YIM_IMG' 		=> $_CLASS['core_user']->img('btn_yim', 'YIM'),
-	'JABBER_IMG'	=> $_CLASS['core_user']->img('btn_jabber', 'JABBER') ,
-	'REPORT_IMG'	=> $_CLASS['core_user']->img('btn_report', 'REPORT_POST'),
-	'REPORTED_IMG'	=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED'),
-	'UNAPPROVED_IMG'=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED'),
-	
-	'S_SELECT_SORT_DIR' 	=> $s_sort_dir,
-	'S_SELECT_SORT_KEY' 	=> $s_sort_key,
-	'S_SELECT_SORT_DAYS' 	=> $s_limit_days,
-	'S_TOPIC_ACTION' 		=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start"),
-	'S_TOPIC_MOD' 			=> ($topic_mod != '') ? '<select name="mode">' . $topic_mod . '</select>' : '',
-	'S_MOD_ACTION' 			=> generate_link("Forums&amp;file=mcp&amp;t=$topic_id&amp;quickmod=1", false, false), 
-
-	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
-	'S_SEARCHBOX_ACTION'	=> generate_link('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
-
-	'U_TOPIC'				=> ($view == 'print') ? generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id, array('full' => true)) : generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id),
-	'U_VIEW_UNREAD_POST'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread").'#unread',
-	'U_VIEW_TOPIC' 			=> generate_link($viewtopic_url, false),
-	'U_VIEW_FORUM' 			=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id),
-	'U_VIEW_OLDER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=previous"),
-	'U_VIEW_NEWER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=next"),
-	'U_PRINT_TOPIC'			=> ($_CLASS['auth']->acl_get('f_print', $forum_id)) ? generate_link($viewtopic_url . '&amp;view=print', false) : '',
-	'U_EMAIL_TOPIC'			=> ($_CLASS['auth']->acl_get('f_email', $forum_id) && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;t='.$topic_id) : '', 
-
-	'U_WATCH_TOPIC' 		=> $s_watching_topic['link'], 
-	'L_WATCH_TOPIC' 		=> $s_watching_topic['title'], 
-
-	'U_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks']) ? generate_link($viewtopic_url . '&amp;bookmark=1', false) : '',
-	'L_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks'] && $topic_data['bookmarked']) ? $_CLASS['core_user']->lang['BOOKMARK_TOPIC_REMOVE'] : $_CLASS['core_user']->lang['BOOKMARK_TOPIC'],
-	
-	'U_POST_NEW_TOPIC' 		=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
-	'U_POST_REPLY_TOPIC' 	=> generate_link("Forums&amp;file=posting&amp;mode=reply&amp;t=$topic_id"),
-	'U_BUMP_TOPIC'			=> (bump_topic_allowed($forum_id, $topic_data['topic_bumped'], $topic_data['topic_last_post_time'], $topic_data['topic_poster'], $topic_data['topic_last_poster_id'])) ? generate_link("Forums&amp;file=posting&amp;mode=bump&amp;t=$topic_id") : '')
-);
 
 // Does this topic contain a poll?
 if (!empty($poll_start))
@@ -1016,11 +900,13 @@ if ($bbcode_bitfield)
 
 $i_total = count($rowset) - 1;
 $prev_post_id = '';
+$first_unread_makred = false;
 
 $_CLASS['core_template']->assign('S_NUM_POSTS', count($post_list));
 
 // Output the posts
 //foreach ($rowset as $i => $row)
+
 for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 {
 	$row =& $rowset[$post_list[$i]];
@@ -1226,20 +1112,105 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'S_DISPLAY_NOTICE'	=> ($display_notice && $row['post_attachment']) ? true : false, 
 		'S_FRIEND'			=> ($row['friend']) ? true : false,
 		'S_UNREAD_POST'		=> $unread,
-		'S_FIRST_UNREAD'	=> ($unread_post_id == $row['post_id']) ? true : false,
+		'S_FIRST_UNREAD'	=> false,
 	);
+
+	if ($unread && !$first_unread_makred)
+	{
+		$postrow['S_FIRST_UNREAD'] = true;
+		$first_unread_makred = true;
+	}
 
 	// Dump vars into template
 	$_CLASS['core_template']->assign_vars_array('postrow', $postrow);
 	
 	$prev_post_id = $row['post_id'];
 
-	unset($rowset[$i], $post_attachments);
-	unset($attachments[$row['post_id']]);
+	unset($rowset[$i], $post_attachments, $attachments[$row['post_id']]);
 }
 
-unset($rowset);
-unset($user_cache);
+unset($rowset, $user_cache);
+
+// Quick mod tools
+$topic_mod = '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_lock', $forum_id) || ($_CLASS['auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->data['user_id'] != ANONYMOUS && $_CLASS['core_user']->data['user_id'] == $topic_data['topic_poster'])) ? (($topic_data['topic_status'] == ITEM_UNLOCKED) ? '<option value="lock">' . $_CLASS['core_user']->lang['LOCK_TOPIC'] . '</option>' : '<option value="unlock">' . $_CLASS['core_user']->lang['UNLOCK_TOPIC'] . '</option>') : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_delete', $forum_id)) ? '<option value="delete_topic">' . $_CLASS['core_user']->lang['DELETE_TOPIC'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_move', $forum_id)) ? '<option value="move">' . $_CLASS['core_user']->lang['MOVE_TOPIC'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_split', $forum_id)) ? '<option value="split">' . $_CLASS['core_user']->lang['SPLIT_TOPIC'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_merge', $forum_id)) ? '<option value="merge">' . $_CLASS['core_user']->lang['MERGE_TOPIC'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id)) ? '<option value="fork">' . $_CLASS['core_user']->lang['FORK_TOPIC'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id) && $topic_data['topic_type'] != POST_NORMAL) ? '<option value="make_normal">' . $_CLASS['core_user']->lang['MAKE_NORMAL'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('f_sticky', $forum_id) && $topic_data['topic_type'] != POST_STICKY) ? '<option value="make_sticky">' . $_CLASS['core_user']->lang['MAKE_STICKY'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data['topic_type'] != POST_ANNOUNCE) ? '<option value="make_announce">' . $_CLASS['core_user']->lang['MAKE_ANNOUNCE'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data['topic_type'] != POST_GLOBAL) ? '<option value="make_global">' . $_CLASS['core_user']->lang['MAKE_GLOBAL'] . '</option>' : '';
+$topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id)) ? '<option value="viewlogs">' . $_CLASS['core_user']->lang['VIEW_TOPIC_LOGS'] . '</option>' : '';
+
+$pagination = generate_pagination("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : ''), $total_posts, $config['posts_per_page'], $start);
+
+// Send vars to template
+$_CLASS['core_template']->assign_array(array(
+	'FORUM_ID' 			=> $forum_id,
+	'FORUM_NAME' 		=> $topic_data['forum_name'],
+	'FORUM_DESC'		=> $topic_data['forum_desc'],
+	'TOPIC_ID' 			=> $topic_id,
+	'TOPIC_TITLE' 		=> censor_text($topic_data['topic_title']),
+	'PAGINATION'		=> $pagination['formated'],
+	'PAGINATION_ARRAY'	=> $pagination['array'],
+	'PAGE_NUMBER' 		=> on_page($total_posts, $config['posts_per_page'], $start),
+	'TOTAL_POSTS'		=> ($total_posts == 1) ? $_CLASS['core_user']->lang['VIEW_TOPIC_POST'] : sprintf($_CLASS['core_user']->lang['VIEW_TOPIC_POSTS'], $total_posts), 
+	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;mode=topic_view&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
+
+	'MODERATORS'	=> (isset($forum_moderators[$forum_id]) && sizeof($forum_moderators[$forum_id])) ? implode(', ', $forum_moderators[$forum_id]) : '',
+
+	'POST_IMG' 		=> ($topic_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', 'FORUM_LOCKED') : $_CLASS['core_user']->img('btn_post', 'POST_NEW_TOPIC'),
+	'QUOTE_IMG' 	=> $_CLASS['core_user']->img('btn_quote', 'REPLY_WITH_QUOTE'),
+	'REPLY_IMG'		=> ($topic_data['forum_status'] == ITEM_LOCKED || $topic_data['topic_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', 'TOPIC_LOCKED') : $_CLASS['core_user']->img('btn_reply', 'REPLY_TO_TOPIC'),
+	'EDIT_IMG' 		=> $_CLASS['core_user']->img('btn_edit', 'EDIT_POST'),
+	'DELETE_IMG' 	=> $_CLASS['core_user']->img('btn_delete', 'DELETE_POST'),
+	'INFO_IMG'		=> $_CLASS['core_user']->img('btn_info', 'VIEW_INFO'),
+	'PROFILE_IMG'	=> $_CLASS['core_user']->img('btn_profile', 'READ_PROFILE'), 
+	'SEARCH_IMG'	=> $_CLASS['core_user']->img('btn_search', 'SEARCH_USER_POSTS'),
+	'PM_IMG'		=> $_CLASS['core_user']->img('btn_pm', 'SEND_PRIVATE_MESSAGE'),
+	'EMAIL_IMG' 	=> $_CLASS['core_user']->img('btn_email', 'SEND_EMAIL'),
+	'WWW_IMG' 		=> $_CLASS['core_user']->img('btn_www', 'VISIT_WEBSITE'),
+	'ICQ_IMG' 		=> $_CLASS['core_user']->img('btn_icq', 'ICQ'),
+	'AIM_IMG' 		=> $_CLASS['core_user']->img('btn_aim', 'AIM'),
+	'MSN_IMG' 		=> $_CLASS['core_user']->img('btn_msnm', 'MSNM'),
+	'YIM_IMG' 		=> $_CLASS['core_user']->img('btn_yim', 'YIM'),
+	'JABBER_IMG'	=> $_CLASS['core_user']->img('btn_jabber', 'JABBER') ,
+	'REPORT_IMG'	=> $_CLASS['core_user']->img('btn_report', 'REPORT_POST'),
+	'REPORTED_IMG'	=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED'),
+	'UNAPPROVED_IMG'=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED'),
+	
+	'S_SELECT_SORT_DIR' 	=> $s_sort_dir,
+	'S_SELECT_SORT_KEY' 	=> $s_sort_key,
+	'S_SELECT_SORT_DAYS' 	=> $s_limit_days,
+	'S_TOPIC_ACTION' 		=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start"),
+	'S_TOPIC_MOD' 			=> ($topic_mod) ? '<select name="mode">' . $topic_mod . '</select>' : '',
+	'S_MOD_ACTION' 			=> generate_link("Forums&amp;file=mcp&amp;t=$topic_id&amp;quickmod=1", false, false), 
+
+	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
+	'S_SEARCHBOX_ACTION'	=> generate_link('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
+
+	'U_TOPIC'				=> ($view == 'print') ? generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id, array('full' => true)) : generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id),
+	'U_VIEW_UNREAD_POST'	=> ($first_unread_makred) ? generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id#unread") : false,
+	'U_VIEW_TOPIC' 			=> generate_link($viewtopic_url),
+	'U_VIEW_FORUM' 			=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id),
+	'U_VIEW_OLDER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=previous"),
+	'U_VIEW_NEWER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=next"),
+	'U_PRINT_TOPIC'			=> ($_CLASS['auth']->acl_get('f_print', $forum_id)) ? generate_link($viewtopic_url . '&amp;view=print') : '',
+	'U_EMAIL_TOPIC'			=> ($_CLASS['auth']->acl_get('f_email', $forum_id) && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;t='.$topic_id) : '', 
+
+	'U_WATCH_TOPIC' 		=> $s_watching_topic['link'], 
+	'L_WATCH_TOPIC' 		=> $s_watching_topic['title'], 
+
+	'U_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks']) ? generate_link($viewtopic_url . '&amp;bookmark=1') : '',
+	'L_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks'] && $topic_data['bookmarked']) ? $_CLASS['core_user']->lang['BOOKMARK_TOPIC_REMOVE'] : $_CLASS['core_user']->lang['BOOKMARK_TOPIC'],
+	
+	'U_POST_NEW_TOPIC' 		=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
+	'U_POST_REPLY_TOPIC' 	=> generate_link("Forums&amp;file=posting&amp;mode=reply&amp;t=$topic_id"),
+	'U_BUMP_TOPIC'			=> (bump_topic_allowed($forum_id, $topic_data['topic_bumped'], $topic_data['topic_last_post_time'], $topic_data['topic_poster'], $topic_data['topic_last_poster_id'])) ? generate_link("Forums&amp;file=posting&amp;mode=bump&amp;t=$topic_id") : '')
+);
 
 // Update topic view and if necessary attachment view counters ... but only
 // if this is the first 'page view'

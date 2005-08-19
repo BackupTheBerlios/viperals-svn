@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 function user_get_id($username, &$difference)
@@ -90,7 +92,7 @@ function user_activate($user_id)
 	}
 // hook here -- maybe ?
 	$sql = 'UPDATE ' . USERS_TABLE . '
-		SET user_status = ' . USER_ACTIVE . '
+		SET user_status = ' . STATUS_ACTIVE . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ')
 			AND user_type <>' . USER_GUEST;
 
@@ -111,7 +113,7 @@ function user_disable($user_id)
 	}
 // hook here -- maybe ?
 	$sql = 'UPDATE ' . USERS_TABLE . '
-		SET user_status = ' . USER_DISABLE . '
+		SET user_status = ' . STATUS_DISABLED . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ')
 			AND user_type <>' . USER_GUEST;
 	$_CLASS['core_db']->query($sql);
@@ -119,10 +121,10 @@ function user_disable($user_id)
 	if (in_array($_CORE_CONFIG['user']['newest_user_id'], $user_id))
 	{
 		$sql = 'SELECT user_id, username FROM ' . USERS_TABLE . '
-			WHERE user_type = '.USER_NORMAL.' AND user_status = '.USER_ACTIVE.'
+			WHERE user_type = '.USER_NORMAL.' AND user_status = '.STATUS_ACTIVE.'
 			ORDER BY user_regdate';
 
-		$result = $_CLASS['core_db']->query($sql);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
@@ -147,7 +149,7 @@ function user_activate_reminder($user_id)
 	}
 // hook here -- maybe ?
 	$sql = 'UPDATE ' . USERS_TABLE . '
-		SET user_status = ' . USER_ACTIVE . '
+		SET user_status = ' . STATUS_ACTIVE . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ')
 			AND user_type =' . USER_NORMAL;
 

@@ -17,7 +17,7 @@ if (!defined('VIPERAL'))
 }
 
 $this->content = '
-<form action="'.generate_link($_CLASS['core_user']->url).'" method="post">
+<form action="" method="post">
 	<p style="text-align: center;">
 		<select name="prevtheme" onchange="this.form.submit();">'.theme_select().'</select>
 		<br /><br /><input class="button" value="Select" type="submit" />

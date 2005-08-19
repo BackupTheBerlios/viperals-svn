@@ -59,11 +59,11 @@ class ucp_zebra extends module
 				$data['add'] = array_diff($data['add'], $friends, $foes, array($_CLASS['core_user']->data['username']));
 				unset($friends, $foes);
 
-				$data['add'] = implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->sql_escape('\\1') . \"'\"", $data['add']));
+				$data['add'] = "'".implode("', '", $_CLASS['core_db']->escape_array($data['add']))."'";
 
 				if ($data['add'])
 				{
-					$sql = 'SELECT user_id, user_type
+					$sql = 'SELECT user_id, user_type, user_status
 						FROM ' . USERS_TABLE . ' 
 						WHERE username IN (' . $data['add'] . ')';
 					$result = $_CLASS['core_db']->query($sql);
@@ -73,7 +73,7 @@ class ucp_zebra extends module
 						$user_id_ary = array();
 						do
 						{
-							if (!in_array($row['user_type'], array(USER_IGNORE, USER_INACTIVE, USER_BOT_ACTIVE, USER_BOT_INACTIVE)))
+							if ($row['user_type'] == USER_NORMAL && $row['user_status'] == STATUS_ACTIVE)
 							{
 								$user_id_ary[] = $row['user_id'];
 							}

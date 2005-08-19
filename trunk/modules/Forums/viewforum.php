@@ -145,7 +145,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Handle marking posts
 	if ($mark_read == 'topics')
 	{
-		markread('mark', $forum_id);
+		markread('forum', $forum_id);
 		
 		$_CLASS['core_display']->meta_refresh(3, generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id));
 
@@ -391,7 +391,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			{
 				if ($mark_forum_read)
 				{
-					//$mark_forum_read = ($row['topic_last_post_time'] < $mark_time_topic) ? (int) max($mark_time_topic, $row['topic_last_post_time']) : false;
+					$mark_forum_read = ($row['topic_last_post_time'] <= $mark_time_topic) ? (int) $mark_time_topic : false;
 				}
 				$mark_time = $mark_time_topic;
 			}
@@ -470,7 +470,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// Update the marktime only if $mark_forum_read is set to a time
 	if ($forum_data['forum_type'] == FORUM_POST && is_int($mark_forum_read))
 	{
-		markread('forum', $forum_id, 0, $mark_forum_read);
+		markread('forum', $forum_id, false, $mark_forum_read);
 	}
 }
 else

@@ -1,33 +1,51 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 $install_prefix = 'test_';
-$time_field = 1122762758; // max Friday January 19th 2038
+
+function field_unix_time($name, $null = false)
+{
+	global $_CLASS;
+
+	$_CLASS['core_db']->add_table_field_int(array('name' => $name, 'min' => 0, 'max' => 200000000, 'null' => $null));
+}
 
 /*
 	Admin Auth Table
 */
+
 $_CLASS['core_db']->table_create('start', $install_prefix.'admins');
 
-$_CLASS['core_db']->add_table_field_char('section', 100);
-$_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('group_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('status', 0, 1);
-$_CLASS['core_db']->add_table_field_text('options', 60000);
+$_CLASS['core_db']->add_table_field_char('admin_section', 100);
 
-$_CLASS['core_db']->add_table_index('auth_id', 'primary');
-$_CLASS['core_db']->add_table_index('user_id');
-$_CLASS['core_db']->add_table_index('group_id');
+$_CLASS['core_db']->add_table_field_int('member_user_id', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('member_group_id', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('admin_status', array('max' => 10));
+$_CLASS['core_db']->add_table_field_text('admin_options', 60000, true);
+
+$_CLASS['core_db']->add_table_index('member_user_id');
+$_CLASS['core_db']->add_table_index('member_group_id');
+$_CLASS['core_db']->add_table_index('admin_status');
 
 $_CLASS['core_db']->table_create('commit');
 
@@ -36,85 +54,88 @@ $_CLASS['core_db']->table_create('commit');
 */
 $_CLASS['core_db']->table_create('start', $install_prefix.'blocks');
 
-$_CLASS['core_db']->add_table_field_int('id', 0, 16000000, 0, true);
-$_CLASS['core_db']->add_table_field_char('title', 100);
-$_CLASS['core_db']->add_table_field_int('type', 0, 1);
-$_CLASS['core_db']->add_table_field_int('position', 0, 1);
-$_CLASS['core_db']->add_table_field_int('weight', 0, 200);
-$_CLASS['core_db']->add_table_field_int('active', 0, 1);
-$_CLASS['core_db']->add_table_field_int('start', 0, $time_field);
-$_CLASS['core_db']->add_table_field_int('expires', 0, $time_field);
-$_CLASS['core_db']->add_table_field_text('content', 60000);
-$_CLASS['core_db']->add_table_field_char('file', 255);
-$_CLASS['core_db']->add_table_field_text('auth', 60000);
-$_CLASS['core_db']->add_table_field_char('rss_url', 255);
-$_CLASS['core_db']->add_table_field_int('rss_rate', 0, 60000);
-$_CLASS['core_db']->add_table_field_int('rss_expires', 0, $time_field);
+$_CLASS['core_db']->add_table_field_int('block_id', array('max' => 16000000, 'auto_increment' => true));
+$_CLASS['core_db']->add_table_field_char('block_title', 100);
+$_CLASS['core_db']->add_table_field_int('block_type', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('block_status', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('block_position', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('block_order', array('max' => 200));
+field_unix_time('block_starts', true);
+field_unix_time('block_expires', true);
+$_CLASS['core_db']->add_table_field_text('block_content', 60000, true);
+$_CLASS['core_db']->add_table_field_char('block_file', 255, true);
+$_CLASS['core_db']->add_table_field_char('block_rss_url', 255, true);
+$_CLASS['core_db']->add_table_field_int('block_rss_rate', array('min' => -1, 'max' => 60000, 'null' => true));
+field_unix_time('block_rss_expires', true);
+$_CLASS['core_db']->add_table_field_text('block_auth', 60000, true);
 
-$_CLASS['core_db']->add_table_index('id', 'primary');
-$_CLASS['core_db']->add_table_index('type');
-$_CLASS['core_db']->add_table_index('position');
+$_CLASS['core_db']->add_table_index('block_id', 'primary');
+$_CLASS['core_db']->add_table_index('block_type');
+$_CLASS['core_db']->add_table_index('block_position');
 
 $_CLASS['core_db']->table_create('commit');
 
 /*
-	Sessions Table
+	Config Table
 */
 $_CLASS['core_db']->table_create('start', $install_prefix.'config');
 
-$_CLASS['core_db']->add_table_field_char('section', 20);
-$_CLASS['core_db']->add_table_field_char('name', 20);
-$_CLASS['core_db']->add_table_field_text('value', 60000);
+$_CLASS['core_db']->add_table_field_char('config_section', 20);
+$_CLASS['core_db']->add_table_field_char('config_name', 20);
+$_CLASS['core_db']->add_table_field_text('config_value', 60000);
+$_CLASS['core_db']->add_table_field_int('config_cache', array('max' => 1, 'null' => true));
 
-$_CLASS['core_db']->add_table_index('section');
-$_CLASS['core_db']->add_table_index('name');
-
+$_CLASS['core_db']->add_table_index(array('config_section', 'config_name'), 'primary');
+$_CLASS['core_db']->add_table_index('config_cache');
 
 $_CLASS['core_db']->table_create('commit');
 
 
 /*
-	Grouyps Table
-	`group_chgpass` smallint(6) NOT NULL default '0',
-
+	Groups Table
 */
+
 $_CLASS['core_db']->table_create('start', $install_prefix.'groups');
 
-$_CLASS['core_db']->add_table_field_int('group_id', 0, 16000000, 0, true);
-$_CLASS['core_db']->add_table_field_int('group_type', 0, 1, 1);
+$_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('group_name', 50);
-$_CLASS['core_db']->add_table_field_int('group_display', 0, 1);
-$_CLASS['core_db']->add_table_field_char('group_avatar', 100);
+$_CLASS['core_db']->add_table_field_int('group_type', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('group_status', array('max' => 10));
 
-$_CLASS['core_db']->add_table_field_int('group_avatar_type', 0, 2000);
-$_CLASS['core_db']->add_table_field_int('group_avatar_width', 0, 2000);
-$_CLASS['core_db']->add_table_field_int('group_avatar_height', 0, 2000);
-$_CLASS['core_db']->add_table_field_int('group_rank', 0, 20000, -1);
-
+$_CLASS['core_db']->add_table_field_int('group_rank', array('max' => 2000));
 $_CLASS['core_db']->add_table_field_char('group_colour', 6);
-$_CLASS['core_db']->add_table_field_int('group_sig_chars', 0, 160000);
-$_CLASS['core_db']->add_table_field_int('group_receive_pm', 0, 1);
-$_CLASS['core_db']->add_table_field_int('group_message_limit', 0, 16000000);
+$_CLASS['core_db']->add_table_field_char('group_avatar', 100);
+$_CLASS['core_db']->add_table_field_int('group_avatar_type', 0, 200);
+$_CLASS['core_db']->add_table_field_int('group_avatar_width', 0, 200);
+$_CLASS['core_db']->add_table_field_int('group_avatar_height', 0, 200);
+
+$_CLASS['core_db']->add_table_field_int('group_sig_chars', array('max' => 160000));
+$_CLASS['core_db']->add_table_field_int('group_receive_pm', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('group_message_limit', array('max' => 10000));
 
 $_CLASS['core_db']->add_table_field_char('group_description', 255);
-$_CLASS['core_db']->add_table_field_int('group_legend', 0, 1);
+$_CLASS['core_db']->add_table_field_int('group_display', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('group_legend', array('max' => 10));
+
 
 $_CLASS['core_db']->add_table_index('group_id', 'primary');
+$_CLASS['core_db']->add_table_index('group_display');
 $_CLASS['core_db']->add_table_index('group_legend');
 
 $_CLASS['core_db']->table_create('commit');
 
 /*
-	Groups Users Table
+	Groups Members Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'groups_users');
+$_CLASS['core_db']->table_create('start', $install_prefix.'groups_members');
 
-$_CLASS['core_db']->add_table_field_int('group_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_char('user_id', 100);
-$_CLASS['core_db']->add_table_field_int('user_status', 0, 1);
+$_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_int('member_user_id', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_int('member_status', array('max' => 16000000));
 
-$_CLASS['core_db']->add_table_index('user_id');
 $_CLASS['core_db']->add_table_index('group_id');
+$_CLASS['core_db']->add_table_index('member_user_id');
+$_CLASS['core_db']->add_table_index('member_status');
 
 $_CLASS['core_db']->table_create('commit');
 
@@ -123,18 +144,18 @@ $_CLASS['core_db']->table_create('commit');
 */
 $_CLASS['core_db']->table_create('start', $install_prefix.'modules');
 
-$_CLASS['core_db']->add_table_field_int('id', 0, 16000000, 0, true);
-$_CLASS['core_db']->add_table_field_char('name', 100);
-$_CLASS['core_db']->add_table_field_char('title', 100);
-$_CLASS['core_db']->add_table_field_int('active', 0, 1);
-$_CLASS['core_db']->add_table_field_int('type', 0, 1);
-$_CLASS['core_db']->add_table_field_int('sides', 0, 1);
-$_CLASS['core_db']->add_table_field_text('auth', 60000);
-$_CLASS['core_db']->add_table_field_text('admin_options', 200);
+$_CLASS['core_db']->add_table_field_int('module_id', array('max' => 16000000, 'auto_increment' => true));
+$_CLASS['core_db']->add_table_field_char('module_name', 100);
+$_CLASS['core_db']->add_table_field_char('module_title', 100);
+$_CLASS['core_db']->add_table_field_int('module_type', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('module_status', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('module_sides', array('max' => 10, 'null' => true));
+$_CLASS['core_db']->add_table_field_text('module_auth', 60000, true);
+$_CLASS['core_db']->add_table_field_text('module_auth_options', 60000, true);
+$_CLASS['core_db']->add_table_field_text('module_admin_options', 6000, true);
 
-$_CLASS['core_db']->add_table_index('id', 'primary');
-$_CLASS['core_db']->add_table_index('name', 'unique');
-$_CLASS['core_db']->add_table_index('homepage'); // to be removed late on
+$_CLASS['core_db']->add_table_index('module_id', 'primary');
+$_CLASS['core_db']->add_table_index('module_name', 'unique');
 
 $_CLASS['core_db']->table_create('commit');
 
@@ -145,17 +166,19 @@ $_CLASS['core_db']->table_create('start', $install_prefix.'sessions');
 
 $_CLASS['core_db']->add_table_field_char('session_id', 40);
 $_CLASS['core_db']->add_table_field_int('session_user_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('session_last_visit', 0, $time_field);
-$_CLASS['core_db']->add_table_field_int('session_start', 0, $time_field);
-$_CLASS['core_db']->add_table_field_int('session_time', 0, $time_field);
+field_unix_time('session_last_visit');
+field_unix_time('session_start');
+field_unix_time('session_time');
 $_CLASS['core_db']->add_table_field_char('session_ip', 18);
 $_CLASS['core_db']->add_table_field_char('session_browser', 255);
 $_CLASS['core_db']->add_table_field_char('session_page', 100);
 $_CLASS['core_db']->add_table_field_char('session_url', 255);
-$_CLASS['core_db']->add_table_field_int('session_user_type', 0, 1);
-$_CLASS['core_db']->add_table_field_int('session_admin', 0, 1);
-$_CLASS['core_db']->add_table_field_text('session_auth', 60000);
+$_CLASS['core_db']->add_table_field_int('session_user_type', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('session_admin', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('session_hidden', array('max' => 10));
+
 $_CLASS['core_db']->add_table_field_text('session_data', 60000);
+$_CLASS['core_db']->add_table_field_text('session_auth', 60000);
 
 $_CLASS['core_db']->add_table_index('session_id', 'primary');
 $_CLASS['core_db']->add_table_index('session_time');
@@ -164,59 +187,46 @@ $_CLASS['core_db']->add_table_index('session_user_id');
 $_CLASS['core_db']->table_create('commit');
 
 /*
+	Sessions Auto login Table
+*/
+$_CLASS['core_db']->table_create('start', $install_prefix.'sessions_auto_login');
+
+$_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000);
+$_CLASS['core_db']->add_table_field_char('auto_login_browser', 255);
+$_CLASS['core_db']->add_table_field_char('auto_login_code', 40);
+field_unix_time('auto_login_time');
+
+$_CLASS['core_db']->add_table_index(array('user_id', 'auto_login_code'), 'primary');
+
+$_CLASS['core_db']->table_create('commit');
+
+/*
 	Smiles Table
 */
 $_CLASS['core_db']->table_create('start', $install_prefix.'smilies');
 
-$_CLASS['core_db']->add_table_field_int('smiley_id', 0, 16000000, 0, true);
-$_CLASS['core_db']->add_table_field_char('code', 10);
-$_CLASS['core_db']->add_table_field_char('emotion', 50);
-$_CLASS['core_db']->add_table_field_char('smiley_url', 50);
-$_CLASS['core_db']->add_table_field_int('smiley_width', 0, 200);
-$_CLASS['core_db']->add_table_field_int('smiley_height', 0, 200);
-$_CLASS['core_db']->add_table_field_int('smiley_order', 0, 200);
-$_CLASS['core_db']->add_table_field_int('display_on_posting', 0, 1);
+$_CLASS['core_db']->add_table_field_int('smiley_id', array('max' => 16000000, 'auto_increment' => true));
+
+$_CLASS['core_db']->add_table_field_char('smiley_code', 10);
+$_CLASS['core_db']->add_table_field_char('smiley_src', 200);
+$_CLASS['core_db']->add_table_field_char('smiley_description', 50);
+
+$_CLASS['core_db']->add_table_field_int('smiley_width', array('max' => 200));
+$_CLASS['core_db']->add_table_field_int('smiley_height', array('max' => 200));
+$_CLASS['core_db']->add_table_field_int('smiley_order', array('max' => 200));
+$_CLASS['core_db']->add_table_field_int('smiley_type', array('max' => 10));
 
 $_CLASS['core_db']->add_table_index('smiley_id', 'primary');
-$_CLASS['core_db']->add_table_index('display_on_posting');
+$_CLASS['core_db']->add_table_index('smiley_type');
 
 $_CLASS['core_db']->table_create('commit');
-
-//////
-//Quick Message
-//////
-
-$_CLASS['core_db']->table_create('start', $install_prefix.'quick_message');
-
-$_CLASS['core_db']->add_table_field_int('id', 0, 16000000, 0, true);
-$_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_char('user_name', 80);
-$_CLASS['core_db']->add_table_field_char('ip', 18);
-$_CLASS['core_db']->add_table_field_text('message', 200);
-$_CLASS['core_db']->add_table_field_int('time', 0, $time_field);
-
-$_CLASS['core_db']->add_table_index('id', 'primary');
-$_CLASS['core_db']->add_table_index('time');
-
-$_CLASS['core_db']->table_create('commit');
-
 
 /*
 
-`user_passchg` int(11) NOT NULL default '0',
-`user_timezone` decimal(5,2) NOT NULL default '0.00',
-`user_dst` tinyint(1) NOT NULL default '0',
- `user_unread_privmsg` tinyint(4) unsigned NOT NULL default '0',
-`user_occ` varchar(255) NOT NULL default '',
+`user_unread_privmsg` tinyint(4) unsigned NOT NULL default '0',
 `user_newpasswd` varchar(40) NOT NULL default '',
- `user_emailtime` int(11) NOT NULL default '0',
-  `user_actkey` varchar(32) NOT NULL default '',
-  `user_newpasswd` varchar(40) NOT NULL default '',
-  `user_viewemail` tinyint(1) NOT NULL default '0',
-user_lastpost_time
-  
+`user_viewemail` tinyint(1) NOT NULL default '0',
 */
-
 
 $_CLASS['core_db']->table_create('start', $install_prefix.'users');
 
@@ -230,14 +240,15 @@ $_CLASS['core_db']->add_table_field_int('user_rank', 0, 16000000);
 $_CLASS['core_db']->add_table_field_char('user_ip', 255);
 $_CLASS['core_db']->add_table_field_char('user_agent', 255);
 $_CLASS['core_db']->add_table_field_int('user_timezone', -43200 , 46800);
+$_CLASS['core_db']->add_table_field_int('user_dst', 0 , 1);
 
-$_CLASS['core_db']->add_table_field_int('user_regdate', 0, $time_field);
-$_CLASS['core_db']->add_table_field_text('user_permissions', 60000); // phpBBs
+field_unix_time('user_regdate');
+$_CLASS['core_db']->add_table_field_text('user_permissions', 60000); // phpBBs rename user_forums_permissions
 $_CLASS['core_db']->add_table_field_char('user_email', 100);
 $_CLASS['core_db']->add_table_field_char('user_birthday', 10);
 $_CLASS['core_db']->add_table_field_text('user_data', 6000);
-$_CLASS['core_db']->add_table_field_int('user_last_visit', 0, $time_field);
-$_CLASS['core_db']->add_table_field_int('user_last_post_time', 0, $time_field);
+field_unix_time('user_last_visit');
+field_unix_time('user_last_post_time');
 $_CLASS['core_db']->add_table_field_int('user_warnings', 0, 10000);
 $_CLASS['core_db']->add_table_field_char('user_lang', 10);
 $_CLASS['core_db']->add_table_field_char('user_theme', 60);
@@ -257,8 +268,6 @@ $_CLASS['core_db']->add_table_field_char('user_website', 255);
 
 $_CLASS['core_db']->add_table_field_char('user_interests', 255);
 $_CLASS['core_db']->add_table_field_char('user_occ', 255);
-
-$_CLASS['core_db']->add_table_field_int('user_posts', 16000000);
 
 $_CLASS['core_db']->add_table_field_int('user_message_limit', 0, 200);
 $_CLASS['core_db']->add_table_field_int('user_message_rules', 0, 1);
@@ -286,6 +295,9 @@ $_CLASS['core_db']->add_table_field_int('user_post_show_days', 0, 200);
 $_CLASS['core_db']->add_table_field_char('user_post_sortby_type', 1);
 $_CLASS['core_db']->add_table_field_char('user_post_sortby_dir', 1);
 
+$_CLASS['core_db']->add_table_field_int('user_posts', 16000000);
+field_unix_time('user_lastpost_time');
+
 $_CLASS['core_db']->add_table_field_int('user_allow_viewonline', 0, 1, 1);
 $_CLASS['core_db']->add_table_field_int('user_allow_viewemail', 0, 1, 1);
 $_CLASS['core_db']->add_table_field_int('user_allow_massemail', 0, 1, 1);
@@ -296,6 +308,8 @@ $_CLASS['core_db']->add_table_field_int('user_avatar_width', 0, 100);
 $_CLASS['core_db']->add_table_field_int('user_avatar_height', 0, 100);
 
 $_CLASS['core_db']->add_table_field_char('user_act_key', 40);
+$_CLASS['core_db']->add_table_field_char('user_new_password', 40);
+$_CLASS['core_db']->add_table_field_char('user_new_password_encoding', 10);
 
 $_CLASS['core_db']->add_table_index('user_id', 'primary');
 $_CLASS['core_db']->add_table_index('username');
@@ -326,7 +340,7 @@ $_CLASS['core_db']->add_table_field_int('thumbnail'. 0, 1);
 $_CLASS['core_db']->add_table_field_char('extension', 50);
 $_CLASS['core_db']->add_table_field_char('mimetype', 100);
 $_CLASS['core_db']->add_table_field_int('filesize', 0, 1000000000);
-$_CLASS['core_db']->add_table_field_int('filetime', 0, $time_field);
+field_unix_time('filetime');
 
 $_CLASS['core_db']->add_table_index('attach_id', 'primary');
 $_CLASS['core_db']->add_table_index('post_msg_id');
@@ -349,7 +363,6 @@ $_CLASS['core_db']->add_table_field_int('auth_setting', 0, 1);
 $_CLASS['core_db']->add_table_index('user_id');
 $_CLASS['core_db']->add_table_index('group_id');
 $_CLASS['core_db']->add_table_index('auth_option_id');
-#$_CLASS['core_db']->add_table_index('auth_option', 'unique');
 
 $_CLASS['core_db']->table_create('commit');
 
@@ -365,7 +378,7 @@ $_CLASS['core_db']->add_table_field_int('is_local', 0, 1);
 $_CLASS['core_db']->add_table_field_int('founder_only', 0, 1);
 
 $_CLASS['core_db']->add_table_index('auth_option_id', 'primary');
-$_CLASS['core_db']->add_table_index('auth_option');
+$_CLASS['core_db']->add_table_index('auth_option', 'unique');
 
 $_CLASS['core_db']->table_create('commit');
 
@@ -435,7 +448,7 @@ $_CLASS['core_db']->add_table_field_int('draft_id', 0, 16000000, 0, true);
 $_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('topic_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('forum_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('save_time', 0, $time_field);
+field_unix_time('save_time');
 $_CLASS['core_db']->add_table_field_char('draft_subject', 50);
 $_CLASS['core_db']->add_table_field_text('draft_message', 0, 16000000);
 
@@ -506,13 +519,13 @@ $_CLASS['core_db']->add_table_field_int('forum_topics', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('forum_topics_real', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('forum_last_post_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('forum_last_poster_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('forum_last_post_time', 0, $time_field);
+field_unix_time('forum_last_post_time');
 $_CLASS['core_db']->add_table_field_char('forum_last_poster_name', 50);
 $_CLASS['core_db']->add_table_field_int('forum_flags', 0, 200);
 $_CLASS['core_db']->add_table_field_int('display_on_index', 0, 1);
 $_CLASS['core_db']->add_table_field_int('enable_indexing', 0, 1);
 $_CLASS['core_db']->add_table_field_int('enable_icons', 0, 1);
-$_CLASS['core_db']->add_table_field_int('prune_next', 0, $time_field);
+field_unix_time('prune_next');
 
 //////
 $_CLASS['core_db']->add_table_field_int('prune_days', 0, 200);
@@ -536,14 +549,14 @@ $_CLASS['core_db']->add_table_field_int('topic_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('forum_id', 0, 16000);
 $_CLASS['core_db']->add_table_field_int('right_id', 0, 16000);
 $_CLASS['core_db']->add_table_field_int('poster_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('post_time', 0, $time_field);
+field_unix_time('post_time');
 $_CLASS['core_db']->add_table_field_char('poster_ip', 20);
 $_CLASS['core_db']->add_table_field_char('post_username', 50);
 $_CLASS['core_db']->add_table_field_int('enable_bbcode', 0, 1);
 $_CLASS['core_db']->add_table_field_int('enable_html', 0, 1);
 $_CLASS['core_db']->add_table_field_int('enable_smilies', 0, 1);
 $_CLASS['core_db']->add_table_field_int('enable_sig', 0, 1);
-$_CLASS['core_db']->add_table_field_int('post_edit_time', 0, $time_field);
+field_unix_time('post_edit_time');
 $_CLASS['core_db']->add_table_field_int('post_edit_count', 0, 20000);
 $_CLASS['core_db']->add_table_field_int('post_attachment', 0, 1);
 $_CLASS['core_db']->add_table_field_char('post_subject', 50);
@@ -578,7 +591,7 @@ $_CLASS['core_db']->add_table_field_int('topic_id', 0, 16000000, 0, true);
 $_CLASS['core_db']->add_table_field_int('forum_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_char('topic_title', 50);
 $_CLASS['core_db']->add_table_field_int('topic_poster', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('topic_time', 0, $time_field);
+field_unix_time('topic_time');
 $_CLASS['core_db']->add_table_field_int('topic_views', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('topic_replies', 0, 16000000);  
 $_CLASS['core_db']->add_table_field_int('topic_status', 0, 1);
@@ -591,22 +604,22 @@ $_CLASS['core_db']->add_table_field_int('icon_id', 0, 200);
 $_CLASS['core_db']->add_table_field_int('topic_attachment', 0, 1);
 $_CLASS['core_db']->add_table_field_int('topic_approved', 0, 1, 1);
 $_CLASS['core_db']->add_table_field_int('topic_reported', 0, 1); 
-$_CLASS['core_db']->add_table_field_int('topic_time_limit', 0, $time_field);
+field_unix_time('topic_time_limit');
 $_CLASS['core_db']->add_table_field_int('topic_replies_real', 16000000);
 $_CLASS['core_db']->add_table_field_char('topic_first_poster_name', 50);
 $_CLASS['core_db']->add_table_field_int('topic_last_poster_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_char('topic_last_poster_name', 50);
-$_CLASS['core_db']->add_table_field_int('topic_last_post_time', 0, $time_field);
-$_CLASS['core_db']->add_table_field_int('topic_last_view_time', 0, $time_field);
+field_unix_time('topic_last_post_time');
+field_unix_time('topic_last_view_time');
 
 $_CLASS['core_db']->add_table_field_int('topic_bumped', 0, 1);
 $_CLASS['core_db']->add_table_field_int('topic_bumper', 0, 16000000);
   
 $_CLASS['core_db']->add_table_field_char('poll_title', 100);
-$_CLASS['core_db']->add_table_field_int('poll_start', 0, $time_field);
-$_CLASS['core_db']->add_table_field_int('poll_length', 0, $time_field); 
+field_unix_time('poll_start');
+field_unix_time('poll_length'); 
 $_CLASS['core_db']->add_table_field_int('poll_max_options', 0, 200, 1);
-$_CLASS['core_db']->add_table_field_int('poll_last_vote', 0, $time_field);
+field_unix_time('poll_last_vote');
 $_CLASS['core_db']->add_table_field_int('poll_vote_change', 0, 1);
 
 $_CLASS['core_db']->add_table_index('topic_id', 'primary');
@@ -625,7 +638,7 @@ $_CLASS['core_db']->table_create('start', $install_prefix.'forums_tracking');
 $_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('forum_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('topic_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('mark_time', 0, $time_field);
+field_unix_time('mark_time');
 
 $_CLASS['core_db']->add_table_index('user_id');
 $_CLASS['core_db']->add_table_index('forum_id');
@@ -652,22 +665,8 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Forums Watch Table
 */
+
 $_CLASS['core_db']->table_create('start', $install_prefix.'forums_watch');
-
-$_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('notify_status', 0, 1);
-
-$_CLASS['core_db']->add_table_index('user_id');
-
-$_CLASS['core_db']->table_create('commit');
-
-//
-//Combine, maybe
-//
-/*
-	Forums Topics Watch Table
-*/
-$_CLASS['core_db']->table_create('start', $install_prefix.'topics_watch');
 
 $_CLASS['core_db']->add_table_field_int('forum_id', 0, 16000000);
 $_CLASS['core_db']->add_table_field_int('topic_id', 0, 16000000);

@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 // sessions should extend this
@@ -34,6 +36,10 @@ class core_user extends sessions
 	var $date_format;
 	var $timezone;
 	var $dst;
+
+	var $is_admin;
+	var $is_bot;
+	var $is_user;
 
 	var $user_setup = false;
 
@@ -190,56 +196,60 @@ class core_user extends sessions
 
 		$this->user_setup = true;
 		$this->data['user_unread_privmsg'] = 0; // TEMP
-		// Do the theme
-		$theme_prev = get_variable('theme_preview', 'REQUEST', false);
-		$theme = ($theme) ? $theme : $_CLASS['core_user']->session_data_get('user_theme');
 		
-		if ($theme_prev && ($theme_prev != $theme) && check_theme($theme_prev))
+		if (!is_null($theme))
 		{
-			$theme = $theme_prev;
-
-			if (!get_variable('temp_preview', 'REQUEST', false))
+			// Do the theme
+			$theme_prev = get_variable('theme_preview', 'REQUEST', false);
+			$theme = ($theme) ? $theme : $_CLASS['core_user']->session_data_get('user_theme');
+			
+			if ($theme_prev && ($theme_prev != $theme) && check_theme($theme_prev))
 			{
-				$_CLASS['core_user']->session_data_set('user_theme', $theme);
-			}
-		}
-		elseif (!$theme || !check_theme($theme))
-		{
-			$theme = ($_CLASS['core_user']->data['user_theme']) ? $_CLASS['core_user']->data['user_theme'] : $_CORE_CONFIG['global']['default_theme'];     
-		
-			if (!check_theme($theme))
-			{
-				if (check_theme($_CORE_CONFIG['global']['default_theme']))
+				$theme = $theme_prev;
+	
+				if (!get_variable('temp_preview', 'REQUEST', false))
 				{
-					$theme = $_CORE_CONFIG['global']['default_theme'];
+					$_CLASS['core_user']->session_data_set('user_theme', $theme);
 				}
-				else
+			}
+			elseif (!$theme || !check_theme($theme))
+			{
+				$theme = ($_CLASS['core_user']->data['user_theme']) ? $_CLASS['core_user']->data['user_theme'] : $_CORE_CONFIG['global']['default_theme'];     
+			
+				if (!check_theme($theme))
 				{
-					// We need a theme, don't we ?
-					$handle = opendir('themes');
-					$theme = false;
-					
-					while ($file = readdir($handle))
+					if (check_theme($_CORE_CONFIG['global']['default_theme']))
 					{
-						if ($file{0} !== '.' && check_theme($file))
+						$theme = $_CORE_CONFIG['global']['default_theme'];
+					}
+					else
+					{
+						// We need a theme, don't we ?
+						$handle = opendir('themes');
+						$theme = false;
+						
+						while ($file = readdir($handle))
 						{
-							$theme = $file;
-							break;
+							if ($file{0} !== '.' && check_theme($file))
+							{
+								$theme = $file;
+								break;
+							}
+						}
+						closedir($handle);
+						
+						if (!$theme)
+						{
+							trigger_error('Something here');
 						}
 					}
-					closedir($handle);
-					
-					if (!$theme)
-					{
-						trigger_error('Something here');
-					}
 				}
 			}
+	
+			$path = $site_file_root.'themes/'.$theme;
+			
+			$_CLASS['core_display']->load_theme($theme, $path);
 		}
-
-		$path = $site_file_root.'themes/'.$theme;
-		
-		$_CLASS['core_display']->load_theme($theme, $path);
 
 		$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
 		$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
