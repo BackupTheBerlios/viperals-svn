@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 function confirmation_image($code = false, $size = false)

@@ -6,13 +6,15 @@
 
 <table class="tablebg" width="100%" cellspacing="1" cellpadding="0" border="0">
 	<tr>
-		<th height="25">{ $SITENAME } - { $L_REGISTRATION }</th>
+		<th height="25">{ $L_REGISTRATION }</th>
 	</tr>
 	<tr>
 		<td class="row1">
+		{ $S_HIDDEN_FIELDS }
 		<!-- IF { $S_SHOW_COPPA } -->
 			<div align="center">
-				<br />{ $L_COPPA_BIRTHDAY }<br /><br /><a href="{ $U_COPPA_NO }">{ $L_COPPA_NO }</a> :: <a href="{ $U_COPPA_YES }">{ $L_COPPA_YES }</a><br /><br />
+				<br />{ $L_COPPA_BIRTHDAY }<br /><br />
+				<a href="{ $U_COPPA_NO }">{ $L_COPPA_NO }</a> :: <a href="{ $U_COPPA_YES }">{ $L_COPPA_YES }</a><br /><br />
 			</div>
 		<!-- ELSE -->
 			<div style="padding: 10px" class="genmed"><br />{ $L_TERMS_OF_USE_CONTENT }<br /><br /></div>

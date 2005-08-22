@@ -1,14 +1,14 @@
 <!-- DISPLAY_HEADER -->
 
-<style type="text/css">@import url(java/jscalendar/skins/aqua/theme.css);</style>
-<script type="text/javascript" src="java/jscalendar/calendar_stripped.js"></script>
-<script type="text/javascript" src="java/jscalendar/lang/calendar-en.js"></script>
-<script type="text/javascript" src="java/jscalendar/calendar-setup.js"></script>
+<style type="text/css">@import url(javascript/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="javascript/jscalendar/calendar.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/calendar-setup.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/lang/calendar-en.js"></script>
 
 { $A_TABLE_OPEN }
 
 <form action="{ $B_ACTION }" name="message" method="post">
-	<table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<table class="tablebg" align="center" cellpadding="4" cellspacing="1" width="100%">
 		<tbody>
 			<!-- IF { $B_ERROR } -->
 			<tr> 
@@ -43,8 +43,7 @@
 				<td class="row1"><b class="genmed">{ $L_STARTS }: </b></td>
 				<td class="row2" >
 					<input class="post" id="time" name="time" size="35" maxlength="100" value="{ $B_STARTS }" type="text">
-					<img src="java/jscalendar/calendar.png" style="cursor: pointer;" id="time_trigger"/>
-					<!-- IF { $B_STARTS } -->   Currently Set:  { $B_STARTS }<!-- ENDIF -->
+					<img src="images/calender_small.png" style="cursor: pointer;" id="time_trigger"/>
 				</td>
 				<td class="row1" align="center" rowspan="2"><b class="genmed">Current Server Time:<br/>{ $B_CURRENT_TIME }: </b></td>
 			</tr>
@@ -52,14 +51,13 @@
 				<td class="row1"><b class="genmed">{ $L_EXPIRES }: </b></td>
 				<td class="row2">
 					<input class="post" id="expires" name="expires" size="35" maxlength="100" value="{ $B_EXPIRES }" type="text" />
-					<img src="java/jscalendar/calendar.png" style="cursor: pointer;"  id="expires_trigger" />
-					<!-- IF { $B_EXPIRES } -->    Currently Set:  { $B_EXPIRES }<!-- ENDIF -->
+					<img src="images/calender_small.png" style="cursor: pointer;"  id="expires_trigger" />
 				</td>
 			</tr>
 			<tr> 
 				<td class="row1" valign="top" ><b class="genmed">{ $L_MESSAGE }: </b></td>
-				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5"></div>
-				<textarea name="content" id="content" editor_enabled="true" style="width:90%; height:400px; display: ;" cols="63" rows="15">{ $B_CONTENT }</textarea><br /><br /></td>
+				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5px"></div>
+				<textarea name="content" id="content" editor_enabled="true" style="width:90%; height:400px;" cols="63" rows="15">{ $B_CONTENT }</textarea><br /><br /></td>
 			</tr>
 			<tr>
 				<td class="cat" colspan="3" align="center" height="28">

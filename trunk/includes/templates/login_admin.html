@@ -64,63 +64,77 @@ form { margin: 0px; padding: 0px; border: 0px; }
 input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
 select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
 .post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}
+
 -->
 </style>
 
 <body>
 
-<div id="container"><div id="wrapper">
-<form action="{$S_LOGIN_ACTION}" method="post">
-	<table align="center" class="tablebg" width="100%" cellspacing="1">
-		<tr> 
-			<th align="center">Login Info</th>
-		</tr>
-		<!-- IF { $LOGIN_EXPLAIN } -->
-		<tr>
-			<td class="row1" colspan="2" align="center"><span class="gensmall">{ $LOGIN_EXPLAIN }</td>
-		</tr>
-		<!-- ENDIF -->
-		<tr> 
-			<td class="row2">
-			<table width="100%" cellspacing="1" cellpadding="4">
-				<!-- IF { $LOGIN_ERROR } -->
+<div id="container">
+	<div id="wrapper">
+		<form action="{$S_LOGIN_ACTION}" method="post">
+			<table align="center" class="tablebg" width="100%" cellspacing="1">
+				<tr> 
+					<th align="center">Login Info</th>
+				</tr>
+				<!-- IF { $LOGIN_EXPLAIN } -->
 				<tr>
-					<td class="gensmall" colspan="2" align="center"><span class="error">{$LOGIN_ERROR}</span></td>
+					<td class="row1" colspan="2" align="center"><span class="gensmall">{ $LOGIN_EXPLAIN }</td>
 				</tr>
 				<!-- ENDIF -->
 				<tr> 
-					<td valign="top"><b class="gensmall">{$L_USERNAME}:</b></td>
-					<td><input class="post" type="text" name="username" size="25" maxlength="40" value="{$USERNAME}" tabindex="1" /></td>
+					<td class="row2">
+					<table width="100%" cellspacing="1" cellpadding="4">
+						<!-- IF { $LOGIN_ERROR } -->
+						<tr>
+							<td class="gensmall" colspan="2" align="center"><span class="error">{$LOGIN_ERROR}</span></td>
+						</tr>
+						<!-- ENDIF -->
+						<tr> 
+							<td valign="top"><b class="gensmall">{$L_USERNAME}:</b></td>
+							<td><input class="post" type="text" name="username" size="25" maxlength="40" value="{$USERNAME}" tabindex="1" /><br /><a class="gensmall" href="{$U_REGISTER}">{$L_REGISTER}</a></td>
+						</tr>
+						<tr> 
+							<td valign="top"><b class="gensmall">{$L_PASSWORD}:</b></td>
+							<td>
+								<input class="post" type="password" name="password" size="25" maxlength="25" tabindex="2" />
+								<!-- IF { $U_SEND_PASSWORD } --><br /><a class="gensmall" href="{ $U_SEND_PASSWORD }">{ $L_FORGOT_PASS }</a><!-- ENDIF -->
+								<!-- IF { $U_RESEND_ACTIVATION } --><br /><a class="gensmall" href="{ $U_RESEND_ACTIVATION }">{ $L_RESEND_ACTIVATION }</a><!-- ENDIF -->
+							 </td>
+						</tr>
+						<!-- IF { $S_DISPLAY_FULL_LOGIN } -->
+						<tr> 
+							<td>&nbsp;</td>
+							<td><input type="checkbox" name="autologin" tabindex="4" /> <span class="gensmall">{$L_LOG_ME_IN}</span></td>
+						</tr>
+						<tr>
+							<td>&nbsp;</td>
+							<td><input type="checkbox" name="viewonline" tabindex="5" /> <span class="gensmall">{$L_HIDE_ME}</span></td>
+						</tr>
+						<!-- ENDIF -->
+					</table>
+					</td>
+				</tr>
+				<!-- IF { $U_CONFIRM_IMAGE } -->
+				<tr> 
+					<th  align="center">{ $L_CONFIRMATION_CODE }</th>
 				</tr>
 				<tr> 
-					<td valign="top"><b class="gensmall">{$L_PASSWORD}:</b></td>
-					<td>
-						<input class="post" type="password" name="password" size="25" maxlength="25" tabindex="2" />
-						<!-- IF { $U_SEND_PASSWORD } --><br /><a class="gensmall" href="{ $U_SEND_PASSWORD }">{ $L_FORGOT_PASS }</a><!-- ENDIF -->
-					 </td>
+					<td align="center" class="row1"><span class="gensmall">Enter the code exactly as you see it in the image<br/><b>This is case sensitive</b></span></td>
+				</tr>
+				<tr>
+					<td align="center" class="row2">{ $U_CONFIRM_IMAGE }</td>
+				</tr>
+				<tr>
+					<td align="center" class="row1"><input class="post" name="confirm_code" size="10" maxlength="6" type="text"></td>
+				</tr>
+				<!-- ENDIF -->
+				<tr> 
+					<th colspan="2" align="center">{$S_HIDDEN_FIELDS}<input type="submit" name="login" class="button" value="{$L_LOGIN}" tabindex="3" /></td>
 				</tr>
 			</table>
-			</td>
-		</tr>
-		<!-- IF { $U_CONFIRM_IMAGE } -->
-		<tr> 
-			<th  align="center">{ $L_CONFIRMATION_CODE }</th>
-		</tr>
-		<tr> 
-			<td align="center" class="row1"><span class="gensmall">Enter the code exactly as you see it in the image<br/><b>This is case sensitive</b></span></td>
-		</tr>
-		<tr>
-			<td align="center" class="row2">{ $U_CONFIRM_IMAGE }</td>
-		</tr>
-		<tr>
-			<td align="center" class="row1"><input class="post" name="confirm_code" size="10" maxlength="6" type="text"></td>
-		</tr>
-		<!-- ENDIF -->
-		<tr> 
-			<th colspan="2" align="center">{$S_HIDDEN_FIELDS}<input type="submit" name="login" class="button" value="{$L_LOGIN}" tabindex="3" /></td>
-		</tr>
-	</table>
-</form>
-</div></div>
+		</form>
+	</div>
+</div>
 
-<body>
+</body>

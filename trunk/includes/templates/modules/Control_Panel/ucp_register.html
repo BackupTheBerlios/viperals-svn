@@ -44,17 +44,19 @@
 		</tr>
 		<tr> 
 			<td class="row1"><b class="genmed">{ $L_CONFIRM_PASSWORD }: </b></td>
-			<td class="row2"><input class="post" type="password" name="password_confirm" size="25" maxlength="100" value="{ $PASSWORD_CONFIRM }" /></td>
+			<td class="row2"><input class="post" type="password" name="password_confirm" size="25" maxlength="100" value="" /></td>
 		</tr>
+		<!--
 		<tr> 
 			<td class="row1"><b class="genmed">{ $L_LANGUAGE }: </b></td>
 			<td class="row2"><select name="lang" onchange="javascript:change_language(this.value);">{ $S_LANG_OPTIONS }</select></td>
 		</tr>
+		-->
 		<tr> 
 			<td class="row1"><b class="genmed">{ $L_TIMEZONE }: </b></td>
 			<td class="row2"><select name="tz">{ $S_TZ_OPTIONS }</select></td>
 		</tr>
-		<!-- IF { $S_CONFIRM_CODE } -->
+		<!-- IF { $CONFIRM_IMG } -->
 		<tr> 
 			<th colspan="2" height="28" valign="middle">{ $L_CONFIRMATION }</th>
 		</tr>
@@ -77,7 +79,7 @@
 		</tr>
 		<!-- ENDIF -->
 		<tr>
-			<td class="cat" colspan="2" align="center" height="28">{ $S_HIDDEN_FIELDS }<input class="btnmain" type="submit" name="submit" value="{ $L_SUBMIT }" />&nbsp;&nbsp;<input class="button" type="reset" value="{ $L_RESET }" name="reset" /></td>
+			<td class="cat" colspan="2" align="center" height="28">{ $S_HIDDEN_FIELDS }<input class="button" type="submit" name="submit" value="{ $L_SUBMIT }" />&nbsp;&nbsp;<input class="button" type="reset" value="{ $L_RESET }" name="reset" /></td>
 		</tr>
 	</table>
 </form>

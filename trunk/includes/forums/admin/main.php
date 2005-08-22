@@ -26,17 +26,6 @@ $action = request_var('action', '');
 
 switch ($action)
 {
-	case 'online':
-		if (!$_CLASS['auth']->acl_get('a_defaults'))
-		{
-			trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
-		}
-
-		set_config('record_online_users', 1, true);
-		set_config('record_online_date', time(), true);
-		add_log('admin', 'LOG_RESET_ONLINE');
-		break;
-
 	case 'stats':
 		if (!$_CLASS['auth']->acl_get('a_defaults'))
 		{
@@ -44,48 +33,41 @@ switch ($action)
 		}
 
 		$sql = 'SELECT COUNT(post_id) AS stat 
-			FROM ' . POSTS_TABLE . '
+			FROM ' . FORUMS_POSTS_TABLE . '
 			WHERE post_approved = 1';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		set_config('num_posts', (int) $row['stat'], true);
 
 		$sql = 'SELECT COUNT(topic_id) AS stat
-			FROM ' . TOPICS_TABLE . '
+			FROM ' . FORUMS_TOPICS_TABLE . '
 			WHERE topic_approved = 1';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 		set_config('num_topics', (int) $row['stat'], true);
 
-		$sql = 'SELECT COUNT(user_id) AS stat
-			FROM ' . USERS_TABLE . '
-			WHERE user_type IN (' . USER_NORMAL . ',' . USER_FOUNDER . ')';
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
-		set_config('num_users', (int) $row['stat'], true);
-
 		$sql = 'SELECT COUNT(attach_id) as stat
-			FROM ' . ATTACHMENTS_TABLE;
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		set_config('num_files', (int) $_CLASS['core_db']->sql_fetchfield('stat', 0, $result), true);
-		$_CLASS['core_db']->sql_freeresult($result);
+			FROM ' . FORUMS_ATTACHMENTS_TABLE;
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	
+		set_config('num_files', (int) $row['stat'], true);
+		$_CLASS['core_db']->free_result($result);
 
 		$sql = 'SELECT SUM(filesize) as stat
-			FROM ' . ATTACHMENTS_TABLE;
-		$result = $_CLASS['core_db']->sql_query($sql);
+			FROM ' . FORUMS_ATTACHMENTS_TABLE;
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 
-		set_config('upload_dir_size', (int) $_CLASS['core_db']->sql_fetchfield('stat', 0, $result), true);
-		$_CLASS['core_db']->sql_freeresult($result);
+		set_config('upload_dir_size', (int) $row['stat'], true);
+		$_CLASS['core_db']->free_result($result);
 
 		add_log('admin', 'LOG_RESYNC_STATS');
-		break;
+	break;
 		
 	case 'user':
 		if (!$_CLASS['auth']->acl_get('a_defaults'))
@@ -106,35 +88,25 @@ switch ($action)
 		
 		if (!sizeof($forum_ary))
 		{
-			$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . ' SET user_posts = 0');
+			$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . ' SET user_posts = 0');
 		}
 		else
 		{
 			$sql = 'SELECT COUNT(post_id) AS num_posts, poster_id
-				FROM ' . POSTS_TABLE . '
+				FROM ' . FORUMS_POSTS_TABLE . '
 				WHERE poster_id <> ' . ANONYMOUS . '
 					AND forum_id IN (' . implode(', ', $forum_ary) . ')
 				GROUP BY poster_id';
-			$result = $_CLASS['core_db']->sql_query($sql);
+			$result = $_CLASS['core_db']->query($sql);
 
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . " SET user_posts = {$row['num_posts']} WHERE user_id = {$row['poster_id']}");
+				$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . " SET user_posts = {$row['num_posts']} WHERE user_id = {$row['poster_id']}");
 			}
-			$_CLASS['core_db']->sql_freeresult($result);
+			$_CLASS['core_db']->free_result($result);
 		}
 
 		add_log('admin', 'LOG_RESYNC_POSTCOUNTS');
-		break;
-		
-	case 'date':
-		if (!$_CLASS['auth']->acl_get('a_defaults'))
-		{
-			trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
-		}
-
-		set_config('board_startdate', time() - 1);
-		add_log('admin', 'LOG_RESET_DATE');
 		break;
 }
 
@@ -146,7 +118,7 @@ $total_files = $config['num_files'];
 
 $start_date = $_CLASS['core_user']->format_date($config['board_startdate']);
 
-$boarddays = (time() - $config['board_startdate']) / 86400;
+$boarddays = (gmtime() - $config['board_startdate']) / 86400;
 
 $posts_per_day = sprintf('%.2f', $total_posts / $boarddays);
 $topics_per_day = sprintf('%.2f', $total_topics / $boarddays);

@@ -224,92 +224,91 @@ $_CLASS['core_db']->table_create('commit');
 /*
 
 `user_unread_privmsg` tinyint(4) unsigned NOT NULL default '0',
-`user_newpasswd` varchar(40) NOT NULL default '',
-`user_viewemail` tinyint(1) NOT NULL default '0',
 */
 
 $_CLASS['core_db']->table_create('start', $install_prefix.'users');
 
-$_CLASS['core_db']->add_table_field_int('user_id', 0, 16000000, 0, true);
+$_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('username', 80);
 $_CLASS['core_db']->add_table_field_char('user_password', 40);
 $_CLASS['core_db']->add_table_field_char('user_password_encoding', 10);
-$_CLASS['core_db']->add_table_field_int('user_type', 0, 1);
-$_CLASS['core_db']->add_table_field_int('group_id', 0, 16000000);
-$_CLASS['core_db']->add_table_field_int('user_rank', 0, 16000000);
-$_CLASS['core_db']->add_table_field_char('user_ip', 255);
-$_CLASS['core_db']->add_table_field_char('user_agent', 255);
-$_CLASS['core_db']->add_table_field_int('user_timezone', -43200 , 46800);
-$_CLASS['core_db']->add_table_field_int('user_dst', 0 , 1);
-
-field_unix_time('user_regdate');
-$_CLASS['core_db']->add_table_field_text('user_permissions', 60000); // phpBBs rename user_forums_permissions
 $_CLASS['core_db']->add_table_field_char('user_email', 100);
-$_CLASS['core_db']->add_table_field_char('user_birthday', 10);
-$_CLASS['core_db']->add_table_field_text('user_data', 6000);
-field_unix_time('user_last_visit');
-field_unix_time('user_last_post_time');
-$_CLASS['core_db']->add_table_field_int('user_warnings', 0, 10000);
-$_CLASS['core_db']->add_table_field_char('user_lang', 10);
-$_CLASS['core_db']->add_table_field_char('user_theme', 60);
-$_CLASS['core_db']->add_table_field_int('user_rank', 0, 16000000);
-$_CLASS['core_db']->add_table_field_char('user_colour', 6);
-$_CLASS['core_db']->add_table_field_char('user_dateformat', 14);
-$_CLASS['core_db']->add_table_field_int('user_new_privmsg', 0, 1);
+$_CLASS['core_db']->add_table_field_int('user_type', 0, 1);
+$_CLASS['core_db']->add_table_field_int('user_status', 0, 10);
+$_CLASS['core_db']->add_table_field_int('user_group', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_char('user_ip', 255);
+$_CLASS['core_db']->add_table_field_char('user_agent', 255, null);
+$_CLASS['core_db']->add_table_field_char('user_birthday', 10, true);
+$_CLASS['core_db']->add_table_field_text('user_data', 6000, true);
 
-$_CLASS['core_db']->add_table_field_text('user_sig', 60000);
-$_CLASS['core_db']->add_table_field_char('user_from', 100);
-$_CLASS['core_db']->add_table_field_char('user_icq', 15);
-$_CLASS['core_db']->add_table_field_char('user_aim', 255);
-$_CLASS['core_db']->add_table_field_char('user_yim', 255);
-$_CLASS['core_db']->add_table_field_char('user_msnm', 255);
-$_CLASS['core_db']->add_table_field_char('user_jabber', 255);
-$_CLASS['core_db']->add_table_field_char('user_website', 255);
+$_CLASS['core_db']->add_table_field_char('user_act_key', 10, null);
+$_CLASS['core_db']->add_table_field_char('user_new_password', 40);
+$_CLASS['core_db']->add_table_field_char('user_new_password_encoding', 10);
 
-$_CLASS['core_db']->add_table_field_char('user_interests', 255);
-$_CLASS['core_db']->add_table_field_char('user_occ', 255);
+field_unix_time('user_reg_date');
+field_unix_time('user_last_visit', true);
 
-$_CLASS['core_db']->add_table_field_int('user_message_limit', 0, 200);
-$_CLASS['core_db']->add_table_field_int('user_message_rules', 0, 1);
+$_CLASS['core_db']->add_table_field_int('user_dst',  array('max' => 1, 'null' => true));
+$_CLASS['core_db']->add_table_field_char('user_lang', 10, true);
+$_CLASS['core_db']->add_table_field_char('user_time_format', 20, true);
+$_CLASS['core_db']->add_table_field_int('user_timezone', array('min' => -43200, 'max' => 46800, 'null' => true));
+$_CLASS['core_db']->add_table_field_char('user_theme', 60, true);
+$_CLASS['core_db']->add_table_field_char('user_colour', 6, true);
+
+$_CLASS['core_db']->add_table_field_int('user_allow_viewonline', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_allow_viewemail', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_allow_massemail', array('max' => 1));
+
+$_CLASS['core_db']->add_table_field_int('user_new_privmsg', array('max' => 1));
+
+$_CLASS['core_db']->add_table_field_text('user_sig', 60000, true);
+$_CLASS['core_db']->add_table_field_char('user_from', 100, true);
+$_CLASS['core_db']->add_table_field_char('user_icq', 15, true);
+$_CLASS['core_db']->add_table_field_char('user_aim', 255, true);
+$_CLASS['core_db']->add_table_field_char('user_yim', 255, true);
+$_CLASS['core_db']->add_table_field_char('user_msnm', 255, true);
+$_CLASS['core_db']->add_table_field_char('user_jabber', 255, true);
+$_CLASS['core_db']->add_table_field_char('user_website', 255, true);
+$_CLASS['core_db']->add_table_field_char('user_interests', 255, true);
+$_CLASS['core_db']->add_table_field_char('user_occ', 255, true);
 
 // look at these
+$_CLASS['core_db']->add_table_field_int('user_message_limit', 0, 200);
+$_CLASS['core_db']->add_table_field_int('user_message_rules', 0, 1);
 $_CLASS['core_db']->add_table_field_int('user_full_folder', -10, 16000000, -3);
 $_CLASS['core_db']->add_table_field_int('user_attachsig', 0, 1, 1);
 ///
 
-$_CLASS['core_db']->add_table_field_int('user_notify', 0, 1);
-$_CLASS['core_db']->add_table_field_int('user_notify_pm', 0, 1);
-$_CLASS['core_db']->add_table_field_int('user_notify_type', 0, 200);
+$_CLASS['core_db']->add_table_field_int('user_notify', array('max' => 1));
+//$_CLASS['core_db']->add_table_field_int('user_notify_pm', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_notify_type', array('max' => 10));
 
-$_CLASS['core_db']->add_table_field_int('user_allow_pm', 0, 1, 1);
-$_CLASS['core_db']->add_table_field_int('user_allow_email', 0, 1, 1);
+$_CLASS['core_db']->add_table_field_int('user_allow_pm', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_allow_email', array('max' => 1));
 
 $_CLASS['core_db']->add_table_field_char('user_sig_bbcode_uid', 5);
-$_CLASS['core_db']->add_table_field_int('user_sig_bbcode_bitfield', 0, 1600);
+$_CLASS['core_db']->add_table_field_int('user_sig_bbcode_bitfield', array('max' => 1600));
 
-$_CLASS['core_db']->add_table_field_int('user_topic_show_days', 0, 200);
+$_CLASS['core_db']->add_table_field_int('user_topic_show_days', array('max' => 200));
 $_CLASS['core_db']->add_table_field_char('user_topic_sortby_type', 1);
 $_CLASS['core_db']->add_table_field_char('user_topic_sortby_dir', 1);
 
-$_CLASS['core_db']->add_table_field_int('user_post_show_days', 0, 200);
+$_CLASS['core_db']->add_table_field_int('user_post_show_days', array('max' => 200));
 $_CLASS['core_db']->add_table_field_char('user_post_sortby_type', 1);
 $_CLASS['core_db']->add_table_field_char('user_post_sortby_dir', 1);
 
-$_CLASS['core_db']->add_table_field_int('user_posts', 16000000);
-field_unix_time('user_lastpost_time');
+$_CLASS['core_db']->add_table_field_int('user_posts', array('max' => 16000000));
+field_unix_time('user_last_post_time');
 
-$_CLASS['core_db']->add_table_field_int('user_allow_viewonline', 0, 1, 1);
-$_CLASS['core_db']->add_table_field_int('user_allow_viewemail', 0, 1, 1);
-$_CLASS['core_db']->add_table_field_int('user_allow_massemail', 0, 1, 1);
+$_CLASS['core_db']->add_table_field_text('user_permissions', 60000); // phpBBs rename user_forums_permissions
 
-$_CLASS['core_db']->add_table_field_char('user_avatar', 200);
-$_CLASS['core_db']->add_table_field_int('user_avatar_type', 0, 10);
-$_CLASS['core_db']->add_table_field_int('user_avatar_width', 0, 100);
-$_CLASS['core_db']->add_table_field_int('user_avatar_height', 0, 100);
+// these can be null I think
+$_CLASS['core_db']->add_table_field_char('user_avatar', 200, null);
+$_CLASS['core_db']->add_table_field_int('user_avatar_type', array('max' => 10, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('user_avatar_width', array('max' => 100, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('user_avatar_height', array('max' => 100, 'null' => true));
 
-$_CLASS['core_db']->add_table_field_char('user_act_key', 40);
-$_CLASS['core_db']->add_table_field_char('user_new_password', 40);
-$_CLASS['core_db']->add_table_field_char('user_new_password_encoding', 10);
+$_CLASS['core_db']->add_table_field_int('user_rank', array('max' => 16000000, 'null' => true));
 
 $_CLASS['core_db']->add_table_index('user_id', 'primary');
 $_CLASS['core_db']->add_table_index('username');

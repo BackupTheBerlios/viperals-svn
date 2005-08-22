@@ -21,6 +21,9 @@ if (!defined('QUICK_MESSAGE_TABLE'))
 	define('QUICK_MESSAGE_TABLE', 'test_quick_message');
 }
 
+$_CLASS['core_user']->user_setup();
+$_CLASS['core_user']->add_lang();
+
 switch (get_variable('mode', 'GET', false))
 {
 	case 'add':
@@ -28,12 +31,8 @@ switch (get_variable('mode', 'GET', false))
 		{
 			url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
 		}
-	
-		$_CLASS['core_user']->user_setup();
-		$_CLASS['core_user']->add_lang();
 
 		$message = trim(get_variable('message', 'POST', false));
-		$_CORE_CONFIG['quick_message']['lastpost_check'] = 300;
 
 		if (!$message)
 		{
@@ -50,14 +49,14 @@ switch (get_variable('mode', 'GET', false))
 		$message 	= htmlentities($message, ENT_QUOTES, 'UTF-8');
 
 	// use limit
-		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['lastpost_check']));
+		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
 		$count = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
 	// add a count check here so it admin ajustable
 		if ($count['count'] > 0)
 		{
-			trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['lastpost_check'] / 60));
+			trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['last_post_check'] / 60));
 		}
 
 		$_CLASS['core_db']->free_result($result);
@@ -132,9 +131,6 @@ switch (get_variable('mode', 'GET', false))
 		redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
 	break;
 }
-
-$_CLASS['core_user']->user_setup();
-$_CLASS['core_user']->add_lang();
 
 $start = get_variable('start', 'GET', 0, 'integer');
 $limit = 20;
@@ -221,10 +217,13 @@ $result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '.QUICK_MESSA
 $row = $_CLASS['core_db']->fetch_row_assoc($result);
 $_CLASS['core_db']->free_result($result);	
 
+$pagination = generate_pagination('Quick_Message', $row['total'], $limit, $start);
+
 $_CLASS['core_template']->assign_array(array(
-	'Q_MESSAGE_PAGINATION'	=> generate_pagination('Quick_Message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
-	'Q_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
-	'Q_TOTAL_MESSAGES'		=> $row['total']
+	'Q_MESSAGE_PAGINATION'			=> $pagination['formated'],
+	'Q_MESSAGE_PAGINATION_ARRAY'	=> $pagination['array'],
+	'Q_PAGE_NUMBER'					=> on_page($row['total'], $limit, $start),
+	'Q_TOTAL_MESSAGES'				=> $row['total']
 ));
 
 $_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');

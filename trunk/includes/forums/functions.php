@@ -23,12 +23,16 @@
 // 
 // -------------------------------------------------------------
 
+// Error messages just incase we can't get our configs
+$config_error = '<center>There is currently a problem with the site<br/>';
+$config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
+
 if (is_null($config = $_CLASS['core_cache']->get('config')))
 {
 	$config = $cached_config = array();
 
 	$sql = 'SELECT config_name, config_value, is_dynamic
-		FROM ' . CONFIG_TABLE;
+		FROM ' . FORUMS_CONFIG_TABLE;
 			
 	if (!$result = $_CLASS['core_db']->query($sql))
 	{
@@ -53,18 +57,16 @@ if (is_null($config = $_CLASS['core_cache']->get('config')))
 else
 {
 	$sql = 'SELECT config_name, config_value
-		FROM ' . CONFIG_TABLE . '
+		FROM ' . FORUMS_CONFIG_TABLE . '
 		WHERE is_dynamic = 1';
 	$result = $_CLASS['core_db']->query($sql);
 	
-	if (is_array($result))
+	if ($result = $_CLASS['core_db']->query($sql))
 	{
-		trigger_error($config_error, E_USER_ERROR);
-	}
-	
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		$config[$row['config_name']] = $row['config_value'];
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$config[$row['config_name']] = $row['config_value'];
+		}
 	}
 }
 
@@ -72,14 +74,14 @@ function set_config($config_name, $config_value, $is_dynamic = false)
 {
 	global $_CLASS, $config;
 
-	$sql = 'UPDATE ' . CONFIG_TABLE . "
+	$sql = 'UPDATE ' . FORUMS_CONFIG_TABLE . "
 		SET config_value = '" . $_CLASS['core_db']->escape($config_value) . "'
 		WHERE config_name = '" . $_CLASS['core_db']->escape($config_name) . "'";
 	$_CLASS['core_db']->query($sql);
 
 	if (!$_CLASS['core_db']->affected_rows() && !isset($config[$config_name]))
 	{
-		$sql = 'INSERT INTO ' . CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+		$sql = 'INSERT INTO ' . FORUMS_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'config_name'	=> $config_name,
 			'config_value'	=> $config_value,
 			'is_dynamic'	=> ($is_dynamic) ? 1 : 0));
@@ -220,7 +222,7 @@ function generate_forum_rules(&$forum_data)
 		unset($bbcode);
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_FORUM_RULES'	=> true,
 		'U_FORUM_RULES'	=> $forum_data['forum_rules_link'],
 		'FORUM_RULES'   => $forum_data['forum_rules'])
@@ -262,7 +264,7 @@ function generate_forum_nav(&$forum_data)
 		)
 	);
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'FORUM_ID' 		=> $forum_data['forum_id'],
 		'FORUM_NAME'	=> $forum_data['forum_name'],
 		'FORUM_DESC'	=> strip_tags($forum_data['forum_desc']))
@@ -283,7 +285,7 @@ function get_forum_parents(&$forum_data)
 		if ($forum_data['forum_parents'] == '')
 		{
 			$sql = 'SELECT forum_id, forum_name, forum_type
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE left_id < ' . $forum_data['left_id'] . '
 					AND right_id > ' . $forum_data['right_id'] . '
 				ORDER BY left_id ASC';
@@ -297,7 +299,7 @@ function get_forum_parents(&$forum_data)
 
 			$forum_data['forum_parents'] = serialize($forum_parents);
 
-			$sql = 'UPDATE ' . FORUMS_TABLE . "
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 				SET forum_parents = '" . $_CLASS['core_db']->escape($forum_data['forum_parents']) . "'
 				WHERE parent_id = " . $forum_data['parent_id'];
 			$_CLASS['core_db']->query($sql);
@@ -331,7 +333,7 @@ function get_moderators($forum_id = false)
 	}
 
 	$sql = 'SELECT *
-		FROM ' . MODERATOR_TABLE . "
+		FROM ' . FORUMS_MODERATOR_TABLE . "
 		WHERE display_on_index = 1
 			$forum_sql";
 	$result = $_CLASS['core_db']->query($sql);
@@ -418,7 +420,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	}
 
 	$sql = 'SELECT forum_id, forum_name, parent_id, forum_type, left_id, right_id
-		FROM ' . FORUMS_TABLE . '
+		FROM ' . FORUMS_FORUMS_TABLE . '
 		ORDER BY left_id ASC';
 	$result = $_CLASS['core_db']->query($sql, 600);
 
@@ -489,7 +491,7 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_DISPLAY_JUMPBOX'	=> $display_jumpbox,
 		'S_JUMPBOX_ACTION'	=> $action)
 	);
@@ -621,7 +623,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 	switch ($mode)
 	{
 		case 'forum':
-			$forum_id = (is_array($forum_id)) ? array_map('intval', $forum_id) : array($forum_id);
+			$forum_id = is_array($forum_id) ? array_map('intval', $forum_id) : array($forum_id);
 
 			if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 			{
@@ -649,7 +651,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 				{
 					$sql = 'DELETE FROM ' . FORUMS_TRACK_TABLE . '
 						WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
-							AND forum_id IN (' . implode(', ', $delete_array) . ')';
+							AND forum_id IN (' . implode(', ', $delete_array) . ') AND  topic_id <> 0';
 					$_CLASS['core_db']->query($sql);
 				}
 				unset($delete_array);
@@ -659,44 +661,19 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 					$sql = 'UPDATE ' . FORUMS_TRACK_TABLE . "
 						SET mark_time = $time 
 						WHERE user_id = " . $_CLASS['core_user']->data['user_id'] . '
-							AND forum_id IN (' . implode(', ', $sql_update) . ')
+							AND forum_id IN (' . implode(', ', $update_array) . ')
 							AND topic_id = 0';
 					$_CLASS['core_db']->query($sql);
 				}
 
 				if ($sql_insert = array_diff($forum_id, $update_array))
 				{
-					$sql = '';
-
 					foreach ($sql_insert as $forum_id)
 					{
-						switch ($_CLASS['core_db']->db_layer)
-						{
-							case 'mysql':
-							
-								$sql .= (($sql != '') ? ', ' : '') . '(' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time)";
-								$sql = 'VALUES ' . $sql;
-								break;
+						$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . ' (user_id, forum_id, mark_time)
+							VALUES (' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time)";
 
-							case 'mysql4':
-							case 'mssql':
-							case 'mysqli':
-							case 'sqlite':
-								$sql .= (($sql != '') ? ' UNION ALL ' : '') . ' SELECT ' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time";
-								break;
-
-							default:
-								$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . ' (user_id, forum_id, mark_time)
-									VALUES (' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time)";
-								$_CLASS['core_db']->query($sql);
-								$sql = '';
-						}
-
-						if ($sql)
-						{
-							$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . " (user_id, forum_id, mark_time) $sql";
-							$_CLASS['core_db']->query($sql);
-						}
+						$_CLASS['core_db']->query($sql);
 					}
 				}
 			}
@@ -719,15 +696,12 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			settype($topic_id, 'integer');
 			settype($forum_id, 'integer');
 
-//if ($_CLASS['core_user']->is_user && ($config['load_db_lastread'] || ($config['load_db_track'] && $type == TRACK_POSTED)))
-// what is this $config['load_db_track'] ?
-
 			if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 			{
 				$sql = 'UPDATE ' . FORUMS_TRACK_TABLE . "
 							SET forum_id = $forum_id, mark_time = $time
 								WHERE topic_id = $topic_id
-								AND user_id = {$_CLASS['core_user']->data['user_id']}";
+								AND user_id = ".$_CLASS['core_user']->data['user_id'];
 
 				if (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows())
 				{
@@ -741,8 +715,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 					$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 				}
 			}
-
-			if (!$config['load_db_lastread'])
+			else
 			{
 				$tracking = array();
 				if (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']))
@@ -798,7 +771,7 @@ function obtain_word_list()
 	if (is_null($censors = $_CLASS['core_cache']->get('word_censors')))
 	{
 		$sql = 'SELECT word, replacement
-			FROM  ' . WORDS_TABLE;
+			FROM  ' . FORUMS_WORDS_TABLE;
 		$result = $_CLASS['core_db']->query($sql);
 
 		$censors = array();
@@ -825,7 +798,7 @@ function obtain_icons()
 	if (is_null($icons = $_CLASS['core_cache']->get('icons')))
 	{
 		$sql = 'SELECT *
-			FROM ' . ICONS_TABLE . ' 
+			FROM ' . FORUMS_ICONS_TABLE . ' 
 			ORDER BY icons_order';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -855,7 +828,7 @@ function obtain_ranks()
 	if (is_null($ranks = $_CLASS['core_cache']->get('ranks')))
 	{
 		$sql = 'SELECT *
-			FROM ' . RANKS_TABLE . '
+			FROM ' . FORUMS_RANKS_TABLE . '
 			ORDER BY rank_min DESC';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -891,9 +864,7 @@ function obtain_attach_extensions($forum_id = false)
 {
 	global $_CLASS;
 
-	$extensions = $_CLASS['core_cache']->get('extensions');
-
-	if (is_null($extensions))
+	if (is_null($extensions = $_CLASS['core_cache']->get('extensions')))
 	{
 		// The rule is to only allow those extensions defined. ;)
 		$sql = 'SELECT e.extension, g.*
@@ -974,42 +945,6 @@ function generate_board_url()
 	return (($config['cookie_secure']) ? 'https://' : 'http://') . preg_replace('#^/?(.*?)/?$#', '\1', trim($config['server_name'])) . (($config['server_port'] <> 80) ? ':' . trim($config['server_port']) : '') . (($path) ? '/' . $path : '');
 }
 
-// Redirects the user to another page then exits the script nicely
-function redirect($url)
-{
-	global $_CLASS, $config;
-
-	script_close();
-
-	// Make sure no &amp;'s are in, this will break the redirect
-	$url = str_replace('&amp;', '&', $url);
-	
-	// Local redirect? If not, prepend the boards url
-	if (strpos($url, '://') === false && $url{0} != '/')
-	{
-		$url = generate_board_url() . preg_replace('#^/?(.*?)/?$#', '/\1', trim($url));
-	}
-
-	// Redirect via an HTML form for PITA webservers
-	if (@preg_match('#Microsoft|WebSTAR|Xitami#', getenv('SERVER_SOFTWARE')))
-	{
-		header('Refresh: 0; URL=' . $url);
-		echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta http-equiv="refresh" content="0; url=' . $url . '"><title>Redirect</title></head><body><div align="center">' . sprintf($_CLASS['core_user']->lang['URL_REDIRECT'], '<a href="' . $url . '">', '</a>') . '</div></body></html>';
-		exit;
-	}
-
-	// Behave as per HTTP/1.1 spec for others
-	header('Location: ' . $url);
-	exit;
-}
-
-// Build Confirm box
-// something is wrong with $check in this function
-function confirm_box($check, $title = '', $hidden = '', $html_body = 'confirm_body.html')
-{
-
-}
-
 // Generate forum login box
 function login_forum_box($forum_data)
 {
@@ -1064,9 +999,9 @@ function login_forum_box($forum_data)
 
 		$_CLASS['core_template']->assign('LOGIN_ERROR', $_CLASS['core_user']->lang['WRONG_PASSWORD']);
 	}
-	
+
 	page_header();
-	
+
 	$_CLASS['core_template']->display('modules/Forums/login_forum.html');
 
 	script_close();
@@ -1265,7 +1200,7 @@ function page_header()
 						$row['username'] = '<b style="color:#' . $row['user_colour'] . '">' . $row['username'] . '</b>';
 					}
 
-					if ($row['user_allow_viewonline'] && $row['session_viewonline'])
+					if ($row['user_allow_viewonline'] && !$row['session_hidden'])
 					{
 						$user_online_link = $row['username'];
 						$logged_visible_online++;
@@ -1275,7 +1210,7 @@ function page_header()
 						$user_online_link = '<i>' . $row['username'] . '</i>';
 						$logged_hidden_online++;
 					}
-
+// Fix this
 					if ($row['user_allow_viewonline'] || $_CLASS['auth']->acl_get('u_viewonline'))
 					{
 						$user_online_link = ($row['user_type'] & USER_BOT) ? "<a href=\"" . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $user_online_link . '</a>' : $user_online_link;
@@ -1389,7 +1324,7 @@ function page_header()
 
 	// The following assigns all _common_ variables that may be used at any point
 	// in a template.
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'LAST_VISIT_DATE' 			=> sprintf($_CLASS['core_user']->lang['YOU_LAST_VISIT'], $s_last_visit),
 		'CURRENT_TIME'				=> sprintf($_CLASS['core_user']->lang['CURRENT_TIME'], $_CLASS['core_user']->format_date(time(), false, true)),
 		'TOTAL_USERS_ONLINE' 		=> $l_online_users,

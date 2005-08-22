@@ -29,7 +29,7 @@ $module = request_var('i', '');
 
 $ucp = new module();
 
-require($site_file_root.'includes/forums/functions_user.php');
+//require($site_file_root.'includes/forums/functions_user.php');
 
 //define the undefineds
 $_CLASS['core_template']->assign_array(array(

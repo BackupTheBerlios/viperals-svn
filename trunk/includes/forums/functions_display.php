@@ -60,7 +60,7 @@ function display_forums($root_data = '', $display_moderators = true)
 	}
 
 	$sql = "SELECT f.* $lastread_select 
-		FROM ". FORUMS_TABLE . " f $sql_from
+		FROM ". FORUMS_FORUMS_TABLE . " f $sql_from
 		WHERE forum_status <> ".ITEM_DELETING."
 		$sql_where
 		ORDER BY f.left_id";
@@ -328,11 +328,9 @@ function display_forums($root_data = '', $display_moderators = true)
 		);
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'U_MARK_FORUMS'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
-
 		'S_HAS_SUBFORUM'	=>	($visible_forums) ? true : false,
-
 		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
 	));
 
@@ -348,40 +346,6 @@ function topic_topic_author(&$topic_row)
 	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? '</a>' : '';
 
 	return $topic_author;
-}
-
-function topic_generate_pagination($replies, $url)
-{
-	global $config, $_CLASS;
-
-	if (($replies + 1) > $config['posts_per_page'])
-	{
-		$total_pages = ceil(($replies + 1) / $config['posts_per_page']);
-		$pagination = '';
-	
-		$times = 1;
-		for ($j = 0; $j < $replies + 1; $j += $config['posts_per_page'])
-		{
-			$pagination .= '<a href="'.generate_link($url.'&amp;start='.$j).'">'.$times.'</a>';
-			if ($times == 1 && $total_pages > 4)
-			{
-				$pagination .= ' ... ';
-				$times = $total_pages - 3;
-				$j += ($total_pages - 4) * $config['posts_per_page'];
-			}
-			else if ($times < $total_pages)
-			{
-				$pagination .= $_CLASS['core_user']->img['pagination_sep'];
-			}
-			$times++;
-		}
-	}
-	else
-	{
-		$pagination = '';
-	}
-
-	return $pagination;
 }
 
 function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_alt, &$topic_type)

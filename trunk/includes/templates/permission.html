@@ -1,5 +1,6 @@
 { $A_TABLE_OPEN }
 <form method="post" action="">
+<!-- IF { $P_CURRENT_GROUPS } || { $P_DCURRENT_GROUPS } || { $P_CURRENT_USERS } || { $P_DCURRENT_USERS }-->
 	<table class="tablebg" border="0" cellpadding="0" cellspacing="1" width="100%">
 		<tbody>
 			<!-- IF { $P_CURRENT_GROUPS } || { $P_DCURRENT_GROUPS } -->
@@ -15,7 +16,7 @@
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
 							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="dg_current[]" multiple="multiple" size="5">{ $P_DCURRENT_GROUPS }</select></td>
+								<td class="row1" align="center"><select style="width: 280px;" name="groups_current[]" multiple="multiple" size="5">{ $P_DCURRENT_GROUPS }</select></td>
 							</tr>
 						</tbody>
 					</table>
@@ -25,17 +26,17 @@
 						<tbody>
 
 							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="g_current[]" multiple="multiple" size="5">{ $P_CURRENT_GROUPS }</select></td>
+								<td class="row1" align="center"><select style="width: 280px;" name="groups_current[]" multiple="multiple" size="5">{ $P_CURRENT_GROUPS }</select></td>
 							</tr>
 						</tbody>
 					</table>
 				</td>
 			</tr>
 			<!-- ENDIF -->
+			<!-- IF { $P_CURRENT_USERS } || { $P_DCURRENT_USERS } -->
 			<tr>
 				<th colspan="2">{ $L_USERS }</th>
 			</tr>
-			<!-- IF { $P_CURRENT_USERS } || { $P_DCURRENT_USERS } -->
 			<tr>
 				<td  class="row1" align="center">{ $L_DISALLOWED }</td>
 				<td  class="row1" align="center">{ $L_ALLOWED }</ttd>
@@ -45,7 +46,7 @@
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
 							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="du_current[]" multiple="multiple" size="5">{ $P_DCURRENT_USERS }</select></td>
+								<td class="row1" align="center"><select style="width: 280px;" name="users_current[]" multiple="multiple" size="5">{ $P_DCURRENT_USERS }</select></td>
 							</tr>
 						</tbody>
 					</table>
@@ -54,7 +55,7 @@
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
 							<tr>
-								<td class="row1" align="center"><select style="width: 280px;" name="u_current[]" multiple="multiple" size="5">{ $P_CURRENT_USERS }</select></td>
+								<td class="row1" align="center"><select style="width: 280px;" name="users_current[]" multiple="multiple" size="5">{ $P_CURRENT_USERS }</select></td>
 							</tr>
 						</tbody>
 					</table>
@@ -68,14 +69,12 @@
 			</tr>
 		</tbody>
 	</table>
-
 	<br/>
-
+<!-- ENDIF -->
 	<table class="tablebg" border="0" cellpadding="0" cellspacing="1" width="100%">
 		<tbody>
-
 			<tr>	
-				<td>
+				<td colspan="2">
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
 							<tr>
@@ -88,7 +87,7 @@
 						</tbody>
 					</table>
 				</td>
-				<td>
+				<td colspan="2">
 					<table class="tablebg" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
 						<tbody>
 							<tr>
@@ -102,7 +101,16 @@
 				</td>
 			</tr>
 			<tr>
-				<td class="cat" colspan="3" align="center" height="28">
+				<th colspan="4">{ $L_OPTIONS }</th>
+			</tr>
+			<tr>
+			<td class="row1"><b class="genmed">{ $L_ACCESS }</b></td>
+			<td class="row2"><input name="auth_options[core_status]" value="1" checked="checked" type="radio">{ $L_ALLOWED }&nbsp;&nbsp;<input name="auth_options[core_status]" value="0" type="radio">{ $L_DENIED }</td>
+			<td class="row1"><b class="genmed">{ $L_GROUP_ALLOWANCE }</b></td>
+			<td class="row2"><input name="auth_options[core_auth_type]" value="1" checked="checked" type="radio">{ $L_ONLY_DEFAULT }&nbsp;&nbsp;<input name="auth_options[core_auth_type]" value="0" type="radio">{ $L_ALL_MEMBERS }</td>
+			</tr>
+			<tr>
+				<td class="cat" colspan="4" align="center" height="28">
 					<input class="btnmain" name="add" value="Submit" type="submit" />&nbsp;&nbsp;<input class="button" value="Reset" name="reset" type="reset" />
 				</td>
 			</tr>

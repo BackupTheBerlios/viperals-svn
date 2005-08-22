@@ -31,19 +31,20 @@ $id = request_var('id', 0);
 // What are we working on?
 switch ($mode)
 {
-	case 'smilies':
-		$table = SMILIES_TABLE;
+/*	case 'smilies':
+		$table = FORUMS_SMILIES_TABLE;
 		$lang = 'SMILIES';
 		$fields = 'smiley';
 		$img_path = $config['smilies_path'];
-		break;
+	break;*/
 
-	case 'icons':
-		$table = ICONS_TABLE;
+	//case 'icons':
+	default:
+		$table = FORUMS_ICONS_TABLE;
 		$lang = 'ICONS';
 		$fields = 'icons';
 		$img_path = $config['icons_path'];
-		break;
+	break;
 }
 
 // Clear some arrays
@@ -96,9 +97,9 @@ switch ($action)
 		$sql = "SELECT * 
 			FROM $table 
 			ORDER BY {$fields}_order " . (($id || $action == 'add') ? 'DESC' : 'ASC');
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			do
 			{
@@ -130,9 +131,9 @@ switch ($action)
 					$order_list = '<option value="' . ($row[$fields . '_order']) . '"' . $selected . '>' . sprintf($_CLASS['core_user']->lang['AFTER_' . $lang], ' -&gt; ' . htmlspecialchars($after_txt)) . '</option>' . $order_list;
 				}
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		$order_list = '<option value="1"' . ((!isset($after)) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['FIRST'] . '</option>' . $order_list;
 
@@ -312,12 +313,12 @@ switch ($action)
 					$sql = "UPDATE $table
 						SET " . $_CLASS['core_db']->sql_build_array('UPDATE', $img_sql) . " 
 						WHERE {$fields}_id = " . $image_id[$image];
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 				else
 				{
 					$sql = "INSERT INTO $table " . $_CLASS['core_db']->sql_build_array('INSERT', $img_sql);
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 
 				$update = FALSE;
@@ -326,7 +327,7 @@ switch ($action)
 				{
 					$update = TRUE;
 
-					$result = $_CLASS['core_db']->sql_query("SELECT {$fields}_order 
+					$result = $_CLASS['core_db']->query("SELECT {$fields}_order 
 						FROM $table
 						WHERE {$fields}_id = " . $image_id[$image]);
 					$order_old = $_CLASS['core_db']->sql_fetchfield($fields . '_order', 0, $result);
@@ -354,7 +355,7 @@ switch ($action)
 					$sql = "UPDATE $table
 						SET {$fields}_order = {$fields}_order $sign 1
 						WHERE $where";
-					$_CLASS['core_db']->sql_query($sql);
+					$_CLASS['core_db']->query($sql);
 				}
 			
 			}
@@ -385,7 +386,7 @@ switch ($action)
 			// The user has already selected a smilies_pak file
 			if ($current == 'delete')
 			{
-				$_CLASS['core_db']->sql_query("TRUNCATE $table");
+				$_CLASS['core_db']->query("TRUNCATE $table");
 
 				switch ($mode)
 				{
@@ -394,9 +395,9 @@ switch ($action)
 
 					case 'icons':
 						// Reset all icon_ids
-						$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . ' 
+						$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . ' 
 							SET icon_id = 0');
-						$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . ' 
+						$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . ' 
 							SET icon_id = 0');
 						break;
 				}
@@ -406,14 +407,14 @@ switch ($action)
 				$cur_img = array();
 
 				$field_sql = ($mode == 'smilies') ? 'code' : 'icons_url';
-				$result = $_CLASS['core_db']->sql_query("SELECT $field_sql FROM $table");
+				$result = $_CLASS['core_db']->query("SELECT $field_sql FROM $table");
 
-				while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					++$order;
 					$cur_img[$row[$field_sql]] = 1;
 				}
-				$_CLASS['core_db']->sql_freeresult($result);
+				$_CLASS['core_db']->free_result($result);
 			}
 
 			if (!($pak_ary = @file($img_path . '/' . $pak)))
@@ -458,7 +459,7 @@ switch ($action)
 							));
 						}
 
-						$_CLASS['core_db']->sql_query("UPDATE $table SET " . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . " 
+						$_CLASS['core_db']->query("UPDATE $table SET " . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . " 
 							WHERE $field_sql = '" . $_CLASS['core_db']->sql_escape($replace_sql) . "'");
 					}
 					else
@@ -479,7 +480,7 @@ switch ($action)
 								'emotion'	=>	$emotion
 							));
 						}
-						$_CLASS['core_db']->sql_query("INSERT INTO $table " . $_CLASS['core_db']->sql_build_array('INSERT', $sql));
+						$_CLASS['core_db']->query("INSERT INTO $table " . $_CLASS['core_db']->sql_build_array('INSERT', $sql));
 					}
 
 				}
@@ -559,10 +560,10 @@ switch ($action)
 		$sql = "SELECT * 
 			FROM $table
 			ORDER BY {$fields}_order";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
 		$pak = '';
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$pak .= "'" . addslashes($row[$fields . '_url']) . "', ";
 			$pak .= "'" . addslashes($row[$fields . '_height']) . "', ";
@@ -574,7 +575,7 @@ switch ($action)
 			}
 			$pak .= "\n";
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		if ($pak != '')
 		{
@@ -593,7 +594,7 @@ switch ($action)
 
 	case 'delete':
 
-		$_CLASS['core_db']->sql_query("DELETE FROM $table 
+		$_CLASS['core_db']->query("DELETE FROM $table 
 			WHERE {$fields}_id = $id");
 
 		switch ($mode)
@@ -603,10 +604,10 @@ switch ($action)
 
 			case 'icons':
 				// Reset appropriate icon_ids
-				$_CLASS['core_db']->sql_query('UPDATE ' . TOPICS_TABLE . " 
+				$_CLASS['core_db']->query('UPDATE ' . TOPICS_TABLE . " 
 					SET icon_id = 0 
 					WHERE icon_id = $id");
-				$_CLASS['core_db']->sql_query('UPDATE ' . POSTS_TABLE . " 
+				$_CLASS['core_db']->query('UPDATE ' . POSTS_TABLE . " 
 					SET icon_id = 0 
 					WHERE icon_id = $id");
 				break;
@@ -625,7 +626,7 @@ switch ($action)
 			$sql = 'UPDATE ' . $table . '
 				SET ' . $fields . "_order = $order_total - " . $fields . '_order
 				WHERE ' . $fields . "_order IN ($image_order, " . (($action == 'move_up') ? $image_order - 1 : $image_order + 1) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			$_CLASS['core_cache']->destroy('icons');
 
@@ -638,9 +639,9 @@ switch ($action)
 		$sql = "SELECT {$fields}_id AS order_id, {$fields}_order AS fields_order
 			FROM $table
 			ORDER BY {$fields}_order";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$order = 0;
 			do
@@ -648,14 +649,14 @@ switch ($action)
 				++$order;
 				if ($row['fields_order'] != $order)
 				{
-					$_CLASS['core_db']->sql_query("UPDATE $table
+					$_CLASS['core_db']->query("UPDATE $table
 						SET {$fields}_order = $order
 						WHERE {$fields}_id = " . $row['order_id']);
 				}
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 		// Output the page
 		adm_page_header($_CLASS['core_user']->lang[$lang]);
@@ -707,11 +708,11 @@ switch ($action)
 		$sql = "SELECT * 
 			FROM $table
 			ORDER BY display_on_posting DESC, {$fields}_order ASC";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 		
 		$row_class = 'row1';
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			if (!$spacer && !$row['display_on_posting'])
 			{
@@ -744,7 +745,7 @@ switch ($action)
 <?php
 
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
 ?>
 		<tr>

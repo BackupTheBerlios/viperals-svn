@@ -1,11 +1,12 @@
 <!-- DISPLAY_HEADER -->
 
-<style type="text/css">@import url(java/jscalendar/skins/aqua/theme.css);</style>
-<script type="text/javascript" src="java/jscalendar/calendar_stripped.js"></script>
-<script type="text/javascript" src="java/jscalendar/lang/calendar-en.js"></script>
-<script type="text/javascript" src="java/jscalendar/calendar-setup.js"></script>
+<style type="text/css">@import url(javascript/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="javascript/jscalendar/calendar.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/calendar-setup.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/lang/calendar-en.js"></script>
 
 { $A_TABLE_OPEN }
+
 <form action="{ $B_ACTION }" method="post">
 	<table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
 		<tbody>
@@ -32,8 +33,7 @@
 				<td class="row1"><b class="genmed">{ $L_STARTS }: </b></td>
 				<td class="row2" >
 					<input class="post" id="b_time" name="b_time" size="35" maxlength="100" value="{ $B_STARTS }" type="text" />
-					<img src="java/jscalendar/calendar.png" style="cursor: pointer;" id="time_trigger" />
-					<!-- IF { $B_STARTS } -->   Currently Set:  { $B_STARTS }<!-- ENDIF -->
+					<img src="images/calender_small.png" style="cursor: pointer;" id="time_trigger" />
 				</td>
 				<td class="row1" align="center" rowspan="2"><b class="genmed">Current Server Time:</b><br/>{ $B_CURRENT_TIME } </td>
 			</tr>
@@ -41,8 +41,7 @@
 				<td class="row1"><b class="genmed">{ $L_EXPIRES }: </b></td>
 				<td class="row2">
 					<input class="post" id="b_expires" name="b_expires" size="35" maxlength="100" value="{ $B_EXPIRES }" type="text" />
-					<img src="java/jscalendar/calendar.png" style="cursor: pointer;"  id="expires_trigger" />
-					<!-- IF { $B_EXPIRES } -->    Currently Set:  { $B_EXPIRES }<!-- ENDIF -->
+					<img src="images/calender_small.png" style="cursor: pointer;"  id="expires_trigger" />
 				</td>
 			</tr>
 			<!-- IF { $B_POSITION } -->

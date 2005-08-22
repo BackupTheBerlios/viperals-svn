@@ -36,15 +36,16 @@
 		</tr>
 		<!-- LOOPELSE -->
 			<tr class="row2">
-				<td colspan="2">
-					{ $ERROR }
+				<td align="center" colspan="2">
+					{ $L_NO_POST }
 				</td>
 			</tr>
 		<!-- ENDLOOP -->
+
 		<!-- IF { $Q_MESSAGE_PAGINATION } -->
 		<tr class="row2">
 			<td style="padding: 5px;" valign="middle" colspan="2">
-				<div style="padding-right: 5px; text-align: right;" class="numbering">[ <!-- IF { $Q_MESSAGE_PREVIOUS_PAGE } --><a href="{ $Q_MESSAGE_PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;|&nbsp;<!-- ENDIF --> { $Q_MESSAGE_PAGINATION } <!-- IF { $Q_MESSAGE_NEXT_PAGE } -->&nbsp;|&nbsp;<a href="{ $Q_MESSAGE_NEXT_PAGE }">{ $L_NEXT }</a><!-- ENDIF --> ]</div>
+				<div style="padding-right: 5px; text-align: right;">{ $Q_MESSAGE_PAGINATION }</div>
 			</td>
 		</tr>
 		<!-- ENDIF -->

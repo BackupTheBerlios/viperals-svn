@@ -1,4 +1,25 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 if (VIPERAL !== 'Admin') 
 {
@@ -66,11 +87,9 @@ function admin_site($save)
 		$data = array('global'	=> array(
 			'default_theme'		=> array('post_name' => 'default_theme'),
 			'link_optimization' => array('post_name' => 'link_optimization'),
-			'site_logo'			=> array('post_name' => 'site_logo'),
 			'site_name'			=> array('post_name' => 'site_name'),
 			'site_url'			=> array('post_name' => 'site_url'),
-			'slogan'			=> array('post_name' => 'slogan'),
-			'startdate'			=> array('post_name' => 'startdate')
+			'start_date'		=> array('post_name' => 'start_date')
 			)
 		);
 		admin_save($data);
@@ -118,7 +137,11 @@ function admin_system($save)
 {
 	if ($save)
 	{
-		$_POST['maintenance_start'] = (($expires = strtotime($_POST['maintenance_start'])) === -1) ? '' : $expires;
+		if (!empty($_POST['maintenance_start']))
+		{
+			$expires = strtotime($_POST['maintenance_start']);
+			$_POST['maintenance_start'] = (!$expires || $expires == -1) ? '' : $expires;
+		}
 
 		$data = array(
 			'maintenance' => array(
@@ -136,7 +159,6 @@ function admin_system($save)
 				'site_port' 	=> array('post_name' => 'site_port'),
 				'site_path' 	=> array('post_name' => 'site_path'),
 				'ip_check' 		=> array('post_name' => 'ip_check'),
-				'browser_check' => array('post_name' => 'browser_check'),
 				'limit_load' 	=> array('post_name' => 'limit_load'),
 				'limit_sessions'	=> array('post_name' => 'limit_sessions'),
 				'session_length'	=> array('post_name' => 'session_length'),

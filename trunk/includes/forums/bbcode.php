@@ -227,7 +227,7 @@ class bbcode
 			$rowset = array();
 
 			$sql = 'SELECT *
-				FROM ' . BBCODES_TABLE . "
+				FROM ' . FORUMS_BBCODES_TABLE . "
 				WHERE bbcode_id IN ($sql)";
 
 			$result = $_CLASS['core_db']->query($sql);

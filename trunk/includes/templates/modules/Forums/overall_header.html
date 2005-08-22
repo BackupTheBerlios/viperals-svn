@@ -7,9 +7,9 @@ function popup(url, width, height)
 	return false;
 }
 
+<!-- IF isset({ $ON_PAGE }) -->
 function jumpto()
 {
-
 	var page = prompt('{ $L_JUMP_PAGE }:', '{ $ON_PAGE }');
 	var perpage = '{ $PER_PAGE }';
 	var base_url = '{ $BASE_URL }';
@@ -19,7 +19,7 @@ function jumpto()
 		document.location.href = base_url.replace('&amp;', '&') + '&start=' + ((page - 1) * perpage);
 	}
 }
-
+<!-- ENDIF -->
 //-->
 </script>
 

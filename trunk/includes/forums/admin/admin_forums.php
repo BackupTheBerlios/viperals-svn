@@ -29,12 +29,15 @@ switch ($mode)
 {
 	case 'add':
 		$acl = 'a_forumadd';
-		break;
+	break;
+
 	case 'delete':
 		$acl = 'a_forumdel';
-		break;
+	break;
+
 	default:
 		$acl = 'a_forum';
+	break;
 }
 
 if (!$_CLASS['auth']->acl_get($acl))
@@ -49,6 +52,11 @@ if ($update)
 	switch ($mode)
 	{
 		case 'delete':
+			if (!$forum_id)
+			{
+				trigger_error('NO_FORUM');
+			}
+
 			$action_subforums	= request_var('action_subforums', '');
 			$subforums_to_id	= request_var('subforums_to_id', 0);
 			$action_posts		= request_var('action_posts', '');
@@ -56,14 +64,18 @@ if ($update)
 
 			delete_forum($forum_id, $action_posts, $action_subforums, $posts_to_id, $subforums_to_id);
 
-			//
 			$_CLASS['auth']->acl_clear_prefetch();
 
 			$show_prev_info = false;
-			trigger_error($_CLASS['core_user']->lang['FORUM_DELETED']);
-			break;
+			trigger_error('FORUM_DELETED');
+		break;
 
 		case 'edit':
+			if (!$forum_id)
+			{
+				trigger_error('NO_FORUM');
+			}
+
 			$forum_data = array(
 				'forum_id'		=>	$forum_id
 			);
@@ -96,7 +108,6 @@ if ($update)
 				'forum_password'		=> request_var('forum_password', ''),
 				'forum_password_confirm'=> request_var('forum_password_confirm', '')
 			);
-
 
 			if ($forum_data['forum_rules'])
 			{
@@ -333,7 +344,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 ?><br /><input type="radio" name="action" value="delete" checked="checked" /> <?php echo $_CLASS['core_user']->lang['DELETE_ALL_POSTS'];
 
 			$sql = 'SELECT forum_id
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE forum_type = ' . FORUM_POST . "
 					AND forum_id <> $forum_id";
 			$result = $_CLASS['core_db']->query($sql);
@@ -580,7 +591,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 <?php
 
 			$sql = 'SELECT forum_id
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE forum_type = ' . FORUM_POST . "
 					AND forum_id <> $forum_id";
 			$result = $_CLASS['core_db']->query($sql);
@@ -635,7 +646,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 	case 'move_up':
 	case 'move_down':
 		$sql = 'SELECT parent_id, left_id, right_id
-			FROM ' . FORUMS_TABLE . "
+			FROM ' . FORUMS_FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -650,7 +661,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		// Get the adjacent forum
 		$sql = 'SELECT forum_id, forum_name, left_id, right_id
-			FROM ' . FORUMS_TABLE . "
+			FROM ' . FORUMS_FORUMS_TABLE . "
 			WHERE parent_id = $parent_id
 				AND " . (($mode == 'move_up') ? "right_id < $right_id ORDER BY right_id DESC" : "left_id > $left_id ORDER BY left_id ASC");
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -682,7 +693,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		$forum_ids = array();
 		$sql = 'SELECT forum_id
-			FROM ' . FORUMS_TABLE . '
+			FROM ' . FORUMS_FORUMS_TABLE . '
 			WHERE left_id > ' . $forum_info[$up_id]['left_id'] . '
 				AND right_id < ' . $forum_info[$up_id]['right_id'];
 		$result = $_CLASS['core_db']->query($sql);
@@ -696,7 +707,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 		// Start transaction
 		$_CLASS['core_db']->transaction();
 
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET left_id = left_id + ' . ($diff_up + 1) . ', right_id = right_id + ' . ($diff_up + 1) . '
 			WHERE left_id > ' . $forum_info[$down_id]['left_id'] . '
 				AND right_id < ' . $forum_info[$down_id]['right_id'];
@@ -704,18 +715,18 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		if (count($forum_ids))
 		{
-			$sql = 'UPDATE ' . FORUMS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 				SET left_id = left_id - ' . ($diff_down + 1) . ', right_id = right_id - ' . ($diff_down + 1) . '
 				WHERE forum_id IN (' . implode(', ', $forum_ids) . ')';
 			$_CLASS['core_db']->query($sql);
 		}
 
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET left_id = ' . $forum_info[$down_id]['left_id'] . ', right_id = ' . ($forum_info[$down_id]['left_id'] + $diff_up) . '
 			WHERE forum_id = ' . $up_id;
 		$_CLASS['core_db']->query($sql);
 
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET left_id = ' . ($forum_info[$up_id]['right_id'] - $diff_down) . ', right_id = ' . $forum_info[$up_id]['right_id'] . '
 			WHERE forum_id = ' . $down_id;
 		$_CLASS['core_db']->query($sql);
@@ -731,11 +742,11 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 	case 'sync':
 		if (!$forum_id)
 		{
-			trigger_error($_CLASS['core_user']->lang['NO_FORUM']);
+			trigger_error('NO_FORUM');
 		}
 
 		$sql = "SELECT forum_name
-			FROM " . FORUMS_TABLE . "
+			FROM " . FORUMS_FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -805,7 +816,7 @@ if ($mode == 'sync')
 <?php
 
 $sql = 'SELECT *
-	FROM ' . FORUMS_TABLE . "
+	FROM ' . FORUMS_FORUMS_TABLE . "
 	WHERE parent_id = $parent_id
 	ORDER BY left_id";
 $result = $_CLASS['core_db']->query($sql);
@@ -910,7 +921,7 @@ function get_forum_info($forum_id)
 	global $_CLASS;
 
 	$sql = 'SELECT *
-		FROM ' . FORUMS_TABLE . "
+		FROM ' . FORUMS_FORUMS_TABLE . "
 		WHERE forum_id = $forum_id";
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -982,7 +993,7 @@ function update_forum_data(&$forum_data)
 		if ($forum_data['parent_id'])
 		{
 			$sql = 'SELECT left_id, right_id
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE forum_id = ' . $forum_data['parent_id'];
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -992,12 +1003,12 @@ function update_forum_data(&$forum_data)
 			}
 			$_CLASS['core_db']->free_result($result);
 
-			$sql = 'UPDATE ' . FORUMS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 				SET left_id = left_id + 2, right_id = right_id + 2
 				WHERE left_id > ' . $row['right_id'];
 			$_CLASS['core_db']->query($sql);
 
-			$sql = 'UPDATE ' . FORUMS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 				SET right_id = right_id + 2
 				WHERE ' . $row['left_id'] . ' BETWEEN left_id AND right_id';
 			$_CLASS['core_db']->query($sql);
@@ -1008,7 +1019,7 @@ function update_forum_data(&$forum_data)
 		else
 		{
 			$sql = 'SELECT MAX(right_id) AS right_id
-				FROM ' . FORUMS_TABLE;
+				FROM ' . FORUMS_FORUMS_TABLE;
 			$result = $_CLASS['core_db']->query($sql);
 
 			$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -1018,12 +1029,12 @@ function update_forum_data(&$forum_data)
 			$forum_data['right_id'] = $row['right_id'] + 2;
 		}
 
-		$sql = 'INSERT INTO ' . FORUMS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $forum_data);
+		$sql = 'INSERT INTO ' . FORUMS_FORUMS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $forum_data);
 		$_CLASS['core_db']->query($sql);
 		
 		$_CLASS['core_db']->transaction('commit');
 
-		$forum_data['forum_id'] = $_CLASS['core_db']->insert_id(FORUMS_TABLE, 'forum_id');
+		$forum_data['forum_id'] = $_CLASS['core_db']->insert_id(FORUMS_FORUMS_TABLE, 'forum_id');
 		add_log('admin', 'LOG_FORUM_ADD', $forum_data['forum_name']);
 	}
 	else
@@ -1069,7 +1080,7 @@ function update_forum_data(&$forum_data)
 		{
 			// the forum name has changed, clear the parents list of child forums
 
-			$sql = 'UPDATE ' . FORUMS_TABLE . "
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 				SET forum_parents = ''
 				WHERE left_id > " . $row['left_id'] . '
 					AND right_id < ' . $row['right_id'];
@@ -1081,7 +1092,7 @@ function update_forum_data(&$forum_data)
 			return $errors;
 		}
 
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $forum_data) . '
 			WHERE forum_id = ' . $forum_data['forum_id'];
 		$_CLASS['core_db']->query($sql);
@@ -1105,14 +1116,14 @@ function move_forum($from_id, $to_id)
 	}
 
 	// Resync parents
-	$sql = 'UPDATE ' . FORUMS_TABLE . "
+	$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 		SET right_id = right_id - $diff, forum_parents = ''
 		WHERE left_id < " . $from_data['right_id'] . "
 			AND right_id > " . $from_data['right_id'];
 	$_CLASS['core_db']->query($sql);
 
 	// Resync righthand side of tree
-	$sql = 'UPDATE ' . FORUMS_TABLE . "
+	$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 		SET left_id = left_id - $diff, right_id = right_id - $diff, forum_parents = ''
 		WHERE left_id > " . $from_data['right_id'];
 	$_CLASS['core_db']->query($sql);
@@ -1122,14 +1133,14 @@ function move_forum($from_id, $to_id)
 		$to_data = get_forum_info($to_id);
 
 		// Resync new parents
-		$sql = 'UPDATE ' . FORUMS_TABLE . "
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 			SET right_id = right_id + $diff, forum_parents = ''
 			WHERE " . $to_data['right_id'] . ' BETWEEN left_id AND right_id
 				AND forum_id NOT IN (' . implode(', ', $moved_ids) . ')';
 		$_CLASS['core_db']->query($sql);
 
 		// Resync the righthand side of the tree
-		$sql = 'UPDATE ' . FORUMS_TABLE . "
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 			SET left_id = left_id + $diff, right_id = right_id + $diff, forum_parents = ''
 			WHERE left_id > " . $to_data['right_id'] . '
 				AND forum_id NOT IN (' . implode(', ', $moved_ids) . ')';
@@ -1149,7 +1160,7 @@ function move_forum($from_id, $to_id)
 	else
 	{
 		$sql = 'SELECT MAX(right_id) AS right_id
-			FROM ' . FORUMS_TABLE . '
+			FROM ' . FORUMS_FORUMS_TABLE . '
 			WHERE forum_id NOT IN (' . implode(', ', $moved_ids) . ')';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -1159,7 +1170,7 @@ function move_forum($from_id, $to_id)
 		$diff = '+ ' . ($row['right_id'] - $from_data['left_id'] + 1);
 	}
 
-	$sql = 'UPDATE ' . FORUMS_TABLE . "
+	$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 		SET left_id = left_id $diff, right_id = right_id $diff, forum_parents = ''
 		WHERE forum_id IN (" . implode(', ', $moved_ids) . ')';
 	$_CLASS['core_db']->query($sql);
@@ -1203,10 +1214,14 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 
 	if ($action_posts == 'delete')
 	{
-		$_CLASS['core_db']->query('UPDATE '.FORUMS_TABLE." SET forum_status = '".ITEM_DELETING."' WHERE forum_id = $forum_id");
+		$_CLASS['core_db']->query('UPDATE '.FORUMS_FORUMS_TABLE.' SET forum_status = '.ITEM_DELETING.' WHERE forum_id = '.$forum_id);
 
 		$log_action_posts = 'POSTS';
-		$errors[] = delete_forum_content($forum_id);
+		
+		if ($delete_error = delete_forum_content($forum_id))
+		{
+			$errors[] = $delete_error;
+		}
 	}
 	elseif ($action_posts == 'move')
 	{
@@ -1219,7 +1234,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 			$log_action_posts = 'MOVE_POSTS';
 
 			$sql = 'SELECT forum_name 
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE forum_id = ' . $posts_to_id;
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -1256,11 +1271,14 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 		}
 		unset($rows);
 
-		$_CLASS['core_db']->query('UPDATE '.FORUMS_TABLE." SET forum_status = '".ITEM_DELETING."' WHERE forum_id  IN (" . implode(', ', $forum_ids) . ')');
+		$_CLASS['core_db']->query('UPDATE '.FORUMS_FORUMS_TABLE.'  SET forum_status = '.ITEM_DELETING.' WHERE forum_id  IN (' . implode(', ', $forum_ids) . ')');
 
 		foreach ($forum_ids as $forum_id)
 		{
-			$errors[] = delete_forum_content($forum_id);
+			if ($delete_error = delete_forum_content($forum_id))
+			{
+				$errors[] = $delete_error;
+			}
 		}
 
 		if (count($errors))
@@ -1270,7 +1288,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 
 		$diff = count($forum_ids) * 2;
 
-		$sql = 'DELETE FROM ' . FORUMS_TABLE . '
+		$sql = 'DELETE FROM ' . FORUMS_FORUMS_TABLE . '
 			WHERE forum_id IN (' . implode(', ', $forum_ids) . ')';
 		$_CLASS['core_db']->query($sql);
 	}
@@ -1285,7 +1303,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 			$log_action_forums = 'MOVE_FORUMS';
 
 			$sql = 'SELECT forum_name 
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE forum_id = ' . $subforums_to_id;
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -1299,7 +1317,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 				unset($row);
 
 				$sql = 'SELECT forum_id
-					FROM ' . FORUMS_TABLE . "
+					FROM ' . FORUMS_FORUMS_TABLE . "
 					WHERE parent_id = $forum_id";
 				$result = $_CLASS['core_db']->query($sql);
 
@@ -1309,13 +1327,13 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 				}
 				$_CLASS['core_db']->free_result($result);
 
-				$sql = 'UPDATE ' . FORUMS_TABLE . "
+				$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 					SET parent_id = $subforums_to_id
 					WHERE parent_id = $forum_id";
 				$_CLASS['core_db']->query($sql);
 
 				$diff = 2;
-				$sql = 'DELETE FROM ' . FORUMS_TABLE . "
+				$sql = 'DELETE FROM ' . FORUMS_FORUMS_TABLE . "
 					WHERE forum_id = $forum_id";
 				$_CLASS['core_db']->query($sql);
 			}
@@ -1329,18 +1347,18 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 	else
 	{
 		$diff = 2;
-		$sql = 'DELETE FROM ' . FORUMS_TABLE . "
+		$sql = 'DELETE FROM ' . FORUMS_FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
 		$_CLASS['core_db']->query($sql);
 	}
 
 	// Resync tree
-	$sql = 'UPDATE ' . FORUMS_TABLE . "
+	$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 		SET right_id = right_id - $diff
 		WHERE left_id < $right_id AND right_id > $right_id";
 	$_CLASS['core_db']->query($sql);
 
-	$sql = 'UPDATE ' . FORUMS_TABLE . "
+	$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 		SET left_id = left_id - $diff, right_id = right_id - $diff
 		WHERE left_id > $right_id";
 	$_CLASS['core_db']->query($sql);
@@ -1407,7 +1425,7 @@ function delete_forum_content($forum_id)
 
 	$_CLASS['core_db']->transaction();
 
-	switch (SQL_LAYER)
+	switch ($_CLASS['core_db']->db_layer)
 	{
 // Needs updating and testing
 /*		case 'mysql4':
@@ -1469,7 +1487,7 @@ function delete_forum_content($forum_id)
 		default:
 			// Select then delete all attachments
 			$sql = 'SELECT a.attach_id, a.physical_filename, a.thumbnail
-				FROM ' . POSTS_TABLE . ' p, ' . ATTACHMENTS_TABLE . " a
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_ATTACHMENTS_TABLE . " a
 				WHERE p.forum_id = $forum_id
 					AND a.in_message = 0
 					AND a.post_msg_id = p.post_id";
@@ -1481,6 +1499,7 @@ function delete_forum_content($forum_id)
 				$attach_ids[] = $row['attach_id'];
 
 				phpbb_unlink($row['physical_filename'], 'file');
+
 				if ($row['thumbnail'])
 				{
 					phpbb_unlink($row['physical_filename'], 'thumbnail');
@@ -1491,71 +1510,68 @@ function delete_forum_content($forum_id)
 			if (count($attach_ids))
 			{
 				$attach_id_list = implode(',', array_unique($attach_ids));
-				$_CLASS['core_db']->query('DELETE FROM ' . ATTACHMENTS_TABLE . " WHERE attach_id IN ($attach_id_list)");
+				$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_ATTACHMENTS_TABLE . " WHERE attach_id IN ($attach_id_list)");
 				unset($attach_ids, $attach_id_list);
 			}
 
 			// Delete everything else and curse your DB for not offering multi-table deletion
 			$tables_ary = array(
 				'post_id'	=>	array(
-					SEARCH_MATCH_TABLE,
-					REPORTS_TABLE,
+					FORUMS_SEARCH_MATCH_TABLE,
+					FORUMS_REPORTS_TABLE,
 				),
 				
 				'topic_id'	=>	array(
-					BOOKMARKS_TABLE,
-					TOPICS_WATCH_TABLE,
-					TOPICS_TRACK_TABLE,
-					POLL_OPTIONS_TABLE,
-					POLL_VOTES_TABLE
+					FORUMS_BOOKMARKS_TABLE,
+					FORUMS_WATCH_TABLE,
+					FORUMS_TRACK_TABLE,
+					FORUMS_POLL_OPTIONS_TABLE,
+					FORUMS_POLL_VOTES_TABLE
 				)
 			);
 
 			foreach ($tables_ary as $field => $tables)
 			{
 				$start = 0;
-				$ids = array();
+				$id_array = array();
 
 				$sql = "SELECT $field
-					FROM " . POSTS_TABLE . '
+					FROM " . FORUMS_POSTS_TABLE . '
 					WHERE forum_id = ' . $forum_id;
 				$result = $_CLASS['core_db']->query($sql);
 
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					$ids[] = $row[$field];
+					$id_array[] = $row[$field];
 				}
 				$_CLASS['core_db']->free_result($result);
 
-				if (!count($ids))
+				if (empty($id_array))
 				{
 					continue;
 				}
 
-				$id_list = implode(',', $ids);
-
 				foreach ($tables as $table)
 				{
-					$_CLASS['core_db']->query("DELETE FROM $table WHERE $field IN ($id_list)");
+					$_CLASS['core_db']->query("DELETE FROM $table WHERE $field IN (".implode(',', $id_array).')');
 				}
 			}
-			unset($ids, $id_list);
+			unset($id_array);
 
-			$table_ary = array(POSTS_TABLE, FORUMS_ACCESS_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, TOPICS_TABLE, ACL_GROUPS_TABLE, ACL_USERS_TABLE, MODERATOR_TABLE, LOG_TABLE);
+			$table_ary = array(FORUMS_POSTS_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, FORUMS_TOPICS_TABLE, FORUMS_ACL_TABLE, FORUMS_MODERATOR_TABLE, FORUMS_LOG_TABLE);
 
 			foreach ($table_ary as $table)
 			{
 				$_CLASS['core_db']->query("DELETE FROM $table WHERE forum_id = $forum_id");
 			}
-
-			// NEED to have this done at the end, maybe a cran
-			$tables = array_merge($tables_ary['post_id'], $tables_ary['topic_id'], $table_ary, array(ATTACHMENTS_TABLE));
-			$_CLASS['core_db']->optimize_tables($tables);
+		break;
 	}
 
 	$_CLASS['core_db']->transaction('commit');
 	
-	return array();
+	// NEED to have this done at the end, maybe a cran
+	$tables = array_unique(array_merge($tables_ary['post_id'], $tables_ary['topic_id'], $table_ary, array(FORUMS_ATTACHMENTS_TABLE)));
+	$_CLASS['core_db']->optimize_tables($tables);
 }
 
 function recalc_btree()
@@ -1563,7 +1579,7 @@ function recalc_btree()
 	global $_CLASS;
 
 	$sql = 'SELECT forum_id, parent_id, left_id, right_id 
-		FROM ' . FORUMS_TABLE . '
+		FROM ' . FORUMS_FORUMS_TABLE . '
 		ORDER BY parent_id ASC';
 	$f_result = $_CLASS['core_db']->query($sql);
 
@@ -1572,23 +1588,23 @@ function recalc_btree()
 		if ($forum_data['parent_id'])
 		{
 			$sql = 'SELECT left_id, right_id
-				FROM ' . FORUMS_TABLE . '
+				FROM ' . FORUMS_FORUMS_TABLE . '
 				WHERE forum_id = ' . $forum_data['parent_id'];
 			$result = $_CLASS['core_db']->query($sql);
 
 			if (!$row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$sql = 'UPDATE ' . FORUMS_TABLE . ' SET parent_id = 0 WHERE forum_id = ' . $forum_data['forum_id'];
+				$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . ' SET parent_id = 0 WHERE forum_id = ' . $forum_data['forum_id'];
 				$_CLASS['core_db']->query($sql);
 			}
 			$_CLASS['core_db']->free_result($result);
 
-			$sql = 'UPDATE ' . FORUMS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 				SET left_id = left_id + 2, right_id = right_id + 2
 				WHERE left_id > ' . $row['right_id'];
 			$_CLASS['core_db']->query($sql);
 
-			$sql = 'UPDATE ' . FORUMS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 				SET right_id = right_id + 2
 				WHERE ' . $row['left_id'] . ' BETWEEN left_id AND right_id';
 			$_CLASS['core_db']->query($sql);
@@ -1599,7 +1615,7 @@ function recalc_btree()
 		else
 		{
 			$sql = 'SELECT MAX(right_id) AS right_id
-				FROM ' . FORUMS_TABLE;
+				FROM ' . FORUMS_FORUMS_TABLE;
 			$result = $_CLASS['core_db']->query($sql);
 
 			$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -1609,7 +1625,7 @@ function recalc_btree()
 			$forum_data['right_id'] = $row['right_id'] + 2;
 		}
 	
-		$sql = 'UPDATE ' . FORUMS_TABLE . '
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET left_id = ' . $forum_data['left_id'] . ', right_id = ' . $forum_data['right_id'] . '
 			WHERE forum_id = ' . $forum_data['forum_id'];
 		$_CLASS['core_db']->query($sql);

@@ -51,7 +51,7 @@ class core_user extends sessions
 		$this->browser = mb_substr((empty($_SERVER['HTTP_USER_AGENT']) ? getenv('HTTP_USER_AGENT') : $_SERVER['HTTP_USER_AGENT']), 0, 255);
 		$this->url	= empty($_SERVER['REQUEST_URI']) ? getenv('REQUEST_URI') : $_SERVER['REQUEST_URI'];
 		$this->ip	= empty($_SERVER['REMOTE_ADDR']) ? getenv('REMOTE_ADDR') : $_SERVER['REMOTE_ADDR'];
-		$this->time	= gmtime();
+		$this->time	= (int) gmtime();
 
 		if (($pos = mb_strpos($this->url, INDEX_PAGE.'?mod=')) !== false)
 		{
@@ -79,7 +79,7 @@ class core_user extends sessions
 
 	function format_time($gmtime, $format = false)
 	{
-		settype($gmtime, 'integer');
+		settype($gmtime, 'int');
 
 		if (!$gmtime)
 		{
@@ -106,6 +106,8 @@ class core_user extends sessions
 	{
 		global $_CLASS;
 
+		settype($id, 'int');
+
 		if ($bot = check_bot_status($this->browser, $this->ip))
 		{
 			$id = $bot;
@@ -123,7 +125,7 @@ class core_user extends sessions
 			script_close(false);
 		}
 
-		$result = $_CLASS['core_db']->query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '.$id);
+		$result = $_CLASS['core_db']->query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '. $id);
 		$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
@@ -143,23 +145,14 @@ class core_user extends sessions
 
 		load_class(false, 'core_auth', 'auth_db');
 		
-		if ($this->is_bot)
+		$this->data['session_admin'] = ADMIN_NOT_ADMIN;
+
+		if (!$this->is_bot && $_CLASS['core_auth']->admin_auth())
 		{
-			$this->data['session_admin'] = ADMIN_NOT_ADMIN;
-		}
-		else
-		{
-			if ($_CLASS['core_auth']->admin_auth())
-			{
-				$this->data['session_admin'] = ($admin_login) ? ADMIN_IS_ADMIN : ADMIN_NOT_LOGGED;
-			}
-			else
-			{
-				$this->data['session_admin'] = ADMIN_NOT_ADMIN;
-			}
+			$this->data['session_admin'] = ($admin_login) ? ADMIN_IS_ADMIN : ADMIN_NOT_LOGGED;
 		}
 
-		$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
+		$this->is_admin = ($this->data['session_admin'] === ADMIN_IS_ADMIN);
 		$this->data['session_hidden'] = $hidden;
 
 		$this->session_create($auto_log);
@@ -169,8 +162,16 @@ class core_user extends sessions
 	{
 		global $_CLASS;
 
-		$this->session_destroy();
-// do last visit update here
+		if ($this->is_user)
+		{
+			$sql = 'UPDATE ' . USERS_TABLE . '
+				SET user_last_visit = ' . (int) $this->data['session_time'] . '
+				WHERE user_id = ' . (int) $this->data['user_id'];
+			$_CLASS['core_db']->query($sql);
+		}
+
+		$this->session_destroy(false, true);
+
 		$sql = 'SELECT *
 			FROM ' . USERS_TABLE . '
 			WHERE user_id = ' . ANONYMOUS;
@@ -365,12 +366,12 @@ class core_user extends sessions
 
 	function user_data_get($name, $default = false)
 	{
-		return (empty($this->data['user_data'][$name])) ? $default : $this->data['user_data'][$name];
+		return isset($this->data['user_data'][$name]) ? $this->data['user_data'][$name] : $default;
 	}
 
 	function user_data_kill($name)
 	{
-		if (empty($this->data['user_data'][$name]))
+		if (!isset($this->data['user_data'][$name]))
 		{
 			return;
 		}
@@ -381,10 +382,10 @@ class core_user extends sessions
 
 	function user_data_set($name, $value, $save = false)
 	{
-		/*if (!empty($this->data['user_data'][$name]) && ($this->data['user_data'][$name] == $value))
+		if (isset($this->data['user_data'][$name]) && ($this->data['user_data'][$name] == $value))
 		{
 			return;
-		}*/
+		}
 
 		$this->data['user_data'][$name] = $value;
 
@@ -393,17 +394,22 @@ class core_user extends sessions
 		}
 	}
 
-	function set_cookie($name, $cookiedata, $cookietime)
+	function set_cookie($name, $cookie_data, $cookie_time)
 	{
 		global $_CORE_CONFIG;
 
+		if ($_CORE_CONFIG['server']['cookie_name'])
+		{
+			$name = $_CORE_CONFIG['server']['cookie_name'] . '_' . $name;
+		}
+
 		if ($this->server_local)
 		{
-			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path']);
+			setcookie($name, $cookie_data, $cookie_time, $_CORE_CONFIG['server']['cookie_path']);
 		}
 		else
 		{
-			setcookie($_CORE_CONFIG['server']['cookie_name'] . '_' . $name, $cookiedata, $cookietime, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
+			setcookie($name, $cookie_data, $cookie_time, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
 		}
 	}
 	

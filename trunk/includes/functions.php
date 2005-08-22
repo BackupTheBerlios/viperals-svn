@@ -433,8 +433,8 @@ function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $adm
 			$end = min($total_pages, $current_page + 2);
 			$start = ($end > $total_pages - 2) ? $total_pages - 4 : $current_page - 2;
 
-			$display['array'][] = array('page' => 1, 'link' => generate_link($base_url, $admin_link), 'seperator' => 'after');
-			$display['formated'] = sprintf($wrapper['first'], generate_link($base_url, $admin_link), 1);
+			$display['array'][] = array('page' => 1, 'link' => generate_link($base_url, array('admin' => $admin_link)), 'seperator' => 'after');
+			$display['formated'] = sprintf($wrapper['first'], generate_link($base_url, array('admin' => $admin_link)), 1);
 		}
 	}
 	else
@@ -448,13 +448,13 @@ function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $adm
 		$display['array'][] = array('page' => $i, 'link' => generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), 'seperator' => false);
 		
 		$this_wrapper = ($current_page == $i) ? $wrapper['current'] : $wrapper['normal'];
-		$display['formated'] .= sprintf($this_wrapper, generate_link($base_url.'&amp;start='.(($i - 1) * $per_page)), $i);
+		$display['formated'] .= sprintf($this_wrapper, generate_link($base_url.'&amp;start='.(($i - 1) * $per_page), array('admin' => $admin_link)), $i);
 	}
 
 	if ($end != $total_pages)
 	{
-		$display['array'][] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;start='.(($total_pages - 1) * $per_page), $admin_link), 'seperator' => 'before');
-		$display['formated'] .= sprintf($wrapper['last'], generate_link($base_url.'&amp;start='.(($total_pages - 1)  * $per_page), $admin_link), $total_pages);
+		$display['array'][] = array('page' => $total_pages, 'link' => generate_link($base_url.'&amp;start='.(($total_pages - 1) * $per_page), array('admin' => $admin_link)), 'seperator' => 'before');
+		$display['formated'] .= sprintf($wrapper['last'], generate_link($base_url.'&amp;start='.(($total_pages - 1)  * $per_page), array('admin' => $admin_link)), $total_pages);
 	}
 
 	return $display;
@@ -514,8 +514,9 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET config_value = '".$_CLASS['core_db']->escape($value) . "'
 		WHERE config_section = '" . $_CLASS['core_db']->escape($section) . "'
 			AND config_name = '". $_CLASS['core_db']->escape($name) ."'";
+	$result = $_CLASS['core_db']->query($sql);
 
-	if ($auto_add && (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows()))
+	if ($auto_add && (!$result || !$_CLASS['core_db']->affected_rows()))
 	{
 		$sql_array = array(
 			'config_section'=> (string) $section,

@@ -50,7 +50,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_username', '', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_password', '', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_host', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'allow_name_chars', '[\\w_\\+\\. \\-\\[\\]]+', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'allow_name_chars', '[\w_\+\. \-\[\]]+', 1)");
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'enable_confirm', '1', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'coppa_enable', '1', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'coppa_fax', '', 1)");
@@ -74,7 +74,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'limit_load', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'limit_sessions', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'ip_check', '4', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'browser_check', '1', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'session_length', '3600', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'error_options', '0', 1)");
 
@@ -186,7 +185,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (a
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_search', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_email', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_rate', 1)");
-#$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_print', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_ignoreflood', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_postcount', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_moderate', 1)");
@@ -206,6 +204,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (a
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local, is_global) VALUES ('m_ip', 1, 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_local, is_global) VALUES ('m_info', 1, 1)");
 
+// this should be replaced by beta
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_global) VALUES ('a_', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_global) VALUES ('a_server', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_global) VALUES ('a_defaults', 1)");
@@ -277,43 +276,30 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (a
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_global) VALUES ('u_pm_img', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth_options (auth_option, is_global) VALUES ('u_pm_flash', 1)");
 
+/*
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (user_id, forum_id, auth_option_id, auth_setting) SELECT 2, 0, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option LIKE 'u_%'");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (user_id, forum_id, auth_option_id, auth_setting) SELECT 2, 0, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option LIKE 'a_%'");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (user_id, forum_id, auth_option_id, auth_setting) SELECT 2, 1, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (user_id, forum_id, auth_option_id, auth_setting) SELECT 2, 2, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
+*/
 
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (user_id, forum_id, auth_option_id, auth_setting) SELECT 2, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'm_%';
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (user_id, forum_id, auth_option_id, auth_setting) SELECT 2, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'm_%';
+// ADMINISTRATOR group
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option LIKE 'u_%'");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option LIKE 'a_%'");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
 
-# ADMINISTRATOR group - admin and forum rights
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 7, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'u_%';
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 7, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'a_%';
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 7, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 7, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html');
-
-# SUPER MODERATOR group - moderator rights
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 6, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chggrp', 'u_chgname');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 6, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'm_%';
+// SUPER MODERATOR group
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 6, 0, auth_option_id, 1 FROM ".$install_prefix."forums_auth_options WHERE auth_option LIKE 'm_%'");
 
 # REGISTERED/REGISTERED COPPA groups - common forum rights
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chggrp', 'u_viewonline', 'u_chgname');
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_subscribe');
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_votechg', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_report', 'f_subscribe');
+
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chgcensors', 'u_chggrp', 'u_viewonline', 'u_chgname');
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_subscribe');
 //$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_votechg', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_report', 'f_subscribe');
-
-# GUESTS, INACTIVE, INACTIVE_COPPA group - basic rights
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 1, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_bbsmiley_code', 'f_search', 'f_print');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 1, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_bbsmiley_code', 'f_search', 'f_print');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 2, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_bbsmiley_code', 'f_search', 'f_print');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 2, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_bbsmiley_code', 'f_search', 'f_print');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 3, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_bbsmiley_code', 'f_search', 'f_print');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 3, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_bbsmiley_code', 'f_search', 'f_print');
-
-# BOTS - read/view only
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 8, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read');
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 8, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_list', 'f_read');
 
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_attachments', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_bbsmiley_code', '1', 0)");
@@ -474,5 +460,4 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_modules (module
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('mcp', 'QUEUE', 'queue', 2, 1, 'unapproved_topics\r\nunapproved_posts\r\nreports', 'acl_m_approve')");
 
 
-//$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."quick_message (id, user_id, user_name, ip, message, time) VALUES (1, 0, 'Site', '', 'Lets do this !', ".gmtime().")");
 ?>

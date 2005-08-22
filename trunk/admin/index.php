@@ -1,4 +1,26 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 if (VIPERAL !== 'Admin') 
 {
 	die;
@@ -57,30 +79,38 @@ $_CLASS['core_template']->assign('cms_news', $cms_news);
 
 if ($_CLASS['core_auth']->admin_power('users'))
 {
-	// seperate this
-	$sql = 'SELECT user_id, username, user_regdate
-		FROM ' . USERS_TABLE . '
-			WHERE user_type = '.USER_NORMAL.'
-			AND user_status IN (' . STATUS_PENDING . ',  ' . STATUS_DISABLED . ')';
-		
-	$result = $_CLASS['core_db']->query_limit($sql, 20);
-	
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	$user_status = array(STATUS_PENDING, STATUS_DISABLED);
+	$count = 0;
+
+	foreach ($user_status as $status)
 	{
-		$type = ($row['user_id'] == STATUS_DISABLED) ? 'users_disabled' : 'users_unactivated';
-	
-		$_CLASS['core_template']->assign_vars_array($type, array(
-				'user_id'		=> $row['user_id'],
-				'user_name'		=> $row['username'],
-				'registered'	=> $_CLASS['core_user']->format_time($row['user_regdate']),
-				'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
-				'link_activate'	=> generate_link('&amp;user_mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
-				'link_remove'	=> generate_link('&amp;user_mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),
-				'link_remind'	=> generate_link('&amp;user_mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
-				'link_details'	=> '',
-		));
+		$sql = 'SELECT user_id, username, user_regdate
+			FROM ' . USERS_TABLE . '
+				WHERE user_type = '.USER_NORMAL.'
+				AND user_status = '.$status;
+		
+		$limit = ($count) ? 10 : 20 - $count;
+		$result = $_CLASS['core_db']->query_limit($sql, $limit);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$type = ($status == STATUS_DISABLED) ? 'users_disabled' : 'users_unactivated';
+		
+			$_CLASS['core_template']->assign_vars_array($type, array(
+					'user_id'		=> $row['user_id'],
+					'user_name'		=> $row['username'],
+					'registered'	=> $_CLASS['core_user']->format_time($row['user_regdate']),
+					'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
+					'link_activate'	=> generate_link('&amp;user_mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
+					'link_remove'	=> generate_link('&amp;user_mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),
+					'link_remind'	=> generate_link('&amp;user_mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
+					'link_details'	=> '',
+			));
+			
+			$count ++;
+		}
+		$_CLASS['core_db']->free_result($result);
 	}
-	$_CLASS['core_db']->free_result($result);
 }
 
 $_CLASS['core_template']->display('admin/index.html');

@@ -34,7 +34,7 @@ class auth
 		if (is_null($this->acl_options = $_CLASS['core_cache']->get('acl_options')))
 		{
 			$sql = 'SELECT auth_option, is_global, is_local
-				FROM ' . ACL_OPTIONS_TABLE . '
+				FROM ' . FORUMS_ACL_OPTIONS_TABLE . '
 				ORDER BY auth_option_id';
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -257,7 +257,7 @@ class auth
 		$sql_opts = ($opts) ? (is_array($opts) ? ' AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->escape('\\1') . \"'\"", $opts)) . ')' : "AND ao.auth_option = '".$_CLASS['core_db']->escape($opts)."'") : '';
 		$groups = $group_members = $hold_ary = array();
 
-		$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND user_status <> ".STATUS_PENDING;
+		$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND member_status <> ".STATUS_PENDING;
 // This is the why phpBB3 seems to be, the why they wanted it to act may have been the above.
 // atleast when you look at the coding....	
 		//$sql = 'SELECT group_id, user_id FROM ' . USERS_TABLE .' WHERE '.$sql_user;
@@ -274,7 +274,7 @@ class auth
 
 		// Sort by group_id since we want user setting to over right grp..  specific > broad
 		$sql = 'SELECT ao.auth_option, a.user_id, a.group_id, a.forum_id, a.auth_setting
-					FROM ' . ACL_TABLE . ' a, ' . ACL_OPTIONS_TABLE . " ao
+					FROM ' . FORUMS_ACL_TABLE . ' a, ' . FORUMS_ACL_OPTIONS_TABLE . " ao
 					WHERE a.auth_option_id = ao.auth_option_id 
 						$sql_user $sql_forum $sql_opts
 						ORDER BY a.group_id";
@@ -331,7 +331,7 @@ class auth
 
 		// Grab group settings ... ACL_NO overrides ACL_YES so act appropriatley
 		$sql = 'SELECT a.group_id, ao.auth_option, a.forum_id, a.auth_setting
-			FROM ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_GROUPS_TABLE . ' a
+			FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_GROUPS_TABLE . ' a
 			WHERE ao.auth_option_id = a.auth_option_id
 				' . (($sql_group) ? 'AND a.' . $sql_group : '') . "
 				$sql_forum

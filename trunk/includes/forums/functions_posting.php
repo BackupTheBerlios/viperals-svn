@@ -35,7 +35,7 @@ function generate_smilies($mode, $forum_id)
 	{
 		$sql = 'SELECT smiley_id
 			FROM ' . SMILIES_TABLE . '
-			WHERE display_on_posting = 0';
+			WHERE smiley_type = 0';
 		$result = $_CLASS['core_db']->query_limit($sql, 1, 0);
 
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -51,18 +51,18 @@ function generate_smilies($mode, $forum_id)
 
 		$sql = 'SELECT *
 			FROM ' . SMILIES_TABLE .' 
-				WHERE display_on_posting ='.(($mode == 'inline') ? '1' : '0') . '
+				WHERE smiley_type ='.(($mode == 'inline') ? '1' : '0') . '
 					ORDER BY smiley_order';
 		$result = $_CLASS['core_db']->query($sql);
 	
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$smiley[] = array(
-				'SMILEY_CODE' 	=> $row['code'],
-				'SMILEY_IMG' 	=> $row['smiley_url'],
+				'SMILEY_CODE' 	=> $row['smiley_code'],
+				'SMILEY_IMG' 	=> $row['smiley_src'],
 				'SMILEY_WIDTH'  => $row['smiley_width'],
 				'SMILEY_HEIGHT' => $row['smiley_height'],
-				'SMILEY_DESC'   => $row['emotion']
+				'SMILEY_DESC'   => $row['smiley_description']
 			);
 		}
 
@@ -74,7 +74,7 @@ function generate_smilies($mode, $forum_id)
 
 	if ($mode == 'inline')
 	{
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_SHOW_SMILEY_LINK' 	=> ($display_link) ? true : false,
 			'U_MORE_SMILIES' 		=> generate_link('Forums&amp;file=posting&amp;mode=smilies&amp;f='.$forum_id))
 		);
@@ -99,7 +99,7 @@ function update_last_post_information($type, $id)
 	$update_sql = array();
 
 	$sql = 'SELECT MAX(p.post_id) as last_post_id
-		FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . " t
+		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . " t
 		WHERE p.topic_id = t.topic_id
 			AND p.post_approved = 1
 			AND t.topic_approved = 1
@@ -111,7 +111,7 @@ function update_last_post_information($type, $id)
 	if ((int) $row['last_post_id'])
 	{
 		$sql = 'SELECT p.post_id, p.poster_id, p.post_time, u.username, p.post_username
-			FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 			WHERE p.poster_id = u.user_id
 				AND p.post_id = ' . $row['last_post_id'];
 		$result = $_CLASS['core_db']->query($sql);
@@ -568,7 +568,7 @@ function posting_gen_topic_types($forum_id, $cur_topic_type = POST_NORMAL)
 			$_CLASS['core_template']->assign_vars_array('topic_type', $array);
 		}
 
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_TOPIC_TYPE_STICKY'	=> ($_CLASS['auth']->acl_get('f_sticky', $forum_id)),
 			'S_TOPIC_TYPE_ANNOUNCE'	=> ($_CLASS['auth']->acl_get('f_announce', $forum_id)))
 		);
@@ -581,15 +581,11 @@ function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 {
 	global $_CLASS, $config;
 		
-	$_CLASS['core_template']->assign(array(
-		'S_SHOW_ATTACH_BOX'	=> true)
-	);
+	$_CLASS['core_template']->assign('S_SHOW_ATTACH_BOX', true);
 
 	if (sizeof($attachment_data))
 	{
-		$_CLASS['core_template']->assign(array(
-			'S_HAS_ATTACHMENTS'	=> true)
-		);
+		$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
 		
 		$count = 0;
 		foreach ($attachment_data as $attach_row)
@@ -619,7 +615,7 @@ function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 		}
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'FILE_COMMENT'  => $filename_data['filecomment'],
 		'FILESIZE'		=> $config['max_filesize'])
 	);
@@ -682,10 +678,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 	
 	if (sizeof($draftrows))
 	{
-		$_CLASS['core_template']->assign(array(
-				'S_SHOW_DRAFTS' => true,
-				'L_FORUM'		=> $_CLASS['core_user']->lang['FORUM']
-			));
+		$_CLASS['core_template']->assign_array('S_SHOW_DRAFTS', true);
 
 		foreach ($draftrows as $draft)
 		{
@@ -740,7 +733,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 
 	// Go ahead and pull all data for this topic
 	$sql = 'SELECT u.username, u.user_id, p.post_id, p.post_username, p.post_subject, p.post_text, p.enable_smilies, p.bbcode_uid, p.bbcode_bitfield, p.post_time
-		FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . " u
+		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . " u
 		WHERE p.topic_id = $topic_id
 			AND p.poster_id = u.user_id
 			" . ((!$_CLASS['auth']->acl_get('m_approve', $forum_id)) ? 'AND p.post_approved = 1' : '') . '

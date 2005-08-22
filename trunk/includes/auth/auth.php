@@ -50,9 +50,9 @@ class core_auth
 		{
 			if (encode_password($user_password, $row['user_password_encoding']) == $row['user_password'])
 			{
-				if ($row['user_status'] == USER_DISABLE || $row['user_status'] == USER_UNACTIVATED)
+				if ($row['user_status'] != STATUS_ACTIVE)
 				{
-					$status =  ($row['user_type'] == USER_INACTIVE) ? 'ACTIVE_ERROR' : 'UNACTIVATED_ERROR';
+					$status =  ($row['user_status'] == STATUS_DISABLED) ? 'ACTIVE_ERROR' : 'UNACTIVATED_ERROR';
 				}
 
 				return (int) $row['user_id'];
@@ -111,14 +111,14 @@ class core_auth
 	{
 		global $_CLASS;
 
-		if (!$_CLASS['core_user']->is_admin || !$this->admin_auth() || !isset($this->_admin_permission[$section]))
+		if (!$_CLASS['core_user']->is_admin || !$this->admin_auth())
 		{
-			if (isset($this->_admin_permission['/all/']))
-			{
-				return true;
-			}
-
 			return false;
+		}
+
+		if (!isset($this->_admin_permission[$section]))
+		{
+			return isset($this->_admin_permission['/all/']) ?  true : false;
 		}
 
 		if ($option)
@@ -178,7 +178,7 @@ class core_auth
 				{
 					$_CLASS['core_user']->login($result, $login_array['admin_login'], !empty($_POST['hidden']), !empty($_POST['auto_login']));
 
-					$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $data['admin_login']));	
+					$login_array['redirect'] = generate_link(get_variable('redirect', 'POST', $login_array['redirect']), array('admin' => $login_array['admin_login']));	
 
 					$_CLASS['core_display']->meta_refresh(5, $login_array['redirect']);
 					$message = (($login_array['success']) ? $_CLASS['core_user']->get_lang($login_array['success']) : $_CLASS['core_user']->lang['LOGIN_REDIRECT']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_PAGE'], '<a href="' . $login_array['redirect'] . '">', '</a> ');
@@ -324,7 +324,7 @@ class core_auth
 
 					if (count($setup['users']))
 					{
-						$setup['users'] = user_get_id($setup['users']);
+						$setup['users'] = user_get_id($setup['users'], $null);
 					}
 
 					if (count($setup['groups']))
@@ -440,7 +440,7 @@ class core_auth
 				$group_auth_type = isset($auth_options['groups'][1][$row['group_id']]['core_status']) ? 1 : 0;
 				$group_list = ($auth_options['groups'][$group_auth_type][$row['group_id']]['core_status']) ? 'allowed_group_list' : 'disallowed_group_list';
 				
-				$$group_list .= '<option' . (($group_auth_type == 1) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+				$$group_list .= '<option' . (($group_auth_type == 1) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 				
 			}
 			$_CLASS['core_db']->free_result($result);
@@ -454,7 +454,7 @@ class core_auth
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$group_list .= '<option value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+			$group_list .= '<option value="' . $row['group_id'] . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
 		$_CLASS['core_db']->free_result($result);
 	

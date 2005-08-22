@@ -18,10 +18,7 @@ $module['LOG']['CRITICAL_LOGS']			 = ($_CLASS['auth']->acl_get('a_')) ? generate
 	
 $module['DB']['SEARCH_INDEX'] 				= ($_CLASS['auth']->acl_get('a_search')) ? generate_link('Forums&amp;file=admin_search', array('admin' => true)) : false;
 
-$module['USER']['BOTS'] 					= ($_CLASS['auth']->acl_get('a_server')) ? generate_link('Forums&amp;file=admin_bots', array('admin' => true)) : false;
-$module['USER']['MANAGE_USERS']				= ($_CLASS['auth']->acl_gets('a_user', 'a_useradd', 'a_userdel')) ? generate_link('Forums&amp;file=admin_users', array('admin' => true)) : '';
 $module['USER']['RANKS']					= ($_CLASS['auth']->acl_get('a_ranks')) ? generate_link('Forums&amp;file=admin_ranks', array('admin' => true)) : '';
-$module['USER']['GROUP_MANAGE'] 			= ($_CLASS['auth']->acl_get('a_group')) ? generate_link('Forums&amp;file=admin_groups&amp;mode=manage', array('admin' => true)) : '';
 $module['USER']['DISALLOW']					= ($_CLASS['auth']->acl_get('a_names')) ? generate_link('Forums&amp;file=admin_disallow', array('admin' => true)) : '';
 
 $module['FORUM']['MANAGE']					= ($_CLASS['auth']->acl_gets('a_forum', 'a_forumadd', 'a_forumdel')) ? generate_link('Forums&amp;file=admin_forums', array('admin' => true)) : false;
@@ -48,7 +45,6 @@ $module['GENERAL']['MASS_EMAIL']			= ($_CLASS['auth']->acl_get('a_email')) ? gen
 
 $module['POST']['ATTACHMENTS'] 				= ($_CLASS['auth']->acl_get('a_attach')) ? generate_link('Forums&amp;file=admin_attachments&amp;mode=ext_groups', array('admin' => true)) : '';
 $module['POST']['BBCODES']					= ($_CLASS['auth']->acl_get('a_bbcode')) ? generate_link('Forums&amp;file=admin_bbcodes', array('admin' => true)) : '';
-$module['POST']['SMILIES']					= ($_CLASS['auth']->acl_get('a_icons')) ? generate_link('Forums&amp;file=admin_icons&amp;mode=smilies', array('admin' => true)) : '';
 $module['POST']['ICONS']					= ($_CLASS['auth']->acl_get('a_icons')) ? generate_link('Forums&amp;file=admin_icons&amp;mode=icons', array('admin' => true)) : '';
 
 ?>

@@ -5,8 +5,8 @@
 <table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
     <tbody>
 		<tr>
-			<th align="center">{$L_TITLE}</th>
-			<th align="center" colspan="2">{ $L_POSITION }</th>
+			<th align="center" width="25%">{$L_TITLE}</th>
+			<th align="center" colspan="2">{ $L_ORDER }</th>
 			<th align="center">{ $L_STATUS }</th>
 			<th align="center">{ $L_FUNCTIONS }</th>
 		</tr>
@@ -19,24 +19,24 @@
 		</tr>
 	<!-- LOOP $top_admin_messages -->
 		<tr>
-			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:EDIT_LINK }'">
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:EDIT_LINK }'; return false;">
 				<a href="{ $top_admin_messages:EDIT_LINK }" title="{ $L_EDIT }">{ $top_admin_messages:TITLE }</a><br />
 				<!-- IF { $top_admin_messages:STARTS } --><br /><b>{ $L_STARTS }: </b>{ $top_admin_messages:STARTS }<!-- ENDIF -->
 				<!-- IF { $top_admin_messages:EXPIRES } --><br /><b>{ $L_EXPIRES }: </b>{ $top_admin_messages:EXPIRES }<!-- ENDIF -->
 			</td>
 			<td class="row1" align="center" >
-				<!-- IF { $top_admin_messages:WEIGHT_UP } -->
-				<a href="{ $top_admin_messages:WEIGHT_MOVE_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
-				<a href="{ $top_admin_messages:WEIGHT_MOVE_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- IF { $top_admin_messages:ORDER_UP } -->
+				<a href="{ $top_admin_messages:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $top_admin_messages:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
 				<!-- ENDIF -->
 			</td>
 			<td class="row1" align="center">
-				<!-- IF { $top_admin_messages:WEIGHT_DOWN } -->
-				<a href="{ $top_admin_messages:WEIGHT_MOVE_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
-				<a href="{ $top_admin_messages:WEIGHT_MOVE_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- IF { $top_admin_messages:ORDER_DOWN } -->
+				<a href="{ $top_admin_messages:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $top_admin_messages:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
 				<!-- ENDIF -->
 			</td>
-			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:ACTIVE_LINK }'">
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:ACTIVE_LINK }'; return false;">
 				<a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a>
 			</td>
 			<td class="row1" align="center">
@@ -51,7 +51,7 @@
 		<tr>
 			<td class="spacer" colspan="8" height="7"></td>
 		</tr>
-	<!-- ENDLOOP -->
+	<!-- ENDLOOP $top_admin_messages -->
 	<!-- ENDIF -->
 
 	<!-- IF isset({ $bottom_admin_messages }) -->
@@ -63,24 +63,24 @@
 		</tr>
 	<!-- LOOP $bottom_admin_messages -->
 		<tr>
-			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:EDIT_LINK }'">
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:EDIT_LINK }'; return false;">
 				<a href="{ $bottom_admin_messages:EDIT_LINK }" title="{ $L_EDIT }">{ $bottom_admin_messages:TITLE }</a><br />
 				<!-- IF { $bottom_admin_messages:STARTS } --><br /><b>{ $L_STARTS }: </b>{ $bottom_admin_messages:STARTS }<!-- ENDIF -->
 				<!-- IF { $bottom_admin_messages:EXPIRES } --><br /><b>{ $L_EXPIRES }: </b>{ $bottom_admin_messages:EXPIRES }<!-- ENDIF -->
 			</td>
 			<td class="row1" align="center" >
-				<!-- IF { $bottom_admin_messages:WEIGHT_UP } -->
-				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
-				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- IF { $bottom_admin_messages:ORDER_UP } -->
+				<a href="{ $bottom_admin_messages:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $bottom_admin_messages:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
 				<!-- ENDIF -->
 			</td>
 			<td class="row1" align="center">
-				<!-- IF { $bottom_admin_messages:WEIGHT_DOWN } -->
-				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
-				<a href="{ $bottom_admin_messages:WEIGHT_MOVE_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- IF { $bottom_admin_messages:ORDER_DOWN } -->
+				<a href="{ $bottom_admin_messages:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $bottom_admin_messages:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
 				<!-- ENDIF -->
 			</td>
-			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:ACTIVE_LINK }'">
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:ACTIVE_LINK }'; return false;">
 				<a href="{ $bottom_admin_messages:ACTIVE_LINK }">{ $bottom_admin_messages:CHANGE }</a>
 			</td>
 			<td class="row1" align="center">
@@ -95,7 +95,7 @@
 		<tr>
 			<td class="spacer" colspan="8" height="7"></td>
 		</tr>
-	<!-- ENDLOOP -->
+	<!-- ENDLOOP $bottom_admin_messages -->
 	<!-- ENDIF -->
 	 		  <tr>
 			<td class="cat" colspan="8">

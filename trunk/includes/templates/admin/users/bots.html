@@ -1,0 +1,28 @@
+<!-- DISPLAY_HEADER -->
+
+{ $A_TABLE_OPEN }
+
+<!-- INCLUDE admin/users/header.html -->
+
+<table class="tablebg" cellspacing="1" cellpadding="4" border="0">
+	<tr>
+		<th nowrap="nowrap">Bot name</th>
+		<th nowrap="nowrap">Last visit</th>
+		<th colspan="3" nowrap="nowrap">Options</th>
+
+	</tr>
+	<!-- LOOP $admin_bots -->
+	<tr>
+		<td class="row1" width="25%">{ $admin_bots:NAME }</td>
+		<td class="row1" width="15%" align="center" nowrap="nowrap">{ $admin_bots:LAST_VISIT }</td>
+		<td class="row1" width="1%"align="center">&nbsp;<a href="{ $admin_bots:LINK_STATUS }">{ $admin_bots:L_STATUS }</a>&nbsp;</td>
+		<td class="row1" width="1%" align="center">&nbsp;<a href="{ $admin_bots:LINK_EDIT }">{ $L_EDIT }</a>&nbsp;</td>
+
+		<td class="row1" width="1%" align="center">&nbsp;<a href="{ $admin_bots:LINK_DELETE }">{ $L_DELETE }</a>&nbsp;</td>
+	</tr>
+	<!-- ENDLOOP $admin_bots -->
+</table>
+
+{ $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

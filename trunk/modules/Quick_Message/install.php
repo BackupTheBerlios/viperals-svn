@@ -33,6 +33,7 @@ $_CLASS['core_db']->add_table_index('message_time');
 
 $_CLASS['core_db']->table_create('commit');
 
+// use set config ?
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('quick_message', 'anonymous_posting', '2', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('quick_message', 'delete_time', '300', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('quick_message', 'height', '200', 1)");

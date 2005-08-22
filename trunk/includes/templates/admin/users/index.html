@@ -2,132 +2,8 @@
 
 { $A_TABLE_OPEN }
 
-<table border="0" cellpadding="4" cellspacing="1" width="100%">
-	<tbody>
-		<tr>
-			<td width="50%" valign="top">
-				<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
-					<tbody>
-						<tr>
-							<th width="25%" colspan="2" align="center"><b>System Info</b></td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Core
-							</td>
-							<td>
-								{ $core_version }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								PHP Version
-							</td>
-							<td>
-								{ $php_version }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Database Version
-							</td>
-							<td>
-								{ $database_version }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Server Software
-							</td>
-							<td>
-								{ $server_software }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Server Host
-							</td>
-							<td>
-								{ $server_host }
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<br/>
-				<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
-					<tbody>
-						<tr>
-							<th width="25%" colspan="2" align="center"><b>System Info</b></td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Core Version
-							</td>
-							<td>
-								{ $core_version }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								PHP Version
-							</td>
-							<td>
-								{ $php_version }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Database Version
-							</td>
-							<td>
-								{ $database_version }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Server Software
-							</td>
-							<td>
-								{ $server_software }
-							</td>
-						</tr>
-						<tr class="row1">
-							<td>
-								Server Host
-							</td>
-							<td>
-								{ $server_host }
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</td>
-			<td width="50%" valign="top">
-				<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
-					<tbody>
-						<tr>
-							<th width="25%" align="center"><b>Viperal CMS - Latest News</b></td>
-						</tr>
-						<!-- LOOP $cms_news -->
-						<tr>
-							<td class="row1">
-								<a href="{ $cms_news:link }"><strong>{ $cms_news:title }</strong></a><br/>
-								<p>
-								{ $cms_news:description }
-								</p>
-							</td>
-						</tr>
-						<tr>
-							<td class="row2" style="padding: 4px;"></th>
-						</tr>
-						<!-- ENDLOOP -->
-					</tbody>
-				</table>
-			</td>
-		</tr>
-    </tbody>
-</table>
-<br/>
+<!-- INCLUDE admin/users/header.html -->
+
 <table class="tablebg" border="0" cellspacing="1" width="100%">
     <tbody>
 		<tr>
@@ -215,7 +91,6 @@
 		</tr>
     </tbody>
 </table>
-
 { $A_TABLE_CLOSE }
 
 <!-- DISPLAY_FOOTER -->

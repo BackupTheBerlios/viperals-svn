@@ -1,5 +1,4 @@
 <!-- INCLUDE modules/Control_Panel/ucp_header.html -->
-
 <script language="javascript" type="text/javascript">
 <!--
 
@@ -40,7 +39,7 @@ function checkForm()
 
 //-->
 </script>
-<script language="javascript" type="text/javascript" src="java/editor.js"></script>
+<script language="javascript" type="text/javascript" src="javascript/editor.js"></script>
 
 <form action="{ $S_POST_ACTION }" method="post" name="post" { $S_FORM_ENCTYPE }>
 
@@ -288,7 +287,7 @@ function checkForm()
 	<!-- IF { $S_SHOW_ATTACH_BOX } --><!-- INCLUDE modules/Control_Panel/ucp_posting_attach_body.html --><!-- ENDIF -->
 
 	<tr>
-		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="bottom" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{$L_SUBMIT}" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="bottom" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="bottom" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" /><!-- ENDIF -->&nbsp; <input class="bottom" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
+		<td class="cat" colspan="2" align="center">{ $S_HIDDEN_FIELDS }<input class="button" type="submit" tabindex="5" name="preview" value="{ $L_PREVIEW }" />&nbsp; <input class="btnmain" type="submit" accesskey="s" tabindex="6" name="post" value="{$L_SUBMIT}" /><!-- IF { $S_SAVE_ALLOWED } -->&nbsp; <input class="bottom" type="submit" accesskey="k" tabindex="8" name="save" value="{$L_SAVE}" /><!-- ENDIF --><!-- IF { $S_HAS_DRAFTS } -->&nbsp; <input class="bottom" type="submit" accesskey="d" tabindex="9" name="load" value="{$L_LOAD}" /><!-- ENDIF -->&nbsp; <input class="button" type="submit" accesskey="c" tabindex="7" name="cancel" value="{ $L_CANCEL }" /></td>
 	</tr>
 </table>
 </form>

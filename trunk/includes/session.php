@@ -175,7 +175,7 @@ class sessions
 			'session_start'		=> (int) $this->time,
 			'session_time'		=> (int) $this->time,
 			'session_browser'	=> (string) $this->browser,
-			'session_page'		=> (string) $this->page,
+			'session_page'		=> (string) $this->page, // need to be added back
 			'session_url'		=> (string) $this->url,
 			'session_ip'		=> (string) $this->ip,
 			'session_user_type'	=> (int) $this->data['user_type'],
@@ -221,35 +221,71 @@ class sessions
 
 		$data_array = array(
 			'user_id'				=> (int) $this->data['user_id'],
-			'auto_login_browser'	=> (string) $this->browser,
-			'auto_login_code'		=> $code,
-			'auto_login_time'		=> (int) $this->time,
+			'auto_login_code'		=> (string) $code,
+			'auto_login_browser'	=> $this->browser,
+			'auto_login_time'		=> $this->time,
 		);
 		
 		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_AUTOLOGIN_TABLE . ' '.	$_CLASS['core_db']->sql_build_array('INSERT', $data_array));
 	
-		$this->set_cookie('ali', $this->data['user_id'], $this->time + 31536000);
-		$this->set_cookie('alc', $code, $this->time + 31536000);
+		$this->set_cookie('ali', $this->data['user_id'], $this->time + 2592000);
+		$this->set_cookie('alc', $code, $this->time + 2592000);
 	}
 
 	function autologin_retrieve($user_id, $code)
 	{
 		global $_CLASS;
-		
-		$sql = 'SELECT *
-			FROM ' . SESSIONS_AUTOLOGIN_TABLE . " 
-			WHERE user_id = $user_id
-			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
-				
+
+		settype($user_id, 'int');
+
+		$sql = 'SELECT * FROM ' . SESSIONS_AUTOLOGIN_TABLE . " 
+					WHERE user_id = $user_id
+					AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
+
 		$result = $_CLASS['core_db']->query($sql);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
-		// This is about all you can validate other than the code, and user_id
-		return ($row && $row['auto_login_browser'] == $this->browser) ? $user_id : false;
+		$return = false;
+
+		// This is about all we can validate other than the code, and user_id
+		if ($row && $row['auto_login_browser'] == $this->browser)
+		{
+			$return = $user_id;
+			
+			$new_code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
+
+			$data_array = array(
+				'auto_login_code'		=> (string) $new_code,
+				'auto_login_time'		=> (int) $this->time,
+			);
+		
+			$sql = 'UPDATE ' . SESSIONS_AUTOLOGIN_TABLE . '	SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data_array) . "
+						WHERE user_id = $user_id
+						AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
+			$_CLASS['core_db']->sql_query($sql);
+
+			// need to update both the code and the user_id,
+			// since user_id cookie has an expiry time
+			$this->set_cookie('alc', $new_code, $this->time + 2592000);
+			$this->set_cookie('ali', $user_id, $this->time + 2592000);
+		}
+
+		return $return;
 	}
 
-	function session_destroy($session_id = false, $remove_cookie = true)
+	function autologin_destroy($user_id, $code)
+	{
+		global $_CLASS;
+		
+		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . " 
+			WHERE user_id = $user_id
+			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
+				
+		$_CLASS['core_db']->query($sql);
+	}
+
+	function session_destroy($session_id = false, $logout = true)
 	{
 		global $_CLASS;
 
@@ -257,37 +293,52 @@ class sessions
 		{
 			$session_id = $this->data['session_id'];
 			
-			if ($remove_cookie)
-			{
-				$this->set_cookie('sid', '', $this->time - 31536000);
-			}
-
-			if ($this->data['session_time'])
-			{
-				$sql = 'UPDATE ' . USERS_TABLE . '
-					SET user_last_visit = ' . $this->data['session_time'] . '
-					WHERE user_id = ' . $this->data['user_id'];
-				$_CLASS['core_db']->query($sql);
-			}
+			$this->set_cookie('sid', '', $this->time - 31536000);
 		}
-		
+
+		if ($logout)
+		{
+			
+		}
+
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
 			WHERE session_id = '" . $_CLASS['core_db']->escape($session_id)."'";
 
 		$_CLASS['core_db']->query($sql);
+
+		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
 	}
 
 	function gc($time)
 	{
 // Add auto login cleaning
-// Move to cron
+// Move to cron		
+
 		global $_CORE_CONFIG, $_CLASS;
 
+/*
+		// keep the next query less demanding
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-			WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
+			WHERE session_user_id = ' . ANONYMOUS . '
+			AND session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
+		$_CLASS['core_db']->query($sql);
+*/
 
-		$result = $_CLASS['core_db']->query($sql);
+		$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
+					SET u.user_last_visit = s.session_time
+					WHERE s.session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
+						AND s.session_user_id <> ' . ANONYMOUS .'
+						AND u.user_id = s.session_user_id';
+		$_CLASS['core_db']->sql_query($sql);
 
+		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . '
+					WHERE auto_login_time < ' . ($time - 2592000);
+		$_CLASS['core_db']->query($sql);
+
+		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
+					WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
+		$_CLASS['core_db']->query($sql);
+		
 		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
 	}
 

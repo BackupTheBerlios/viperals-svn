@@ -2,73 +2,67 @@
 
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
-		<th colspan="3">{ $L_USERGROUPS }</th>
+		<th colspan="2">{ $L_USERGROUPS }</th>
 	</tr>
 	<tr>
-		<td class="row3" colspan="3"><span class="genmed">{ $L_GROUPS_EXPLAIN }</span></td>
+		<td class="row3" colspan="2"><span class="genmed">{ $L_GROUPS_EXPLAIN }</span></td>
 	</tr>
 
 	<tr>
-		<th colspan="2">{ $L_GROUP_DETAILS }</td>
+		<th colspan="1">{ $L_GROUP_DETAILS }</td>
 		<th>{ $L_MARK }</td>
 	</tr>
 
+	<!-- IF isset({ $leader }) -->
+	<tr>
+		<td class="row3" colspan="2"><b class="gensmall">{ $L_GROUP_LEADER }</b></td>
+	</tr>
+	<!-- ENDIF -->
 	<!-- LOOP $leader -->
-	<!-- IF !({ $leader:#LOOP_INDEX }) -->
 	<tr>
-		<td class="row3" colspan="3"><b class="gensmall">{ $L_GROUP_LEADER }</b></td>
-	</tr>
-	<!-- ENDIF -->
-	<tr>
-		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $S_CHANGE_DEFAULT } --><input type="radio" name="default"<!-- IF { $leader:S_GROUP_DEFAULT } --> checked="checked"<!-- ENDIF --> /><!-- ENDIF --></td>
 		<td class="row1"><b class="genmed"><a href="{ $leader:U_VIEW_GROUP }">{ $leader:GROUP_NAME }</a></b><!-- IF { $leader:GROUP_DESC } --><p class="forumdesc">{ $leader:GROUP_DESC }</p><!-- ENDIF --></td>
-		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $leader:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $leader:GROUP_ID }]" /><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $leader:GROUP_RESIGN } --><input type="checkbox" name="group_id[]" value="{ $member:GROUP_ID }" /><!-- ENDIF --></td>
 	</tr>
 	<!-- ENDLOOP -->
-	
-	<!-- LOOP $member -->
-	<!-- IF !({ $member:#LOOP_INDEX }) -->
-	<tr>
-		<td class="row3" colspan="3"><b class="gensmall">{ $L_GROUP_MEMBER }</b></td>
-	</tr>
-	<!-- ENDIF -->
-	<tr>
-		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $S_CHANGE_DEFAULT } --><input type="radio" name="default"<!-- IF { $member:S_GROUP_DEFAULT } --> checked="checked"<!-- ENDIF --> /><!-- ENDIF --></td>
-		<td class="row1"><b class="genmed"><a href="{ $member:U_VIEW_GROUP }">{ $member:GROUP_NAME }</a></b><!-- IF { $member:GROUP_DESC } --><p class="forumdesc">{ $member:GROUP_DESC }</p><!-- ENDIF --></td>
-		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $member:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $member:GROUP_ID }]" /><!-- ENDIF --></td>
-	</tr>
-	<!-- ENDLOOP -->
-	
-	<!-- LOOP $pending -->
-	<!-- IF !({ $pending:#LOOP_INDEX }) -->
-	<tr>
-		<td class="row3" colspan="3"><b class="gensmall">{$L_GROUP_PENDING}</b></td>
-	</tr>
-	<!-- ENDIF -->
-	<tr>
-		<td class="row1" width="6%" align="center" nowrap="nowrap">&nbsp;</td>
-		<td class="row1"><b class="genmed"><a href="{ $pending:U_VIEW_GROUP }">{ $pending:GROUP_NAME }</a></b><!-- IF { $pending:GROUP_DESC } --><p class="forumdesc">{ $pending:GROUP_DESC }</p><!-- ENDIF --></td>
-		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $pending:GROUP_SPECIAL } --><input type="checkbox" name="mark[{ $pending:GROUP_ID }]" /><!-- ENDIF --></td>
-	</tr>
-	<!-- ENDLOOP -->
-	
-	<!-- LOOP $nonmember -->
-	<!-- IF !({ $nonmember:#LOOP_INDEX }) -->
-		<tr>
-			<td class="row3" colspan="3"><b class="gensmall">{$L_GROUP_NONMEMBER}</b></td>
-		</tr>
-		<!-- ENDIF -->
-		<tr>
-			<td class="row1" width="6%" align="center" nowrap="nowrap">&nbsp;</td>
-			<td class="row1"><b class="genmed"><a href="{$nonmember:U_VIEW_GROUP}">{ $nonmember:GROUP_NAME }</a></b><!-- IF { $nonmember:GROUP_DESC } --><p class="forumdesc">{ $nonmember:GROUP_DESC }</p><!-- ENDIF --></td>
-			<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF !{ $nonmember:GROUP_SPECIAL } --><input type="checkbox" name="mark[{$nonmember:GROUP_ID}]" /><!-- ENDIF --></td>
-		</tr>
-		<!-- ENDLOOP -->
 
+	<!-- IF isset({ $member }) -->
+	<tr>
+		<td class="row3" colspan="2"><b class="gensmall">{ $L_GROUP_MEMBER }</b></td>
+	</tr>
+	<!-- ENDIF -->
+	<!-- LOOP $member -->
+	<tr>
+		<td class="row1"><b class="genmed"><a href="{ $member:U_VIEW_GROUP }">{ $member:GROUP_NAME }</a></b><!-- IF { $member:GROUP_DESC } --><p class="forumdesc">{ $member:GROUP_DESC }</p><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $member:GROUP_RESIGN } --><input type="checkbox" name="group_id[]" value="{ $member:GROUP_ID }" /><!-- ENDIF --></td>
+	</tr>
+	<!-- ENDLOOP -->
+	
+	<!-- IF isset({ $pending }) -->
+	<tr>
+		<td class="row3" colspan="2"><b class="gensmall">{$L_GROUP_PENDING}</b></td>
+	</tr>
+	<!-- ENDIF -->
+	<!-- LOOP $pending -->
+	<tr>
+		<td class="row1"><b class="genmed"><a href="{ $pending:U_VIEW_GROUP }">{ $pending:GROUP_NAME }</a></b><!-- IF { $pending:GROUP_DESC } --><p class="forumdesc">{ $pending:GROUP_DESC }</p><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $pending:GROUP_RESIGN } --><input type="checkbox" name="group_id[]" value="{ $member:GROUP_ID }" /><!-- ENDIF --></td>
+	</tr>
+	<!-- ENDLOOP -->
+	
+	<!-- IF isset({ $nonmember }) -->
+	<tr>
+		<td class="row3" colspan="3"><b class="gensmall">{$L_GROUP_NONMEMBER}</b></td>
+	</tr>
+	<!-- ENDIF -->
+	<!-- LOOP $nonmember -->
+	<tr>
+		<td class="row1"><b class="genmed"><a href="{$nonmember:U_VIEW_GROUP}">{ $nonmember:GROUP_NAME }</a></b><!-- IF { $nonmember:GROUP_DESC } --><p class="forumdesc">{ $nonmember:GROUP_DESC }</p><!-- ENDIF --></td>
+		<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $nonmember:GROUP_APPLY } --><input type="checkbox" name="group_id[]" value="{ $member:GROUP_ID }" /><!-- ENDIF --></td>
+	</tr>
+	<!-- ENDLOOP -->
 	<tr>
 		<td class="cat" colspan="3"></div><div style="float:right"><span class="genmed">Select: </span><select name="mode"><option value="join">Join marked</option><option value="resign">Resign marked</option><option value="demote">Demote marked</option></select>&nbsp;<input class="btnmain" type="submit" name="submit" value="{$L_SUBMIT}" />&nbsp;</div></td>
 	</tr>
-
 </table>
 
 <!-- INCLUDE modules/Control_Panel/ucp_footer.html -->
