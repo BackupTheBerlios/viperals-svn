@@ -942,7 +942,7 @@ class parse_message extends bbcode_firstpass
 			// NOTE: obtain_* function? chaching the table contents?
 			
 
-			$sql = 'SELECT * FROM ' . SMILIES_TABLE;
+			$sql = 'SELECT * FROM ' . SMILIES_TABLE .' ORDER BY LENGTH(smiley_code) DESC';;
 			$result = $_CLASS['core_db']->query($sql);
 
 			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))

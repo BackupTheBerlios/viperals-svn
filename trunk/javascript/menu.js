@@ -116,9 +116,6 @@ function menu_show(object_name)
 
 	menu.style.display	= '';
 	
-//Move to init function, once done
-	menu.style.position	= 'absolute';
-
 	if ((object_offsets['left'] + menu.offsetWidth) > document.body.clientWidth)
 	{
 		// It to wide to show on the right so we have to put it on the left

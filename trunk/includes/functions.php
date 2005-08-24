@@ -647,45 +647,6 @@ function strip_slashes($str)
 	return (STRIP_SLASHES) ? stripslashes($str) : $str ;
 }
 
-function theme_select($default = false)
-{
-	global $site_file_root, $_CLASS;
-	
-	$themetmp = array();
-	$default = ($default) ? $default : $_CLASS['core_display']->theme_name;
-	
-	$theme = '';
-	$handle = opendir($site_file_root.'themes');
-	while ($file = readdir($handle))
-	{
-		if ($file{0} !== '.')
-		{
-			if (file_exists($site_file_root."themes/$file/index.php"))
-			{
-				$themetmp[] = array('file' => $file, 'template'=> true);
-			}
-		}
-	}
-	
-	closedir($handle);
-	
-	$count = count($themetmp);
-	
-	for ($i = 0; $i < $count; $i++)
-	{
-		if ($themetmp[$i]['file'] == $default)
-		{
-			$theme .= '<option value="'.$themetmp[$i]['file'].'" selected="selected">'.$themetmp[$i]['file'].'</option>';
-		}
-		else
-		{
-			$theme .= '<option value="'.$themetmp[$i]['file'].'">'.$themetmp[$i]['file'].'</option>';
-		}
-	}
-	
-	return $theme;
-}
-
 function modify_lines($text, $replacement = '')
 {
 	return str_replace(array("\r\n", "\r", "\n"), $replacement, $text);
@@ -715,6 +676,78 @@ function redirect($url = false, $save = false)
 	</html>';
 
 	script_close($save);
+}
+
+function select_language($default = '')
+{
+}
+
+function select_theme($default = false)
+{
+	global $site_file_root, $_CLASS;
+	
+	if (!$default)
+	{
+		$default = $_CLASS['core_display']->theme_name;
+	}
+	
+	$theme_array = array();
+	$handle = opendir($site_file_root.'themes');
+	
+	while ($file = readdir($handle))
+	{
+		if ($file{0} !== '.')
+		{
+			if (file_exists($site_file_root."themes/$file/index.php"))
+			{
+				$theme_array[] = array('file' => $file, 'template'=> true);
+			}
+		}
+	}
+	
+	closedir($handle);
+	
+	$count = count($theme_array);
+	$select = '';
+
+	for ($i = 0; $i < $count; $i++)
+	{
+		$selected = ($theme_array[$i]['file'] == $default) ? ' selected="selected"' : '';
+		$select .= '<option value="'.$theme_array[$i]['file']."\" $selected>".$theme_array[$i]['file']."</option>\n";
+	}
+
+	return $select;
+}
+
+function tz_array()
+{
+	return array('-12', '-11', '-10', '-9', '-8', '-7', '-6', '-5', '-4', '-3.5', '-3', '-2', '-1', '0', 
+			'1', '2', '3','3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '8', '9.5', '10', '11', '12');
+}
+
+function select_tz($default = false)
+{
+	global $_CLASS;
+
+	$tz_array = tz_array();
+
+	$count = count($tz_array);
+	$select = '';
+	
+	/*if (!$default)
+	{
+		$default = $_CORE_CONFIG['global']['default_timezone'];
+	}*/
+	
+	for ($i = 0; $i < $count; $i++)
+	{
+		$selected = ($tz_array[$i] == $default) ? ' selected="selected"' : '';
+		$tz_dis = isset($_CLASS['core_user']->lang['tz']['zones'][$tz_array[$i]]) ? $_CLASS['core_user']->lang['tz']['zones'][$tz_array[$i]] : 'Zone '.$tz_array[$i];
+
+		$select .= '<option value="'.$tz_array[$i]."\" $selected>$tz_dis</option>\n";
+	}
+
+	return $select;
 }
 
 function url_redirect($url = false, $save = false)

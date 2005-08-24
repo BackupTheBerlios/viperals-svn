@@ -30,6 +30,8 @@ class sessions
 	var $sid_link_prefex = 'sid';
 	var $sid_link = false;
 
+	var $autologin_code = false;
+
 	function start()
 	{
 		global $_CLASS, $_CORE_CONFIG, $SID, $mod;
@@ -253,10 +255,10 @@ class sessions
 		{
 			$return = $user_id;
 			
-			$new_code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
+			$this->autologin_code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
 
 			$data_array = array(
-				'auto_login_code'		=> (string) $new_code,
+				'auto_login_code'		=> (string) $this->autologin_code,
 				'auto_login_time'		=> (int) $this->time,
 			);
 		
@@ -267,7 +269,7 @@ class sessions
 
 			// need to update both the code and the user_id,
 			// since user_id cookie has an expiry time
-			$this->set_cookie('alc', $new_code, $this->time + 2592000);
+			$this->set_cookie('alc', $this->autologin_code, $this->time + 2592000);
 			$this->set_cookie('ali', $user_id, $this->time + 2592000);
 		}
 
@@ -293,12 +295,15 @@ class sessions
 		{
 			$session_id = $this->data['session_id'];
 			
-			$this->set_cookie('sid', '', $this->time - 31536000);
-		}
-
-		if ($logout)
-		{
-			
+			if ($logout)
+			{
+				$this->set_cookie('sid', '', $this->time - 31536000);
+	
+				if ($this->autologin_code)
+				{
+					$this->autologin_destroy($this->data['user_id'], $this->autologin_code);
+				}
+			}
 		}
 
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "

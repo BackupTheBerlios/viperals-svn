@@ -1,41 +1,46 @@
 // Collapse Code by Ryan Marshall ( viperal1@gmail.com )
 
-// If we use this on news, we need some kind of true gc.
-// May not be possible tho without some php stuff
+/*
+* To do:
+*
+*	Add some kind of slide effect
+*	Auto opening on mouse over maybe ( closeing on mouse out ) ?	
+*/
 
-function get_cookie(Name)
+function get_cookie(cookie_name)
 {
-	var cookie_name = Name + "=";
+	var cookie_prefix = cookie_name + "=";
 	var cookie_length = document.cookie.length;
 
 	if (cookie_length > 0)
 	{
-		var offset = document.cookie.indexOf(cookie_name);
+		var start = document.cookie.indexOf(cookie_prefix);
 
-		if (offset != -1)
+		if (start != -1)
 		{
-			offset += cookie_name.length;
-			var end = document.cookie.indexOf(';', offset);
+			start += cookie_prefix.length;
+			var end = document.cookie.indexOf(';', start);
 
 			if (end == -1)
 			{
 				end = cookie_length;
 			}
 
-			return unescape(document.cookie.substring(offset, end));
+			return unescape(document.cookie.substring(start, end));
 		}
 	}
+
 	return null;
 }
 
-function set_cookie(name, value, expires)
+function set_cookie(cookie_name, value, expires)
 {
-	document.cookie = name + '=' + escape(value) + '; path=/; expires=' + expires.toGMTString();
+	document.cookie = cookie_name + '=' + escape(value) + '; path=/; expires=' + expires.toGMTString();
 }
 
-function delete_cookie(name)
+function delete_cookie(cookie_name)
 {
-	document.cookie = name + '=' + '; expires=Thu, 01-Jan-70 00:00:01 GMT' +  '; path=/';
+	document.cookie = cookie_name + '=' + '; expires=Thu, 01-Jan-70 00:00:01 GMT' +  '; path=/';
 }
 
 function array_search(needle, haystack, strict)
@@ -51,54 +56,56 @@ function array_search(needle, haystack, strict)
 	return null;
 }
 
-function switch_collapse(id, name)
+function switch_collapse(identifier, cookie)
 {
-	var area = document.getElementById(id);
+	var area = document.getElementById(identifier);
+	var img = document.getElementById(identifier + '_img');
+
+	var item = document.getElementById(identifier + '_item');
 
 	if (area.style.display == 'none')
 	{
 		area.style.display = '';
-		switch_collapse_save(id, false, name);
+		switch_collapse_save(identifier, false, cookie);
+		
+		if (img)
+		{
+			img.src = img.src.replace('show', 'hide');
+		}
+
+		if (item)
+		{
+			item.className = item.className.replace('show', 'hide');
+		}
 	}
 	else
 	{
 		area.style.display = 'none';
-		switch_collapse_save(id, id, name);
+		switch_collapse_save(identifier, true, cookie);
+		
+		if (img)
+		{
+			img.src = img.src.replace('hide', 'show');
+		}
+
+		if (item)
+		{
+			item.className = item.className.replace('hide', 'show');
+		}
 	}
 }
 
-function switch_collapse_img(id, img_show, img_hide, name)
-{
-	var area = document.getElementById(id);
-	var img = document.getElementById(id+'_img');
-
-	if (area.style.display == 'none')
-	{
-		area.style.display = '';
-		img.src = img_show;
-
-		switch_collapse_save(id, false, name);
-	}
-	else
-	{
-		area.style.display = 'none';
-		img.src = img_hide;
-
-		switch_collapse_save(id, id, name);
-	}
-}
-
-function switch_collapse_save(id, save, name)
+function switch_collapse_save(identifier, save, cookie_name)
 {
 	// typeof name == 'undefined'
-	if (!name)
+	if (!cookie_name)
 	{
-		name = 'collapsed_items';
+		cookie_name = 'collapsed_items';
 	}
 
-	//alert(name);
+	//alert(cookie_name);
 
-	var collapsed_cookie = get_cookie(name);
+	var collapsed_cookie = get_cookie(cookie_name);
 	var collapsed_items = new Array();
 	var set = false;
 
@@ -108,7 +115,7 @@ function switch_collapse_save(id, save, name)
 
 		for (var i in collapsed_cookie)
 		{
-			if (collapsed_cookie[i] == id)
+			if (collapsed_cookie[i] == identifier)
 			{
 				if (set == false)
 				{
@@ -116,7 +123,7 @@ function switch_collapse_save(id, save, name)
 
 					if (save != false)
 					{
-						collapsed_items.push(id);
+						collapsed_items.push(identifier);
 					}
 				}
 			}
@@ -129,7 +136,7 @@ function switch_collapse_save(id, save, name)
 
 	if (set == false && save != false)
 	{
-		collapsed_items.push(id);
+		collapsed_items.push(identifier);
 	}
 
 	//alert(collapsed_items.join(':'));
@@ -138,10 +145,10 @@ function switch_collapse_save(id, save, name)
 		var expires = new Date()
 
 		expires.setTime(expires.getTime() + 31536000000);
-		set_cookie(name, collapsed_items.join(':'), expires)
+		set_cookie(cookie_name, collapsed_items.join(':'), expires)
 	}
 	else
 	{
-		delete_cookie(name)
+		delete_cookie(cookie_name)
 	}
 }

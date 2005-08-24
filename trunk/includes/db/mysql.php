@@ -449,9 +449,10 @@ class db_mysql
 		switch ($mode)
 		{
 			case 'start':
-				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
+// this is done even for none admins ( need to fix this )
+				if (empty($_CORE_CONFIG['server']['error_options']) || $_CORE_CONFIG['server']['error_options'] == ERROR_DEBUGGER)
 				{
-					if (strpos('SELECT', $this->last_query) === 0)
+					if (strpos($this->last_query, 'SELECT') !== false)
 					{
 						if ($result = @mysql_query('EXPLAIN '.$this->last_query, $this->link_identifier))
 						{
@@ -478,7 +479,7 @@ class db_mysql
 				$end_time = $end_time[0] + $end_time[1];
 				$this->queries_time += $end_time - $start_time;
 
-				if (empty($_CORE_CONFIG['global']['error']) || $_CORE_CONFIG['global']['error'] == ERROR_DEBUGGER)
+				if (empty($_CORE_CONFIG['server']['error_options']) || $_CORE_CONFIG['server']['error_options'] == ERROR_DEBUGGER)
 				{
 					if ($this->last_result !== false)
 					{

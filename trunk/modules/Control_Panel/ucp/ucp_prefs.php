@@ -153,9 +153,9 @@ class ucp_prefs extends module
 
 					'DATE_FORMAT'		=> $dateformat, 
 
-					'S_LANG_OPTIONS'	=> language_select($lang), 
-					'S_THEME_OPTIONS'	=> theme_select($theme),
-					'S_TZ_OPTIONS'		=> tz_select($tz),
+					'S_LANG_OPTIONS'	=> select_language($lang), 
+					'S_THEME_OPTIONS'	=> select_theme($theme),
+					'S_TZ_OPTIONS'		=> select_tz($tz),
 					'S_CAN_HIDE_ONLINE'	=> true, 
 					'S_SELECT_NOTIFY'	=> ($config['jab_enable'] && $_CLASS['core_user']->data['user_jabber'] && @extension_loaded('xml')) ? true : false)
 				);

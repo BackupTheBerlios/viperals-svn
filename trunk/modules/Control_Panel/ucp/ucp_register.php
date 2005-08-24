@@ -27,15 +27,17 @@ class ucp_register extends module
 	{
 		global $site_file_root, $config, $_CLASS, $_CORE_CONFIG;
 		
-		if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_DISABLE)
+		$coppa		= isset($_REQUEST['coppa']) ? (int) $_REQUEST['coppa'] : null;
+		$submit		= isset($_POST['submit']);
+
+		if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_DISABLE
+			|| ($coppa || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN)
+			&& !$_CORE_CONFIG['email']['email_enable'])
 		{
 			trigger_error('UCP_REGISTER_DISABLE');
 		}
 
 		$_CLASS['core_template']->assign('S_UCP_ACTION', generate_link('Control_Panel&amp;mode=register'));
-
-		$coppa		= isset($_REQUEST['coppa']) ? (int) $_REQUEST['coppa'] : null;
-		$submit		= isset($_POST['submit']);
 
 		$error = $data = array();
 		$s_hidden_fields = '';
@@ -85,8 +87,10 @@ class ucp_register extends module
 
 			$username	= get_variable('username', 'POST', false);
 			$password	= get_variable('password', 'POST', false);
-			$email		= get_variable('email', 'POST', false);
-			
+
+			$email			= get_variable('email', 'POST', false);
+			$email_confirm	= get_variable('email_confirm', 'POST', '');
+
 			//when we add this make sure to confirm that it's one of the installed langs
 			$lang		= $_CORE_CONFIG['global']['default_lang'];
 			$tz			= get_variable('tz', 'POST', false);
@@ -100,17 +104,26 @@ class ucp_register extends module
 
 			if ($username_validate !== true)
 			{
-				$error[] = $username_validate;
+				$error[] = $_CLASS['core_user']->get_lang($username_validate);
 			}
 
 			if (!$password || $password !== get_variable('password_confirm', 'POST', ''))
 			{
-				$error[] = 'PASSWORD_ERROR';
+				$error[] = $_CLASS['core_user']->get_lang('PASSWORD_ERROR');
 			}
 
-			if (!$email || $email !== get_variable('email_confirm', 'POST', ''))
+			if (!$email || $email !== $email_confirm)
 			{
-				$error[] = 'PASSWORD_ERROR';
+				$error[] = $_CLASS['core_user']->get_lang('EMAIL_ERROR');
+			}
+			elseif (!check_email($email))
+			{
+				$error[] = $_CLASS['core_user']->get_lang('EMAIL_INVALID');
+			}
+
+			if (!$tz || !in_array($tz, tz_array()))
+			{
+				$tz = null;
 			}
 
 			if ($_CORE_CONFIG['user']['enable_confirm'])
@@ -120,22 +133,15 @@ class ucp_register extends module
 
 				if (!$confirm_code || !$confirmation_code || $confirm_code != $confirmation_code)
 				{
-					$error[] = $_CLASS['core_user']->lang['CONFIRM_CODE_WRONG'];
+					$error[] = $_CLASS['core_user']->get_lang('CONFIRM_CODE_WRONG');
 				}
 
 				// we don't need this any more
 				$_CLASS['core_user']->user_data_kill('confirmation_code');
 			}
 
-		//$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 			if (empty($error))
 			{
-				// Tz need to be moved out of the lang file, only use it for languages
-				if (!$tz || !in_array($tz, $_CLASS['core_user']->lang['tz']['zones']))
-				{
-					$tz = null;
-				}
-	
 				$password = encode_password($password, $_CORE_CONFIG['user']['password_encoding']);
 	
 				if (!$password)
@@ -151,14 +157,33 @@ class ucp_register extends module
 						//do some admin contact thing here
 						die('Try again later');
 					}
-	
+
 					$user_status = STATUS_PENDING;
 					$user_act_key = generate_string(10);
+
+					if ($coppa)
+					{
+						$message = $_CLASS['core_user']->lang['ACCOUNT_COPPA'];
+						$email_template = 'coppa_welcome_inactive';
+					}
+					elseif ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF)
+					{
+						$message = $_CLASS['core_user']->lang['ACCOUNT_INACTIVE'];
+						$email_template = 'user_welcome_inactive';
+					}
+					elseif ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN)
+					{
+						$message = $_CLASS['core_user']->lang['ACCOUNT_INACTIVE_ADMIN'];
+						$email_template = 'admin_welcome_inactive';
+					}
 				}
 				else
 				{
 					$user_status = STATUS_ACTIVE;
 					$user_act_key = null;
+
+					$email_template = 'user_welcome';
+					$message = $_CLASS['core_user']->lang['ACCOUNT_ADDED'];
 				}
 	
 				if ($user_status === STATUS_ACTIVE)
@@ -167,7 +192,7 @@ class ucp_register extends module
 					set_core_config('user', 'newest_username', $row['username'], false);
 					set_core_config('user', 'num_users', $_CORE_CONFIG['user']['num_users'] + 1, false);
 				}
-	
+
 				$data = array(
 					'username'		=> $username,
 					'user_email'	=> $email,
@@ -179,7 +204,7 @@ class ucp_register extends module
 					'user_password'			=> $password,
 					'user_password_encoding'=> $_CORE_CONFIG['user']['password_encoding'],
 
-					'user_lang'			=> ($lang == $_CORE_CONFIG['global']['default_lang']) ? null :$lang ,
+					'user_lang'			=> ($lang == $_CORE_CONFIG['global']['default_lang']) ? null : $lang,
 					'user_type'			=> USER_NORMAL,
 					'user_status'		=> $user_status,
 					'user_act_key'		=> $user_act_key,
@@ -187,37 +212,71 @@ class ucp_register extends module
 				);
 
 				user_add($data);
+				unset($data);
+
+				require_once($site_file_root.'includes/mailer.php');
+		
+				$mailer = new core_mailer();
+
+				$mailer->to($email, $username);
+				$mailer->subject($subject);
+
+				// change this don't want to use phpBBs template
+				$_CLASS['core_template']->assign_array(array(
+					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
+					'WELCOME_MSG'   => sprintf($_CLASS['core_user']->lang['WELCOME_SUBJECT'], $_CORE_CONFIG['global']['site_name']),
+					'USERNAME'		=> $username,
+					'PASSWORD'		=> $password,
+					'EMAIL_SIG'		=> '', //I like this
+					'U_ACTIVATE'	=> generate_link("system&amp;mode=activate&user_id=$user_id&key=$user_act_key", array('sid' => false, 'full' => true))
+				));
+
+				if ($coppa)
+				{
+					$_CLASS['core_template']->assign_array(array(
+						'FAX_INFO'		=> $_CORE_CONFIG['user']['coppa_fax'],
+						'MAIL_INFO'		=> $_CORE_CONFIG['user']['coppa_mail'],
+						'EMAIL_ADDRESS' => $email,
+						'SITENAME'		=> $_CORE_CONFIG['global']['site_name'])
+					);
+				}
+
+				$mailer->message = trim($_CLASS['core_template']->display('modules/Control_Panel/email/'.$email_template, true));
+
+				$mailer->send();
+
+				$message = $message . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="'. generate_link() .'">', '</a>');
+				trigger_error($message);
 			}
 		}
 
 		$s_hidden_fields .= '<input type="hidden" name="coppa" value="' . $coppa . '" />';
 		$s_hidden_fields .= '<input type="hidden" name="agreed" value="true" />';
-		$confirm_image = '';
 		
-		// Visual Confirmation - Show images
 		if ($_CORE_CONFIG['user']['enable_confirm'])
 		{
-			if ($submit)
-			{
-				if ($_CORE_CONFIG['user']['max_reg_attempts'])
-				{
-					$attempts = (int) $_CLASS['core_user']->session_data_get('reg_attempts');
-
-					if ($attempts >= $_CORE_CONFIG['user']['max_reg_attempts'])
-					{
-						trigger_error($_CLASS['core_user']->lang['TOO_MANY_REGISTERS']);
-					}
-
-					$_CLASS['core_user']->session_data_get('reg_attempts', ($attempts + 1));
-				}
-
-				$_CLASS['core_user']->session_data_set('confirmation_code', generate_string(6));
-			}
-
+			$_CLASS['core_user']->session_data_set('confirmation_code', generate_string(6));
 			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
 		}
+		else
+		{
+			$confirm_image = false;
+		}
 
-		$l_reg_cond = '';
+		if ($submit)
+		{
+			if ($_CORE_CONFIG['user']['max_reg_attempts'])
+			{
+				$attempts = (int) $_CLASS['core_user']->session_data_get('reg_attempts', 0);
+
+				if ($attempts > $_CORE_CONFIG['user']['max_reg_attempts'])
+				{
+					trigger_error($_CLASS['core_user']->lang['TOO_MANY_REGISTERS']);
+				}
+
+				$_CLASS['core_user']->session_data_get('reg_attempts', ($attempts + 1));
+			}
+		}
 
 		switch ($_CORE_CONFIG['user']['require_activation'])
 		{
@@ -228,25 +287,29 @@ class ucp_register extends module
 			case USER_ACTIVATION_ADMIN:
 				$l_reg_cond = $_CLASS['core_user']->lang['UCP_ADMIN_ACTIVATE'];
 			break;
+			
+			default:
+				$l_reg_cond = '';
+			break;
 		}
 
 		$user_char_ary = array('.*' => 'USERNAME_CHARS_ANY', '[\w]+' => 'USERNAME_ALPHA_ONLY', '[\w_\+\. \-\[\]]+' => 'USERNAME_ALPHA_SPACERS');
 
-		$_CLASS['core_template']->assign(array(
-			'ERROR'						=> empty($error) ? false : implode('<br />', $error), 
-			'USERNAME'					=> isset($username) ? $username : '',
-			'PASSWORD'					=> isset($password) ? $password : '',
-			'EMAIL'						=> isset($email) ? $email : '',
-			'EMAIL_CONFIRM'				=> isset($email_confirm) ? $email_confirm : '', // should remove this also maybe
-			'CONFIRM_IMG'				=> $confirm_image,
+		$_CLASS['core_template']->assign_array(array(
+			'ERROR'			=> empty($error) ? false : implode('<br />', $error), 
+			'USERNAME'		=> isset($username) ? $username : '',
+			'PASSWORD'		=> isset($password) ? $password : '',
+			'EMAIL'			=> isset($email) ? $email : '',
+			'EMAIL_CONFIRM'	=> isset($email_confirm) ? $email_confirm : '',
+			'CONFIRM_IMG'	=> $confirm_image,
+			'SELECT_TZ'		=> select_tz(isset($tz) ? $tz : $_CORE_CONFIG['global']['default_timezone']),
 
 			'L_CONFIRM_EXPLAIN'			=> sprintf($_CLASS['core_user']->lang['CONFIRM_EXPLAIN'], '<a href="mailto:' . htmlentities($config['board_contact']) . '">', '</a>'), 
 			'L_ITEMS_REQUIRED'			=> $l_reg_cond, 
 			'L_USERNAME_EXPLAIN'		=> sprintf($_CLASS['core_user']->lang[$user_char_ary[$_CORE_CONFIG['user']['allow_name_chars']] . '_EXPLAIN'], $_CORE_CONFIG['user']['min_name_chars'], $_CORE_CONFIG['user']['max_name_chars']),
 			'L_NEW_PASSWORD_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['NEW_PASSWORD_EXPLAIN'], $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
 
-			//'S_LANG_OPTIONS'	=> language_select($lang), 
-			'S_TZ_OPTIONS'		=> tz_select(isset($tz) ? $tz : $_CORE_CONFIG['global']['default_timezone']),
+
 			'S_COPPA'			=> $coppa, 
 			'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
 			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;mode=register"))

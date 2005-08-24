@@ -499,28 +499,6 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	return;
 }
 
-function language_select($default = '')
-{
-}
-
-// Pick a timezone
-function tz_select($default = '')
-{
-	global $sys_timezone, $_CLASS;
-
-	$tz_select = '';
-	foreach ($_CLASS['core_user']->lang['tz']['zones'] as $offset => $zone)
-	{
-		if (is_numeric($offset))
-		{
-			$selected = ($offset == $default) ? ' selected="selected"' : '';
-			$tz_select .= '<option value="' . $offset . '"' . $selected . '>' . $zone . '</option>';
-		}
-	}
-
-	return $tz_select;
-}
-
 // Topic and forum watching common code
 function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_status = 'unset', $start = 0)
 {

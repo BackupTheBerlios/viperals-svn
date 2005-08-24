@@ -1,15 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 if (!defined('VIPERAL'))
 {
@@ -29,7 +39,7 @@ $this->content = '<div align="center"><br />
 	<input name="domains" value="'.$Site_domain.'" type="hidden" />
 	<input name="q" size="15" maxlength="200" value="" type="text" />
 	<input name="sitesearch" value="'.$Site_domain.'" type="hidden" />
-	<br /><br /><input class="bottom" name="btnG" value="Search" type="submit" />
+	<br /><br /><input class="button" name="btnG" value="Search" type="submit" />
 </form>
 </div>';
 

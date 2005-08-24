@@ -85,7 +85,8 @@ function user_add($data)
 		'group_id'		=> (int) $data['user_group'],
 		'member_user_id'=> (int) $user_id,
 		'member_status'	=> $data['user_status']
-	);
+	));
+	
 	$_CLASS['core_db']->query($sql);
 
 	$_CLASS['core_db']->transaction('commit');
@@ -317,8 +318,8 @@ function groups_user_remove($group_id, $user_id)
 {
 	global $_CLASS;
 
-	$group_ids = is_array($group_id) ? $group_id : array($group_id);
-	$user_ids = is_array($user_id) ? $user_id : array($user_id);
+	$group_id = is_array($group_id) ? $group_id : array($group_id);
+	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
 	$group_id = array_map('intval', $group_id);
 
@@ -372,8 +373,8 @@ function groups_user_add($group_id, $user_id, $status)
 {
 	global $_CLASS;
 
-	$group_ids = is_array($group_id) ? $group_id : array($group_id);
-	$user_ids = is_array($user_id) ? $user_id : array($user_id);
+	$group_id = is_array($group_id) ? $group_id : array($group_id);
+	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
 	$group_id = array_map('intval', $group_id);
 	$user_id = array_map('intval', $user_id);
@@ -383,42 +384,23 @@ function groups_user_add($group_id, $user_id, $status)
 		return;
 	}
 
-	$sql = 'SELECT member_user_id, member_status FROM ' . USER_GROUP_TABLE . ' 
-				WHERE group_id IN (' . implode(', ', $group_id) . ')
-				AND member_user_id IN (' . implode(', ', $user_id) . ')
-				AND  = '.$status;
-	$result = $_CLASS['core_db']->query($sql);
+	$_CLASS['core_db']->transaction();
 
-	$update_array = array();
-	$ignore_array = array();
-
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	foreach ($user_id as $u_id)
 	{
-		$update_id[] = $row['user_id'];
-	}
-	$_CLASS['core_db']->free_result($result);
-	
-	// We move all users that are removed from the default groups to
-	// REGISTERED / REGISTERED_COPPA
-	if (!empty($defaults))
-	{
-// need to update/completion
-		$result = $_CLASS['core_db']->query('SELECT * FROM ' . GROUPS_TABLE . ' 	WHERE group_id = 4');
-
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-		$sql = 'UPDATE FROM '. USERS_TABLE .' 
-					SET group_id = 4, user_rank = -1
-					WHERE user_id IN (' . implode(', ', $group_id) . ')';
-		$result = $_CLASS['core_db']->query($sql);
+		foreach ($group_id as $g_id)
+		{
+			$data = array(
+				'group_id'		=> (int) $g_id,
+				'user_id'		=> (int) $u_id,
+				'member_status'	=> (int) $status,
+			);
+		
+			$_CLASS['core_db']->query('INSERT INTO '.USER_GROUP_TABLE.' '.$_CLASS['core_db']->sql_build_array('INSERT', $data));
+		}
 	}
 
-	$sql = 'DELETE FROM ' . USER_GROUP_TABLE . '
-		WHERE group_id IN ('. implode(', ', $group_id) . ')
-		AND user_id IN ('. implode(', ', $user_id) .')';
-
-	$result = $_CLASS['core_db']->query($sql);
+	$_CLASS['core_db']->transaction('commit');
 }
 
 function validate_username($username)
@@ -436,14 +418,15 @@ function validate_username($username)
 
 	if ($length > $_CORE_CONFIG['user']['max_name_chars'] || $length < $_CORE_CONFIG['user']['min_name_chars'])
 	{
-		return 'INVALID_LENGHT';
+		return 'USERNAME_INVALID_LENGHT';
 	}
 
 	if (!preg_match('#^' . $_CORE_CONFIG['user']['allow_name_chars'] . '$#i', $username))
 	{
-		return 'INVALID_CHARS';
+		return 'USERNAME_INVALID_CHARS';
 	}
 
+// wouldn't select limit be better ?
 	$sql = 'SELECT COUNT(*) as count
 		FROM ' . USERS_TABLE . "
 		WHERE LOWER(username) = '" . $_CLASS['core_db']->escape($username) . "'";
