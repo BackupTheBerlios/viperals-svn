@@ -48,13 +48,110 @@ $_CLASS['core_template']->assign_array(array(
 	'LINK_VIEW_UNACTIVATED'	=> generate_link('users&amp;mode=unactivated', array('admin' => true)),
 ));
 
+$id = (int) get_variable('id', 'GET', false);
+
 if (isset($_REQUEST['mode']))
 {
 	switch ($_REQUEST['mode'])
 	{
+		case 'add_user':
+			if (isset($_POST['submit']))
+			{
+				require_once($site_file_root.'includes/functions_user.php');
+	
+				$error = array();
+	
+				$username	= get_variable('username', 'POST', false);
+				$password	= get_variable('password', 'POST', false);
+				$email		= get_variable('email', 'POST', false);
+				$tz			= get_variable('tz', 'POST', false);
+				$error		= array();
+
+				//when we add this make sure to confirm that it's one of the installed langs
+				$lang		= $_CORE_CONFIG['global']['default_lang'];
+	
+				if (strpos($username, "\n"))
+				{
+					die;
+				}
+
+				$username_validate = validate_username($username);
+	
+				if ($username_validate !== true)
+				{
+					$error[] = $_CLASS['core_user']->get_lang($username_validate);
+				}
+	
+				if (!$password || $password !== get_variable('password_confirm', 'POST', ''))
+				{
+					$error[] = $_CLASS['core_user']->get_lang('PASSWORD_ERROR');
+				}
+	
+				if (!$email)
+				{
+					$error[] = $_CLASS['core_user']->get_lang('EMAIL_ERROR');
+				}
+				elseif (!check_email($email)) // we can maybe remove this check
+				{
+					$error[] = $_CLASS['core_user']->get_lang('EMAIL_INVALID');
+				}
+	
+				if (!$tz || !in_array($tz, tz_array()))
+				{
+					$tz = null;
+				}
+
+				if (empty($error))
+				{
+					$password = encode_password($password, $_CORE_CONFIG['user']['password_encoding']);
+		
+					if (!$password)
+					{
+						//do some admin contact thing here
+						die('Try again later');
+					}
+
+					$data = array(
+						'username'		=> (string) $username,
+						'user_email'	=> (string) $email,
+						'user_group'	=> (int) ($coppa) ? 3 : 2,
+						'user_reg_date'	=> (int) gmtime(),
+						'user_timezone'	=> $tz,
+	
+						'user_password'			=> (string) $password,
+						'user_password_encoding'=> (string) $_CORE_CONFIG['user']['password_encoding'],
+	
+						'user_lang'			=> ($lang == $_CORE_CONFIG['global']['default_lang']) ? null : $lang,
+						'user_type'			=> USER_NORMAL,
+						'user_status'		=> STATUS_ACTIVE,
+						'user_act_key'		=> null,
+						'user_ip'			=> '',
+					);
+	
+					user_add($data);
+					
+					set_core_config('user', 'newest_user_id', $row['user_id'], false);
+					set_core_config('user', 'newest_username', $row['username'], false);
+					set_core_config('user', 'num_users', $_CORE_CONFIG['user']['num_users'] + 1, false);
+				}
+			}
+
+			$_CLASS['core_template']->assign_array(array(
+				'COPPA'			=> isset($coppa) ? $coppa : false, 
+				'EMAIL'			=> isset($email) ? $email : '',
+				'ERROR'			=> empty($error) ? false : implode('<br />', $error),
+
+				'PASSWORD'		=> isset($password) ? $password : '',
+				'USERNAME'		=> isset($username) ? $username : '',
+
+				'SELECT_TZ'		=> select_tz(isset($tz) ? $tz : $_CORE_CONFIG['global']['default_timezone']),
+				'S_ACTION'		=> generate_link('users&amp;mode=add_user', array('admin' => true))
+			));
+	
+			$_CLASS['core_display']->display(false, 'admin/users/add.html');
+		break;
+
 		case 'bots':
-			$id = (int) get_variable('id', 'GET', false);
-			
 			if ($id && isset($_REQUEST['option']))
 			{
 				require_once($site_file_root.'includes/functions_user.php');
@@ -119,6 +216,40 @@ if (isset($_REQUEST['mode']))
 
 		case 'disabled':
 		case 'unactivated':
+			if ($id && isset($_REQUEST['option']))
+			{
+				require_once($site_file_root.'includes/functions_user.php');
+
+				switch ($_REQUEST['option'])
+				{
+					case 'activate':
+						user_activate($id);
+					break;
+			
+					case 'delete':
+						if (display_confirmation())
+						{
+							$sql = 'SELECT user_id, user_type
+								FROM ' . USERS_TABLE . ' 
+								WHERE user_id = '.$id;
+				
+							$result = $_CLASS['core_db']->query($sql);
+							$row = $_CLASS['core_db']>fetch_row_assoc($result);
+							$_CLASS['core_db']->free_result($result);
+				
+							if ($row['user_type'] != USER_BOT)
+							{
+								break;
+							}
+				
+							user_delete($id);
+				
+							trigger_error($_CLASS['core_user']->lang['BOT_DELETED']);
+						}
+					break;
+				}
+			}
+
 			if ($_REQUEST['mode'] == 'unactivated')
 			{
 				$status = STATUS_PENDING;
@@ -131,7 +262,7 @@ if (isset($_REQUEST['mode']))
 				$template = 'admin/users/disabled.html';
 				$link = 'users&amp;mode=disabled';
 			}
-$status = STATUS_DISABLED;
+
 			$start = get_variable('start', 'GET', false, 'integer');
 
 			$sql = 'SELECT user_id, username, user_regdate
@@ -148,9 +279,9 @@ $status = STATUS_DISABLED;
 						'user_name'		=> $row['username'],
 						'registered'	=> $_CLASS['core_user']->format_time($row['user_regdate']),
 						'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
-						'link_activate'	=> generate_link('&amp;user_mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
-						'link_remove'	=> generate_link('&amp;user_mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),
-						'link_remind'	=> generate_link('&amp;user_mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
+						'link_activate'	=> generate_link($link.'&amp;option=activate&amp;id=' . $row['user_id'], array('admin' => true)),
+						'link_remove'	=> generate_link($link.'&amp;option=delete&amp;id=' . $row['user_id'], array('admin' => true)),
+						'link_remind'	=> generate_link($link.'&amp;option=remind&amp;id=' . $row['user_id'], array('admin' => true)),
 						'link_details'	=> '',
 				));
 			}
@@ -173,17 +304,42 @@ $status = STATUS_DISABLED;
 }
 
 $user_status = array(STATUS_PENDING, STATUS_DISABLED);
-$count = 0;
+$last_count = 0;
 
 // needed view more
 foreach ($user_status as $status)
 {
+	$limit = ($last_count) ? 10 : 20 - $last_count;
+
+	$sql = 'SELECT COUNT(*)	FROM ' . USERS_TABLE . '
+				WHERE user_type = '.USER_NORMAL.'
+				AND user_status = '.$status;
+	$result = $_CLASS['core_db']->query($sql);
+	list($count) = $_CLASS['core_db']->fetch_row_num($result);
+
+	$last_count = $last_count + min($count, $limit);
+
+	if ($status === STATUS_PENDING)
+	{
+		$more = 'MORE_PENDING';
+		$link = generate_link('users&amp;mode=unactivated', array('admin' => true));
+	}
+	else
+	{
+		$more = 'MORE_DISABLED';
+		$link = generate_link('users&amp;mode=disabled', array('admin' => true));
+	}
+
+	$_CLASS['core_template']->assign_array(array(
+		$more			=> ($count > $limit),
+		'LINK_'.$more	=> $link,
+	));
+
 	$sql = 'SELECT user_id, username, user_regdate
 		FROM ' . USERS_TABLE . '
 			WHERE user_type = '.USER_NORMAL.'
 			AND user_status = '.$status;
 
-	$limit = ($count) ? 10 : 20 - $count;
 	$result = $_CLASS['core_db']->query_limit($sql, $limit);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -200,8 +356,6 @@ foreach ($user_status as $status)
 				'link_remind'	=> generate_link('&amp;user_mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
 				'link_details'	=> '',
 		));
-		
-		$count ++;
 	}
 	$_CLASS['core_db']->free_result($result);
 }

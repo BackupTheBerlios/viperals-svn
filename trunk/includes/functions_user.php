@@ -29,7 +29,9 @@ function check_user_id(&$user_id, $bypass = false)
 	$user_id = array_unique($user_id);
 
 	// array map should make 0 values for notint values
-	if (($key = array_search(0, $user_id)) === false)
+	$key = array_search(0, $user_id);
+
+	if ($key !== false && !is_null($key))
 	{
 		unset($user_id[$key]);
 	}

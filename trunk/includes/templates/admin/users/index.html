@@ -39,7 +39,7 @@
 				<a href="{ $users_unactivated:link_remove }">{ $L_REMOVE }</a>
 			</td>
 			<td width="60" align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $users_unactivated:link_remind }'; return false;">
-				<a href="{ $users_unactivated:link_remind }">{ $L_REMIND }</a> 
+				<a href="{ $users_unactivated:link_remind }">{ $L_REMIND }</a>
 			</td>
 		</tr>
 		<tr>
@@ -52,6 +52,13 @@
 			</td>
 		</tr>
 		<!-- ENDLOOP -->
+		<!-- IF { $MORE_PENDING } -->
+		<tr>
+			<td colspan="6" align="center" class="row1">
+				<a href="{ $LINK_MORE_PENDING }"><b>{ $L_VIEW_MORE_PENDING }</b></a>
+			</td>
+		</tr>
+		<!-- ENDIF -->
 		<tr>
 			<td colspan="6" class="row2">{ $L_DISABLED_USERS }</td>
 		</tr>
@@ -86,6 +93,13 @@
 			</td>
 		</tr>
 		<!-- ENDLOOP -->
+		<!-- IF { $MORE_DISABLED } -->
+		<tr>
+			<td colspan="6" align="center" class="row1">
+				<a href="{ $LINK_MORE_DISABLED }"><b>{ $L_VIEW_MORE_DISABLED }</b></a>
+			</td>
+		</tr>
+		<!-- ENDIF -->
 		<tr>
 			<td colspan="6" class="cat" align="right"><select name="mark_option"><option value="activate">{ $L_ACTIVATE }</option><option value="remove">{ $L_REMOVE }</option></select>&nbsp;<input class="bottom" name="submit" value="{ $L_SUBMIT }" type="submit">&nbsp;</td>
 		</tr>

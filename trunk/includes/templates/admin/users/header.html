@@ -37,7 +37,8 @@
 						</tr>
 						<tr class="row1">
 							<td colspan="4">
-								<img src="images/add_user.png" alt="{ $L_ADD_USER }" title="{ $L_ADD_USER }" border="0">
+<!-- NEED A IMAGE BUTTOM CLASS -->
+								<a href="{ $LINK_ADD_USER }" title="{ $L_VIEW_BOTS }"><img src="images/add_user.png" alt="{ $L_ADD_USER }" title="{ $L_ADD_USER }" /></a>
 							</td>
 						</tr>
 					</tbody>
@@ -55,7 +56,7 @@
 							</td>
 						</tr>
 						<tr>
-							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $LINK_BOTS }'; return false;">
+							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $LINK_VIEW_BOTS }'; return false;">
 								<a href="{ $LINK_VIEW_BOTS }" title="{ $L_VIEW_BOTS }">{ $L_VIEW_BOTS }</a>
 							</td>
 						</tr>
@@ -70,8 +71,11 @@
 							</td>
 						</tr>
 						<tr>
+							<td class="row2" nowrap="nowrap"></td>
+						</tr>
+						<tr>
 							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $LINK_ADD_USER }'; return false;">
-								<a href="{ $LINK_ADD_USER }" title="{ $L_VIEW_BOTS }">{ $L_VIEW_BOTS }</a>
+								<a href="{ $LINK_ADD_USER }" title="{ $L_VIEW_BOTS }">{ $L_ADD_USER }</a>
 							</td>
 						</tr>
 					</tbody>

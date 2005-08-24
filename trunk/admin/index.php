@@ -80,16 +80,41 @@ $_CLASS['core_template']->assign('cms_news', $cms_news);
 if ($_CLASS['core_auth']->admin_power('users'))
 {
 	$user_status = array(STATUS_PENDING, STATUS_DISABLED);
-	$count = 0;
+	$last_count = 0;
 
 	foreach ($user_status as $status)
 	{
+		$limit = ($last_count) ? 10 : 20 - $last_count;
+
+		$sql = 'SELECT COUNT(*)	FROM ' . USERS_TABLE . '
+					WHERE user_type = '.USER_NORMAL.'
+					AND user_status = '.$status;
+		$result = $_CLASS['core_db']->query($sql);
+		list($count) = $_CLASS['core_db']->fetch_row_num($result);
+
+		$last_count = $last_count + min($count, $limit);
+
+		if ($status === STATUS_PENDING)
+		{
+			$more = 'MORE_PENDING';
+			$link = generate_link('users&amp;mode=unactivated', array('admin' => true));
+		}
+		else
+		{
+			$more = 'MORE_DISABLED';
+			$link = generate_link('users&amp;mode=disabled', array('admin' => true));
+		}
+	
+		$_CLASS['core_template']->assign_array(array(
+			$more			=> ($count > $limit),
+			'LINK_'.$more	=> $link,
+		));
+		
 		$sql = 'SELECT user_id, username, user_regdate
 			FROM ' . USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.'
 				AND user_status = '.$status;
 		
-		$limit = ($count) ? 10 : 20 - $count;
 		$result = $_CLASS['core_db']->query_limit($sql, $limit);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -106,8 +131,6 @@ if ($_CLASS['core_auth']->admin_power('users'))
 					'link_remind'	=> generate_link('&amp;user_mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
 					'link_details'	=> '',
 			));
-			
-			$count ++;
 		}
 		$_CLASS['core_db']->free_result($result);
 	}

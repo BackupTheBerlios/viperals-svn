@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 if (!defined('VIPERAL'))
@@ -54,7 +56,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		}
     }
 
-	htmlentities($row['message_text'], ENT_QUOTES, 'UTF-8');
+	$row['message_text'] = htmlentities($row['message_text'], ENT_QUOTES, 'UTF-8');
 
 	unset($words_array, $words);
 	

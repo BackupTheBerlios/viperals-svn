@@ -20,7 +20,9 @@ $site_file_root = '';
 
 require($site_file_root.'core.php');
 
-$_CLASS['core_user']->user_setup();
+$_CLASS['core_user']->user_setup(null);
+$_CLASS['core_display']->load_theme('viperal_admin', $site_file_root.'themes_admin/viperal_admin');
+
 $_CLASS['core_user']->add_lang('admin/common.php');
 
 $_CORE_MODULE['title'] = $_CLASS['core_user']->lang['ADMIN'];
@@ -90,11 +92,18 @@ if ($_CORE_MODULE['name'])
 $_CORE_MODULE['title'] = $_CLASS['core_user']->lang['ADMIN'].' &gt; '.$_CORE_MODULE['title'];
 $_CORE_MODULE['sides'] = BLOCK_ALL;
 	
-$_CLASS['core_blocks']->add_block(array(
-		'block_title'		=> 'Administration',
-		'block_position'	=> BLOCK_LEFT,
-		'block_file'		=> 'block-Admin.php',
-	));
+require($site_file_root.'admin/menu.php');
+
+$main_menu = build_menu($menu);
+
+$_CLASS['core_template']->assign_array(array(
+		'LINK_HOME'		=> generate_link(),
+		'LINK_ADMIN'	=> generate_link(false, array('admin' => true)),
+
+		'MENU_MAIN'			=> $main_menu['content'],
+		'MENU_MAIN_ITEMS'	=> $main_menu['menu'],
+));
+
 
 //load_class($site_file_root.'includes/core_editor.php', 'core_editor');
 //$_CLASS['core_editor']->setup();
