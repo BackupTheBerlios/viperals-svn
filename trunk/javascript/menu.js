@@ -3,12 +3,14 @@
 /*
 * To do:
 *
-*	Add some kind of slide affect
+*	Complete slide affect
 *	Menu generator in javascript
 *	Auto closing of menu...
 *	
 */
 
+var slider_id = new Array();
+var slider_height = new Array();
 var active_menu = false;
 
 function get_offsets(element)
@@ -114,6 +116,7 @@ function menu_show(object_name)
 	// best to do this everytime, incase the windows is resized
 	var object_offsets = get_offsets(object);
 
+	menu.style.clip = 'rect(auto, auto, 0px, auto)';
 	menu.style.display	= '';
 	
 	if ((object_offsets['left'] + menu.offsetWidth) > document.body.clientWidth)
@@ -127,6 +130,8 @@ function menu_show(object_name)
 	}
 
 	menu.style.top = (object_offsets['top'] + object.offsetHeight) + 'px';
+	
+	start_slide(object_name+ '_menu', menu.offsetHeight);
 }
 
 function menu_hide(object_name)
@@ -145,4 +150,41 @@ function menu_hide(object_name)
 	}
 	
 	menu.style.display = 'none';	
+}
+
+function slide(identifier, height)
+{
+	var area = document.getElementById(identifier);
+
+	if (slider_height[identifier] == height || slider_height[identifier] > height)
+	{
+		stop_slide(identifier);
+	}
+	else
+	{
+		slider_height[identifier] += 6;
+
+		if (slider_height[identifier] > height)
+		{
+			slider_height[identifier] = height;
+		}
+
+		area.style.clip = 'rect(auto, auto, ' + slider_height[identifier] + 'px, auto)';
+	}
+}
+
+function start_slide(identifier, height)
+{
+	slider_height[identifier] = 0;
+
+	slider_id[identifier] = window.setInterval("slide('"+identifier+"',"+height+")", 10);
+}
+
+function stop_slide(identifier)
+{
+	if (slider_id[identifier] && slider_id[identifier] != null)
+	{
+		window.clearInterval(slider_id[identifier]);
+		slider_id[identifier] = null;
+	}
 }
