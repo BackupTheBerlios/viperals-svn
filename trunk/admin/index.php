@@ -110,7 +110,7 @@ if ($_CLASS['core_auth']->admin_power('users'))
 			'LINK_'.$more	=> $link,
 		));
 		
-		$sql = 'SELECT user_id, username, user_regdate
+		$sql = 'SELECT user_id, username, user_reg_date
 			FROM ' . USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.'
 				AND user_status = '.$status;

@@ -469,11 +469,11 @@ function generate_string($length)
 	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 	$string = '';
-	$num_chars = strlen($chars) - 1;
+	$max_chars = strlen($chars) - 1;
 
 	for ($i = 0; $i < $length; ++$i)
 	{
-		$string .= substr($chars, mt_rand(0, $num_chars), 1);
+		$string .= substr($chars, mt_rand(0, $max_chars), 1);
 	}
 
 	return $string;
@@ -556,7 +556,8 @@ function script_close($save = true)
 
 		if ($save)
 		{
-			if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['server']['error_options'])
+			//if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['server']['error_options'])
+			if ($_CORE_CONFIG['server']['error_options'])
 			{
 				if (!empty($_CLASS['core_db']->query_list))
 				{
@@ -662,7 +663,7 @@ function redirect($url = false, $save = false)
 	header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
 	header('Expires: 0');
 	header('Pragma: no-cache');
-		
+
 	echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 	<html>
 		<head>

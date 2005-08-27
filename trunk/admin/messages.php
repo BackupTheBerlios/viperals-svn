@@ -106,9 +106,11 @@ $_CLASS['core_db']->free_result($result);
 
 foreach ($messages as $row)
 {
+	$active = $row['block_status'] == STATUS_ACTIVE;
+
 	$_CLASS['core_template']->assign_vars_array($block_position[$row['block_position']].'_admin_messages', array(
-		'ACTIVE'		=> ($row['block_status']) ? true : false,
-		'CHANGE'		=> ($row['block_status']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+		'ACTIVE'		=> $active,
+		'CHANGE'		=> ($active) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
 
 		'AUTH_LINK'		=> generate_link('messages&amp;mode=auth&amp;id='.$row['block_id'], array('admin' => true)),
 		'ACTIVE_LINK'	=> generate_link('messages&amp;mode=change&amp;id='.$row['block_id'], array('admin' => true)),

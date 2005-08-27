@@ -156,32 +156,38 @@ if (isset($_REQUEST['mode']))
 			{
 				require_once($site_file_root.'includes/functions_user.php');
 			
+				$sql = 'SELECT user_id, user_type, user_status
+					FROM ' . USERS_TABLE . ' 
+					WHERE user_id = '.$id;
+				
+				$result = $_CLASS['core_db']->query($sql);
+				$row = $_CLASS['core_db']->fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
+
+				if ($row['user_type'] != USER_BOT)
+				{
+					break;
+				}
+
 				switch ($_REQUEST['option'])
 				{
 					case 'activate':
-						user_activate($id);
+						if ($row['user_status'] != STATUS_ACTIVE)
+						{
+							user_activate($id);
+						}
 					break;
 			
 					case 'deactivate':
-						user_disable($id);
+						if ($row['user_status'] == STATUS_ACTIVE)
+						{
+							user_disable($id);
+						}
 					break;
 				
 					case 'delete':
 						if (display_confirmation())
 						{
-							$sql = 'SELECT user_id, user_type
-								FROM ' . USERS_TABLE . ' 
-								WHERE user_id = '.$id;
-				
-							$result = $_CLASS['core_db']->query($sql);
-							$row = $_CLASS['core_db']>fetch_row_assoc($result);
-							$_CLASS['core_db']->free_result($result);
-				
-							if ($row['user_type'] != USER_BOT)
-							{
-								break;
-							}
-				
 							user_delete($id);
 				
 							trigger_error($_CLASS['core_user']->lang['BOT_DELETED']);
@@ -220,10 +226,26 @@ if (isset($_REQUEST['mode']))
 			{
 				require_once($site_file_root.'includes/functions_user.php');
 
+				$sql = 'SELECT user_id, user_type, user_status
+					FROM ' . USERS_TABLE . ' 
+					WHERE user_id = '.$id;
+				
+				$result = $_CLASS['core_db']->query($sql);
+				$row = $_CLASS['core_db']>fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
+
+				if ($row['user_type'] != USER_NORMAL)
+				{
+					break;
+				}
+							
 				switch ($_REQUEST['option'])
 				{
 					case 'activate':
-						user_activate($id);
+						if ($row['user_status'] != STATUS_ACTIVE)
+						{
+							user_activate($id);
+						}
 					break;
 			
 					case 'delete':
@@ -265,7 +287,7 @@ if (isset($_REQUEST['mode']))
 
 			$start = get_variable('start', 'GET', false, 'integer');
 
-			$sql = 'SELECT user_id, username, user_regdate
+			$sql = 'SELECT user_id, username, user_reg_date
 				FROM ' . USERS_TABLE . '
 					WHERE user_type = '.USER_NORMAL.'
 					AND user_status = '.$status;
@@ -277,7 +299,7 @@ if (isset($_REQUEST['mode']))
 				$_CLASS['core_template']->assign_vars_array('users_admin', array(
 						'user_id'		=> $row['user_id'],
 						'user_name'		=> $row['username'],
-						'registered'	=> $_CLASS['core_user']->format_time($row['user_regdate']),
+						'registered'	=> $_CLASS['core_user']->format_time($row['user_reg_date']),
 						'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 						'link_activate'	=> generate_link($link.'&amp;option=activate&amp;id=' . $row['user_id'], array('admin' => true)),
 						'link_remove'	=> generate_link($link.'&amp;option=delete&amp;id=' . $row['user_id'], array('admin' => true)),
@@ -306,7 +328,6 @@ if (isset($_REQUEST['mode']))
 $user_status = array(STATUS_PENDING, STATUS_DISABLED);
 $last_count = 0;
 
-// needed view more
 foreach ($user_status as $status)
 {
 	$limit = ($last_count) ? 10 : 20 - $last_count;
@@ -335,7 +356,7 @@ foreach ($user_status as $status)
 		'LINK_'.$more	=> $link,
 	));
 
-	$sql = 'SELECT user_id, username, user_regdate
+	$sql = 'SELECT user_id, username, user_reg_date
 		FROM ' . USERS_TABLE . '
 			WHERE user_type = '.USER_NORMAL.'
 			AND user_status = '.$status;
@@ -349,7 +370,7 @@ foreach ($user_status as $status)
 		$_CLASS['core_template']->assign_vars_array($type, array(
 				'user_id'		=> $row['user_id'],
 				'user_name'		=> $row['username'],
-				'registered'	=> $_CLASS['core_user']->format_time($row['user_regdate']),
+				'registered'	=> $_CLASS['core_user']->format_time($row['user_reg_date']),
 				'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 				'link_activate'	=> generate_link('&amp;user_mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
 				'link_remove'	=> generate_link('&amp;user_mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),

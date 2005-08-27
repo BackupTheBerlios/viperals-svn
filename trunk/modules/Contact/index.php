@@ -1,17 +1,27 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
+// Add departments
 
 if (!defined('VIPERAL'))
 {
@@ -25,7 +35,7 @@ $error = '';
 
 if (!empty($_POST['preview']) || !empty($_POST['contact']))
 {
-	$data['MESSAGE']= get_variable('message', 'POST', '');
+	$data['MESSAGE']= trim(get_variable('message', 'POST', ''));
 	$data['NAME']	= get_variable('sender_name', 'POST', '');
 	$data['EMAIL']	= get_variable('sender_email', 'POST', '');
 
@@ -72,6 +82,7 @@ $_CLASS['core_template']->assign_array(array(
 
 $_CLASS['core_template']->display('modules/Contact/index.html');
 
+// remove this function
 function send_feedback($sender_name, $sender_email, $message, $preview = false)
 {
 	global $_CLASS, $_CORE_CONFIG;
@@ -89,12 +100,15 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 	if ($preview)
 	{
 		$_CLASS['core_template']->assign('PREVIEW', $body);
+
 		return;
 	}
 
+	require_once($site_file_root.'includes/mailer.php');
+
 	$mailer = new core_mailer;
-	$mailer->to('newuser@localhost', 'Viperal');
-	$mailer->subject('New Feedback');
+	$mailer->to($_CORE_CONFIG['email']['site_mail'], false);
+	$mailer->subject($_CLASS['core_user']->get_lang('SITE_FEEDBACK'));
 
 	$mailer->message = $body;
 

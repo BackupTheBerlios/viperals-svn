@@ -328,7 +328,6 @@ if ($hilit_words)
 // General Viewtopic URL for return links
 $viewtopic_url = "Forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : '');
 
-
 // Grab ranks
 $ranks = obtain_ranks();
 
@@ -1326,14 +1325,17 @@ function topic_last_read($topic_id, $forum_id)
 	else
 	{
 		$topic_last_read = 0;
+
 		if (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']))
 		{
 			$tracking_topics = unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']));
+
 			if (isset($tracking_topics[$forum_id]))
 			{
 				$topic_last_read = base_convert(max($tracking_topics[$forum_id]), 36, 10);
 				$topic_last_read = max($topic_last_read, $_CLASS['core_user']->data['session_last_visit']);
 			}
+
 			unset($tracking_topics);
 		}
 	}

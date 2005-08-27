@@ -33,7 +33,7 @@ class core_user extends sessions
 	var $lang = array();
 	var $img = array();
 
-	var $date_format;
+	var $time_format;
 	var $timezone;
 	var $dst;
 
@@ -86,7 +86,7 @@ class core_user extends sessions
 			return false;;
 		}
 
-		$format = (!$format) ? $this->date_format : $format;
+		$format = (!$format) ? $this->time_format : $format;
 
 		return strtr(date($format, $this->time_convert($gmtime)), $this->lang['datetime']);
 	}
@@ -255,7 +255,7 @@ class core_user extends sessions
 		$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
 		$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
 
-		$this->date_format = ($this->data['user_dateformat']) ? $this->data['user_dateformat'] : $_CORE_CONFIG['global']['default_dateformat'];
+		$this->time_format = ($this->data['user_time_format']) ? $this->data['user_time_format'] : $_CORE_CONFIG['global']['default_dateformat'];
 		$this->timezone = ($this->data['user_timezone']) ? $this->data['user_timezone'] : $_CORE_CONFIG['global']['default_timezone'];
 
 		require($this->lang_path . 'common.php');
@@ -271,7 +271,7 @@ class core_user extends sessions
 		{
 			global $_CORE_MODULE, $_CLASS;
 			
-			$module = ($module) ? $module : $_CORE_MODULE['name'];
+			$module = ($module) ? $module : $_CORE_MODULE['module_name'];
 			$lang = ($lang) ? $lang : $this->lang_name;
 
 			if (file_exists($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file"))
@@ -356,7 +356,7 @@ class core_user extends sessions
 		{
 			global $_CORE_MODULE;
 			
-			include($site_file_root.'modules/'.$_CORE_MODULE['name']."/language/$this->lang_name/$lang_file");
+			include($site_file_root.'modules/'.$_CORE_MODULE['module_name']."/language/$this->lang_name/$lang_file");
 
 			return;
 		}

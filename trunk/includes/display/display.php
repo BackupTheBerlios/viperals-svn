@@ -38,25 +38,25 @@ class core_display
 	{
 		global $_CLASS, $site_file_root;
 
-		if (!$module || !file_exists($site_file_root.'modules/'.$module['name'].'/index.php'))
+		if (!$module || !file_exists($site_file_root.'modules/'.$module['module_name'].'/index.php'))
 		{
 			return '404:_PAGE_NOT_FOUND';
 		}
 
-		if (!$module['active'])
+		if ($module['module_status'] != STATUS_ACTIVE)
 		{
 			if (!$_CLASS['core_auth']->admin_auth('modules'))
 			{
 				return '_MODULE_NOT_ACTIVE';
 			}
 
-			$_CLASS['core_display']->message = '<b>Module '.$module['name'].' Isn\'t Active</b><br />';
+			$_CLASS['core_display']->message = '<b>Module '.$module['module_name'].' Isn\'t Active</b><br />';
 		}
 
 		//authization check here
-		$module['auth'] = ($module['auth']) ? unserialize($module['auth']) : '';
+		$module['module_auth'] = ($module['module_auth']) ? unserialize($module['module_auth']) : '';
 
-		if (($module['auth'] && !$_CLASS['core_auth']->auth($module['auth'])) && !$_CLASS['core_auth']->admin_power('modules'))
+		if (($module['module_auth'] && !$_CLASS['core_auth']->auth($module['module_auth'])) && !$_CLASS['core_auth']->admin_power('modules'))
 		{
 			return '_MODULE_NOT_AUTH';
 		}
@@ -64,7 +64,7 @@ class core_display
 		//first module control the sides.
 		if (!empty($this->modules))
 		{
-			$module['sides'] = $this->modules[0]['sides'];
+			$module['module_sides'] = $this->modules[0]['module_sides'];
 		}
 
 		$this->modules[] = $module;
@@ -113,7 +113,7 @@ class core_display
 
 		if ($title)
 		{
-			$_CORE_MODULE['title'] = $title;
+			$_CORE_MODULE['module_title'] = $title;
 		}
 
 		if ($template)
@@ -142,7 +142,7 @@ class core_display
 
 		if ($title)
 		{
-			$_CORE_MODULE['title'] = $title;
+			$_CORE_MODULE['module_title'] = $title;
 		}
 
 		$this->headers();
@@ -169,7 +169,7 @@ class core_display
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
-			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.(is_array($_CORE_MODULE['title']) ? implode(' &gt; ', $_CORE_MODULE['title']) : $_CORE_MODULE['title']),
+			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.(is_array($_CORE_MODULE['module_title']) ? implode(' &gt; ', $_CORE_MODULE['module_title']) : $_CORE_MODULE['module_title']),
 			'SITE_BASE'			=>	generate_base_url(),
 			'SITE_CHARSET'		=>	'UTF-8',
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
@@ -211,7 +211,7 @@ class core_display
 		{
 			global $site_file_root;
 
-			require($site_file_root.'modules/'.$_CORE_MODULE['name'].'/index.php');
+			require($site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/index.php');
 		}
 
 		$this->displayed['footer'] = true;

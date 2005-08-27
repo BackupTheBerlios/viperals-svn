@@ -56,6 +56,16 @@ $menu['system'][] = array('lang' => $_CLASS['core_user']->get_lang('SITE_SETTING
 $menu['system'][] = array('lang' => $_CLASS['core_user']->get_lang('SYSTEM_SETTINGS'), 'link' => generate_link('system&amp;mode=system', array('admin' => true)));
 $menu['system'][] = array('lang' => $_CLASS['core_user']->get_lang('BOTS'), 'link' => generate_link('users&amp;mode=bots', array('admin' => true)));
 
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('USERS'), 'link' => generate_link('users', array('admin' => true)));
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('MANAGE'), 'link' => generate_link('users', array('admin' => true)));
+$menu['users'][] = '';
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('VIEW_DISABLED'), 'link' => generate_link('users&mode=disabled', array('admin' => true)));
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('VIEW_UNACTIVATED'), 'link' => generate_link('users&mode=unactivated', array('admin' => true)));
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('VIEW_BOTS'), 'link' => generate_link('users&amp;mode=bots', array('admin' => true)));
+$menu['users'][] = '';
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('ADD_USER'), 'link' => generate_link('users&mode=add_user', array('admin' => true)));
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('ADD_BOT'), 'link' => generate_link('users&mode=add_bot', array('admin' => true)));
+
 function build_menu($menu)
 {
 	$names = array_keys($menu);

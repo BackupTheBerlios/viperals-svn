@@ -107,7 +107,7 @@ class db_mysql
 		$this->return_on_error = $fail;
 	}
 
-	function transaction($option = 'start')
+	function transaction($option = 'start', $auto_rollback = true)
 	{
 		if (!$this->link_identifier)
 		{
@@ -124,25 +124,26 @@ class db_mysql
 					break;
 				}
 
-				//$result = mysql_query('SET AUTOCOMMIT=0', $this->db_connect_id);
-				$result = mysql_query('BEGIN TRANSACTION', $this->link_identifier);
+				//$result = mysql_query('SET AUTOCOMMIT = 0', $this->link_identifier);
+				$result = mysql_query('START TRANSACTION', $this->link_identifier);
 				$this->in_transaction = true;
 			break;
 
 			case 'commit':
-			
+
 				if (!$this->in_transaction)
 				{
 					break;
 				}
 
 				$result = mysql_query('COMMIT', $this->link_identifier);
-				
-				if (!$result)
+
+				if (!$result && $auto_rollback)
 				{
 					mysql_query('ROLLBACK', $this->link_identifier);
 				}
-				
+
+				//$result = mysql_query('SET AUTOCOMMIT=1', $this->link_identifier);
 				$this->in_transaction = false;
 			break;
 
@@ -153,6 +154,7 @@ class db_mysql
 				}
 
 				$result = mysql_query('ROLLBACK', $this->link_identifier);
+				//$result = mysql_query('SET AUTOCOMMIT=1', $this->link_identifier);
 				$this->in_transaction = false;
 			break;
 		}
@@ -432,8 +434,10 @@ class db_mysql
 		{
 			$this->transaction('rollback');
 		}
-		
+
 		trigger_error($message, E_USER_ERROR);
+		
+		script_close(false);
 	}
 
 	function _debug($mode, $backtrace)
@@ -546,6 +550,20 @@ class db_mysql
 
 	function add_table_field_int($name, $setting_sent)
 	{
+		if (!$setting_sent || !is_array($setting_sent))
+		{
+			global $site_file_root;
+			
+			$debug_backtrace = debug_backtrace();
+			$backtrace = array();
+			// remove the root directorys
+			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
+			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
+
+			$backtrace['line'] = $debug_backtrace[0]['line'];
+			print_r($backtrace);echo '<br/>';
+		}
+		
 		$setting = array('default' => null, 'min' => 0, 'max' => 0, 'auto_increment' => false, 'null' => false);
 		$setting = array_merge($setting, $setting_sent);
 
@@ -644,7 +662,7 @@ class db_mysql
 		{
 			return;
 		}*/
-		$field = is_array($field) ? implode(',', $field) : $field;
+		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)
 		{

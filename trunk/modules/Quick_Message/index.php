@@ -1,15 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 if (!defined('VIPERAL'))
 {
@@ -46,7 +56,7 @@ switch (get_variable('mode', 'GET', false))
 			trigger_error('LONG_MESSAGE');
 		}
 
-		$message 	= htmlentities($message, ENT_QUOTES, 'UTF-8');
+		$message = htmlentities($message, ENT_QUOTES, 'UTF-8');
 
 	// use limit
 		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
@@ -69,10 +79,39 @@ switch (get_variable('mode', 'GET', false))
 		else
 		{
 			$user_id = 0;
-			$user_name = get_username();
+			$user_name = get_variable('poster_name', 'POST', false);
+
+			if (!$user_name)
+			{
+				if ($_CORE_CONFIG['quick_message']['anonymous_posting'] != '2')
+				{
+					trigger_error('NO_NAME');
+				}
+			}
+			else
+			{
+				$length = mb_strlen($user_name);
+
+				if ($length < 2)
+				{
+					trigger_error('SHORT_NAME');
+				}
+
+				if ($length > 10)
+				{
+					trigger_error('LONG_NAME');
+				}
+
+				require($site_file_root.'includes/functions_user.php');
+			
+				if ($error = validate_username($user_name))
+				{
+					trigger_error($error);
+				}
+			}
 		}
 
-		htmlentities($user_name, ENT_QUOTES, 'UTF-8');
+		$user_name = htmlentities($user_name, ENT_QUOTES, 'UTF-8');
 
 		$sql = 'INSERT INTO '.QUICK_MESSAGE_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'poster_name'	=> (string) $user_name,
@@ -229,45 +268,5 @@ $_CLASS['core_template']->assign_array(array(
 $_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
 	
 script_close();
-
-function get_username()
-{
-
-	global $_CORE_CONFIG, $site_file_root;
-	
-	$user_name = trim(get_variable('user_name', 'POST', ''));
-
-	if (!$user_name)
-	{
-		if ($_CORE_CONFIG['quick_message']['anonymous_posting'] == '2')
-		{
-			return false;
-			
-		} else {
-		
-			trigger_error('NO_NAME');
-		}
-	}
-	
-	$length = mb_strlen($user_name);
-	
-	if ($length < 2)
-	{
-		trigger_error('SHORT_NAME');
-	}
-	
-	if ($length > 10)
-	{
-		trigger_error('LONG_NAME');
-	}
-	
-	require($site_file_root.'includes/forums/functions_user.php');
-
-	if ($error = validate_username($user_name))
-	{
-		trigger_error($error);
-	}
-	return $user_name;
-}
 
 ?>

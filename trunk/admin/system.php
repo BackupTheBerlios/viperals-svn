@@ -181,7 +181,6 @@ function admin_system($save)
 		'MAINTENANCE' 		=> $_CORE_CONFIG['maintenance']['active'],
 		'MAINTENANCE_MSG' 	=> $_CORE_CONFIG['maintenance']['text'],
 		'MAINTENANCE_START' => is_numeric($_CORE_CONFIG['maintenance']['start']) ? $_CLASS['core_user']->format_date($_CORE_CONFIG['maintenance']['start'], 'M d, Y h:i a') : '',
-		'BROWSER_CHECK'		=> $_CORE_CONFIG['server']['browser_check'],
 		'IP_CHECK'			=> $_CORE_CONFIG['server']['ip_check'],
 		'SITE_DOMAIN'		=> $_CORE_CONFIG['server']['site_domain'],
 		'SITE_PATH'			=> $_CORE_CONFIG['server']['site_path'],

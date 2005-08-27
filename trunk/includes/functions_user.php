@@ -94,7 +94,7 @@ function user_add($data)
 	$_CLASS['core_db']->transaction('commit');
 }
 
-function user_activate($user_id)
+function user_activate($user_id, $update_stats = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
@@ -119,7 +119,12 @@ function user_activate($user_id)
 
 	$_CLASS['core_db']->query($sql);
 	
-	set_core_config('user', 'num_users', $_CORE_CONFIG['user']['num_users'] + count($user_id));
+	if ($update_stats)
+	{
+		set_core_config('user', 'total_users', $_CORE_CONFIG['user']['total_users'] + count($user_id));
+
+		$_CLASS['core_cache']->destroy('core_config');
+	}
 }
 
 function user_activate_reminder($user_id)
@@ -127,7 +132,7 @@ function user_activate_reminder($user_id)
 
 }
 
-function user_disable($user_id)
+function user_disable($user_id, $update_stats = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
@@ -156,23 +161,27 @@ function user_disable($user_id)
 			AND member_status = ' . STATUS_ACTIVE;
 	$_CLASS['core_db']->query($sql);
 
-	if (in_array($_CORE_CONFIG['user']['newest_user_id'], $user_id))
+	if ($update_stats)
 	{
-		$sql = 'SELECT user_id, username FROM ' . USERS_TABLE . '
-			WHERE user_type = '.USER_NORMAL.' AND user_status = '.STATUS_ACTIVE.'
-			ORDER BY user_regdate';
-
-		$result = $_CLASS['core_db']->query_limit($sql, 1);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-		set_core_config('user', 'newest_user_id', $row['user_id'], false);
-		set_core_config('user', 'newest_username', $row['username'], false);
-	}
-
-	set_core_config('user', 'num_users', $_CORE_CONFIG['user']['num_users'] - count($user_id), false);
+		if (in_array($_CORE_CONFIG['user']['newest_user_id'], $user_id))
+		{
+			$sql = 'SELECT user_id, username FROM ' . USERS_TABLE . '
+				WHERE user_type = '.USER_NORMAL.' AND user_status = '.STATUS_ACTIVE.'
+				ORDER BY user_reg_date';
 	
-	$_CLASS['core_cache']->destroy('core_config');
+			$result = $_CLASS['core_db']->query_limit($sql, 1);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+	
+			set_core_config('user', 'newest_user_id', $row['user_id'], false);
+			set_core_config('user', 'newest_username', $row['username'], false);
+		}
+	
+		$total_users = $_CORE_CONFIG['user']['total_users'] - count($user_id);
+		set_core_config('user', 'total_users', $total_users, false);
+		
+		$_CLASS['core_cache']->destroy('core_config');
+	}
 }
 
 function user_delete($user_id, $quick = false)
@@ -428,15 +437,15 @@ function validate_username($username)
 		return 'USERNAME_INVALID_CHARS';
 	}
 
-// wouldn't select limit be better ?
-	$sql = 'SELECT COUNT(*) as count
+	$sql = 'SELECT username
 		FROM ' . USERS_TABLE . "
 		WHERE LOWER(username) = '" . $_CLASS['core_db']->escape($username) . "'";
-	$result = $_CLASS['core_db']->query($sql);
-	list($count) = $_CLASS['core_db']->fetch_row_num($result);
+
+	$result = $_CLASS['core_db']->query_limit($sql, 1);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
-	if ($count)
+	if (is_array($row))
 	{
 		return 'USERNAME_TAKEN';
 	}

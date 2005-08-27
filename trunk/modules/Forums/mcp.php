@@ -55,7 +55,7 @@ class module
 		);
 		
 		$sql = 'SELECT module_id, module_title, module_filename, module_subs, module_acl
-			FROM ' . MODULES_TABLE . "
+			FROM ' . FORUMS_MODULES_TABLE . "
 			WHERE module_type = '{$module_type}'
 				AND module_enabled = 1
 			ORDER BY module_order ASC";
@@ -215,7 +215,7 @@ class module
 	{
 		global $_CLASS;
 
-		$_CLASS['core_display']->display_head($page_title);
+		$_CLASS['core_display']->display_header($page_title);
 		
 		page_header();
 
@@ -249,7 +249,7 @@ class module
 			case 'unapproved_topics':
 
 				$sql = 'SELECT COUNT(*) AS total
-					FROM ' . TOPICS_TABLE . '
+					FROM ' . FORUMS_TOPICS_TABLE . '
 					WHERE forum_id IN (' . implode(', ', $forum_list) . ')
 						AND topic_approved = 0';
 				$result = $_CLASS['core_db']->query($sql);
@@ -261,7 +261,7 @@ class module
 			case 'unapproved_posts':
 
 				$sql = 'SELECT COUNT(*) AS total
-						FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t 
+						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t 
 						WHERE p.forum_id IN (' . implode(', ', $forum_list) . ')
 							AND p.post_approved = 0
 							AND t.topic_id = p.topic_id
@@ -384,7 +384,7 @@ if (!$quickmod)
 	{
 		// We determine the topic and forum id here, to make sure the moderator really has moderative rights on this post
 		$sql = 'SELECT topic_id, forum_id
-			FROM ' . POSTS_TABLE . "
+			FROM ' . FORUMS_POSTS_TABLE . "
 			WHERE post_id = $post_id";
 		$result = $_CLASS['core_db']->query($sql);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -397,7 +397,7 @@ if (!$quickmod)
 	if ($topic_id && !$forum_id)
 	{
 		$sql = 'SELECT forum_id
-			FROM ' . TOPICS_TABLE . "
+			FROM ' . FORUMS_TOPICS_TABLE . "
 			WHERE topic_id = $topic_id";
 		$result = $_CLASS['core_db']->query($sql);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -489,8 +489,8 @@ function get_topic_data($topic_ids, $acl_list = false)
 	}
 
 	$sql = 'SELECT f.*, t.*
-		FROM ' . TOPICS_TABLE . ' t
-			LEFT JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
+		FROM ' . FORUMS_TOPICS_TABLE . ' t
+			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
 		WHERE t.topic_id IN (' . implode(', ', $topic_ids) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 		
@@ -514,8 +514,8 @@ function get_post_data($post_ids, $acl_list = false)
 	$rowset = array();
 
 	$sql = 'SELECT p.*, u.*, t.*, f.*
-		FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u, ' . TOPICS_TABLE . ' t
-			LEFT JOIN ' . FORUMS_TABLE . ' f ON f.forum_id = p.forum_id
+		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u, ' . FORUMS_TOPICS_TABLE . ' t
+			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON f.forum_id = p.forum_id
 		WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 			AND u.user_id = p.poster_id
 			AND t.topic_id = p.topic_id';
@@ -546,7 +546,7 @@ function get_forum_data($forum_id, $acl_list = 'f_list')
 	$rowset = array();
 
 	$sql = 'SELECT *
-		FROM ' . FORUMS_TABLE . '
+		FROM ' . FORUMS_FORUMS_TABLE . '
 		WHERE forum_id ' . ((is_array($forum_id)) ? 'IN (' . implode(', ', $forum_id) . ')' : "= $forum_id");
 	$result = $_CLASS['core_db']->query($sql);
 		
@@ -581,7 +581,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 			$default_key = 't';
 			$default_dir = 'd';
 			$sql = 'SELECT COUNT(topic_id) AS total
-				FROM ' . TOPICS_TABLE . "
+				FROM ' . FORUMS_TOPICS_TABLE . "
 				$where_sql forum_id = $forum_id
 					AND topic_type NOT IN (" . POST_ANNOUNCE . ', ' . POST_GLOBAL . ")
 					AND topic_last_post_time >= $min_time";
@@ -597,7 +597,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 			$default_key = 't';
 			$default_dir = 'a';
 			$sql = 'SELECT COUNT(post_id) AS total
-				FROM ' . POSTS_TABLE . "
+				FROM ' . FORUMS_POSTS_TABLE . "
 				$where_sql topic_id = $topic_id
 					AND post_time >= $min_time";
 			if (!$_CLASS['auth']->acl_get('m_approve', $forum_id))
@@ -611,7 +611,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 			$default_key = 't';
 			$default_dir = 'd';
 			$sql = 'SELECT COUNT(post_id) AS total
-				FROM ' . POSTS_TABLE . "
+				FROM ' . FORUMS_POSTS_TABLE . "
 				$where_sql forum_id IN (" . (($forum_id) ? $forum_id : implode(', ', get_forum_list('m_approve'))) . ')
 					AND post_approved = 0
 					AND post_time >= ' . $min_time;
@@ -622,7 +622,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 			$default_key = 't';
 			$default_dir = 'd';
 			$sql = 'SELECT COUNT(topic_id) AS total
-				FROM ' . TOPICS_TABLE . "
+				FROM ' . FORUMS_TOPICS_TABLE . "
 				$where_sql forum_id IN (" . (($forum_id) ? $forum_id : implode(', ', get_forum_list('m_approve'))) . ')
 					AND topic_approved = 0
 					AND topic_time >= ' . $min_time;
@@ -647,7 +647,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 				$where_sql .= ' p.forum_id IN (' . implode(', ', get_forum_list('m_')) . ')';
 			}
 			$sql = 'SELECT COUNT(r.report_id) AS total
-				FROM ' . REPORTS_TABLE . ' r, ' . POSTS_TABLE . " p
+				FROM ' . FORUMS_REPORTS_TABLE . ' r, ' . FORUMS_POSTS_TABLE . " p
 				$where_sql
 					AND p.post_id = r.post_id
 					$limit_time_sql";
@@ -658,7 +658,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 			$default_key = 't';
 			$default_dir = 'd';
 			$sql = 'SELECT COUNT(log_id) AS total
-				FROM ' . LOG_TABLE . "
+				FROM ' . FORUMS_LOG_TABLE . "
 				$where_sql forum_id IN (" . (($forum_id) ? $forum_id : implode(', ', get_forum_list('m_'))) . ')
 					AND log_time >= ' . $min_time . ' 
 					AND log_type = ' . LOG_MOD;

@@ -130,10 +130,12 @@ foreach ($blocks as $block)
 		break;
 	}
 
+	$active = $block['block_status'] == STATUS_ACTIVE;
+
 	$_CLASS['core_template']->assign_vars_array($block_position[$block['block_position']].'_admin_blocks', array(
-			'ACTIVE'		=> ($block['block_status']),
+			'ACTIVE'		=> $active,
 			'ACTIVE_LINK'	=> generate_link('blocks&amp;mode=change&amp;id='.$block['block_id'], array('admin' => true)),
-			'CHANGE'		=> ($block['block_status']) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+			'CHANGE'		=> ($active) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
 			'ERROR'			=> ($error) ? $_CLASS['core_user']->get_lang($error) : false,
 
 			'EDIT_LINK'		=> generate_link('blocks&amp;mode=edit&amp;id='.$block['block_id'], array('admin' => true)),

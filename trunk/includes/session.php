@@ -44,7 +44,7 @@ class sessions
 		if ($session_id_url)
 		{
 			// session id in url > cookie
-			if (!$session_id || $session_id_url !== $session_id)
+			if (!$session_id || $session_id !== $session_id_url)
 			{
 				$session_id = $session_id_url;
 				$this->sid_link = 'sid='.$session_id;
@@ -61,7 +61,7 @@ class sessions
 				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
 				WHERE s.session_id = '" . $_CLASS['core_db']->escape($session_id) . "'
 					AND u.user_id = s.session_user_id";
-					
+
 			$result = $_CLASS['core_db']->query($sql);
 
 			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);

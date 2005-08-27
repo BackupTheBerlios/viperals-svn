@@ -54,7 +54,7 @@ class core_blocks
 			$side = ($side == BLOCK_LEFT) ? BLOCK_RIGHT : BLOCK_LEFT;
 		}
 			
-		if ($_CORE_MODULE['sides'] == BLOCK_ALL || ($side == BLOCK_LEFT && $_CORE_MODULE['sides'] == BLOCK_LEFT) || ($side == BLOCK_RIGHT && $_CORE_MODULE['sides'] == BLOCK_RIGHT))
+		if ($_CORE_MODULE['module_sides'] == BLOCK_ALL || ($side == BLOCK_LEFT && $_CORE_MODULE['module_sides'] == BLOCK_LEFT) || ($side == BLOCK_RIGHT && $_CORE_MODULE['module_sides'] == BLOCK_RIGHT))
 		{
 			$this->load_blocks();
 
@@ -82,7 +82,7 @@ class core_blocks
 
 		if (is_null($this->blocks_array = $_CLASS['core_cache']->get('blocks')))
 		{
-			$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_status = 1 ORDER BY block_order ASC');
+			$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_status = '.STATUS_ACTIVE.' ORDER BY block_order ASC');
 
 			$this->blocks_array = array();
 
@@ -171,7 +171,7 @@ class core_blocks
 			{
 				$this->block['block_modules'] = unserialize($this->block['block_modules']);
 // Homepage needs it's own value
-				if (!in_array($_CORE_MODULE['title'], $this->block['block_modules']['show'] || in_array($_CORE_MODULE['title'], $this->block['block_modules']['hide'])))
+				if (!in_array($_CORE_MODULE['module_title'], $this->block['block_modules']['show'] || in_array($_CORE_MODULE['module_title'], $this->block['block_modules']['hide'])))
 				{
 					continue;
 				}
