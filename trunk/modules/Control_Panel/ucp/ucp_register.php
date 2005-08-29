@@ -30,8 +30,8 @@ class ucp_register extends module
 		$coppa		= isset($_REQUEST['coppa']) ? (int) $_REQUEST['coppa'] : null;
 		$submit		= isset($_POST['submit']);
 
-		if ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_DISABLE
-			|| ($coppa || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN)
+		if ($_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_DISABLE
+			|| ($coppa || $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_ADMIN)
 			&& !$_CORE_CONFIG['email']['email_enable'])
 		{
 			trigger_error('UCP_REGISTER_DISABLE');
@@ -147,15 +147,15 @@ class ucp_register extends module
 				if (!$password)
 				{
 					//do some admin contact thing here
-					die('Try again later');
+					die('Activation disabled: Passwaord encoding problem');
 				}
 	
-				if ($coppa || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN)
+				if ($coppa || $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_ADMIN)
 				{
 					if (!$_CORE_CONFIG['email']['email_enable'])
 					{
 						//do some admin contact thing here
-						die('Try again later');
+						die('Activation disabled: Email Disabled');
 					}
 
 					$user_status = STATUS_PENDING;
@@ -166,12 +166,12 @@ class ucp_register extends module
 						$message = $_CLASS['core_user']->lang['ACCOUNT_COPPA'];
 						$email_template = 'coppa_welcome_inactive';
 					}
-					elseif ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_SELF)
+					elseif ($_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_SELF)
 					{
 						$message = $_CLASS['core_user']->lang['ACCOUNT_INACTIVE'];
 						$email_template = 'user_welcome_inactive';
 					}
-					elseif ($_CORE_CONFIG['user']['require_activation'] == USER_ACTIVATION_ADMIN)
+					elseif ($_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_ADMIN)
 					{
 						$message = $_CLASS['core_user']->lang['ACCOUNT_INACTIVE_ADMIN'];
 						$email_template = 'admin_welcome_inactive';
@@ -186,33 +186,32 @@ class ucp_register extends module
 					$message = $_CLASS['core_user']->lang['ACCOUNT_ADDED'];
 				}
 	
-				if ($user_status === STATUS_ACTIVE)
-				{
-					set_core_config('user', 'newest_user_id', $row['user_id'], false);
-					set_core_config('user', 'newest_username', $row['username'], false);
-					set_core_config('user', 'num_users', $_CORE_CONFIG['user']['num_users'] + 1, false);
-				}
-
 				$data = array(
-					'username'		=> $username,
-					'user_email'	=> $email,
+					'username'		=> (string) $username,
+					'user_email'	=> (string) $email,
 // add an option so admin can set with group they added to
 					'user_group'	=> ($coppa) ? 3 : 2,
-					'user_reg_date'	=> gmtime(),
-					'user_timezone'	=> $tz,
+					'user_reg_date'	=> (int) $_CLASS['core_user']->time,
+					'user_timezone'	=> (string) $tz,
 
-					'user_password'			=> $password,
-					'user_password_encoding'=> $_CORE_CONFIG['user']['password_encoding'],
+					'user_password'			=> (string) $password,
+					'user_password_encoding'=> (string) $_CORE_CONFIG['user']['password_encoding'],
 
-					'user_lang'			=> ($lang == $_CORE_CONFIG['global']['default_lang']) ? null : $lang,
+					'user_lang'			=> ($lang) ? (string) $lang : null,
 					'user_type'			=> USER_NORMAL,
-					'user_status'		=> $user_status,
-					'user_act_key'		=> $user_act_key,
-					'user_ip'			=> $_CLASS['core_user']->ip,
+					'user_status'		=> (int) $user_status,
+					'user_act_key'		=> (string) $user_act_key,
+					'user_ip'			=> (string) $_CLASS['core_user']->ip,
 				);
 
 				user_add($data);
-				unset($data);
+
+				if ($data['user_status'] === STATUS_ACTIVE)
+				{
+					set_core_config('user', 'newest_user_id', $data['user_id'], false);
+					set_core_config('user', 'newest_username', $data['username'], false);
+					set_core_config('user', 'total_users', $_CORE_CONFIG['user']['total_users'] + 1, false);
+				}
 
 				require_once($site_file_root.'includes/mailer.php');
 		
@@ -221,14 +220,13 @@ class ucp_register extends module
 				$mailer->to($email, $username);
 				$mailer->subject($subject);
 
-				// change this don't want to use phpBBs template
 				$_CLASS['core_template']->assign_array(array(
 					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 					'WELCOME_MSG'   => sprintf($_CLASS['core_user']->lang['WELCOME_SUBJECT'], $_CORE_CONFIG['global']['site_name']),
 					'USERNAME'		=> $username,
 					'PASSWORD'		=> $password,
 					'EMAIL_SIG'		=> '', //I like this
-					'U_ACTIVATE'	=> generate_link("system&amp;mode=activate&user_id=$user_id&key=$user_act_key", array('sid' => false, 'full' => true))
+					'U_ACTIVATE'	=> generate_link('system&amp;mode=activate&user_id='.$data['user_id'].'&key='.$user_act_key, array('sid' => false, 'full' => true))
 				));
 
 				if ($coppa)
@@ -237,8 +235,8 @@ class ucp_register extends module
 						'FAX_INFO'		=> $_CORE_CONFIG['user']['coppa_fax'],
 						'MAIL_INFO'		=> $_CORE_CONFIG['user']['coppa_mail'],
 						'EMAIL_ADDRESS' => $email,
-						'SITENAME'		=> $_CORE_CONFIG['global']['site_name'])
-					);
+						'SITENAME'		=> $_CORE_CONFIG['global']['site_name']
+					));
 				}
 
 				$mailer->message = trim($_CLASS['core_template']->display('modules/Control_Panel/email/'.$email_template, true));
@@ -278,7 +276,7 @@ class ucp_register extends module
 			}
 		}
 
-		switch ($_CORE_CONFIG['user']['require_activation'])
+		switch ($_CORE_CONFIG['user']['activation'])
 		{
 			case USER_ACTIVATION_SELF:
 				$l_reg_cond = $_CLASS['core_user']->lang['UCP_EMAIL_ACTIVATE'];

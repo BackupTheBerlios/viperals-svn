@@ -24,11 +24,11 @@ $Id$
 class db_mysql
 {
 	var $link_identifier = false;
-	var $db_layer = 'mysql';
+	var $db_layer = 'mysql3';
 
 	var $last_result;
 	var $return_on_error;
-	var $in_transaction;
+	var $in_transaction = false;
 
 	var $queries_time = 0;
 	var $num_queries = 0;
@@ -54,22 +54,11 @@ class db_mysql
 		}
 
 		$this->link_identifier = ($db['persistent']) ? @mysql_pconnect($db['server'], $db['username'], $db['password']) : @mysql_connect($db['server'], $db['username'], $db['password']);
+
 		if ($this->link_identifier)
 		{
 			if (@mysql_select_db($db['database']))
 			{
-				mysql_query('SET NAMES utf8',$this->link_identifier);
-
-				//mysql_query('SET character_set_results = NULL', $this->link_identifier);
-
-				/*
-				$result = mysql_query("show variables like 'col%'",$this->link_identifier);
-				while ($value = mysql_fetch_assoc($result))
-				{
-					print_r($value);
-					echo '<br>';
-				}
-				*/
 				return $this->link_identifier;
 			}
 
@@ -109,57 +98,7 @@ class db_mysql
 
 	function transaction($option = 'start', $auto_rollback = true)
 	{
-		if (!$this->link_identifier)
-		{
-			return;
-		}
-
-		$result = false;
-
-		switch ($option)
-		{
-			case 'start':
-				if ($this->in_transaction)
-				{
-					break;
-				}
-
-				//$result = mysql_query('SET AUTOCOMMIT = 0', $this->link_identifier);
-				$result = mysql_query('START TRANSACTION', $this->link_identifier);
-				$this->in_transaction = true;
-			break;
-
-			case 'commit':
-
-				if (!$this->in_transaction)
-				{
-					break;
-				}
-
-				$result = mysql_query('COMMIT', $this->link_identifier);
-
-				if (!$result && $auto_rollback)
-				{
-					mysql_query('ROLLBACK', $this->link_identifier);
-				}
-
-				//$result = mysql_query('SET AUTOCOMMIT=1', $this->link_identifier);
-				$this->in_transaction = false;
-			break;
-
-			case 'rollback':
-				if (!$this->in_transaction)
-				{
-					break;
-				}
-
-				$result = mysql_query('ROLLBACK', $this->link_identifier);
-				//$result = mysql_query('SET AUTOCOMMIT=1', $this->link_identifier);
-				$this->in_transaction = false;
-			break;
-		}
-
-		return $result;
+		return true;
 	}
 
 	function query($query = false,  $backtrace = false)
@@ -364,21 +303,14 @@ class db_mysql
 
 	function escape($text)
 	{
-		if (function_exists('mysql_real_escape_string') && $this->link_identifier)
-		{
-			return mysql_real_escape_string($text, $this->link_identifier);
-		}
-		else
-		{
-			return mysql_escape_string($text);
-		}
+		return mysql_escape_string($text);
 	}
 
 	function escape_array($value)
 	{
 		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
-		
+	
 	function optimize_tables($table = '')
 	{
 		global $_CORE_CONFIG;
@@ -531,9 +463,8 @@ class db_mysql
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
-				// Let users choose transaction safe InnoDB or MyISAM
-				// ENGINE=MyISAM
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) TYPE=MyISAM;";
+
 				if ($option == 'return')
 				{
 					return $table;

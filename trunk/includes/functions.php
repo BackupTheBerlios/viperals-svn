@@ -173,7 +173,7 @@ function check_maintance_status($return = false)
 function check_theme($theme)
 {
 	global $site_file_root;
-	
+
 	if (file_exists($site_file_root.'themes/'.$theme.'/index.php'))
 	{
 		return true;
@@ -217,7 +217,7 @@ function display_confirmation($message = '', $hidden = '')
 	script_close();
 }
 
-function encode_password($pure, $encoding = 'md5')
+function encode_password($pure, $encoding)
 {
 	switch ($encoding)
 	{
@@ -607,25 +607,24 @@ function on_page($num_items, $per_page, $start)
 // to keep or not to keep ?
 function session_users()
 {
-	global $_CLASS, $config;
+	global $_CLASS, $_CORE_CONFIG;
 	static $loaded = false;
 	
-	if ($loaded) 
+	if ($loaded)
 	{
 		return $loaded;
 	}
 
 	$loaded = array();
-	//	WHERE s.session_time >= ' . (time() - (intval($config['load_online_time']) * 60)) .'
 
 	$sql = 'SELECT s.*, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
 				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
-					WHERE s.session_time >= ' . (time() - (21600)) .'
+					WHERE s.session_time >= ' . (gmtime() - (int) $_CORE_CONFIG['server']['session_length']) .'
 				AND u.user_id = s.session_user_id';
 	$result = $_CLASS['core_db']->query($sql);
-	
+
 	$update = false;
-	
+
 	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		// update current user info with current page and url as it is done at the end of script.
@@ -638,8 +637,9 @@ function session_users()
 		
 		$loaded[] = $row;
 	}
-	
+
 	$_CLASS['core_db']->free_result($result);
+
 	return $loaded;
 }
 

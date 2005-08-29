@@ -21,6 +21,86 @@
 $Id$
 */
 
+function avatar_gallery(&$current_folder, &$folders, &$error)
+{
+	global $config, $_CLASS, $_CORE_CONFIG;
+
+	$path = $config['avatar_gallery_path'];
+	$data = $folders = array();
+
+	if ($current_folder)
+	{
+		$path .= '/'.$current_folder;
+	}
+	
+	if (!file_exists($path) || !is_dir($path))
+	{
+		return $data;
+	}
+
+	$dir = @opendir($path);
+
+	$count = 0;
+
+	while ($file = readdir($dir))
+	{
+		if (preg_match('#\.(gif$|png$|jpg|jpeg)$#i', $file))
+		{	
+			$data[$count]['file'] = ($current_folder) ? $current_folder.'/'.$file : $file; 
+			$data[$count]['name'] = ucfirst(str_replace('_', ' ', preg_replace('#^(.*)\..*$#', '\1', $file)));
+
+			$count++;
+		}
+
+		if (!$current_folder)
+		{
+			if ($file{0} != '.' && is_dir("$path/$file"))
+			{
+				$folders[] = $file;
+			}
+		}
+	}
+	closedir($dir);
+	
+	if ($current_folder)
+	{
+		$dir = @opendir($config['avatar_gallery_path']);
+
+		while ($file = readdir($dir))
+		{
+			if ($file{0} != '.' && is_dir($config['avatar_gallery_path']."/$file"))
+			{	
+				$folders[] = $file;
+			}
+		}
+		closedir($dir);
+	}
+
+	if (!$current_folder && empty($data) && !empty($folders))
+	{
+		$current_folder = $folders[0];
+
+		$path = $config['avatar_gallery_path'].'/'.$current_folder;
+
+		$dir = @opendir($path);
+		while ($file = readdir($dir))
+		{
+			if (preg_match('#\.(gif$|png$|jpg|jpeg)$#i', $file))
+			{	
+				$data[$count]['file'] = $current_folder.'/'.$file; 
+				$data[$count]['name'] = ucfirst(str_replace('_', ' ', preg_replace('#^(.*)\..*$#', '\1', $file)));
+	
+				$count++;
+			}
+		}
+		closedir($dir);
+	}
+
+	ksort($data);
+
+	return $data;
+}
+
 function check_user_id(&$user_id, $bypass = false)
 {
 	// should we just return false, if this array map is different from the one sent
@@ -60,7 +140,7 @@ function check_user_id(&$user_id, $bypass = false)
 	return $user_id;
 }
 
-function user_add($data)
+function user_add(&$data)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
@@ -81,11 +161,11 @@ function user_add($data)
 	$sql = 'INSERT INTO ' . USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
 	$_CLASS['core_db']->query($sql);
 
-	$user_id = $_CLASS['core_db']->insert_id(USERS_TABLE, 'user_id');
+	$data['user_id'] = $_CLASS['core_db']->insert_id(USERS_TABLE, 'user_id');
 				
 	$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 		'group_id'		=> (int) $data['user_group'],
-		'member_user_id'=> (int) $user_id,
+		'user_id'		=> (int) $data['user_id'],
 		'member_status'	=> $data['user_status']
 	));
 	
@@ -98,13 +178,16 @@ function user_activate($user_id, $update_stats = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
-	$user_id = array_map('intval', is_array($user_id) ? $user_id : array($user_id));
+	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
-	if (empty($user_id))
+	if (check_user_id($user_id) == false)
 	{
 		return;
 	}
-// hook here -- maybe ?
+	
+	$_CLASS['core_db']->transaction();
+
+// hook here
 	$sql = 'UPDATE ' . USERS_TABLE . '
 		SET user_status = ' . STATUS_ACTIVE . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ')
@@ -114,8 +197,8 @@ function user_activate($user_id, $update_stats = true)
 
 	$sql = 'UPDATE ' . USER_GROUP_TABLE . '
 		SET member_status = ' . STATUS_ACTIVE . '
-			WHERE user_id  IN (' . implode(', ', $user_id) . ')';
-			//AND group_id =' .; get default group/s then add update, also update all group where the status is disabled
+			WHERE user_id  IN (' . implode(', ', $user_id) . ') 
+			AND member_status = ' . STATUS_DISABLED;
 
 	$_CLASS['core_db']->query($sql);
 	
@@ -125,6 +208,8 @@ function user_activate($user_id, $update_stats = true)
 
 		$_CLASS['core_cache']->destroy('core_config');
 	}
+
+	$_CLASS['core_db']->transaction('commit');
 }
 
 function user_activate_reminder($user_id)
@@ -144,6 +229,7 @@ function user_disable($user_id, $update_stats = true)
 	}
 
 // hook here -- maybe ?
+	$_CLASS['core_db']->transaction();
 
 	// disabled the user first
 	$sql = 'UPDATE ' . USERS_TABLE . '
@@ -157,7 +243,7 @@ function user_disable($user_id, $update_stats = true)
 // should also remove all pending groups
 	$sql = 'UPDATE ' . USER_GROUP_TABLE . '
 		SET member_status = ' . STATUS_DISABLED . '
-			WHERE user_id  IN (' . implode(', ', $user_id) . ')
+			WHERE user_id IN (' . implode(', ', $user_id) . ')
 			AND member_status = ' . STATUS_ACTIVE;
 	$_CLASS['core_db']->query($sql);
 
@@ -182,6 +268,8 @@ function user_disable($user_id, $update_stats = true)
 		
 		$_CLASS['core_cache']->destroy('core_config');
 	}
+	
+	$_CLASS['core_db']->transaction('commit');
 }
 
 function user_delete($user_id, $quick = false)
@@ -345,7 +433,7 @@ function groups_user_remove($group_id, $user_id)
 	}
 
 	$sql = 'SELECT user_id FROM ' . USERS_TABLE . ' 
-				WHERE group_id IN (' . implode(', ', $group_id) . ')
+				WHERE user_group IN (' . implode(', ', $group_id) . ')
 				AND user_id IN (' . implode(', ', $user_id) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -368,7 +456,7 @@ function groups_user_remove($group_id, $user_id)
 		$_CLASS['core_db']->free_result($result);
 
 		$sql = 'UPDATE FROM '. USERS_TABLE .' 
-					SET group_id = 4, user_rank = -1
+					SET user_group = 4, user_rank = -1
 					WHERE user_id IN (' . implode(', ', $group_id) . ')';
 		$result = $_CLASS['core_db']->query($sql);
 	}

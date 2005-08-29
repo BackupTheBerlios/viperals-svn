@@ -147,6 +147,8 @@ class core_error_handler
 
 		if ($this->report != ERROR_NONE)
 		{
+			echo $error;
+
 			//damn windows
 			$errfile = str_replace('\\','/', $errfile);
 			// Remove the root paths, site files, along with document root
@@ -171,8 +173,6 @@ class core_error_handler
 			break;
 
 			case E_USER_ERROR:
-
-				$_CLASS['core_user']->user_setup();
 
 				$code = false;
 
@@ -200,11 +200,22 @@ class core_error_handler
 					}
 				}
 
-				$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
+				if (isset($_CLASS['core_user']))
+				{
+					$_CLASS['core_user']->user_setup();
+					$error = (!empty($_CLASS['core_user']->lang[$error])) ? $_CLASS['core_user']->lang[$error] : $error;
+				}
 
 				$_CLASS['core_template']->assign('MESSAGE_TEXT',  $error);
 
-				$_CLASS['core_display']->display(false, 'error.html');
+				if (isset($_CLASS['core_display']))
+				{
+					$_CLASS['core_display']->display(false, 'error.html');
+				}
+				
+				$_CLASS['core_template']->display('error.html');
+
+				script_close();
 			break;
 
 			case E_USER_NOTICE:
@@ -220,8 +231,15 @@ class core_error_handler
 				));
 
 				$this->error_setting = array('title', 'redirect');
-				
-				$_CLASS['core_display']->display($this->error_setting['title'], 'message.html');
+
+				if (isset($_CLASS['core_display']))
+				{
+					$_CLASS['core_display']->display($this->error_setting['title'], 'message.html');
+				}
+
+				$_CLASS['core_template']->display('message.html');
+
+				script_close();
 			break;
 		}
 	}

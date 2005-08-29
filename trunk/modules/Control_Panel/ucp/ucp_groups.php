@@ -48,7 +48,12 @@ class ucp_groups extends module
 					die;
 				}
 			}
-//empty(array())
+			
+			if (empty($group_id))
+			{
+				die; //temp
+			}
+
 			require_once($site_file_root.'includes/functions_user.php');
 
 			switch ($_POST['mode'])
@@ -56,27 +61,38 @@ class ucp_groups extends module
 				case 'resign':
 // need to get member status and add other group types ( pending members can resign from all )
 					$sql = 'SELECT group_id	FROM  ' . GROUPS_TABLE . '
-								WHERE group_type = ' . GROUP_SYSTEM .'
+								WHERE group_type IN (' . GROUP_SYSTEM .', '.GROUP_SPECIAL.')
 								AND group_id IN ('. implode(', ', $group_id) .')';
+								
+					$sql = 'SELECT m.member_status, g.group_id, g.group_type
+								FROM ' . USER_GROUP_TABLE . ' m, ' . GROUPS_TABLE . ' g 
+								WHERE m.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
+								AND m.group_id IN ('. implode(', ', $group_id) .')';
+
 					$result = $_CLASS['core_db']->query($sql);
 
-					$special = array();
+					$unset = array();
+
 					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
-						$special[] = $row['user_id'];
+						if ($row['group_type'] == GROUP_SYSTEM && $row['group_type'] == GROUP_SPECIAL && $row['member_status'] != STATUS_PENDING)
+						{
+							$unset[] = $row['user_id'];
+						}
 					}
 					$_CLASS['core_db']->free_result($result);
 
-					$group_id = array_diff($group_id, $special);
-					unset($special);
+					$group_id = array_diff($group_id, $unset);
+					unset($unset);
 
 					groups_user_remove($group_id, $_CLASS['core_user']->data['user_id']);
 				break;
 
 				case 'apply':
-// users can be added 2x here, check to see if they are in the group first
-					$sql = 'SELECT group_id, FROM ' . USER_GROUP_TABLE . '
-						WHERE  group_id IN ('. implode(', ', $group_id) .')';
+					$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . '
+						WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
+						AND group_id IN ('. implode(', ', $group_id) .')';
+	
 					$result = $_CLASS['core_db']->query($sql);
 
 					$unset = array();
@@ -87,26 +103,32 @@ class ucp_groups extends module
 					}
 					$_CLASS['core_db']->free_result($result);
 
-					$sql = 'SELECT group_id, group_status, group_type FROM  ' . GROUPS_TABLE . '
-								WHERE group_id IN ('. implode(', ', $group_id) .')';
-					$result = $_CLASS['core_db']->query($sql);
+					$group_id = array_diff($group_id, $unset);
+					unset($unset);
 
-					$group_id = array();
-
-					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+					if (!empty($group_id))
 					{
-						$status = ($row['group_type'] == GROUP_UNRESTRAINED) ? STATUS_ACTIVE : STATUS_PENDING;
-
-						if ($row['group_status'] == STATUS_ACTIVE)
+						$sql = 'SELECT group_id, group_status, group_type FROM  ' . GROUPS_TABLE . '
+									WHERE group_id IN ('. implode(', ', $group_id) .')';
+						$result = $_CLASS['core_db']->query($sql);
+	
+						$group_id = array();
+	
+						while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 						{
-							$group_id[$status][] = $row['group_id'];
+							$status = ($row['group_type'] == GROUP_UNRESTRAINED) ? STATUS_ACTIVE : STATUS_PENDING;
+	
+							if ($row['group_status'] == STATUS_ACTIVE)
+							{
+								$group_id[$status][] = $row['group_id'];
+							}
 						}
-					}
-					$_CLASS['core_db']->free_result($result);
-
-					foreach ($group_id as $status => $ids)
-					{
-						groups_user_add($ids, $_CLASS['core_user']->data['user_id'], $status);
+						$_CLASS['core_db']->free_result($result);
+	
+						foreach ($group_id as $status => $ids)
+						{
+							groups_user_add($ids, $_CLASS['core_user']->data['user_id'], $status);
+						}
 					}
 				break;		
 			}
@@ -121,7 +143,8 @@ class ucp_groups extends module
 			ORDER BY g.group_type DESC, g.group_name';
 		$result = $_CLASS['core_db']->query($sql);
 
-		$group_id_ary = array();
+		$group_array = array();
+
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$row['group_status'] = STATUS_ACTIVE;
@@ -132,21 +155,21 @@ class ucp_groups extends module
 				'GROUP_ID'			=> $row['group_id'],
 				'GROUP_NAME'		=> isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
 				'GROUP_DESC'		=> $row['group_description'],
-				'GROUP_RESIGN'		=> ($row['group_type'] != GROUP_SYSTEM || ($row['group_type'] == GROUP_SPECIAL && $row['member_status'] == STATUS_PENDING)),
+				'GROUP_RESIGN'		=> ($row['member_status'] == STATUS_PENDING || ($row['group_type'] != GROUP_SYSTEM && $row['group_type'] != GROUP_SPECIAL)),
 				'U_VIEW_GROUP'		=> generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']),
-				'S_GROUP_DEFAULT'	=> ($row['group_id'] == $_CLASS['core_user']->data['group_id']) ? true : false
+				'S_GROUP_DEFAULT'	=> ($row['group_id'] == $_CLASS['core_user']->data['user_group']) ? true : false
 			));
 
-			$group_id_ary[] = $row['group_id'];
+			$group_array[] = $row['group_id'];
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$sql_and = 'NOT IN (' . GROUP_SYSTEM . ', ' . GROUP_HIDDEN . ')';
+		$sql_and = 'AND group_type NOT IN (' . GROUP_SYSTEM . ', ' . GROUP_HIDDEN . ')';
 
 		$sql = 'SELECT group_id, group_name, group_description, group_type
 			FROM ' . GROUPS_TABLE . '
-			WHERE group_id NOT IN (' . implode(', ', $group_id_ary) . ')
-				AND group_status = '. STATUS_ACTIVE ."
+			WHERE group_id NOT IN (' . implode(', ', $group_array) . ')
+				AND group_status = '. STATUS_ACTIVE ." $sql_and
 			ORDER BY group_type DESC, group_name";
 		$result = $_CLASS['core_db']->query($sql);
 

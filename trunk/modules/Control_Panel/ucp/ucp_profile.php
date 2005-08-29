@@ -16,21 +16,11 @@ class ucp_profile extends module
 	function ucp_profile($id, $mode)
 	{
 		global $config, $_CLASS, $site_file_root, $_CORE_CONFIG;
-		$_CLASS['core_template']->assign(array(
-			'S_PRIVMSGS'		=>  false,
-			'profile_fields'	=>  false)
-
-		);
 		
-		$s_hidden_fields = '';
-		
-		$_CLASS['core_user']->add_lang('posting','Forums');
+		$preview	= isset($_POST['preview']);
+		$submit		= isset($_POST['submit']);
 
-		$preview	= (!empty($_POST['preview'])) ? true : false;
-		$submit		= (!empty($_POST['submit'])) ? true : false;
-		$delete		= (!empty($_POST['delete'])) ? true : false;
 		$module_link	= generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
-		$bday_day = $bday_month = $bday_year = '';
 
 		$error = $data = array();
 		$s_hidden_fields = '';
@@ -72,7 +62,7 @@ class ucp_profile extends module
 					extract($data);
 					unset($data);
 
-					if ($_CLASS['auth']->acl_get('u_chgpasswd') && $new_password && $password_confirm != $new_password)
+					if ($new_password && $password_confirm != $new_password)
 					{
 						$error[] = 'NEW_PASSWORD_ERROR';
 					}
@@ -92,7 +82,7 @@ class ucp_profile extends module
 						$sql_ary = array(
 							//'username'			=> ($_CLASS['auth']->acl_get('u_chgname') && $_CORE_CONFIG['user']['allow_namechange']) ? $username : $_CLASS['core_user']->data['username'], 
 							'user_email'		=> ($_CLASS['auth']->acl_get('u_chgemail')) ? $email : $_CLASS['core_user']->data['user_email'], 
-							//'user_password'		=> ($_CLASS['auth']->acl_get('u_chgpasswd') && $new_password) ? md5($new_password) : $_CLASS['core_user']->data['user_password'], 
+							//'user_password'		=> ($new_password) ? md5($new_password) : $_CLASS['core_user']->data['user_password'], 
 							//'user_passchg'		=> time(), 
 						);
 
@@ -196,64 +186,52 @@ class ucp_profile extends module
 					'S_FORCE_PASSWORD'	=> ($_CORE_CONFIG['user']['chg_passforce'] && $this->data['user_passchg'] < time() - $_CORE_CONFIG['user']['chg_passforce']) ? true : false, 
 					'S_CHANGE_USERNAME'	=> ($_CORE_CONFIG['user']['allow_namechange'] && $_CLASS['auth']->acl_get('u_chgname')) ? true : false, 
 					'S_CHANGE_EMAIL'	=> ($_CLASS['auth']->acl_get('u_chgemail')) ? true : false,
-					'S_CHANGE_PASSWORD'	=> ($_CLASS['auth']->acl_get('u_chgpasswd')) ? true : false)
-				);
+					'S_CHANGE_PASSWORD'	=> true
+				));
 				break;
 
 			case 'profile_info':
 
-				include($site_file_root.'includes/forums/message_parser.php');
-				// TODO: The posting file is included because $message_parser->decode_message() relies on decode_message() in the posting functions.
-				include($site_file_root.'includes/forums/functions_posting.php');
-				 
+				$error = array();
+				$this_year = gmdate('Y', time());
+				
 				if ($submit)
 				{
-					$var_ary = array(
-						'icq'			=> (string) '', 
-						'aim'			=> (string) '', 
-						'msn'			=> (string) '', 
-						'yim'			=> (string) '', 
-						'jabber'		=> (string) '', 
-						'website'		=> (string) '', 
-						'location'		=> (string) '',
-						'occupation'	=> (string) '',
-						'interests'		=> (string) '',
-						'bday_day'		=> 0,
-						'bday_month'	=> 0,
-						'bday_year'		=> 0,
-					);
+					$icq	= get_variable('icq', 'POST', null);
+					$aim	= get_variable('aim', 'POST', null);
+					$msn	= get_variable('msn', 'POST', null);
+					$yim	= get_variable('yim', 'POST', null);
+					$jabber = get_variable('jabber', 'POST', null);
+					//$google = get_variable('google', 'POST', null);
 
-					foreach ($var_ary as $var => $default)
+					$website	= get_variable('website', 'POST', null);
+					$location	= get_variable('location', 'POST', null);				
+					$occupation	= get_variable('occupation', 'POST', null);
+					$interests	= get_variable('interests', 'POST', null);
+
+					$bday_day	= get_variable('bday_day', 'POST', false);
+					$bday_month	= get_variable('bday_month', 'POST', false);
+					$bday_year	= get_variable('bday_year', 'POST', false);
+
+					if ($bday_day || $bday_month || $bday_year)
 					{
-						$data[$var] = request_var($var, $default);
+						if ($bday_day < 1 || $bday_day > 31 || $bday_month < 1 || $bday_month > 12 || $bday_year < ($this_year - 100) || $bday_month > $this_year)
+						{
+							$error[] = $_CLASS['core_user']->get_lang('BIRTHDAY_ERROR');
+						}
 					}
 
-					$var_ary = array(
-						'icq'			=> array(
-							array('string', true, 3, 15), 
-							array('match', true, '#^[0-9]+$#i')), 
-						'aim'			=> array('string', true, 5, 255), 
-						'msn'			=> array('string', true, 5, 255), 
-						'jabber'		=> array(
-							array('string', true, 5, 255), 
-							array('match', true, '#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}(/.*)?$#i')),
-						'yim'			=> array('string', true, 5, 255), 
-						'website'		=> array(
-							array('string', true, 12, 255), 
-							array('match', true, '#^http[s]?://(.*?\.)*?[a-z0-9\-]+\.[a-z]{2,4}#i')), 
-						'location'		=> array('string', true, 2, 255), 
-						'occupation'	=> array('string', true, 2, 500), 
-						'interests'		=> array('string', true, 2, 500), 
-						'bday_day'		=> array('num', true, 1, 31),
-						'bday_month'	=> array('num', true, 1, 12),
-						'bday_year'		=> array('num', true, 1901, gmdate('Y', time())),
-					);
+					if (mb_strlen($interests) > 255)
+					{
+						$error[] = $_CLASS['core_user']->get_lang('INTEREST_LONG_ERROR');
+					}
 
-					$error = validate_data($data, $var_ary);
-					extract($data);
-					unset($data);
-					
-					if (!sizeof($error))
+					if (mb_strlen($occupation) > 255)
+					{
+						$error[] = $_CLASS['core_user']->get_lang('OCCUPATION_LONG_ERROR');
+					}
+
+					if (empty($error))
 					{
 						$sql_ary = array(
 							'user_icq'		=> $icq,
@@ -261,32 +239,39 @@ class ucp_profile extends module
 							'user_msnm'		=> $msn,
 							'user_yim'		=> $yim,
 							'user_jabber'	=> $jabber,
+							//'user_google'	=> $google,
 							'user_website'	=> $website,
 							'user_from'		=> $location,
 							'user_occ'		=> $occupation,
 							'user_interests'=> $interests,
-							'user_birthday'	=> sprintf('%2d-%2d-%4d', $bday_day, $bday_month, $bday_year),
+							'user_birthday'	=> ($bday_day) ? sprintf('%2d-%2d-%4d', $bday_day, $bday_month, $bday_year) : null,
 						);
-
+	
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
 							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 						$_CLASS['core_db']->sql_query($sql);
-
+	
 						$_CLASS['core_display']->meta_refresh(3, $module_link);
 						$message = $_CLASS['core_user']->lang['PROFILE_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.$module_link.'">', '</a>');
 						trigger_error($message);
 					}
-					// Replace "error" strings with their real, localised form
-					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 				}
 
-				if (!$bday_day && $_CLASS['core_user']->data['user_birthday'])
+				if (!isset($bday_day))
 				{
-					list($bday_day, $bday_month, $bday_year) = explode('-', $_CLASS['core_user']->data['user_birthday']);
+					if ($_CLASS['core_user']->data['user_birthday'])
+					{
+						list($bday_day, $bday_month, $bday_year) = explode('-', $_CLASS['core_user']->data['user_birthday']);
+					}
+					else
+					{
+						$bday_day = $bday_month = $bday_year = '';
+					}
 				}
 
 				$s_birthday_day_options = '<option value="0"' . ((!$bday_day) ? ' selected="selected"' : '') . '>--</option>';
+
 				for ($i = 1; $i < 32; $i++)
 				{
 					$selected = ($i == $bday_day) ? ' selected="selected"' : '';
@@ -301,44 +286,36 @@ class ucp_profile extends module
 				}
 				$s_birthday_year_options = '';
 
-				$now = explode(':', gmdate('Y'));
-
 				$s_birthday_year_options = '<option value="0"' . ((!$bday_year) ? ' selected="selected"' : '') . '>--</option>';
-				$i = $now[0] - 100;
 
-				for ($i; $i < $now[0]; $i++)
+				$i = $this_year - 100;
+				for ($i; $i < $this_year; $i++)
 				{
 					$selected = ($i == $bday_year) ? ' selected="selected"' : '';
 					$s_birthday_year_options .= "<option value=\"$i\"$selected>$i</option>";
 				}
-				unset($now);
 
-				$_CLASS['core_template']->assign(array(
-					'ERROR'		=> (sizeof($error)) ? implode('<br />', $error) : '',
+				$_CLASS['core_template']->assign_array(array(
+					'ERROR'		=> empty($error) ? '' : implode('<br />', $error),
 
-					'ICQ'		=> (isset($icq)) ? $icq : $_CLASS['core_user']->data['user_icq'], 
-					'YIM'		=> (isset($yim)) ? $yim : $_CLASS['core_user']->data['user_yim'], 
-					'AIM'		=> (isset($aim)) ? $aim : $_CLASS['core_user']->data['user_aim'], 
-					'MSN'		=> (isset($msn)) ? $msn : $_CLASS['core_user']->data['user_msnm'], 
-					'JABBER'	=> (isset($jabber)) ? $jabber : $_CLASS['core_user']->data['user_jabber'], 
-					'WEBSITE'	=> (isset($website)) ? $website : $_CLASS['core_user']->data['user_website'], 
-					'LOCATION'	=> (isset($location)) ? $location : $_CLASS['core_user']->data['user_from'], 
-					'OCCUPATION'=> (isset($occupation)) ? $occupation : $_CLASS['core_user']->data['user_occ'], 
-					'INTERESTS'	=> (isset($interests)) ? $interests : $_CLASS['core_user']->data['user_interests'], 
+					'ICQ'		=> isset($icq) ? $icq : $_CLASS['core_user']->data['user_icq'], 
+					'YIM'		=> isset($yim) ? $yim : $_CLASS['core_user']->data['user_yim'], 
+					'AIM'		=> isset($aim) ? $aim : $_CLASS['core_user']->data['user_aim'], 
+					'MSN'		=> isset($msn) ? $msn : $_CLASS['core_user']->data['user_msnm'], 
+					//'GOOGLE'	=> isset($google) ? $google : $_CLASS['core_user']->data['user_google'], 
+					'JABBER'	=> isset($jabber) ? $jabber : $_CLASS['core_user']->data['user_jabber'], 
+					'WEBSITE'	=> isset($website) ? $website : $_CLASS['core_user']->data['user_website'], 
+					'LOCATION'	=> isset($location) ? $location : $_CLASS['core_user']->data['user_from'], 
+					'OCCUPATION'=> isset($occupation) ? $occupation : $_CLASS['core_user']->data['user_occ'], 
+					'INTERESTS'	=> isset($interests) ? $interests : $_CLASS['core_user']->data['user_interests'], 
 
 					'S_BIRTHDAY_DAY_OPTIONS'	=> $s_birthday_day_options, 
 					'S_BIRTHDAY_MONTH_OPTIONS'	=> $s_birthday_month_options, 
-					'S_BIRTHDAY_YEAR_OPTIONS'	=> $s_birthday_year_options,)
-				);
+					'S_BIRTHDAY_YEAR_OPTIONS'	=> $s_birthday_year_options,
+				));
 			break;
 
 			case 'signature':
-
-				if (!$_CLASS['auth']->acl_get('u_sig'))
-				{
-					trigger_error('NO_AUTH_SIGNATURE');
-				}
-				
 				require($site_file_root.'includes/forums/functions_posting.php');
 				
 				// Generate smiley listing
@@ -435,90 +412,78 @@ class ucp_profile extends module
 
 			case 'avatar':
 
-				$display_gallery = (isset($_POST['display_gallery'])) ? true : false;
-				$category = request_var('category', '');
-				$delete = (isset($_POST['delete'])) ? true : false;
-				
-				$avatarselect = request_var('avatarselect', '');
-				$avatarselect = str_replace(array('../', '..\\', './', '.\\'), '', $avatarselect);
-				if ($avatarselect && ($avatarselect{0} == '/' || $avatarselect{0} == "\\"))
-				{
-					 $avatarselect = '';
-				}
-				
+				$display_gallery = isset($_POST['display_gallery']);
+				$folder = isset($_REQUEST['category']) ? str_replace(array('../', '..\\', './', '.\\'), '', $_REQUEST['category']) : false;
+
+				$delete = isset($_POST['delete']);
+
 				// Can we upload? 
-				$can_upload = ($config['allow_avatar_upload'] && file_exists($config['avatar_path']) && is_writeable($config['avatar_path']) && $_CLASS['auth']->acl_get('u_chgavatar') && (@ini_get('file_uploads') || strtolower(@ini_get('file_uploads')) == 'on')) ? true : false;
+				$can_upload = (file_exists($config['avatar_path']) && is_writeable($config['avatar_path']) && @ini_get('file_uploads')) ? true : false;
 
 				if ($submit)
 				{
-					$var_ary = array(
-						'uploadurl'		=> (string) '', 
-						'remotelink'	=> (string) '', 
-						'width'			=> (string) '',
-						'height'		=> (string) '' 
-					);
+					$gallery_avatar = isset($_POST['avatarselect']) ? str_replace(array('../', '..\\', './', '.\\'), '', $_POST['avatarselect']) : false;
 
-					foreach ($var_ary as $var => $default)
+					if ($config['allow_avatar_local'] && $gallery_avatar)
 					{
-						$data[$var] = request_var($var, $default);
+						if (!file_exists($config['avatar_gallery_path'] . '/' . $gallery_avatar))
+						{
+							$error[] = 'BAD_AVATAR';
+						}
+						else
+						{
+							$type = AVATAR_GALLERY;
+							$filename = $gallery_avatar;
+
+							list($width, $height) = getimagesize($config['avatar_gallery_path'] . '/' . $gallery_avatar);
+						}
 					}
-
-					$var_ary = array(
-						'uploadurl'		=> array('string', true, 5, 255), 
-						'remotelink'	=> array('string', true, 5, 255), 
-						'width'			=> array('string', true, 1, 3), 
-						'height'		=> array('string', true, 1, 3), 
-					);
-
-					$error = validate_data($data, $var_ary);
-					
-					if (!sizeof($error))
+					else
 					{
-						$data['user_id'] = $_CLASS['core_user']->data['user_id'];
+						$data['uploadurl']	= get_variable('uploadurl', 'POST', false);
+						$data['remotelink']	= get_variable('remotelink', 'POST', '');
+						$data['width']		= get_variable('width', 'POST', '');
+						$data['height']		= get_variable('height', 'POST', '');
+						$data['user_id']	= $_CLASS['core_user']->data['user_id'];
+
+						require_once($site_file_root.'includes/forums/functions_user.php');
 
 						if ((!empty($_FILES['uploadfile']['name']) || $data['uploadurl']) && $can_upload)
 						{
 							list($type, $filename, $width, $height) = avatar_upload($data, $error);
 						}
-						else if ($data['remotelink'] && $_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_remote'])
+						elseif ($data['remotelink'] && $config['allow_avatar_remote'])
 						{
 							list($type, $filename, $width, $height) = avatar_remote($data, $error);
 						}
-						else if ($avatarselect && $_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_local'])
-						{
-							$type = AVATAR_GALLERY;
-							$filename = $avatarselect;
-
-							list($width, $height) = getimagesize($config['avatar_gallery_path'] . '/' . $filename);
-						}
-						else if ($delete && $_CLASS['auth']->acl_get('u_chgavatar'))
+						elseif ($delete)
 						{
 							$type = $filename = $width = $height = '';
 						}
+						else
+						{
+							$error[] = 'IM_LOST';
+						}
 					}
 
-					if (!sizeof($error))
+					if (empty($error))
 					{
-						// Do we actually have any data to update?
-						if (sizeof($data))
+						$sql_ary = array(
+							'user_avatar'			=> $filename, 
+							'user_avatar_type'		=> $type, 
+							'user_avatar_width'		=> $width, 
+							'user_avatar_height'	=> $height, 
+						);
+
+						$sql = 'UPDATE ' . USERS_TABLE . ' 
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
+							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
+						$_CLASS['core_db']->sql_query($sql);
+
+						// Delete old avatar if present
+						if ($_CLASS['core_user']->data['user_avatar'] && $filename != $_CLASS['core_user']->data['user_avatar'] && $_CLASS['core_user']->data['user_avatar_type'] != AVATAR_GALLERY)
 						{
-							$sql_ary = array(
-								'user_avatar'			=> $filename, 
-								'user_avatar_type'		=> $type, 
-								'user_avatar_width'		=> $width, 
-								'user_avatar_height'	=> $height, 
-							);
-
-							$sql = 'UPDATE ' . USERS_TABLE . ' 
-								SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' 
-								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-							$_CLASS['core_db']->sql_query($sql);
-
-							// Delete old avatar if present
-							if ($_CLASS['core_user']->data['user_avatar'] && $filename != $_CLASS['core_user']->data['user_avatar'] && $_CLASS['core_user']->data['user_avatar_type'] != AVATAR_GALLERY)
-							{
-								avatar_delete($_CLASS['core_user']->data['user_avatar']);
-							}
+							avatar_delete($_CLASS['core_user']->data['user_avatar']);
 						}
 
 						$_CLASS['core_display']->meta_refresh(3, $module_link);
@@ -526,15 +491,12 @@ class ucp_profile extends module
 						trigger_error($message);
 					}
 
-					extract($data);
-					unset($data);
-
-					// Replace "error" strings with their real, localised form
 					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 				}
 
 				// Generate users avatar
 				$avatar_img = '';
+
 				if ($_CLASS['core_user']->data['user_avatar'])
 				{
 					switch ($_CLASS['core_user']->data['user_avatar_type'])
@@ -552,7 +514,7 @@ class ucp_profile extends module
 				}
 
 				$_CLASS['core_template']->assign(array(
-					'ERROR'			=> (sizeof($error)) ? implode('<br />', $error) : '', 
+					'ERROR'			=> empty($error) ? '' : implode('<br />', $error), 
 					'AVATAR'		=> $avatar_img, 
 					'AVATAR_SIZE'	=> $config['avatar_filesize'], 
 
@@ -561,16 +523,19 @@ class ucp_profile extends module
 					'L_AVATAR_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['AVATAR_EXPLAIN'], $config['avatar_max_width'], $config['avatar_max_height'], round($config['avatar_filesize'] / 1024)),)
 				);
 
-// Needs some work
-				if ($display_gallery && $_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_local'])
+				if ($display_gallery && $config['allow_avatar_local'])
 				{
-					$avatar_list = avatar_gallery($category, $error);
-					$category = (!$category) ? key($avatar_list) : $category;
+					require_once($site_file_root.'includes/functions_user.php');
+
+					$avatar_list = avatar_gallery($folder, $folders, $error);
+
+					array_unshift($folders, '');
 
 					$s_category_options = '';
-					foreach (array_keys($avatar_list) as $cat)
+
+					foreach ($folders as $cat)
 					{
-						$s_category_options .= '<option value="' . $cat . '"' . (($cat == $category) ? ' selected="selected"' : '') . '>' . $cat . '</option>';
+						$s_category_options .= '<option value="' . $cat . '"' . (($cat == $folder) ? ' selected="selected"' : '') . '>' . (($cat) ? $cat : '--') . '</option>';
 					}
 
 					$_CLASS['core_template']->assign(array(
@@ -578,41 +543,35 @@ class ucp_profile extends module
 						'S_CAT_OPTIONS'		=> $s_category_options)
 					);
 
-					$avatar_list = $avatar_list[$category];
-
 					foreach ($avatar_list as $avatar)
 					{
-
 						$_CLASS['core_template']->assign_vars_array('avatar',  array(
-								'AVATAR_IMAGE'		=> $config['avatar_gallery_path'] . '/' . $avatar['file'],
-								'AVATAR_NAME'		=> $avatar['name'],
-								'AVATAR_FILE'		=> $avatar['file'],
-								'S_OPTIONS_AVATAR'	=> $avatar['file']
-							));
+							'AVATAR_IMAGE'		=> $config['avatar_gallery_path'] . '/' . $avatar['file'],
+							'AVATAR_NAME'		=> $avatar['name'],
+							'AVATAR_FILE'		=> $avatar['file'],
+						));
 					}
-					unset($avatar_list);			
+					unset($avatar_list);
 				}
 				else
 				{
 					$_CLASS['core_template']->assign(array(
 						'AVATAR'		=> $avatar_img,
 						'AVATAR_SIZE'	=> $config['avatar_filesize'],
-						'WIDTH'			=> (isset($width)) ? $width : $_CLASS['core_user']->data['user_avatar_width'],
-						'HEIGHT'		=> (isset($height)) ? $height : $_CLASS['core_user']->data['user_avatar_height'],
+						'WIDTH'			=> $_CLASS['core_user']->data['user_avatar_width'],
+						'HEIGHT'		=> $_CLASS['core_user']->data['user_avatar_height'],
 
-						'S_UPLOAD_AVATAR_FILE'	=> $can_upload,
-						'S_UPLOAD_AVATAR_URL'	=> $can_upload,
-						'S_LINK_AVATAR'			=> ($_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_remote']) ? true : false,
-						'S_GALLERY_AVATAR'		=> ($_CLASS['auth']->acl_get('u_chgavatar') && $config['allow_avatar_local']) ? true : false,
+						'S_CAN_UPLOAD'		=> $can_upload,
+						'S_LINK_AVATAR'		=> ($config['allow_avatar_remote']),
+						'S_GALLERY_AVATAR'	=> ($config['allow_avatar_local']),
 					));
 				}
 
 				break;
 		}
 
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_PROFILE_' . strtoupper($mode)],
-			
 			'S_HIDDEN_FIELDS'			=> $s_hidden_fields,
 			'S_UCP_ACTION'				=> $module_link)
 		);

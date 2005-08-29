@@ -291,7 +291,10 @@ switch ($mode)
 		}
 
 		// We left join on the session table to see if the user is currently online
-		$sql = 'SELECT username, user_id, user_type, user_status, group_id, user_colour, user_permissions, user_sig, user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_regdate, user_rank, user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm, user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_last_visit
+		$sql = 'SELECT username, user_id, user_type, user_status, user_group, user_colour, user_permissions, user_sig,
+			user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_reg_date, user_rank,
+			user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm,
+			user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_last_visit
 			FROM ' . USERS_TABLE . "
 			WHERE user_id = $user_id
 				AND user_type = " . USER_NORMAL;
@@ -308,7 +311,7 @@ switch ($mode)
 		$sql = 'SELECT g.group_id, g.group_name, g.group_type
 			FROM ' . USER_GROUP_TABLE . ' ug, ' . GROUPS_TABLE . " g
 			WHERE ug.user_id = $user_id
-				AND g.group_id = ug.group_id" . ((!$_CLASS['auth']->acl_gets('a_group')) ? ' AND group_type <> ' . GROUP_HIDDEN : '') . '
+				AND g.group_id = ug.group_id AND group_type <> " . GROUP_HIDDEN. '
 			ORDER BY group_type, group_name';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -316,7 +319,7 @@ switch ($mode)
 		
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$group_options .= '<option value="' . $row['group_id'] . '"'.(($member['group_id'] == $row['group_id'])? ' selected="selected"' : '').'>' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+			$group_options .= '<option value="' . $row['group_id'] . '"'.(($member['user_group'] == $row['group_id'])? ' selected="selected"' : '').'>' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
 		$_CLASS['core_db']->free_result($result);
 		
@@ -411,7 +414,7 @@ switch ($mode)
 		}
 
 		// Do the relevant calculations
-		$memberdays = max(1, round((time() - $member['user_regdate']) / 86400));
+		$memberdays = max(1, round((time() - $member['user_reg_date']) / 86400));
 		$posts_per_day = $member['user_posts'] / $memberdays;
 		$percentage = ($config['num_posts']) ? min(100, ($num_real_posts / $config['num_posts']) * 100) : 0;
 
@@ -478,8 +481,8 @@ switch ($mode)
 			'ACTIVE_TOPIC_PCT'	=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $active_t_pct),
 
 			'LOCATION'		=> (!empty($member['user_from'])) ? censor_text($member['user_from']) : '',
-			'OCCUPATION'    => (!empty($member['user_occ'])) ? censor_text($member['user_occ']) : '',
-			'INTERESTS'		=> (!empty($member['user_interests'])) ? censor_text($member['user_interests']) : '',
+			'OCCUPATION'    => (!empty($member['user_occ'])) ? str_replace("\n", '<br />', censor_text($member['user_occ'])) : '',
+			'INTERESTS'		=> (!empty($member['user_interests'])) ? str_replace("\n", '<br />', censor_text($member['user_interests'])) : '',
 			'SIGNATURE'		=> (!empty($member['user_sig'])) ? str_replace("\n", '<br />', $member['user_sig']) : '',
 
 			'AVATAR_IMG'	=> $poster_avatar,
@@ -565,7 +568,7 @@ switch ($mode)
 			$sql = 'SELECT username, user_email, user_allow_viewemail, user_lang, user_jabber, user_notify_type
 				FROM ' . USERS_TABLE . "
 				WHERE user_id = $user_id
-					AND user_type = ". USER_NORMAL . ' AND u.user_status = ' . STATUS_ACTIVE;
+					AND user_type = ". USER_NORMAL . ' AND user_status = ' . STATUS_ACTIVE;
 			$result = $_CLASS['core_db']->query($sql);
 
 			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
@@ -723,7 +726,7 @@ switch ($mode)
 
 		// Sorting
 		$sort_key_text = array('a' => $_CLASS['core_user']->lang['SORT_USERNAME'], 'b' => $_CLASS['core_user']->lang['SORT_LOCATION'], 'c' => $_CLASS['core_user']->lang['SORT_JOINED'], 'd' => $_CLASS['core_user']->lang['SORT_POST_COUNT'], 'e' => $_CLASS['core_user']->lang['SORT_EMAIL'], 'f' => $_CLASS['core_user']->lang['WEBSITE'], 'g' => $_CLASS['core_user']->lang['ICQ'], 'h' => $_CLASS['core_user']->lang['AIM'], 'i' => $_CLASS['core_user']->lang['MSNM'], 'j' => $_CLASS['core_user']->lang['YIM'], 'k' => $_CLASS['core_user']->lang['JABBER'], 'l' => $_CLASS['core_user']->lang['SORT_LAST_ACTIVE'], 'm' => $_CLASS['core_user']->lang['SORT_RANK']);
-		$sort_key_sql = array('a' => 'u.username', 'b' => 'u.user_from', 'c' => 'u.user_regdate', 'd' => 'u.user_posts', 'e' => 'u.user_email', 'f' => 'u.user_website', 'g' => 'u.user_icq', 'h' => 'u.user_aim', 'i' => 'u.user_msnm', 'j' => 'u.user_yim', 'k' => 'u.user_jabber', 'l' => 'u.user_last_visit', 'm' => 'u.user_rank DESC, u.user_posts');
+		$sort_key_sql = array('a' => 'u.username', 'b' => 'u.user_from', 'c' => 'u.user_reg_date', 'd' => 'u.user_posts', 'e' => 'u.user_email', 'f' => 'u.user_website', 'g' => 'u.user_icq', 'h' => 'u.user_aim', 'i' => 'u.user_msnm', 'j' => 'u.user_yim', 'k' => 'u.user_jabber', 'l' => 'u.user_last_visit', 'm' => 'u.user_rank DESC, u.user_posts');
 
 		$sort_dir_text = array('a' => $_CLASS['core_user']->lang['ASCENDING'], 'd' => $_CLASS['core_user']->lang['DESCENDING']);
 
@@ -799,7 +802,7 @@ switch ($mode)
 			$sql_where .= ($msn) ? " AND u.user_msnm LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($msn)) ."' " : '';
 			$sql_where .= ($jabber) ? " AND u.user_jabber LIKE '" . str_replace('*', '%', $_CLASS['core_db']->escape($jabber)) . "' " : '';
 			$sql_where .= (is_numeric($count)) ? ' AND u.user_posts ' . $find_key_match[$count_select] . ' ' . (int) $count . ' ' : '';
-			$sql_where .= (sizeof($joined) > 1) ? " AND u.user_regdate " . $find_key_match[$joined_select] . ' ' . gmmktime(0, 0, 0, intval($joined[1]), intval($joined[2]), intval($joined[0])) : '';
+			$sql_where .= (sizeof($joined) > 1) ? " AND u.user_reg_date " . $find_key_match[$joined_select] . ' ' . gmmktime(0, 0, 0, intval($joined[1]), intval($joined[2]), intval($joined[0])) : '';
 			$sql_where .= (sizeof($active) > 1) ? " AND u.user_last_visit " . $find_key_match[$active_select] . ' ' . gmmktime(0, 0, 0, $active[1], intval($active[2]), intval($active[0])) : '';
 
 			if ($ipdomain && $_CLASS['auth']->acl_get('m_ip'))
@@ -1031,11 +1034,14 @@ switch ($mode)
 		$_CLASS['core_db']->free_result($result);
 		
 		// Do the SQL thang
-		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_regdate, u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_last_visit 
-			'. $sql_fields .' FROM ' . USERS_TABLE . " u$sql_from
-			WHERE u.user_type = " . USER_NORMAL . ' AND u.user_status = ' . STATUS_ACTIVE ."
-				$sql_where
-			ORDER BY $order_by";
+		$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_allow_viewemail, u.user_posts, u.user_reg_date,
+				u.user_rank, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, 
+				u.user_msnm, u.user_jabber, u.user_avatar, u.user_avatar_type, u.user_last_visit '. $sql_fields .'
+					FROM ' . USERS_TABLE . " u$sql_from
+					WHERE u.user_type = " . USER_NORMAL . ' AND u.user_status = ' . STATUS_ACTIVE ."
+						$sql_where
+						ORDER BY $order_by";
+
 		$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
 
 		$id_cache = array();
@@ -1170,7 +1176,7 @@ function show_profile($data)
 		'USER_COLOR'	=> (!empty($data['user_colour'])) ? $data['user_colour'] : '',
 		'RANK_TITLE'	=> $rank_title,
 
-		'JOINED'		=> $_CLASS['core_user']->format_date($data['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
+		'JOINED'		=> $_CLASS['core_user']->format_date($data['user_reg_date'], $_CLASS['core_user']->lang['DATE_FORMAT']),
 		'VISITED'		=> (empty($last_visit)) ? ' - ' : $_CLASS['core_user']->format_date($last_visit, $_CLASS['core_user']->lang['DATE_FORMAT']),
 		'POSTS'			=> ($data['user_posts']) ? $data['user_posts'] : 0,
 

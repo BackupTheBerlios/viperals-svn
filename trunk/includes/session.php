@@ -218,20 +218,20 @@ class sessions
 	function autologin_generate()
 	{
 		global $_CLASS;
-// make this useable outside sessions
-		$code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
+
+		$this->autologin_code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
 
 		$data_array = array(
 			'user_id'				=> (int) $this->data['user_id'],
-			'auto_login_code'		=> (string) $code,
-			'auto_login_browser'	=> $this->browser,
-			'auto_login_time'		=> $this->time,
+			'auto_login_code'		=> (string) $this->autologin_code,
+			'auto_login_browser'	=> (string) $this->browser,
+			'auto_login_time'		=> (int) $this->time,
 		);
-		
+
 		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_AUTOLOGIN_TABLE . ' '.	$_CLASS['core_db']->sql_build_array('INSERT', $data_array));
-	
+
 		$this->set_cookie('ali', $this->data['user_id'], $this->time + 2592000);
-		$this->set_cookie('alc', $code, $this->time + 2592000);
+		$this->set_cookie('alc', $this->autologin_code, $this->time + 2592000);
 	}
 
 	function autologin_retrieve($user_id, $code)
@@ -316,9 +316,7 @@ class sessions
 
 	function gc($time)
 	{
-// Add auto login cleaning
 // Move to cron		
-
 		global $_CORE_CONFIG, $_CLASS;
 
 /*
@@ -328,10 +326,11 @@ class sessions
 			AND session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 		$_CLASS['core_db']->query($sql);
 */
+		$_CLASS['core_db']->transaction();
 
 		$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
 					SET u.user_last_visit = s.session_time
-					WHERE s.session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
+					WHERE s.session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']) . '
 						AND s.session_user_id <> ' . ANONYMOUS .'
 						AND u.user_id = s.session_user_id';
 		$_CLASS['core_db']->sql_query($sql);
@@ -341,10 +340,12 @@ class sessions
 		$_CLASS['core_db']->query($sql);
 
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
+					WHERE session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']);
 		$_CLASS['core_db']->query($sql);
 		
 		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
+		
+		$_CLASS['core_db']->transaction('commit');
 	}
 
 	function session_data_get($name, $default = false)
