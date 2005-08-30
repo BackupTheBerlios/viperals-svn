@@ -550,20 +550,6 @@ class db_mysql
 
 	function add_table_field_int($name, $setting_sent)
 	{
-		if (!$setting_sent || !is_array($setting_sent))
-		{
-			global $site_file_root;
-			
-			$debug_backtrace = debug_backtrace();
-			$backtrace = array();
-			// remove the root directorys
-			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
-			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
-
-			$backtrace['line'] = $debug_backtrace[0]['line'];
-			print_r($backtrace);echo '<br/>';
-		}
-		
 		$setting = array('default' => null, 'min' => 0, 'max' => 0, 'auto_increment' => false, 'null' => false);
 		$setting = array_merge($setting, $setting_sent);
 
@@ -621,7 +607,7 @@ class db_mysql
 		}
 	}
 
-	function add_table_field_text($name, $characters = 60000, $null = false)
+	function add_table_field_text($name, $characters, $null = false)
 	{
 		if ($characters <= 255)
 		{
@@ -650,18 +636,14 @@ class db_mysql
 	function add_table_field_char($name, $characters, $null = false, $default = null, $padded = false)
 	{
 		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
-		$this->_fields[$name] .= $null ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 		$this->_fields[$name] .= is_null($default) ? '' : "DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
-		
-		/*if (empty($this->_fields[$field]))
-		{
-			return;
-		}*/
+
 		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)

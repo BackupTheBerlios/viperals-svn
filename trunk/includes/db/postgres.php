@@ -1,17 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 class db_postgres
 {
@@ -73,6 +81,8 @@ class db_postgres
 		if ($this->link_identifier)
 		{
 			pg_set_client_encoding($this->link_identifier, 'UNICODE');
+			//pg_set_client_encoding($this->link_identifier, 'UTF8');  pg8.1 unicode still works tho
+
 			//pg_query($this->link_identifier, "SET CLIENT_ENCODING TO 'value'"); SET NAMES 'value'
 			return $this->link_identifier;
 		}
@@ -101,7 +111,7 @@ class db_postgres
 		$this->return_on_error = $fail;
 	}
 
-	function transaction($option = 'start')
+	function transaction($option = 'start', $auto_rollback = true)
 	{
 		$result = false;
 		
@@ -113,7 +123,7 @@ class db_postgres
 					break;
 				}
 
-				$result = @pg_query($this->db_connect_id, 'BEGIN TRANSACTION');
+				$result = @pg_query($this->db_connect_id, 'BEGIN');
 				$this->in_transaction = true;
 			break;
 
@@ -126,7 +136,7 @@ class db_postgres
 
 				$result = @pg_query($this->db_connect_id, 'COMMIT');
 				
-				if (!$result)
+				if (!$result && $auto_rollback)
 				{
 					@pg_query($this->db_connect_id, 'ROLLBACK');
 				}
@@ -179,7 +189,7 @@ class db_postgres
 		{
 			$this->_error($query, $backtrace);
 		}
-		elseif (strpos($query, 'SELECT') !== false)
+		elseif (strpos($query, 'SELECT') === 0)
 		{
 			$this->open_queries[(int) $this->last_result] = $this->last_result;
 		}
@@ -346,22 +356,22 @@ class db_postgres
 	function insert_id($table, $column)
 	{
 		$oid = @pg_last_oid($this->last_result);
-	
+
+		/* 
+		Shouldn't be need, but incase they don't have oid support ( not sure why they wouldn't )
+		They can fall back to the less acurrate method, totally not recommended for active sites
+
+		if ($result = $this->query("SELECT last_value FROM pg_get_serial_sequence($table, $column)"))
+		{
+			$return = $this->fetch_row_assoc($result);
+			$this->free_result($result);
+			
+			$return['last_value'];
+		}
+		*/
+
 		if ($oid === false || !($result = $this->query("SELECT $column FROM $table WHERE oid = $oid")))
 		{
-			/* 
-			Shouldn't be need, but incase they don't have oid ( not sure why they wouldn't )
-			They can fall back to the less acurrate method, totally not recommended for active sites
-
-			if ($result = $this->query("SELECT last_value FROM pg_get_serial_sequence($table, $column)"))
-			{
-				$return = $this->fetch_row_assoc($result);
-				$this->free_result($result);
-				
-				$return['last_value'];
-			}
-			*/
-			
 			return false;
 		}
 
@@ -522,12 +532,19 @@ class db_postgres
 				}
 
 				$fields = implode(", \n", $this->_fields);
-				$indexs = ($this->_indexs) ? "\n\n".implode("\n", $this->_indexs) :  '';
+
+				if ($this->_indexs['primary'])
+				{
+					$fields .= ", \n".$this->_indexs['primary'];
+					unset($this->_indexs['primary']);
+				}
+			
+				$indexs = empty($this->_indexs) ? '' : "\n\n".implode("\n", $this->_indexs);
 
 				$oid = ($this->_table_oid) ? 'WITH OIDS' : 'WITHOUT OIDS';
 
 				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields." \n )\n $oid;$indexs";
-//WITH ENCODING='UNICODE'  ( for create table )
+//WITH ENCODING='UNICODE'  ( for database creation )
 				if ($option == 'return')
 				{
 					return $table;
@@ -542,33 +559,37 @@ class db_postgres
 		}
 	}
 
-	function add_table_field_int($name, $number_min, $number_max = false, $default = 0, $auto_increment = false)
+	function add_table_field_int($name, $setting_sent)
 	{
-		$length = max(strlen($number_min), strlen($number_max));
+		$setting = array('default' => null, 'min' => 0, 'max' => 0, 'auto_increment' => false, 'null' => false);
+		$setting = array_merge($setting, $setting_sent);
 
-		if (!$auto_increment && $number_min >= -32768 && $number_max <= 32767)
+		$length = max(strlen($setting['min']), strlen($setting['max']));
+
+		if (!$setting['auto_increment'] && $setting['min'] >= -32768 && $setting['max'] <= 32767)
 		{
 			// SMALLINT -- INT2 ( -32,768 to 32,767 )
 			$this->_fields[$name] =  "$name SMALLINT";
 		}
-		elseif ($number_min >= -2147483648 && $number_max <= 2147483647)
+		elseif ($setting['min'] >= -2147483648 && $setting['max'] <= 2147483647)
 		{
 			// INTEGER -- INT4 ( +auto_increment => SERIAL4 ) ( -2,147,483,648 to 2,147,483,647 )
-			$this->_fields[$name] =   ($auto_increment) ? "$name SERIAL" : "$name INTEGER";
+			$this->_fields[$name] =   ($setting['auto_increment']) ? "$name SERIAL" : "$name INTEGER";
 		}
-		elseif ($number_min >= 9223372036854775808 && $number_max <= 9223372036854775807)
+		elseif ($setting['min'] >= 9223372036854775808 && $setting['max'] <= 9223372036854775807)
 		{
 			// BIGINT -- INT8 ( +auto_increment => SERIAL8 ) ( 9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 )
-			$this->_fields[$name] =  ($auto_increment) ? "$name BIGSERIAL" : "$name BIGINT";
+			$this->_fields[$name] =  ($setting['auto_increment']) ? "$name BIGSERIAL" : "$name BIGINT";
 		}
 
-		if ($auto_increment)
+		if ($setting['auto_increment'])
 		{
 			$this->_table_oid = true;
 		}
 		else
 		{
-			$this->_fields[$name] .= " NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= ($setting['null']) ? " NULL" : " NOT NULL";
+			$this->_fields[$name] .= is_null($setting['default']) ? '' : " DEFAULT '".(int) $setting['default']."'";
 		}
 	}
 
@@ -577,38 +598,27 @@ class db_postgres
 		$this->_fields[$name] =  "$name TEXT".(($null) ? " NULL" : " NOT NULL");
 	}
 
-	function add_table_field_char($name, $characters, $default = null, $padded = false)
+	function add_table_field_char($name, $characters, $null = false, $default = null, $padded = false)
 	{
 		$this->_fields[$name] =  ($padded) ? "$name CHARACTER($characters)" : "$name CHARACTER VARYING($characters)";
-		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= is_null($default) ? '' : "DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
-		static $primary_key = false;
-
-		if (empty($this->_fields[$field]))
-		{
-			return;
-		}
-
 		$index_name = $this->_table_name.'_'.(($index_name) ? $index_name : $field) ;
+		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)
 		{
 			case 'index':
 			case 'unique':
-				//CREATE INDEX a ON test USING btree (a)
 				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->_table_name} ($field);";
 			break;
 
 			case 'primary':
-				if ($primary_key)
-				{
-				}
-				$primary_key = $field;
-
-				$this->_fields[$field] .= ' PRIMARY KEY';
+				$this->_indexs['primary'] = "PRIMARY KEY ($field)";
 			break;
 		}
 	}

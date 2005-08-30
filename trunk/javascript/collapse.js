@@ -6,8 +6,11 @@
 **	Auto opening on mouse over maybe ( closeing on mouse out ) ?	
 */
 
-var slider_id = new Array();
-var slider_height = new Array();
+if (typeof slider_id == 'undefined')
+{
+	var slider_id = new Array();
+	var slider_height = new Array();
+}
 
 function get_cookie(cookie_name)
 {
@@ -58,7 +61,7 @@ function array_search(needle, haystack, strict)
 	return null;
 }
 
-function switch_collapse(identifier, cookie)
+function switch_collapse(identifier, no_slide, cookie)
 {
 	var area = document.getElementById(identifier);
 	var img = document.getElementById(identifier + '_img');
@@ -67,16 +70,7 @@ function switch_collapse(identifier, cookie)
 
 	if (area.style.display == 'none')
 	{
-		area.style.height = '';
-		area.style.display = '';
-		var height = area.offsetHeight;
-
-		area.style.overflow	= 'hidden';
-		area.style.height = '0px';
-
 		switch_collapse_save(identifier, false, cookie);
-
-		start_slide_block(identifier, 'out', height);
 
 		if (img)
 		{
@@ -87,17 +81,25 @@ function switch_collapse(identifier, cookie)
 		{
 			item.className = item.className.replace('show', 'hide');
 		}
+
+		area.style.display = '';
+
+		if (!no_slide)
+		{
+			area.style.height = '';
+
+			var height = area.offsetHeight;
+	
+			area.style.overflow	= 'hidden';
+			area.style.height = '0px';
+
+			start_slide_block(identifier, 'out', height);
+		}
 	}
 	else
 	{
-		var height = area.offsetHeight;
-		area.style.overflow	= 'hidden';
-
-		start_slide_block(identifier, 'in', height);
-
 		switch_collapse_save(identifier, true, cookie);
 		
-
 		if (img)
 		{
 			img.src = img.src.replace('hide', 'show');
@@ -106,6 +108,18 @@ function switch_collapse(identifier, cookie)
 		if (item)
 		{
 			item.className = item.className.replace('hide', 'show');
+		}
+
+		if (no_slide)
+		{
+			area.style.display = 'none';
+		}
+		else
+		{
+			var height = area.offsetHeight;
+			area.style.overflow	= 'hidden';
+	
+			start_slide_block(identifier, 'in', height);
 		}
 	}
 }
@@ -171,42 +185,40 @@ function switch_collapse_save(identifier, save, cookie_name)
 function slide_block(identifier, option, height)
 {
 	var area = document.getElementById(identifier);
+	var step = Math.ceil(height / 25);
+
+	if (step < 6)
+	{
+		step = 6;
+	}
 
 	if (option == 'in')
 	{
-		if (slider_height[identifier] == 0)
-		{//alert(height);
-			stop_slide_block(identifier);
+		slider_height[identifier] -= step;
+		
+		if (slider_height[identifier] <= 0)
+		{
 			area.style.display = 'none';
+			area.style.height = '';
 
+			stop_slide_block(identifier);
+			
 			return;
 		}
-
-		slider_height[identifier] -= 6;
-		
-		if (slider_height[identifier] < 0)
-		{
-			slider_height[identifier] = 0;
-		}
-
 	}
 	else
 	{
-		if (slider_height[identifier] == height || slider_height[identifier] > height)
-		{	//alert(height);
+		slider_height[identifier] += step;
+
+		if (slider_height[identifier] >= height)
+		{
+			area.style.height = '';
 			stop_slide_block(identifier);
 
 			return;
 		}
-
-		slider_height[identifier] += 6;
-		
-		if (slider_height[identifier] > height)
-		{
-			slider_height[identifier] = height;
-		}
 	}
-		
+
 	area.style.height = slider_height[identifier]+'px';
 }
 

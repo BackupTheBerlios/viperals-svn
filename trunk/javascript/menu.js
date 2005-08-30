@@ -148,27 +148,26 @@ function menu_hide(object_name)
 	{
 		active_menu = false;
 	}
-	
+
+	stop_slide(object_name+ '_menu');
 	menu.style.display = 'none';	
 }
 
 function slide(identifier, height)
 {
 	var area = document.getElementById(identifier);
+	var step = Math.ceil(height / 25);
 
-	if (slider_height[identifier] == height || slider_height[identifier] > height)
+	slider_height[identifier] += step;
+
+	if (slider_height[identifier] >= height)
 	{
+		area.style.clip = '';
+		
 		stop_slide(identifier);
 	}
 	else
 	{
-		slider_height[identifier] += 6;
-
-		if (slider_height[identifier] > height)
-		{
-			slider_height[identifier] = height;
-		}
-
 		area.style.clip = 'rect(auto, auto, ' + slider_height[identifier] + 'px, auto)';
 	}
 }

@@ -673,6 +673,7 @@ $_CLASS['core_db']->table_create('start', $install_prefix.'forums_watch');
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_int('notify_type', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('notify_status', array('max' => 10));
 
 $_CLASS['core_db']->add_table_index('forum_id');

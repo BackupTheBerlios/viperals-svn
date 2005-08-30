@@ -164,7 +164,7 @@ function activate()
 		trigger_error('CANT_ACTIVATED');
 	}
 	
-	$sql = 'SELECT username, user_status, user_email, user_new_password, user_new_password_encoding, user_act_key
+	$sql = 'SELECT username, user_status, user_group, user_new_password, user_new_password_encoding, user_act_key
 		FROM ' . USERS_TABLE . " WHERE user_id = $user_id AND user_type = ".USER_NORMAL;
 
 	$result = $_CLASS['core_db']->sql_query($sql);
@@ -180,7 +180,7 @@ function activate()
 	{
 		trigger_error(($row['user_status'] == USER_ACTIVE) ? 'ALREADY_ACTIVATED' : 'CANT_ACTIVATED');
 	}
-	
+
 	if ($row['user_act_key'] != $key)
 	{
 		trigger_error('WRONG_ACTIVATION_KEY');
@@ -192,7 +192,7 @@ function activate()
 		'user_new_password_encoding'=> null
 	);
 
-	if ($row['user_new_password'])
+	if ($row['user_status'] != USER_UNACTIVATED)
 	{
 		$sql_ary += array(
 			'user_password'				=> $row['user_new_password'],
@@ -203,13 +203,14 @@ function activate()
 	{
 		include_once($site_file_root.'includes/functions_user.php');
 		user_activate($user_id);
-		
+
 		set_core_config('user', 'newest_user_id', $row['user_id'], false);
 		set_core_config('user', 'newest_username', $row['username'], false);
 	}
 
 	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 		WHERE user_id = ' . $row['user_id'];
+
 	$result = $_CLASS['core_db']->sql_query($sql);
 }
 

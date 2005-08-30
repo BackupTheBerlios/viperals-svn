@@ -425,14 +425,14 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 		$forum_ids[] = $row['forum_id'];
 	}
 
-	if (!sizeof($post_ids))
+	if (empty($post_ids))
 	{
 		return false;
 	}
 
 	$sql_where = implode(', ', $post_ids);
 
-	$_CLASS['core_db']->sql_transaction('begin');
+	$_CLASS['core_db']->transaction();
 
 	$table_ary = array(FORUMS_POSTS_TABLE, FORUMS_REPORTS_TABLE, FORUMS_SEARCH_MATCH_TABLE);
 	

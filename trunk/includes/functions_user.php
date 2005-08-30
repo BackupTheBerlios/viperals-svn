@@ -537,7 +537,7 @@ function validate_username($username)
 	{
 		return 'USERNAME_TAKEN';
 	}
-	
+
 	return true;
 }
 

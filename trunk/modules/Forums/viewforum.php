@@ -1,15 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 // -------------------------------------------------------------
 //
@@ -174,13 +184,14 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 		}
 	}
 
-	// Forum rules amd subscription info
-	$s_watching_forum = $s_watching_forum_img = array();
-	$s_watching_forum['link'] = $s_watching_forum['title'] = '';
-	if (($config['email_enable'] || $config['jab_enable']) && $config['allow_forum_notify'] && $_CLASS['auth']->acl_get('f_subscribe', $forum_id))
+	if ($_CLASS['auth']->acl_get('f_subscribe', $forum_id))
 	{
 		$notify_status = (isset($forum_data['notify_status'])) ? $forum_data['notify_status'] : NULL;
-		watch_topic_forum('forum', $s_watching_forum, $s_watching_forum_img, $_CLASS['core_user']->data['user_id'], $forum_id, $notify_status);
+		$s_watching_forum = watch_topic_forum('forum', $_CLASS['core_user']->data['user_id'], $forum_id, $notify_status);
+	}
+	else
+	{
+		$s_watching_forum['link'] = $s_watching_forum['title'] = '';
 	}
 
 	gen_forum_auth_level('forum', $forum_id);
@@ -204,7 +215,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 		$sql = 'SELECT COUNT(topic_id) AS num_topics
 			FROM ' . FORUMS_TOPICS_TABLE . "
 			WHERE forum_id = $forum_id
-				AND topic_type <> " . POST_ANNOUNCE . "  
+				AND topic_type <> " . POST_ANNOUNCE . " 
 				AND topic_last_post_time >= $min_post_time
 			" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND topic_approved = 1');
 		$result = $_CLASS['core_db']->query($sql);
@@ -292,7 +303,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	if ($forum_data['forum_type'] == FORUM_POST)
 	{
 		// Obtain announcements ... removed sort ordering, sort by time in all cases
-		$sql = "SELECT t.* $sql_select 
+		$sql = "SELECT DISTINCT t.* $sql_select 
 			FROM $sql_from 
 			WHERE t.forum_id IN ($forum_id, 0)
 				AND t.topic_type IN (" . POST_ANNOUNCE . ', ' . POST_GLOBAL . ')
@@ -310,6 +321,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	// If the user is trying to reach late pages, start searching from the end
 	$store_reverse = false;
 	$sql_limit = $config['topics_per_page'];
+
 	if ($start > $topics_count / 2)
 	{
 		$store_reverse = true;
@@ -350,8 +362,9 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 
 	$topic_list = ($store_reverse) ? array_merge($announcement_list, array_reverse($topic_list)) : array_merge($announcement_list, $topic_list);
 
-	// set to true so we can test .. we only update the mark if this is made into an (int) time
-	$mark_forum_read = true;
+	// we only update the mark if this is made into an (int) time
+	// We don't check when $start is used
+	$mark_forum_read = ($start) ? false : true;
 
 	// Okay, lets dump out the page ...
 	if (sizeof($topic_list))

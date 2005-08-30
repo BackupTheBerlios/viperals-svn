@@ -39,11 +39,11 @@ function check_bot_status($browser, $ip)
 		{
 			$is_bot = $bot['user_id'];
 		}
-		
+
 		if ($bot['user_ip'] && (!$bot['user_agent'] || $is_bot))
 		{
 			$is_bot = false;
-			
+
 			foreach (explode(',', $bot['user_ip']) as $bot_ip)
 			{
 				if (strpos($ip, $bot_ip) === 0)
@@ -52,7 +52,7 @@ function check_bot_status($browser, $ip)
 				}
 			}
 		}
-		
+
 		if ($is_bot)
 		{
 			if ($bot['user_status'] == USER_DISABLE)
@@ -64,7 +64,7 @@ function check_bot_status($browser, $ip)
 			break;
 		}
 	}
-	
+
 	return $is_bot;
 }
 
@@ -87,7 +87,7 @@ function check_load_status($return = false)
 {
 	global $_CORE_CONFIG, $_CLASS;
 	static $load_status = null;
-	
+
 	if (!is_null($load_status))
 	{
 		return $load_status;
@@ -155,7 +155,7 @@ function check_maintance_status($return = false)
 			{
 				return $maintance_status = false;
 			}
-			
+
 			if ($return)
 			{
 				return $maintance_status = true;
@@ -163,7 +163,7 @@ function check_maintance_status($return = false)
 
 			trigger_error('503:'.$_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
 		}
-		
+
 		return $_CORE_CONFIG['maintenance']['start'];
 	}
 
@@ -181,7 +181,7 @@ function check_theme($theme)
 	return false;
 }
 
-function display_confirmation($message = '', $hidden = '')
+function display_confirmation($message = '', $hidden = '', $image = false)
 {
 	global $_CLASS, $SID;
 // Add user entered confirmation code as a choose, maybe ...
@@ -193,9 +193,9 @@ function display_confirmation($message = '', $hidden = '')
 	if (isset($_POST['confirm']))
 	{
 		$code = $_CLASS['core_user']->session_data_get('confirmation_code');
-		$confirm_code = get_variable('confirm_code', 'POST');
+		$confirm_code = get_variable('confirm_code', 'POST', false);
 
-		if ($code && $confirm_code && $code == $confirm_code)
+		if ($code && $confirm_code && $code === $confirm_code)
 		{
 			return true;
 		}
@@ -204,12 +204,24 @@ function display_confirmation($message = '', $hidden = '')
 	}
 
 	$confirmation_code = generate_string(6);
+
+	if ($image)
+	{
+		$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
+	}
+	else
+	{
+		$confirm_image = false;
+		$hidden .= '<input type="hidden" name="confirm_code" value="' . $confirmation_code . '" />';
+	}
+
 	$_CLASS['core_user']->session_data_set('confirmation_code', $confirmation_code);
 
 	$_CLASS['core_template']->assign_array(array(
 		'MESSAGE'		=> ($message) ? $message : 'Are you sure you want to perform this action ?',
 		'CONFIRM_ACTION'=> generate_link($_CLASS['core_user']->url),
-		'HIDDEN_FIELDS'	=> $hidden.'<input type="hidden" name="confirm_code" value="' . $confirmation_code . '" />'
+		'CONFIRM_IMAGE'	=> $confirm_image,
+		'HIDDEN_FIELDS'	=> $hidden
 	));
 
 	$_CLASS['core_template']->display('confirmation.html');
@@ -249,27 +261,27 @@ function get_bots()
 	if (is_null($bots = $_CLASS['core_cache']->get('bots')))
 	{
 		$bots = array();
-		
+
 		$sql = 'SELECT user_id, username, user_agent, user_ip
 			FROM ' . USERS_TABLE . ' WHERE user_type = ' . USER_BOT;
 		$result = $_CLASS['core_db']->query($sql);
-			
+
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$bots[] = $row;
 		}
-		
+
 		$_CLASS['core_db']->free_result($result);
 		$_CLASS['core_cache']->put('bots', $bots);
 	}
-	
+
 	return $bots;
 }
 
 function get_variable($var_name, $type, $default = false, $var_type = 'string')
 {
 	$variable = null;
-	
+
 	$type = strtoupper($type);
 
 	switch ($type)
@@ -290,7 +302,7 @@ function get_variable($var_name, $type, $default = false, $var_type = 'string')
 			$variable = isset($_COOKIE[$var_name]) ? $_COOKIE[$var_name] : $default;
 		break;
 	}
-			
+
 	if (is_null($variable))
 	{
 		return $default;
@@ -329,23 +341,23 @@ function get_variable($var_name, $type, $default = false, $var_type = 'string')
 function generate_base_url()
 {
 	static $base = false;
-	
+
 	if (!$base)
 	{
 		global $_CORE_CONFIG;
-		
-		$base = ($_CORE_CONFIG['server']['cookie_secure']) ? 'https://' : 'http://' ;
-		$base .= trim((isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_CORE_CONFIG['server']['site_domain']));
-		$base .= (($_CORE_CONFIG['server']['site_port'] != 80) ? ':' . trim($_CORE_CONFIG['server']['site_port']) : '') . $_CORE_CONFIG['server']['site_path'];
+
+		$base = ($_CORE_CONFIG['server']['site_secure']) ? 'https://' : 'http://' ;
+		$base .= trim(isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_CORE_CONFIG['server']['site_domain']);
+		$base .= (($_CORE_CONFIG['server']['site_port'] && $_CORE_CONFIG['server']['site_port'] != 80) ? ':' . $_CORE_CONFIG['server']['site_port'] : '') . ($_CORE_CONFIG['server']['site_path']) ? $_CORE_CONFIG['server']['site_path'] : '/';
 	}
-	
+
 	return $base;
 }
 
 function generate_link($link = false, $link_options = false)
 {
 	global $_CLASS, $_CORE_MODULE;
-	
+
 	$options = array(
 		'admin'		=> false,
 		'full'		=> false,
@@ -368,7 +380,7 @@ function generate_link($link = false, $link_options = false)
 	}
 
 	$file = ($options['admin']) ? ADMIN_PAGE : INDEX_PAGE;
-	
+
 	if (!$link)
 	{
 		$link = $file;
@@ -487,9 +499,9 @@ function gmtime()
 function load_class($file, $name, $class = false)
 {
 	global $_CLASS;
-	
+
 	$class = ($class) ? $class : $name;
-	
+
 	if (empty($_CLASS[$name]) || !is_object($_CLASS[$name]))
 	{
 		if ($file)
@@ -510,7 +522,7 @@ function login_box($login_options = false, $template = false)
 function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false, $cache = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
-	
+
 	$sql = 'UPDATE ' . CORE_CONFIG_TABLE . " SET config_value = '".$_CLASS['core_db']->escape($value) . "'
 		WHERE config_section = '" . $_CLASS['core_db']->escape($section) . "'
 			AND config_name = '". $_CLASS['core_db']->escape($name) ."'";
@@ -526,9 +538,7 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 		);
 
 		$_CLASS['core_db']->return_on_error(true);
-
 		$_CLASS['core_db']->query('INSERT INTO ' . CORE_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
-		
 		$_CLASS['core_db']->return_on_error(false);
 	}
 
@@ -574,12 +584,12 @@ function script_close($save = true)
 			$_CLASS['core_user']->save();
 		}	
 	}
-	
+
 	if (!empty($_CLASS['core_cache']))
 	{
 		$_CLASS['core_cache']->save();
 	}
-	
+
 	if (!empty($_CLASS['core_db']))
 	{
 		$_CLASS['core_db']->disconnect();
@@ -609,7 +619,7 @@ function session_users()
 {
 	global $_CLASS, $_CORE_CONFIG;
 	static $loaded = false;
-	
+
 	if ($loaded)
 	{
 		return $loaded;
@@ -686,12 +696,12 @@ function select_language($default = '')
 function select_theme($default = false)
 {
 	global $site_file_root, $_CLASS;
-	
+
 	if (!$default)
 	{
 		$default = $_CLASS['core_display']->theme_name;
 	}
-	
+
 	$theme_array = array();
 	$handle = opendir($site_file_root.'themes');
 	
@@ -749,11 +759,6 @@ function select_tz($default = false)
 	}
 
 	return $select;
-}
-
-function url_redirect($url = false, $save = false)
-{
-	redirect($url = false, $save = false);
 }
 
 if (!function_exists('file_get_contents'))

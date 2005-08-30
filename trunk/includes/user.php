@@ -246,7 +246,7 @@ class core_user extends sessions
 					}
 				}
 			}
-	
+
 			$path = $site_file_root.'themes/'.$theme;
 			
 			$_CLASS['core_display']->load_theme($theme, $path);
@@ -409,7 +409,7 @@ class core_user extends sessions
 		}
 		else
 		{
-			setcookie($name, $cookie_data, $cookie_time, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['cookie_secure']);
+			setcookie($name, $cookie_data, $cookie_time, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['site_secure']);
 		}
 	}
 	

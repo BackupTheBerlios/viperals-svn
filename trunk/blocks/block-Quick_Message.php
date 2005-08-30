@@ -39,8 +39,8 @@ $result = $_CLASS['core_db']->query_limit('SELECT * from '.QUICK_MESSAGE_TABLE.'
 
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
-	//$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES, 'UTF-8'));
-	$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES));
+	$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES, 'UTF-8'));
+	//$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES));
 
 	$row['message_text'] = '';
 

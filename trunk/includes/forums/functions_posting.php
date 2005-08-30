@@ -35,7 +35,7 @@ function generate_smilies($mode, $forum_id)
 	{
 		$sql = 'SELECT smiley_id
 			FROM ' . SMILIES_TABLE . '
-			WHERE smiley_type = 0';
+			WHERE smiley_type = 1';
 		$result = $_CLASS['core_db']->query_limit($sql, 1, 0);
 
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -51,7 +51,7 @@ function generate_smilies($mode, $forum_id)
 
 		$sql = 'SELECT *
 			FROM ' . SMILIES_TABLE .' 
-				WHERE smiley_type ='.(($mode == 'inline') ? '1' : '0') . '
+				WHERE smiley_type ='.(($mode == 'inline') ? '0' : '1') . '
 					ORDER BY smiley_order';
 		$result = $_CLASS['core_db']->query($sql);
 	
@@ -469,13 +469,11 @@ function posting_gen_topic_icons($mode, $icon_id)
 {
 	global $config, $_CLASS;
 
-	// Grab icons
-	$icons = array();
-	obtain_icons($icons);
+	$icons = obtain_icons();
 
 	$_CLASS['core_template']->assign('S_NO_ICON_CHECKED', ((!$icon_id) ? ' checked="checked"' : ''));
 
-	if (sizeof($icons))
+	if (!empty($icons))
 	{
 		foreach ($icons as $id => $data)
 		{
@@ -488,8 +486,8 @@ function posting_gen_topic_icons($mode, $icon_id)
 					'ICON_HEIGHT' 	=> $data['height'],
 	
 					'S_CHECKED'		=> ($id == $icon_id) ? true : false,
-					'S_ICON_CHECKED' => ($id == $icon_id) ? ' checked="checked"' : '')
-				);
+					'S_ICON_CHECKED' => ($id == $icon_id) ? ' checked="checked"' : ''
+				));
 			}
 		}
 
@@ -632,7 +630,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 	if ($forum_id || $topic_id)
 	{
 		$sql = 'SELECT d.draft_id, d.topic_id, d.forum_id, d.draft_subject, d.save_time, f.forum_name
-			FROM ' . DRAFTS_TABLE . ' d, ' . FORUMS_TABLE . ' f
+			FROM ' . FORUMS_DRAFTS_TABLE . ' d, ' . FORUMS_TABLE . ' f
 				WHERE d.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND f.forum_id = d.forum_id ' . 
 				(($forum_id) ? " AND f.forum_id = $forum_id" : '') . '
@@ -641,7 +639,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 	else
 	{
 		$sql = 'SELECT *
-			FROM ' . DRAFTS_TABLE . '
+			FROM ' . FORUMS_DRAFTS_TABLE . '
 				WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND forum_id = 0
 				AND topic_id = 0
@@ -664,7 +662,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 	if (sizeof($topic_ids))
 	{
 		$sql = 'SELECT topic_id, forum_id, topic_title
-			FROM ' . TOPICS_TABLE . '
+			FROM ' . FORUMS_TOPICS_TABLE . '
 			WHERE topic_id IN (' . implode(',', array_unique($topic_ids)) . ')';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -813,209 +811,149 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 // User Notification
 function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id, $topic_id, $post_id)
 {
-	// Going to rewite this
-	return; 
-	
 	global $config, $_CORE_CONFIG, $_CLASS, $site_file_root;
 
-	$topic_notification = ($mode == 'reply' || $mode == 'quote');
-	$forum_notification = ($mode == 'post');
+return;
 
-	if (!$topic_notification && !$forum_notification)
+	if ($mode == 'reply' || $mode == 'quote')
 	{
-		trigger_error('WRONG_NOTIFICATION_MODE');
+		$notify_type = 'topic';
+		$template = 'topic_notify'; //forum_notify
+		$where = "(w.forum_id = $forum_id OR w.topic_id = $topic_id)";
+	}
+	else
+	{
+		$notify_type = 'forum';
+		$template = 'newtopic_notify';
+		$where = 'w.forum_id = '.$forum_id;
 	}
 
 	$topic_title = ($topic_notification) ? $topic_title : $subject;
 	$topic_title = censor_text($topic_title);
 
-	// Get banned User ID's
-	$sql = 'SELECT ban_userid 
-		FROM ' . BANLIST_TABLE;
-	$result = $_CLASS['core_db']->query($sql);
+	$holding = array();
 
-	$sql_ignore_users = ANONYMOUS . ', ' . $_CLASS['core_user']->data['user_id'];
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		if (isset($row['ban_userid']))
-		{
-			$sql_ignore_users .= ', ' . $row['ban_userid'];
-		}
-	}
-	$_CLASS['core_db']->free_result($result);
+// Add use of notification type
 
-	$notify_rows = array();
-
-	// -- get forum_userids	|| topic_userids
-	$sql = 'SELECT u.user_id, u.username, u.user_email, u.user_lang, u.user_notify_type, u.user_jabber 
-		FROM ' . (($topic_notification) ? TOPICS_WATCH_TABLE : FORUMS_WATCH_TABLE) . ' w, ' . USERS_TABLE . ' u
-		WHERE w.' . (($topic_notification) ? 'topic_id' : 'forum_id') . ' = ' . (($topic_notification) ? $topic_id : $forum_id) . "
-			AND w.user_id NOT IN ($sql_ignore_users)
+	// Lets get all the users that are set to be notified
+	// $sql = 'SELECT w.notify_type, u.user_id, u.username, u.user_email, u.user_lang, u.user_notify_type, u.user_jabber 
+	$sql = 'SELECT w.notify_type, u.user_id, u.username, u.user_email, u.user_lang
+		FROM '.FORUMS_WATCH_TABLE.' w, ' . USERS_TABLE . " u
+		WHERE $where
 			AND w.notify_status = 0
-			AND u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')
+			AND u.user_status = ". STATUS_ACTIVE . '
 			AND u.user_id = w.user_id';
 	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	while ($user = $_CLASS['core_db']->fetch_user_assoc($result))
 	{
-		$notify_rows[$row['user_id']] = array(
-			'user_id'		=> $row['user_id'],
-			'username'		=> $row['username'],
-			'user_email'	=> $row['user_email'],
-			'user_jabber'	=> $row['user_jabber'], 
-			'user_lang'		=> $row['user_lang'], 
-			'notify_type'	=> ($topic_notification) ? 'topic' : 'forum',
-			'template'		=> ($topic_notification) ? 'topic_notify' : 'newtopic_notify',
-			'method'		=> $row['user_notify_type'], 
-			'allowed'		=> false
-		);
+		$ignore_array[$user['user_id']] = $user['user_id'];
+
+		$holding[$user['user_id']] = $user;
+		$holding[$user['user_id']]['template'] = ($notify_type == 'topic' && $user['forum_id']) ? 'forum_notify' : $template;
+		
+		if ($notify_type == 'topic' && $user['forum_id'])
+		{
+			$holding[$user['user_id']]['template'] = 'forum_notify';
+			$holding[$user['user_id']]['update'] = 'forum';
+		}
+		else
+		{
+			$holding[$user['user_id']]['template'] = $template;
+			$holding[$user['user_id']]['update'] = $notify_type;
+		}
 	}
 	$_CLASS['core_db']->free_result($result);
 	
-	// forum notification is sent to those not receiving post notification
-	if ($topic_notification)
-	{
-		if (sizeof($notify_rows))
-		{
-			$sql_ignore_users .= ', ' . implode(', ', array_keys($notify_rows));
-		}
-
-		$sql = 'SELECT u.user_id, u.username, u.user_email, u.user_lang, u.user_notify_type, u.user_jabber 
-			FROM ' . FORUMS_WATCH_TABLE . ' fw, ' . USERS_TABLE . " u
-			WHERE fw.forum_id = $forum_id
-				AND fw.user_id NOT IN ($sql_ignore_users)
-				AND fw.notify_status = 0
-				AND u.user_type IN (" . USER_NORMAL . ', ' . USER_FOUNDER . ')
-				AND u.user_id = fw.user_id';
-		$result = $_CLASS['core_db']->query($sql);
-
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			$notify_rows[$row['user_id']] = array(
-				'user_id'		=> $row['user_id'],
-				'username'		=> $row['username'],
-				'user_email'	=> $row['user_email'],
-				'user_jabber'	=> $row['user_jabber'], 
-				'user_lang'		=> $row['user_lang'],
-				'notify_type'	=> 'forum',
-				'template'		=> 'forum_notify',
-				'method'		=> $row['user_notify_type'], 
-				'allowed'		=> false
-			);
-		}
-		$_CLASS['core_db']->free_result($result);
-	}
-
-	if (!sizeof($notify_rows))
+	if (empty($holding))
 	{
 		return;
 	}
 
-	foreach ($_CLASS['auth']->acl_get_list(array_keys($notify_rows), 'f_read', $forum_id) as $forum_id => $forum_ary)
+	// Now we remove the users that aren't allowed to read the forum
+	$acl_list = $_CLASS['auth']->acl_get_list(array_keys($ignore_array), 'f_read', $forum_id);
+
+	foreach($forum_ary[$forum_id]['f_read'] as $user_id)
 	{
-		foreach ($forum_ary as $auth_option => $user_ary)
-		{
-			foreach ($user_ary as $user_id)
-			{
-				$notify_rows[$user_id]['allowed'] = true;
-			}
-		}
+		unset($ignore_array[$user_id]);
 	}
 
+	$processed = $update = array();
 
-	// Now, we have to do a little step before really sending, we need to distinguish our users a little bit. ;)
-	$msg_users = $delete_ids = $update_notification = array();
-	foreach ($notify_rows as $user_id => $row)
+	foreach ($holding as $user)
 	{
-		if (!$row['allowed'] || !trim($row['user_email']))
+		if (!in_array($user['user_id'], $ignore_array))
 		{
-			$delete_ids[$row['notify_type']][] = $row['user_id'];
-		}
-		else
-		{
-			$msg_users[] = $row;
-			$update_notification[$row['notify_type']][] = $row['user_id'];
+			$processed[$user['template']][] = $user;
+			$update[$user['update']][] = $user['user_id'];
 		}
 	}
-	unset($notify_rows);
+	unset($holding, $ignore_array);
 
-	// Now, we are able to really send out notifications
-	if (sizeof($msg_users))
+	if (empty($processed))
 	{
-		require_once($site_file_root.'includes/forums/functions_messenger.php');
-		$messenger = new messenger();
-
-		$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
-
-		$msg_list_ary = array();
-		foreach ($msg_users as $row)
-		{ 
-			$pos = (!isset($msg_list_ary[$row['template']])) ? 0 : sizeof($msg_list_ary[$row['template']]);
-
-			$msg_list_ary[$row['template']][$pos]['method']	= $row['method'];
-			$msg_list_ary[$row['template']][$pos]['email']	= $row['user_email'];
-			$msg_list_ary[$row['template']][$pos]['jabber']	= $row['user_jabber'];
-			$msg_list_ary[$row['template']][$pos]['name']	= $row['username'];
-			$msg_list_ary[$row['template']][$pos]['lang']	= $row['user_lang'];
-		}
-		unset($msg_users);
-
-		foreach ($msg_list_ary as $email_template => $email_list)
-		{
-			foreach ($email_list as $addr)
-			{
-				$messenger->template($email_template, $addr['lang']);
-
-				$messenger->replyto($config['board_email']);
-				$messenger->to($addr['email'], $addr['name']);
-				$messenger->im($addr['jabber'], $addr['name']);
-
-				$messenger->assign_vars(array(
-					'EMAIL_SIG'		=> $email_sig,
-					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
-					'USERNAME'		=> $addr['name'],
-					'TOPIC_TITLE'	=> $topic_title,  
-					'FORUM_NAME'	=> $forum_name,
-
-					'U_FORUM'				=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&e=0", array('sid' => false, 'full' => true)),
-					'U_TOPIC'				=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&e=0", array('sid' => false, 'full' => true)),
-					'U_NEWEST_POST'			=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&p=$post_id&e=$post_id", array('sid' => false, 'full' => true)),
-					'U_STOP_WATCHING_TOPIC' => generate_link("Forums&amp;file=viewtopic&f=$forum_id&t=$topic_id&unwatch=topic", array('sid' => false, 'full' => true)),
-					'U_STOP_WATCHING_FORUM' => generate_link("Forums&amp;file=viewforum&f=$forum_id&unwatch=forum", array('sid' => false, 'full' => true)), 
-				));
-
-				$messenger->send($addr['method']);
-				$messenger->reset();
-			}
-		}
-		unset($msg_list_ary);
-
-		if ($messenger->queue)
-		{
-			$messenger->save_queue();
-		}
+		return;
 	}
 
-	// Handle the DB updates
+	require_once($site_file_root.'includes/forums/functions_messenger.php');
+	$messenger = new messenger();
+
+	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
+
+	require_once($site_file_root.'includes/mailer.php');
+
+	foreach ($processed as $template => $user_list)
+	{
+		$mailer = new core_mailer;
+
+		$count = count($user_list);
+		for ($i = 0; $i < $count; $i++)
+		{
+			$mailer->to($user_list[$i]['user_id'], $user_list[$i]['username']);
+		}
+
+// this has to change
+		$mailer->subject($_CLASS['core_user']->get_lang('FORUM_NOTIFICATION'));
+
+		$_CLASS['core_template']->assign_array(array(
+			'EMAIL_SIG'		=> '',
+			'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
+			'TOPIC_TITLE'	=> $topic_title,  
+			'FORUM_NAME'	=> $forum_name,
+
+			'U_FORUM'				=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&e=0", array('sid' => false, 'full' => true)),
+			'U_TOPIC'				=> generate_link("Forums&amp;file=viewtopic&t=$topic_id&e=0", array('sid' => false, 'full' => true)),
+			'U_NEWEST_POST'			=> generate_link("Forums&amp;file=viewtopic&t=$topic_id&p=$post_id&e=$post_id", array('sid' => false, 'full' => true)),
+			'U_STOP_WATCHING_TOPIC' => generate_link("Forums&amp;file=viewtopic&t=$topic_id&unwatch=topic", array('sid' => false, 'full' => true)),
+			'U_STOP_WATCHING_FORUM' => generate_link("Forums&amp;file=viewforum&f=$forum_id&unwatch=forum", array('sid' => false, 'full' => true)), 
+		));
+
+		//$mailer->message = trim($_CLASS['core_template']->display('fdsgfd'.$template, true));
+		//$mailer->send();
+		
+		unset($mailer);
+	}
+
 	$_CLASS['core_db']->transaction();
 
-	if (isset($update_notification['topic']) && sizeof($update_notification['topic']))
+	if (!empty($update['topic']))
 	{
-		$_CLASS['core_db']->query('UPDATE ' . TOPICS_WATCH_TABLE . "
+		$_CLASS['core_db']->query('UPDATE ' . FORUMS_WATCH_TABLE . "
 			SET notify_status = 1
 			WHERE topic_id = $topic_id
-				AND user_id IN (" . implode(', ', $update_notification['topic']) . ")");
+				AND user_id IN (" . implode(', ', $update['topic']) . ")");
 	}
 
-	if (isset($update_notification['forum']) && sizeof($update_notification['forum']))
+	if (!empty($update['forum']))
 	{
 		$_CLASS['core_db']->query('UPDATE ' . FORUMS_WATCH_TABLE . "
 			SET notify_status = 1
 			WHERE forum_id = $forum_id
-				AND user_id IN (" . implode(', ', $update_notification['forum']) . ")");
+				AND user_id IN (" . implode(', ', $update['forum']) . ")");
 	}
 
 	// Now delete the user_ids not authorized to receive notifications on this topic/forum
+	/*
 	if (isset($delete_ids['topic']) && sizeof($delete_ids['topic']))
 	{
 		$_CLASS['core_db']->query('DELETE FROM ' . TOPICS_WATCH_TABLE . "
@@ -1029,6 +967,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 			WHERE forum_id = $forum_id
 				AND user_id IN (" . implode(', ', $delete_ids['forum']) . ")");
 	}
+	*/
 
 	$_CLASS['core_db']->sql_transaction('commit');
 }

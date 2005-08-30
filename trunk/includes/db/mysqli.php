@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 class db_mysqli
@@ -95,7 +97,7 @@ class db_mysqli
 		$this->return_on_error = $fail;
 	}
 
-	function transaction($option = 'start')
+	function transaction($option = 'start', $auto_rollback = true)
 	{
 		if (!$this->link_identifier)
 		{
@@ -125,7 +127,7 @@ class db_mysqli
 
 				$result = mysqli_commit($this->link_identifier);
 
-				if (!$result)
+				if (!$result && $auto_rollback)
 				{
 					mysqli_rollback($this->link_identifier);
 				}
@@ -637,7 +639,7 @@ class db_mysqli
 		{
 			return;
 		}*/
-		$field = is_array($field) ? implode(',', $field) : $field;
+		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)
 		{
@@ -651,7 +653,6 @@ class db_mysqli
 			break;
 		}
 	}
-
 }
 
 ?>

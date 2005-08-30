@@ -500,11 +500,11 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 }
 
 // Topic and forum watching common code
-function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_status = 'unset', $start = 0)
+function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset', $start = 0)
 {
-	global $_CLASS, $_CLASS, $_CORE_CONFIG;
+	global $_CLASS, $config, $_CORE_CONFIG;
 
-	if (!$_CLASS['core_user']->is_user || $_CORE_CONFIG['email']['email_enable'] || $config['allow_topic_notify'])
+	if (!$_CLASS['core_user']->is_user || !$_CORE_CONFIG['email']['email_enable'] || !$config['allow_topic_notify'])
 	{
 		return array('link' => '', 'title' => '', 'watching' => false);
 	}
@@ -523,7 +523,7 @@ function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_sta
 				AND user_id = $user_id";
 		$result = $_CLASS['core_db']->query($sql);
 
-		$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : NULL;
+		$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : null;
 		$_CLASS['core_db']->free_result($result);
 	}
 
@@ -534,15 +534,30 @@ function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_sta
 			if ($_GET['watch'] == $mode)
 			{
 				$is_watching = true;
-	
-				$sql = 'INSERT INTO ' . FORUMS_WATCH_TABLE . " (user_id, $where_sql, notify_status)
-					VALUES ($user_id, $match_id, 0)";
-				$_CLASS['core_db']->query($sql);
+
+				/*
+				if ($mode == 'forum')
+				{
+					$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
+						WHERE topic_id = $match_id
+							AND user_id = $user_id";
+				
+					$_CLASS['core_db']->query($sql);
+				}
+				*/
+
+				$sql_array = array(
+					'user_id' => (int) $user_id,
+					$where_sql => (int) $match_id,
+					'notify_status' => 0
+				);
+
+				$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_WATCH_TABLE . ' '.$_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
 			}
 
-			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
-			$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
-			trigger_error($message);
+			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
+			//$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
+			//trigger_error($message);
 		}
 	}
 	else
@@ -556,12 +571,13 @@ function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_sta
 				$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
 					WHERE $where_sql = $match_id
 						AND user_id = $user_id";
+
 				$_CLASS['core_db']->query($sql);
 			}
 
-			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
-			$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
-			trigger_error($message);
+			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
+			//$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
+			//trigger_error($message);
 		}
 		else
 		{
@@ -582,7 +598,7 @@ function watch_topic_forum($mode, &$s_watching, $user_id, $match_id, $notify_sta
 			'watching' => true,
 			'link' => generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start"),
 			'title' => $_CLASS['core_user']->lang[(($is_watching) ? 'STOP' : 'START') . '_WATCHING_' . strtoupper($mode)],
-		);
+	);
 }
 
 // Marks a topic or form as read
@@ -1359,7 +1375,6 @@ function page_header()
 // Temp
 		'T_IMAGE_PATH'			=> "themes/viperal/template/modules/Forums/images/",
 
-		'TRANSLATION_INFO'	=> 'Ported by <a href="http://www.viperal.com/" target="viperal">Viperal</a>',
 		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
 	));

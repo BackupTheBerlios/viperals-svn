@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 // -------------------------------------------------------------
@@ -150,7 +152,7 @@ if ($_CLASS['core_user']->is_user)
 {
 	$extra_fields .= ', tw.notify_status';
 	$join_sql_table .= ' LEFT JOIN ' . FORUMS_WATCH_TABLE . ' tw ON (tw.user_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-		AND tw.forum_id = $forum_id AND tw.topic_id IN ($topic_id, 0) )";
+		AND (tw.forum_id = $forum_id OR tw.topic_id = $topic_id))";
 
 	if ($config['allow_bookmarks'])
 	{
@@ -179,8 +181,6 @@ if (!$topic_data || $topic_data['forum_status'] == ITEM_DELETING || (!$topic_dat
 	trigger_error('NO_TOPIC');
 }
 
-$topic_data['notify_status'] = isset($topic_data['notify_status']) ? $topic_data['notify_status'] : 0;
-
 //Check for read permission
 if (!$_CLASS['auth']->acl_get('f_read', $forum_id) && !$_CLASS['auth']->acl_get('m_', $forum_id))
 {
@@ -193,6 +193,7 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id) && !$_CLASS['auth']->acl_get(
 }
 
 // Are we watching this topic?
+$topic_data['notify_status'] = isset($topic_data['notify_status']) ? $topic_data['notify_status'] : null;
 $s_watching_topic = watch_topic_forum('topic', $_CLASS['core_user']->data['user_id'], $topic_id, $topic_data['notify_status'], $start);
 
 // Bookmarks
@@ -592,7 +593,7 @@ if (empty($post_list))
 	trigger_error($_CLASS['core_user']->lang['NO_TOPIC']);
 }
 
-$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_regdate, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, z.friend, z.foe, p.*
+$sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_reg_date, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, z.friend, z.foe, p.*
 	FROM ' . FORUMS_POSTS_TABLE . ' p
 	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id), ' . USERS_TABLE . ' u
 	WHERE p.post_id IN (' . implode(', ', $post_list) . ')
@@ -712,7 +713,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			$id_cache[] = $poster_id;
 
 			$user_cache[$poster_id] = array(
-				'joined'				=> $_CLASS['core_user']->format_date($row['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
+				'joined'				=> $_CLASS['core_user']->format_date($row['user_reg_date'], $_CLASS['core_user']->lang['DATE_FORMAT']),
 				'posts'					=> $row['user_posts'],
 				'from'					=> $row['user_from'],
 				'sig'					=> $user_sig,

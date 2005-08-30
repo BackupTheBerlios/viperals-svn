@@ -983,54 +983,6 @@ function avatar_upload($data, &$error)
 	return array(AVATAR_UPLOAD, $file->get('realname'), $file->get('width'), $file->get('height'));
 }
 
-function avatar_gallery($category, &$error)
-{
-	global $config, $_CLASS, $_CORE_CONFIG;
-
-	$path = $config['avatar_gallery_path'];
-	
-	if (!file_exists($path) || !is_dir($path))
-	{
-		return array($_CLASS['core_user']->lang['NONE'] => array());
-	}
-	
-	// To be replaced with SQL ... before M3 completion
-	$dp = @opendir($path);
-
-	$data = array();
-	$count = 0;
-
-	while ($file = readdir($dp))
-	{
-		if ($file{0} != '.' && is_dir("$path/$file"))
-		{
-			$dp2 = @opendir("$path/$file");
-
-			while ($sub_file = readdir($dp2))
-			{
-				if (preg_match('#\.(gif$|png$|jpg|jpeg)$#i', $sub_file))
-				{
-					$data[$file][$count]['file'] = "$file/$sub_file"; 
-					$data[$file][$count]['name'] = ucfirst(str_replace('_', ' ', preg_replace('#^(.*)\..*$#', '\1', $sub_file)));
-
-					$count++;
-				}
-			}
-			closedir($dp2);
-		}
-	}
-	closedir($dp);
-	
-	if (!sizeof($data))
-	{
-		return false;
-	}
-	
-	ksort($data);
-
-	return $data;
-}
-
 //
 // Usergroup functions
 //

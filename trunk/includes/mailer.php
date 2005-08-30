@@ -182,9 +182,10 @@ class core_mailer
 			$message = "\n".strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message)))."\n";
 		}
 
-		if (!$_CORE_CONFIG['email']['smtp'])
+		if ($_CORE_CONFIG['email']['smtp'])
 		{
 			$smtp = new smtp_mailer;
+
 			if ($connect = $smtp->connect($_CORE_CONFIG['email']['smtp_host'], $_CORE_CONFIG['email']['smtp_port']))
 			{
 				$login = $smtp->login($_CORE_CONFIG['email']['smtp_username'], $_CORE_CONFIG['email']['smtp_password']);
@@ -252,7 +253,7 @@ class smtp_mailer
 		$port = ((int) $port) ? (int) $port : 25;
 
 		//$host = 'tls://smtp.gmail.com';
-		//$port = 587;
+		//$port = 465;
 
 		$this->connection = fsockopen($host, $port, $errno, $errstr, 5);
 

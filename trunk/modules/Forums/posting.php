@@ -1,4 +1,26 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 // -------------------------------------------------------------
 //
 // $Id: posting.php,v 1.346 2004/10/19 19:20:29 acydburn Exp $
@@ -10,6 +32,7 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+
 if (!defined('VIPERAL'))
 {
     die;
@@ -21,13 +44,12 @@ $topic_id	= request_var('t', 0);
 $forum_id	= request_var('f', 0);
 $draft_id	= request_var('d', 0);
 
-$submit		= (isset($_POST['post']));
-$preview	= (isset($_POST['preview']));
-$save		= (isset($_POST['save']));
-$load		= (isset($_POST['load']));
-$cancel		= (isset($_POST['cancel']));
-$confirm	= (isset($_POST['confirm']));
-$delete		= (isset($_POST['delete']));
+$submit		= isset($_POST['post']);
+$preview	= isset($_POST['preview']);
+$save		= isset($_POST['save']);
+$load		= isset($_POST['load']);
+$confirm	= isset($_POST['confirm']);
+$delete		= isset($_POST['delete']);
 
 $refresh	= isset($_POST['add_file']) || isset($_POST['delete_file']) || isset($_POST['edit_comment']) || isset($_POST['cancel_unglobalise']) || $save || $load;
 
@@ -37,10 +59,10 @@ $error = array();
 $current_time = $_CLASS['core_user']->time;
 
 // Was cancel pressed? If so then redirect to the appropriate page
-if ($_CLASS['core_user']->is_bot || $cancel)
+if ($_CLASS['core_user']->is_bot || isset($_POST['cancel']))
 {
-	$redirect = ($post_id) ? generate_link("Forums&amp;file=viewtopic&p=$post_id#$post_id") : (($topic_id) ? generate_link('Forums&amp;file=viewtopic&t='.$topic_id) : (($forum_id) ? generate_link('Forums&amp;file=viewforum&f='.$forum_id) : generate_link('Forums')));
-	url_redirect($redirect);
+	$redirect = ($post_id) ? "Forums&amp;file=viewtopic&p=$post_id#$post_id" : (($topic_id) ? 'Forums&amp;file=viewtopic&t='.$topic_id : (($forum_id) ? 'Forums&amp;file=viewforum&f='.$forum_id : 'Forums'));
+	redirect(generate_link($redirect,  array('full' => true)));
 }
 
 switch ($mode)
@@ -54,7 +76,7 @@ switch ($mode)
 		$sql = 'SELECT *
 			FROM ' . FORUMS_FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
-		break;
+	break;
 
 	case 'bump':
 	case 'reply':
@@ -64,9 +86,8 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT t.*, f.* 
-			FROM ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . " f
-			WHERE t.topic_id = $topic_id
-				AND f.forum_id = t.forum_id";
+			FROM ' . FORUMS_TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_FORUMS_TABLE . " f ON (f.forum_id = t.forum_id)
+			WHERE t.topic_id = $topic_id";
 	break;
 
 	case 'quote':
@@ -78,16 +99,19 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT f.*, t.*, p.*, u.username, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield
-			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . ' f, ' . FORUMS_USERS_TABLE . " u
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u , ' . FORUMS_TOPICS_TABLE . ' t
+			LEFT JOIN ' . FORUMS_FORUMS_TABLE . " f ON (f.forum_id = t.forum_id)
 			WHERE p.post_id = $post_id
 				AND t.topic_id = p.topic_id
-				AND u.user_id = p.poster_id
-				AND (f.forum_id = t.forum_id 
-					OR f.forum_id = $forum_id)";
-		break;
+				AND u.user_id = p.poster_id";
+	break;
 
 	case 'smilies':
+		require_once($site_file_root.'includes/forums/functions_posting.php');
+
 		generate_smilies('window', $forum_id);
+
+		script_close(false);
 	break;
 
 	default:
@@ -109,9 +133,10 @@ require_once($site_file_root.'includes/forums/message_parser.php');
 require_once($site_file_root.'includes/forums/functions_admin.php');
 require_once($site_file_root.'includes/forums/functions_posting.php');
 
+// remove
 extract($posting_data);
 
-if (!$_CLASS['auth']->acl_get('f_' . $mode, $forum_id) && !$_CLASS['auth']->acl_get('m_'. $mode, $forum_id) && $forum_type == FORUM_POST)
+if ($posting_data['forum_type'] == FORUM_POST && !$_CLASS['auth']->acl_get('f_' . $mode, $forum_id) && !$_CLASS['auth']->acl_get('m_'. $mode, $forum_id))
 {
 	if ($_CLASS['core_user']->is_user)
 	{
@@ -121,19 +146,11 @@ if (!$_CLASS['auth']->acl_get('f_' . $mode, $forum_id) && !$_CLASS['auth']->acl_
 	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_EXPLAIN_' . strtoupper($mode)]));
 }
 
-$quote_username = (isset($username)) ? $username : ((isset($post_username)) ? $post_username : '');
-
-$forum_id	= (int) $forum_id;
+$forum_id	= (int) $posting_data['forum_id'];
 $topic_id	= (int) $topic_id;
 $post_id	= (int) $post_id;
 
-// Global Topic? - Adjust forum id
-if (!$forum_id && $topic_type == POST_GLOBAL)
-{
-	$forum_id = request_var('f', 0);
-}
-
-$post_edit_locked = (isset($post_edit_locked)) ? (int) $post_edit_locked : 0;
+$posting_data['post_edit_locked'] = isset($posting_data['post_edit_locked']) ? (int) $posting_data['post_edit_locked'] : false;
 
 $_CLASS['core_user']->add_lang(array('posting', 'mcp', 'viewtopic'));
 $_CLASS['core_user']->add_img();
@@ -149,9 +166,8 @@ if ($forum_password)
 	unset($forum_info);
 }
 
-$post_subject = (in_array($mode, array('quote', 'edit', 'delete'))) ? $post_subject : ((isset($topic_title)) ? $topic_title : '');
-
-$topic_time_limit = (isset($topic_time_limit)) ? (($topic_time_limit) ? (int) $topic_time_limit / 86400 : (int) $topic_time_limit) : 0;
+$post_subject = in_array($mode, array('quote', 'edit', 'delete')) ? $posting_data['post_subject'] : (isset($posting_data['topic_title']) ? $posting_data['topic_title'] : '');
+$topic_time_limit = (isset($posting_data['topic_time_limit']) && $posting_data['topic_time_limit']) ? (int) $posting_data['topic_time_limit'] / 86400 : 0;
 
 $poll_length = (isset($poll_length)) ? (($poll_length) ? (int) $poll_length / 86400 : (int) $poll_length) : 0;
 $poll_start = (isset($poll_start)) ? (int) $poll_start : 0;
@@ -191,16 +207,18 @@ $message_parser->get_submitted_attachment_data();
 
 // Set uninitialized variables
 $uninit = array('post_attachment' => 0, 'poster_id' => 0, 'enable_magic_url' => 0, 'topic_status' => 0, 'topic_type' => POST_NORMAL, 'subject' => '', 'topic_title' => '', 'post_time' => 0, 'post_edit_reason' => '');
+
 foreach ($uninit as $var_name => $default_value)
 {
-	if (!isset($$var_name))
+	if (!isset($posting_data[$var_name]))
 	{
-		$$var_name = $default_value;
+		$posting_data[$var_name] = $default_value;
 	}
 }
+
 unset($uninit, $var_name, $default_value);
 
-if ($post_attachment && !$submit && !$refresh && !$preview && $mode == 'edit')
+if ($posting_data['post_attachment'] && !$submit && !$refresh && !$preview && $mode == 'edit')
 {
 	$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
 		FROM ' . FORUMS_ATTACHMENTS_TABLE . "
@@ -214,16 +232,16 @@ if ($post_attachment && !$submit && !$refresh && !$preview && $mode == 'edit')
 	$_CLASS['core_db']->free_result($result);
 }
 
-if ($poster_id == ANONYMOUS || !$poster_id)
+if (!$posting_data['poster_id'] || $posting_data['poster_id'] == ANONYMOUS)
 {
-	$username = (in_array($mode, array('quote', 'edit', 'delete'))) ? trim($post_username) : '';
+	$posting_data['username'] = in_array($mode, array('quote', 'edit', 'delete')) ? trim($posting_data['post_username']) : get_variable('username', 'POST', '');
 }
 else
 {
-	$username = (in_array($mode, array('quote', 'edit', 'delete'))) ? trim($username) : '';
+	$posting_data['username'] = in_array($mode, array('quote', 'edit', 'delete')) ? trim($posting_data['username']) : '';
 }
 
-$enable_urls = $enable_magic_url;
+$enable_urls = $posting_data['enable_magic_url'];
 $enable_html = (isset($enable_html)) ? $enable_html : $config['allow_html'];
 
 if (!in_array($mode, array('quote', 'edit', 'delete')))
@@ -234,7 +252,7 @@ if (!in_array($mode, array('quote', 'edit', 'delete')))
 	$enable_urls	= true;
 }
 
-$enable_magic_url = $drafts = false;
+$posting_data['enable_magic_url'] = $drafts = false;
 
 // User own some drafts?
 if ($_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedrafts') && $mode != 'delete')
@@ -256,26 +274,29 @@ if ($_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedrafts') &&
 $check_value = (($enable_html+1) << 16) + (($enable_bbcode+1) << 8) + (($enable_smilies+1) << 4) + (($enable_urls+1) << 2) + (($enable_sig+1) << 1);
 
 // Notify user checkbox
+$notify_set = false;
+
 if ($mode != 'post' && $_CLASS['core_user']->is_user)
 {
-	$sql = 'SELECT topic_id
+	$sql = 'SELECT forum_id, topic_id
 		FROM ' . FORUMS_WATCH_TABLE . "
-		WHERE forum_id = $forum_id AND topic_id IN ($topic_id, 0)
+		WHERE (forum_id = $forum_id OR topic_id = $topic_id)
 			AND user_id = " . $_CLASS['core_user']->data['user_id'];
+
 	$result = $_CLASS['core_db']->query_limit($sql, 1);
-	$notify_set = ($_CLASS['core_db']->fetch_row_assoc($result)) ? 1 : 0;
+
+	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$notify_set = ($row['topic_id']) ? 1 : 2;
+	}
 	$_CLASS['core_db']->free_result($result);
-}
-else
-{
-	$notify_set = 0;
 }
 
 // Forum/Topic locked?
 // what about if we want to delete/etc ?
-if (($forum_status == ITEM_LOCKED || $topic_status == ITEM_LOCKED) && !$_CLASS['auth']->acl_get('m_edit', $forum_id))
+if (($posting_data['forum_status'] == ITEM_LOCKED || $posting_data['topic_status'] == ITEM_LOCKED) && !$_CLASS['auth']->acl_get('m_edit', $forum_id))
 {
-	$message = ($forum_status == ITEM_LOCKED) ? 'FORUM_LOCKED' : 'TOPIC_LOCKED';
+	$message = ($posting_data['forum_status'] == ITEM_LOCKED) ? 'FORUM_LOCKED' : 'TOPIC_LOCKED';
 	trigger_error($message);
 }
 
@@ -284,19 +305,19 @@ if (($forum_status == ITEM_LOCKED || $topic_status == ITEM_LOCKED) && !$_CLASS['
 // !$preview && !$refresh && !$submit &&
 if ($mode == 'edit' && !$preview && !$refresh && !$submit && !$_CLASS['auth']->acl_get('m_edit', $forum_id))
 {
-	if ($_CLASS['core_user']->data['user_id'] != $poster_id)
+	if ($posting_data['post_edit_locked'])
+	{
+		trigger_error('CANNOT_EDIT_POST_LOCKED');
+	}
+
+	if ($_CLASS['core_user']->data['user_id'] != $posting_data['poster_id'])
 	{
 		trigger_error('USER_CANNOT_EDIT');
 	}
 
-	if (!($post_time > time() - $config['edit_time'] || !$config['edit_time']))
+	if (!($posting_data['post_time'] > time() - $config['edit_time'] || !$config['edit_time']))
 	{
 		trigger_error('CANNOT_EDIT_TIME');
-	}
-
-	if ($post_edit_locked)
-	{
-		trigger_error('CANNOT_EDIT_POST_LOCKED');
 	}
 }
 
@@ -311,7 +332,7 @@ if ($mode == 'edit')
 // Delete triggered ?
 if ($mode == 'delete')
 {
-	if ($_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id && ((!$_CLASS['core_user']->is_user && $poster_id == ANONYMOUS && $poster_ip && $poster_ip == $_CLASS['core_user']->ip) || ($_CLASS['core_user']->is_user && $poster_id == $_CLASS['core_user']->data['user_id'])))
+	if ($_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id == $topic_last_post_id && ((!$_CLASS['core_user']->is_user && $posting_data['poster_id'] == ANONYMOUS && $poster_ip && $poster_ip == $_CLASS['core_user']->ip) || ($_CLASS['core_user']->is_user && $posting_data['poster_id'] == $_CLASS['core_user']->data['user_id'])))
 	{
 		$user_deletable = true;
 	}
@@ -325,16 +346,16 @@ if ($mode == 'delete' && ($user_deletable || $_CLASS['auth']->acl_get('m_delete'
 {
 	$s_hidden_fields = '<input type="hidden" name="p" value="' . $post_id . '" /><input type="hidden" name="f" value="' . $forum_id . '" /><input type="hidden" name="mode" value="delete" />';
 
-	if (confirm_box(true))
+	if (display_confirmation(false, $s_hidden_fields))
 	{
 		$data = array(
 			'topic_first_post_id'=> $topic_first_post_id,
 			'topic_last_post_id'=> $topic_last_post_id,
 			'topic_approved'	=> $topic_approved,
-			'topic_type'		=> $topic_type,
+			'topic_type'		=> $posting_data['topic_type'],
 			'post_approved' 	=> $post_approved,
-			'post_time'			=> $post_time,
-			'poster_id'			=> $poster_id
+			'post_time'			=> $posting_data['post_time'],
+			'poster_id'			=> $posting_data['poster_id']
 		);
 		
 		$next_post_id = delete_post($mode, $post_id, $topic_id, $forum_id, $data);
@@ -343,7 +364,7 @@ if ($mode == 'delete' && ($user_deletable || $_CLASS['auth']->acl_get('m_delete'
 		{
 			if (!$user_deletable)
 			{
-				add_log('mod', $forum_id, $topic_id, 'LOG_DELETE_TOPIC', $topic_title);
+				add_log('mod', $forum_id, $topic_id, 'LOG_DELETE_TOPIC', $posting_data['topic_title']);
 			}
 
 			$meta_info = generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id);
@@ -362,21 +383,17 @@ if ($mode == 'delete' && ($user_deletable || $_CLASS['auth']->acl_get('m_delete'
 
 		$_CLASS['core_display']->meta_refresh(3, $meta_info);
 		$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id).'">', '</a>');
+
 		trigger_error($message);
-	}
-	else
-	{
-		confirm_box(false, 'DELETE_MESSAGE', $s_hidden_fields);
 	}
 }
 
-
-if ($mode == 'delete' && $poster_id != $_CLASS['core_user']->data['user_id'] && !$_CLASS['auth']->acl_get('f_delete', $forum_id))
+if ($mode == 'delete' && $posting_data['poster_id'] != $_CLASS['core_user']->data['user_id'] && !$_CLASS['auth']->acl_get('f_delete', $forum_id))
 {
 	trigger_error('DELETE_OWN_POSTS');
 }
 
-if ($mode == 'delete' && $poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id != $topic_last_post_id)
+if ($mode == 'delete' && $posting_data['poster_id'] == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id) && $post_id != $topic_last_post_id)
 {
 	trigger_error('CANNOT_DELETE_REPLIED');
 }
@@ -385,7 +402,6 @@ if ($mode == 'delete')
 {
 	trigger_error('USER_CANNOT_DELETE');
 }
-
 
 // HTML, BBCode, Smilies, Images and Flash status
 $html_status	= ($config['allow_html'] && $_CLASS['auth']->acl_get('f_html', $forum_id));
@@ -423,7 +439,7 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 
 	markread('topic', $forum_id, $topic_id, $current_time);
 
-	add_log('mod', $forum_id, $topic_id, sprintf($_CLASS['core_user']->lang['LOGM_BUMP'], $topic_title));
+	add_log('mod', $forum_id, $topic_id, sprintf($_CLASS['core_user']->lang['LOGM_BUMP'], $posting_data['topic_title']));
 
 	$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;p=$topic_last_post_id#$topic_last_post_id"));
 
@@ -440,7 +456,7 @@ elseif ($mode == 'bump')
 if ($save && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_savedrafts'))
 {
 	$subject = request_var('subject', '', true);
-	$subject = (!$subject && $mode != 'post') ? $topic_title : $subject;
+	$subject = (!$subject && $mode != 'post') ? $posting_data['topic_title'] : $subject;
 	$message = request_var('message', '', true);
 
 	if ($subject && $message)
@@ -494,8 +510,8 @@ if ($draft_id && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_sa
 	
 	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$_REQUEST['subject'] = html_entity_decode($row['draft_subject'],HTML_ENTITIES);
-		$_REQUEST['message'] = html_entity_decode($row['draft_message'],HTML_ENTITIES);
+		$_REQUEST['subject'] = html_entity_decode($row['draft_subject'], HTML_ENTITIES);
+		$_REQUEST['message'] = html_entity_decode($row['draft_message'], HTML_ENTITIES);
 
 		$refresh = true;
 		$_CLASS['core_template']->assign('S_DRAFT_LOADED', true);
@@ -514,35 +530,29 @@ if ($load && $drafts)
 
 if ($submit || $preview || $refresh)
 {
-	$topic_cur_post_id	= request_var('topic_cur_post_id', 0);
+	$posting_data['post_edit_reason'] = ($mode == 'edit' && isset($_POST['edit_reason']) && !empty($_POST['edit_reason']) && $_CLASS['core_user']->data['user_id'] != $posting_data['poster_id']) ? get_variable('edit_reason', 'POST', '') : '';
+	$posting_data['topic_type'] = isset($_POST['topic_type']) ? (int) $_POST['topic_type'] : (($mode != 'post') ? $posting_data['topic_type'] : POST_NORMAL);
 
-	$subject = request_var('subject', '', true);
+	$topic_cur_post_id	= get_variable('topic_cur_post_id', 'POST', 0, 'int');
 
-	if (strcmp($subject, strtoupper($subject)) == 0 && $subject)
-	{
-		$subject = strtolower($subject);
-	}
-	
-	$message_parser->message = request_var('message', '', true);
+	$subject = mb_strtolower(get_variable('subject', 'POST', ''));
+	$message_parser->message = get_variable('message', 'POST', '');
 
-	$username			= (isset($_POST['username'])) ? request_var('username', '') : $username;
-	$post_edit_reason	= (isset($_POST['edit_reason']) && !empty($_POST['edit_reason']) && $mode == 'edit' && $_CLASS['core_user']->data['user_id'] != $poster_id) ? request_var('edit_reason', '') : '';
 
-	$topic_type			= (isset($_POST['topic_type'])) ? (int) $_POST['topic_type'] : (($mode != 'post') ? $topic_type : POST_NORMAL);
 	$topic_time_limit	= (isset($_POST['topic_time_limit'])) ? (int) $_POST['topic_time_limit'] : (($mode != 'post') ? $topic_time_limit : 0);
-	$icon_id			= request_var('icon', 0);
+	$icon_id			= get_variable('icon', 'POST', 0, 'int');
 
 	$enable_html 		= (!$html_status || isset($_POST['disable_html'])) ? false : true;
 	$enable_bbcode 		= (!$bbcode_status || isset($_POST['disable_bbcode'])) ? false : true;
 	$enable_smilies		= (!$smilies_status || isset($_POST['disable_smilies'])) ? false : true;
-	$enable_urls 		= (isset($_POST['disable_magic_url'])) ? 0 : 1;
+	$enable_urls 		= isset($_POST['disable_magic_url']) ? 0 : 1;
 	$enable_sig			= (!$config['allow_sig']) ? false : (($_CLASS['core_user']->is_user && isset($_POST['attach_sig'])) ? true : false);
 
-	$notify				= (isset($_POST['notify']));
-	$topic_lock			= (isset($_POST['lock_topic']));
-	$post_lock			= (isset($_POST['lock_post']));
+	$notify				= isset($_POST['notify']);
+	$topic_lock			= isset($_POST['lock_topic']);
+	$post_lock			= isset($_POST['lock_post']);
 
-	$poll_delete		= (isset($_POST['poll_delete']));
+	$poll_delete		= isset($_POST['poll_delete']);
 	
 	// Faster than crc32
 	if ($submit)
@@ -557,7 +567,7 @@ if ($submit || $preview || $refresh)
 
 	// Delete Poll
 	if ($poll_delete && $mode == 'edit' && $poll_options && 
-		((!$poll_last_vote && $poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id)))
+		((!$poll_last_vote && $posting_data['poster_id'] == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id)))
 	{
 		switch (SQL_LAYER)
 		{
@@ -663,31 +673,29 @@ if ($submit || $preview || $refresh)
 		{
 			if ($last_post_time && ($current_time - $last_post_time) < intval($config['flood_interval']))
 			{
-				$error[] = $_CLASS['core_user']->lang['FLOOD_ERROR'];
+				$error[] = $_CLASS['core_user']->get_lang('FLOOD_ERROR');
 			}
 		}
 	}
 
 	// Validate username
-	if (($username && !$_CLASS['core_user']->is_user) || ($mode == 'edit' && $post_username))
+	if (($posting_data['username'] && !$_CLASS['core_user']->is_user) || ($mode == 'edit' && (!$posting_data['poster_id'] || $posting_data['poster_id'] == ANONYMOUS)))
 	{
-		require($site_file_root.'includes/forums/functions_user.php');
-		
-		if (($result = validate_username(($mode == 'edit' && $post_username) ? $post_username : $username)) != false)
+		require_once($site_file_root.'includes/functions_user.php');
+		$result = validate_username($posting_data['username']);
+
+		if ($result !== true)
 		{
-			if ((!$result == 'USERNAME_TAKEN') || ($result == 'USERNAME_TAKEN' && !$_CLASS['auth']->acl_get('m_edit', $forum_id)))
-			{
-				$error[] = $result;
-			}
+			$error[] = $result;
 		}
 	}
 
 	// Parse subject
-	if (!$subject && ($mode == 'post' || ($mode == 'edit' && $topic_first_post_id == $post_id)))
+	if (!$subject && ($mode == 'post' || ($mode == 'edit' && $posting_data['topic_first_post_id'] == $posting_data['post_id'])))
 	{
-		$error[] = $_CLASS['core_user']->lang['EMPTY_SUBJECT'];
+		$error[] = $_CLASS['core_user']->get_lang('EMPTY_SUBJECT');
 	}
-	
+
 	$poll_last_vote = (isset($poll_last_vote)) ? $poll_last_vote : 0;
 
 	if ($poll_option_text && 
@@ -725,19 +733,22 @@ if ($submit || $preview || $refresh)
 	}
 
 	// Check topic type
-	if ($topic_type != POST_NORMAL && ($mode == 'post' || ($mode == 'edit' && $topic_first_post_id == $post_id)))
+	if ($posting_data['topic_type'] != POST_NORMAL && ($mode == 'post' || ($mode == 'edit' && $posting_data['topic_first_post_id'] == $posting_data['post_id'])))
 	{
-		switch ($topic_type)
+		switch ($posting_data['topic_type'])
 		{
 			case POST_GLOBAL:
 			case POST_ANNOUNCE:
 				$auth_option = 'f_announce';
-				break;
+			break;
+
 			case POST_STICKY:
 				$auth_option = 'f_sticky';
-				break;
+			break;
+
 			default:
 				$auth_option = '';
+			break;	
 		}
 
 		if (!$_CLASS['auth']->acl_get($auth_option, $forum_id))
@@ -752,10 +763,10 @@ if ($submit || $preview || $refresh)
 	}
 
 	// Store message, sync counters
-	if (!sizeof($error) && $submit)
+	if (empty($error) && $submit)
 	{
 		// Check if we want to de-globalize the topic... and ask for new forum
-		if ($topic_type != POST_GLOBAL)
+		if ($posting_data['topic_type'] != POST_GLOBAL)
 		{
 			$sql = 'SELECT topic_type, forum_id
 				FROM ' . FORUMS_TOPICS_TABLE . "
@@ -788,21 +799,23 @@ if ($submit || $preview || $refresh)
 		if ($submit)
 		{
 			// Lock/Unlock Topic
-			$change_topic_status = $topic_status;
+			$change_topic_status = $posting_data['topic_status'];
 			$perm_lock_unlock = ($_CLASS['auth']->acl_get('m_lock', $forum_id) || ($_CLASS['auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_poster));
 
-			if ($topic_status == ITEM_LOCKED && !$topic_lock && $perm_lock_unlock)
+			if ($posting_data['topic_status'] == ITEM_LOCKED && !$topic_lock && $perm_lock_unlock)
 			{
 				$change_topic_status = ITEM_UNLOCKED;
 			}
-			else if ($topic_status == ITEM_UNLOCKED && $topic_lock && $perm_lock_unlock)
+			else if ($posting_data['topic_status'] == ITEM_UNLOCKED && $topic_lock && $perm_lock_unlock)
 			{
 				$change_topic_status = ITEM_LOCKED;
 			}
 		
-			if ($change_topic_status != $topic_status)
+			if ($change_topic_status != $posting_data['topic_status'])
 			{
-				$sql = 'UPDATE ' . TOPICS_TABLE . "
+				$posting_data['topic_status'] = $change_topic_status;
+
+				$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . "
 					SET topic_status = $change_topic_status
 					WHERE topic_id = $topic_id
 						AND topic_moved_id = 0";
@@ -810,21 +823,21 @@ if ($submit || $preview || $refresh)
 			
 				$user_lock = ($_CLASS['auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_poster) ? 'USER_' : '';
 
-				add_log('mod', $forum_id, $topic_id, 'LOG_' . $user_lock . (($change_topic_status == ITEM_LOCKED) ? 'LOCK' : 'UNLOCK'), $topic_title);
+				//add_log('mod', $forum_id, $topic_id, 'LOG_' . $user_lock . (($change_topic_status == ITEM_LOCKED) ? 'LOCK' : 'UNLOCK'), $posting_data['topic_title']);
 			}
 
 			// Lock/Unlock Post Edit
-			if ($mode == 'edit' && $post_edit_locked == ITEM_LOCKED && !$post_lock && $_CLASS['auth']->acl_get('m_edit', $forum_id))
+			if ($mode == 'edit' && $posting_data['post_edit_locked'] == ITEM_LOCKED && !$post_lock && $_CLASS['auth']->acl_get('m_edit', $forum_id))
 			{
-				$post_edit_locked = ITEM_UNLOCKED;
+				$posting_data['post_edit_locked'] = ITEM_UNLOCKED;
 			}
-			else if ($mode == 'edit' && $post_edit_locked == ITEM_UNLOCKED && $post_lock && $_CLASS['auth']->acl_get('m_edit', $forum_id))
+			else if ($mode == 'edit' && $posting_data['post_edit_locked'] == ITEM_UNLOCKED && $post_lock && $_CLASS['auth']->acl_get('m_edit', $forum_id))
 			{
-				$post_edit_locked = ITEM_LOCKED;
+				$posting_data['post_edit_locked'] = ITEM_LOCKED;
 			}
 
 			$post_data = array(
-				'topic_title'			=> (!$topic_title) ? $subject : $topic_title,
+				'topic_title'			=> (!$posting_data['topic_title']) ? $subject : $posting_data['topic_title'],
 				'topic_first_post_id'	=> (isset($topic_first_post_id)) ? (int) $topic_first_post_id : 0,
 				'topic_last_post_id'	=> (isset($topic_last_post_id)) ? (int) $topic_last_post_id : 0,
 				'topic_time_limit'		=> (int) $topic_time_limit,
@@ -832,7 +845,7 @@ if ($submit || $preview || $refresh)
 				'topic_id'				=> (int) $topic_id,
 				'forum_id'				=> (int) $forum_id,
 				'icon_id'				=> (int) $icon_id,
-				'poster_id'				=> (int) $poster_id,
+				'poster_id'				=> (int) $posting_data['poster_id'],
 				'enable_sig'			=> (bool) $enable_sig,
 				'enable_bbcode'			=> (bool) $enable_bbcode,
 				'enable_html' 			=> (bool) $enable_html,
@@ -840,17 +853,16 @@ if ($submit || $preview || $refresh)
 				'enable_urls'			=> (bool) $enable_urls,
 				'enable_indexing'		=> (bool) $enable_indexing,
 				'message_md5'			=> (string) $message_md5,
-				'post_time'				=> (isset($post_time)) ? (int) $post_time : $current_time,
+				'post_time'				=> ($posting_data['post_time']) ? (int) $posting_data['post_time'] : $current_time,
 				'post_checksum'			=> (isset($post_checksum)) ? (string) $post_checksum : '',
-				'post_edit_reason'		=> $post_edit_reason,
+				'post_edit_reason'		=> $posting_data['post_edit_reason'],
 				'post_edit_user'		=> ($mode == 'edit') ? $_CLASS['core_user']->data['user_id'] : ((isset($post_edit_user)) ? (int) $post_edit_user : 0),
 				'forum_parents'			=> $forum_parents,
 				'forum_name'			=> $forum_name,
 				'notify'				=> $notify,
 				'notify_set'			=> $notify_set,
 				'poster_ip'				=> (isset($poster_ip)) ? (int) $poster_ip : $_CLASS['core_user']->ip,
-				'post_edit_locked'		=> (int) $post_edit_locked,
-				'post_edit_locked'		=> (int) $post_edit_locked,
+				'post_edit_locked'		=> (int) $posting_data['post_edit_locked'],
 				'bbcode_bitfield'		=> (int) $message_parser->bbcode_bitfield,
 				'bbcode_uid'			=> $message_parser->bbcode_uid,
 				'message'				=> $message_parser->message,
@@ -859,7 +871,7 @@ if ($submit || $preview || $refresh)
 			);
 			unset($message_parser);
 			
-			submit_post($mode, $subject, $username, $topic_type, $poll, $post_data, $update_message);
+			submit_post($mode, $subject, $posting_data['username'], $posting_data['topic_type'], $poll, $post_data, $update_message);
 		}
 	}	
 
@@ -869,7 +881,7 @@ if ($submit || $preview || $refresh)
 // Preview
 if (!sizeof($error) && $preview)
 {
-	$post_time = ($mode == 'edit') ? $post_time : $current_time;
+	$posting_data['post_time'] = ($mode == 'edit') ? $posting_data['post_time'] : $current_time;
 
 	$preview_message = $message_parser->format_display($enable_html, $enable_bbcode, $enable_urls, $enable_smilies, false);
 
@@ -972,6 +984,7 @@ $message_parser->decode_message($bbcode_uid);
 
 if ($mode == 'quote' && !$preview && !$refresh)
 {
+	$quote_username = isset($posting_data['username']) ? $posting_data['username'] : (isset($posting_data['post_username']) ? $posting_data['post_username'] : '');
 	$message_parser->message = '[quote="' . $quote_username . '"]' . censor_text(trim($message_parser->message)) . "[/quote]\n";
 }
 
@@ -1014,7 +1027,7 @@ $topic_type_toggle = false;
 
 if ($mode == 'post' || ($mode == 'edit' && $post_id == $topic_first_post_id))
 {
-	$topic_type_toggle = posting_gen_topic_types($forum_id, $topic_type);
+	$topic_type_toggle = posting_gen_topic_types($forum_id, $posting_data['topic_type']);
 }
 
 $s_topic_icons = false;
@@ -1032,8 +1045,8 @@ $smilies_checked	= (isset($enable_smilies)) ? !$enable_smilies : (($config['allo
 $urls_checked		= (isset($enable_urls)) ? !$enable_urls : 0;
 $sig_checked		= $enable_sig;
 $notify_checked		= (isset($notify)) ? $notify : ((!$notify_set) ? (($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_notify'] : 0) : 1);
-$lock_topic_checked	= (isset($topic_lock)) ? $topic_lock : (($topic_status == ITEM_LOCKED) ? 1 : 0);
-$lock_post_checked	= (isset($post_lock)) ? $post_lock : $post_edit_locked;
+$lock_topic_checked	= (isset($topic_lock)) ? $topic_lock : (($posting_data['topic_status'] == ITEM_LOCKED) ? 1 : 0);
+$lock_post_checked	= isset($post_lock) ? $post_lock : $posting_data['post_edit_locked'];
 
 // Page title & action URL, include session_id for security purpose
 $s_action = "Forums&amp;file=posting&amp;mode=$mode&amp;f=$forum_id";
@@ -1064,7 +1077,7 @@ $forum_data = array(
 	'forum_parents'	=> $forum_parents,
 	'forum_name'	=> $forum_name,
 	'forum_id'		=> $forum_id,
-	'forum_type'	=> $forum_type,
+	'forum_type'	=> $posting_data['forum_type'],
 	'forum_desc'	=> $forum_desc,
 	'forum_rules'	=> $forum_rules,
 	'forum_rules_flags' => $forum_rules_flags,
@@ -1092,9 +1105,9 @@ $_CLASS['core_template']->assign_array(array(
 	
 	'FORUM_NAME' 			=> $forum_name,
 	'FORUM_DESC'			=> ($forum_desc) ? strip_tags($forum_desc) : '',
-	'TOPIC_TITLE' 			=> $topic_title,
+	'TOPIC_TITLE' 			=> $posting_data['topic_title'],
 	'MODERATORS' 			=> (sizeof($moderators)) ? implode(', ', $moderators[$forum_id]) : '',
-	'USERNAME'				=> ((!$preview && $mode != 'quote') || $preview) ? stripslashes($username) : '',
+	'USERNAME'				=> ((!$preview && $mode != 'quote') || $preview) ? $posting_data['username'] : '',
 	'SUBJECT'				=> $post_subject,
 	'MESSAGE'				=> $post_text,
 	'HTML_STATUS'			=> ($html_status) ? $_CLASS['core_user']->lang['HTML_IS_ON'] : $_CLASS['core_user']->lang['HTML_IS_OFF'],
@@ -1103,19 +1116,19 @@ $_CLASS['core_template']->assign_array(array(
 	'FLASH_STATUS'			=> ($flash_status) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
 	'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
 	'MINI_POST_IMG'			=> $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
-	'POST_DATE'				=> ($post_time) ? $_CLASS['core_user']->format_date($post_time) : '',
+	'POST_DATE'				=> ($posting_data['post_time']) ? $_CLASS['core_user']->format_date($posting_data['post_time']) : '',
 	'ERROR'					=> (sizeof($error)) ? implode('<br />', $error) : '', 
 	'TOPIC_TIME_LIMIT'		=> (int) $topic_time_limit,
-	'EDIT_REASON'			=> $post_edit_reason,
+	'EDIT_REASON'			=> $posting_data['post_edit_reason'],
 
 	'U_VIEW_FORUM' 			=> generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id),
 	'U_VIEWTOPIC' 			=> ($mode != 'post') ? generate_link("Forums&amp;file=viewtopic&amp;$forum_id&amp;t=$topic_id") : '',
 
 	'S_EDIT_POST'			=> ($mode == 'edit'),
-	'S_EDIT_REASON'			=> ($mode == 'edit' && $_CLASS['core_user']->data['user_id'] != $poster_id),
+	'S_EDIT_REASON'			=> ($mode == 'edit' && $_CLASS['core_user']->data['user_id'] != $posting_data['poster_id']),
 	'S_DISPLAY_USERNAME'	=> (!$_CLASS['core_user']->is_user || ($mode == 'edit' && $post_username)),
 	'S_SHOW_TOPIC_ICONS'	=> $s_topic_icons,
-	'S_DELETE_ALLOWED' 		=> ($mode == 'edit' && (($post_id == $topic_last_post_id && $poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id))),
+	'S_DELETE_ALLOWED' 		=> ($mode == 'edit' && (($post_id == $topic_last_post_id && $posting_data['poster_id'] == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id))),
 	'S_HTML_ALLOWED'		=> $html_status,
 	'S_HTML_CHECKED' 		=> ($html_checked) ? ' checked="checked"' : '',
 	'S_BBCODE_ALLOWED'		=> $bbcode_status,
@@ -1147,7 +1160,7 @@ if (($mode == 'post' || ($mode == 'edit' && $post_id == $topic_first_post_id && 
 	$_CLASS['core_template']->assign_array(array(
 		'S_SHOW_POLL_BOX'		=> true,
 		'S_POLL_VOTE_CHANGE'    => ($_CLASS['auth']->acl_get('f_votechg', $forum_id)),
-		'S_POLL_DELETE'			=> ($mode == 'edit' && $poll_options && ((!$poll_last_vote && $poster_id == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id))),
+		'S_POLL_DELETE'			=> ($mode == 'edit' && $poll_options && ((!$poll_last_vote && $posting_data['poster_id'] == $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('f_delete', $forum_id)) || $_CLASS['auth']->acl_get('m_delete', $forum_id))),
 
 		'L_POLL_OPTIONS_EXPLAIN'=> sprintf($_CLASS['core_user']->lang['POLL_OPTIONS_EXPLAIN'], $config['max_poll_options']),
 		'VOTE_CHANGE_CHECKED'   => (isset($poll_vote_change) && $poll_vote_change) ? ' checked="checked"' : '',
@@ -1213,17 +1226,20 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 	if (!delete_posts('post_id', array($post_id), false))
 	{
 		// Try to delete topic, we may had an previous error causing inconsistency
+		/*
 		if ($post_mode = 'delete_topic')
 		{
 			delete_topics('topic_id', array($topic_id), false);
 		}
+		*/
 		trigger_error('ALREADY_DELETED');
 	}
 
 	$_CLASS['core_db']->transaction('commit');
 
 	// Collect the necessary informations for updating the tables
-	$sql_data[FORUMS_TABLE] = '';
+	$sql_data[FORUMS_FORUMS_TABLE] = '';
+
 	switch ($post_mode)
 	{
 		case 'delete_topic':
@@ -1232,18 +1248,18 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 			if ($data['topic_type'] != POST_GLOBAL)
 			{
-				$sql_data[FORUMS_TABLE] .= 'forum_posts = forum_posts - 1, forum_topics_real = forum_topics_real - 1';
-				$sql_data[FORUMS_TABLE] .= ($data['topic_approved']) ? ', forum_topics = forum_topics - 1' : '';
+				$sql_data[FORUMS_FORUMS_TABLE] .= 'forum_posts = forum_posts - 1, forum_topics_real = forum_topics_real - 1';
+				$sql_data[FORUMS_FORUMS_TABLE] .= ($data['topic_approved']) ? ', forum_topics = forum_topics - 1' : '';
+				$sql_data[FORUMS_FORUMS_TABLE] .= ', ';
 			}
 
-			$sql_data[FORUMS_TABLE] .= ($sql_data[FORUMS_TABLE]) ? ', ' : '';
-			$sql_data[FORUMS_TABLE] .= implode(', ', update_last_post_information('forum', $forum_id));
-			$sql_data[TOPICS_TABLE] = 'topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
+			$sql_data[FORUMS_FORUMS_TABLE] .= implode(', ', update_last_post_information('forum', $forum_id));
+			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 			break;
 
 		case 'delete_first_post':
 			$sql = 'SELECT p.post_id, p.poster_id, p.post_username, u.username 
-				FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . " u
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_USERS_TABLE . " u
 				WHERE p.topic_id = $topic_id 
 					AND p.poster_id = u.user_id 
 				ORDER BY p.post_time ASC";
@@ -1254,11 +1270,11 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 			if ($data['topic_type'] != POST_GLOBAL)
 			{
-				$sql_data[FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
+				$sql_data[FORUMS_FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
 			}
 
-			$sql_data[TOPICS_TABLE] = 'topic_first_post_id = ' . intval($row['post_id']) . ", topic_first_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->sql_escape($row['post_username']) : $_CLASS['core_db']->sql_escape($row['username'])) . "'";
-			$sql_data[TOPICS_TABLE] .= ', topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
+			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_first_post_id = ' . intval($row['post_id']) . ", topic_first_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->sql_escape($row['post_username']) : $_CLASS['core_db']->sql_escape($row['username'])) . "'";
+			$sql_data[FORUMS_TOPICS_TABLE] .= ', topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 
 			$next_post_id = (int) $row['post_id'];
 			break;
@@ -1266,23 +1282,23 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 		case 'delete_last_post':
 			if ($data['topic_type'] != POST_GLOBAL)
 			{
-				$sql_data[FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
+				$sql_data[FORUMS_FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
 			}
 
-			$sql_data[FORUMS_TABLE] .= ($sql_data[FORUMS_TABLE]) ? ', ' : '';
-			$sql_data[FORUMS_TABLE] .= implode(', ', update_last_post_information('forum', $forum_id));
-			$sql_data[TOPICS_TABLE] = 'topic_bumped = 0, topic_bumper = 0, topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
+			$sql_data[FORUMS_FORUMS_TABLE] .= ($sql_data[FORUMS_FORUMS_TABLE]) ? ', ' : '';
+			$sql_data[FORUMS_FORUMS_TABLE] .= implode(', ', update_last_post_information('forum', $forum_id));
+			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_bumped = 0, topic_bumper = 0, topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 
 			$update = update_last_post_information('topic', $topic_id);
 			if (sizeof($update))
 			{
-				$sql_data[TOPICS_TABLE] .= ', ' . implode(', ', $update);
+				$sql_data[FORUMS_TOPICS_TABLE] .= ', ' . implode(', ', $update);
 				$next_post_id = (int) str_replace('topic_last_post_id = ', '', $update[0]);
 			}
 			else
 			{
 				$sql = 'SELECT MAX(post_id) as last_post_id
-					FROM ' . POSTS_TABLE . "
+					FROM ' . FORUMS_POSTS_TABLE . "
 					WHERE topic_id = $topic_id " .
 						((!$_CLASS['auth']->acl_get('m_approve')) ? 'AND post_approved = 1' : '');
 				$result = $_CLASS['core_db']->query($sql);
@@ -1295,7 +1311,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 			
 		case 'delete':
 			$sql = 'SELECT post_id
-				FROM ' . POSTS_TABLE . "
+				FROM ' . FORUMS_POSTS_TABLE . "
 				WHERE topic_id = $topic_id " . 
 					((!$_CLASS['auth']->acl_get('m_approve')) ? 'AND post_approved = 1' : '') . '
 					AND post_time > ' . $data['post_time'] . '
@@ -1307,10 +1323,10 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 			if ($data['topic_type'] != POST_GLOBAL)
 			{
-				$sql_data[FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
+				$sql_data[FORUMS_FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
 			}
 
-			$sql_data[TOPICS_TABLE] = 'topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
+			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 			$next_post_id = (int) $row['post_id'];
 	}
 				
@@ -1319,7 +1335,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 	$_CLASS['core_db']->transaction();
 
-	$where_sql = array(FORUMS_TABLE => "forum_id = $forum_id", TOPICS_TABLE => "topic_id = $topic_id", USERS_TABLE => 'user_id = ' . $data['poster_id']);
+	$where_sql = array(FORUMS_FORUMS_TABLE => "forum_id = $forum_id", FORUMS_TOPICS_TABLE => "topic_id = $topic_id", USERS_TABLE => 'user_id = ' . $data['poster_id']);
 
 	foreach ($sql_data as $table => $update_sql)
 	{
@@ -1423,7 +1439,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				$sql_data[FORUMS_POSTS_TABLE]['sql'] = array();
 			}
 
-			$sql_data[FORUMS_POSTS_TABLE]['sql'] = array_merge($sql_data[POSTS_TABLE]['sql'], array(
+			$sql_data[FORUMS_POSTS_TABLE]['sql'] = array_merge($sql_data[FORUMS_POSTS_TABLE]['sql'], array(
 				'forum_id' 			=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
 				'poster_id' 		=> $data['poster_id'],
 				'icon_id'			=> $data['icon_id'],
