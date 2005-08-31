@@ -180,6 +180,7 @@ class sessions
 			'session_page'		=> (string) $this->page, // need to be added back
 			'session_url'		=> (string) $this->url,
 			'session_ip'		=> (string) $this->ip,
+			'session_last_visit'=> (int) $this->data['session_last_visit'],
 			'session_user_type'	=> (int) $this->data['user_type'],
 			'session_admin'		=> (int) $this->data['session_admin'],
 			'session_auth'		=> (int) serialize($_CLASS['core_auth']->auth_dump()),
@@ -265,7 +266,7 @@ class sessions
 			$sql = 'UPDATE ' . SESSIONS_AUTOLOGIN_TABLE . '	SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data_array) . "
 						WHERE user_id = $user_id
 						AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			// need to update both the code and the user_id,
 			// since user_id cookie has an expiry time
@@ -316,36 +317,64 @@ class sessions
 
 	function gc($time)
 	{
-// Move to cron		
+// Move to cron
+		if (!is_numeric($time))
+		{
+			return;
+		}
+
 		global $_CORE_CONFIG, $_CLASS;
 
-/*
-		// keep the next query less demanding
+		$_CLASS['core_db']->transaction();
+
+		// Remove all expired guess sessions
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
 			WHERE session_user_id = ' . ANONYMOUS . '
 			AND session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 		$_CLASS['core_db']->query($sql);
-*/
-		$_CLASS['core_db']->transaction();
 
-		$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
-					SET u.user_last_visit = s.session_time
-					WHERE s.session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']) . '
-						AND s.session_user_id <> ' . ANONYMOUS .'
-						AND u.user_id = s.session_user_id';
-		$_CLASS['core_db']->sql_query($sql);
+// see if other database supports UPDATE sELECT
+		switch ($_CLASS['core_db']->db_layer)
+		{
+			//Oracle8 suporrts this also, I believe
+			case 'mysql':
+			case 'mysqli':
+				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
+							SET u.user_last_visit = s.session_time
+								WHERE s.session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']) . '
+								AND u.user_id = s.session_user_id';
+				$_CLASS['core_db']->query($sql);
+			break;
+
+			default:
+				$sql = 'SELECT session_user_id, MAX(session_time) AS session_time
+							FROM ' . SESSIONS_TABLE . '
+								WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
+								GROUP BY session_user_id';
+				$result = $_CLASS['core_db']->query($sql);
+				
+				// Should be fast with the transaction
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+				{
+					$sql = 'UPDATE ' . USERS_TABLE . '
+							SET user_last_visit = ' . $row['session_time'] . '
+								WHERE user_id = ' . $row['session_user_id'];
+					$_CLASS['core_db']->query($sql);
+				}
+			break;
+		}
+
+		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
+				WHERE session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']);
+			$_CLASS['core_db']->query($sql);
 
 		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . '
 					WHERE auto_login_time < ' . ($time - 2592000);
 		$_CLASS['core_db']->query($sql);
-
-		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-					WHERE session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']);
-		$_CLASS['core_db']->query($sql);
-		
-		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
 		
 		$_CLASS['core_db']->transaction('commit');
+
+		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
 	}
 
 	function session_data_get($name, $default = false)

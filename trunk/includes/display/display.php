@@ -291,7 +291,7 @@ class core_display
 	{
 		global $_CLASS;
 
-		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(array('full' => true))) . '">';
+		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(false, array('full' => true))) . '">';
 	}
 }
 

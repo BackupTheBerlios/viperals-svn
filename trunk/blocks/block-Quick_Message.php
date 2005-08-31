@@ -39,8 +39,12 @@ $result = $_CLASS['core_db']->query_limit('SELECT * from '.QUICK_MESSAGE_TABLE.'
 
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
-	$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES, 'UTF-8'));
-	//$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES));
+	/*
+		php 4 doesn't support mb html_entity_decode :-(
+		Make a core function for this
+	*/
+	//$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES, 'UTF-8'));
+	$words_array = explode(' ', $row['message_text']);
 
 	$row['message_text'] = '';
 
@@ -64,6 +68,8 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	
 	if ($row['poster_name'])
 	{
+		$row['poster_name'] = htmlentities($row['poster_name'], ENT_QUOTES, 'UTF-8');
+
 		if ($row['poster_id']) 
 		{
 			$this->content .= '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']).'"><b>' . $row['poster_name'] . ': </b></a>';

@@ -39,7 +39,7 @@ switch (get_variable('mode', 'GET', false))
 	case 'add':
 		if (empty($_POST['submit']) || $_CLASS['core_user']->is_bot)
 		{
-			url_redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+			redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
 		}
 
 		$message = trim(get_variable('message', 'POST', false));
@@ -55,8 +55,6 @@ switch (get_variable('mode', 'GET', false))
 		{ 
 			trigger_error('LONG_MESSAGE');
 		}
-
-		$message = htmlentities($message, ENT_QUOTES, 'UTF-8');
 
 	// use limit
 		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
@@ -111,8 +109,6 @@ switch (get_variable('mode', 'GET', false))
 			}
 		}
 
-		$user_name = htmlentities($user_name, ENT_QUOTES, 'UTF-8');
-
 		$sql = 'INSERT INTO '.QUICK_MESSAGE_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'poster_name'	=> (string) $user_name,
 			'poster_id'		=> (int) $user_id,
@@ -123,7 +119,7 @@ switch (get_variable('mode', 'GET', false))
 
 		$_CLASS['core_db']->query($sql);
 
-		redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+		redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
 	break;
 
 	case 'delete':
@@ -167,7 +163,7 @@ switch (get_variable('mode', 'GET', false))
 		$_CLASS['core_db']->query($sql);
 
 		//trigger_error('MESSAGE_DELETED');
-		redirect(generate_link($_CLASS['core_user']->data['session_url']), false);
+		redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
 	break;
 }
 
@@ -204,7 +200,7 @@ do
 {
 	if ($row['poster_name'])
 	{
-		$user_name = $row['poster_name'];
+		$user_name = htmlentities($row['poster_name'], ENT_QUOTES, 'UTF-8');;
 		$userlink = ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']) : false;
 	}
 	else
@@ -242,7 +238,7 @@ do
 		'USER_NAME'		=> $user_name,
 		'USER_LINK'		=> $userlink,
 		'DELETE_LINK'	=> $delete_link,
-		'MESSAGE'		=> modify_lines($row['message_text'], '<br />'),
+		'MESSAGE'		=> modify_lines(htmlentities($row['message_text'], ENT_QUOTES, 'UTF-8'), '<br />'),
 		'TIME'			=> $_CLASS['core_user']->format_date($row['message_time']),
 		'POSTER_AVATAR' => $avatar,
 		'U_PROFILE' 	=> ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['poster_id']) : false,

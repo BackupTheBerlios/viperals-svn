@@ -28,7 +28,7 @@ class db_postgres
 
 	var $last_result;
 	var $return_on_error;
-	var $in_transaction;
+	var $in_transaction = false;
 
 	var $queries_time = 0;
 	var $num_queries = 0;
@@ -80,7 +80,7 @@ class db_postgres
 
 		if ($this->link_identifier)
 		{
-			pg_set_client_encoding($this->link_identifier, 'UNICODE');
+			//pg_set_client_encoding($this->link_identifier, 'UNICODE');
 			//pg_set_client_encoding($this->link_identifier, 'UTF8');  pg8.1 unicode still works tho
 
 			//pg_query($this->link_identifier, "SET CLIENT_ENCODING TO 'value'"); SET NAMES 'value'
@@ -123,7 +123,7 @@ class db_postgres
 					break;
 				}
 
-				$result = @pg_query($this->db_connect_id, 'BEGIN');
+				$result = pg_query($this->link_identifier, 'START TRANSACTION');
 				$this->in_transaction = true;
 			break;
 
@@ -134,11 +134,11 @@ class db_postgres
 					break;
 				}
 
-				$result = @pg_query($this->db_connect_id, 'COMMIT');
+				$result = pg_query($this->link_identifier, 'COMMIT');
 				
 				if (!$result && $auto_rollback)
 				{
-					@pg_query($this->db_connect_id, 'ROLLBACK');
+					pg_query($this->link_identifier, 'ROLLBACK');
 				}
 				
 				$this->in_transaction = false;
@@ -150,7 +150,7 @@ class db_postgres
 					break;
 				}
 
-				$result = @pg_query($this->db_connect_id, 'ROLLBACK');
+				$result = pg_query($this->link_identifier, 'ROLLBACK');
 				$this->in_transaction = false;
 			break;
 		}
@@ -533,7 +533,7 @@ class db_postgres
 
 				$fields = implode(", \n", $this->_fields);
 
-				if ($this->_indexs['primary'])
+				if (isset($this->_indexs['primary']))
 				{
 					$fields .= ", \n".$this->_indexs['primary'];
 					unset($this->_indexs['primary']);
@@ -550,7 +550,10 @@ class db_postgres
 					return $table;
 				}
 
-				$this->sql_query($table);
+				if (!$this->sql_query($table))
+				{
+				echo $table.'<br/>';
+				}
 
 			case 'cancel':
 				$this->_table_name = $this->_table_oid = false;
@@ -608,7 +611,7 @@ class db_postgres
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = $this->_table_name.'_'.(($index_name) ? $index_name : $field) ;
-		$field = is_array($field) ? implode('` , `', $field) : $field;
+		$field = is_array($field) ? implode(', ', $field) : $field;
 
 		switch ($type)
 		{
