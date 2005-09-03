@@ -219,7 +219,7 @@ function display_confirmation($message = '', $hidden = '', $image = false)
 
 	$_CLASS['core_template']->assign_array(array(
 		'MESSAGE'		=> ($message) ? $message : 'Are you sure you want to perform this action ?',
-		'CONFIRM_ACTION'=> generate_link($_CLASS['core_user']->url),
+		'CONFIRM_ACTION'=> ($_CLASS['core_user']->url) ? generate_link($_CLASS['core_user']->url) : '',
 		'CONFIRM_IMAGE'	=> $confirm_image,
 		'HIDDEN_FIELDS'	=> $hidden
 	));

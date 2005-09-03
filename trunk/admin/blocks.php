@@ -99,8 +99,8 @@ if (isset($_REQUEST['mode']))
 blocks_block('main');
 
 $result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_file, block_auth
-	FROM '.BLOCKS_TABLE.'
-	WHERE block_position IN ('.BLOCK_RIGHT.', '.BLOCK_TOP.', '.BLOCK_BOTTOM.', '.BLOCK_LEFT.') ORDER BY block_position, block_order ASC');
+	FROM ' . BLOCKS_TABLE . '
+	WHERE block_position IN (' . BLOCK_RIGHT . ', ' . BLOCK_TOP . ', ' . BLOCK_BOTTOM . ', ' . BLOCK_LEFT . ') ORDER BY block_position, block_order ASC');
 
 $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
 $in_position = false;

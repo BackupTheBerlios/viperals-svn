@@ -162,7 +162,7 @@ function block_order($id, $option)
 
 function block_delete($id, $return_link = false)
 {
-    global $_CLASS;
+	global $_CLASS;
 
 	$result = $_CLASS['core_db']->query('SELECT block_order, block_type, block_position FROM ' . BLOCKS_TABLE . ' WHERE block_id='.$id);
 	$block = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -175,15 +175,15 @@ function block_delete($id, $return_link = false)
 
 	check_position($block['block_position']);
 
-    if (display_confirmation())
-    {
-		$_CLASS['core_db']->query('DELETE from ' . BLOCKS_TABLE . ' where block_id='.$id);
-        $result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = block_order-1 WHERE block_position='.$block['block_position'].' AND block_order > '.$block['block_order']);
+	if (display_confirmation())
+	{
+		$_CLASS['core_db']->query('DELETE from ' . BLOCKS_TABLE . ' where block_id = '.$id);
+		$result = $_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . ' SET block_order = block_order-1 WHERE block_position='.$block['block_position'].' AND block_order > '.$block['block_order']);
 
-        $_CLASS['core_cache']->destroy('blocks');
+		$_CLASS['core_cache']->destroy('blocks');
         
-        if ($return_link)
-        {
+		if ($return_link)
+		{
 			trigger_error('Block deleted<br/><a href="'.$return_link.'">Click here to return</a>');	        
 		}
 	}

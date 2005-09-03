@@ -26,31 +26,41 @@
 				<a href="{ $normal_modules:EDIT_LINK }">{ $normal_modules:TITLE }</a>
 				<!-- IF { $normal_modules:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $normal_modules:ERROR }</span><!-- ENDIF -->
 			</td>
-			<!-- IF { $normal_modules:ACTIVE } -->
-			<td align="center" class="row2" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'; return false;">
-				<a href="{ $normal_modules:ACTIVE_LINK }">{ $normal_modules:CHANGE }</a>
-			</td>
+			<!-- IF { $normal_modules:INSTALLED } -->
+				<!-- IF { $normal_modules:ACTIVE } -->
+				<td align="center" class="row2" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'; return false;">
+					<a href="{ $normal_modules:ACTIVE_LINK }">{ $normal_modules:CHANGE }</a>
+				</td>
+				<!-- ELSE -->
+				<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'; return false;">
+					<a href="{ $normal_modules:ACTIVE_LINK }">{ $normal_modules:CHANGE }</a>
+				</td>
+				<!-- ENDIF -->
+				<td nowrap="nowrap" class="row1" align="center">
+					<!-- IF { $normal_modules:EDIT_LINK } -->
+						<a href="{ $normal_modules:EDIT_LINK }">{ $L_EDIT }</a> |
+					<!-- ENDIF -->
+					<!-- IF { $normal_modules:AUTH_LINK } -->
+						<a href="{ $normal_modules:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+					<!-- ENDIF -->
+					<!-- IF { $normal_modules:INSTALLER_LINK } -->
+						 | <a href="{ $normal_modules:INSTALLER_LINK }">{ $L_UNINSTALL }</a>
+					<!-- ENDIF -->
+				</td>
+				<!-- IF { $S_ADMIN_AUTH_LINK } -->
+				<td nowrap="nowrap" class="row1" align="center">
+					<a href="{ $normal_modules:ADMIN_AUTH_LINK }">{ $L_ADMIN_PERMISSIONS }</a>
+				</td>
+				<!-- ENDIF -->
 			<!-- ELSE -->
-			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $normal_modules:ACTIVE_LINK }'; return false;">
-				<a href="{ $normal_modules:ACTIVE_LINK }">{ $normal_modules:CHANGE }</a>
+			<td align="center" class="row1">
+				{ $L_NOT_INSTALLED }
 			</td>
-			<!-- ENDIF -->
 			<td nowrap="nowrap" class="row1" align="center">
-			<!-- IF { $normal_modules:EDIT_LINK } -->
-				<a href="{ $normal_modules:EDIT_LINK }">{ $L_EDIT }</a> |
-			<!-- ENDIF -->
-			<!-- IF { $normal_modules:AUTH_LINK } -->
-			<a href="{ $normal_modules:AUTH_LINK }">{ $L_PERMISSIONS }</a>
-			<!-- ENDIF -->
-			<!-- IF { $normal_modules:UNINSTALL_LINK } -->
-				 | <a href="{ $normal_modules:UNINSTALL_LINK }">{ $L_UNINSTALL }</a>
-			<!-- ENDIF -->
-			</td>
-			<!-- IF { $S_ADMIN_AUTH_LINK } -->
-			<td nowrap="nowrap" class="row1" align="center">
-				<a href="{ $normal_modules:ADMIN_AUTH_LINK }">{ $L_ADMIN_PERMISSIONS }</a>
+				<a href="{ $normal_modules:INSTALLER_LINK }">{ $L_INSTALL }</a>
 			</td>
 			<!-- ENDIF -->
+
 		</tr>
 		<tr>
 			<td class="spacer" colspan="4" height="7"></td>
