@@ -146,11 +146,11 @@ function user_add(&$data)
 
 	$default_data = array(
 		'user_allow_viewonline' => 1,
-		'user_allow_viewemail' => 1,
-		'user_allow_massemail' => 1,
-		'user_new_privmsg' => 0,
-		'user_allow_pm' => 1,
-		'user_allow_email' => 1,
+		'user_allow_viewemail'	=> 1,
+		'user_allow_massemail'	=> 1,
+		'user_new_privmsg'		=> 0,
+		'user_allow_pm'			=> 1,
+		'user_allow_email'		=> 1,
 	);
 
 	$data = array_merge($default_data, $data);

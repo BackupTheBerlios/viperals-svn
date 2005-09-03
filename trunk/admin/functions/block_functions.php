@@ -46,15 +46,16 @@ function block_auth($id)
 	{
 		if (is_null($auth))
 		{
-			$block['block_auth'] = $auth = '';
+			$block['block_auth'] = '';
+			$auth = 'null';
 		}
 		else
 		{
 			$block['block_auth'] = $auth;
-			$auth = $_CLASS['core_db']->escape(serialize($auth));
+			$auth = "'".$_CLASS['core_db']->escape(serialize($auth))."'";
 		}
 
-		$_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . " SET block_auth = '$auth' WHERE block_id = $id");
+		$_CLASS['core_db']->query('UPDATE ' . BLOCKS_TABLE . " SET block_auth = $auth WHERE block_id = $id");
 		$_CLASS['core_cache']->destroy('blocks');
 	}
 	

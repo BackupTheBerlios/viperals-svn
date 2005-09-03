@@ -127,12 +127,12 @@ switch ($mode)
 			
 			if ($row['group_type'] == GROUP_HIDDEN && !$_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel') && $row['ug_user_id'] != $_CLASS['core_user']->data['user_id'])
 			{
-				$group_name = $_CLASS['core_user']->lang['UNDISCLOSED'];
+				$group_name = $_CLASS['core_user']->get_lang('UNDISCLOSED');
 				$u_group = '';
 			}
 			else
 			{
-				$group_name = ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'];
+				$group_name = isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'];
 				$u_group = generate_link('Members_List&amp;mode=group&amp;g='.$row['group_id']);
 			}
 
@@ -319,7 +319,7 @@ switch ($mode)
 		
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$group_options .= '<option value="' . $row['group_id'] . '"'.(($member['user_group'] == $row['group_id'])? ' selected="selected"' : '').'>' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+			$group_options .= '<option value="' . $row['group_id'] . '"'.(($member['user_group'] == $row['group_id'])? ' selected="selected"' : '').'>' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
 		}
 		$_CLASS['core_db']->free_result($result);
 		
@@ -498,7 +498,6 @@ switch ($mode)
 
 			'S_PROFILE_ACTION'	=> generate_link('Members_List&amp;mode=group'),
 			'S_GROUP_OPTIONS'	=> $group_options,
-			'S_CUSTOM_FIELDS'	=> (isset($profile_fields['row']) && sizeof($profile_fields['row'])) ? true : false,
 			
 			'U_ADD_FRIEND'		=> generate_link('Control_Panel&amp;i=zebra&amp;add=' . urlencode($member['username'])),
 			'U_ADD_FOE'			=> generate_link('Control_Panel&amp;i=zebra&amp;mode=foes&amp;add=' . urlencode($member['username'])),
@@ -508,19 +507,7 @@ switch ($mode)
 			'L_VIEWING_PROFILE' 	=> sprintf($_CLASS['core_user']->lang['VIEWING_PROFILE'], $member['username']),
 		));
 		
-		if (isset($profile_fields['row']) && sizeof($profile_fields['row']))
-		{
-			$_CLASS['core_template']->assign($profile_fields['row']);
-		}
-		
-		if (isset($profile_fields['blockrow']) && sizeof($profile_fields['blockrow']))
-		{
-			foreach ($profile_fields['blockrow'] as $field_data)
-			{
-				$_CLASS['core_template']->assign_vars_array('custom_fields', $field_data);
-			}
-		}
-		break;
+	break;
 
 	case 'email':
 		// Send an email
@@ -897,7 +884,7 @@ switch ($mode)
 
 				case GROUP_UNRESTRAINED:
 					$group_row['group_type'] = 'FREE';
-					break;
+				break;
 			}
 
 			$avatar_img = '';
@@ -927,7 +914,7 @@ switch ($mode)
 
 			$_CLASS['core_template']->assign_array(array(
 				'GROUP_DESC'    => $group_row['group_description'],
-				'GROUP_NAME'    => $group_row['group_name'],
+				'GROUP_NAME'    => isset($_CLASS['core_user']->lang['G_' . $group_row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $group_row['group_name']] : $group_row['group_name'],
 				'GROUP_COLOR'   => $group_row['group_colour'],
 				'GROUP_TYPE'	=> $_CLASS['core_user']->lang['GROUP_IS_'. $group_row['group_type']],
 				'GROUP_RANK'	=> $rank_title,

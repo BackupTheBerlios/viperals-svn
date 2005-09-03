@@ -140,7 +140,7 @@ class ucp_pm extends module
 			case 'options':
 				$sql = 'SELECT group_message_limit
 					FROM ' . GROUPS_TABLE . '
-					WHERE group_id = ' . $_CLASS['core_user']->data['group_id'];
+					WHERE group_id = ' . $_CLASS['core_user']->data['user_group'];
 				$result = $_CLASS['core_db']->query($sql);
 
 				list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
@@ -169,7 +169,7 @@ class ucp_pm extends module
 			
 				$sql = 'SELECT group_message_limit
 					FROM ' . GROUPS_TABLE . '
-					WHERE group_id = ' . $_CLASS['core_user']->data['group_id'];
+					WHERE group_id = ' . $_CLASS['core_user']->data['user_group'];
 				$result = $_CLASS['core_db']->query($sql);
 				list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
 				$_CLASS['core_db']->free_result($result);
@@ -286,7 +286,7 @@ class ucp_pm extends module
 					}
 	
 					$sql = 'SELECT t.*, p.*, u.*
-						FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_USERS_TABLE . ' u
+						FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . ' u
 						WHERE t.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 							AND p.author_id = u.user_id
 							AND t.folder_id = $folder_id
@@ -379,6 +379,7 @@ class ucp_pm extends module
 
 			default:
 				trigger_error('NO_ACTION_MODE');
+			break;
 		}
 
 		$_CLASS['core_template']->assign(array( 

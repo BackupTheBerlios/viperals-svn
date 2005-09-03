@@ -66,21 +66,21 @@ if (!$_CLASS['core_user']->is_user)
 }
 else
 {
-		if ($config['load_db_lastread'])
-		{
-			$sql_lastread = 'LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
-				AND ft.forum_id = f.forum_id AND ft.topic_id = 0)';
-			$lastread_select = ', ft.mark_time ';
-		}
-		else
-		{
-			$sql_lastread = $lastread_select = '';
-			$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
-		}
+	if ($config['load_db_lastread'])
+	{
+		$sql_lastread = 'LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
+			AND ft.forum_id = f.forum_id AND ft.topic_id = 0)';
+		$lastread_select = ', ft.mark_time ';
+	}
+	else
+	{
+		$sql_lastread = $lastread_select = '';
+		$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
+	}
 
-		$sql = "SELECT f.*, fw.notify_status $lastread_select 
-			FROM " . FORUMS_FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ") $sql_lastread
-			WHERE f.forum_id = $forum_id";
+	$sql = "SELECT f.*, fw.notify_status $lastread_select 
+		FROM " . FORUMS_FORUMS_TABLE . ' f LEFT JOIN ' . FORUMS_WATCH_TABLE . ' fw ON (fw.forum_id = f.forum_id AND fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ") $sql_lastread
+		WHERE f.forum_id = $forum_id";
 }
 
 $result = $_CLASS['core_db']->query($sql);
@@ -187,7 +187,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	if ($_CLASS['auth']->acl_get('f_subscribe', $forum_id))
 	{
 		$notify_status = (isset($forum_data['notify_status'])) ? $forum_data['notify_status'] : NULL;
-		$s_watching_forum = watch_topic_forum('forum', $_CLASS['core_user']->data['user_id'], $forum_id, $notify_status);
+		$s_watching_forum = watch_topic_forum('forum', $_CLASS['core_user']->data['user_id'], $forum_id, 0, $notify_status);
 	}
 	else
 	{
@@ -224,6 +224,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 		{
 			$start = 0;
 		}
+
 		$topics_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['num_topics'] : 0;
 		$sql_limit_time = "AND t.topic_last_post_time >= $min_post_time";
 	}
@@ -295,10 +296,15 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	$rowset = $announcement_list = $topic_list = array();
 
 	$sql_from = FORUMS_TOPICS_TABLE.' t ';
-	$sql_from .= ($_CLASS['core_user']->is_user && $config['load_db_lastread']) ? ' LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')' : '';
+	$sql_select = '';
 
-	$sql_approved = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1';
-	$sql_select = (($config['load_db_lastread'] || $config['load_db_track']) && $_CLASS['core_user']->is_user) ? ', tt.mark_time' : '';
+	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
+	{
+		$sql_from .= ' LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')';
+		$sql_select .= ', tt.mark_time';
+	}
+
+	$sql_approved = $_CLASS['auth']->acl_get('m_approve', $forum_id) ? '' : 'AND t.topic_approved = 1';
 
 	if ($forum_data['forum_type'] == FORUM_POST)
 	{
@@ -322,6 +328,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	$store_reverse = false;
 	$sql_limit = $config['topics_per_page'];
 
+// what's this store_reverse all about ?
 	if ($start > $topics_count / 2)
 	{
 		$store_reverse = true;
@@ -343,7 +350,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 	}
 
 	// Obtain other topics
-	$sql_where = ($forum_data['forum_type'] == FORUM_POST || !sizeof($active_forum_ary)) ? "= $forum_id" : 'IN (' . implode(', ', $active_forum_ary['forum_id']) . ')';
+	$sql_where = ($forum_data['forum_type'] == FORUM_POST || empty($active_forum_ary)) ? "= $forum_id" : 'IN (' . implode(', ', $active_forum_ary['forum_id']) . ')';
 	$sql = "SELECT t.* $sql_select
 		FROM $sql_from
 		WHERE t.forum_id $sql_where
@@ -364,10 +371,10 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 
 	// we only update the mark if this is made into an (int) time
 	// We don't check when $start is used
-	$mark_forum_read = ($start) ? false : true;
+	$mark_forum_read = ($sql_start || $sql_limit != $config['topics_per_page'] || $sql_limit_time) ? false : true;
 
 	// Okay, lets dump out the page ...
-	if (sizeof($topic_list))
+	if (!empty($topic_list))
 	{
 		if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 		{
@@ -419,7 +426,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 			$s_type_switch_test = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
 
 			// Replies
-			$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
+			$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? (int) $row['topic_replies_real'] : (int) $row['topic_replies'];
 
 			if ($row['topic_status'] == ITEM_MOVED)
 			{

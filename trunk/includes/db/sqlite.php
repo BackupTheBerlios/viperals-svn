@@ -523,12 +523,19 @@ class db_sqlite
 
 				// Have to create the table first then do the indexs
 				// I guess it's ....
-				$this->sql_query($table);
-
+				if (!$this->sql_query($table))
+				{
+					echo $table.'<br/>';
+				}
+				
 				foreach ($this->_indexs as $query)
 				{
-					$this->sql_query($query);
+					if (!$this->sql_query($query))
+					{
+						echo $query.'<br/>';
+					}
 				}
+
 
 			case 'cancel':
 				$this->_table_name = false;
@@ -537,59 +544,68 @@ class db_sqlite
 		}
 	}
 
-	function add_table_field_int($name, $number_min, $number_max = false, $default = null, $auto_increment = false)
+	function add_table_field_int($name, $setting_sent)
 	{
-		$length = max(strlen($number_min), strlen($number_max));
+		$setting = array('default' => null, 'auto_increment' => false, 'null' => false);
+		$setting = array_merge($setting, $setting_sent);
 
 		$this->_fields[$name] =  $name .' INTEGER';
 
-		if ($auto_increment)
+		if ($setting['auto_increment'])
 		{
 			$this->_fields[$name] .= ' AUTOINCREMENT';
 		}
 		else
 		{
-			$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= ($setting['null']) ? " NULL" : " NOT NULL";
+			$this->_fields[$name] .= is_null($setting['default']) ? '' : " DEFAULT '".(int) $setting['default']."'";
 		}
 	}
 
-	function add_table_field_text($name, $characters = 60000, $null = true)
+	function add_table_field_text($name, $characters, $null = true)
+	{
+		$this->_fields[$name] =  "$name TEXT".(($null) ? " NULL" : " NOT NULL");
+	}
+
+	function add_table_field_char($name, $characters, $null = false, $default = null, $padded = false)
 	{
 		$this->_fields[$name] =  $name.' TEXT';
 		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
-	}
-
-	function add_table_field_char($name, $characters, $default = null, $padded = false)
-	{
-
-		$this->_fields[$name] =  $name.' TEXT';
-		$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '$default'";
+		$this->_fields[$name] .= is_null($default) ? '' : "DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
-		if (empty($this->_fields[$field]))
-		{
-			return;
-		}
+		$index_name = ($index_name) ? $index_name : $field;
 
-		$index_name = $this->_table_name.'_'.(($index_name) ? $index_name : $field) ;
+		$index_name = is_array($index_name) ? implode('_', $index_name) : $index_name;
+		$index_name = $this->_table_name . '_' . $index_name;
 
 		switch ($type)
 		{
 			case 'index':
-			case 'unique'://CREATE INDEX group_id ON test_admins ( group_id ) ; 
-				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->_table_name} ( $field );";
+			case 'unique':
+				$field = is_array($field) ? implode(', ', $field) : $field;
+				$this->_indexs[$index_name] = (($type == 'UNIQUE') ? 'CREATE UNIQUE' : 'CREATE') . " INDEX $index_name ON {$this->_table_name} ($field);";
 			break;
 
 			case 'primary':
-				if ($pos = stripos($this->_fields[$field], ' AUTOINCREMENT'))
+// need to check if sqlite even supports 2 pkeys
+				if (is_array($field))
+				{
+					// maybe make this regular indexes
+					return;
+				}
+
+				/*
+				if ($pos = strpos($this->_fields[$field], ' AUTOINCREMENT'))
 				{
 					$this->_fields[$field] = substr($this->_fields[$field], 0, $pos);
 					$this->_fields[$field] .= ' PRIMARY KEY AUTOINCREMENT'; // AUTOINCREMENT isn't needed
 
 					break;
 				}
+				*/
 
 				$this->_fields[$field] .= ' PRIMARY KEY';
 			break;

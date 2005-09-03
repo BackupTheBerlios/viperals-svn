@@ -74,7 +74,6 @@ $display_vars = array(
 			'max_search_chars'	=> array('lang' => 'MAX_SEARCH_CHARS',	'type' => 'text:3:3', 'explain' => true),
 			'load_search_upd'	=> array('lang' => 'YES_SEARCH_UPDATE',	'type' => 'radio:yes_no', 'explain' => true),
 //			'load_search_phr'	=> array('lang' => 'YES_SEARCH_PHRASE',	'type' => 'radio:yes_no', 'explain' => true),
-			'load_tplcompile'	=> array('lang' => 'RECOMPILE_TEMPLATES', 'type' => 'radio:yes_no', 'explain' => true)
 		)
 	),
 	'default' => array(

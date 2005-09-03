@@ -63,7 +63,9 @@ class core_user extends sessions
 				$this->url = mb_substr($this->url, 0, $pos - 1);
 			}
 
-			$this->url = htmlspecialchars(html_entity_decode($this->url, ENT_QUOTES));
+			//$this->url = htmlspecialchars(html_entity_decode($this->url, ENT_QUOTES));
+			$this->url = htmlspecialchars($this->url, ENT_QUOTES);
+
 			$this->url = mb_substr($this->url, 0, 255);
 		}
 		else

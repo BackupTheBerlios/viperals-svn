@@ -13,12 +13,12 @@
 		<td class="row1" width="35%"><b class="genmed">{ $L_CURRENT_IMAGE }: </b><br /><span class="gensmall">{ $L_AVATAR_EXPLAIN }</span></td>
 		<td class="row2" align="center"><br /><!-- IF { $AVATAR } -->{$AVATAR}<!-- ELSE --><img src="{ $T_THEME_PATH }/images/no_avatar.gif" alt="" /><!-- ENDIF --><br /><br /><input type="checkbox" name="delete" />&nbsp;<span class="gensmall">{ $L_DELETE_AVATAR }</span></td>
 	</tr>
-	<!-- IF { $S_UPLOAD_AVATAR_FILE } -->
+<!-- IF !isset({ $S_DISPLAY_GALLERY }) -->
+	<!-- IF { $S_CAN_UPLOAD } -->
 	<tr> 
 		<td class="row1" width="35%"><b class="genmed">{ $L_UPLOAD_AVATAR_FILE }: </b></td>
 		<td class="row2"><input type="hidden" name="MAX_FILE_SIZE" value="{ $AVATAR_SIZE }" /><input class="post" type="file" name="uploadfile" /></td>
 	</tr>
-	<!-- ENDIF --><!-- IF { $S_UPLOAD_AVATAR_URL } -->
 	<tr> 
 		<td class="row1" width="35%"><b class="genmed">{ $L_UPLOAD_AVATAR_URL }: </b><br /><span class="gensmall">{ $L_UPLOAD_AVATAR_URL_EXPLAIN }</span></td>
 		<td class="row2"><input class="post" type="text" name="uploadurl" size="40" value="" /></td>
@@ -37,7 +37,8 @@
 		<td class="row1" width="35%"><b class="genmed">{ $L_AVATAR_GALLERY }: </b></td>
 		<td class="row2"><input class="btnlite" type="submit" name="display_gallery" value="{ $L_DISPLAY_GALLERY }" /></td>
 	</tr>
-	<!-- ENDIF --><!-- IF isset({ $S_DISPLAY_GALLERY }) -->
+	<!-- ENDIF -->
+<!-- ELSE -->
 	<tr> 
 		<th colspan="2">{ $L_AVATAR_GALLERY }</th>
 	</tr>
@@ -49,7 +50,7 @@
 		<table cellspacing="1" cellpadding="4" border="0" width="100%">
 			<!-- LOOP $avatar --><!-- IF ({ $avatar:#LOOP_INDEX } % 8) == 0 --></tr><tr><!-- ENDIF -->
 				<td align="center"><img src="{ $avatar:AVATAR_IMAGE }" alt="{ $avatar:AVATAR_NAME }" title="{ $avatar:AVATAR_NAME }" /><br/>
-				<input type="radio" name="avatarselect" value="{ $avatar:S_OPTIONS_AVATAR }" /></td>
+				<input type="radio" name="avatarselect" value="{ $avatar:AVATAR_FILE }" /></td>
 			<!-- LOOPELSE -->
 			<tr>
 				<td align="center"><b class="gen">{ $L_NO_GALLERY_AVATAR }</b></td>

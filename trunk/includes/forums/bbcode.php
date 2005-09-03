@@ -127,13 +127,11 @@ class bbcode
 	
 	function decode_php($text)
 	{
-		global $phpversion;
-
 		$text = trim($text);
 
 		$remove_tags = false;
 
-		$text = strtr($text, array_flip(get_html_translation_table(HTML_ENTITIES)));
+		//$text = strtr($text, array_flip(get_html_translation_table(HTML_ENTITIES)));
 
 		$str_from = array('&lt;', '&gt;', '&#39;');
 		$str_to = array('<', '>', '\'');
@@ -147,7 +145,7 @@ class bbcode
 		}
 
 
-		if ($phpversion < 420)
+		if (version_compare(PHP_VERSION, '4.2.0', '<'))
 		{
 			ob_start();
 			highlight_string($text);

@@ -21,6 +21,9 @@
 $Id$
 */
 
+
+// Need to redo this, do all check before the saving
+
 if (VIPERAL !== 'Admin') 
 {
 	die;
@@ -89,9 +92,10 @@ function admin_site($save)
 			'link_optimization' => array('post_name' => 'link_optimization'),
 			'site_name'			=> array('post_name' => 'site_name'),
 			'site_url'			=> array('post_name' => 'site_url'),
-			'start_date'		=> array('post_name' => 'start_date')
-			)
-		);
+			'start_date'		=> array('post_name' => 'start_date'),
+			'foot1'				=> array('post_name' => 'foot1'),
+			'foot2'				=> array('post_name' => 'foot2'),
+		));
 		admin_save($data);
 	}
 
@@ -101,8 +105,9 @@ function admin_site($save)
 		'A_OPTION'		=> 'site',
 		'ACTION'		=> generate_link('system', array('admin' => true)),
 		
-		'DEFAULT_THEME' 	=> $_CORE_CONFIG['global']['default_theme'],
 		'LINK_OPTIMIZATION' => $_CORE_CONFIG['global']['link_optimization'],
+
+		'SELECT_THEME' 		=> select_theme($_CORE_CONFIG['global']['default_theme']),
 		'SITE_NAME'			=> $_CORE_CONFIG['global']['site_name'],
 		'SITE_URL'			=> $_CORE_CONFIG['global']['site_url'],
 		'START_DATE'		=> $_CORE_CONFIG['global']['start_date'],
@@ -110,25 +115,7 @@ function admin_site($save)
 		'FOOTER_FIRST' 		=> $_CORE_CONFIG['global']['foot1'],
 		'FOOTER_SECOND' 	=> $_CORE_CONFIG['global']['foot2'],
 		
-		));
-	
-	$handle = opendir('themes');
-	
-	while ($file = readdir($handle))
-	{
-		if ($file{0} !== '.')
-		{
-			if (file_exists("themes/$file/index.php"))
-			{
-				$_CLASS['core_template']->assign_vars_array('site_theme', array(
-					'FILE'	=> $file,
-					'NAME'  => $file,
-				));
-			}
-		} 
-	}
-	
-	closedir($handle);
+	));
 
 	$_CLASS['core_template']->display('admin/system/index.html');
 }
@@ -153,11 +140,11 @@ function admin_system($save)
 				'cookie_domain' => array('post_name' => 'cookie_domain'),
 				'cookie_name' 	=> array('post_name' => 'cookie_name'),
 				'cookie_path' 	=> array('post_name' => 'cookie_path'),
-				'cookie_secure'	=> array('post_name' => 'cookie_secure'),
 				'error_options'	=> array('post_name' => 'error_options'),
 				'site_domain'	=> array('post_name' => 'site_domain'),
 				'site_port' 	=> array('post_name' => 'site_port'),
 				'site_path' 	=> array('post_name' => 'site_path'),
+				'site_secure'	=> array('post_name' => 'site_secure'),
 				'ip_check' 		=> array('post_name' => 'ip_check'),
 				'limit_load' 	=> array('post_name' => 'limit_load'),
 				'limit_sessions'	=> array('post_name' => 'limit_sessions'),
@@ -176,7 +163,6 @@ function admin_system($save)
 		'COOKIE_DOMAIN' => $_CORE_CONFIG['server']['cookie_domain'],
 		'COOKIE_NAME' 	=> $_CORE_CONFIG['server']['cookie_name'],
 		'COOKIE_PATH' 	=> $_CORE_CONFIG['server']['cookie_path'],
-		'COOKIE_SECURE' => $_CORE_CONFIG['server']['cookie_secure'],
 		'ERROR'			=> $_CORE_CONFIG['server']['error_options'],
 		'MAINTENANCE' 		=> $_CORE_CONFIG['maintenance']['active'],
 		'MAINTENANCE_MSG' 	=> $_CORE_CONFIG['maintenance']['text'],
@@ -185,84 +171,14 @@ function admin_system($save)
 		'SITE_DOMAIN'		=> $_CORE_CONFIG['server']['site_domain'],
 		'SITE_PATH'			=> $_CORE_CONFIG['server']['site_path'],
 		'SITE_PORT'			=> $_CORE_CONFIG['server']['site_port'],
+		'SITE_SECURE'		=> $_CORE_CONFIG['server']['site_secure'],
 		'LIMIT_LOAD'		=> $_CORE_CONFIG['server']['limit_load'],
 		'LIMIT_SESSIONS'	=> $_CORE_CONFIG['server']['limit_sessions'],
 		'SESSION_LENGTH'	=> $_CORE_CONFIG['server']['session_length'],
 		
-		));
+	));
 
 	$_CLASS['core_template']->display('admin/system/index.html');
-}
-
-function admin_users($save)
-{
-	if ($save)
-	{
-		$data = array('user' => array(
-			'require_activation'=> array('post_name' => 'require_activation'),
-			'coppa_enable'		=> array('post_name' => 'coppa_enable'),
-			'coppa_fax'			=> array('post_name' => 'coppa_fax'),
-			'coppa_mail'		=> array('post_name' => 'coppa_mail'),
-			'enable_confirm'	=> array('post_name' => 'enable_confirm'),
-			'max_reg_attempts'	=> array('post_name' => 'max_reg_attempts'),
-			'min_name_chars'	=> array('post_name' => 'min_name_chars'),
-			'max_name_chars'	=> array('post_name' => 'max_name_chars'),
-			'min_pass_chars'	=> array('post_name' => 'min_pass_chars'),
-			'max_pass_chars'	=> array('post_name' => 'max_pass_chars'),
-			'chg_passforce'		=> array('post_name' => 'chg_passforce'),
-			'allow_namechange'	=> array('post_name' => 'allow_namechange'),
-			'max_reg_attempts'	=> array('post_name' => 'max_reg_attempts'),
-			'allow_name_chars'	=> array('post_name' => 'allow_name_chars'),
-			'allow_emailreuse'	=> array('post_name' => 'allow_emailreuse'),
-			)
-		);
-		admin_save($data);
-	}
-
-	global $_CLASS, $_CORE_CONFIG;
-
-    $_CLASS['core_template']->assign_array(array(
-		'A_OPTION' => 'users',
-		'ACTION' => generate_link('system&amp;mode=users', array('admin' => true)),
-		'L_EDITOR_OPTION' => $_CLASS['core_user']->lang['EDITOR_OPTION'],
-		
-		'ACTIVATION_OPTION' => $_CORE_CONFIG['user']['require_activation'],
-		'COPPA_ENABLE'		=> $_CORE_CONFIG['user']['coppa_enable'],
-		'COPPA_FAX'			=> $_CORE_CONFIG['user']['coppa_fax'],
-		'COPPA_MAIL'		=> $_CORE_CONFIG['user']['coppa_mail'],
-		'CONFIRM_ENABLE'	=> $_CORE_CONFIG['user']['enable_confirm'],
-		'MAX_REG_ATTEMPTS'	=> $_CORE_CONFIG['user']['max_reg_attempts'],
-		'MIN_NAME_CHARS'	=> $_CORE_CONFIG['user']['min_name_chars'],
-		'MAX_NAME_CHARS'	=> $_CORE_CONFIG['user']['max_name_chars'],
-		'MIN_PASS_CHARS'	=> $_CORE_CONFIG['user']['min_pass_chars'],
-		'MAX_PASS_CHARS'	=> $_CORE_CONFIG['user']['max_pass_chars'],
-		'CHG_PASSFORCE'		=> $_CORE_CONFIG['user']['chg_passforce'],
-		'ALLOW_NAMECHANGE'	=> $_CORE_CONFIG['user']['allow_namechange'],
-		'ALLOW_NAME_CHARS'	=> $_CORE_CONFIG['user']['allow_name_chars'],
-		//'PASS_COMPLEX'  => $_CORE_CONFIG['user']['pass_complex'],
-		//'ALLOW_NAMECHANGE'  => $_CORE_CONFIG['user']['pass_complex'],
-		'ALLOW_EMAILREUSE'	=> $_CORE_CONFIG['user']['allow_emailreuse'],
-
-		'A_ACC_OPTION'	=> array(
-			array(
-				'LANG' => $_CLASS['core_user']->lang['ACC_NONE'],
-				'OPTION' => USER_ACTIVATION_NONE,
-			),
-			array(
-				'LANG' => $_CLASS['core_user']->lang['ACC_USER'],
-				'OPTION' => USER_ACTIVATION_SELF,
-			),
-			array(
-				'LANG' => $_CLASS['core_user']->lang['ACC_ADMIN'],
-				'OPTION' => USER_ACTIVATION_ADMIN,
-			),
-			array(
-				'LANG' => $_CLASS['core_user']->lang['ACC_DISABLE'],
-				'OPTION' => USER_ACTIVATION_DISABLE,
-			))
-		));
-
-		$_CLASS['core_template']->display('admin/system/index.html');
 }
 
 ?>

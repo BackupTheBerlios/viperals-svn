@@ -22,7 +22,7 @@ require($site_file_root.'core.php');
 
 if (!$_CLASS['core_user']->is_admin)
 {
-	//die('this is admin only :-) need better language :-(');
+	die('this is admin only :-) need better language :-(');
 }
 
 $_CLASS['core_error_handler']->stop();

@@ -17,7 +17,10 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
+
 // Add channel support, rss_data[channel][item][item_branch]
 // nested items
 // maybe make this more xml specfic with another rss function?
@@ -30,6 +33,7 @@ class core_rss
 	var $item_tags = array('title', 'link', 'description', 'author');
 	var $channel_tags = array('title', 'link', 'description', 'author');
 	var $send_cookie = false;
+	var $channel_open = false;
 
 	var $error = '';
 	var $item = 0;
@@ -134,7 +138,6 @@ class core_rss
 		if (mb_strpos($data, '200') === false)
 		{
 			//echo $data;
-
 			if (mb_strpos($data, '301') === true || mb_strpos($data, '301') === true)
 			{
 				while (!empty($data))
@@ -239,12 +242,12 @@ class core_rss
 			return;
 		}
 
-		$element = strtolower($element);
-
 		if (mb_strpos($element, ':'))
 		{
 			list($element) = explode(':', $element, 2);
 		}
+
+		$element = strtolower($element);
 
 		if (!$this->feed_type)
 		{
@@ -252,18 +255,19 @@ class core_rss
 			{
 				Case 'rdf':
 					$this->feed_type = 'rss';
-					break;
+				break;
 				
 				Case 'rss':
 					$this->feed_type = 'rss';
-					break;
+				break;
 				
 				Case 'feed':
 					$this->feed_type = 'atom';
-					break;
+				break;
 
 				default:
 					$this->feed_type = 'generic';
+				break;
 			}
 
 			$attrs = array_change_key_case($attrs, CASE_LOWER);
@@ -274,14 +278,20 @@ class core_rss
 			return;
 		}
 
-		if ($element == 'item' || $element == 'entry')
+		if ($element === 'item' || $element === 'entry')
 		{
 			$this->item_open = true;
 			return;
 		}
-		elseif ($element == 'channel' || $element == 'feed')
+		elseif ($element === 'channel' || $element === 'feed')
 		{
 			$this->channel_open = true;
+			return;
+		}
+		
+		if ($element == 'link' && $this->feed_type == 'atom' && in_array($element, $this->item_tags))
+		{
+			$this->rss_data[$this->item][$element] = $attrs['HREF'];
 			return;
 		}
 
@@ -291,7 +301,6 @@ class core_rss
 			{
 				$this->title_type = $element;
 			}
-			return;
 		}
 		else
 		{

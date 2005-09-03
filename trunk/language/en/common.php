@@ -22,7 +22,6 @@
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
 $this->lang += array(
-	'ENCODING'		=> 'utf-8',
 	'LANG'			=> 'en',
 	'DIRECTION'		=> 'ltr',
 	'LEFT'			=> 'left',
@@ -48,7 +47,7 @@ $this->lang += array(
 	'ALL_FORUMS'			=> 'All Forums',
 	'ALL_MESSAGES'			=> 'All Messages',
 	'ALL_POSTS'				=> 'All Posts',
-	'ALL_TIMES'             => 'All times are GMT%1$s %2$s',
+	'ALL_TIMES'             => 'All times are %1$s %2$s',
 	'ALL_TOPICS'			=> 'All Topics',
 	'AND'					=> 'And',
 	'ARE_WATCHING_FORUM'	=> 'You have subscribed to receive updates on this forum',
@@ -214,9 +213,10 @@ $this->lang += array(
 	'LOGOUT' 			=> 'Logout',
 	'LOG_ADMIN_AUTH_FAIL'   => '<b>Failed administration login attempt</b>',
 	'LOG_ADMIN_AUTH_SUCCESS'=> '<b>Sucessful administration login</b>',
+	'LOG_DELETE_POST'	=> '<b>Deleted post</b><br />&#187; %s',
 	'LOG_DELETE_TOPIC'	=> '<b>Deleted topic</b><br />&#187; %s',
-	'LOG_EMAIL_ERROR'       => '<b>Email error<br />&#187; %s',
-	'LOG_JABBER_ERROR'      => '<b>Jabber error<br />&#187; %s',
+	'LOG_EMAIL_ERROR'	=> '<b>Email error<br />&#187; %s',
+	'LOG_JABBER_ERROR'	=> '<b>Jabber error<br />&#187; %s',
 	'LOG_ME_IN'			=> 'Log me on automatically each visit',
 	'LOG_USER_FEEDBACK'     => '<b>Added user feedback</b><br />&#187; %s',
 	'LOG_USER_GENERAL'	=> '%s',

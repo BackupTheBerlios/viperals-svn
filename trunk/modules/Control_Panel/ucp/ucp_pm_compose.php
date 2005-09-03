@@ -17,10 +17,6 @@ function compose_pm($id, $mode, $action)
 {
 	global $_CLASS, $site_file_root, $config;
 	
-	require($site_file_root.'includes/forums/functions_admin.php');
-	require($site_file_root.'includes/forums/functions_posting.php');
-	require($site_file_root.'includes/forums/message_parser.php');
-
 	if (!$action)
 	{
 		$action = 'post';
@@ -52,18 +48,18 @@ function compose_pm($id, $mode, $action)
 	// Do NOT use request_var or specialchars here
 	$address_list	= isset($_REQUEST['address_list']) ? $_REQUEST['address_list'] : array();
 
-	$submit		= (isset($_POST['post']));
-	$preview	= (isset($_POST['preview']));
-	$save		= (isset($_POST['save']));
-	$load		= (isset($_POST['load']));
-	$cancel		= (isset($_POST['cancel']));
-	$confirm	= (isset($_POST['confirm']));
-	$delete		= (isset($_POST['delete']));
+	$submit		= isset($_POST['post']);
+	$preview	= isset($_POST['preview']);
+	$save		= isset($_POST['save']);
+	$load		= isset($_POST['load']);
+	$cancel		= isset($_POST['cancel']);
+	$confirm	= isset($_POST['confirm']);
+	$delete		= isset($_POST['delete']);
 
-	$remove_u	= (isset($_REQUEST['remove_u']));
-	$remove_g	= (isset($_REQUEST['remove_g']));
-	$add_to		= (isset($_REQUEST['add_to']));
-	$add_bcc	= (isset($_REQUEST['add_bcc']));
+	$remove_u	= isset($_REQUEST['remove_u']);
+	$remove_g	= isset($_REQUEST['remove_g']);
+	$add_to		= isset($_REQUEST['add_to']);
+	$add_bcc	= isset($_REQUEST['add_bcc']);
 
 	$refresh	= isset($_POST['add_file']) || isset($_POST['delete_file']) || isset($_POST['edit_comment']) || $save || $load
 		|| $remove_u || $remove_g || $add_to || $add_bcc;
@@ -71,13 +67,23 @@ function compose_pm($id, $mode, $action)
 	$action		= ($delete && !$preview && !$refresh && $submit) ? 'delete' : $action;
 
 	$error = array();
-	$current_time = time();
+	$current_time = gmtime();
 
 	// Was cancel pressed? If so then redirect to the appropriate page
 	if ($cancel || ($current_time - $lastclick < 2 && $submit))
 	{
 		$redirect = generate_link("Control_Panel&amp;i=$id&amp;mode=view_messages&amp;action=view_message" . (($msg_id) ? "&amp;p=$msg_id" : ''));
 		redirect($redirect);
+	}
+
+	if ($action == 'forward' && (!$config['forward_pm'] || !$_CLASS['auth']->acl_get('u_pm_forward')))
+	{
+		trigger_error('NO_AUTH_FORWARD_MESSAGE');
+	}
+
+	if ($action == 'edit' && !$_CLASS['auth']->acl_get('u_pm_edit'))
+	{
+		trigger_error('NO_AUTH_EDIT_MESSAGE');
 	}
 
 	$sql = '';
@@ -92,13 +98,11 @@ function compose_pm($id, $mode, $action)
 			{
 				trigger_error('NO_AUTH_SEND_MESSAGE');
 			}
-		
-			break;
+		break;
 			
 		case 'reply':
 		case 'quote':
 		case 'forward':
-		
 			if (!$msg_id)
 			{
 				trigger_error('NO_MESSAGE');
@@ -108,11 +112,11 @@ function compose_pm($id, $mode, $action)
 			{
 				trigger_error('NO_AUTH_SEND_MESSAGE');
 			}
-			
+
 			if ($quote_post)
 			{
 				$sql = 'SELECT p.post_text as message_text, p.poster_id as author_id, p.post_time as message_time, p.bbcode_bitfield, p.bbcode_uid, p.enable_sig, p.enable_html, p.enable_smilies, p.enable_magic_url, t.topic_title as message_subject, u.username as quote_username
-					FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . USERS_TABLE . " u
+					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . USERS_TABLE . " u
 					WHERE p.post_id = $msg_id
 						AND t.topic_id = p.topic_id
 						AND u.user_id = p.poster_id";
@@ -120,13 +124,13 @@ function compose_pm($id, $mode, $action)
 			else
 			{
 				$sql = 'SELECT t.*, p.*, u.username as quote_username
-					FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . ' u
+					FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . ' u
 					WHERE t.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 						AND p.author_id = u.user_id
 						AND t.msg_id = p.msg_id
 						AND p.msg_id = $msg_id";
 			}
-			break;
+		break;
 
 		case 'edit':
 			if (!$msg_id)
@@ -136,12 +140,12 @@ function compose_pm($id, $mode, $action)
 
 			// check for outbox (not read) status, we do not allow editing if one user already having the message
 			$sql = 'SELECT p.*, t.*
-				FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p
+				FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p
 				WHERE t.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 					AND t.folder_id = ' . PRIVMSGS_OUTBOX . "
 					AND t.msg_id = $msg_id
 					AND t.msg_id = p.msg_id";
-			break;
+		break;
 
 		case 'delete':
 			if (!$_CLASS['auth']->acl_get('u_pm_delete'))
@@ -155,27 +159,22 @@ function compose_pm($id, $mode, $action)
 			}
 
 			$sql = 'SELECT msg_id, unread, new, author_id, folder_id
-				FROM ' . PRIVMSGS_TO_TABLE . '
+				FROM ' . FORUMS_PRIVMSGS_TO_TABLE . '
 				WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 					AND msg_id = $msg_id";
 			break;
 
 		case 'smilies':
+			require_once($site_file_root.'includes/forums/functions_posting.php');
+	
 			generate_smilies('window', 0);
-			break;
+	
+			script_close(false);
+		break;
 
 		default:
 			trigger_error('NO_ACTION_MODE');
-	}
-
-	if ($action == 'forward' && (!$config['forward_pm'] || !$_CLASS['auth']->acl_get('u_pm_forward')))
-	{
-		trigger_error('NO_AUTH_FORWARD_MESSAGE');
-	}
-
-	if ($action == 'edit' && !$_CLASS['auth']->acl_get('u_pm_edit'))
-	{
-		trigger_error('NO_AUTH_EDIT_MESSAGE');
+		break;
 	}
 
 	if ($sql)
@@ -198,11 +197,11 @@ function compose_pm($id, $mode, $action)
 			trigger_error('NO_AUTHOR');
 		}
 
-		if (($action == 'reply' || $action == 'quote') && !sizeof($address_list) && !$refresh && !$submit && !$preview)
+		if (($action == 'reply' || $action == 'quote') && empty($address_list) && !$refresh && !$submit && !$preview)
 		{
 			$address_list = array('u' => array($author_id => 'to'));
 		}
-		else if ($action == 'edit' && !sizeof($address_list) && !$refresh && !$submit && !$preview)
+		elseif ($action == 'edit' && empty($address_list) && !$refresh && !$submit && !$preview)
 		{
 			// Rebuild TO and BCC Header
 			$address_list = rebuild_header(array('to' => $to_address, 'bcc' => $bcc_address));
@@ -229,7 +228,6 @@ function compose_pm($id, $mode, $action)
 		trigger_error('NO_AUTH_GROUP_MESSAGE');
 	}
 
-
 	if ($action == 'edit' && !$refresh && !$preview && !$submit)
 	{
 		if (!($message_time > time() - $config['pm_edit_time'] || !$config['pm_edit_time']))
@@ -237,16 +235,20 @@ function compose_pm($id, $mode, $action)
 			trigger_error('CANNOT_EDIT_MESSAGE_TIME');
 		}
 	}
+
 	if (!isset($icon_id))
 	{
 		$icon_id = 0;
 	}
 
+	require_once($site_file_root.'includes/forums/functions_admin.php');
+	require_once($site_file_root.'includes/forums/functions_posting.php');
+	require_once($site_file_root.'includes/forums/message_parser.php');
 
 	$message_parser = new parse_message();
 
-	$message_subject = (isset($message_subject)) ? $message_subject : '';
-	$message_parser->message = ($action == 'reply') ? '' : ((isset($message_text)) ? $message_text : '');
+	$message_subject = isset($message_subject) ? $message_subject : '';
+	$message_parser->message = ($action == 'reply') ? '' : (isset($message_text) ? $message_text : '');
 	unset($message_text);
 
 	$s_action = "Control_Panel&amp;i=$id&amp;mode=$mode&amp;action=$action";
@@ -295,7 +297,7 @@ function compose_pm($id, $mode, $action)
 	if ($message_attachment && !$submit && !$refresh && !$preview && $action == 'edit')
 	{
 		$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
-			FROM ' . ATTACHMENTS_TABLE . "
+			FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 			WHERE post_msg_id = $msg_id
 				AND in_message = 1
 				ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
@@ -320,7 +322,7 @@ function compose_pm($id, $mode, $action)
 	if ($_CLASS['auth']->acl_get('u_savedrafts') && $action != 'delete')
 	{
 		$sql = 'SELECT draft_id
-			FROM ' . DRAFTS_TABLE . '
+			FROM ' . FORUMS_DRAFTS_TABLE . '
 			WHERE (forum_id = 0 AND topic_id = 0)
 				AND user_id = ' . $_CLASS['core_user']->data['user_id'] . 
 				(($draft_id) ? " AND draft_id <> $draft_id" : '');
@@ -338,6 +340,7 @@ function compose_pm($id, $mode, $action)
 		$message_parser->bbcode_uid = $bbcode_uid;
 	}
 
+$config['auth_bbcode_pm'] = true;
 	$html_status	= ($config['allow_html'] && $config['auth_html_pm'] && $_CLASS['auth']->acl_get('u_pm_html'));
 	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm'] && $_CLASS['auth']->acl_get('u_pm_bbcode'));
 	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm'] && $_CLASS['auth']->acl_get('u_pm_smilies'));
@@ -353,7 +356,7 @@ function compose_pm($id, $mode, $action)
 
 		if ($subject && $message)
 		{
-			$sql = 'INSERT INTO ' . DRAFTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+			$sql = 'INSERT INTO ' . FORUMS_DRAFTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 				'user_id'	=> $_CLASS['core_user']->data['user_id'],
 				'topic_id'	=> 0,
 				'forum_id'	=> 0,
@@ -377,7 +380,7 @@ function compose_pm($id, $mode, $action)
 	if ($draft_id && $_CLASS['auth']->acl_get('u_savedrafts'))
 	{
 		$sql = 'SELECT draft_subject, draft_message 
-			FROM ' . DRAFTS_TABLE . " 
+			FROM ' . FORUMS_DRAFTS_TABLE . " 
 			WHERE draft_id = $draft_id
 				AND topic_id = 0
 				AND forum_id = 0
@@ -387,7 +390,7 @@ function compose_pm($id, $mode, $action)
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$_REQUEST['subject'] = $row['draft_subject'];
-			$_POST['message'] = $row['draft_message'];
+			$_REQUEST['message'] = $row['draft_message'];
 			$refresh = true;
 			$_CLASS['core_template']->assign('S_DRAFT_LOADED', true);
 		}
@@ -405,17 +408,9 @@ function compose_pm($id, $mode, $action)
 
 	if ($submit || $preview || $refresh)
 	{
-		$subject = request_var('subject', '');
+		$subject = mb_strtolower(get_variable('subject', 'POST', ''));
 
-		if (strcmp($subject, strtoupper($subject)) == 0 && $subject)
-		{
-			$subject = strtolower($subject);
-		}
-		$subject = preg_replace('#&amp;(\#[0-9]+;)#', '&\1', $subject);
-
-	
-		$message_parser->message = (isset($_POST['message'])) ? htmlspecialchars(str_replace(array('\\\'', '\\"', '\\0', '\\\\'), array('\'', '"', '\0', '\\'), $_POST['message'])) : '';
-		$message_parser->message = preg_replace('#&amp;(\#[0-9]+;)#', '&\1', $message_parser->message);
+		$message_parser->message = request_var('message', '', true);
 
 		$icon_id			= request_var('icon', 0);
 
@@ -443,6 +438,7 @@ function compose_pm($id, $mode, $action)
 
 		// Check checksum ... don't re-parse message if the same
 		$update_message = ($action != 'edit' || $message_md5 != $post_checksum || $status_switch || $preview) ? true : false;
+
 		if ($update_message)
 		{
 			$message_parser->parse($enable_html, $enable_bbcode, $enable_urls, $enable_smilies, $img_status, $flash_status, true);
@@ -455,7 +451,7 @@ function compose_pm($id, $mode, $action)
 		if ($action != 'edit' && !$preview && !$refresh && $config['flood_interval'] && !$_CLASS['auth']->acl_get('u_ignoreflood'))
 		{
 			// Flood check
-			$last_post_time = $_CLASS['core_user']->data['user_lastpost_time'];
+			$last_post_time = $_CLASS['core_user']->data['user_last_post_time'];
 
 			if ($last_post_time)
 			{
@@ -472,18 +468,18 @@ function compose_pm($id, $mode, $action)
 			$error[] = $_CLASS['core_user']->lang['EMPTY_SUBJECT'];
 		}
 
-		if (!sizeof($address_list))
+		if (empty($address_list))
 		{
 			$error[] = $_CLASS['core_user']->lang['NO_RECIPIENT'];
 		}
 
-		if (sizeof($message_parser->warn_msg) && !($remove_u || $remove_g || $add_to || $add_bcc))
+		if (!empty($message_parser->warn_msg) && !($remove_u || $remove_g || $add_to || $add_bcc))
 		{
 			$error[] = implode('<br />', $message_parser->warn_msg);
 		}
 
 		// Store message, sync counters
-		if (!sizeof($error) && $submit)
+		if (empty($error) && $submit)
 		{
 			$pm_data = array(
 				'msg_id'				=> (int) $msg_id,
@@ -519,7 +515,7 @@ function compose_pm($id, $mode, $action)
 		$message_subject = stripslashes($subject);
 	}
 
-	if (!sizeof($error) && $preview)
+	if (empty($error) && $preview)
 	{
 		$post_time = ($action == 'edit') ? $post_time : $current_time;
 
@@ -546,7 +542,7 @@ function compose_pm($id, $mode, $action)
 		}
 
 		// Attachment Preview
-		if (sizeof($message_parser->attachment_data))
+		if (!empty($message_parser->attachment_data))
 		{
 			require($site_file_root.'includes/forums/functions_display.php');
 			$extensions = $update_count = array();
@@ -557,7 +553,7 @@ function compose_pm($id, $mode, $action)
 
 		$preview_subject = censor_text($subject);
 
-		if (!sizeof($error))
+		if (empty($error))
 		{
 			$_CLASS['core_template']->assign(array(
 				'POST_DATE'					=> $_CLASS['core_user']->format_date($post_time),
@@ -572,7 +568,7 @@ function compose_pm($id, $mode, $action)
 	}
 
 	// Decode text for message display
-	$bbcode_uid = (($action == 'quote' || $action == 'forward')&& !$preview && !$refresh && !sizeof($error)) ? $bbcode_uid : $message_parser->bbcode_uid;
+	$bbcode_uid = (($action == 'quote' || $action == 'forward')&& !$preview && !$refresh && empty($error)) ? $bbcode_uid : $message_parser->bbcode_uid;
 
 	$message_parser->decode_message($bbcode_uid);
 
@@ -623,18 +619,18 @@ function compose_pm($id, $mode, $action)
 
 	// Build address list for display
 	// array('u' => array($author_id => 'to'));
-	if (sizeof($address_list))
+	if (!empty($address_list))
 	{
 		// Get Usernames and Group Names
 		$result = array();
-		if (isset($address_list['u']) && sizeof($address_list['u']))
+		if (isset($address_list['u']) && !empty($address_list['u']))
 		{
 			$result['u'] = $_CLASS['core_db']->query('SELECT user_id as id, username as name, user_colour as colour 
 				FROM ' . USERS_TABLE . ' 
 				WHERE user_id IN (' . implode(', ', array_map('intval', array_keys($address_list['u']))) . ')');
 		}
 		
-		if (isset($address_list['g']) && sizeof($address_list['g']))
+		if (isset($address_list['g']) && !empty($address_list['g']))
 		{
 			$result['g'] = $_CLASS['core_db']->query('SELECT group_id as id, group_name as name, group_colour as colour 
 				FROM ' . GROUPS_TABLE . ' 
@@ -745,7 +741,7 @@ function compose_pm($id, $mode, $action)
 		'FLASH_STATUS'			=> ($flash_status) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
 		'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
 		'MINI_POST_IMG'			=> $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['PM']),
-		'ERROR'					=> (sizeof($error)) ? implode('<br />', $error) : '', 
+		'ERROR'					=> empty($error) ? '' : implode('<br />', $error), 
 
 		'S_EDIT_POST'			=> ($action == 'edit'),
 		'S_SHOW_PM_ICONS'		=> $s_pm_icons,
@@ -777,7 +773,7 @@ function compose_pm($id, $mode, $action)
 // For composing messages, handle list actions
 function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_to, $add_bcc)
 {
-	global $_REQUEST;
+	global $_REQUEST, $site_file_root;
 
 	// Delete User [TO/BCC]
 	if ($remove_u)
@@ -801,7 +797,7 @@ function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_
 		// Add Selected Groups
 		$group_list = isset($_REQUEST['group_list']) ? array_map('intval', $_REQUEST['group_list']) : array();
 
-		if (sizeof($group_list))
+		if (!empty($group_list))
 		{
 			foreach ($group_list as $group_id)
 			{
@@ -818,12 +814,13 @@ function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_
 		}
 
 		// Reveal the correct user_ids
-		if (sizeof($usernames))
+		if (!empty($usernames))
 		{
-			$user_id_ary = array();
-			user_get_id_name($user_id_ary, $usernames);
+			require_once($site_file_root.'includes/functions_user.php');
+
+			$user_id_ary = user_get_id($usernames, $difference);
 			
-			if (sizeof($user_id_ary))
+			if (!empty($user_id_ary))
 			{
 				foreach ($user_id_ary as $user_id)
 				{

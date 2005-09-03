@@ -53,9 +53,7 @@
 			<td class="row1" width="50%"><b>{ $L_DEFAULT_THEME }: </b></td>
 			<td class="row2">
 				<select name="default_theme">
-				<!-- LOOP $site_theme -->
-					<option value="{ $site_theme:FILE }" <!-- IF { $site_theme:FILE } == { $DEFAULT_THEME } --> selected="selected" <!-- ENDIF -->> { $site_theme:NAME }</option>
-				<!-- ENDLOOP -->
+					{ $SELECT_THEME }
 				</select>
 			</td>
 		</tr>
@@ -92,29 +90,27 @@
 		<tr>
 			<th colspan="2">Server Settings</th>
 		</tr>
-	
 		<tr>
 			<td class="row1" width="50%"><b>Domain Name: </b><br><span class="gensmall">The domain name this board runs from</span></td>
 			<td class="row2"><input class="post" size="40" maxlength="255" name="site_domain" value="{ $SITE_DOMAIN }" type="text"></td>
 		</tr>
-	
-	
 		<tr>
 			<td class="row1" width="50%"><b>Server Port: </b><br><span class="gensmall">The port your server is running on, usually 80, only change if different</span></td>
 			<td class="row2"><input class="post" size="5" maxlength="5" name="site_port" value="{ $SITE_PORT }" type="text"></td>
 		</tr>
-	
-	
 		<tr>
 			<td class="row1" width="50%"><b>Script path: </b><br><span class="gensmall">Site located relative to the domain name</span></td>
 	
 			<td class="row2"><input class="post" maxlength="255" name="site_path" value="{ $SITE_PATH }" type="text"></td>
 		</tr>
-	
-	
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SITE_SECURE }: </b><br><span class="gensmall">{ $L_COOKIE_SECURE_EXPLAIN }</span></td>
+			<td class="row2"><input name="site_secure" value="0" <!-- IF !{ $SITE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Disabled&nbsp;&nbsp;<input name="site_secure" value="1" <!-- IF { $SITE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Enabled</td>
+		</tr>
+
 		<tr>
 			<td class="row1" width="50%"><b>Session IP validation: </b><br><span class="gensmall">Determines how much of the users IP is used to validate a session; All compares the complete address, A.B.C the first x.x.x, A.B the first x.x, None disables checking.</span></td>
-			<td class="row2"><input name="ip_check" value="4" <!-- IF { $IP_CHECK } == 4  -->checked="checked" <!-- ENDIF -->type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" <!-- IF { $IP_CHECK } == 3 -->checked="checked" <!-- ENDIF --> type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" <!-- IF { $IP_CHECK } == 2 --> checked="checked" <!-- ENDIF --> type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" <!-- IF { $IP_CHECK } == 0 --> checked="checked" <!-- ENDIF --> type="radio"> None&nbsp;&nbsp;</td>
+			<td class="row2"><input name="ip_check" value="4" <!-- IF { $IP_CHECK } == 4  -->checked="checked" <!-- ENDIF -->type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" <!-- IF { $IP_CHECK } == 3 -->checked="checked" <!-- ENDIF --> type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" <!-- IF { $IP_CHECK } == 2 --> checked="checked" <!-- ENDIF --> type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" <!-- IF { $IP_CHECK } --> checked="checked" <!-- ENDIF --> type="radio"> None&nbsp;&nbsp;</td>
 	
 		</tr>
 		<tr>
@@ -157,12 +153,7 @@
 	
 			<td class="row2"><input class="post" maxlength="255" name="cookie_path" value="{ $COOKIE_PATH }" type="text"></td>
 		</tr>
-	
-	
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_COOKIE_SECURE }: </b><br><span class="gensmall">{ $L_COOKIE_SECURE_EXPLAIN }</span></td>
-			<td class="row2"><input name="cookie_secure" value="0" <!-- IF !{ $COOKIE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Disabled&nbsp;&nbsp;<input name="cookie_secure" value="1" <!-- IF { $COOKIE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Enabled</td>
-		</tr>
+
 		<script type="text/javascript">
 			  Calendar.setup(
 				{
@@ -171,75 +162,9 @@
 				}
 			  );
 		</script>
-	<!-- ELSEIF { $SYSTEM_MODE } == 'users' -->
-		<tr>
-			<th colspan="2">{ $L_USER_OPTIONS }</th>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_ACC_ACTIVATION }: </b><br><span class="gensmall">{ $L_ACC_ACTIVATION_EXPLAIN }</span></td>
-	
-			<td class="row2">
-			<!-- LOOP $A_ACC_OPTION -->
-				<input name="require_activation" value="{$A_ACC_OPTION:OPTION}" <!-- IF { $A_ACC_OPTION:OPTION } == { $ACTIVATION_OPTION } --> checked="checked" <!-- ENDIF --> type="radio"> {$A_ACC_OPTION:LANG}&nbsp;&nbsp;
-			<!-- ENDLOOP -->
-			</td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_ENABLE_COPPA }: </b><br><span class="gensmall">{ $L_ENABLE_COPPA_EXPLAIN }</span></td>
-	
-			<td class="row2"><input name="coppa_enable" value="1" <!-- IF { $COPPA_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="coppa_enable" value="0" <!-- IF !{ $COPPA_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_COPPA_FAX }: </b></td>
-			<td class="row2"><input class="post" size="25" maxlength="100" name="coppa_fax" value="{ $COPPA_FAX }" type="text"></td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_COPPA_MAIL }: </b><br><span class="gensmall">{ $L_COPPA_MAIL_EXPLAIN }</span></td>
-			<td class="row2"><textarea name="coppa_mail" rows="5" cols="40">{ $COPPA_MAIL }</textarea></td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_VISUAL_CONFIRM }: </b><br><span class="gensmall">{ $L_VISUAL_CONFIRM_EXPLAIN }</span></td>
-	
-			<td class="row2"><input name="enable_confirm" value="1" <!-- IF { $CONFIRM_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="enable_confirm" value="0" <!-- IF !{ $CONFIRM_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_REG_LIMIT }: </b><br><span class="gensmall">{ $L_REG_LIMIT_EXPLAIN }</span></td>
-			<td class="row2"><input class="post" size="4" maxlength="4" name="max_reg_attempts" value="{ $MAX_REG_ATTEMPTS }" type="text"></td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_USERNAME_LENGTH }: </b><br><span class="gensmall">{ $L_USERNAME_LENGTH_EXPLAIN }</span></td>
-			<td class="row2"><input class="post" size="3" maxlength="3" name="min_name_chars" value="{ $MIN_NAME_CHARS }" type="text"> Min&nbsp;&nbsp;<input class="post" size="3" maxlength="3" name="max_name_chars" value="{ $MAX_NAME_CHARS }" type="text"> Max</td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_USERNAME_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
-			<td class="row2"><select name="allow_name_chars"><option value=".*" <!-- IF { $ALLOW_NAME_CHARS } == '.*' --> selected="selected" <!-- ENDIF -->>Any character</option><option value="[\w]+" <!-- IF { $ALLOW_NAME_CHARS } == '[\w]+' --> selected="selected" <!-- ENDIF -->>Alphanumeric only</option><option value="[\w_\+\. \-\[\]]+" <!-- IF { $ALLOW_NAME_CHARS } == '[\w_\+\. \-\[\]]+' --> selected="selected" <!-- ENDIF -->>Alphanumeric and spacers</option></select></td>
-		</tr>
-		<tr>
-	
-			<td class="row1" width="50%"><b>{ $L_PASSWORD_LENGTH }: </b><br><span class="gensmall">{ $L_PASSWORD_LENGTH_EXPLAIN }</span></td>
-			<td class="row2"><input class="post" size="3" maxlength="3" name="min_pass_chars" value="{ $MIN_PASS_CHARS }" type="text"> Min&nbsp;&nbsp;<input class="post" size="3" maxlength="3" name="max_pass_chars" value="{ $MAX_PASS_CHARS }" type="text"> Max</td>
-		</tr>
-	
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_PASSWORD_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
-			<td class="row2"><select name="pass_complex"><option value=".*">No requirements</option><option value="[a-zA-Z]">Must be mixed case</option><option value="[a-zA-Z0-9]">Must contain alphanumerics</option><option value="[a-zA-Z\W]">Must contain symbols</option></select></td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_FORCE_PASS_CHANGE }: </b><br><span class="gensmall">{ $L_FORCE_PASS_CHANGE_EXPLAIN }</span></td>
-			<td class="row2"><input class="post" size="3" maxlength="3" name="chg_passforce" value="{ $CHG_PASSFORCE }" type="text"></td>
-	
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_ALLOW_EMAIL_REUSE }: </b><br><span class="gensmall">{ $L_ALLOW_EMAIL_REUSE_EXPLAIN }</span></td>
-			<td class="row2"><input name="allow_emailreuse" value="1" <!-- IF { $ALLOW_EMAILREUSE } --> checked="checked" <!-- ENDIF -->  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_emailreuse" value="0" <!-- IF !{ $ALLOW_EMAILREUSE } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_ALLOW_NAME_CHANGE }: </b></td>
-			<td class="row2"><input name="allow_namechange" value="1" <!-- IF { $ALLOW_NAMECHANGE } --> checked="checked" <!-- ENDIF -->  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_namechange" value="0" <!-- IF !{ $ALLOW_NAMECHANGE } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
-		</tr>
 	<!-- ENDIF -->
 		<tr>
-			<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="btnmain" type="submit">&nbsp;&nbsp;<input value="Reset" class="button" type="reset"></td>
+			<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="button" type="submit">&nbsp;&nbsp;<input value="Reset" class="button" type="reset"></td>
 		</tr>
 	</tbody>
 	</table>

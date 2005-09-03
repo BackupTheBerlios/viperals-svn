@@ -46,12 +46,9 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 	$message = $message_row['message_text'];
 
 	// If the board has HTML off but the message has HTML on then we process it, else leave it alone
-	if (!$config['auth_html_pm'] || !$_CLASS['auth']->acl_get('u_pm_html'))
+	if ($message_row['enable_html'] && (!$config['auth_html_pm'] || !$_CLASS['auth']->acl_get('u_pm_html')))
 	{
-		if ($message_row['enable_html'] && $config['auth_bbcode_pm'] && $_CLASS['auth']->acl_get('u_pm_bbcode'))
-		{
-			$message = preg_replace('#(<)([\/]?.*?)(>)#is', "&lt;\\2&gt;", $message);
-		}
+		$message = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $message);
 	}
 
 	// Second parse bbcode here
@@ -89,7 +86,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 			require($site_file_root.'includes/forums/functions_display.php');
 
 			$sql = 'SELECT * 
-				FROM ' . ATTACHMENTS_TABLE . "
+				FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 				WHERE post_msg_id = $msg_id
 					AND in_message = 1
 				ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC') . ', post_msg_id ASC';
@@ -102,9 +99,9 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 			$_CLASS['core_db']->free_result($result);
 	
 			// No attachments exist, but message table thinks they do so go ahead and reset attach flags
-			if (!sizeof($attachments))
+			if (empty($attachments))
 			{
-				$sql = 'UPDATE ' . PRIVMSGS_TABLE . " 
+				$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TABLE . " 
 					SET message_attachment = 0 
 					WHERE msg_id = $msg_id";
 				$_CLASS['core_db']->query($sql);
@@ -117,7 +114,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 	}
 
 	// Assign inline attachments
-	if (isset($attachments) && sizeof($attachments))
+	if (!empty($attachments))
 	{
 		$unset_attachments = parse_inline_attachments($message, $attachments, $update_count, 0);
 	
@@ -157,7 +154,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		'AUTHOR_RANK' 		=> $user_info['rank_title'],
 		'RANK_IMAGE' 		=> $user_info['rank_image'],
 		'AUTHOR_AVATAR'		=> (isset($user_info['avatar'])) ? $user_info['avatar'] : '',
-		'AUTHOR_JOINED'		=> $_CLASS['core_user']->format_date($user_info['user_regdate'], $_CLASS['core_user']->lang['DATE_FORMAT']),
+		'AUTHOR_JOINED'		=> $_CLASS['core_user']->format_date($user_info['user_reg_date']),
 		'AUTHOR_POSTS' 		=> (!empty($user_info['user_posts'])) ? $user_info['user_posts'] : '',
 		'AUTHOR_FROM' 		=> (!empty($user_info['user_from'])) ? $user_info['user_from'] : '',
 
@@ -195,10 +192,10 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		'S_HAS_ATTACHMENTS' => (sizeof($attachments)) ? true : false,
 		'S_DISPLAY_NOTICE'	=> $display_notice && $message_row['message_attachment'],
 
-		'U_PRINT_PM'		=> ($config['print_pm'] && $_CLASS['auth']->acl_get('u_pm_printpm')) ? generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=print") : '',
-		'U_EMAIL_PM'		=> ($config['email_pm'] && $_CORE_CONFIG['email']['email_enable'] && $_CLASS['auth']->acl_get('u_pm_emailpm')) ? 'Email' : '',
-		'U_FORWARD_PM'		=> ($config['forward_pm'] && $_CLASS['auth']->acl_get('u_pm_forward')) ? generate_link("$url&amp;mode=compose&amp;action=forward&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '')
-	);
+		'U_PRINT_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=print"),
+		'U_EMAIL_PM'		=> ($_CORE_CONFIG['email']['email_enable']) ? 'Email' : '',
+		'U_FORWARD_PM'		=> generate_link("$url&amp;mode=compose&amp;action=forward&amp;f=$folder_id&amp;p=" . $message_row['msg_id'])
+	));
 
 	// Display not already displayed Attachments for this post, we already parsed them. ;)
 	if (isset($attachments) && sizeof($attachments))
@@ -229,7 +226,7 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 
 	// Get History Messages (could be newer)
 	$sql = 'SELECT t.*, p.*, u.*
-		FROM ' . PRIVMSGS_TABLE . ' p, ' . PRIVMSGS_TO_TABLE . ' t, ' . USERS_TABLE . ' u
+		FROM ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . USERS_TABLE . ' u
 		WHERE t.msg_id = p.msg_id 
 			AND p.author_id = u.user_id
 			AND t.folder_id <> ' . PRIVMSGS_NO_BOX . "
@@ -243,6 +240,7 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 	{
 		$sql .= " AND (p.root_level = " . $message_row['root_level'] . ' OR p.msg_id = ' . $message_row['root_level'] . ')';
 	}
+
 	$sql .= ' ORDER BY p.message_time ';
 	$sort_dir = (!empty($_CLASS['core_user']->data['user_sortby_dir'])) ? $_CLASS['core_user']->data['user_sortby_dir'] : 'd';
 	$sql .= ($sort_dir == 'd') ? 'ASC' : 'DESC';
@@ -372,29 +370,29 @@ function get_user_informations($user_id, $user_row)
 	}
 
 	// Grab ranks
-	$ranks = array();
-	obtain_ranks($ranks);
+	$ranks = obtain_ranks();
 
 	// Generate online information for user
+	
+	$user_row['online'] = false;
+
 	if ($config['load_onlinetrack'])
 	{
-		$sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
+		$sql = 'SELECT session_user_id, MAX(session_hidden) AS session_hidden
 			FROM ' . SESSIONS_TABLE . " 
 			WHERE session_user_id = $user_id
-			GROUP BY session_user_id";
+			AND session_time < " . ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']) . '
+				GROUP BY session_user_id';
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
 		$update_time = $config['load_online_time'] * 60;
+
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$user_row['online'] = (time() - $update_time < $row['online_time'] && ($row['viewonline'] && $user_row['user_allow_viewonline'])) ? true : false;
-		} else {
-			$user_row['online'] = false;
+			$user_row['online'] = (!$row['session_hidden'] && $user_row['user_allow_viewonline']) ? true : false;
 		}
-	}
-	else
-	{
-		$user_row['online'] = false;
+
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	if ($user_row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
@@ -419,7 +417,7 @@ function get_user_informations($user_id, $user_row)
 		$user_row['rank_title'] = (!empty($ranks['special'][$user_row['user_rank']]['rank_title'])) ? $ranks['special'][$user_row['user_rank']]['rank_title'] : '';
 		$user_row['rank_image'] = (!empty($ranks['special'][$user_row['user_rank']]['rank_image'])) ? '<img src="' . $config['ranks_path'] . '/' . $ranks['special'][$user_row['user_rank']]['rank_image'] . '" border="0" alt="' . $ranks['special'][$user_row['user_rank']]['rank_title'] . '" title="' . $ranks['special'][$user_row['user_rank']]['rank_title'] . '" /><br />' : '';
 	}
-	elseif(isset($ranks['normal']))
+	elseif (isset($ranks['normal']))
 	{
 		foreach ($ranks['normal'] as $rank)
 		{
@@ -430,6 +428,10 @@ function get_user_informations($user_id, $user_row)
 				break;
 			}
 		}
+	}
+	else
+	{
+		$user_row['rank_title'] = $user_row['rank_image'] = '';
 	}
 
 	if (!empty($user_row['user_allow_viewemail']) || $_CLASS['auth']->acl_get('a_email'))

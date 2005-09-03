@@ -23,17 +23,17 @@ class core_auth
 {
 	var $_user_id;
 	var $_group_ids = array();
-	var $_group_default_id;
+	var $_user_group;
 
 	var $_got_data = false;
 	var $_admin_permission = array();
 
-	function core_auth($user_id = false, $group_id = false)
+	function core_auth($user_id = false, $user_group = false)
 	{
 		global $_CLASS;
 
 		$this->_user_id = ($user_id) ? $user_id : $_CLASS['core_user']->data['user_id'];
-		$this->_group_default_id = ($group_id) ? $group_id : $_CLASS['core_user']->data['group_id'];
+		$this->_user_group = ($user_group) ? $user_group : $_CLASS['core_user']->data['user_group'];
 	}
 
 	function user_auth($user_name, $user_password)
@@ -80,8 +80,8 @@ class core_auth
 
 // should this be extended for defualt groups only, and all in group ?
 		$sql = 'SELECT * FROM ' . ADMIN_AUTH_TABLE ." 
-					WHERE member_user_id = {$this->_user_id}
-					OR member_group_id = {$this->_group_default_id} ORDER BY member_user_id";
+					WHERE user_id = {$this->_user_id}
+					OR group_id = {$this->_user_group} ORDER BY user_id";
 
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -98,7 +98,7 @@ class core_auth
 
 				if (trim($row['admin_options']) && is_array($row['admin_options'] = @unserialize($row['admin_options'])))
 				{
-					$this->_admin_permission[$row['section']] = $row['options'];
+					$this->_admin_permission[$row['admin_section']] += $row['options'];
 				}
 			}
 		}
@@ -118,7 +118,7 @@ class core_auth
 
 		if (!isset($this->_admin_permission[$section]))
 		{
-			return isset($this->_admin_permission['/all/']) ?  true : false;
+			return isset($this->_admin_permission['_all_']) ?  true : false;
 		}
 
 		if ($option)
@@ -162,7 +162,7 @@ class core_auth
 			if (!$error && $_CORE_CONFIG['user']['enable_confirm'])
 			{
 				$code = $_CLASS['core_user']->session_data_get('confirmation_code');
-				$confirm_code = get_variable('confirm_code', 'POST');
+				$confirm_code = get_variable('confirm_code', 'POST', false);
 	
 				if (!$code || !$confirm_code || $code !== $confirm_code)
 				{
@@ -200,7 +200,7 @@ class core_auth
 		if ($_CORE_CONFIG['user']['enable_confirm'])
 		{
 			$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
-			$_CLASS['core_user']->session_data_set('confirmation_code', strtoupper(generate_string(6)));
+			$_CLASS['core_user']->session_data_set('confirmation_code', generate_string(6));
 		}
 		else
 		{
@@ -212,7 +212,7 @@ class core_auth
 			'LOGIN_EXPLAIN'			=> $_CLASS['core_user']->get_lang($login_array['explain']), 
 
 			'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
-			'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['require_activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
+			'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
 			'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
 			'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
 			'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
@@ -260,7 +260,7 @@ class core_auth
 			// need to sort/seperate this so that Only Default goups are first
 			foreach ($options_array['groups'][1] as $id => $group_options)
 			{
-				if ($id == $this->_group_default_id)
+				if ($id == $this->_user_group)
 				{
 					return (isset($group_options[$option]) ? $group_options[$option] : false);
 				}
@@ -385,8 +385,7 @@ class core_auth
 							unset($auth_options['users'][$key]);
 						}
 					}
-
-					//print_r($auth_options);
+					
 				break;
 			
 				case 'set':
@@ -396,13 +395,9 @@ class core_auth
 
 			$return = null;
 
-			foreach ($auth_options as $test)
+			if (!empty($auth_options['users'])|| !empty($auth_options['groups'][0])	|| !empty($auth_options['groups'][1]))
 			{
-				if (!empty($test))
-				{
-					$return =& $auth_options;
-					break;
-				}
+				$return =& $auth_options;
 			}
 		}
 

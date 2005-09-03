@@ -552,7 +552,7 @@ class db_postgres
 
 				if (!$this->sql_query($table))
 				{
-				echo $table.'<br/>';
+					echo $table.'<br/>';
 				}
 
 			case 'cancel':
@@ -579,9 +579,9 @@ class db_postgres
 			// INTEGER -- INT4 ( +auto_increment => SERIAL4 ) ( -2,147,483,648 to 2,147,483,647 )
 			$this->_fields[$name] =   ($setting['auto_increment']) ? "$name SERIAL" : "$name INTEGER";
 		}
-		elseif ($setting['min'] >= 9223372036854775808 && $setting['max'] <= 9223372036854775807)
+		elseif ($setting['min'] >= -9223372036854775808 && $setting['max'] <= 9223372036854775807)
 		{
-			// BIGINT -- INT8 ( +auto_increment => SERIAL8 ) ( 9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 )
+			// BIGINT -- INT8 ( +auto_increment => SERIAL8 ) ( -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 )
 			$this->_fields[$name] =  ($setting['auto_increment']) ? "$name BIGSERIAL" : "$name BIGINT";
 		}
 
@@ -610,7 +610,11 @@ class db_postgres
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
-		$index_name = $this->_table_name.'_'.(($index_name) ? $index_name : $field) ;
+		$index_name = ($index_name) ? $index_name : $field;
+
+		$index_name = is_array($index_name) ? implode('_', $index_name) : $index_name;
+		$index_name = $this->_table_name . '_' . $index_name;
+
 		$field = is_array($field) ? implode(', ', $field) : $field;
 
 		switch ($type)

@@ -15,11 +15,13 @@ class ucp_prefs extends module
 {
 	function ucp_prefs($id, $mode)
 	{
-		global $config, $_CLASS, $SID, $_CORE_CONFIG;
+		global $config, $_CLASS, $site_file_root, $_CORE_CONFIG;
 
 		$submit = (isset($_POST['submit'])) ? true : false;
 		$error = $data = array();
 		$s_hidden_fields = '';
+
+		require_once($site_file_root.'includes/forums/functions_user.php');
 
 		switch($mode)
 		{
@@ -49,7 +51,6 @@ class ucp_prefs extends module
 					}
 
 					$var_ary = array(
-						//'dateformat'	=> array('string', false, 3, 15), 
 						'lang'			=> array('match', false, '#^[a-z_]{2,}$#i'),
 						'tz'			=> array('num', false, -13, 13),
 					);
@@ -69,11 +70,11 @@ class ucp_prefs extends module
 							'user_allow_massemail'	=> $massemail, 
 							'user_allow_viewonline'	=> ($_CLASS['auth']->acl_get('u_hideonline')) ? !$hideonline : $_CLASS['core_user']->data['user_allow_viewonline'], 
 							'user_notify_type'		=> $notifymethod, 
-							'user_notify_pm'		=> $notifypm,
+							//'user_notify_pm'		=> $notifypm,
 							'user_data'				=> serialize($_CLASS['core_user']->data['user_data']), 
 
 							'user_dst'				=> $dst,
-							'user_dateformat'		=> $dateformat,
+							'user_time_format'		=> $dateformat,
 							'user_lang'				=> $lang,
 							'user_timezone'			=> $tz * 3600,
 							'user_theme'			=> $theme,
@@ -109,7 +110,7 @@ class ucp_prefs extends module
 				$hideonline = (isset($hideonline)) ? $hideonline : !$_CLASS['core_user']->data['user_allow_viewonline'];
 				$hide_online_yes = ($hideonline) ? ' checked="checked"' : '';
 				$hide_online_no = (!$hideonline) ? ' checked="checked"' : '';
-				$notifypm = (isset($notifypm)) ? $notifypm : $_CLASS['core_user']->data['user_notify_pm'];
+				$notifypm = (isset($notifypm)) ? $notifypm : '';
 				$notify_pm_yes = ($notifypm) ? ' checked="checked"' : '';
 				$notify_pm_no = (!$notifypm) ? ' checked="checked"' : '';
 				$popuppm = (isset($popuppm)) ? $popuppm : $_CLASS['core_user']->optionget('popuppm');
@@ -123,7 +124,7 @@ class ucp_prefs extends module
 				$dst_no = (!$dst) ? ' checked="checked"' : '';
 
 				$notifymethod = (isset($notifymethod)) ? $notifymethod : $_CLASS['core_user']->data['user_notify_type'];
-				$dateformat = (isset($dateformat)) ? $dateformat : $_CLASS['core_user']->data['user_dateformat'];
+				$dateformat = (isset($dateformat)) ? $dateformat : $_CLASS['core_user']->data['user_time_format'];
 				$lang = (isset($lang)) ? $lang : $_CLASS['core_user']->data['user_lang'];
 				$theme = (isset($theme)) ? $theme : $_CLASS['core_user']->data['user_theme'];
 				$tz = (isset($tz)) ? $tz * 3600 : $_CLASS['core_user']->data['user_timezone'] / 3600;
@@ -227,7 +228,7 @@ class ucp_prefs extends module
 						$_CLASS['core_db']->sql_query($sql);
 
 						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel$SID&amp;i=$id&amp;mode=$mode").'">', '</a>');
+						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 						trigger_error($message);
 					}
 					// Replace "error" strings with their real, localised form

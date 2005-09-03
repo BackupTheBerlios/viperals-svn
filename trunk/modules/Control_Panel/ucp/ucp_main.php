@@ -201,7 +201,7 @@ class ucp_main extends module
 				}
 
 				// Do the relevant calculations 
-				$memberdays = max(1, round((time() - $_CLASS['core_user']->data['user_regdate']) / 86400));
+				$memberdays = max(1, round((time() - $_CLASS['core_user']->data['user_reg_date']) / 86400));
 				$posts_per_day = $_CLASS['core_user']->data['user_posts'] / $memberdays;
 				$percentage = ($config['num_posts']) ? min(100, ($num_real_posts / $config['num_posts']) * 100) : 0;
 
@@ -228,7 +228,7 @@ class ucp_main extends module
 
 				$_CLASS['core_template']->assign_array(array(
 					'USER_COLOR'		=> (!empty($_CLASS['core_user']->data['user_colour'])) ? $_CLASS['core_user']->data['user_colour'] : '', 
-					'JOINED'			=> $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_regdate']),
+					'JOINED'			=> $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_reg_date']),
 					'VISITED'			=> (empty($_CLASS['core_user']->data['user_lastvisit'])) ? ' - ' : $_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_lastvisit']),
 					'POSTS'				=> ($_CLASS['core_user']->data['user_posts']) ? $_CLASS['core_user']->data['user_posts'] : 0,
 					'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),

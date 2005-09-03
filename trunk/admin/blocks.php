@@ -504,23 +504,21 @@ function block_select($default = false)
 {
 	global $site_file_root, $_CLASS;
 
-	$block_list = array();
-	$default = ($default) ? $default : $_CLASS['core_display']->theme;
-
-	$block_list = '';
 	$block_list_array = array();
 
 	$handle = opendir($site_file_root.'blocks');
 
 	while ($file = readdir($handle))
 	{
-		if(substr($file, 0, 6) == 'block-')
+		if (substr($file, 0, 6) == 'block-')
 		{
 			$block_list_array[$file] = ereg_replace('_',' ',substr($file,6,-4));
 		} 
 	}
 
 	closedir($handle);
+
+	$block_list = '';
 
 	foreach ($block_list_array as $value => $name)
 	{

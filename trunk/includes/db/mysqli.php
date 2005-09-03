@@ -23,7 +23,7 @@ $Id$
 
 class db_mysqli
 {
-	var $link_identifier;
+	var $link_identifier = false;
 	var $db_layer = 'mysqli';
 
 	var $last_result;
@@ -37,9 +37,9 @@ class db_mysqli
 	var $query_details = array();
 	var $open_queries = array();
 
-	var $indexs = array();
-	var $fields = array();
-	var $table_name = false;
+	var $_indexs = array();
+	var $_fields = array();
+	var $_table_name = false;
 
 	function connect($db)
 	{		
@@ -183,7 +183,7 @@ class db_mysqli
 		{
 			$this->_error($query, $backtrace);
 		}
-		elseif (strpos($query, 'SELECT') !== false)
+		elseif (strpos($query, 'SELECT') === false)
 		{
 			$this->open_queries[(string) $this->last_result] = $this->last_result;
 		}
@@ -232,13 +232,13 @@ class db_mysqli
 			return false;
 		}
 
-		$fields = $values = array();
+		$_fields = $values = array();
 
 		if ($query == 'INSERT')
 		{
 			foreach ($array as $key => $value)
 			{
-				$fields[] = $key;
+				$_fields[] = $key;
 
 				if (is_numeric($value))
 				{
@@ -258,7 +258,7 @@ class db_mysqli
 				}
 			}
 
-			return ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
+			return ' (' . implode(', ', $_fields) . ') VALUES (' . implode(', ', $values) . ')';
 		}
 		elseif ($query == 'UPDATE' || $query == 'SELECT')
 		{
@@ -371,6 +371,11 @@ class db_mysqli
 
 	function escape_array($value)
 	{
+		if (!$this->link_identifier)
+		{ 
+			return false; 
+		}
+
 		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
 
@@ -516,13 +521,13 @@ class db_mysqli
 					return;
 				}
 
-				$fields = implode(", \n", $this->_fields);
-				if ($indexs = implode(", \n", $this->_indexs))
+				$_fields = implode(", \n", $this->_fields);
+				if ($_indexs = implode(", \n", $this->_indexs))
 				{
-					$fields .= ", \n";
+					$_fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')
@@ -598,7 +603,7 @@ class db_mysqli
 		}
 	}
 
-	function add_table_field_text($name, $characters = 60000, $null = false)
+	function add_table_field_text($name, $characters, $null = false)
 	{
 		if ($characters <= 255)
 		{
@@ -627,18 +632,14 @@ class db_mysqli
 	function add_table_field_char($name, $characters, $null = false, $default = null, $padded = false)
 	{
 		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
-		$this->_fields[$name] .= $null ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 		$this->_fields[$name] .= is_null($default) ? '' : "DEFAULT '$default'";
 	}
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
-		$index_name = ($index_name) ? $index_name : $field;
+		$index_name = $index_name ? $index_name : $field;
 		
-		/*if (empty($this->_fields[$field]))
-		{
-			return;
-		}*/
 		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)

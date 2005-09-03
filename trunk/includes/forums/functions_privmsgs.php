@@ -113,7 +113,7 @@ $global_rule_conditions = array(
 );
 
 // Get all folder
- function get_folder($user_id, &$folder, $folder_id = false)
+function get_folder($user_id, &$folder, $folder_id = false)
 {
 	global $_CLASS;
 
@@ -139,7 +139,8 @@ $global_rule_conditions = array(
 	$_CLASS['core_db']->free_result($result);
 
 	// Make sure the default boxes are defined
-	foreach (array(PRIVMSGS_INBOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX) as $default_folder)
+	$folder_array = array(PRIVMSGS_INBOX, PRIVMSGS_OUTBOX, PRIVMSGS_SENTBOX);
+	foreach ($folder_array as $default_folder)
 	{
 		if (!isset($num_messages[$default_folder]))
 		{
@@ -194,8 +195,9 @@ $global_rule_conditions = array(
 function clean_sentbox($num_sentbox_messages)
 {
 	global $_CLASS, $config;
-
-	$message_limit = (!$_CLASS['core_user']->data['user_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['core_user']->data['user_message_limit'];
+// TEMP
+$_CLASS['core_user']->data['user_message_limit'] = isset($_CLASS['core_user']->data['user_message_limit']) ? $_CLASS['core_user']->data['user_message_limit'] : false;
+	$message_limit = ($_CLASS['core_user']->data['user_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['core_user']->data['user_message_limit'];
 	
 	// Check Message Limit - 
 	if ($message_limit && $num_sentbox_messages > $message_limit)
@@ -289,7 +291,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 		$user_rules = $_CLASS['core_db']->fetch_row_assocset($result);
 		$_CLASS['core_db']->free_result($result);
 
-		if (sizeof($user_rules))
+		if (!empty($user_rules))
 		{
 			$sql = 'SELECT zebra_id, friend, foe
 				FROM ' . ZEBRA_TABLE . "
@@ -1091,8 +1093,6 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		return;
 	}
 
-	$current_time = time();
-
 	// Collect some basic informations about which tables and which rows to update/insert
 	$sql_data = array();
 	$root_level = 0;
@@ -1163,7 +1163,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'author_id'			=> (int) $_CLASS['core_user']->data['user_id'],
 				'icon_id'			=> $data['icon_id'], 
 				'author_ip' 		=> $_CLASS['core_user']->ip,
-				'message_time'		=> $current_time,
+				'message_time'		=> $_CLASS['core_user']->time,
 				'enable_bbcode' 	=> $data['enable_bbcode'],
 				'enable_html' 		=> $data['enable_html'],
 				'enable_smilies' 	=> $data['enable_smilies'],
@@ -1183,7 +1183,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		case 'edit':
 			$sql_data = array(
 				'icon_id'			=> $data['icon_id'],
-				'message_edit_time'	=> $current_time,
+				'message_edit_time'	=> $_CLASS['core_user']->time,
 				'enable_bbcode' 	=> $data['enable_bbcode'],
 				'enable_html' 		=> $data['enable_html'],
 				'enable_smilies' 	=> $data['enable_smilies'],
@@ -1196,12 +1196,12 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid']
 			);
-			break;
+		break;
 	}
 
 	$_CLASS['core_db']->transaction();
 
-	if (sizeof($sql_data))
+	if (!empty($sql_data))
 	{
 		if ($mode == 'post' || $mode == 'reply' || $mode == 'quote' || $mode == 'forward')
 		{
@@ -1231,15 +1231,15 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'msg_id'	=> $data['msg_id'],
 				'user_id'	=> $user_id,
 				'author_id'	=> $_CLASS['core_user']->data['user_id'],
-				'folder_id'	=> PRIVMSGS_NO_BOX,
-				'new'		=> 1,
+				'folder_id'	=> PRIVMSGS_INBOX,
+				'msg_new'	=> 1,
 				'unread'	=> 1,
 				'forwarded'	=> ($mode == 'forward') ? 1 : 0))
 			);
 		}
 
 		$sql = 'UPDATE ' . USERS_TABLE . ' 
-			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1, user_last_privmsg = ' . time() . '
+			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1
 			WHERE user_id IN (' . implode(', ', array_keys($recipients)) . ')';
 		$_CLASS['core_db']->query($sql);
 
@@ -1251,7 +1251,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'user_id'	=> (int) $_CLASS['core_user']->data['user_id'],
 				'author_id'	=> (int) $_CLASS['core_user']->data['user_id'],
 				'folder_id'	=> PRIVMSGS_OUTBOX,
-				'new'		=> 0,
+				'msg_new'	=> 0,
 				'unread'	=> 0,
 				'forwarded'	=> ($mode == 'forward') ? 1 : 0))
 			);
@@ -1262,13 +1262,13 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	if ($mode == 'reply' || $mode == 'quote' || $mode == 'forward' || $mode == 'post')
 	{
 		$sql = 'UPDATE ' . USERS_TABLE . "
-			SET user_lastpost_time = $current_time
+			SET user_last_post_time = {$_CLASS['core_user']->time}
 			WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
 		$_CLASS['core_db']->query($sql);
 	}
 
 	// Submit Attachments
-	if (sizeof($data['attachment_data']) && $data['msg_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit', 'forward')))
+	if (!empty($data['attachment_data']) && $data['msg_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit', 'forward')))
 	{
 		$space_taken = $files_added = 0;
 
@@ -1309,7 +1309,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			}
 		}
 		
-		if (sizeof($data['attachment_data']))
+		if (!empty($data['attachment_data']))
 		{
 			$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TABLE . '
 				SET message_attachment = 1
@@ -1328,6 +1328,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 
 	// Delete draft if post was loaded...
 	$draft_id = request_var('draft_loaded', 0);
+
 	if ($draft_id)
 	{
 		$sql = 'DELETE FROM ' . DRAFTS_TABLE . " 
@@ -1349,7 +1350,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 function pm_notification($mode, $author, $recipients, $subject, $message)
 {
 	global $_CLASS, $config;
-
+return;
 	$subject = censor_text($subject);
 	
 	// Get banned User ID's

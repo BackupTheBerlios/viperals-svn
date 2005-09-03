@@ -878,25 +878,41 @@ return;
 		unset($ignore_array[$user_id]);
 	}
 
-	$processed = $update = array();
+	$processed = $delete_array = $update_array = array();
 
 	foreach ($holding as $user)
 	{
 		if (!in_array($user['user_id'], $ignore_array))
 		{
 			$processed[$user['template']][] = $user;
-			$update[$user['update']][] = $user['user_id'];
+			$update_array[$user['update']][] = $user['user_id'];
+		}
+		else
+		{
+			$delete_array[$user['update']] = $user['user_id'];
 		}
 	}
 	unset($holding, $ignore_array);
+
+	// Now delete the user_ids not authorized to receive notifications on this topic/forum
+	if (!empty($delete_array['topic']))
+	{
+		$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_WATCH_TABLE . "
+			WHERE topic_id = $topic_id
+				AND user_id IN (" . implode(', ', $delete_array['topic']) . ")");
+	}
+
+	if (!empty($delete_array['forum']))
+	{
+		$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_WATCH_TABLE . "
+			WHERE forum_id = $forum_id
+				AND user_id IN (" . implode(', ', $delete_array['forum']) . ")");
+	}
 
 	if (empty($processed))
 	{
 		return;
 	}
-
-	require_once($site_file_root.'includes/forums/functions_messenger.php');
-	$messenger = new messenger();
 
 	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
 
@@ -916,7 +932,7 @@ return;
 		$mailer->subject($_CLASS['core_user']->get_lang('FORUM_NOTIFICATION'));
 
 		$_CLASS['core_template']->assign_array(array(
-			'EMAIL_SIG'		=> '',
+			'EMAIL_SIG'		=> $email_sig,
 			'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 			'TOPIC_TITLE'	=> $topic_title,  
 			'FORUM_NAME'	=> $forum_name,
@@ -936,38 +952,21 @@ return;
 
 	$_CLASS['core_db']->transaction();
 
-	if (!empty($update['topic']))
+	if (!empty($update_array['topic']))
 	{
 		$_CLASS['core_db']->query('UPDATE ' . FORUMS_WATCH_TABLE . "
 			SET notify_status = 1
 			WHERE topic_id = $topic_id
-				AND user_id IN (" . implode(', ', $update['topic']) . ")");
+				AND user_id IN (" . implode(', ', $update_array['topic']) . ")");
 	}
 
-	if (!empty($update['forum']))
+	if (!empty($update_array['forum']))
 	{
 		$_CLASS['core_db']->query('UPDATE ' . FORUMS_WATCH_TABLE . "
 			SET notify_status = 1
 			WHERE forum_id = $forum_id
-				AND user_id IN (" . implode(', ', $update['forum']) . ")");
+				AND user_id IN (" . implode(', ', $update_array['forum']) . ")");
 	}
-
-	// Now delete the user_ids not authorized to receive notifications on this topic/forum
-	/*
-	if (isset($delete_ids['topic']) && sizeof($delete_ids['topic']))
-	{
-		$_CLASS['core_db']->query('DELETE FROM ' . TOPICS_WATCH_TABLE . "
-			WHERE topic_id = $topic_id
-				AND user_id IN (" . implode(', ', $delete_ids['topic']) . ")");
-	}
-
-	if (isset($delete_ids['forum']) && sizeof($delete_ids['forum']))
-	{
-		$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_WATCH_TABLE . "
-			WHERE forum_id = $forum_id
-				AND user_id IN (" . implode(', ', $delete_ids['forum']) . ")");
-	}
-	*/
 
 	$_CLASS['core_db']->sql_transaction('commit');
 }

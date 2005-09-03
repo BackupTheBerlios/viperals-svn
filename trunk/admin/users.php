@@ -41,7 +41,8 @@ $_CLASS['core_template']->assign_array(array(
 	'COUNT_USERS'	=> $count_users,
 	'LINK_ADD_USER'	=> generate_link('users&amp;mode=add_user', array('admin' => true)),
 	'LINK_EDIT_USER'=> generate_link('users&amp;mode=edit_user', array('admin' => true)),
-	
+	'LINK_SETTINGS'	=> generate_link('users&amp;mode=setting', array('admin' => true)),
+
 	'LINK_USER_INDEX'		=> generate_link('users', array('admin' => true)),
 	'LINK_VIEW_BOTS'		=> generate_link('users&amp;mode=bots', array('admin' => true)),
 	'LINK_VIEW_DISABLED'	=> generate_link('users&amp;mode=disabled', array('admin' => true)),
@@ -54,6 +55,76 @@ if (isset($_REQUEST['mode']))
 {
 	switch ($_REQUEST['mode'])
 	{
+		case 'setting':
+			if (isset($_POST['submit']))
+			{
+				$activation_array = array(USER_ACTIVATION_NONE, USER_ACTIVATION_SELF, USER_ACTIVATION_ADMIN, USER_ACTIVATION_DISABLE);
+				$activation = get_variable('activation', 'POST', USER_ACTIVATION_NONE, 'int');
+
+				$data['activation'] = in_array($activation, $activation_array) ? $activation : USER_ACTIVATION_NONE;
+		 		$data['coppa_enable'] = get_variable('coppa_enable', 'POST') ? 1 : 0;
+		 		$data['coppa_fax'] = get_variable('coppa_fax', 'POST');
+		 		$data['coppa_mail'] = get_variable('coppa_mail', 'POST');
+		 		$data['enable_confirm'] = get_variable('enable_confirm', 'POST') ? 1 : 0;
+		 		$data['max_reg_attempts'] = get_variable('coppa_fax', 'POST', 0, 'INT');
+		 		$data['min_name_chars'] = get_variable('min_name_chars', 'POST', 0, 'INT');
+		 		$data['max_name_chars'] = get_variable('max_name_chars', 'POST', 0, 'INT');
+		 		$data['min_pass_chars'] = get_variable('min_pass_chars', 'POST', 0, 'INT');
+		 		$data['max_pass_chars'] = get_variable('max_pass_chars', 'POST', 0, 'INT');
+
+				foreach ($data as $name => $setting)
+				{
+					if ($setting != $_CORE_CONFIG['user'][$name])
+					{
+						set_core_config('user', $name, $setting, false);
+					}
+				}
+			}
+
+			$_CLASS['core_template']->assign_array(array(
+				'S_ACTION' => generate_link('users&amp;mode=setting', array('admin' => true)),
+		
+				'ACTIVATION_OPTION' => $_CORE_CONFIG['user']['activation'],
+				'COPPA_ENABLE'		=> $_CORE_CONFIG['user']['coppa_enable'],
+				'COPPA_FAX'			=> $_CORE_CONFIG['user']['coppa_fax'],
+				'COPPA_MAIL'		=> $_CORE_CONFIG['user']['coppa_mail'],
+				'CONFIRM_ENABLE'	=> $_CORE_CONFIG['user']['enable_confirm'],
+				'MAX_REG_ATTEMPTS'	=> $_CORE_CONFIG['user']['max_reg_attempts'],
+				'MIN_NAME_CHARS'	=> $_CORE_CONFIG['user']['min_name_chars'],
+				'MAX_NAME_CHARS'	=> $_CORE_CONFIG['user']['max_name_chars'],
+				'MIN_PASS_CHARS'	=> $_CORE_CONFIG['user']['min_pass_chars'],
+				'MAX_PASS_CHARS'	=> $_CORE_CONFIG['user']['max_pass_chars'],
+				//'CHG_PASSFORCE'		=> $_CORE_CONFIG['user']['chg_passforce'],
+				//'ALLOW_NAMECHANGE'	=> $_CORE_CONFIG['user']['allow_namechange'],
+				'ALLOW_NAME_CHARS'	=> $_CORE_CONFIG['user']['allow_name_chars'],
+				
+				//'PASS_COMPLEX'  => $_CORE_CONFIG['user']['pass_complex'],
+				//'ALLOW_NAMECHANGE'  => $_CORE_CONFIG['user']['pass_complex'],
+				//'ALLOW_EMAILREUSE'	=> $_CORE_CONFIG['user']['allow_emailreuse'],
+
+				'A_ACC_OPTION'	=> array(
+					array(
+						'LANG' => $_CLASS['core_user']->lang['ACC_NONE'],
+						'OPTION' => USER_ACTIVATION_NONE,
+					),
+					array(
+						'LANG' => $_CLASS['core_user']->lang['ACC_USER'],
+						'OPTION' => USER_ACTIVATION_SELF,
+					),
+					array(
+						'LANG' => $_CLASS['core_user']->lang['ACC_ADMIN'],
+						'OPTION' => USER_ACTIVATION_ADMIN,
+					),
+					array(
+						'LANG' => $_CLASS['core_user']->lang['ACC_DISABLE'],
+						'OPTION' => USER_ACTIVATION_DISABLE,
+					)
+				)
+			));
+	
+			$_CLASS['core_display']->display(false, 'admin/users/setting.html');
+		break;
+
 		case 'add_user':
 			if (isset($_POST['submit']))
 			{
@@ -61,12 +132,13 @@ if (isset($_REQUEST['mode']))
 	
 				$error = array();
 	
-				$username	= get_variable('username', 'POST', false);
-				$password	= get_variable('password', 'POST', false);
-				$email		= get_variable('email', 'POST', false);
-				$tz			= get_variable('tz', 'POST', false);
-				$error		= array();
+				$username	= get_variable('username', 'POST');
+				$password	= get_variable('password', 'POST');
+				$email		= get_variable('email', 'POST');
+				$tz			= get_variable('tz', 'POST');
+				$coppa		= get_variable('coppa', 'POST');
 
+				$error		= array();
 				//when we add this make sure to confirm that it's one of the installed langs
 				$lang		= $_CORE_CONFIG['global']['default_lang'];
 	
@@ -132,7 +204,7 @@ if (isset($_REQUEST['mode']))
 					
 					set_core_config('user', 'newest_user_id', $row['user_id'], false);
 					set_core_config('user', 'newest_username', $row['username'], false);
-					set_core_config('user', 'num_users', $_CORE_CONFIG['user']['num_users'] + 1, false);
+					set_core_config('user', 'total_users', $_CORE_CONFIG['user']['total_users'] + 1, false);
 				}
 			}
 

@@ -70,8 +70,13 @@ class cache_file extends cache
 		$this->expires[$name] = $expires;
 	}
 	
-	function gc()
+	function gc($time = false)
 	{
+		if (!$time)
+		{
+			$time = gmtime();
+		}
+
 		$dir = opendir($this->cache_dir);
 
 		while ($file = readdir($dir))
@@ -87,13 +92,16 @@ class cache_file extends cache
 					$unset = true;
 				}
 				
-				if (time() > $this->expires[$name])
+				if ($time > $this->expires[$name])
 				{
 					unlink($this->cache_dir . $file);
 					$this->remove($name);
 				}
 
-				($unset) ? $this->remove($name) : '';
+				if ($unset)
+				{
+					$this->remove($name);
+				}
 			}
 		}
 

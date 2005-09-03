@@ -500,7 +500,8 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 }
 
 // Topic and forum watching common code
-function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset', $start = 0)
+//do we need user_id ?
+function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status = 'unset', $start = 0)
 {
 	global $_CLASS, $config, $_CORE_CONFIG;
 
@@ -509,8 +510,16 @@ function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset',
 		return array('link' => '', 'title' => '', 'watching' => false);
 	}
 
-	$where_sql = ($mode == 'forum') ? 'forum_id' : 'topic_id';
-	$u_url = ($mode == 'forum') ? 'f' : 't';
+	if ($mode == 'forum')
+	{
+		$where = "user_id = $user_id AND forum_id = $forum_id AND topic_id = 0";
+		$url = 'f='.$forum_id;
+	}
+	else
+	{
+		$where = "user_id = $user_id AND forum_id = $forum_id AND topic_id IN ($topic_id, 0)";
+		$url = 't='.$topic_id;
+	}
 
 	$is_watching = false;
 
@@ -519,8 +528,8 @@ function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset',
 		// Is user watching this thread?
 		$sql = 'SELECT notify_status
 			FROM '.FORUMS_WATCH_TABLE."
-			WHERE $where_sql = $match_id
-				AND user_id = $user_id";
+			 WHERE $where";
+
 		$result = $_CLASS['core_db']->query($sql);
 
 		$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : null;
@@ -535,28 +544,29 @@ function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset',
 			{
 				$is_watching = true;
 
-				/*
+				// Remove all topics that are being watched, we watching the whole forum dude
 				if ($mode == 'forum')
 				{
 					$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
-						WHERE topic_id = $match_id
+						WHERE forum_id = $forum_id
 							AND user_id = $user_id";
 				
 					$_CLASS['core_db']->query($sql);
 				}
-				*/
 
 				$sql_array = array(
 					'user_id' => (int) $user_id,
-					$where_sql => (int) $match_id,
-					'notify_status' => 0
+					'forum_id' => $forum_id,
+					'topic_id' => $topic_id,
+					'notify_status' => 0,
+					'notify_type' => 0
 				);
 
 				$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_WATCH_TABLE . ' '.$_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
 			}
 
-			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
-			//$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
+			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
+			//$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
 			//trigger_error($message);
 		}
 	}
@@ -568,15 +578,23 @@ function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset',
 			{
 				$is_watching = false;
 
+				if ($mode == 'forum')
+				{
+					$where_delete = "forum_id = $forum_id AND topic_id = 0";
+				}
+				else
+				{
+					$where_delete = "forum_id = $forum_id AND topic_id = $topic_id";
+				}
+
 				$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
-					WHERE $where_sql = $match_id
-						AND user_id = $user_id";
+							WHERE user_id = $user_id AND $where_delete";
 
 				$_CLASS['core_db']->query($sql);
 			}
 
-			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;start=$start"));
-			//$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;" . $u_url . "=$match_id&amp;start=$start") . '">', '</a>');
+			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
+			//$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
 			//trigger_error($message);
 		}
 		else
@@ -587,8 +605,7 @@ function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset',
 			{
 				$sql = 'UPDATE ' . FORUMS_WATCH_TABLE . "
 					SET notify_status = 0
-					WHERE $where_sql = $match_id
-						AND user_id = $user_id";
+					WHERE $where";
 				$_CLASS['core_db']->query($sql);
 			}
 		}
@@ -596,7 +613,7 @@ function watch_topic_forum($mode, $user_id, $match_id, $notify_status = 'unset',
 
 	return array(
 			'watching' => true,
-			'link' => generate_link("Forums&amp;file=view$mode&amp;$u_url=$match_id&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start"),
+			'link' => generate_link("Forums&amp;file=view$mode&amp;$url&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start"),
 			'title' => $_CLASS['core_user']->lang[(($is_watching) ? 'STOP' : 'START') . '_WATCHING_' . strtoupper($mode)],
 	);
 }
@@ -664,10 +681,14 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 				{
 					foreach ($sql_insert as $forum_id)
 					{
-						$sql = 'INSERT INTO ' . FORUMS_TRACK_TABLE . ' (user_id, forum_id, mark_time)
-							VALUES (' . $_CLASS['core_user']->data['user_id'] . ", $forum_id, $time)";
+						$sql_ary = array(
+							'user_id'		=> $_CLASS['core_user']->data['user_id'],
+							'topic_id'		=> 0,
+							'forum_id'		=> $forum_id,
+							'mark_time'		=> $time
+						);
 
-						$_CLASS['core_db']->query($sql);
+						$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 					}
 				}
 			}

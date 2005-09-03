@@ -1,25 +1,40 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 if (!defined('VIPERAL'))
 {
     die;
 }
 
-set_magic_quotes_runtime(0);
 error_reporting(E_ALL);
+//error_reporting(0);
+
+if (!extension_loaded('mbstring'))
+{
+	require_once($site_file_root.'includes/compatiblity/mbstring.php');
+}
+
+set_magic_quotes_runtime(0);
 mb_internal_encoding('UTF-8');
 //mb_http_output('UTF-8');
 
@@ -36,19 +51,16 @@ define('STRIP_SLASHES', get_magic_quotes_gpc());
 
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
+$base_memory_usage = get_memory_usage();
 
-// Move to index files
-$base_memory_usage = function_exists('memory_get_usage') ? memory_get_usage() : 0;
-
-require($site_file_root.'includes/functions.php');
-require($site_file_root.'config.php');
-require($site_file_root.'includes/tables.php');
-require($site_file_root.'includes/handler.php');
-require($site_file_root.'includes/mailer.php');
-require($site_file_root.'includes/db/'.$site_db['type'].'.php');
-require($site_file_root.'includes/display/template.php');
-require($site_file_root.'includes/cache/cache.php');
-require($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
+require_once($site_file_root.'includes/functions.php');
+require_once($site_file_root.'config.php');
+require_once($site_file_root.'includes/tables.php');
+require_once($site_file_root.'includes/handler.php');
+require_once($site_file_root.'includes/db/'.$site_db['type'].'.php');
+require_once($site_file_root.'includes/display/template.php');
+require_once($site_file_root.'includes/cache/cache.php');
+require_once($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
 
 // Load basic classes
 load_class(false, 'core_error_handler');
@@ -69,6 +81,21 @@ if (function_exists('register_shutdown_function'))
 $_CLASS['core_db']->connect($site_db);
 unset($sitedb);
 
+/*
+$_CLASS['core_db']->transaction();
+require($site_file_root.'install/build_tables.php');
+$_CLASS['core_db']->transaction('commit');
+die;
+*/
+
+
+/*
+$_CLASS['core_db']->transaction();
+require($site_file_root.'install/build_data.php');
+$_CLASS['core_db']->transaction('commit');
+die;
+*/
+
 $_CLASS['core_db']->return_on_error = true;
 
 // Error messages just incase we can't get our configs
@@ -77,7 +104,7 @@ $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
 if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 {
-	$_CORE_CONFIG = array();
+	$_CORE_CONFIG = $cache = array();
 
 	$sql = 'SELECT * FROM '.CORE_CONFIG_TABLE;
 		
@@ -88,11 +115,29 @@ if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 	
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$_CORE_CONFIG[$row['section']][$row['name']] = $row['value'];
+		if ($row['config_cache'])
+		{
+			$cache[$row['config_section']][$row['config_name']] = $row['config_value'];
+		}
+		$_CORE_CONFIG[$row['config_section']][$row['config_name']] = $row['config_value'];
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	$_CLASS['core_cache']->put('core_config', $_CORE_CONFIG);
+	$_CLASS['core_cache']->put('core_config', $cache);
+	unset($cache);
+}
+else
+{
+	$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE . ' WHERE config_cache = 0';
+		
+	if ($result = $_CLASS['core_db']->query($sql))
+	{
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$_CORE_CONFIG[$row['config_section']][$row['config_name']] = $row['config_value'];
+		}
+		$_CLASS['core_db']->free_result($result);
+	}
 }
 
 unset($config_error);
@@ -137,13 +182,58 @@ if ($_CLASS['core_user']->is_admin)
 }
 else
 {
-	$_CORE_CONFIG['global']['error'] = ERROR_NONE;
+	$_CORE_CONFIG['server']['error_options'] = ERROR_NONE;
 	$_CLASS['core_error_handler']->report = ERROR_NONE;
 }
+
+/*
+$_CORE_CONFIG['server']['error_options'] = ERROR_DEBUGGER;	
+//$_CORE_CONFIG['server']['error_options'] = ERROR_ONPAGE;	
+$_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options'];
+*/
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here
+}
+
+$install_prefix = 'test_';
+$time = gmtime();
+
+if (!function_exists('field_unix_time'))
+{
+	function field_unix_time($name, $null = false)
+	{
+		global $_CLASS;
+	
+		$_CLASS['core_db']->add_table_field_int($name, array('max' => 200000000, 'null' => $null));
+	}
+}
+
+function get_memory_usage()
+{
+	if (function_exists('memory_get_usage'))
+	{
+		return memory_get_usage();
+	}
+
+/*
+	This pisses me off, seeing that screen pop up all the time :-(
+	Enable it if you want, Will be disabled by default
+
+	if (PHP_OS == 'WINNT')
+	{
+		exec('tasklist /fi "PID eq ' . getmypid() . '" /fo LIST', $output); 
+		//Mem Usage: 24,064 K
+		if (!empty($output[5]))
+		{
+			$usage = (int) str_replace(',', '', substr($output[5], strpos($output[5], ':' ) + 1));
+			// hopefully it always returns the value in KBs
+			return $usage * 1000;
+		}
+	}
+*/
+	return 0;
 }
 
 ?>

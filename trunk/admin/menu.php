@@ -58,6 +58,7 @@ $menu['system'][] = array('lang' => $_CLASS['core_user']->get_lang('BOTS'), 'lin
 
 $menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('USERS'), 'link' => generate_link('users', array('admin' => true)));
 $menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('MANAGE'), 'link' => generate_link('users', array('admin' => true)));
+$menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('SETTING'), 'link' => generate_link('users&mode=setting', array('admin' => true)));
 $menu['users'][] = '';
 $menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('VIEW_DISABLED'), 'link' => generate_link('users&mode=disabled', array('admin' => true)));
 $menu['users'][] = array('lang' => $_CLASS['core_user']->get_lang('VIEW_UNACTIVATED'), 'link' => generate_link('users&mode=unactivated', array('admin' => true)));

@@ -206,7 +206,7 @@ if (isset($post_text))
 $message_parser->get_submitted_attachment_data();
 
 // Set uninitialized variables
-$uninit = array('post_attachment' => 0, 'poster_id' => 0, 'enable_magic_url' => 0, 'topic_status' => 0, 'topic_type' => POST_NORMAL, 'subject' => '', 'topic_title' => '', 'post_time' => 0, 'post_edit_reason' => '');
+$uninit = array('post_attachment' => 0, 'poster_id' => 0, 'enable_magic_url' => 0, 'topic_status' => ITEM_UNLOCKED, 'topic_type' => POST_NORMAL, 'subject' => '', 'topic_title' => '', 'post_time' => 0, 'post_edit_reason' => '');
 
 foreach ($uninit as $var_name => $default_value)
 {
@@ -510,8 +510,8 @@ if ($draft_id && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_sa
 	
 	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$_REQUEST['subject'] = html_entity_decode($row['draft_subject'], HTML_ENTITIES);
-		$_REQUEST['message'] = html_entity_decode($row['draft_message'], HTML_ENTITIES);
+		$_REQUEST['subject'] = $row['draft_subject'];
+		$_REQUEST['message'] = $row['draft_message'];
 
 		$refresh = true;
 		$_CLASS['core_template']->assign('S_DRAFT_LOADED', true);
@@ -536,7 +536,7 @@ if ($submit || $preview || $refresh)
 	$topic_cur_post_id	= get_variable('topic_cur_post_id', 'POST', 0, 'int');
 
 	$subject = mb_strtolower(get_variable('subject', 'POST', ''));
-	$message_parser->message = get_variable('message', 'POST', '');
+	$message_parser->message = request_var('message', '', true);
 
 
 	$topic_time_limit	= (isset($_POST['topic_time_limit'])) ? (int) $_POST['topic_time_limit'] : (($mode != 'post') ? $topic_time_limit : 0);
@@ -841,6 +841,7 @@ if ($submit || $preview || $refresh)
 				'topic_first_post_id'	=> (isset($topic_first_post_id)) ? (int) $topic_first_post_id : 0,
 				'topic_last_post_id'	=> (isset($topic_last_post_id)) ? (int) $topic_last_post_id : 0,
 				'topic_time_limit'		=> (int) $topic_time_limit,
+				'topic_status'			=> (int) $posting_data['topic_status'],
 				'post_id'				=> (int) $post_id,
 				'topic_id'				=> (int) $topic_id,
 				'forum_id'				=> (int) $forum_id,
@@ -1482,6 +1483,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'topic_first_poster_name' => (!$_CLASS['core_user']->is_user && $username) ? stripslashes($username) : $_CLASS['core_user']->data['username'],
 				'topic_type'		=> $topic_type,
 				'topic_time_limit'	=> ($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) ? ($data['topic_time_limit'] * 86400) : 0,
+				'topic_status'		=> $data['topic_status'],
 				'topic_attachment'	=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0
 			);
 

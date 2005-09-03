@@ -154,14 +154,12 @@ function display_forums($root_data = '', $display_moderators = true)
 			}
 		}
 
-		if (!isset($row['mark_time']))
+		if (!$config['load_db_lastread'] || !$_CLASS['core_user']->is_user)
 		{
-			$row['mark_time'] = 0;
+			$row['mark_time'] = isset($tracking_topics[$forum_id][0]) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0;
 		}
 
-		$mark_time_forum = ($config['load_db_lastread']) ? $row['mark_time'] : ((isset($tracking_topics[$forum_id][0])) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0);
-
-		if ($mark_time_forum < $row['forum_last_post_time'] && $_CLASS['core_user']->is_user)
+		if ($row['mark_time'] < $row['forum_last_post_time'])
 		{
 			$forum_unread[$parent_id] = true;
 		}

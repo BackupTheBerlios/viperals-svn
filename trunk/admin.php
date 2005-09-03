@@ -25,8 +25,8 @@ $_CLASS['core_display']->load_theme('viperal_admin', $site_file_root.'themes_adm
 
 $_CLASS['core_user']->add_lang('admin/common.php');
 
-$_CORE_MODULE['title'] = $_CLASS['core_user']->lang['ADMIN'];
-$_CORE_MODULE['sides'] = BLOCK_ALL;
+$_CORE_MODULE['module_title'] = $_CLASS['core_user']->lang['ADMIN'];
+$_CORE_MODULE['module_sides'] = BLOCK_ALL;
 $_CLASS['core_blocks']->blocks_loaded = true;
 
 if (!$_CLASS['core_user']->is_user)
@@ -54,25 +54,29 @@ $file_path = false;
 
 if ($mod)
 {
-	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE name='".$_CLASS['core_db']->escape($mod)."'");
+	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE module_name='".$_CLASS['core_db']->escape($mod)."'");
 	$_CORE_MODULE = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
+	
+// remove this -- just for testing
+	$_CORE_MODULE['module_name'] = $mod;
+	$_CORE_MODULE['module_title'] = $mod;
 }
 
 if (!$mod || !$_CORE_MODULE)
 {
-	$_CORE_MODULE = array('title' => '', 'name' => '');
+	$_CORE_MODULE = array('module_title' => '', 'module_name' => '');
 	$file_path = $site_file_root.'admin/index.php';
 }
 else
 {
-	if (file_exists($site_file_root.'admin/'.$_CORE_MODULE['name'].'.php'))
+	if (file_exists($site_file_root.'admin/'.$_CORE_MODULE['module_name'].'.php'))
 	{
-		$file_path = $site_file_root.'admin/'.$_CORE_MODULE['name'].'.php';
+		$file_path = $site_file_root.'admin/'.$_CORE_MODULE['module_name'].'.php';
 	}
 	else
 	{
-		$file_path = (file_exists($site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/index.php')) ? $site_file_root.'modules/'.$_CORE_MODULE['name'].'/admin/index.php' : false;
+		$file_path = (file_exists($site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/admin/index.php')) ? $site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/admin/index.php' : false;
 	}
 }
 
@@ -81,16 +85,16 @@ if (!$file_path)
 	trigger_error('NO_ADMIN_MODULE', E_USER_ERROR);
 }
 
-if ($_CORE_MODULE['name'])
+if ($_CORE_MODULE['module_name'])
 {
-	if (!$_CLASS['core_auth']->admin_power($_CORE_MODULE['name']))
+	if (!$_CLASS['core_auth']->admin_power($_CORE_MODULE['module_name']))
 	{
 		trigger_error('NOT_AUTH', E_USER_ERROR);
 	}
 }
 
-$_CORE_MODULE['title'] = $_CLASS['core_user']->lang['ADMIN'].' &gt; '.$_CORE_MODULE['title'];
-$_CORE_MODULE['sides'] = BLOCK_ALL;
+$_CORE_MODULE['module_title'] = $_CLASS['core_user']->lang['ADMIN'].' &gt; '.$_CORE_MODULE['module_title'];
+$_CORE_MODULE['module_sides'] = BLOCK_ALL;
 	
 require($site_file_root.'admin/menu.php');
 

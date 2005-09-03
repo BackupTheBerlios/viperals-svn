@@ -16,8 +16,9 @@ var active_menu = false;
 function get_offsets(element)
 {
 	var offsets = new Array();
+	var window_offset = (window.pageYOffset) ? window.pageYOffset : (document.body.scrollTop) ? document.body.scrollTop : document.documentElement.scrollTop;
 
-	offsets['top']	= element.offsetTop;
+	offsets['top']	= Number(window_offset) + element.offsetTop;
 	offsets['left']	= element.offsetLeft;
 
 	while ((element = element.offsetParent) != null)

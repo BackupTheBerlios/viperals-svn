@@ -150,9 +150,9 @@ $extra_fields = $join_sql_table = '';
 
 if ($_CLASS['core_user']->is_user)
 {
-	$extra_fields .= ', tw.notify_status';
+	$extra_fields .= ', tw.notify_status, tw.topic_id AS watch_topic';
 	$join_sql_table .= ' LEFT JOIN ' . FORUMS_WATCH_TABLE . ' tw ON (tw.user_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-		AND (tw.forum_id = $forum_id OR tw.topic_id = $topic_id))";
+		AND tw.forum_id = $forum_id AND tw.topic_id IN ($topic_id, 0))";
 
 	if ($config['allow_bookmarks'])
 	{
@@ -193,8 +193,13 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id) && !$_CLASS['auth']->acl_get(
 }
 
 // Are we watching this topic?
-$topic_data['notify_status'] = isset($topic_data['notify_status']) ? $topic_data['notify_status'] : null;
-$s_watching_topic = watch_topic_forum('topic', $_CLASS['core_user']->data['user_id'], $topic_id, $topic_data['notify_status'], $start);
+if (!isset($topic_data['notify_status']))
+{
+	$topic_data['notify_status'] = null;
+	$topic_data['watch_topic'] = false;
+}
+
+$s_watching_topic = watch_topic_forum('topic', $_CLASS['core_user']->data['user_id'], $forum_id, $topic_id, $topic_data['notify_status'], $start);
 
 // Bookmarks
 if ($config['allow_bookmarks'] && $_CLASS['core_user']->is_user && request_var('bookmark', 0))
@@ -394,21 +399,21 @@ if (!empty($poll_start))
 		}
 	}
 
-	$s_can_vote = (((!sizeof($cur_voted_id) && $_CLASS['auth']->acl_get('f_vote', $forum_id)) || 
+	$s_can_vote = (((empty($cur_voted_id) && $_CLASS['auth']->acl_get('f_vote', $forum_id)) || 
 		($_CLASS['auth']->acl_get('f_votechg', $forum_id) && $poll_vote_change)) &&
 		(($poll_length != 0 && $poll_start + $poll_length > time()) || $poll_length == 0) &&
 		$topic_data['topic_status'] != ITEM_LOCKED && 
 		$topic_data['forum_status'] != ITEM_LOCKED) ? true : false;
 		
-		$s_display_results = (!$s_can_vote || ($s_can_vote && sizeof($cur_voted_id)) || $view == 'viewpoll') ? true : false;
+		$s_display_results = (!$s_can_vote || ($s_can_vote && !empty($cur_voted_id)) || $view == 'viewpoll') ? true : false;
 		
 	if ($update && $s_can_vote)
 	{
-		if (!sizeof($voted_id) || sizeof($voted_id) > $poll_max_options)
+		if (empty($voted_id) || !empty($voted_id) > $poll_max_options)
 		{
 			$_CLASS['core_display']->meta_refresh(5, generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id"));
 
-			$message = (!sizeof($voted_id)) ? 'NO_VOTE_OPTION' : 'TOO_MANY_VOTE_OPTIONS';
+			$message = empty($voted_id) ? 'NO_VOTE_OPTION' : 'TOO_MANY_VOTE_OPTIONS';
 			$message = $_CLASS['core_user']->lang[$message] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id").'">', '</a>');
 			trigger_error($message);
 		}
@@ -483,7 +488,7 @@ if (!empty($poll_start))
 		require_once($site_file_root.'includes/forums/bbcode.php');
 		$poll_bbcode = new bbcode();
 		
-		$size = sizeof($poll_info);
+		$size = !empty($poll_info);
 		for ($i = 0, $size; $i < $size; $i++)
 		{
 			$poll_bbcode->bbcode_second_pass($poll_info[$i]['poll_option_text'], $poll_info[$i]['bbcode_uid'], $poll_option['bbcode_bitfield']);
@@ -757,7 +762,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			}
 			else
 			{
-				if (isset($ranks['normal']) && sizeof($ranks['normal']))
+				if (isset($ranks['normal']) && !empty($ranks['normal']))
 				{
 					foreach ($ranks['normal'] as $rank)
 					{
@@ -801,7 +806,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 $_CLASS['core_db']->free_result($result);
 
 // Generate online information for user
-if ($config['load_onlinetrack'] && sizeof($id_cache))
+if ($config['load_onlinetrack'] && !empty($id_cache))
 {
 	$sql = 'SELECT session_user_id, session_hidden, MAX(session_time) as online_time
 		FROM ' . SESSIONS_TABLE . ' 
@@ -820,7 +825,7 @@ if ($config['load_onlinetrack'] && sizeof($id_cache))
 unset($id_cache);
 
 // Pull attachment data
-if (sizeof($attach_list))
+if (!empty($attach_list))
 {
 	if ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id))
 	{
@@ -840,7 +845,7 @@ if (sizeof($attach_list))
 		$_CLASS['core_db']->free_result($result);
 
 		// No attachments exist, but post table thinks they do so go ahead and reset post_attach flags
-		if (!sizeof($attachments))
+		if (empty($attachments))
 		{
 			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . ' 
 				SET post_attachment = 0 
@@ -848,7 +853,7 @@ if (sizeof($attach_list))
 			$_CLASS['core_db']->query($sql);
 
 			// We need to update the topic indicator too if the complete topic is now without an attachment
-			if (sizeof($rowset) != $total_posts)
+			if (!empty($rowset) != $total_posts)
 			{
 				// Not all posts are displayed so we query the db to find if there's any attachment for this topic
 				$sql = 'SELECT a.post_msg_id as post_id
@@ -942,7 +947,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	$message = $row['post_text'];
 
 	// If the board has HTML off but the post has HTML on then we process it, else leave it alone
-	if ((!$config['allow_html'] || !$_CLASS['auth']->acl_get('f_html', $forum_id)) && $row['enable_html'])
+	if ($row['enable_html'] && (!$config['allow_html'] || !$_CLASS['auth']->acl_get('f_html', $forum_id)))
 	{
 		$message = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $message);
 	}
@@ -956,7 +961,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	// Always process smilies after parsing bbcodes
 	$message = smiley_text($message);
 
-	if (isset($attachments[$row['post_id']]) && sizeof($attachments[$row['post_id']]))
+	if (isset($attachments[$row['post_id']]) && !empty($attachments[$row['post_id']]))
 	{
 		$unset_attachments = parse_inline_attachments($message, $attachments[$row['post_id']], $update_count, $forum_id);
 
@@ -989,7 +994,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	if (($row['post_edit_count'] && $config['display_last_edited']) || $row['post_edit_reason'])
 	{
 		// Get usernames for all following posts if not already stored
-		if (!sizeof($post_edit_list) && $row['post_edit_reason'])
+		if (empty($post_edit_list) && $row['post_edit_reason'])
 		{
 			// Remove all post_ids already parsed (we do not have to check them)
 			$post_storage_list = (!$store_reverse) ? array_slice($post_list, $i) : array_slice(array_reverse($post_list), $i);
@@ -1041,7 +1046,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	$post_attachments = array();
 
 	// Remove this foreach.
-	if (isset($attachments[$row['post_id']]) && sizeof($attachments[$row['post_id']]))
+	if (isset($attachments[$row['post_id']]) && !empty($attachments[$row['post_id']]))
 	{
 		foreach ($attachments[$row['post_id']] as $attachment)
 		{
@@ -1146,6 +1151,7 @@ $topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data[
 $topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id)) ? '<option value="viewlogs">' . $_CLASS['core_user']->lang['VIEW_TOPIC_LOGS'] . '</option>' : '';
 
 $pagination = generate_pagination("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : ''), $total_posts, $config['posts_per_page'], $start);
+$topic_data['topic_title'] = censor_text($topic_data['topic_title']);
 
 // Send vars to template
 $_CLASS['core_template']->assign_array(array(
@@ -1153,14 +1159,14 @@ $_CLASS['core_template']->assign_array(array(
 	'FORUM_NAME' 		=> $topic_data['forum_name'],
 	'FORUM_DESC'		=> $topic_data['forum_desc'],
 	'TOPIC_ID' 			=> $topic_id,
-	'TOPIC_TITLE' 		=> censor_text($topic_data['topic_title']),
+	'TOPIC_TITLE' 		=> $topic_data['topic_title'],
 	'PAGINATION'		=> $pagination['formated'],
 	'PAGINATION_ARRAY'	=> $pagination['array'],
 	'PAGE_NUMBER' 		=> on_page($total_posts, $config['posts_per_page'], $start),
 	'TOTAL_POSTS'		=> ($total_posts == 1) ? $_CLASS['core_user']->lang['VIEW_TOPIC_POST'] : sprintf($_CLASS['core_user']->lang['VIEW_TOPIC_POSTS'], $total_posts), 
 	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;mode=topic_view&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
 
-	'MODERATORS'	=> (isset($forum_moderators[$forum_id]) && sizeof($forum_moderators[$forum_id])) ? implode(', ', $forum_moderators[$forum_id]) : '',
+	'MODERATORS'	=> (isset($forum_moderators[$forum_id]) && !empty($forum_moderators[$forum_id])) ? implode(', ', $forum_moderators[$forum_id]) : '',
 
 	'POST_IMG' 		=> ($topic_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', 'FORUM_LOCKED') : $_CLASS['core_user']->img('btn_post', 'POST_NEW_TOPIC'),
 	'QUOTE_IMG' 	=> $_CLASS['core_user']->img('btn_quote', 'REPLY_WITH_QUOTE'),
@@ -1201,6 +1207,7 @@ $_CLASS['core_template']->assign_array(array(
 	'U_PRINT_TOPIC'			=> ($_CLASS['auth']->acl_get('f_print', $forum_id)) ? generate_link($viewtopic_url . '&amp;view=print') : '',
 	'U_EMAIL_TOPIC'			=> ($_CLASS['auth']->acl_get('f_email', $forum_id) && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;t='.$topic_id) : '', 
 
+	'S_WATCH_FORUMS'		=> $topic_data['watch_topic'] ? false : true,
 	'U_WATCH_TOPIC' 		=> $s_watching_topic['link'], 
 	'L_WATCH_TOPIC' 		=> $s_watching_topic['title'], 
 
@@ -1209,7 +1216,7 @@ $_CLASS['core_template']->assign_array(array(
 	
 	'U_POST_NEW_TOPIC' 		=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
 	'U_POST_REPLY_TOPIC' 	=> generate_link("Forums&amp;file=posting&amp;mode=reply&amp;t=$topic_id"),
-	'U_BUMP_TOPIC'			=> (bump_topic_allowed($forum_id, $topic_data['topic_bumped'], $topic_data['topic_last_post_time'], $topic_data['topic_poster'], $topic_data['topic_last_poster_id'])) ? generate_link("Forums&amp;file=posting&amp;mode=bump&amp;t=$topic_id") : '')
+	'U_BUMP_TOPIC'			=> bump_topic_allowed($forum_id, $topic_data['topic_bumped'], $topic_data['topic_last_post_time'], $topic_data['topic_poster'], $topic_data['topic_last_poster_id']) ? generate_link("Forums&amp;file=posting&amp;mode=bump&amp;t=$topic_id") : '')
 );
 
 // Update topic view and if necessary attachment view counters ... but only
@@ -1224,7 +1231,7 @@ if (!mb_strpos($_CLASS['core_user']->data['session_url'], '&amp;t='.$topic_id))
 	$_CLASS['core_db']->query($sql);
 
 	// Update the attachment download counts
-	if (sizeof($update_count))
+	if (!empty($update_count))
 	{
 		$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
 			SET download_count = download_count + 1 
@@ -1238,7 +1245,6 @@ if ($update_mark)
 {
 	// Now lets get the all topics that are in the markable range,
 	// with is the max topics displayed on the forum's viewforum page
-// Need forum_topic_per_page along with whatever users have to after listing
 
 	// Get the user's last mark time for this forums
 	$sql = 'SELECT mark_time FROM '.FORUMS_TRACK_TABLE . ' 
@@ -1250,7 +1256,7 @@ if ($update_mark)
 	$_CLASS['core_db']->free_result($result);
 		
 	$sql = 'SELECT t.topic_id, t.topic_last_post_time, tr.mark_time FROM ' . FORUMS_TOPICS_TABLE . ' t
-			LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tr ON ( tr.topic_id = t.topic_id AND tr.user_id = '.$_CLASS['core_user']->data['user_id'].")
+			LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tr ON (tr.topic_id = t.topic_id AND tr.user_id = '.$_CLASS['core_user']->data['user_id'].")
 				WHERE t.forum_id = $forum_id
 					ORDER BY topic_last_post_time DESC";
 
@@ -1265,11 +1271,13 @@ if ($update_mark)
 		do
 		{
 			$last_mark_time = max($row['mark_time'], $forum_marktime);
+
 			if ($row['topic_last_post_time'] > $last_mark_time && $row['topic_id'] != $topic_id)
 			{
 				// We have a winner/loser
 				// Set so the forum isn't marked
 				$update_forum_mark = false;
+
 				break;
 			}
 		}
@@ -1297,7 +1305,7 @@ page_header();
 
 make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
 
-$_CLASS['core_display']->display(array($_CLASS['core_user']->lang['VIEW_TOPIC'], $topic_data['topic_title']), 'modules/Forums/viewtopic_body.html');
+$_CLASS['core_display']->display(array($_CLASS['core_user']->get_lang('VIEWING_TOPIC'), $topic_data['topic_title']), 'modules/Forums/viewtopic_body.html');
 
 //Move if we can
 function topic_last_read($topic_id, $forum_id)

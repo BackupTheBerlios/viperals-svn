@@ -87,16 +87,16 @@ function mcp_topic_view($id, $mode, $action, $url)
 	$posts_per_page = max(0, request_var('posts_per_page', intval($config['posts_per_page'])));
 
 	$sql = 'SELECT u.username, u.user_colour, p.*
-		FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 		WHERE ' . (($action == 'reports') ? 'p.post_reported = 1 AND ' : '') . "
 			p.topic_id = {$topic_id}
 			AND p.poster_id = u.user_id
 		ORDER BY $sort_order_sql";
-	$result = $_CLASS['core_db']->sql_query_limit($sql, $posts_per_page, $start);
+	$result = $_CLASS['core_db']->query_limit($sql, $posts_per_page, $start);
 
 	$rowset = array();
 	$bbcode_bitfield = 0;
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$rowset[] = $row;
 		$bbcode_bitfield |= $row['bbcode_bitfield'];
@@ -147,7 +147,7 @@ function mcp_topic_view($id, $mode, $action, $url)
 			'MESSAGE'		=> $message,
 			'POST_ID'		=> $row['post_id'],
 
-			'MINI_POST_IMG' => ($row['post_time'] > $_CLASS['core_user']->data['user_lastvisit'] && $_CLASS['core_user']->data['is_registered']) ? $_CLASS['core_user']->img('icon_post_new', $_CLASS['core_user']->lang['NEW_POST']) : $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
+			'MINI_POST_IMG' => ($row['post_time'] > $_CLASS['core_user']->data['user_last_visit'] && $_CLASS['core_user']->is_user) ? $_CLASS['core_user']->img('icon_post_new', $_CLASS['core_user']->lang['NEW_POST']) : $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
 			
 			'S_CHECKBOX'		=> $s_checkbox,
 			'S_POST_REPORTED'	=> ($row['post_reported']) ? true : false,
@@ -323,11 +323,11 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 						$limit_time_sql
 					ORDER BY $sort_order_sql";
 			}
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 0, $start);
+			$result = $_CLASS['core_db']->query_limit($sql, 0, $start);
 
 			$store = false;
 			$post_id_list = array();
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				// If splitted from selected post (split_beyond), we split the unapproved items too.
 				if (!$row['post_approved'] && !$_CLASS['auth']->acl_get('m_approve', $row['forum_id']))

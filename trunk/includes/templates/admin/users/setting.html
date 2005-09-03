@@ -1,0 +1,84 @@
+<!-- DISPLAY_HEADER -->
+
+{ $A_TABLE_OPEN }
+
+<!-- INCLUDE admin/users/header.html -->
+<form method="post" action="{ $S_ACTION }">
+	<table class="tablebg" cellspacing="1" cellpadding="4" width="100%">
+		<tr>
+			<th colspan="2">{ $L_USER_OPTIONS }</th>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_ACC_ACTIVATION }: </b><br><span class="gensmall">{ $L_ACC_ACTIVATION_EXPLAIN }</span></td>
+	
+			<td class="row2">
+			<!-- LOOP $A_ACC_OPTION -->
+				<input name="activation" value="{$A_ACC_OPTION:OPTION}" <!-- IF { $A_ACC_OPTION:OPTION } == { $ACTIVATION_OPTION } --> checked="checked" <!-- ENDIF --> type="radio"> {$A_ACC_OPTION:LANG}&nbsp;&nbsp;
+			<!-- ENDLOOP -->
+			</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_ENABLE_COPPA }: </b><br><span class="gensmall">{ $L_ENABLE_COPPA_EXPLAIN }</span></td>
+	
+			<td class="row2"><input name="coppa_enable" value="1" <!-- IF { $COPPA_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="coppa_enable" value="0" <!-- IF !{ $COPPA_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_COPPA_FAX }: </b></td>
+			<td class="row2"><input class="post" size="25" maxlength="100" name="coppa_fax" value="{ $COPPA_FAX }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_COPPA_MAIL }: </b><br><span class="gensmall">{ $L_COPPA_MAIL_EXPLAIN }</span></td>
+			<td class="row2"><textarea name="coppa_mail" rows="5" cols="40">{ $COPPA_MAIL }</textarea></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_VISUAL_CONFIRM }: </b><br><span class="gensmall">{ $L_VISUAL_CONFIRM_EXPLAIN }</span></td>
+	
+			<td class="row2"><input name="enable_confirm" value="1" <!-- IF { $CONFIRM_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="enable_confirm" value="0" <!-- IF !{ $CONFIRM_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_REG_LIMIT }: </b><br><span class="gensmall">{ $L_REG_LIMIT_EXPLAIN }</span></td>
+			<td class="row2"><input class="post" size="4" maxlength="4" name="max_reg_attempts" value="{ $MAX_REG_ATTEMPTS }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_USERNAME_LENGTH }: </b><br><span class="gensmall">{ $L_USERNAME_LENGTH_EXPLAIN }</span></td>
+			<td class="row2"><input class="post" size="3" maxlength="3" name="min_name_chars" value="{ $MIN_NAME_CHARS }" type="text"> Min&nbsp;&nbsp;<input class="post" size="3" maxlength="3" name="max_name_chars" value="{ $MAX_NAME_CHARS }" type="text"> Max</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_USERNAME_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
+			<td class="row2"><select name="allow_name_chars"><option value=".*" <!-- IF { $ALLOW_NAME_CHARS } == '.*' --> selected="selected" <!-- ENDIF -->>Any character</option><option value="[\w]+" <!-- IF { $ALLOW_NAME_CHARS } == '[\w]+' --> selected="selected" <!-- ENDIF -->>Alphanumeric only</option><option value="[\w_\+\. \-\[\]]+" <!-- IF { $ALLOW_NAME_CHARS } == '[\w_\+\. \-\[\]]+' --> selected="selected" <!-- ENDIF -->>Alphanumeric and spacers</option></select></td>
+		</tr>
+		<tr>
+	
+			<td class="row1" width="50%"><b>{ $L_PASSWORD_LENGTH }: </b><br><span class="gensmall">{ $L_PASSWORD_LENGTH_EXPLAIN }</span></td>
+			<td class="row2"><input class="post" size="3" maxlength="3" name="min_pass_chars" value="{ $MIN_PASS_CHARS }" type="text"> Min&nbsp;&nbsp;<input class="post" size="3" maxlength="3" name="max_pass_chars" value="{ $MAX_PASS_CHARS }" type="text"> Max</td>
+		</tr>
+	
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_PASSWORD_CHARS }: </b><br><span class="gensmall">{ $L_USERNAME_CHARS_EXPLAIN }</span></td>
+			<td class="row2"><select name="pass_complex"><option value=".*">No requirements</option><option value="[a-zA-Z]">Must be mixed case</option><option value="[a-zA-Z0-9]">Must contain alphanumerics</option><option value="[a-zA-Z\W]">Must contain symbols</option></select></td>
+		</tr>
+<!--
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_FORCE_PASS_CHANGE }: </b><br><span class="gensmall">{ $L_FORCE_PASS_CHANGE_EXPLAIN }</span></td>
+			<td class="row2"><input class="post" size="3" maxlength="3" name="chg_passforce" value="{ $CHG_PASSFORCE }" type="text"></td>
+	
+		</tr>
+
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_ALLOW_EMAIL_REUSE }: </b><br><span class="gensmall">{ $L_ALLOW_EMAIL_REUSE_EXPLAIN }</span></td>
+			<td class="row2"><input name="allow_emailreuse" value="1" <!-- IF { $ALLOW_EMAILREUSE } --> checked="checked" <!-- ENDIF -->  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_emailreuse" value="0" <!-- IF !{ $ALLOW_EMAILREUSE } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_ALLOW_NAME_CHANGE }: </b></td>
+			<td class="row2"><input name="allow_namechange" value="1" <!-- IF { $ALLOW_NAMECHANGE } --> checked="checked" <!-- ENDIF -->  type="radio">{ $L_YES }&nbsp;&nbsp;<input name="allow_namechange" value="0" <!-- IF !{ $ALLOW_NAMECHANGE } --> checked="checked" <!-- ENDIF --> type="radio">No</td>
+		</tr>
+--!>
+		<tr>
+			<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="button" type="submit">&nbsp;&nbsp;<input value="Reset" class="button" type="reset"></td>
+		</tr>
+	</table>
+</form>
+
+{ $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

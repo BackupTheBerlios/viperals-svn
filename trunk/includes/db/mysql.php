@@ -62,14 +62,6 @@ class db_mysql
 
 				//mysql_query('SET character_set_results = NULL', $this->link_identifier);
 
-				/*
-				$result = mysql_query("show variables like 'col%'",$this->link_identifier);
-				while ($value = mysql_fetch_assoc($result))
-				{
-					print_r($value);
-					echo '<br>';
-				}
-				*/
 				return $this->link_identifier;
 			}
 
@@ -201,11 +193,6 @@ class db_mysql
 		return $this->last_result;
 	}
 
-	function sql_query($query = false)
-	{
-		return mysql_query($query, $this->link_identifier);
-	}
-
 	function query_limit($query = false, $total = false, $offset = 0, $backtrace = false) 
 	{
 		if (!$query || !$total || !$this->link_identifier) 
@@ -230,6 +217,11 @@ class db_mysql
 		}
 		
 		return $this->query($query, $backtrace);
+	}
+
+	function sql_query($query = false)
+	{
+		return mysql_query($query, $this->link_identifier);
 	}
 
 	/*
@@ -364,18 +356,21 @@ class db_mysql
 
 	function escape($text)
 	{
-		if (function_exists('mysql_real_escape_string') && $this->link_identifier)
-		{
-			return mysql_real_escape_string($text, $this->link_identifier);
+		if (!$this->link_identifier)
+		{ 
+			return false; 
 		}
-		else
-		{
-			return mysql_escape_string($text);
-		}
+
+		return mysql_real_escape_string($text, $this->link_identifier);
 	}
 
 	function escape_array($value)
 	{
+		if (!$this->link_identifier)
+		{ 
+			return false; 
+		}
+
 		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
 		
@@ -657,6 +652,14 @@ class db_mysql
 				$this->_indexs['primary'] = "PRIMARY KEY (`$field`)";
 			break;
 		}
+	}
+}
+
+if (!function_exists('mysql_real_escape_string'))
+{
+	function mysql_real_escape_string($text, $null)
+	{
+		return mysql_escape_string($text);
 	}
 }
 

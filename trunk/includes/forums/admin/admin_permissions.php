@@ -538,7 +538,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			AND a.auth_option_id = o.auth_option_id
 			AND a.forum_id IN ($sql_forum_id)
 			AND u.user_id = a.user_id
-		ORDER BY u.username, u.user_regdate ASC";
+		ORDER BY u.username, u.user_reg_date ASC";
 	$result = $_CLASS['core_db']->query($sql);
 
 	$users = '';
