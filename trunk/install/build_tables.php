@@ -881,7 +881,7 @@ $_CLASS['core_db']->add_table_field_int('message_attachment', array('max' => 1))
 $_CLASS['core_db']->add_table_field_int('bbcode_bitfield', 1000000000);
 $_CLASS['core_db']->add_table_field_char('bbcode_uid', 5);
 field_unix_time('message_edit_time', true);
-$_CLASS['core_db']->add_table_field_text('message_edit_count', array('max' => 200, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('message_edit_count', array('max' => 200, 'null' => true));
 $_CLASS['core_db']->add_table_field_text('to_address', 1000000);
 $_CLASS['core_db']->add_table_field_text('bcc_address', 1000000);
 

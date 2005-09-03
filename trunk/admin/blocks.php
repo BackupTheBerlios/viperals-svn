@@ -343,7 +343,7 @@ function block_get_data(&$data, &$error, $type = false)
 		$data['block_position'] = BLOCK_RIGHT;
 	}
 
-	$data['block_status']	= get_variable('b_active', 'POST', 0, 'integer');
+	$data['block_status']	= (get_variable('b_active', 'POST', STATUS_DISABLED, 'integer') === STATUS_DISABLED) ? STATUS_DISABLED : STATUS_ACTIVE;
 	$data['block_expires']	= get_variable('b_expires', 'POST', '');
 	$data['block_starts']	= get_variable('b_time', 'POST', '');
 

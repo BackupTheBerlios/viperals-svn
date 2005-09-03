@@ -210,7 +210,7 @@ function messages_get_data(&$data, &$error)
 		}
 	}
 	
-	$data['block_status']	= get_variable('active', 'POST', 0);
+	$data['block_status']	= (get_variable('active', 'POST', STATUS_DISABLED, 'integer') === STATUS_DISABLED) ? STATUS_DISABLED : STATUS_ACTIVE;
 	$data['block_expires']	= get_variable('expires', 'POST', 0);
 	$data['block_starts']	= get_variable('time', 'POST', '');
 	$data['block_position']	= get_variable('b_position', 'POST', BLOCK_MESSAGE_TOP, 'integer');
