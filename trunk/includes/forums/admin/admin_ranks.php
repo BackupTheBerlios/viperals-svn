@@ -19,11 +19,12 @@
  *
  ***************************************************************************/
 
+// needs work
 
 // Do we have permission?
 if (!$_CLASS['auth']->acl_get('a_ranks'))
 {
-	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
+	trigger_error('NO_ADMIN');
 }
 
 // Check mode
@@ -38,7 +39,7 @@ else
 	{
 		$mode = 'add';
 	}
-	else if (isset($_POST['save']))
+	elseif (isset($_POST['save']))
 	{
 		$mode = 'save';
 	}
@@ -58,22 +59,26 @@ switch ($mode)
 	case 'add':
 
 		$data = $ranks = $existing_imgs = array();
-		$result = $_CLASS['core_db']->sql_query('SELECT * 
-			FROM ' . RANKS_TABLE . ' 
+
+		$result = $_CLASS['core_db']->query('SELECT * 
+			FROM ' . FORUMS_RANKS_TABLE . ' 
 			ORDER BY rank_special DESC, rank_min DESC');
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			do
+			$existing_imgs[] = $row['rank_image'];
+
+			if ($mode == 'edit' && $rank_id == $row['rank_id'])
 			{
-				$existing_imgs[] = $row['rank_image'];
-				if ($mode == 'edit' && $rank_id == $row['rank_id'])
-				{
-					$ranks = $row;
-				}
+				$ranks = $row;
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+// temp stuff
+if (empty($ranks))
+{
+$ranks['rank_title'] = $ranks['rank_image'] = $ranks['rank_special'] = $ranks['rank_min'] = '';
+}
+		$_CLASS['core_db']->free_result($result);
 
 		$imglist = filelist($config['ranks_path'], '');
 
@@ -197,20 +202,20 @@ function update_image_dimensions()
 
 		if ($rank_id)
 		{
-			$sql = "UPDATE " . RANKS_TABLE . "
-				SET rank_title = '" . $_CLASS['core_db']->sql_escape($rank_title) . "', rank_special = $special_rank, rank_min = $min_posts, rank_image = '" . $_CLASS['core_db']->sql_escape($rank_image) . "'
+			$sql = "UPDATE " . FORUMS_RANKS_TABLE . "
+				SET rank_title = '" . $_CLASS['core_db']->escape($rank_title) . "', rank_special = $special_rank, rank_min = $min_posts, rank_image = '" . $_CLASS['core_db']->escape($rank_image) . "'
 				WHERE rank_id = $rank_id";
 
 			$message = $_CLASS['core_user']->lang['RANK_UPDATED'];
 		}
 		else
 		{
-			$sql = "INSERT INTO " . RANKS_TABLE . " (rank_title, rank_special, rank_min, rank_image)
-				VALUES ('" . $_CLASS['core_db']->sql_escape($rank_title) . "', $special_rank, $min_posts, '" . $_CLASS['core_db']->sql_escape($rank_image) . "')";
+			$sql = "INSERT INTO " . FORUMS_RANKS_TABLE . " (rank_title, rank_special, rank_min, rank_image)
+				VALUES ('" . $_CLASS['core_db']->escape($rank_title) . "', $special_rank, $min_posts, '" . $_CLASS['core_db']->escape($rank_image) . "')";
 
 			$message = $_CLASS['core_user']->lang['RANK_ADDED'];
 		}
-		$_CLASS['core_db']->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
 		$_CLASS['core_cache']->destroy('ranks');
 
@@ -225,14 +230,14 @@ function update_image_dimensions()
 
 		if ($rank_id)
 		{
-			$sql = "DELETE FROM " . RANKS_TABLE . "
+			$sql = "DELETE FROM " . FORUMS_RANKS_TABLE . "
 				WHERE rank_id = $rank_id";
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			$sql = "UPDATE " . USERS_TABLE . "
 				SET user_rank = 0
 				WHERE user_rank = $rank_id";
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 
 			$_CLASS['core_cache']->destroy('ranks');
 
@@ -265,11 +270,11 @@ function update_image_dimensions()
 <?php
 
 		// Show the default page
-		$sql = "SELECT * FROM " . RANKS_TABLE . "
+		$sql = "SELECT * FROM " . FORUMS_RANKS_TABLE . "
 			ORDER BY rank_min ASC, rank_special ASC";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$row_class = 'row2';
 			
@@ -300,7 +305,7 @@ function update_image_dimensions()
 <?php
 
 			}
-			while ($row = $_CLASS['core_db']->sql_fetchrow($result));
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 		}
 
 ?>

@@ -118,7 +118,7 @@ class sessions
 		$ali = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_ali', 'COOKIE', false, 'int');
 		$alc = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_alc', 'COOKIE');
 
-		if ($ali && $ali)
+		if ($ali && $alc)
 		{
 			if ($id = $this->autologin_retrieve($ali, $alc))
 			{
@@ -305,6 +305,8 @@ class sessions
 					$this->autologin_destroy($this->data['user_id'], $this->autologin_code);
 				}
 			}
+
+			$this->save_session = false;
 		}
 
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "

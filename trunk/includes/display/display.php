@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 class core_display
@@ -144,6 +146,11 @@ class core_display
 		{
 			$_CORE_MODULE['module_title'] = $title;
 		}
+		elseif (!$_CORE_MODULE['module_title'])
+		{
+// should move this somewhere else
+			$_CORE_MODULE['module_title'] = $_CORE_MODULE['module_name'];
+		}
 
 		$this->headers();
 
@@ -166,6 +173,7 @@ class core_display
 		{
 			$this->message = '<b>System is in maintenance mode</b><br />';
 		}
+
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],

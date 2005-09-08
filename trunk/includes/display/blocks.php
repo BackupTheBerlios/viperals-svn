@@ -17,8 +17,9 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
-*/
 
+$Id$
+*/
 /* to do
 move Auth, lang, and expire/begin checks to load_blocks
 */
@@ -106,11 +107,11 @@ class core_blocks
 	*/
 	function add_block($data, $position = false)
 	{
-		$option_array = array('block_title','block_position', 'block_content', 'block_file' , 'block_starts' ,'block_expires', 'block_id',	'block_auth',	'block_type');
+		$option_array = array('block_status' => STATUS_ACTIVE, 'block_title' => '','block_position' => BLOCK_LEFT, 'block_content' => '', 'block_file' => '', 'block_starts' => 0,'block_expires' => 0, 'block_id' => 0,	'block_auth' => '',	'block_type' => '');
 
-		foreach($option_array as $option)
+		foreach ($option_array as $option => $value)
 		{
-			$data_perpared[$option] = (empty($data[$option])) ? '' : $data[$option];
+			$data_perpared[$option] = isset($data[$option]) ? $data[$option] : $value ;
 		}
 
 		$this->blocks_array[$data_perpared['block_position']][] = $data_perpared;
@@ -153,7 +154,7 @@ class core_blocks
 //language check here.
 			if ($this->block['block_expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['block_expires']))
 			{
-				$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET active=0 WHERE expires > 0 AND expires <='.$_CLASS['core_user']->time);
+				$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET block_status = ' . STATUS_DISABLED . ' WHERE block_expires > 0 AND block_expires <= ' . $_CLASS['core_user']->time);
 										
 				$_CLASS['core_cache']->destroy('blocks');
 				$expire_updated = true;

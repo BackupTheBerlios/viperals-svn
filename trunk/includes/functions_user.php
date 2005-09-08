@@ -162,7 +162,7 @@ function user_add(&$data)
 	$_CLASS['core_db']->query($sql);
 
 	$data['user_id'] = $_CLASS['core_db']->insert_id(USERS_TABLE, 'user_id');
-				
+
 	$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 		'group_id'		=> (int) $data['user_group'],
 		'user_id'		=> (int) $data['user_id'],

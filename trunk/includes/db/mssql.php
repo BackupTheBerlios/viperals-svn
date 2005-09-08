@@ -1,17 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 class db_mssql
 {
@@ -566,46 +574,50 @@ class db_mssql
 		}
 	}
 
-	function add_table_field_int($name, $number_min, $number_max = false, $default = 0, $auto_increment = false)
+//$name, $number_min, $number_max = false, $default = 0, $auto_increment = false
+	function add_table_field_int($name, $setting_sent)
 	{
-		$length = max(strlen($number_min), strlen($number_max));
+		$setting = array('default' => 0, 'min' => 0, 'max' => 0, 'auto_increment' => false, 'null' => false);
+		$setting = array_merge($setting, $setting_sent);
 
-		if ($number_min >= -0 && $number_max <= 255)
+		$length = max(strlen($setting['min']), strlen($setting['max']));
+
+		if ($setting['min'] >= -0 && $setting['max'] <= 255)
 		{
 			// TINYINT UNSIGNED ( 0 to 255 )
 			$this->_fields[$name] =  "`$name` TINYINT($length) UNSIGNED";
 		}
-		elseif ($number_min >= -128 && $number_max <= 128)
+		elseif ($setting['min'] >= -128 && $setting['max'] <= 128)
 		{
 			// TINYINT ( -128 to 127 )
 			$this->_fields[$name] =  "`$name` TINYINT($length) DEFAULT";
 		}
-		elseif ($number_min >= 0 && $number_max <= 65535)
+		elseif ($setting['min'] >= 0 && $setting['max'] <= 65535)
 		{
 			// SMALLINT UNSIGNED ( 0 to 65,535 )
 			$this->_fields[$name] =  "`$name` SMALLINT($length) UNSIGNED";
 		}
-		elseif ($number_min >= -32768 && $number_max <= 32767)
+		elseif ($setting['min'] >= -32768 && $setting['max'] <= 32767)
 		{
 			// SMALLINT ( -32,768 to 32,767 )
 			$this->_fields[$name] =  "`$name` SMALLINT($length)";
 		}
-		elseif ($number_min >= 0 && $number_max <= 16777215)
+		elseif ($setting['min'] >= 0 && $setting['max'] <= 16777215)
 		{
 			// MEDIUMINT UNSIGNED ( 0 to 16,777,215 )
 			$this->_fields[$name] =  "`$name` MEDIUMINT($length) UNSIGNED";
 		}
-		elseif ($number_min >= -8388608 && $number_max <= 8388607)
+		elseif ($setting['min'] >= -8388608 && $setting['max'] <= 8388607)
 		{
 			// MEDIUMINT ( -8,388,608 to 8,388,607 )
 			$this->_fields[$name] =  "`$name` MEDIUMINT($length)";
 		}
-		elseif ($number_min >= -2147483647 && $number_max <= 2147483647)
+		elseif ($setting['min'] >= -2147483647 && $setting['max'] <= 2147483647)
 		{
 			// INT ( -2,147,483,647 to 2,147,483,647 )
 			$this->_fields[$name] =  "`$name` INT($length)";
 		}
-		elseif ($number_min >= 0 && $number_max <= 4294967295) // we'll do this last
+		elseif ($setting['min'] >= 0 && $setting['max'] <= 4294967295) // we'll do this last
 		{
 			// INT UNSIGNED ( 0 to 4,294,967,295 )
 			$this->_fields[$name] =  "`$name` INT($length) UNSIGNED";
@@ -617,7 +629,8 @@ class db_mssql
 		}
 		else
 		{
-			$this->_fields[$name] .= (is_null($default)) ? " NULL" : " NOT NULL DEFAULT '".(int) $default."'";
+			$this->_fields[$name] .= ($setting['null']) ? " NULL" : " NOT NULL";
+			$this->_fields[$name] .= " DEFAULT '".(int) $default."'";
 		}
 	}
 

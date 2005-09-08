@@ -96,8 +96,6 @@ if (isset($_REQUEST['mode']))
 	}
 }
 
-blocks_block('main');
-
 $result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_file, block_auth
 	FROM ' . BLOCKS_TABLE . '
 	WHERE block_position IN (' . BLOCK_RIGHT . ', ' . BLOCK_TOP . ', ' . BLOCK_BOTTOM . ', ' . BLOCK_LEFT . ') ORDER BY block_position, block_order ASC');
@@ -222,7 +220,6 @@ function block_add($id = false, $block = false, $error = false)
 		}
 
 		unset($block_post);
-		blocks_block();
 	}
 	else
 	{
@@ -231,7 +228,6 @@ function block_add($id = false, $block = false, $error = false)
 			block_get_data($block, $error, get_variable('type', 'GET', BLOCKTYPE_FILE));
 			$error = '';
 		}
-		blocks_block('add');
 	}
 
 	$b_show_content = $b_file = $b_rss_show = $b_rss_rate = $b_rss_url = false;
@@ -273,49 +269,6 @@ function block_add($id = false, $block = false, $error = false)
 	));
 
 	$_CLASS['core_template']->display('admin/blocks/edit.html');
-}
-
-function blocks_block($mode = false)
-{
-    global $_CLASS;
-
-	$content = '<table class="tablebg" cellspacing="1" width="100%"><tbody><tr><th>Options</th>	</tr>';
-
-	if ($mode == 'main')
-	{
-		$content .= '<tr><td class="row1"><b class="phpbbnav">Main</b>
-		<ul class="phpbbnav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
-		<li>&#187; <b>Main</li></ul></td><tr>';
-	}
-	else
-	{
-		$content .= '<tr><td class="row2" onmouseover="this.className=\'row1\'" onmouseout="this.className=\'row2\'" onclick="location.href=\''.generate_link('blocks', array('admin' => true)).'\'" nowrap="nowrap"><a class="phpbbnav" href="'.generate_link('blocks', array('admin' => true)).'">Main</a>
-		</td></tr>';
-	}
-
-	if ($mode == 'add')
-	{
-		$content .= '<tr><td class="row1"><b class="phpbbnav">Add</b><ul class="phpbbnav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">';
-		$content .= '<li>&#187;<a href="'.generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_FILE, array('admin' => true)).'"> New Regular Block</a></li>';
-		$content .= '<li>&#187;<a href="'.generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_FEED, array('admin' => true)).'"> New Feed Block</a></li>';
-		$content .= '<li>&#187;<a href="'.generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_HTML, array('admin' => true)).'"> New HTML Block</a></li></ul></td></tr>';
-	}
-	else
-	{
-		$content .= '<td class="row2" onmouseover="this.className=\'row1\'" onmouseout="this.className=\'row2\'" onclick="location.href=\''.generate_link('blocks&amp;mode=add', array('admin' => true)).'\'" nowrap="nowrap"><a class="phpbbnav" href="'.generate_link('blocks&amp;mode=add', array('admin' => true)).'">Add New Block</a>
-		</td></tr>';
-	}
-
-	$content .= '</tbody></table>';
-
-	$data = array(
-		'title' 	=> 'Block Administration',
-		'position'	=> BLOCK_LEFT,
-		'type' 		=> BLOCKTYPE_HTML,
-		'content'	=> $content,
-	);
-
-	$_CLASS['core_blocks']->add_block($data);
 }
 
 function block_get_data(&$data, &$error, $type = false)

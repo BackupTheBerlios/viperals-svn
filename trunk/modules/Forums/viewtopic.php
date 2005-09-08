@@ -242,7 +242,7 @@ if ($config['allow_bookmarks'] && $_CLASS['core_user']->is_user && request_var('
 }
 
 // We make this check here because the correct forum_id is determined
-$topic_replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $topic_data['topic_replies_real'] : $topic_data['topic_replies'];
+$topic_replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? (int) $topic_data['topic_replies_real'] : (int) $topic_data['topic_replies'];
 
 if (!isset($topic_last_read))
 {
@@ -762,6 +762,12 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			}
 			else
 			{
+				$user_cache[$poster_id]['rank_title'] = '';
+				$user_cache[$poster_id]['rank_image'] = '';
+				
+				/*
+				We do this on posting no need to un-needed stuff
+
 				if (isset($ranks['normal']) && !empty($ranks['normal']))
 				{
 					foreach ($ranks['normal'] as $rank)
@@ -770,15 +776,12 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 						{
 							$user_cache[$poster_id]['rank_title'] = $rank['rank_title'];
 							$user_cache[$poster_id]['rank_image'] = (!empty($rank['rank_image'])) ? '<img src="' . $config['ranks_path'] . '/' . $rank['rank_image'] . '" border="0" alt="' . $rank['rank_title'] . '" title="' . $rank['rank_title'] . '" /><br />' : '';
+
 							break;
 						}
 					}
 				}
-				else
-				{
-					$user_cache[$poster_id]['rank_title'] = '';
-					$user_cache[$poster_id]['rank_image'] = '';
-				}
+				*/
 			}
 
 			if (!empty($row['user_allow_viewemail']) || $_CLASS['auth']->acl_get('a_email'))
@@ -815,11 +818,11 @@ if ($config['load_onlinetrack'] && !empty($id_cache))
 
 	$result = $_CLASS['core_db']->query($sql);
 
-	$update_time = $config['load_online_time'] * 60;
+	$min_online_time = $_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length'] * 60;
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$user_cache[$row['session_user_id']]['online'] = (time() - $update_time < $row['online_time'] && (!$row['session_hidden']));
+		$user_cache[$row['session_user_id']]['online'] = (!$row['session_hidden'] && $row['online_time'] > $min_online_time);
 	}
 }
 unset($id_cache);

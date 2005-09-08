@@ -27,7 +27,7 @@ $Id$
 //
 // FILENAME  : posting.php
 // STARTED   : Sat Feb 17, 2001
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
@@ -658,10 +658,11 @@ if ($submit || $preview || $refresh)
 		else
 		{
 			$sql = 'SELECT post_time AS last_post_time
-				FROM ' . POSTS_TABLE . "
+				FROM ' . FORUMS_POSTS_TABLE . "
 				WHERE poster_ip = '" . $_CLASS['core_user']->ip . "'
 					AND post_time > " . ($current_time - $config['flood_interval']);
 			$result = $_CLASS['core_db']->query_limit($sql, 1);
+
 			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$last_post_time = $row['last_post_time'];
@@ -1474,17 +1475,20 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	{
 		case 'post':
 			$sql_data[FORUMS_TOPICS_TABLE]['sql'] = array(
-				'topic_poster'		=> (int) $_CLASS['core_user']->data['user_id'],
-				'topic_time'		=> $current_time,
-				'forum_id' 			=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
-				'icon_id'			=> $data['icon_id'],
-				'topic_approved'	=> ($_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) && !$_CLASS['auth']->acl_get('m_approve')) ? 0 : 1,
-				'topic_title' 		=> $subject,
+				'topic_poster'			=> (int) $_CLASS['core_user']->data['user_id'],
+				'topic_time'			=> $current_time,
+				'forum_id' 				=> ($topic_type == POST_GLOBAL) ? 0 : $data['forum_id'],
+				'icon_id'				=> $data['icon_id'],
+				'topic_approved'		=> ($_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) && !$_CLASS['auth']->acl_get('m_approve')) ? 0 : 1,
+				'topic_title' 			=> $subject,
 				'topic_first_poster_name' => (!$_CLASS['core_user']->is_user && $username) ? stripslashes($username) : $_CLASS['core_user']->data['username'],
-				'topic_type'		=> $topic_type,
-				'topic_time_limit'	=> ($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) ? ($data['topic_time_limit'] * 86400) : 0,
-				'topic_status'		=> $data['topic_status'],
-				'topic_attachment'	=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0
+				'topic_type'			=> $topic_type,
+				'topic_time_limit'		=> ($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) ? ($data['topic_time_limit'] * 86400) : 0,
+				'topic_status'			=> $data['topic_status'],
+				'topic_attachment'		=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
+				'topic_replies_real'	=> 0,
+				'topic_replies'			=> 0,
+				'topic_views'			=> 0,
 			);
 
 			if (isset($poll['poll_options']) && !empty($poll['poll_options']))
@@ -1508,8 +1512,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				}
 				$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real + 1' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', forum_topics = forum_topics + 1' : '');
 			}
-			
-			break;
+		break;
 
 		case 'reply':
 			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = 'topic_replies_real = topic_replies_real + 1, topic_bumped = 0, topic_bumper = 0' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', topic_replies = topic_replies + 1' : '');
@@ -1519,7 +1522,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			{
 				$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_posts = forum_posts + 1';
 			}
-			break;
+		break;
 
 		case 'edit_topic':
 		case 'edit_first_post':
@@ -1577,11 +1580,11 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		if ($post_mode == 'post')
 		{
 			$sql_data[FORUMS_TOPICS_TABLE]['sql'] = array(
-				'topic_first_post_id' => $data['post_id'],
-				'topic_last_post_id' => $data['post_id'],
-				'topic_last_post_time' => $current_time,
-				'topic_last_poster_id' => (int) $_CLASS['core_user']->data['user_id'],
-				'topic_last_poster_name' => (!$_CLASS['core_user']->is_user && $username) ? stripslashes($username) : $_CLASS['core_user']->data['username']
+				'topic_first_post_id'	=> $data['post_id'],
+				'topic_last_post_id'	=> $data['post_id'],
+				'topic_last_post_time'	=> $current_time,
+				'topic_last_poster_id'	=> (int) $_CLASS['core_user']->data['user_id'],
+				'topic_last_poster_name'=> (!$_CLASS['core_user']->is_user && $username) ? $username : $_CLASS['core_user']->data['username']
 			);
 		}
 

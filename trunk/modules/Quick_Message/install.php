@@ -17,15 +17,29 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
+
+if (!defined('VIPERAL'))
+{
+    die;
+}
+
+global $prefix;
+
+if (!defined('QUICK_MESSAGE_TABLE'))
+{
+	define('QUICK_MESSAGE_TABLE', $prefix.'quick_message');
+}
 
 class Quick_Message_install
 {
 	function install()
 	{
-		global $_CLASS, $prefix;
+		global $_CLASS;
 
-		$_CLASS['core_db']->table_create('start', $prefix.'quick_message');
+		$_CLASS['core_db']->table_create('start', QUICK_MESSAGE_TABLE);
 		
 		$_CLASS['core_db']->add_table_field_int('message_id', array('max' => 16000000, 'auto_increment' => true));
 		$_CLASS['core_db']->add_table_field_text('message_text', 200);
@@ -48,14 +62,29 @@ class Quick_Message_install
 
 		$_CLASS['core_cache']->destroy('core_config');
 
-		$_CLASS['core_db']->query('INSERT INTO '.$prefix."quick_message (poster_id, poster_name, poster_ip, message_text, message_time) VALUES (0, 'Site', '', 'Lets do this !', ".gmtime().")");
+		$array = array(
+			'message_text'	=> 'Lets do this !',
+			'message_time'	=> (int) $_CLASS['core_user']->time,
+			'poster_id'		=> 0,
+			'poster_name'	=> (string) '',
+			'poster_ip'		=> (string) ''
+		);
+
+		$_CLASS['core_db']->query('INSERT INTO ' . QUICK_MESSAGE_TABLE . ' '. $_CLASS['core_db']->sql_build_array('INSERT', $array));
 
 		return true;
 	}
 
 	function uninstall()
 	{
+		global $_CLASS;
 
+		$_CLASS['core_db']->report_error(false);
+
+		$_CLASS['core_db']->query('DROP TABLE ' . QUICK_MESSAGE_TABLE);
+		$_CLASS['core_db']->query('DELETE FROM ' . CORE_CONFIG_TABLE . " WHERE config_section = 'quick_message'");
+
+		$_CLASS['core_db']->report_error(true);
 	}
 }
 

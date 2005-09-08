@@ -26,6 +26,8 @@ $Id$
 	next your going to say you can't use a database *
 */
 
+define('MB_CASE_TITLE', 0);
+
 if (!function_exists('mb_internal_encoding'))
 {
 	function mb_internal_encoding()
@@ -83,5 +85,11 @@ if (!function_exists('mb_convert_case'))
 	}
 }
 
-
+if (!function_exists('mb_strtolower'))
+{
+	function mb_strtolower($string, $encoding = null)
+	{
+		return strtolower($string);
+	}
+}
 ?>

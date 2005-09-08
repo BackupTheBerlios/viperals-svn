@@ -38,6 +38,7 @@ set_magic_quotes_runtime(0);
 mb_internal_encoding('UTF-8');
 //mb_http_output('UTF-8');
 
+
 // Remove registered globals
 if ((bool) ini_get('register_globals'))
 {
@@ -52,6 +53,17 @@ define('STRIP_SLASHES', get_magic_quotes_gpc());
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
 $base_memory_usage = get_memory_usage();
+
+//REQUEST_URI not set in IIS
+if (empty($_SERVER['REQUEST_URI']))
+{
+	$_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_NAME'];
+
+	if ($_SERVER['QUERY_STRING'])
+	{
+		$_SERVER['REQUEST_URI'] .= '?'.$_SERVER['QUERY_STRING'];
+	}
+}
 
 require_once($site_file_root.'includes/functions.php');
 require_once($site_file_root.'config.php');
@@ -70,7 +82,7 @@ load_class(false, 'core_db', 'db_'.$site_db['type']);
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-//$_CLASS['core_error_handler']->stop();
+$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))
@@ -96,11 +108,15 @@ $_CLASS['core_db']->transaction('commit');
 die;
 */
 
+/*
+	Progres need to be optimized after install :-(
+	$_CLASS['core_db']->optimize_tables();
+*/
+
 $_CLASS['core_db']->return_on_error = true;
 
 // Error messages just incase we can't get our configs
-$config_error = '<center>There is currently a problem with the site<br/>';
-$config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
+$config_error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB3</center>';
 
 if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 {
@@ -221,7 +237,7 @@ function get_memory_usage()
 	This pisses me off, seeing that screen pop up all the time :-(
 	Enable it if you want, Will be disabled by default
 
-	if (PHP_OS == 'WINNT')
+	if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
 	{
 		exec('tasklist /fi "PID eq ' . getmypid() . '" /fo LIST', $output); 
 		//Mem Usage: 24,064 K

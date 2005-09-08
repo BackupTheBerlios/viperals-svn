@@ -27,7 +27,7 @@ class db_mysql
 	var $db_layer = 'mysql';
 
 	var $last_result;
-	var $return_on_error;
+	var $report_error = true;
 	var $in_transaction;
 
 	var $queries_time = 0;
@@ -54,6 +54,7 @@ class db_mysql
 		}
 
 		$this->link_identifier = ($db['persistent']) ? @mysql_pconnect($db['server'], $db['username'], $db['password']) : @mysql_connect($db['server'], $db['username'], $db['password']);
+
 		if ($this->link_identifier)
 		{
 			if (@mysql_select_db($db['database']))
@@ -89,14 +90,9 @@ class db_mysql
 		$this->link_identifier = false;
 	}
 
-	function sql_return_on_error($fail = false)
+	function report_error($report)
 	{
-		$this->return_on_error = $fail;
-	}
-
-	function return_on_error($fail = false)
-	{
-		$this->return_on_error = $fail;
+		$this->report_error = ($report);
 	}
 
 	function transaction($option = 'start', $auto_rollback = true)
@@ -302,7 +298,7 @@ class db_mysql
 
 		$num = mysql_affected_rows($this->link_identifier);
 
-		return (!$num || $num == -1) ? 0 : $num;
+		return (!$num || $num === -1) ? 0 : $num;
 	}
 
 	function fetch_row_assoc($result = false)
@@ -418,7 +414,7 @@ class db_mysql
 
 	function _error($sql = '', $backtrace)
 	{
-		if ($this->return_on_error)
+		if (!$this->report_error)
 		{
 			return;
 		}

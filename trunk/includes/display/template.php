@@ -17,6 +17,8 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
+
+$Id$
 */
 
 /*
@@ -364,7 +366,7 @@ class core_template
 				case 'DISPLAY_FOOTER':
 					$tag_blocks[0][$loop] = "<?php echo \$_CLASS['core_display']->display_footer(); ?>";
 				break;
-	
+
 				case 'IGNORE':
 					$compile = false;
 				break;

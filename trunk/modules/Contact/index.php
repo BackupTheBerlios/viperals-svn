@@ -75,7 +75,7 @@ else
 $_CLASS['core_template']->assign_array(array( 
 	'ERROR' 				=> $error,
 	'MESSAGE' 				=> $message,
-	'ACTION' 				=> generate_link($_CORE_MODULE['name']),
+	'ACTION' 				=> generate_link($_CORE_MODULE['module_name']),
 	'SENDER_EMAIL' 			=> $sender_email,
 	'SENDER_NAME' 			=> $sender_name,
 ));

@@ -307,7 +307,7 @@ class db_mysqli
 
 		$num = mysqli_affected_rows($this->link_identifier);
 
-		return (!$num || $num == -1) ? 0 : $num;
+		return (!$num || $num === -1) ? 0 : $num;
 	}
 
 	function fetch_row_assoc($result = false)

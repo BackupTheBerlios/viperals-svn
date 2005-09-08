@@ -106,7 +106,10 @@ if ($update)
 				'prune_announce'		=> request_var('prune_announce', FALSE),
 				'prune_sticky'			=> request_var('prune_sticky', FALSE),
 				'forum_password'		=> request_var('forum_password', ''),
-				'forum_password_confirm'=> request_var('forum_password_confirm', '')
+				'forum_password_confirm'=> request_var('forum_password_confirm', ''),
+				'forum_posts'			=> 0,
+				'forum_topics'			=> 0,
+				'forum_topics_real'		=> 0,
 			);
 
 			if ($forum_data['forum_rules'])

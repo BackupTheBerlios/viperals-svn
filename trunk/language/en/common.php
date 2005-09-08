@@ -1,11 +1,33 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 // -------------------------------------------------------------
 //
 // $Id: common.php,v 1.12 2004/07/19 20:13:16 acydburn Exp $
 //
 // FILENAME  : common.php [ English ]
 // STARTED   : Sat Dec 16, 2000
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 

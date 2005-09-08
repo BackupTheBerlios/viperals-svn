@@ -27,7 +27,7 @@ class db_postgres
 	var $db_layer = 'postgre';
 
 	var $last_result;
-	var $return_on_error;
+	var $report_error = true;
 	var $in_transaction = false;
 
 	var $queries_time = 0;
@@ -106,11 +106,10 @@ class db_postgres
 		$this->link_identifier = false;
 	}
 
-	function sql_return_on_error($fail = false)
+	function report_error($report)
 	{
-		$this->return_on_error = $fail;
+		$this->report_error = ($report);
 	}
-
 	function transaction($option = 'start', $auto_rollback = true)
 	{
 		$result = false;
@@ -424,7 +423,7 @@ class db_postgres
 
 	function _error($sql = '', $backtrace)
 	{
-		if ($this->return_on_error)
+		if (!$this->report_error)
 		{
 			return;
 		}
@@ -439,15 +438,39 @@ class db_postgres
 		trigger_error($message, E_USER_ERROR);
 	}
 
-	function version()
+	function version($return_dbname = false)
 	{
 		if (!$this->link_identifier)
 		{
 			return false;
 		}
 
-		//$version = pg_version($this->link_identifier);
-		//return $version['client'];
+		if (function_exists('pg_version'))
+		{
+			$version = pg_version($this->link_identifier);
+			return $version['server'];	
+		}
+		else
+		{
+			$result = $this->query('SELECT VERSION() AS version');
+			$row = $this->fetch_row_assoc($result);
+			$this->free_result($result);
+
+			if (!$row)
+			{
+				return;
+			}
+
+			if ($return_dbname)
+			{	// should we return the full info ?
+				return $row['version'];
+			}
+			else
+			{
+				$version = explode(' ', $row['version']);
+				return $version[1];
+			}
+		}
 	}
 
 	function _debug($mode, $backtrace)

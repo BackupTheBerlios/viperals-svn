@@ -763,13 +763,13 @@ $_CLASS['core_db']->table_create('commit');
 */
 $_CLASS['core_db']->table_create('start', $install_prefix.'forums_ranks');
 
-$_CLASS['core_db']->add_table_field_int('rank_id', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_int('rank_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('rank_title', 50);
 $_CLASS['core_db']->add_table_field_int('rank_min', array('min' => -1, 'max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('rank_special', array('max' => 1));
 $_CLASS['core_db']->add_table_field_char('rank_image', 100);
 
-$_CLASS['core_db']->add_table_index('rank_id');
+$_CLASS['core_db']->add_table_index('rank_id', 'primary');
 
 $_CLASS['core_db']->table_create('commit');
 

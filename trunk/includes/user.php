@@ -49,7 +49,8 @@ class core_user extends sessions
 	function core_user()
 	{
 		$this->browser = mb_substr((empty($_SERVER['HTTP_USER_AGENT']) ? getenv('HTTP_USER_AGENT') : $_SERVER['HTTP_USER_AGENT']), 0, 255);
-		$this->url	= empty($_SERVER['REQUEST_URI']) ? getenv('REQUEST_URI') : $_SERVER['REQUEST_URI'];
+
+		$this->url	= $_SERVER['REQUEST_URI'];
 		$this->ip	= empty($_SERVER['REMOTE_ADDR']) ? getenv('REMOTE_ADDR') : $_SERVER['REMOTE_ADDR'];
 		$this->time	= (int) gmtime();
 
@@ -85,7 +86,7 @@ class core_user extends sessions
 
 		if (!$gmtime)
 		{
-			return false;;
+			return false;
 		}
 
 		$format = (!$format) ? $this->time_format : $format;
@@ -414,7 +415,7 @@ class core_user extends sessions
 			setcookie($name, $cookie_data, $cookie_time, $_CORE_CONFIG['server']['cookie_path'], $_CORE_CONFIG['server']['cookie_domain'], $_CORE_CONFIG['server']['site_secure']);
 		}
 	}
-	
+
 ///////////////////
 // TO BE REMOVED //
 ///////////////////

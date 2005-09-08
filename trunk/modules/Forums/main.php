@@ -27,7 +27,7 @@ $Id$
 //
 // FILENAME  : index.php 
 // STARTED   : Sat Feb 13, 2001
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
@@ -52,13 +52,14 @@ $sql = 'SELECT group_id, group_name, group_colour, group_type
 		AND group_type <> ' . GROUP_HIDDEN;
 $result = $_CLASS['core_db']->query($sql);
 
-$legend = '';
+$legend = array();
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
-	$legend .= (($legend != '') ? ', ' : '') . '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
+	$legend[] .= '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
 $_CLASS['core_db']->free_result($result);
 
+$legend = implode(', ', $legend);
 
 // Generate birthday list if required ...
 $birthday_list = '';
@@ -107,8 +108,7 @@ $_CLASS['core_template']->assign_array(array(
 	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']), 
 
 	'U_MARK_FORUMS'	=> generate_link('Forums&amp;mark=forums')
-	)
-);
+));
 
 page_header();
 

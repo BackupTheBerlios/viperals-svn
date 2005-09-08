@@ -537,9 +537,9 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 			'config_cache'	=> (int) $cache,
 		);
 
-		$_CLASS['core_db']->return_on_error(true);
+		$_CLASS['core_db']->report_error(false);
 		$_CLASS['core_db']->query('INSERT INTO ' . CORE_CONFIG_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
-		$_CLASS['core_db']->return_on_error(false);
+		$_CLASS['core_db']->report_error(true);
 	}
 
 	$_CORE_CONFIG[$section][$name] = $value;
@@ -830,7 +830,6 @@ if (!function_exists('html_entity_decode'))
 		return strtr($string, array_flip(get_html_translation_table(HTML_ENTITIES, $quote_style)));
 	}
 }
-
 
 // Should 4.3 be the min, or 4.2 ?
 // Move seperate file, if someone has a pre 4.3 they'll have to include that file

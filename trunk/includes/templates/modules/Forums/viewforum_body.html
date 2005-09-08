@@ -34,9 +34,9 @@
 
 	<!-- LOOP $topicrow -->
 	<tr>
-		<td class="row1" width="25" align="center">{ $topicrow:TOPIC_FOLDER_IMG }</td>
+		<td class="row1" align="center" width="25">{ $topicrow:TOPIC_FOLDER_IMG }</td>
 		<!-- IF { $S_TOPIC_ICONS } -->
-		<td class="row1" width="25" align="center"><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /></td>
+		<td class="row1" align="center" width="25"><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /></td>
 		<!-- ENDIF -->
 		<td class="row1">
 			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } -->
@@ -45,15 +45,15 @@
 			<!-- IF { $topicrow:S_TOPIC_REPORTED } -->
 				<a href="{$topicrow:U_MCP_REPORT}">{ $REPORTED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
-			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{$topicrow:U_VIEW_TOPIC}">{$topicrow:TOPIC_TITLE}</a></p>
+			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{$topicrow:U_VIEW_TOPIC}">{$topicrow:TOPIC_TITLE}</a> </p>
 		<!-- IF { $topicrow:PAGINATION } -->
 		<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $topicrow:PAGINATION } ] </p>
 		<!-- ENDIF -->
 		</td>
-		<td class="row2" width="100" align="center"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
-		<td class="row1" width="50" align="center"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
-		<td class="row2" width="50" align="center"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
-		<td class="row1" width="120" align="center">
+		<td class="row2" align="center" width="100"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
+		<td class="row1" align="center" width="50"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
+		<td class="row2" align="center" width="50"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
+		<td class="row1" align="center" width="120">
 			<p class="topicdetails">{ $topicrow:LAST_POST_TIME }</p>
 			<p class="topicdetails">
 			<!-- IF { $topicrow:U_LAST_POST_AUTHOR } -->
@@ -150,9 +150,9 @@
 	</tr>
 	<!-- ENDIF -->
 	<tr>
-		<td class="row1" width="25" align="center">{ $topicrow:TOPIC_FOLDER_IMG }</td>
+		<td class="row1" align="center" width="25">{ $topicrow:TOPIC_FOLDER_IMG }</td>
 		<!-- IF { $S_TOPIC_ICONS } -->
-		<td class="row1" width="25" nowrap="nowrap" align="center"><!-- IF { $topicrow:TOPIC_ICON_IMG } --><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /><!-- ENDIF --></td>
+		<td class="row1" align="center" width="25"><!-- IF { $topicrow:TOPIC_ICON_IMG } --><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /><!-- ENDIF --></td>
 		<!-- ENDIF -->
 		<td class="row1">
 			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } -->
@@ -161,15 +161,15 @@
 			<!-- IF { $topicrow:S_TOPIC_REPORTED } -->
 				<a href="{$topicrow:U_MCP_REPORT}">{ $REPORTED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
-			<p class="topictitle">&nbsp;{ $topicrow:NEWEST_POST_IMG }&nbsp;{ $topicrow:ATTACH_ICON_IMG } <a href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a>&nbsp;</p>
+			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a> </p>
 			<!-- IF { $topicrow:PAGINATION } -->
 			<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $topicrow:PAGINATION } ] </p>
 			<!-- ENDIF -->
 		</td>
-		<td class="row2" width="80" align="center"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
-		<td class="row1" width="50" align="center"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
-		<td class="row2" width="50" align="center"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
-		<td class="row1" width="150" nowrap="nowrap" align="center">
+		<td class="row2" align="center" width="100"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
+		<td class="row1" align="center" width="50"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
+		<td class="row2" align="center" width="50"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
+		<td class="row1" align="center" width="120">
 			<p class="topicdetails">{ $topicrow:LAST_POST_TIME }</p>
 			<p class="topicdetails"><!-- IF { $topicrow:U_LAST_POST_AUTHOR } --><a href="{ $topicrow:U_LAST_POST_AUTHOR }">{ $topicrow:LAST_POST_AUTHOR }</a><!-- ELSE -->{ $topicrow:LAST_POST_AUTHOR }<!-- ENDIF -->
 			<a href="{ $topicrow:U_LAST_POST }">{ $topicrow:LAST_POST_IMG }</a>
@@ -185,12 +185,17 @@
 		<!-- ENDIF -->
 	</tr>
 	<!-- ENDLOOP $topicrow -->
-
+</table>
+<table class="tablebg" width="100%" cellspacing="1">
 	<tr align="center">
-		<!-- IF { $S_TOPIC_ICONS } --><td class="cat" colspan="7"><!-- ELSE --><td class="cat" colspan="6" ><!-- ENDIF -->
-		<form method="post" action="{ $S_FORUM_ACTION }">
-			<span class="gensmall">{ $L_DISPLAY_TOPICS }:</span>&nbsp;{ $S_SELECT_SORT_DAYS }&nbsp;<span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR }&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_GO }" />
-		</form>
+	<!-- IF { $S_TOPIC_ICONS } -->
+		<td class="cat" colspan="7">
+	<!-- ELSE -->
+		<td class="cat" colspan="6" >
+	<!-- ENDIF -->
+			<form method="post" action="{ $S_FORUM_ACTION }">
+				<span class="gensmall">{ $L_DISPLAY_TOPICS }:</span>&nbsp;{ $S_SELECT_SORT_DAYS }&nbsp;<span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR }&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_GO }" />
+			</form>
 		</td>
 	</tr>
 </table>

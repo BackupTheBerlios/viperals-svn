@@ -33,7 +33,7 @@ class db_sqlite
 	var $db_layer = 'sqlite';
 
 	var $last_result;
-	var $return_on_error;
+	var $report_error = true;
 	var $in_transaction;
 
 	var $queries_time = 0;
@@ -86,9 +86,9 @@ class db_sqlite
 		$this->link_identifier = false;
 	}
 
-	function sql_return_on_error($fail = false)
+	function report_error($report)
 	{
-		$this->return_on_error = $fail;
+		$this->report_error = ($report);
 	}
 
 	function transaction($option = 'start')
@@ -409,7 +409,7 @@ class db_sqlite
 
 	function _error($sql = '', $backtrace)
 	{
-		if ($this->return_on_error)
+		if (!$this->report_error)
 		{
 			return;
 		}

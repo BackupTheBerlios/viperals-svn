@@ -27,7 +27,7 @@ $Id$
 //
 // FILENAME  : viewforum.php 
 // STARTED   : Sat Feb 13, 2001
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
@@ -456,7 +456,7 @@ if ($forum_data['forum_type'] == FORUM_POST || ($forum_data['forum_flags'] & 16)
 				'PAGINATION'		=> $pagination['formated'],
 				'PAGINATION_ARRAY'	=> $pagination['array'],
 				'REPLIES' 			=> $replies,
-				'VIEWS' 			=> $row['topic_views'],
+				'VIEWS' 			=> (int) $row['topic_views'],
 				'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
 				'TOPIC_TYPE' 		=> $topic_type,
 

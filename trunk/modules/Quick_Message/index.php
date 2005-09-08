@@ -26,9 +26,11 @@ if (!defined('VIPERAL'))
     die;
 }
 
+global $prefix;
+
 if (!defined('QUICK_MESSAGE_TABLE'))
 {
-	define('QUICK_MESSAGE_TABLE', 'test_quick_message');
+	define('QUICK_MESSAGE_TABLE', $prefix.'quick_message');
 }
 
 $_CLASS['core_user']->user_setup();
@@ -46,7 +48,7 @@ switch (get_variable('mode', 'GET', false))
 
 		if (!$message)
 		{
-			trigger_error('NO_MESSAGE'); 
+			trigger_error('NO_MESSAGE');
 		}
 
 		$length = mb_strlen($message);
@@ -132,7 +134,7 @@ switch (get_variable('mode', 'GET', false))
 			die;
 		}
 
-		$result = $_CLASS['core_db']->query_limit('SELECT message_id, poster_id, poster_name, poster_ip, message_time FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time', 1);
+		$result = $_CLASS['core_db']->query_limit('SELECT message_id, poster_id, poster_name, poster_ip, message_time FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time DESC', 1);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
@@ -143,7 +145,7 @@ switch (get_variable('mode', 'GET', false))
 
 		$return = true;
 
-		if ($row['message_id'] != $id)
+		if ($row['message_id'] == $id)
 		{
 			if ($row['message_time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
 			{
@@ -163,7 +165,7 @@ switch (get_variable('mode', 'GET', false))
 		$_CLASS['core_db']->query($sql);
 
 		//trigger_error('MESSAGE_DELETED');
-		redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
+		redirect(($_CLASS['core_user']->data['session_url']) ? generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)) : '');
 	break;
 }
 

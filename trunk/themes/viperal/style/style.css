@@ -195,7 +195,7 @@ body
 /* 
 	NEWS BLOCKS
 */
-.newsblock
+.articles_block
 {
     background-color: #eee;
     background: url(images/bg.gif);
@@ -204,7 +204,7 @@ body
     font-size: 110%;
 }
 	
-.newsblock .title
+.articles_block .title
 {
 	position: relative;
 	background: #C7D0D7;
@@ -213,14 +213,14 @@ body
 	padding: 2px;
 }
 
-.newsblock .content
+.articles_block .content
 {
 	padding: 10px;
 	min-height: 13px;
 	color: black;
 }
 
-.newsblock .numbering
+.articles_block .numbering
 {
 	text-align: center;
 }

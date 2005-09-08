@@ -52,7 +52,7 @@ if (is_null($cms_news = $_CLASS['core_cache']->get('cms_news')))
 	
 	load_class($site_file_root.'includes/core_rss.php', 'core_rss');
 	
-	if ($_CLASS['core_rss']->get_rss('http://viperal.byethost33.com/feed.php?mode=cms&feed=rss2', 3))
+	if ($_CLASS['core_rss']->get_rss('http://www.php.net/news.rss', 3))
 	{
 		while ($data = $_CLASS['core_rss']->get_rss_data())
 		{

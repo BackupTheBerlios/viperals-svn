@@ -21,13 +21,13 @@
 $Id$
 */
 
-class db_mysql
+class db_mysql3
 {
 	var $link_identifier = false;
 	var $db_layer = 'mysql3';
 
 	var $last_result;
-	var $return_on_error;
+	var $report_error = true;
 	var $in_transaction = false;
 
 	var $queries_time = 0;
@@ -53,7 +53,7 @@ class db_mysql
 			$this->disconnect();
 		}
 
-		$this->link_identifier = ($db['persistent']) ? @mysql_pconnect($db['server'], $db['username'], $db['password']) : @mysql_connect($db['server'], $db['username'], $db['password']);
+		$this->link_identifier = ($db['persistent']) ? mysql_pconnect($db['server'], $db['username'], $db['password']) : mysql_connect($db['server'], $db['username'], $db['password']);
 
 		if ($this->link_identifier)
 		{
@@ -65,7 +65,7 @@ class db_mysql
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
 		
-		if (!$error)
+		if (!isset($error))
 		{
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 		}
@@ -86,14 +86,9 @@ class db_mysql
 		$this->link_identifier = false;
 	}
 
-	function sql_return_on_error($fail = false)
+	function report_error($report)
 	{
-		$this->return_on_error = $fail;
-	}
-
-	function return_on_error($fail = false)
-	{
-		$this->return_on_error = $fail;
+		$this->report_error = ($report);
 	}
 
 	function transaction($option = 'start', $auto_rollback = true)
@@ -249,7 +244,7 @@ class db_mysql
 
 		$num = mysql_affected_rows($this->link_identifier);
 
-		return (!$num || $num == -1) ? 0 : $num;
+		return (!$num || $num === -1) ? 0 : $num;
 	}
 
 	function fetch_row_assoc($result = false)
@@ -355,7 +350,7 @@ class db_mysql
 
 	function _error($sql = '', $backtrace)
 	{
-		if ($this->return_on_error)
+		if (!$this->report_error)
 		{
 			return;
 		}
@@ -470,7 +465,10 @@ class db_mysql
 					return $table;
 				}
 
-				$this->sql_query($table);
+				if (!$this->sql_query($table))
+				{
+					echo $table;
+				}
 
 			case 'cancel':
 				$this->_table_name = false;
@@ -481,20 +479,6 @@ class db_mysql
 
 	function add_table_field_int($name, $setting_sent)
 	{
-		if (!$setting_sent || !is_array($setting_sent))
-		{
-			global $site_file_root;
-			
-			$debug_backtrace = debug_backtrace();
-			$backtrace = array();
-			// remove the root directorys
-			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
-			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
-
-			$backtrace['line'] = $debug_backtrace[0]['line'];
-			print_r($backtrace);echo '<br/>';
-		}
-		
 		$setting = array('default' => null, 'min' => 0, 'max' => 0, 'auto_increment' => false, 'null' => false);
 		$setting = array_merge($setting, $setting_sent);
 
@@ -552,7 +536,7 @@ class db_mysql
 		}
 	}
 
-	function add_table_field_text($name, $characters = 60000, $null = false)
+	function add_table_field_text($name, $characters, $null = false)
 	{
 		if ($characters <= 255)
 		{
@@ -581,7 +565,7 @@ class db_mysql
 	function add_table_field_char($name, $characters, $null = false, $default = null, $padded = false)
 	{
 		$this->_fields[$name] = ($padded) ? "`$name` CHAR($characters)" :  "`$name` VARCHAR($characters)";
-		$this->_fields[$name] .= $null ? " NULL" : " NOT NULL";
+		$this->_fields[$name] .= ($null) ? " NULL" : " NOT NULL";
 		$this->_fields[$name] .= is_null($default) ? '' : "DEFAULT '$default'";
 	}
 
@@ -589,10 +573,6 @@ class db_mysql
 	{
 		$index_name = ($index_name) ? $index_name : $field;
 		
-		/*if (empty($this->_fields[$field]))
-		{
-			return;
-		}*/
 		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)

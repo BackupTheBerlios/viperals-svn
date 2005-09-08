@@ -61,16 +61,16 @@ if (isset($_REQUEST['mode']))
 				$activation_array = array(USER_ACTIVATION_NONE, USER_ACTIVATION_SELF, USER_ACTIVATION_ADMIN, USER_ACTIVATION_DISABLE);
 				$activation = get_variable('activation', 'POST', USER_ACTIVATION_NONE, 'int');
 
-				$data['activation'] = in_array($activation, $activation_array) ? $activation : USER_ACTIVATION_NONE;
-		 		$data['coppa_enable'] = get_variable('coppa_enable', 'POST') ? 1 : 0;
-		 		$data['coppa_fax'] = get_variable('coppa_fax', 'POST');
-		 		$data['coppa_mail'] = get_variable('coppa_mail', 'POST');
-		 		$data['enable_confirm'] = get_variable('enable_confirm', 'POST') ? 1 : 0;
+				$data['activation']		= in_array($activation, $activation_array) ? $activation : USER_ACTIVATION_NONE;
+		 		$data['coppa_enable']	= get_variable('coppa_enable', 'POST') ? 1 : 0;
+		 		$data['coppa_fax']		= get_variable('coppa_fax', 'POST');
+		 		$data['coppa_mail']		= get_variable('coppa_mail', 'POST');
+		 		$data['enable_confirm']	= get_variable('enable_confirm', 'POST') ? 1 : 0;
+		 		$data['min_name_chars']	= get_variable('min_name_chars', 'POST', 0, 'INT');
+		 		$data['max_name_chars']	= get_variable('max_name_chars', 'POST', 0, 'INT');
+		 		$data['min_pass_chars']	= get_variable('min_pass_chars', 'POST', 0, 'INT');
+		 		$data['max_pass_chars']	= get_variable('max_pass_chars', 'POST', 0, 'INT');
 		 		$data['max_reg_attempts'] = get_variable('coppa_fax', 'POST', 0, 'INT');
-		 		$data['min_name_chars'] = get_variable('min_name_chars', 'POST', 0, 'INT');
-		 		$data['max_name_chars'] = get_variable('max_name_chars', 'POST', 0, 'INT');
-		 		$data['min_pass_chars'] = get_variable('min_pass_chars', 'POST', 0, 'INT');
-		 		$data['max_pass_chars'] = get_variable('max_pass_chars', 'POST', 0, 'INT');
 
 				foreach ($data as $name => $setting)
 				{
@@ -187,7 +187,7 @@ if (isset($_REQUEST['mode']))
 						'username'		=> (string) $username,
 						'user_email'	=> (string) $email,
 						'user_group'	=> (int) ($coppa) ? 3 : 2,
-						'user_reg_date'	=> (int) gmtime(),
+						'user_reg_date'	=> (int) $_CLASS['core_user']->time,
 						'user_timezone'	=> $tz,
 	
 						'user_password'			=> (string) $password,
@@ -202,9 +202,11 @@ if (isset($_REQUEST['mode']))
 	
 					user_add($data);
 					
-					set_core_config('user', 'newest_user_id', $row['user_id'], false);
-					set_core_config('user', 'newest_username', $row['username'], false);
-					set_core_config('user', 'total_users', $_CORE_CONFIG['user']['total_users'] + 1, false);
+					set_core_config('user', 'newest_user_id', $data['user_id'], false);
+					set_core_config('user', 'newest_username', $data['username'], false);
+					set_core_config('user', 'total_users', $_CORE_CONFIG['user']['total_users'] + 1);
+					
+					trigger_error('USER_ADDED');
 				}
 			}
 
@@ -262,18 +264,17 @@ if (isset($_REQUEST['mode']))
 						{
 							user_delete($id);
 				
-							trigger_error($_CLASS['core_user']->lang['BOT_DELETED']);
+							trigger_error('BOT_DELETED');
 						}
 					break;
 				}
 			}
-			
+
 			$sql = 'SELECT user_id, username, user_status, user_last_visit 
 				FROM ' . USERS_TABLE . '
 				WHERE user_type = ' . USER_BOT . ' ORDER BY user_last_visit DESC';
-			
 			$result = $_CLASS['core_db']->query($sql);
-			
+
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$_CLASS['core_template']->assign_vars_array('admin_bots', array(
@@ -286,9 +287,8 @@ if (isset($_REQUEST['mode']))
 					'L_STATUS'		=> ($row['user_status'] == STATUS_ACTIVE) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
 				));
 			}
-			
 			$_CLASS['core_db']->free_result($result);
-			
+
 			$_CLASS['core_display']->display(false, 'admin/users/bots.html');
 		break;
 
@@ -301,7 +301,7 @@ if (isset($_REQUEST['mode']))
 				$sql = 'SELECT user_id, user_type, user_status
 					FROM ' . USERS_TABLE . ' 
 					WHERE user_id = '.$id;
-				
+
 				$result = $_CLASS['core_db']->query($sql);
 				$row = $_CLASS['core_db']>fetch_row_assoc($result);
 				$_CLASS['core_db']->free_result($result);
@@ -310,7 +310,7 @@ if (isset($_REQUEST['mode']))
 				{
 					break;
 				}
-							
+
 				switch ($_REQUEST['option'])
 				{
 					case 'activate':
@@ -319,7 +319,7 @@ if (isset($_REQUEST['mode']))
 							user_activate($id);
 						}
 					break;
-			
+
 					case 'delete':
 						if (display_confirmation())
 						{
@@ -384,11 +384,11 @@ if (isset($_REQUEST['mode']))
 			$sql = 'SELECT count(*) as count FROM ' . USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.'
 				AND user_status = '.$status;
-		
+
 			$result = $_CLASS['core_db']->query($sql);
 			list($count) = $_CLASS['core_db']->fetch_row_num($result);
 			$_CLASS['core_db']->free_result($result);
-			
+
 			$pagination = generate_pagination($link, $count, 20, $start, true);
 			$_CLASS['core_template']->assign('USERS_PAGINATION', $pagination['formated']);
 
@@ -438,7 +438,7 @@ foreach ($user_status as $status)
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$type = ($status == STATUS_DISABLED) ? 'users_disabled' : 'users_unactivated';
-	
+
 		$_CLASS['core_template']->assign_vars_array($type, array(
 				'user_id'		=> $row['user_id'],
 				'user_name'		=> $row['username'],

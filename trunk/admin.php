@@ -57,10 +57,6 @@ if ($mod)
 	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE module_name='".$_CLASS['core_db']->escape($mod)."'");
 	$_CORE_MODULE = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
-	
-// remove this -- just for testing
-	$_CORE_MODULE['module_name'] = $mod;
-	$_CORE_MODULE['module_title'] = $mod;
 }
 
 if (!$mod || !$_CORE_MODULE)
