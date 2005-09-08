@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{ $SITE_LANG }" lang="{ $SITE_LANG }">
+<head>
+<title>{ $SITE_TITLE }</title>
+<meta http-equiv="content-Type" content="text/html; charset={ $SITE_CHARSET }" />
+<meta name="author" content="{ $SITE_NAME }" /><meta http-equiv="expires" content="0" />
+<meta name="copyright" content="Copyright { $SITE_NAME } { $SITE_URL }" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- <link rel="stylesheet" href="{ $A_STYLESHEET }" type="text/css" /> -->
+<style type="text/css">@import "{ $A_STYLESHEET }";</style>
+
+{ $HEADER_REGULAR }
+{ $HEADER_JS }
+
+<script type="text/javascript" src="/javascript/collapse.js"></script>
+<script type="text/javascript" src="/javascript/menu.js"></script>
+
+<!--[if IE]>
+<style>
+	.bodymain
+	{
+		height:1500px;
+	}
+</style>
+<![endif]-->
+
+</head>
+
+<body>
+
+{ $HEADER_BODY }
+
+<a name="Top"></a>
+<div style="position:fixed;top: -1px;left: -1px;z-index: 1;">
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tr>
+		<td nowrap="nowrap" class="row2"><a href="{ $LINK_HOME }">{ $L_SITE_INDEX }</a></td>
+		<td nowrap="nowrap" class="row2"><a href="{ $LINK_ADMIN }">{ $L_ADMIN_INDEX }</a></td>
+		{ $MENU_MAIN_ITEMS }
+		<td width="100%" class="row2"></td>
+	</tr>
+</table>
+</div>
+
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tr>
+		<td height="20" class="row2"></td>
+	</tr>
+</table>
+{ $MENU_MAIN }
+
+<!-- include blockleft.html -->
+
+<div class="mainbody" style="margin-left: { $THEME_MARGINLEFT }">
+	<div id="page">
+		You are here: { $PAGE_TITLE }
+	</div>
+	
+	<div class="bodymain" style="margin-right: { $THEME_MARGINRIGHT }">
+	<!-- IF { $HEADER_MESSAGE }-->
+	<div style="color: #999; border-bottom:1px solid #ccc; padding:2px; background-color: #eee; text-align: center;">{ $HEADER_MESSAGE }</div>
+	<!-- ENDIF -->
+
+<!-- IF isset({ $block_center }) -->
+	<!-- LOOP $block_center -->
+	<div class="centerblock">
+		<div class="title">{ $block_center:TITLE }</div>
+			<div class="OpenTable"><div class="outer">
+				<div class="inner">
+					<div class="content">{ $block_center:CONTENT }</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- ENDLOOP $block_center -->
+	<br />
+<!-- ENDIF -->

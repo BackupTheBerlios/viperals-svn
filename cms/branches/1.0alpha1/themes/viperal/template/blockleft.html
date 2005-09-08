@@ -1,0 +1,13 @@
+<!-- IF isset({ $block_left }) -->
+<div id="blocksleft">
+	<!-- LOOP $block_left -->
+	<div class="blocks">
+		<div class="top" onclick="switch_collapse('block_{ $block_left:id }');" style="cursor:pointer">&nbsp;{ $block_left:title }&nbsp;</div>
+			<div<!-- IF { $block_left:collapsed } --> style="display: none;"<!-- ENDIF --> class="content" id="block_{ $block_left:id }">
+			{ $block_left:content }
+			</div>
+		</div>
+	<br />
+	<!-- ENDLOOP $block_left-->
+</div>
+<!-- ENDIF -->

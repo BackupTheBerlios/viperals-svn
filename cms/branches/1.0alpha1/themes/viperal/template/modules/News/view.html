@@ -1,0 +1,12 @@
+<div class="newsblock">
+	<div class="title" onclick="blockswitch2('{ $NEWS_ID }');" style="cursor:pointer">{ $NEWS_TITLE }
+		</div>
+		<div class="content"><!-- IF { $NEWS_FULL_STORY } -->{ $NEWS_FULL_STORY }<!-- ELSE -->{ $NEWS_INTRO }<!-- ENDIF -->
+		<br /><br />
+
+		<hr />
+		 <div style="text-align: left; margin-left: 60%">Posted: { $NEWS_TIME }<br/>
+		 <!-- IF { $NEWS_POSTER_LINK } -->By: <a href="{ $NEWS_POSTER_LINK }">{ $NEWS_POSTER } </a><!-- ELSE -->By: { $NEWS_POSTER } <!-- ENDIF --></div></div>
+		<br />
+	</div>
+<br />

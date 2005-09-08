@@ -1,0 +1,57 @@
+<!-- DISPLAY_HEADER -->
+
+{ $A_TABLE_OPEN }
+
+<table class="tablebg" width="100%" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr>
+			<th width="20%">{ $L_POSTER }</th>
+			<th width="80%" colspan="2">{ $L_MESSAGE }</th>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="2" height="7"></td>
+		</tr>
+		<!-- LOOP $quick_message -->
+		<tr style="min-height: 100px;">
+			<td class="row1" align="center" valign="top">
+				<!-- IF { $quick_message:USER_LINK }  -->
+					<a href="{ $quick_message:USER_LINK } "><b> { $quick_message:USER_NAME } </b></a><br /><br />
+				<!-- ELSE -->
+					<b> { $quick_message:USER_NAME } </b>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1">
+				<span class="gensmall">{ $quick_message:TIME }</span>
+				<!-- IF { $quick_message:DELETE_LINK } -->
+					<a href="{ $quick_message:DELETE_LINK } "><b>  { $L_DELETE }</b></a>
+				<!-- ENDIF -->
+				<hr/>
+				<p>
+					{ $quick_message:MESSAGE }
+				</p>
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="2" height="7"></td>
+		</tr>
+		<!-- LOOPELSE -->
+			<tr class="row2">
+				<td align="center" colspan="2">
+					{ $L_NO_POST }
+				</td>
+			</tr>
+		<!-- ENDLOOP -->
+
+		<!-- IF { $Q_MESSAGE_PAGINATION } -->
+		<tr class="row2">
+			<td style="padding: 5px;" valign="middle" colspan="2">
+				<div style="padding-right: 5px; text-align: right;">{ $Q_MESSAGE_PAGINATION }</div>
+			</td>
+		</tr>
+		<!-- ENDIF -->
+	</tbody>
+</table>
+
+{ $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

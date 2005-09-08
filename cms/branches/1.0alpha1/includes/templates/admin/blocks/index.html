@@ -1,0 +1,211 @@
+<!-- DISPLAY_HEADER -->
+
+{ $A_TABLE_OPEN }
+
+<table border="0" class="tablebg" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_FILE }'; return false;"><a href="{ $N_BLOCK_FILE }">{ $L_BLOCK_REGULAR }</a></td>
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_FEED }'; return false;"><a href="{ $N_BLOCK_FEED }">{ $L_BLOCK_FEED }</a></td>
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_HTML }'; return false;"><a href="{ $N_BLOCK_HTML }">{ $L_BLOCK_HTML }</a></td>
+		</tr>
+	</tbody>
+</table>
+<div style="padding: 3px"></div>
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th align="center" width="25%">{ $L_TITLE }</b></th>
+			<th align="center" colspan="2">{ $L_ORDER }</th>
+			<th align="center">{ $L_TYPE }</td>
+			<th align="center">{ $L_ACTIVE }</th>
+			<th align="center" colspan="2">{ $L_OPTIONS }</th>
+		</tr>
+		<!-- IF isset({ $left_admin_blocks }) -->
+    	<tr>
+			<td class="cat" colspan="8"><b class="gensmall">{ $L_LEFT_SIDE_BLOCKS }</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDIF -->
+		<!-- LOOP $left_admin_blocks -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $left_admin_blocks:EDIT_LINK }'; return false;">
+				<a href="{ $left_admin_blocks:EDIT_LINK }">{ $left_admin_blocks:TITLE }</a>
+				<!-- IF { $left_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $left_admin_blocks:ERROR }</span><!-- ENDIF -->
+			</td>
+			<td class="row1" align="center" >
+				<!-- IF { $left_admin_blocks:ORDER_UP } -->
+				<a href="{ $left_admin_blocks:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $left_admin_blocks:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $left_admin_blocks:ORDER_DOWN } -->
+				<a href="{ $left_admin_blocks:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $left_admin_blocks:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row2" align="center">{ $left_admin_blocks:TYPE }</td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $left_admin_blocks:ACTIVE_LINK }'; return false;">
+				<a href="{ $left_admin_blocks:ACTIVE_LINK }">{ $left_admin_blocks:CHANGE }</a>
+			</td>
+			<td class="row1" align="center">
+				<a href="{ $left_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $left_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- IF { $left_admin_blocks:DELETE_LINK } -->
+				| <a href="{ $left_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF -->
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDLOOP -->
+
+	    <!-- IF isset({ $centertop_admin_blocks }) -->
+    	<tr>
+			<td class="cat" colspan="8"><b class="gensmall">Center Top Blocks</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDIF -->
+		<!-- LOOP $centertop_admin_blocks -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $centertop_admin_blocks:EDIT_LINK }'; return false;">
+				<a href="{ $centertop_admin_blocks:EDIT_LINK }">{ $centertop_admin_blocks:TITLE }</a>
+				<!-- IF { $centertop_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $centertop_admin_blocks:ERROR }</span><!-- ENDIF -->
+			</td>
+			<td class="row1" align="center" >
+				<!-- IF { $centertop_admin_blocks:ORDER_UP } -->
+				<a href="{ $centertop_admin_blocks:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $centertop_admin_blocks:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $centertop_admin_blocks:ORDER_DOWN } -->
+				<a href="{ $centertop_admin_blocks:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $centertop_admin_blocks:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row2" align="center">{ $centertop_admin_blocks:TYPE }</td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $centertop_admin_blocks:ACTIVE_LINK }'; return false;">
+				<a href="{ $centertop_admin_blocks:ACTIVE_LINK }">{ $centertop_admin_blocks:CHANGE }</a>
+			</td>
+			
+			<td class="row1" align="center">
+				<a href="{ $centertop_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $centertop_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- IF { $centertop_admin_blocks:DELETE_LINK } -->
+				| <a href="{ $centertop_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF -->
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDLOOP -->
+
+    	<!-- IF isset({ $centerbottom_admin_blocks }) -->
+    	<tr>
+			<td class="cat" colspan="8"><b class="gensmall">Center Bottom Blocks</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDIF -->
+		<!-- LOOP $centerbottom_admin_blocks -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $centerbottom_admin_blocks:EDIT_LINK }'; return false;">
+				<a href="{ $centerbottom_admin_blocks:EDIT_LINK }">{ $centerbottom_admin_blocks:TITLE }</a>
+				<!-- IF { $centerbottom_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $centerbottom_admin_blocks:ERROR }</span><!-- ENDIF -->
+			</td>
+			<td class="row1" align="center" >
+				<!-- IF { $centerbottom_admin_blocks:ORDER_UP } -->
+				<a href="{ $centerbottom_admin_blocks:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $centerbottom_admin_blocks:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $centerbottom_admin_blocks:ORDER_DOWN } -->
+				<a href="{ $centerbottom_admin_blocks:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $centerbottom_admin_blocks:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row2" align="center">{ $centerbottom_admin_blocks:TYPE }</td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $centerbottom_admin_blocks:ACTIVE_LINK }'; return false;">
+				<a href="{ $centerbottom_admin_blocks:ACTIVE_LINK }">{ $right_admin_blocks:CHANGE }</a>
+			</td>
+			<td class="row1" align="center">
+				<a href="{ $centerbottom_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $centerbottom_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- IF { $centerbottom_admin_blocks:DELETE_LINK } -->
+				| <a href="{ $centerbottom_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF -->
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDLOOP -->
+		<!-- IF isset({ $right_admin_blocks }) -->
+    	<tr>
+			<td class="cat" colspan="8"><b class="gensmall">Right Side Blocks</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDIF -->
+		<!-- LOOP $right_admin_blocks -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $right_admin_blocks:EDIT_LINK }'; return false;">
+				<a href="{ $right_admin_blocks:EDIT_LINK }">{ $right_admin_blocks:TITLE }</a>
+				<!-- IF { $right_admin_blocks:ERROR } --><br/><span style="font-size: 90%; color: red;">{ $right_admin_blocks:ERROR }</span><!-- ENDIF -->
+			</td>
+			<td class="row1" align="center" >
+				<!-- IF { $right_admin_blocks:ORDER_UP } -->
+				<a href="{ $right_admin_blocks:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $right_admin_blocks:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $right_admin_blocks:ORDER_DOWN } -->
+				<a href="{ $right_admin_blocks:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $right_admin_blocks:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row2" align="center">{ $right_admin_blocks:TYPE }</td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $right_admin_blocks:ACTIVE_LINK }'; return false;">
+				<a href="{ $right_admin_blocks:ACTIVE_LINK }">{ $right_admin_blocks:CHANGE }</a>
+			</td>
+			<td class="row1" align="center">
+				<a href="{ $right_admin_blocks:EDIT_LINK }">{ $L_EDIT }</a> |
+				<a href="{ $right_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- IF { $right_admin_blocks:DELETE_LINK } -->
+				| <a href="{ $right_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF -->
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+		<!-- ENDLOOP -->
+	</tbody>
+</table>
+
+<div style="padding: 3px"></div>
+
+<table border="0" class="tablebg" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_FILE }'; return false;"><a href="{ $N_BLOCK_FILE }">{ $L_BLOCK_REGULAR }</a></td>
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_FEED }'; return false;"><a href="{ $N_BLOCK_FEED }">{ $L_BLOCK_FEED }</a></td>
+			<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $N_BLOCK_HTML }'; return false;"><a href="{ $N_BLOCK_HTML }">{ $L_BLOCK_HTML }</a></td>
+		</tr>
+	</tbody>
+</table>
+{ $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

@@ -1,0 +1,18 @@
+<!DOCTYPE rss PUBLIC "-//Netscape Communications//DTD RSS 0.91//EN"
+ "http://my.netscape.com/publish/formats/rss-0.91.dtd">
+<rss version="0.91">
+	<channel>
+		<title>{ $SITE_NAME }</title>
+		<link>{ $SITE_URL }</link>
+		<description></description>
+		<language>{ $LANG }</language>
+		<!-- LOOP $items -->
+		<item>
+			<title>{ $items:TITLE }</title>
+			<link>{ $items:LINK }</link>
+			<description>{ $items:DESCRIPTION }</description>
+			<pubDate>{ $items:TIME }</pubDate>
+		</item>
+		<!-- ENDLOOP -->
+	</channel>
+</rss>

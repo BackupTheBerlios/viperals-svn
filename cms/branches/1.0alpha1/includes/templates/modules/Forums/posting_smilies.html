@@ -1,0 +1,42 @@
+<!-- INCLUDE modules/Forums/simple_header.html -->
+
+<script language="javascript" type="text/javascript">
+<!--
+function smiley(text)
+{
+	text = ' ' + text + ' ';
+
+	if (opener.document.forms['post'].message.createTextRange && opener.document.forms['post'].message.caretPos)
+	{
+		var caretPos = opener.document.forms['post'].message.caretPos;
+		caretPos.text = caretPos.text.charAt(caretPos.text.length - 1) == ' ' ? text + ' ' : text;
+		opener.document.forms['post'].message.focus();
+	}
+	else
+	{
+		opener.document.forms['post'].message.value  += text;
+		opener.document.forms['post'].message.focus();
+	}
+}
+//-->
+</script>
+
+<table width="100%" cellspacing="1" cellpadding="4" border="0">
+	<tr>
+		<td><table class="tablebg" width="95%" cellspacing="1" cellpadding="4" border="0">
+			<tr>
+				<th height="28">{ $L_SMILIES }</th>
+			</tr>
+			<tr>
+				<td class="row1" align="center" valign="middle">
+				<!-- LOOP $smiley -->
+					<a href="javascript:smiley('{ $smiley:SMILEY_CODE }')"><img src="{ $T_SMILIES_PATH }{ $smiley:SMILEY_IMG }" width="{ $smiley:SMILEY_WIDTH }" height="{ $smiley:SMILEY_HEIGHT }" border="0" alt="{ $smiley:SMILEY_DESC }" title="{ $smiley:SMILEY_DESC }" hspace="2" vspace="2" onclick="smiley('{ $smiley:SMILEY_CODE }');return false" /></a>
+				<!-- ENDLOOP $smiley -->
+					<br /><a class="nav" href="javascript:window.close();">{ $L_CLOSE_WINDOW }</a>
+				</td>
+			</tr>
+		</table></td>
+	</tr>
+</table>
+
+<!-- INCLUDE modules/Forums/simple_footer.html -->

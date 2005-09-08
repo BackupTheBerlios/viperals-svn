@@ -1,0 +1,86 @@
+<!-- INCLUDE modules/Forums/overall_header.html -->
+
+<script language="javascript" type="text/javascript" defer="defer">
+<!--
+function marklist(form_name, status)
+{
+	for (i = 0; i < document.forms[form_name].length; i++)
+	{
+		document.forms[form_name].elements[i].checked = status;
+	}
+}
+//-->
+</script>
+
+<!-- IF { $TOPIC_TITLE } || { $FORUM_NAME } -->
+<h2><!-- IF { $TOPIC_TITLE } --><a class="titles" href="{ $U_VIEWTOPIC }">{ $TOPIC_TITLE }</a><!-- ELSE --><a class="titles" href="{ $U_VIEW_FORUM }" title="{ $FORUM_DESC }">{ $FORUM_NAME }</a><!-- ENDIF --></h2>
+	<!-- IF { $MODERATORS } -->
+		<p class="moderators">{ $L_MODERATORS }: { $MODERATORS }</p>
+	<!-- ENDIF --><!-- IF { $U_MCP } -->
+		<p class="linkmcp">[ <a href="{ $U_MCP }">{ $L_MCP }</a> ]</p>
+	<!-- ENDIF -->
+<br clear="all" />
+<!-- ENDIF -->
+
+	<!-- IF { $MESSAGE } -->
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th>{ $L_MESSAGE }</th>
+		</tr>
+		<tr> 
+			<td class="row1" align="center"><br /><span class="gen">{ $MESSAGE }<br /><br />
+			{ section name=return_linksloop loop=$return_links }{ $return_links[return_linksloop].MESSAGE_LINK }<br /><br />{ /section }</span></td>
+		</tr>
+	</table>
+
+	<br />
+	<!-- ENDIF -->
+
+	<!-- IF { $CONFIRM_MESSAGE } -->
+	<table class="tablebg" width="100%" cellspacing="1">
+		<form name="confirm" method="post" action="{$S_CONFIRM_ACTION}"{$S_FORM_ENCTYPE}>
+			<tr>
+				<th><b>{ $L_PLEASE_CONFIRM }</b></th>
+			</tr>
+			<tr> 
+				<td class="row1" align="center"><span class="gen"><br />{ $CONFIRM_MESSAGE }<br /><br />{ $S_HIDDEN_FIELDS }<input class="btnmain" type="submit" name="confirm" value="{ $L_YES }" />&nbsp;&nbsp;<input class="btnlite" type="submit" name="cancel" value="{ $L_NO }" /><br /><br /></span></td>
+			</tr>
+		</form>
+	</table>
+
+	<br />
+	<!-- ENDIF -->
+		
+		<!--
+		<td width="20%" valign="top">
+
+			<table class="tablebg" width="100%" cellspacing="1">
+				<tr>
+					<th>{ $L_OPTIONS }</th>
+				</tr>
+				{ section name=mcp_sectionloop loop=$mcp_section }
+				<tr>
+				 IF { $mcp_section[mcp_sectionloop].S_SELECTED } 
+					<td class="row1"><b class="nav">{$mcp_section[mcp_sectionloop].L_TITLE}</b>
+
+						<ul class="nav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
+
+						{ section name=mcp_subsectionloop loop=$mcp_subsection }
+							 IF { $mcp_subsection[mcp_subsectionloop].SECTION eq $smarty.section.forumrowloop.index }
+						<li>&#187; < IF { $mcp_subsection[mcp_subsectionloop].S_SELECTED }<b>{$mcp_subsection[mcp_subsectionloop].L_TITLE}F { $mcp_subsection[mcp_subsectionloop].ADD_ITEM } ({$mcp_subsection[mcp_subsectionloop].ADD_ITEM}){ /if }</b>{ else }<a href="{$mcp_subsection[mcp_subsectionloop].U_TITLE}">{$mcp_subsection[mcp_subsectionloop].L_TITLE}IF { $mcp_subsection[mcp_subsectionloop].ADD_ITEM } ({$mcp_subsection[mcp_subsectionloop].ADD_ITEM}){ /if }</a>{ /if }</li>
+							{ /if }
+						{ /section }
+						</ul>
+
+					{ else }
+					<td class="row2" nowrap="nowrap" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{$mcp_section[mcp_sectionloop].U_TITLE}'"><a class="nav" href="{$mcp_section[mcp_sectionloop].U_TITLE}">{$mcp_section[mcp_sectionloop].L_TITLE}</a>
+					{ /if }
+					</td>
+				</tr>
+				{ /section } 
+			</table>
+
+		</td>
+		
+		<td><img src="images/spacer.gif" width="4" alt="" /></td>
+		-->

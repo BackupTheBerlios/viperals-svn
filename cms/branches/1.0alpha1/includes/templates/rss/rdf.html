@@ -1,0 +1,28 @@
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns="http://purl.org/rss/1.0/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+>
+<channel rdf:about="{ $SITE_URL }">
+	<title>{ $SITE_NAME }</title>
+	<link>{ $SITE_URL }</link>
+	<description></description>
+	<items>
+		<rdf:Seq>
+<!-- LOOP $items -->
+	<rdf:li rdf:resource="{ $items:LINK }" />
+<!-- ENDLOOP -->
+
+		</rdf:Seq>
+	</items>
+</channel>
+<!-- LOOP $items -->
+<item rdf:about="{ $items:LINK }">
+	<title>{ $items:TITLE }</title>
+	<link>{ $items:LINK }</link>
+	<description>{ $items:DESCRIPTION }</description>
+	<dc:creator>{ $items:AUTHOR }</dc:creator>
+	<dc:date>{ $items:TIME }</dc:date>
+</item>
+<!-- ENDLOOP -->
+</rdf:RDF>

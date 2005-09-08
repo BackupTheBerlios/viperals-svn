@@ -1,0 +1,74 @@
+﻿<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th>{ $L_OPTIONS }</th>
+	</tr>
+	<!-- LOOP $ucp_section -->
+	<tr>
+		<!-- IF { $ucp_section:S_SELECTED } -->
+		<td class="row1"><b class="nav">{ $ucp_section:L_TITLE }</b>
+			<ul class="nav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
+			<!-- LOOP $ucp_subsection -->
+			<li>&#187; <!-- IF { $ucp_subsection:S_SELECTED } --><b>{ $ucp_subsection:L_TITLE }</b><!-- ELSE --><a href="{$ucp_subsection:U_TITLE}">{ $ucp_subsection:L_TITLE }</a><!-- ENDIF --></li>
+			<!-- ENDLOOP $ucp_subsection -->
+			</ul>
+		<!-- ELSE -->
+		<td class="row2" nowrap="nowrap" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $ucp_section:U_TITLE }'"><a class="nav" href="{ $ucp_section:U_TITLE }">{ $ucp_section:L_TITLE }</a>
+		<!-- ENDIF -->
+		</td>
+	</tr>
+	<!-- ENDLOOP $ucp_section -->
+</table>
+
+<div style="padding: 2px;"></div>
+
+<!-- IF { $S_SHOW_COLOUR_LEGEND } -->
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+	<tr>
+		<th colspan="2">{ $L_MESSAGE_COLOURS }</th>
+	</tr>
+	<!-- LOOP $pm_colour_info -->
+	<tr>
+		<!-- IF { $pm_colour_info:IMG } -->
+			<td class="row1 { $pm_colour_info:CLASS }" width="5"><img src="images/spacer.gif" width="5" alt="{ $pm_colour_info:LANG }" border="0" /></td>
+		<!-- ELSE -->
+			<td class="row1" width="25" align="center">{ $pm_colour_info:IMG }</td>
+		<!-- ENDIF -->
+		<td class="row1"><span class="genmed">{ $pm_colour_info:LANG }</span></td>
+	</tr>
+	<!-- ENDLOOP $pm_colour_info -->
+</table>
+ 
+<div style="padding: 2px;"></div>
+<!-- ENDIF -->
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th>{ $L_FRIENDS }</th>
+	</tr>
+	<tr>
+		<td class="row1" align="center">
+		
+			<b class="genmed" style="color:green">{ $L_FRIENDS_ONLINE }</b>
+
+			<ul class="nav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
+			<!-- LOOP $friends_online -->
+				<li><a href="{ $friends_online:U_PROFILE }">{ $friends_online:USERNAME }</a></li>
+			<!-- LOOPELSE -->
+			<li>{ $L_NO_FRIENDS_ONLINE }</li>
+			<!-- ENDLOOP $friends_online -->
+			</ul>
+
+			<hr />
+
+			<b class="genmed" style="color:red">{ $L_FRIENDS_OFFLINE }</b>
+
+			<ul class="nav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
+			<!-- LOOP $friends_offline -->
+			<li><a href="{ $friends_offline:U_PROFILE }">{ $friends_offline:USERNAME }</a></li>
+			<!-- LOOPELSE -->
+			<li>{$L_NO_FRIENDS_OFFLINE}</li>
+			<!-- ENDLOOP $friends_online -->
+			</ul>
+		</td>
+	</tr>
+</table>
