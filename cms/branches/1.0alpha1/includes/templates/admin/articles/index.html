@@ -1,0 +1,110 @@
+<!-- DISPLAY_HEADER -->
+
+{ $A_TABLE_OPEN }
+
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th align="center" width="25%">{$L_TITLE}</th>
+			<th align="center" colspan="2">{ $L_ORDER }</th>
+			<th align="center">{ $L_STATUS }</th>
+			<th align="center">{ $L_FUNCTIONS }</th>
+		</tr>
+    <!-- IF isset({ $top_admin_messages }) -->
+    	<tr>
+			<td class="cat" colspan="8"><b class="gensmall">{ $L_TOP_MESSAGES }</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+	<!-- LOOP $top_admin_messages -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:EDIT_LINK }'; return false;">
+				<a href="{ $top_admin_messages:EDIT_LINK }" title="{ $L_EDIT }">{ $top_admin_messages:TITLE }</a><br />
+				<!-- IF { $top_admin_messages:STARTS } --><br /><b>{ $L_STARTS }: </b>{ $top_admin_messages:STARTS }<!-- ENDIF -->
+				<!-- IF { $top_admin_messages:EXPIRES } --><br /><b>{ $L_EXPIRES }: </b>{ $top_admin_messages:EXPIRES }<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center" >
+				<!-- IF { $top_admin_messages:ORDER_UP } -->
+				<a href="{ $top_admin_messages:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $top_admin_messages:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $top_admin_messages:ORDER_DOWN } -->
+				<a href="{ $top_admin_messages:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $top_admin_messages:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $top_admin_messages:ACTIVE_LINK }'; return false;">
+				<a href="{ $top_admin_messages:ACTIVE_LINK }">{ $top_admin_messages:CHANGE }</a>
+			</td>
+			<td class="row1" align="center">
+			<!-- IF { $top_admin_messages:EDIT_LINK } -->
+				<a href="{ $top_admin_messages:EDIT_LINK }">{ $L_EDIT }</a> |
+			<!-- ENDIF -->
+			<a href="{ $top_admin_messages:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- IF { $top_admin_messages:DELETE_LINK } -->
+				 | <a href="{ $top_admin_messages:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF --> </td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+	<!-- ENDLOOP $top_admin_messages -->
+	<!-- ENDIF -->
+
+	<!-- IF isset({ $bottom_admin_messages }) -->
+    	<tr>
+			<td class="cat" colspan="8"><b class="gensmall">{ $L_BOTTOM_MESSAGES }</b></td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+	<!-- LOOP $bottom_admin_messages -->
+		<tr>
+			<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:EDIT_LINK }'; return false;">
+				<a href="{ $bottom_admin_messages:EDIT_LINK }" title="{ $L_EDIT }">{ $bottom_admin_messages:TITLE }</a><br />
+				<!-- IF { $bottom_admin_messages:STARTS } --><br /><b>{ $L_STARTS }: </b>{ $bottom_admin_messages:STARTS }<!-- ENDIF -->
+				<!-- IF { $bottom_admin_messages:EXPIRES } --><br /><b>{ $L_EXPIRES }: </b>{ $bottom_admin_messages:EXPIRES }<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center" >
+				<!-- IF { $bottom_admin_messages:ORDER_UP } -->
+				<a href="{ $bottom_admin_messages:LINK_ORDER_UP }"><img src="images/1uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>&nbsp;
+				<a href="{ $bottom_admin_messages:LINK_ORDER_TOP }"><img src="images/2uparrow.png" alt="{ $L_MOVE_UP }" title="{ $L_MOVE_UP }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center">
+				<!-- IF { $bottom_admin_messages:ORDER_DOWN } -->
+				<a href="{ $bottom_admin_messages:LINK_ORDER_DOWN }"><img src="images/1downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>&nbsp;
+				<a href="{ $bottom_admin_messages:LINK_ORDER_BOTTOM }"><img src="images/2downarrow.png" alt="{ $L_MOVE_DOWN }" title="{ $L_MOVE_DOWN }" border="0"></a>
+				<!-- ENDIF -->
+			</td>
+			<td class="row1" align="center"  onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $bottom_admin_messages:ACTIVE_LINK }'; return false;">
+				<a href="{ $bottom_admin_messages:ACTIVE_LINK }">{ $bottom_admin_messages:CHANGE }</a>
+			</td>
+			<td class="row1" align="center">
+			<!-- IF { $bottom_admin_messages:EDIT_LINK } -->
+			<a href="{ $bottom_admin_messages:EDIT_LINK }">{ $L_EDIT }</a> |
+			<!-- ENDIF -->
+			<a href="{ $bottom_admin_messages:AUTH_LINK }">{ $L_PERMISSIONS }</a>
+			<!-- IF { $bottom_admin_messages:DELETE_LINK } -->
+				| <a href="{ $bottom_admin_messages:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF --> </td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="8" height="7"></td>
+		</tr>
+	<!-- ENDLOOP $bottom_admin_messages -->
+	<!-- ENDIF -->
+	 		  <tr>
+			<td class="cat" colspan="8">
+				<form action="{ $LINK_ADD }" method="post"><input class="button" value="{ $L_ADD_NEW }" name="regular" type="submit" /></form>
+			</td>
+		  </tr>
+  </tbody>
+</table>
+
+{ $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->
