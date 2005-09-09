@@ -151,7 +151,7 @@ class core_blocks
 			{
 				continue;
 			}
-//language check here.
+
 			if ($this->block['block_expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['block_expires']))
 			{
 				$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET block_status = ' . STATUS_DISABLED . ' WHERE block_expires > 0 AND block_expires <= ' . $_CLASS['core_user']->time);
@@ -166,18 +166,6 @@ class core_blocks
 			{
 				continue;
 			}
-
-			/*
-			if ($this->block['block_modules'])
-			{
-				$this->block['block_modules'] = unserialize($this->block['block_modules']);
-// Homepage needs it's own value
-				if (!in_array($_CORE_MODULE['module_title'], $this->block['block_modules']['show'] || in_array($_CORE_MODULE['module_title'], $this->block['block_modules']['hide'])))
-				{
-					continue;
-				}
-			}
-			*/
 
 			$this->display_blocks();
 			$this->content = '';

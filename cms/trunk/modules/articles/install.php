@@ -46,13 +46,13 @@ class articles_install
 		$_CLASS['core_db']->add_table_field_int('articles_id', array('max' => 16000000, 'auto_increment' => true));
 		$_CLASS['core_db']->add_table_field_char('articles_title', 80);
 		$_CLASS['core_db']->add_table_field_int('articles_posted', array('max' => 200000000));
-		$_CLASS['core_db']->add_table_field_int('articles_start', array('max' => 200000000, 'null' => true));
+		$_CLASS['core_db']->add_table_field_int('articles_starts', array('max' => 200000000, 'null' => true));
 		$_CLASS['core_db']->add_table_field_int('articles_expires', array('max' => 200000000, 'null' => true));
 		$_CLASS['core_db']->add_table_field_text('articles_intro', 60000, true);
 		$_CLASS['core_db']->add_table_field_text('articles_text', 10000000);
 		$_CLASS['core_db']->add_table_field_text('articles_notes', 60000, true);
 
-		$_CLASS['core_db']->add_table_field_int('articles_order', array('max' => 16000000, 'null' => true));
+		$_CLASS['core_db']->add_table_field_int('articles_order', array('max' => 16000000));
 		$_CLASS['core_db']->add_table_field_int('articles_type', array('max' => 10));
 		$_CLASS['core_db']->add_table_field_int('articles_status', array('max' => 10));
 		$_CLASS['core_db']->add_table_field_text('articles_auth', 60000, true);
@@ -76,6 +76,7 @@ class articles_install
 			'articles_title'	=> 'Welcome Post',
 			'articles_posted'	=> (int) $_CLASS['core_user']->time,
 			'articles_text'		=> '<p align="center">I need something snappy here</p>',
+			'articles_order'	=> 1,
 			'articles_type'		=> 1,
 			'articles_status'	=> STATUS_ACTIVE,
 			'poster_id'			=> 0,

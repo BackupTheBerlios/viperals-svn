@@ -78,16 +78,30 @@ if (isset($_GET['mode']))
 }
 
 $start = get_variable('start', 'GET', false, 'int');
-$limit = 10;
 $collapable_holding = array();
+$expire_updated = false;
+$limit = 10;
 
-$sql = 'SELECT * FROM '.  ARTICLES_TABLE .' WHERE articles_status = ' . STATUS_ACTIVE . ' ORDER BY articles_order DESC';
+$sql = 'SELECT * FROM '.  ARTICLES_TABLE .' WHERE articles_status = ' . STATUS_ACTIVE . ' ORDER BY articles_order ASC';
 $result = $_CLASS['core_db']->query_limit($sql, $limit, $start);
 
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 // this can cause problems, only thing to do is remove the limit query and do a loop until we get the needed articles
 	if ($row['articles_auth'] && !$_CLASS['core_auth']->auth(@unserialize($row['articles_auth'])) && !$_CLASS['core_auth']->admin_power('articles'))
+	{
+		continue;
+	}
+	
+	if ($row['articles_expires'] && !$expire_updated && ($_CLASS['core_user']->time > $row['articles_expires']))
+	{
+		$_CLASS['core_db']->query('UPDATE '.ARTICLES_TABLE.' SET articles_status = ' . STATUS_DISABLED . ' WHERE articles_expires > 0 AND articles_expires <= ' . $_CLASS['core_user']->time);
+		$expire_updated = true;
+
+		continue;
+	}
+
+	if ($row['articles_starts'] && ($row['articles_starts'] > $_CLASS['core_user']->time))
 	{
 		continue;
 	}

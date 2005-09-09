@@ -187,10 +187,10 @@ function block_delete($id, $return_link = false)
 			trigger_error('Block deleted<br/><a href="'.$return_link.'">Click here to return</a>');	        
 		}
 	}
-	
+
 	if ($return_link)
 	{
-		url_redirect($return_link);
+		redirect($return_link);
 	}
 }
 

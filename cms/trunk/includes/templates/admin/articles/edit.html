@@ -32,14 +32,6 @@
 				<td class="row2" colspan="2"><input name="active" value="2" <!-- IF { $B_ACTIVE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="active" value="0" <!-- IF !{ $B_ACTIVE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
 			</tr>
 			<tr> 
-				<td class="row1"><b class="genmed">{ $L_POSITION }: </b></td>
-				<td class="row2" colspan="2"><select name="b_position">{ $B_POSITION }</select></td>
-			</tr>
-			<tr> 
-				<td class="row1"><b class="genmed">{ $L_TYPE }: </b></td>
-				<td class="row2" colspan="2"><select name="b_type">{ $B_TYPE }</select></td>
-			</tr>
-			<tr> 
 				<td class="row1"><b class="genmed">{ $L_STARTS }: </b></td>
 				<td class="row2" >
 					<input class="post" id="starts" name="starts" size="35" maxlength="100" value="{ $B_STARTS }" type="text">
@@ -57,7 +49,17 @@
 			<tr> 
 				<td class="row1" valign="top" ><b class="genmed">{ $L_MESSAGE }: </b></td>
 				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5px"></div>
-				<textarea name="content" id="content" editor_enabled="true" style="width:90%; height:400px;" cols="63" rows="15">{ $B_CONTENT }</textarea><br /><br /></td>
+				<textarea name="text" id="text" editor_enabled="true" style="width:90%; height:400px;" cols="63" rows="15">{ $B_TEXT }</textarea><br /><br /></td>
+			</tr>
+			<tr> 
+				<td class="row1" valign="top" ><b class="genmed">{ $L_INTRO_MESSAGE }: </b></td>
+				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5px"></div>
+				<textarea name="intro" id="intro" editor_enabled="true" style="width:90%; height:200px;" cols="63" rows="15">{ $B_INTRO }</textarea><br /><br /></td>
+			</tr>
+			<tr> 
+				<td class="row1" valign="top" ><b class="genmed">{ $L_ADMIN_NOTES }: </b></td>
+				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5px"></div>
+				<textarea name="notes" id="notes" editor_enabled="false" style="width:90%; height:150px;" cols="63" rows="15">{ $B_NOTES }</textarea><br /><br /></td>
 			</tr>
 			<tr>
 				<td class="cat" colspan="3" align="center" height="28">

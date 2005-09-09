@@ -118,7 +118,7 @@ foreach ($messages as $row)
 		'EDIT_LINK'		=> generate_link('messages&amp;mode=edit&amp;id='.$row['block_id'], array('admin' => true)),
 		'DELETE_LINK' 	=> generate_link('messages&amp;mode=delete&amp;id='.$row['block_id'], array('admin' => true)),
 
-		'EXPIRES'		=> ($row['block_expires'] && $row['block_expires'] < $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['block_expires']) : false,
+		'EXPIRES'		=> ($row['block_expires'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['block_expires']) : false,
 		'STARTS'		=> ($row['block_starts'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($row['block_starts']) : false,
 		'TITLE'			=> $row['block_title'],
 
@@ -155,7 +155,7 @@ function message_edit($id = false, $block = false, $error = false)
 		
 		if (!$block)
 		{
-			url_redirect(generate_link('messages', array('admin' => true)));
+			redirect(generate_link('messages', array('admin' => true)));
 		}
 		
 		check_position($block['block_position']);
@@ -200,7 +200,7 @@ function messages_get_data(&$data, &$error)
 	}
 
 	$data['block_title'] = get_variable('title', 'POST', '');
-	$data['block_content'] = trim(get_variable('content', 'POST', ''));
+	$data['block_content'] = get_variable('content', 'POST', '');
 	
 	foreach ($data as $field => $value)
 	{
@@ -212,7 +212,7 @@ function messages_get_data(&$data, &$error)
 	
 	$data['block_status']	= (get_variable('active', 'POST', STATUS_DISABLED, 'integer') === STATUS_DISABLED) ? STATUS_DISABLED : STATUS_ACTIVE;
 	$data['block_expires']	= get_variable('expires', 'POST', 0);
-	$data['block_starts']	= get_variable('time', 'POST', '');
+	$data['block_starts']	= get_variable('starts', 'POST', '');
 	$data['block_position']	= get_variable('b_position', 'POST', BLOCK_MESSAGE_TOP, 'integer');
 	$data['block_type'] 	= get_variable('b_type', 'REQUEST', BLOCKTYPE_MESSAGE, 'integer');
 
@@ -232,7 +232,7 @@ function messages_get_data(&$data, &$error)
 
 	if ($data['block_starts'])
 	{
-		$start = strtotime($data['block_start']);
+		$start = strtotime($data['block_starts']);
 
 		if (!$start || $start == -1)
 		{
@@ -269,7 +269,7 @@ function message_save($id = false)
 
 		if (!$block)
 		{
-			url_redirect(generate_link('messages', array('admin' => true)));
+			redirect(generate_link('messages', array('admin' => true)));
 		}
 
 		check_position($block['block_position']);

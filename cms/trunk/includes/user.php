@@ -131,10 +131,10 @@ class core_user extends sessions
 		$result = $_CLASS['core_db']->query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '. $id);
 		$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
-		
+
 		if (!$this->data)
 		{
-			die;
+			die('Installlation problem');
 // Error here, however this happen
 		}
 

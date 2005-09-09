@@ -120,15 +120,15 @@ $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, 
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('users', 0, 2, '')");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('groups', 0, 2, '')");
 
-$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('articles', 1, 2, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('articles', 1, 1, 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Contact', 1, 2, 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Calender', 1, 2, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Calender', 1, 1, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Control_Panel', 1, 2, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Forums', 1, 2, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Members_List', 1, 2, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Recommend_Us', 1, 2, 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Submit_News', 1, 2, 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Quick_Message', 1, 2, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$install_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Quick_Message', 1, 1, 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':D', 'grin.png', 'Very Happy', 19, 19, 1, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$install_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':)', 'smile.png', 'Smile', 19, 19, 2, 0)");

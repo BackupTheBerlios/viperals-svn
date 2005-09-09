@@ -38,7 +38,7 @@ function check_position($position, $redirect = true)
 	{
 		if ($redirect)
 		{
-			url_redirect(generate_link('blocks', array('admin' => true)));
+			redirect(generate_link('blocks', array('admin' => true)));
 			die;
 		}
 		return false;
@@ -96,9 +96,9 @@ if (isset($_REQUEST['mode']))
 	}
 }
 
-$result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_file, block_auth
-	FROM ' . BLOCKS_TABLE . '
-	WHERE block_position IN (' . BLOCK_RIGHT . ', ' . BLOCK_TOP . ', ' . BLOCK_BOTTOM . ', ' . BLOCK_LEFT . ') ORDER BY block_position, block_order ASC');
+$result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_starts, block_expires, block_file, block_auth
+	FROM ' . BLOCKS_TABLE . ' WHERE block_position IN (' . BLOCK_RIGHT . ', ' . BLOCK_TOP . ', ' . BLOCK_BOTTOM . ', ' . BLOCK_LEFT . ')
+	ORDER BY block_position, block_order ASC');
 
 $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
 $in_position = false;
@@ -142,6 +142,9 @@ foreach ($blocks as $block)
 			'DELETE_LINK' 	=> ($block['block_type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['block_id'], array('admin' => true)) : '',
 			'TITLE'			=> $block['block_title'],
 			'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['block_type']),
+
+			'EXPIRES'		=> ($block['block_expires'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($block['block_expires']) : false,
+			'STARTS'		=> ($block['block_starts'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($block['block_starts']) : false,
 
 			'ORDER_DOWN' 	=> ($block['block_order'] < $weigth[$block['block_position']]),
 			'ORDER_UP'		=> ($block['block_order'] > 1),

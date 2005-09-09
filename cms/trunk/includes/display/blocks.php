@@ -151,7 +151,7 @@ class core_blocks
 			{
 				continue;
 			}
-//language check here.
+
 			if ($this->block['block_expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['block_expires']))
 			{
 				$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET block_status = ' . STATUS_DISABLED . ' WHERE block_expires > 0 AND block_expires <= ' . $_CLASS['core_user']->time);

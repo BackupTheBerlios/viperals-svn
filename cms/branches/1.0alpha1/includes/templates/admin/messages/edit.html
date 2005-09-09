@@ -42,8 +42,8 @@
 			<tr> 
 				<td class="row1"><b class="genmed">{ $L_STARTS }: </b></td>
 				<td class="row2" >
-					<input class="post" id="time" name="time" size="35" maxlength="100" value="{ $B_STARTS }" type="text">
-					<img src="images/calender_small.png" style="cursor: pointer;" id="time_trigger"/>
+					<input class="post" id="starts" name="starts" size="35" maxlength="100" value="{ $B_STARTS }" type="text">
+					<img src="images/calender_small.png" style="cursor: pointer;" id="starts_trigger"/>
 				</td>
 				<td class="row1" align="center" rowspan="2"><b class="genmed">Current Server Time:<br/>{ $B_CURRENT_TIME }: </b></td>
 			</tr>
@@ -95,8 +95,8 @@ function fast_preview()
 
   Calendar.setup(
     {
-      inputField  : "time",         // ID of the input field
-      button      : "time_trigger"       // ID of the button
+      inputField  : "starts",         // ID of the input field
+      button      : "starts_trigger"       // ID of the button
     }
   );
 </script>
