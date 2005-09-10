@@ -38,7 +38,6 @@ set_magic_quotes_runtime(0);
 mb_internal_encoding('UTF-8');
 //mb_http_output('UTF-8');
 
-
 // Remove registered globals
 if ((bool) ini_get('register_globals'))
 {
@@ -92,26 +91,6 @@ if (function_exists('register_shutdown_function'))
 
 $_CLASS['core_db']->connect($site_db);
 unset($sitedb);
-
-/*
-$_CLASS['core_db']->transaction();
-require($site_file_root.'install/build_tables.php');
-$_CLASS['core_db']->transaction('commit');
-die;
-*/
-
-
-/*
-$_CLASS['core_db']->transaction();
-require($site_file_root.'install/build_data.php');
-$_CLASS['core_db']->transaction('commit');
-die;
-*/
-
-/*
-	Progres need to be optimized after install :-(
-	$_CLASS['core_db']->optimize_tables();
-*/
 
 $_CLASS['core_db']->return_on_error = true;
 

@@ -26,11 +26,11 @@ if (!defined('VIPERAL'))
     die;
 }
 
-global $prefix;
+global $table_prefix;
 
 if (!defined('QUICK_MESSAGE_TABLE'))
 {
-	define('QUICK_MESSAGE_TABLE', $prefix.'quick_message');
+	define('QUICK_MESSAGE_TABLE', $table_prefix.'quick_message');
 }
 
 class Quick_Message_install

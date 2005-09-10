@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Viperal: Agreement</title>
+<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="expires" content="0" />
+
+<style type="text/css">
+<!--
+body
+{
+    font-family: Verdana, Helvetica, sans-serif;
+    font-size: 10px;
+    margin: 0%;
+    padding: 0px;
+    background-color: white;
+    background: url(../images/bg.gif);
+}
+
+.error { color: red; }
+
+#container
+{
+	position: absolute;
+	top: 50%;
+	left: 0px;
+	width: 100%;
+	margin-top: -130px;
+}
+
+#wrapper
+{
+	position: relative;
+	text-align: left;
+	width: 500px;
+	margin: 0px auto;
+}
+
+.spacer
+{
+	background-color: #ECECEC;
+}
+
+.button
+{
+	background-color: #DCE1E5;
+	border: 1px solid #ccc;
+	color: black;
+}
+
+th { height: 28px; color: #FFA34F; font-size: 110%; font-weight: bold; background-color: #006699;white-space: nowrap; }
+.tablebg { background-color: #A9B8C2; }
+
+.row1 { background-color: #ECECEC; padding: 4px; }
+.row2 { background-color: #DCE1E5; padding: 4px; }
+.row3 { background-color: #C0C8D0; padding: 4px; }
+
+a:link { color: #005784; text-decoration: none; }
+a:active { color: #005784; text-decoration: none; }
+a:visited { color: #005784; text-decoration: none; }
+a:hover { color: #000000; text-decoration: none; }
+
+form { margin: 0px; padding: 0px; border: 0px; }
+input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
+.post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}
+
+-->
+</style>
+<script language="Javascript" type="text/javascript">
+<!--
+var old_value = 'all';
+
+function change_option(name)
+{
+	var area = document.getElementById(name);
+
+	if (!area)
+	{
+		if (old_value == 'all')
+		{
+			return;
+		}
+		else
+		{
+			name = 'all'
+			area = document.getElementById(name);
+		}
+	}
+
+	area.style.display = '';
+
+	var i = 1;
+
+	while (true)
+	{
+		area = document.getElementById(name + '_' + i);
+
+		if (!area)
+		{
+			break;
+		}
+
+		area.style.display = '';
+		i += 1;
+	}
+
+	area = document.getElementById(old_value);
+	area.style.display = 'none';
+	
+	var i = 1;
+
+	while (true)
+	{
+		area = document.getElementById(old_value + '_' + i);
+
+		if (!area)
+		{
+			break;
+		}
+
+		area.style.display = 'none';
+		i += 1;
+	}
+
+	old_value = name;
+}
+
+//-->
+</script>
+<body>
+	<div id="container">
+		<div id="wrapper">
+			<form action="" method="post">
+				<table class="tablebg" width="100%" cellspacing="1" cellpadding="4">
+					<tbody>
+						<tr>
+							<th colspan="2">Database Configuration</th>
+						</tr>
+						<!-- IF { $error } -->
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">{ $error }</th>
+						</tr>
+						<!-- ENDIF -->
+						<tr>
+							<td class="row1" width="50%"><b>Database type: </b></td>
+							<td class="row2"><select id="layer" name="layer" onchange="change_option(this.value);">{ $database_options }</select></td>
+						</tr>
+						<tr id="sqlite" style="display: none;">
+							<td class="row1" width="50%"><b>Database File: </b></td>
+							<td class="row2"><input class="post" name="file_sqlite" value="{ $file }" type="text"></td>
+						</tr>
+						<tr id="sqlite_pdo" style="display: none;">
+							<td class="row1" width="50%"><b>Database File: </b></td>
+							<td class="row2"><input class="post" name="file_sqlite_pdo" value="{ $file }" type="text"></td>
+						</tr>
+						<tr id="all">
+							<td class="row1" width="50%"><b>Database server hostname: </b></td>
+							<td class="row2"><input class="post" name="server" value="{ $server }" type="text"></td>
+						</tr>
+						<tr id="all_1">
+							<td class="row1" width="50%"><b>Database server port: </b><br><span class="gensmall">Leave this blank unless you know the server operates on a non-standard port.</span></td>
+							<td class="row2"><input class="post" name="port" value="{ $port }" type="text"></td>
+						</tr>
+						<tr id="all_2">
+							<td class="row1" width="50%"><b>Database name: </b><br/>Required</td>
+							<td class="row2"><input class="post" name="database" value="{ $database }" type="text"></td>
+						</tr>
+						<tr id="all_3">
+							<td class="row1" width="50%"><b>Database username: </b><br/>Required</td>
+					
+							<td class="row2"><input class="post" name="username" value="{ $username }" type="text"></td>
+						</tr>
+						<tr id="all_4">
+							<td class="row1" width="50%"><b>Database password: </b></td>
+							<td class="row2"><input class="post" name="password" value="{ $password }" type="password"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Prefix for tables: </b></td>
+							<td class="row2"><input class="post" name="table_prefix" value="{ $table_prefix }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Prefix for user table: </b></td>
+							<td class="row2"><input class="post" name="user_prefix" value="{ $user_prefix }" type="text"></td>
+						</tr>
+						<tr>
+							<input type="hidden" name="stage" value="2" />
+							<input type="hidden" name="agreement_signed" value="1" />
+							<th colspan="2" align="center"><input class="button" name="test" value="Test Connection" type="submit"> <input class="button" name="submit" value="Start Installation" type="submit"></th>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+	</div>
+
+<script language="Javascript" type="text/javascript">
+<!--
+	change_option(document.getElementById('layer').value);
+//-->
+</script>
+
+</body>
+
+</html>

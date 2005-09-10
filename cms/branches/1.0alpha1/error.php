@@ -22,7 +22,7 @@ if (extension_loaded('zlib'))
 }
 
 //echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
-$site_file_root = 'C:/apachefriends/xampp/cms/';
+$site_file_root = '';
 $lang = 'en';
 
 if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))

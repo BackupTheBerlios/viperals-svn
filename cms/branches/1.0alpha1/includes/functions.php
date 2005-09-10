@@ -803,6 +803,7 @@ if (!function_exists('file_put_contents'))
 			@flock($fp, LOCK_UN);
 			fclose($fp);
 		}
+
 		return $bytes;
 	}
 }

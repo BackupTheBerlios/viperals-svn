@@ -26,7 +26,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-error_reporting(E_ALL);
+error_reporting(0);
 //error_reporting(0);
 
 if (!extension_loaded('mbstring'))
@@ -37,7 +37,6 @@ if (!extension_loaded('mbstring'))
 set_magic_quotes_runtime(0);
 mb_internal_encoding('UTF-8');
 //mb_http_output('UTF-8');
-
 
 // Remove registered globals
 if ((bool) ini_get('register_globals'))
@@ -82,7 +81,7 @@ load_class(false, 'core_db', 'db_'.$site_db['type']);
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
-$_CLASS['core_error_handler']->stop();
+//$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (function_exists('register_shutdown_function'))
@@ -92,26 +91,6 @@ if (function_exists('register_shutdown_function'))
 
 $_CLASS['core_db']->connect($site_db);
 unset($sitedb);
-
-/*
-$_CLASS['core_db']->transaction();
-require($site_file_root.'install/build_tables.php');
-$_CLASS['core_db']->transaction('commit');
-die;
-*/
-
-
-/*
-$_CLASS['core_db']->transaction();
-require($site_file_root.'install/build_data.php');
-$_CLASS['core_db']->transaction('commit');
-die;
-*/
-
-/*
-	Progres need to be optimized after install :-(
-	$_CLASS['core_db']->optimize_tables();
-*/
 
 $_CLASS['core_db']->return_on_error = true;
 

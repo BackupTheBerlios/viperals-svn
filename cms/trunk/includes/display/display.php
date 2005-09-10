@@ -181,7 +181,6 @@ class core_display
 			'SITE_BASE'			=>	generate_base_url(),
 			'SITE_CHARSET'		=>	'UTF-8',
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
-			'SITE_URL'			=>	$_CORE_CONFIG['global']['site_url'],
 			'HEADER_MESSAGE'	=>	$this->message,
 			'HEADER_REGULAR'	=>	$this->header['meta'].$this->header['regular'],
 			'HEADER_JS' 		=>	$this->header['js'],

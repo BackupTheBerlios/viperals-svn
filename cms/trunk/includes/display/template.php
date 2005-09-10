@@ -48,20 +48,10 @@ class core_template
     /*
 		Assign variable to be used in template
     */
-// rewmove array from here
+
 	function assign($var, $value = false)
     {
-		if (is_array($var))
-		{
-			foreach ($var as $name => $value)
-			{
-				$this->_vars[$name] = $value;
-			}
-		}
-		else
-		{
-			$this->_vars[$var] = $value;
-		}
+		$this->_vars[$var] = $value;
 	}
 
     function assign_array($var, $value = false)

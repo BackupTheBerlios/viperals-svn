@@ -28,7 +28,7 @@ if (!defined('VIPERAL'))
 
 if (!defined('ARTICLES_TABLE'))
 {
-	define('ARTICLES_TABLE', $prefix.'articles');
+	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
 
 $_CLASS['core_user']->user_setup();
@@ -58,7 +58,7 @@ if (isset($_GET['mode']))
 				trigger_error('ARTICLE_NOT_FOUND');
 			}
 
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'ARTICLES_POSTER' 		=> ($row['poster_name']) ? $row['poster_name'] : $_CLASS['core_user']->get_lang('ANONYMOUS'),
 				'ARTICLES_POSTER_LINK'	=> ($row['poster_name'] && $row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']) : '',
 				'ARTICLES_TEXT'			=> $row['articles_text'],

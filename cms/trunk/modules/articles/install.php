@@ -30,7 +30,7 @@ global $prefix;
 
 if (!defined('ARTICLES_TABLE'))
 {
-	define('ARTICLES_TABLE', $prefix.'articles');
+	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
 
 class articles_install
@@ -64,9 +64,9 @@ class articles_install
 		$_CLASS['core_db']->add_table_field_char('approver_name', 80, true);
 
 		$_CLASS['core_db']->add_table_index('articles_id', 'primary');
-		$_CLASS['core_db']->add_table_index('articles_start');
+		$_CLASS['core_db']->add_table_index('articles_starts');
+		$_CLASS['core_db']->add_table_index('articles_expires');
 		//$_CLASS['core_db']->add_table_index('articles_type');
-		//$_CLASS['core_db']->add_table_index('articles_expires');
 		$_CLASS['core_db']->add_table_index('articles_order');
 		$_CLASS['core_db']->add_table_index('articles_status');
 

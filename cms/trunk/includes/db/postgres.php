@@ -75,24 +75,30 @@ class db_postgres
 
 		$connection_string = implode(' ', $connection_string);
 
-
 		$this->link_identifier = ($db['persistent']) ? @pg_pconnect($connection_string) : @pg_connect($connection_string);
 
 		if ($this->link_identifier)
 		{
-			//pg_set_client_encoding($this->link_identifier, 'UNICODE');
-			//pg_set_client_encoding($this->link_identifier, 'UTF8');  pg8.1 unicode still works tho
+			if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN')
+			{
+				pg_set_client_encoding($this->link_identifier, 'UNICODE');
+				//pg_set_client_encoding($this->link_identifier, 'UTF8');  pg8.1 unicode still works tho
+				//pg_query($this->link_identifier, "SET CLIENT_ENCODING TO 'UNICODE'"); SET NAMES 'UNICODE'
+			}
 
-			//pg_query($this->link_identifier, "SET CLIENT_ENCODING TO 'value'"); SET NAMES 'value'
 			return $this->link_identifier;
+		}
+
+		if (!$this->report_error)
+		{
+			return false;
 		}
 
 		$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 
 		$this->disconnect();
-		trigger_error($error, E_USER_ERROR);
 
-		die;
+		trigger_error($error, E_USER_ERROR);
 	}
 
 	function disconnect()
@@ -102,7 +108,7 @@ class db_postgres
 			return;
 		}
 
-		@pg_close($this->link_identifier);
+		pg_close($this->link_identifier);
 		$this->link_identifier = false;
 	}
 
@@ -110,6 +116,7 @@ class db_postgres
 	{
 		$this->report_error = ($report);
 	}
+
 	function transaction($option = 'start', $auto_rollback = true)
 	{
 		$result = false;
@@ -186,7 +193,7 @@ class db_postgres
 
 		if ($this->last_result === false)
 		{
-			$this->_error($query, $backtrace);
+			$this->sql_error($backtrace);
 		}
 		elseif (strpos($query, 'SELECT') === 0)
 		{
@@ -329,7 +336,7 @@ class db_postgres
 			return false;
 		}
 
-		return @pg_fetch_assoc($result);
+		return pg_fetch_assoc($result);
 	}
 
 	function fetch_row_num($result = false)
@@ -339,7 +346,7 @@ class db_postgres
 			return false;
 		}
 
-		return @pg_fetch_row($result);
+		return pg_fetch_row($result);
 	}
 
 	function fetch_row_both($result = false)
@@ -349,12 +356,12 @@ class db_postgres
 			return false;
 		}
 
-		return @pg_fetch_array($result);
+		return pg_fetch_array($result);
 	}
 
 	function insert_id($table, $column)
 	{
-		$oid = @pg_last_oid($this->last_result);
+		$oid = pg_last_oid($this->last_result);
 
 		/* 
 		Shouldn't be need, but incase they don't have oid support ( not sure why they wouldn't )
@@ -389,7 +396,7 @@ class db_postgres
 
 		unset($this->open_queries[(int) $result]);
 
-		return @pg_free_result($result);
+		return pg_free_result($result);
 	}
 
 	function escape($text)
@@ -421,14 +428,22 @@ class db_postgres
 		}
 	}
 
-	function _error($sql = '', $backtrace)
+	function sql_error($backtrace, $return = false)
 	{
+		if ($return)
+		{
+			return array(
+				'message'	=> @pg_last_error($this->link_identifier),
+				'code'		=> ''
+			);
+		}
+		
 		if (!$this->report_error)
 		{
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u><br /><br />' . @pg_last_error($this->link_identifier) . '<br /><br />File: <br/>'.$backtrace['file'].'<br/><br />Line:<br/>'.$backtrace['line'].'<br /><br /><u>SQL</u><br /><br />' . $sql .'<br />';
+		$message = '<u>SQL ERROR</u><br /><br />' . @pg_last_error($this->link_identifier) . '<br /><br />File: <br/>'.$backtrace['file'].'<br/><br />Line:<br/>'.$backtrace['line'].'<br /><br /><u>SQL</u><br /><br />' . $this->last_query .'<br />';
 
 		if ($this->in_transaction)
 		{
@@ -490,14 +505,14 @@ class db_postgres
 				{
 					if (strpos('SELECT', $this->last_query) === 0)
 					{
-						if ($result = @pg_query($this->link_identifier, 'EXPLAIN '.$this->last_query))
+						if ($result = pg_query($this->link_identifier, 'EXPLAIN '.$this->last_query))
 						{
-							while ($row = @pg_fetch_assoc($result))
+							while ($row = pg_fetch_assoc($result))
 							{
 								$this->query_details[$this->num_queries][] = $row;
 							}
 
-							@pg_free_result($result);
+							pg_free_result($result);
 						}
 					}
 					else

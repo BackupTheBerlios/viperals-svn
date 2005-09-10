@@ -41,11 +41,11 @@ class db_mysql
 	var $_fields = array();
 	var $_table_name = false;
 
-	function connect($db)
+	function connect($db, $return = false)
 	{		
 		if ($db['port'])
 		{
-			$db['server'] .= ':' . $port;
+			$db['server'] .= ':' . $db['port'];
 		}
 
 		if ($this->link_identifier)
@@ -68,8 +68,13 @@ class db_mysql
 
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
-		
-		if (!$error)
+
+		if (!$this->report_error)
+		{
+			return false;
+		}
+
+		if (!isset($error))
 		{
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 		}
@@ -179,7 +184,7 @@ class db_mysql
 
 		if ($this->last_result === false)
 		{
-			$this->_error($query, $backtrace);
+			$this->sql_error($backtrace);
 		}
 		elseif (strpos($query, 'SELECT') === 0)
 		{
@@ -223,60 +228,67 @@ class db_mysql
 	/*
 		Boy do I like this but it phpBB's, may have to do something similar
 	*/
-	function sql_build_array($query, $assoc_ary = false)
+	function sql_build_array($query, $array = false)
 	{
-		if (!is_array($assoc_ary))
+		if (!is_array($array))
 		{
 			return false;
 		}
 
-		$fields = array();
-		$values = array();
+		$_fields = $values = array();
 
 		if ($query == 'INSERT')
 		{
-			foreach ($assoc_ary as $key => $var)
+			foreach ($array as $key => $value)
 			{
-				$fields[] = $key;
+				$_fields[] = $key;
 
-				if (is_null($var))
+				if (is_numeric($value))
+				{
+					$values[] = $value;
+				}
+				elseif (is_string($value))
+				{
+					$values[] = "'" . $this->escape($value) . "'";
+				}
+				elseif (is_null($value))
 				{
 					$values[] = 'NULL';
 				}
-				elseif (is_string($var))
+				elseif (is_bool($value))
 				{
-					$values[] = "'" . $this->escape($var) . "'";
-				}
-				else
-				{
-					$values[] = (is_bool($var)) ? intval($var) : $var;
+					$values[] = ($value) ? 1 : 0;
 				}
 			}
 
-			$query = ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
+			return ' (' . implode(', ', $_fields) . ') VALUES (' . implode(', ', $values) . ')';
 		}
-		else if ($query == 'UPDATE' || $query == 'SELECT')
+		elseif ($query == 'UPDATE' || $query == 'SELECT')
 		{
 			$values = array();
-			foreach ($assoc_ary as $key => $var)
+			foreach ($array as $key => $value)
 			{
-				if (is_null($var))
+				if (is_numeric($value))
+				{
+					$values[] = $key.' = '.$value;
+				}
+				elseif (is_string($value))
+				{
+					$values[] = "$key = '" . $this->escape($value) . "'";
+				}
+				elseif (is_null($value))
 				{
 					$values[] = "$key = NULL";
 				}
-				elseif (is_string($var))
+				elseif (is_bool($value))
 				{
-					$values[] = "$key = '" . $this->escape($var) . "'";
+					$values[] = $key.' = '.(($value) ? 1 : 0);
 				}
-				else
-				{
-					$values[] = (is_bool($var)) ? "$key = " . intval($var) : "$key = $var";
-				}
-			}
-			$query = implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
-		}
 
-		return $query;
+			}
+
+			return implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
+		}
 	}
 
 	function num_rows($result = false)
@@ -393,7 +405,7 @@ class db_mysql
 				}
 			}
 
-			$this->sql_freeresult($result);
+			$this->free_result($result);
 		}
 
 		if ($table)
@@ -412,14 +424,22 @@ class db_mysql
 		return (($return_dbname) ? 'MySQL ' : '').mysql_get_server_info($this->link_identifier);
 	}
 
-	function _error($sql = '', $backtrace)
+	function sql_error($backtrace, $return = false)
 	{
+		if ($return)
+		{
+			return array(
+				'message'	=> @mysql_error(),
+				'code'		=> @mysql_errno()
+			);
+		}
+
 		if (!$this->report_error)
 		{
 			return;
 		}
 
-		$message = '<br clear="all"/><table><tr><td><u>SQL ERROR</u><br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br /></td></tr></table>';
+		$message = '<br clear="all"/><table><tr><td><u>SQL ERROR</u><br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($this->last_query) ? '<br /><br /><u>SQL</u><br /><br />' . $this->last_query : '') . '<br /></td></tr></table>';
 
 		if ($this->in_transaction)
 		{
@@ -427,8 +447,6 @@ class db_mysql
 		}
 
 		trigger_error($message, E_USER_ERROR);
-		
-		script_close(false);
 	}
 
 	function _debug($mode, $backtrace)
@@ -634,6 +652,7 @@ class db_mysql
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
+		$index_name = is_array($index_name) ? implode('_', $index_name) : $index_name;
 
 		$field = is_array($field) ? implode('` , `', $field) : $field;
 

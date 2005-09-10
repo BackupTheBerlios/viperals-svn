@@ -27,7 +27,7 @@ if (VIPERAL !== 'Admin')
 
 if (!defined('ARTICLES_TABLE'))
 {
-	define('ARTICLES_TABLE', $prefix.'articles');
+	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
 
 if (isset($_REQUEST['mode']))

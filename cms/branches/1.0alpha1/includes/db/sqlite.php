@@ -172,7 +172,7 @@ class db_sqlite
 
 		if ($this->last_result === false)
 		{
-			$this->_error($query, $backtrace);
+			$this->sql_error($backtrace);
 		}
 		elseif (strpos($query, 'SELECT') === 0)
 		{
@@ -407,14 +407,24 @@ class db_sqlite
 		return (($return_dbname) ? 'SQLITE ' : '').sqlite_libversion();
 	}
 
-	function _error($sql = '', $backtrace)
+	function sql_error($backtrace, $return = false)
 	{
+		if ($return)
+		{
+			$code = @sqlite_last_error($this->link_identifier);
+
+			return array(
+				'message'	=> @sqlite_error_string($code),
+				'code'		=> $code
+			);
+		}
+
 		if (!$this->report_error)
 		{
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u><br /><br />' . @sqlite_error_string(@sqlite_last_error($this->link_identifier)) . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br />';
+		$message = '<u>SQL ERROR</u><br /><br />' . @sqlite_error_string(@sqlite_last_error($this->link_identifier)) . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($this->last_query) ? '<br /><br /><u>SQL</u><br /><br />' . $this->last_query : '') . '<br />';
 
 		if ($this->in_transaction)
 		{

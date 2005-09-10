@@ -42,6 +42,7 @@ $menu['messages'][] = array('lang' => 'Add Message', 'link' => generate_link('me
 $menu['modules'][] = array('lang' => $_CLASS['core_user']->get_lang('MODULES'), 'link' => generate_link('modules', array('admin' => true)));
 $menu['modules'][] = array('lang' => $_CLASS['core_user']->get_lang('MANAGE'), 'link' => generate_link('modules', array('admin' => true)));
 $menu['modules'][] = '';
+$menu['modules'][] = array('lang' => $_CLASS['core_user']->get_lang('ARTICLES'), 'link' => generate_link('articles', array('admin' => true)));
 
 $menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('FORUMS'), 'link' => generate_link('Forums', array('admin' => true)));
 $menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('ADMIN_INDEX'), 'link' => generate_link('Forums', array('admin' => true)));

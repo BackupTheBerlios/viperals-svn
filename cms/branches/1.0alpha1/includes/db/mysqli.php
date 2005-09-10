@@ -27,7 +27,7 @@ class db_mysqli
 	var $db_layer = 'mysqli';
 
 	var $last_result;
-	var $return_on_error;
+	var $report_error = true;
 	var $in_transaction;
 
 	var $queries_time = 0;
@@ -62,15 +62,19 @@ class db_mysqli
 				mysqli_query($this->link_identifier, 'SET NAMES utf8');
 
 				//mysqli_query($this->link_identifier, 'SET character_set_results = NULL');
-				//mysqli_set_charset($this->link_identifier, "utf8");
 
 				return $this->link_identifier;
 			}
 
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
+
+		if (!$this->report_error)
+		{
+			return false;
+		}
 		
-		if (!$error)
+		if (!isset($error))
 		{
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
 		}
@@ -92,9 +96,9 @@ class db_mysqli
 		$this->link_identifier = false;
 	}
 
-	function sql_return_on_error($fail = false)
+	function report_error($report)
 	{
-		$this->return_on_error = $fail;
+		$this->report_error = ($report);
 	}
 
 	function transaction($option = 'start', $auto_rollback = true)
@@ -181,9 +185,9 @@ class db_mysqli
 
 		if ($this->last_result === false)
 		{
-			$this->_error($query, $backtrace);
+			$this->sql_error($backtrace);
 		}
-		elseif (strpos($query, 'SELECT') === false)
+		elseif (strpos($query, 'SELECT') === 0)
 		{
 			$this->open_queries[(string) $this->last_result] = $this->last_result;
 		}
@@ -421,14 +425,22 @@ class db_mysqli
 		return mysqli_get_server_info($this->link_identifier);
 	}
 	
-	function _error($sql = '', $backtrace)
+	function sql_error($backtrace, $return = false)
 	{
+		if ($return)
+		{
+			return array(
+				'message'	=> @mysqli_error($this->link_identifier),
+				'code'		=> @mysqli_errno($this->link_identifier)
+			);
+		}
+
 		if ($this->return_on_error)
 		{
 			return;
 		}
 
-		$message = '<u>SQL ERROR</u><br /><br />' . @mysqli_error($this->link_identifier) . '<br /><br />File: <br/>'.$backtrace['file'].'<br/><br />Line:<br/>'.$backtrace['line'].'<br /><br /><u>SQL</u><br /><br />' . $sql .'<br />';
+		$message = '<u>SQL ERROR</u><br /><br />' . @mysqli_error($this->link_identifier) . '<br /><br />File: <br/>'.$backtrace['file'].'<br/><br />Line:<br/>'.$backtrace['line'].'<br /><br /><u>SQL</u><br /><br />' . $this->last_query .'<br />';
 
 		if ($this->in_transaction)
 		{
@@ -638,8 +650,9 @@ class db_mysqli
 
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
-		$index_name = $index_name ? $index_name : $field;
-		
+		$index_name = ($index_name) ? $index_name : $field;
+		$index_name = is_array($index_name) ? implode('_', $index_name) : $index_name;
+
 		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)

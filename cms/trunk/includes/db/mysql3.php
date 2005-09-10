@@ -64,7 +64,12 @@ class db_mysql3
 
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB2</center>';
 		}
-		
+
+		if (!$this->report_error)
+		{
+			return false;
+		}
+
 		if (!isset($error))
 		{
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';
@@ -125,7 +130,7 @@ class db_mysql3
 
 		if ($this->last_result === false)
 		{
-			$this->_error($query, $backtrace);
+			$this->sql_error($backtrace);
 		}
 		elseif (strpos($query, 'SELECT') === 0)
 		{
@@ -348,14 +353,22 @@ class db_mysql3
 		return (($return_dbname) ? 'MySQL ' : '').mysql_get_server_info($this->link_identifier);
 	}
 
-	function _error($sql = '', $backtrace)
+	function sql_error($backtrace, $return = false)
 	{
+		if ($return)
+		{
+			return array(
+				'message'	=> @mysql_error(),
+				'code'		=> @mysql_errno()
+			);
+		}
+
 		if (!$this->report_error)
 		{
 			return;
 		}
 
-		$message = '<br clear="all"/><table><tr><td><u>SQL ERROR</u><br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $sql : '') . '<br /></td></tr></table>';
+		$message = '<br clear="all"/><table><tr><td><u>SQL ERROR</u><br /><br />' . @mysql_error() . '<br /><br />File:<br/><br/>'.$backtrace['file'].'<br /><br />Line:<br /><br />'.$backtrace['line'].'<br /><br /><u>CALLING PAGE</u><br /><br />'.(($sql) ? '<br /><br /><u>SQL</u><br /><br />' . $this->last_query : '') . '<br /></td></tr></table>';
 
 		if ($this->in_transaction)
 		{
@@ -572,7 +585,8 @@ class db_mysql3
 	function add_table_index($field, $type  = 'index', $index_name = false)
 	{
 		$index_name = ($index_name) ? $index_name : $field;
-		
+		$index_name = is_array($index_name) ? implode('_', $index_name) : $index_name;
+
 		$field = is_array($field) ? implode('` , `', $field) : $field;
 
 		switch ($type)

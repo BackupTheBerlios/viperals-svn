@@ -143,7 +143,7 @@ foreach ($blocks as $block)
 			'TITLE'			=> $block['block_title'],
 			'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['block_type']),
 
-			'EXPIRES'		=> ($block['block_expires'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($block['block_expires']) : false,
+			'EXPIRES'		=> ($block['block_expires']) ? $_CLASS['core_user']->format_date($block['block_expires']) : false,
 			'STARTS'		=> ($block['block_starts'] > $_CLASS['core_user']->time) ? $_CLASS['core_user']->format_date($block['block_starts']) : false,
 
 			'ORDER_DOWN' 	=> ($block['block_order'] < $weigth[$block['block_position']]),

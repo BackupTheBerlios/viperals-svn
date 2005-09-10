@@ -21,8 +21,6 @@
 $Id$
 */
 
-$install_prefix = 'test_';
-
 function field_unix_time($name, $null = false)
 {
 	global $_CLASS;
@@ -34,7 +32,7 @@ function field_unix_time($name, $null = false)
 	Admin Auth Table
 */
 
-$_CLASS['core_db']->table_create('start', $install_prefix.'admins');
+$_CLASS['core_db']->table_create('start', $table_prefix.'admins');
 
 $_CLASS['core_db']->add_table_field_char('admin_section', 100);
 
@@ -52,7 +50,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Blocks Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'blocks');
+$_CLASS['core_db']->table_create('start', $table_prefix.'blocks');
 
 $_CLASS['core_db']->add_table_field_int('block_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('block_title', 100);
@@ -78,7 +76,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Config Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'config');
+$_CLASS['core_db']->table_create('start', $table_prefix.'config');
 
 $_CLASS['core_db']->add_table_field_char('config_section', 20);
 $_CLASS['core_db']->add_table_field_char('config_name', 20);
@@ -95,7 +93,7 @@ $_CLASS['core_db']->table_create('commit');
 	Groups Table
 */
 
-$_CLASS['core_db']->table_create('start', $install_prefix.'groups');
+$_CLASS['core_db']->table_create('start', $table_prefix.'groups');
 
 // this section needs updating, with null fields
 $_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'auto_increment' => true));
@@ -127,7 +125,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Groups Members Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'groups_members');
+$_CLASS['core_db']->table_create('start', $table_prefix.'groups_members');
 
 $_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
@@ -142,7 +140,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Modules Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'modules');
+$_CLASS['core_db']->table_create('start', $table_prefix.'modules');
 
 $_CLASS['core_db']->add_table_field_int('module_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('module_name', 100);
@@ -162,7 +160,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Sessions Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'sessions');
+$_CLASS['core_db']->table_create('start', $table_prefix.'sessions');
 
 $_CLASS['core_db']->add_table_field_char('session_id', 40);
 $_CLASS['core_db']->add_table_field_int('session_user_id', array('max' => 16000000));
@@ -189,7 +187,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Sessions Auto login Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'sessions_auto_login');
+$_CLASS['core_db']->table_create('start', $table_prefix.'sessions_auto_login');
 
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_char('auto_login_browser', 255);
@@ -203,7 +201,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Smiles Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'smilies');
+$_CLASS['core_db']->table_create('start', $table_prefix.'smilies');
 
 $_CLASS['core_db']->add_table_field_int('smiley_id', array('max' => 16000000, 'auto_increment' => true));
 
@@ -226,7 +224,7 @@ $_CLASS['core_db']->table_create('commit');
 `user_unread_privmsg` tinyint(4) unsigned NOT NULL default '0',
 */
 
-$_CLASS['core_db']->table_create('start', $install_prefix.'users');
+$_CLASS['core_db']->table_create('start', $user_prefix.'users');
 
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('username', 80);
@@ -324,7 +322,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Attachments Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_attachments');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_attachments');
 
 $_CLASS['core_db']->add_table_field_int('attach_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('post_msg_id', array('max' => 16000000));
@@ -352,7 +350,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Auth Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_auth');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_auth');
 
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'null' => true));
@@ -369,7 +367,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Auth Options Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_auth_options');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_auth_options');
 
 $_CLASS['core_db']->add_table_field_int('auth_option_id', array('max' => 2000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('auth_option', 20);
@@ -385,7 +383,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Auth Presets Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_auth_presets');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_auth_presets');
 
 $_CLASS['core_db']->add_table_field_int('preset_id', array('max' => 16000));
 $_CLASS['core_db']->add_table_field_int('preset_user_id', array('max' => 16000000));
@@ -402,7 +400,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Bookmarks Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_bookmarks');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_bookmarks');
 
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
@@ -416,7 +414,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Config Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_config');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_config');
 
 $_CLASS['core_db']->add_table_field_char('config_name', 100);
 $_CLASS['core_db']->add_table_field_char('config_value', 255);
@@ -431,7 +429,7 @@ $_CLASS['core_db']->table_create('commit');
 	Forums Disallow Table
 */
 /*
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_disallow');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_disallow');
 
 $_CLASS['core_db']->add_table_field_int('disallow_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('disallow_username', 30);
@@ -444,7 +442,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Drafts Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_drafts');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_drafts');
 
 $_CLASS['core_db']->add_table_field_int('draft_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
@@ -463,7 +461,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Extensions Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_extensions');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_extensions');
 
 $_CLASS['core_db']->add_table_field_int('extension_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000));
@@ -476,7 +474,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Extension Groups Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_extension_groups');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_extension_groups');
 
 $_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('group_name', 20);
@@ -495,7 +493,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Forums Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_forums');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_forums');
 
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('parent_id', array('max' => 16000));
@@ -546,7 +544,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums POsts Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_posts');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_posts');
 
 $_CLASS['core_db']->add_table_field_int('post_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
@@ -588,7 +586,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Topics Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_topics');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_topics');
 
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
@@ -639,7 +637,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Extensions Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_tracking');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_tracking');
 
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
@@ -655,7 +653,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Icons Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_icons');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_icons');
 
 $_CLASS['core_db']->add_table_field_int('icons_id', array('max' => 2000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('icons_url', 50);
@@ -672,7 +670,7 @@ $_CLASS['core_db']->table_create('commit');
 	Forums Forums Watch Table
 */
 
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_watch');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_watch');
 
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
@@ -689,7 +687,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Modules Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_modules');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_modules');
 
 $_CLASS['core_db']->add_table_field_int('module_id', array('max' => 2000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('module_type', 3);
@@ -709,7 +707,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Moderator Cache Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_moderator_cache');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_moderator_cache');
 
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
@@ -728,7 +726,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Poll Results Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_poll_results');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_poll_results');
 
 $_CLASS['core_db']->add_table_field_int('poll_option_id', array('max' => 2000));
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
@@ -743,7 +741,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Poll Voters Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_poll_voters');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_poll_voters');
 
 $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('poll_option_id', array('max' => 2000));
@@ -761,7 +759,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Poll Voters Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_ranks');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_ranks');
 
 $_CLASS['core_db']->add_table_field_int('rank_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('rank_title', 50);
@@ -776,7 +774,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Words Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_search_wordlist');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_search_wordlist');
 
 $_CLASS['core_db']->add_table_field_int('word_id', array('max' => 3000000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('word_text', 100);
@@ -790,7 +788,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums search_wordmatch Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_search_wordmatch');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_search_wordmatch');
 
 $_CLASS['core_db']->add_table_field_int('post_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('word_id', array('max' => 3000000000));
@@ -803,7 +801,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Words Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_words');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_words');
 
 $_CLASS['core_db']->add_table_field_int('word_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('word', 100);
@@ -816,7 +814,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Zebra Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_zebra');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_zebra');
 
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('zebra_id', array('max' => 16000000));
@@ -833,7 +831,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Log Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_log');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_log');
 
 $_CLASS['core_db']->add_table_field_int('log_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('log_type', array('max' => 200));
@@ -857,7 +855,7 @@ $_CLASS['core_db']->table_create('commit');
 
 /*
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_privmsgs');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_privmsgs');
 
 $_CLASS['core_db']->add_table_field_int('msg_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('root_level', array('max' => 16000000));
@@ -896,7 +894,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Log Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_privmsgs_folder');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_privmsgs_folder');
 
 $_CLASS['core_db']->add_table_field_int('folder_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
@@ -911,7 +909,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Log Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_privmsgs_rules');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_privmsgs_rules');
 
 $_CLASS['core_db']->add_table_field_int('rule_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
@@ -930,7 +928,7 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Log Table
 */
-$_CLASS['core_db']->table_create('start', $install_prefix.'forums_privmsgs_to');
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_privmsgs_to');
 
 $_CLASS['core_db']->add_table_field_int('msg_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
