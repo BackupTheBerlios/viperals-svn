@@ -60,11 +60,6 @@ define('ADMIN_NOT_LOGGED', 0);
 define('ADMIN_NOT_ADMIN', 1);
 define('ADMIN_IS_ADMIN', 2);
 
-//Error reporting tyoe
-define('ERROR_NONE', 0);
-define('ERROR_ONPAGE', 1);
-define('ERROR_DEBUGGER', 2);
-
 // Block side defines
 define('BLOCK_NONE', 0);
 define('BLOCK_ALL', 1);
