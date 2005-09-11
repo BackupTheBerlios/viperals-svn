@@ -30,7 +30,7 @@ class viperal_admin_theme
 		$_CLASS['core_template']->assign_array(array(
 			'A_TABLE_OPEN'	=> $this->table_open,
 			'A_TABLE_CLOSE'	=> $this->table_close,
-			'A_STYLESHEET'	=> '/themes_admin/viperal_admin/style/style.css',
+			'A_STYLESHEET'	=> 'themes_admin/viperal_admin/style/style.css',
 		));
 	}
 

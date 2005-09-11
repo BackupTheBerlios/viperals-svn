@@ -33,7 +33,7 @@ header('Content-Type: text/xml');
 
 if (!defined('ARTICLES_TABLE'))
 {
-	define('ARTICLES_TABLE', $prefix.'articles');
+	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
 
 $result = $_CLASS['core_db']->query_limit('SELECT articles_id, articles_title, articles_intro, articles_text, articles_posted, articles_starts, poster_name FROM ' . ARTICLES_TABLE . ' ORDER BY articles_order ASC', 10);

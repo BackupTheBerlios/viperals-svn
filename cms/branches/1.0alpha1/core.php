@@ -64,6 +64,11 @@ if (empty($_SERVER['REQUEST_URI']))
 	}
 }
 
+//Error reporting tyoe
+define('ERROR_NONE', 0);
+define('ERROR_ONPAGE', 1);
+define('ERROR_DEBUGGER', 2);
+
 require_once($site_file_root.'includes/display/template.php');
 require_once($site_file_root.'includes/functions.php');
 require_once($site_file_root.'includes/handler.php');
