@@ -182,7 +182,7 @@ class core_error_handler
 					
 					if (!is_numeric($code))
 					{
-						$error = $code.$error;
+						$error = $code.':'.$error;
 					}
 					else
 					{

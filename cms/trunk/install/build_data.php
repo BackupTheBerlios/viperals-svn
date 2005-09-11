@@ -108,15 +108,24 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups_members (group_id
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups_members (group_id, user_id, member_status) VALUES (5, 7, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups_members (group_id, user_id, member_status) VALUES (5, 8, 2)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('blocks', 0, 2,'')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('groups', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('system', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('messages', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('modules', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('services', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('smiles', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('users', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('groups', 0, 2, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Contol Panel', 3, 2, 2, 1, 'block-Control_Panel.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Modules', 0, 2, 2, 2, 'block-Modules.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('User', 0, 2, 2, 3, 'block-User.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_rss_url, block_rss_rate) VALUES ('php.net RSS Feed', 1, 2, 3, 1, 'http://www.php.net/news.rss', 7200)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Theme Select', 0, 2, 3, 2, 'block-theme_select.php')");
+
+$content = $_CLASS['core_db']->escape('<div style="text-align:center">Hello and welcome</div>');
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_content) VALUES ('Welcome', 4, 2, 6, 4, '$content')");
+
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('blocks', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('groups', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('system', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('messages', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('modules', 0, 2)");
+//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('services', 0, 2, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('smiles', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('users', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('groups', 0, 2)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('articles', 1, 1, 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Contact', 1, 2, 1)");
@@ -124,8 +133,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, mo
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Control_Panel', 1, 2, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Forums', 1, 2, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Members_List', 1, 2, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Recommend_Us', 1, 2, 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Submit_News', 1, 2, 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Quick_Message', 1, 1, 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':D', 'grin.png', 'Very Happy', 19, 19, 1, 0)");
@@ -287,18 +294,18 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth_options (aut
 // ADMINISTRATOR group
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'u_%'");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'a_%'");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
+//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
+//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
 
 // SUPER MODERATOR group
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 6, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'm_%'");
 
 # REGISTERED/REGISTERED COPPA groups - common forum rights
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chggrp', 'u_viewonline', 'u_chgname');
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 2, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chggrp', 'u_viewonline', 'u_chgname')");
 //$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_subscribe');
 //$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_votechg', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_report', 'f_subscribe');
 
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 0, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chgcensors', 'u_chggrp', 'u_viewonline', 'u_chgname');
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 3, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chgcensors', 'u_chggrp', 'u_viewonline', 'u_chgname')");
 //$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_subscribe');
 //$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_votechg', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_report', 'f_subscribe');
 
