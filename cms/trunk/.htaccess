@@ -1,13 +1,13 @@
-php_flag register_globals 0
-php_flag register_argc_argv 0
-php_flag magic_quotes_gpc 0
+#php_flag register_globals 0
+#php_flag register_argc_argv 0
+#php_flag magic_quotes_gpc 0
 
 <LimitExcept GET PUT POST>
 order allow,deny
 allow from all
 </LimitExcept>
 
-ErrorDocument 403 /error.php?error=403
-ErrorDocument 404 /error.php?error=404
+ErrorDocument 403 error.php?error=403
+ErrorDocument 404 error.php?error=404
 
 Options -Indexes
