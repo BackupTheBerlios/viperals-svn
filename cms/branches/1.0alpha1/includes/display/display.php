@@ -31,7 +31,7 @@ class core_display
 	var $homepage = false;
 	var $modules = array();
 
-	var $copyright = 'Powered by <a href="http://www.viperal.com">CMS alpha-dev</a> (c) 2004 - 2005 Ryan Marshall ( Viperal )';
+	var $copyright = 'Powered by <a href="http://www.viperal.com">CMS alpha 1</a> (c) 2004 - 2005 Ryan Marshall ( Viperal )';
 
 	/*
 		Handles sorting and auth'ing of modules

@@ -808,21 +808,6 @@ if (!function_exists('file_put_contents'))
 	}
 }
 
-//this doesn't work, maybe we should just translate those that can affect the html layout ?
-function core_html_entity_decode($string, $quote_style = ENT_COMPAT)
-{
-	$holding = get_html_translation_table(HTML_ENTITIES, $quote_style);
-
-	foreach ($holding as $from => $to)
-	{
-		$translations[utf8_encode($to)] = utf8_encode($from);
-	}
-
-	unset($translations['&amp;Epsilon;']);
-	//Ελληνικά, Magyarul
-	return strtr($string, $translations);
-}
-
 if (!function_exists('html_entity_decode'))
 {
 	//string html_entity_decode ( string string [, int quote_style [, string charset]] )

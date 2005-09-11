@@ -64,25 +64,32 @@ if (empty($_SERVER['REQUEST_URI']))
 	}
 }
 
-require_once($site_file_root.'includes/functions.php');
-require_once($site_file_root.'config.php');
-require_once($site_file_root.'includes/tables.php');
-require_once($site_file_root.'includes/handler.php');
-require_once($site_file_root.'includes/db/'.$site_db['type'].'.php');
 require_once($site_file_root.'includes/display/template.php');
-require_once($site_file_root.'includes/cache/cache.php');
-require_once($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
+require_once($site_file_root.'includes/functions.php');
+require_once($site_file_root.'includes/handler.php');
+require_once($site_file_root.'config.php');
 
 // Load basic classes
-load_class(false, 'core_error_handler');
-load_class(false, 'core_cache', 'cache_'.$acm_type);
 load_class(false, 'core_template');
-load_class(false, 'core_db', 'db_'.$site_db['type']);
+load_class(false, 'core_error_handler');
 
 // Set error handler
 $_CLASS['core_error_handler']->start();
 //$_CLASS['core_error_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
+if (empty($site_db))
+{
+	trigger_error('<p style="text-align:center">Site isn\'t Installed<br/><a href="install/installer.php">Click here to install</a></p>', E_USER_ERROR);
+}
+
+require_once($site_file_root.'includes/tables.php');
+require_once($site_file_root.'includes/db/'.$site_db['type'].'.php');
+require_once($site_file_root.'includes/cache/cache.php');
+require_once($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
+
+load_class(false, 'core_cache', 'cache_'.$acm_type);
+load_class(false, 'core_db', 'db_'.$site_db['type']);
 
 if (function_exists('register_shutdown_function'))
 {
@@ -92,7 +99,7 @@ if (function_exists('register_shutdown_function'))
 $_CLASS['core_db']->connect($site_db);
 unset($sitedb);
 
-$_CLASS['core_db']->return_on_error = true;
+$_CLASS['core_db']->report_error(false);
 
 // Error messages just incase we can't get our configs
 $config_error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB3</center>';
@@ -137,7 +144,8 @@ else
 
 unset($config_error);
 
-$_CLASS['core_db']->return_on_error = false;
+$_CLASS['core_db']->report_error(true);
+
 $_CLASS['core_cache']->remove('core_config');
 $_CLASS['core_cache']->remove('config');
 
@@ -190,19 +198,6 @@ $_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options']
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here
-}
-
-$install_prefix = 'test_';
-$time = gmtime();
-
-if (!function_exists('field_unix_time'))
-{
-	function field_unix_time($name, $null = false)
-	{
-		global $_CLASS;
-	
-		$_CLASS['core_db']->add_table_field_int($name, array('max' => 200000000, 'null' => $null));
-	}
 }
 
 function get_memory_usage()

@@ -104,9 +104,6 @@ $_CLASS['core_template']->assign_array(array(
 		'MENU_MAIN_ITEMS'	=> $main_menu['menu'],
 ));
 
-
-//load_class($site_file_root.'includes/core_editor.php', 'core_editor');
-//$_CLASS['core_editor']->setup();
 require($file_path);
     
 ?>

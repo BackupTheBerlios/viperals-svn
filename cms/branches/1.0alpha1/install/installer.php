@@ -415,11 +415,16 @@ if ($stage === 2)
 
 if ($stage === 1)
 {
+	if (isset($_POST['test']) && empty($error))
+	{
+		$error[] = 'Database Setting Perfect :-)';
+	}
+
 	$_CLASS['core_template']->assign_array(array(
 		'database_options'	=> $database_options,
 		'error'				=> empty($error) ? false : implode('<br/>', $error),
 
-		'server'		=> isset($site_db['server']) ? $site_db['server'] : '',
+		'server'		=> isset($site_db['server']) ? $site_db['server'] : 'localhost',
 		'port'			=> isset($site_db['port']) ? $site_db['port'] : '',
 		'database'		=> isset($site_db['database']) ? $site_db['database'] : '',
 		'username'		=> isset($site_db['username']) ? $site_db['username'] : '',
