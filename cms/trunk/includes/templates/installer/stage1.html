@@ -137,57 +137,69 @@ function change_option(name)
 						<tr>
 							<th colspan="2">Database Configuration</th>
 						</tr>
+						<!-- IF { $error } -->
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">{ $error }</th>
+						</tr>
+						<!-- ENDIF -->
 						<tr>
 							<td class="row1" width="50%"><b>Database type: </b></td>
-							<td class="row2"><select name="dbms" onchange="change_option(this.value);">{ $database_options }</select></td>
+							<td class="row2"><select id="layer" name="layer" onchange="change_option(this.value);">{ $database_options }</select></td>
 						</tr>
 						<tr id="sqlite" style="display: none;">
 							<td class="row1" width="50%"><b>Database File: </b></td>
-							<td class="row2"><input class="post" name="file" value="" type="text"></td>
+							<td class="row2"><input class="post" name="file_sqlite" value="{ $file }" type="text"></td>
 						</tr>
 						<tr id="sqlite_pdo" style="display: none;">
 							<td class="row1" width="50%"><b>Database File: </b></td>
-							<td class="row2"><input class="post" name="file" value="" type="text"></td>
+							<td class="row2"><input class="post" name="file_sqlite_pdo" value="{ $file }" type="text"></td>
 						</tr>
 						<tr id="all">
 							<td class="row1" width="50%"><b>Database server hostname: </b></td>
-							<td class="row2"><input class="post" name="server" value="" type="text"></td>
+							<td class="row2"><input class="post" name="server" value="{ $server }" type="text"></td>
 						</tr>
 						<tr id="all_1">
 							<td class="row1" width="50%"><b>Database server port: </b><br><span class="gensmall">Leave this blank unless you know the server operates on a non-standard port.</span></td>
-							<td class="row2"><input class="post" name="port" value="" type="text"></td>
+							<td class="row2"><input class="post" name="port" value="{ $port }" type="text"></td>
 						</tr>
 						<tr id="all_2">
-							<td class="row1" width="50%"><b>Database name: </b></td>
-							<td class="row2"><input class="post" name="database" value="" type="text"></td>
+							<td class="row1" width="50%"><b>Database name: </b><br/>Required</td>
+							<td class="row2"><input class="post" name="database" value="{ $database }" type="text"></td>
 						</tr>
 						<tr id="all_3">
-							<td class="row1" width="50%"><b>Database username: </b></td>
+							<td class="row1" width="50%"><b>Database username: </b><br/>Required</td>
 					
-							<td class="row2"><input class="post" name="username" value="" type="text"></td>
+							<td class="row2"><input class="post" name="username" value="{ $username }" type="text"></td>
 						</tr>
 						<tr id="all_4">
 							<td class="row1" width="50%"><b>Database password: </b></td>
-							<td class="row2"><input class="post" name="password" value="" type="password"></td>
+							<td class="row2"><input class="post" name="password" value="{ $password }" type="password"></td>
 						</tr>
 						<tr>
 							<td class="row1" width="50%"><b>Prefix for tables: </b></td>
-							<td class="row2"><input class="post" name="table_prefix" value="cms_" type="text"></td>
+							<td class="row2"><input class="post" name="table_prefix" value="{ $table_prefix }" type="text"></td>
 						</tr>
 						<tr>
 							<td class="row1" width="50%"><b>Prefix for user table: </b></td>
-							<td class="row2"><input class="post" name="user_prefix" value="cms_" type="text"></td>
+							<td class="row2"><input class="post" name="user_prefix" value="{ $user_prefix }" type="text"></td>
 						</tr>
 						<tr>
-							<input type="hidden" name="stage" value="1" />
+							<input type="hidden" name="stage" value="2" />
 							<input type="hidden" name="agreement_signed" value="1" />
-							<th colspan="2" align="center"><input class="button" name="test" value="Test Connection" type="submit"> <input class="button" name="submit" value="Continue" type="submit"></th>
+							<th colspan="2" align="center"><input class="button" name="test" value="Test Connection" type="submit"> <input class="button" name="submit" value="Start Installation" type="submit"></th>
 						</tr>
 					</tbody>
 				</table>
 			</form>
 		</div>
 	</div>
+
+<script language="Javascript" type="text/javascript">
+<!--
+	change_option(document.getElementById('layer').value);
+//-->
+</script>
+
 </body>
 
 </html>
