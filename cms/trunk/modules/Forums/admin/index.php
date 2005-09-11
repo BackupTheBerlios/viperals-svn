@@ -1,11 +1,33 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 // -------------------------------------------------------------
 //
 // $Id: pagestart.php,v 1.18 2004/08/02 14:31:45 psotfx Exp $
 //
 // FILENAME  : pagestart.php
 // STARTED   : Thu Aug 2, 2001
-// COPYRIGHT : © 2001, 2004 phpBB Group
+// COPYRIGHT : 2001, 2004 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ]
 //
@@ -20,9 +42,9 @@ $safe_mode	= (@ini_get('safe_mode') || @strtolower(ini_get('safe_mode')) == 'on'
 $file_uploads = (@ini_get('file_uploads') || strtolower(@ini_get('file_uploads')) == 'on') ? true : false;
 
 $data = array(
-	'title' => 'Forum Administration',
-	'position' => BLOCK_LEFT,
-	'file' => 'block-Admin_Forums.php',
+	'block_title'		=> 'Forum Administration',
+	'block_position'	=> BLOCK_LEFT,
+	'block_file'		=> 'block-Admin_Forums.php',
 );
 
 $_CLASS['core_blocks']->add_block($data);
