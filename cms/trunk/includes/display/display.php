@@ -167,7 +167,7 @@ class core_display
 			$this->header['regular'] .= '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
 		}
 
-		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'backend.php?feed=rdf" />';
+		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'feed.php?feed=rdf" />';
 
 		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['start'] < time())
 		{
