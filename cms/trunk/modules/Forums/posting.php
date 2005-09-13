@@ -535,7 +535,7 @@ if ($submit || $preview || $refresh)
 
 	$topic_cur_post_id	= get_variable('topic_cur_post_id', 'POST', 0, 'int');
 
-	$subject = mb_strtolower(get_variable('subject', 'POST', ''));
+	$subject = mb_strtolower(htmlentities(get_variable('subject', 'POST', ''), ENT_QUOTES, 'UTF-8'));
 	$message_parser->message = request_var('message', '', true);
 
 
@@ -1615,7 +1615,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$sql_data[FORUMS_FORUMS_TABLE]['stat'][] = 'forum_topics_real = forum_topics_real - 1' . (($row['topic_approved']) ? ', forum_topics = forum_topics - 1' : '');
 
 			// Update forum_ids for all posts
-			$sql = 'UPDATE ' . POSTS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 				SET forum_id = 0
 				WHERE topic_id = ' . $data['topic_id'];
 			$_CLASS['core_db']->query($sql);

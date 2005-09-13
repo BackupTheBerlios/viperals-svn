@@ -157,16 +157,6 @@
 				<!-- IF { $postrow:POSTER_FROM } --><div class="poster_details"><b>{ $L_LOCATION }:</b> { $postrow:POSTER_FROM }</div><!-- ENDIF -->
 				<!-- IF { $postrow:POSTER_POSTS } --><div class="poster_details"><b>{ $L_POSTS }:</b> { $postrow:POSTER_POSTS }</div><!-- ENDIF -->
 				<br />
-				<!-- IF isset({ $postrow:S_PROFILE_FIELD_1 }) -->
-				<!-- Use a construct like this to include admin defined profile fields. Replace FIELD1 with the name of your field. -->
-				<br /><b>{ $postrow:PROFILE_FIELD1_NAME }:</b> { $postrow:PROFILE_FIELD1_VALUE }
-				<!-- ENDIF -->
-				<!---
-				need to think of a way of doing it
-				 BEGIN custom_fields 
-				<br /><b>{postrow.custom_fields.PROFILE_FIELD_NAME}:</b> {postrow.custom_fields.PROFILE_FIELD_VALUE}
-				END custom_fields
-				-->
 				</div>
 			</td>
 			<td valign="top"><table width="100%" cellspacing="5">

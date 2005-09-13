@@ -1,4 +1,5 @@
 <!-- DISPLAY_HEADER -->
+<script type="text/javascript" src="javascript/forums/forum_view.js"></script>
 
 <!-- INCLUDE modules/Forums/overall_header.html -->
 
@@ -154,14 +155,14 @@
 		<!-- IF { $S_TOPIC_ICONS } -->
 		<td class="row1" align="center" width="25"><!-- IF { $topicrow:TOPIC_ICON_IMG } --><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /><!-- ENDIF --></td>
 		<!-- ENDIF -->
-		<td class="row1">
+		<td class="row1" id="topic_{ $topicrow:TOPIC_ID }" onmouseover="tite_edit_init('{ $topicrow:TOPIC_ID }', 'topic');">
 			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } -->
 				<a href="{ $topicrow:U_MCP_QUEUE }">{ $UNAPPROVED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
 			<!-- IF { $topicrow:S_TOPIC_REPORTED } -->
 				<a href="{$topicrow:U_MCP_REPORT}">{ $REPORTED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
-			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a> </p>
+			{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a class="topictitle" id="topic_name_{ $topicrow:TOPIC_ID }" href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a>
 			<!-- IF { $topicrow:PAGINATION } -->
 			<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $topicrow:PAGINATION } ] </p>
 			<!-- ENDIF -->

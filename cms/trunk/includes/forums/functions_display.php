@@ -327,6 +327,7 @@ function display_forums($root_data = '', $display_moderators = true)
 	}
 
 	$_CLASS['core_template']->assign_array(array(
+		'MODIFY_FORUM'		=> $_CLASS['auth']->acl_get('a_forum'),
 		'U_MARK_FORUMS'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
 		'S_HAS_SUBFORUM'	=>	($visible_forums) ? true : false,
 		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']

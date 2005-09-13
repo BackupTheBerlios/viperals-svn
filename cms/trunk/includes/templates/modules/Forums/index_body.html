@@ -1,4 +1,5 @@
 <!-- DISPLAY_HEADER -->
+<script type="text/javascript" src="javascript/forums/forum_view.js"></script>
 
 <!-- INCLUDE modules/Forums/overall_header.html -->
 
@@ -12,8 +13,7 @@
 		<th width="50">&nbsp;{ $L_POSTS }&nbsp;</th>
 		<th>&nbsp;{ $L_LAST_POST }&nbsp;</th>
 	</tr>
-	
-	<!-- LOOP $forumrow -->
+<!-- LOOP $forumrow -->
 	<!-- IF { $forumrow:S_IS_CAT } -->
 	<tr>
 		<td class="cat" colspan="2"><h4><a href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a></h4></td>
@@ -23,11 +23,11 @@
 	<tr>
 		<td class="row1" width="50" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
 		<!-- IF { $forumrow:CLICKS } -->
-		<td class="row1">
+		<td class="row1" id="forum_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } -->onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
 		<!-- ELSE -->
-		<td class="row1" colspan="4">
+		<td class="row1" colspan="4" id="forum_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } -->onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF -->  width="100%">
 		<!-- ENDIF -->
-			<a class="forumlink" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
+			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
 			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p></td>
 		<!-- IF { $forumrow:CLICKS } -->
 		<td class="row2" colspan="3" align="center"><span class="gensmall">{ $L_REDIRECTS }: { $forumrow:CLICKS }</span></td>
@@ -36,8 +36,8 @@
 	<!-- ELSE -->
 	<tr>
 		<td class="row1" width="50" height="40" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
-		<td class="row1" height="40" width="100%">
-			<a class="forumlink" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
+		<td class="row1" height="40" id="forum_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } -->onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
+			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
 			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p>
 			<!-- IF { $forumrow:MODERATORS } -->
 				<p class="forumdesc"><strong>{ $forumrow:L_MODERATOR_STR }:</strong> { $forumrow:MODERATORS }</p>

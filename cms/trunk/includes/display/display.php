@@ -174,6 +174,7 @@ class core_display
 			$this->message = '<b>System is in maintenance mode</b><br />';
 		}
 
+		$this->header['js'] = '<script type="text/javascript" src="javascript/common.js"></script>';
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
