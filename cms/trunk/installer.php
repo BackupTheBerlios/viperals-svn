@@ -25,7 +25,7 @@ define('VIPERAL', 'INSTALLER');
 error_reporting(E_ALL);
 
 //echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = '../';
+$site_file_root = '';
 
 if (!extension_loaded('mbstring'))
 {
@@ -103,7 +103,7 @@ if ($stage && !$_POST['agreement_signed'])
 	$stage = 0;
 }
 
-if ($stage === 3)
+if ($stage === 4)
 {
 	if (file_exists($site_file_root.'config.php'))
 	{
@@ -218,12 +218,12 @@ if ($stage === 3)
 		'config_content'	=> $config_content
 	));
 
-	$_CLASS['core_template']->display('installer/stage2.html');
+	$_CLASS['core_template']->display('installer/stage3.html');
 
 	script_close();
 }
 
-if ($stage === 2)
+if ($stage === 3)
 {
 	if ($db_layer && in_array($db_layer, array_keys($database_array)))
 	{
@@ -331,7 +331,7 @@ if ($stage === 2)
 
 	if (isset($_POST['test']) || !empty($error))
 	{
-		$stage = 1;
+		$stage = 2;
 	}
 	else
 	{
@@ -407,46 +407,14 @@ if ($stage === 2)
 			'config_content'	=> $config_data
 		));
 
-		$_CLASS['core_template']->display('installer/stage2.html');
+		$_CLASS['core_template']->display('installer/stage3.html');
 
 		script_close();
 	}
 }
 
-if ($stage === 1)
+if ($stage === 2)
 {
-	$php_config = array(
-		/*array(
-			'lang'	=> 'PHP version',
-			'recommended'	=> '4.2.3 +',
-			'current'		=> PHP_VERSION
-		),*/
-		array(
-			'lang'	=> 'Safe Mode',
-			'ini'	=> 'safe_mode',
-			'recommended'	=> false,
-			'current'		=> (bool) ini_get('safe_mode')
-		),
-		array(
-			'lang'	=> 'Magic Quotes GPC',
-			'ini'	=> 'magic_quotes_gpc',
-			'recommended'	=> false,
-			'current'		=> (bool) ini_get('magic_quotes_gpc')
-		),
-		array(
-			'lang'	=> 'Register Globals',
-			'ini'	=> 'register_globals',
-			'recommended'	=> false,
-			'current'		=> (bool) ini_get('register_globals')
-		),
-		array(
-			'lang'	=> 'Output Buffering',
-			'ini'	=> 'output_buffering',
-			'recommended'	=> false,
-			'current'		=> (bool) ini_get('output_buffering')
-		),
-	);
-
 	if (isset($_POST['test']) && empty($error))
 	{
 		$error[] = 'Database Setting Perfect :-)';
@@ -454,7 +422,6 @@ if ($stage === 1)
 
 	$_CLASS['core_template']->assign_array(array(
 		'database_options'	=> $database_options,
-		'php_config'		=> $php_config,
 		'error'				=> empty($error) ? false : implode('<br/>', $error),
 
 		'server'		=> isset($site_db['server']) ? $site_db['server'] : 'localhost',
@@ -467,8 +434,41 @@ if ($stage === 1)
 		'user_prefix'	=> get_variable('user_prefix', 'POST', 'cms_'),
 	));
 
-	$_CLASS['core_template']->display('installer/stage1.html');
+	$_CLASS['core_template']->display('installer/stage2.html');
 
+	script_close();
+}
+
+if ($stage === 1)
+{
+	$gd_info = gd_info();
+	$continue = true;
+
+	if (!$compatible = version_compare(PHP_VERSION, '4.2.0', '>='))
+	{
+		$continue = false;
+	}
+	
+	$_CLASS['core_template']->assign_array(array(
+		'error'				=> false,
+		'magic_quotes_gpc'	=> ((bool) ini_get('magic_quotes_gpc') === false),
+		'output_buffering'	=> ((bool) ini_get('output_buffering') === false),
+		'register_globals'	=> ((bool) ini_get('register_globals') === false),
+		'safe_mode'			=> ((bool) ini_get('safe_mode') === false),
+
+		'php_version'			=> PHP_VERSION,
+		'workable_Version'		=> $compatible,
+		'recommended_Version'	=> version_compare(PHP_VERSION, '4.3.0', '>='),
+		
+		'mbstring'	=> extension_loaded('mbstring'),
+		'zlib'		=> extension_loaded('zlib'),
+		'gd'		=> extension_loaded('gd'),
+		'gd_version'=> $gd_info['GD Version'],
+
+		'continue'	=> $continue,
+	));
+	
+	$_CLASS['core_template']->display('installer/stage1.html');
 	script_close();
 }
 

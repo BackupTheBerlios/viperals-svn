@@ -25,7 +25,7 @@ body
 	top: 50%;
 	left: 0px;
 	width: 100%;
-	margin-top: -130px;
+	margin-top: -200px;
 }
 
 #wrapper
@@ -67,67 +67,7 @@ select { color: black; background-color: white; font-family: Verdana, serif; fon
 
 -->
 </style>
-<script language="Javascript" type="text/javascript">
-<!--
-var old_value = 'all';
 
-function change_option(name)
-{
-	var area = document.getElementById(name);
-
-	if (!area)
-	{
-		if (old_value == 'all')
-		{
-			return;
-		}
-		else
-		{
-			name = 'all'
-			area = document.getElementById(name);
-		}
-	}
-
-	area.style.display = '';
-
-	var i = 1;
-
-	while (true)
-	{
-		area = document.getElementById(name + '_' + i);
-
-		if (!area)
-		{
-			break;
-		}
-
-		area.style.display = '';
-		i += 1;
-	}
-
-	area = document.getElementById(old_value);
-	area.style.display = 'none';
-	
-	var i = 1;
-
-	while (true)
-	{
-		area = document.getElementById(old_value + '_' + i);
-
-		if (!area)
-		{
-			break;
-		}
-
-		area.style.display = 'none';
-		i += 1;
-	}
-
-	old_value = name;
-}
-
-//-->
-</script>
 <body>
 	<div id="container">
 		<div id="wrapper">
@@ -135,71 +75,73 @@ function change_option(name)
 				<table class="tablebg" width="100%" cellspacing="1" cellpadding="4">
 					<tbody>
 						<tr>
-							<th colspan="2">Database Configuration</th>
+							<th colspan="2">PHP Version</th>
+						</tr>
+						<tr>
+							<td class="row2" colspan="2"><b>PHP Version: { $php_version }</b></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Version Supported: </b><br/>Required</td>
+							<td class="row2"><!-- IF { $workable_Version } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_red.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Version higher than recommended: </b></td>
+							<td class="row2"><!-- IF { $recommended_Version } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<th colspan="2">PHP Configuration</th>
 						</tr>
 						<!-- IF { $error } -->
 						<tr>
 							<td colspan="2" class="row2" style="color: red; text-align:center;">{ $error }</th>
 						</tr>
 						<!-- ENDIF -->
-						<tr>
-							<td class="row1" width="50%"><b>Database type: </b></td>
-							<td class="row2"><select id="layer" name="layer" onchange="change_option(this.value);">{ $database_options }</select></td>
-						</tr>
-						<tr id="sqlite" style="display: none;">
-							<td class="row1" width="50%"><b>Database File: </b></td>
-							<td class="row2"><input class="post" name="file_sqlite" value="{ $file }" type="text"></td>
-						</tr>
-						<tr id="sqlite_pdo" style="display: none;">
-							<td class="row1" width="50%"><b>Database File: </b></td>
-							<td class="row2"><input class="post" name="file_sqlite_pdo" value="{ $file }" type="text"></td>
-						</tr>
-						<tr id="all">
-							<td class="row1" width="50%"><b>Database server hostname: </b></td>
-							<td class="row2"><input class="post" name="server" value="{ $server }" type="text"></td>
-						</tr>
-						<tr id="all_1">
-							<td class="row1" width="50%"><b>Database server port: </b><br><span class="gensmall">Leave this blank unless you know the server operates on a non-standard port.</span></td>
-							<td class="row2"><input class="post" name="port" value="{ $port }" type="text"></td>
-						</tr>
-						<tr id="all_2">
-							<td class="row1" width="50%"><b>Database name: </b><br/>Required</td>
-							<td class="row2"><input class="post" name="database" value="{ $database }" type="text"></td>
-						</tr>
-						<tr id="all_3">
-							<td class="row1" width="50%"><b>Database username: </b><br/>Required</td>
-					
-							<td class="row2"><input class="post" name="username" value="{ $username }" type="text"></td>
-						</tr>
-						<tr id="all_4">
-							<td class="row1" width="50%"><b>Database password: </b></td>
-							<td class="row2"><input class="post" name="password" value="{ $password }" type="password"></td>
+							<tr>
+							<td class="row1" width="50%"><b>Safe Mode - OFF: </b></td>
+							<td class="row2"><!-- IF { $safe_mode } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
 						</tr>
 						<tr>
-							<td class="row1" width="50%"><b>Prefix for tables: </b></td>
-							<td class="row2"><input class="post" name="table_prefix" value="{ $table_prefix }" type="text"></td>
+							<td class="row1" width="50%"><b>Magic Quotes GPC - OFF: </b></td>
+							<td class="row2"><!-- IF { $magic_quotes_gpc } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
 						</tr>
 						<tr>
-							<td class="row1" width="50%"><b>Prefix for user table: </b></td>
-							<td class="row2"><input class="post" name="user_prefix" value="{ $user_prefix }" type="text"></td>
+							<td class="row1" width="50%"><b>Output Buffering - OFF: </b></td>
+							<td class="row2"><!-- IF { $output_buffering } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
 						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Register Globals - OFF: </b></td>
+							<td class="row2"><!-- IF { $register_globals } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<th colspan="2">PHP Extensions</th>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>mbstring: </b></td>
+							<td class="row2"><!-- IF { $mbstring } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>zlib: </b></td>
+							<td class="row2"><!-- IF { $zlib } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>GD:<br />{ $gd_version }</b></td>
+							<td class="row2"><!-- IF { $gd } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<!-- IF !{ $continue } -->
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">You may not continue, please fix all problems listed in RED</th>
+						</tr>
+						<!-- ENDIF -->
 						<tr>
 							<input type="hidden" name="stage" value="2" />
 							<input type="hidden" name="agreement_signed" value="1" />
-							<th colspan="2" align="center"><input class="button" name="test" value="Test Connection" type="submit"> <input class="button" name="submit" value="Start Installation" type="submit"></th>
+							<th colspan="2" align="center"><input class="button" <!-- IF !{ $continue } -->disabled="disabled"<!-- ENDIF --> name="continue" value="Continue" type="submit"></th>
 						</tr>
 					</tbody>
 				</table>
 			</form>
 		</div>
 	</div>
-
-<script language="Javascript" type="text/javascript">
-<!--
-	change_option(document.getElementById('layer').value);
-//-->
-</script>
-
 </body>
 
 </html>

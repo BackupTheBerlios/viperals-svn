@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Viperal: Agreement</title>
+<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="expires" content="0" />
+
+<style type="text/css">
+<!--
+body
+{
+    font-family: Verdana, Helvetica, sans-serif;
+    font-size: 10px;
+    margin: 0%;
+    padding: 0px;
+    background-color: white;
+    background: url(../images/bg.gif);
+}
+
+.error { color: red; }
+
+#container
+{
+	position: relative;
+	top: 50%;
+	left: 0px;
+	width: 100%;
+	margin-top: 0px;
+}
+
+#wrapper
+{
+	position: relative;
+	text-align: left;
+	width: 500px;
+	margin: 0px auto;
+}
+
+.spacer
+{
+	background-color: #ECECEC;
+}
+
+.button
+{
+	background-color: #DCE1E5;
+	border: 1px solid #ccc;
+	color: black;
+}
+
+th { height: 28px; color: #FFA34F; font-size: 110%; font-weight: bold; background-color: #006699;white-space: nowrap; }
+.tablebg { background-color: #A9B8C2; }
+
+.row1 { background-color: #ECECEC; padding: 4px; }
+.row2 { background-color: #DCE1E5; padding: 4px; }
+.row3 { background-color: #C0C8D0; padding: 4px; }
+
+a:link { color: #005784; text-decoration: none; }
+a:active { color: #005784; text-decoration: none; }
+a:visited { color: #005784; text-decoration: none; }
+a:hover { color: #000000; text-decoration: none; }
+
+form { margin: 0px; padding: 0px; border: 0px; }
+input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
+.post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}
+
+-->
+</style>
+
+<body>
+	<div id="container">
+		<div id="wrapper">
+			<form action="" method="post">
+				<table class="tablebg" width="100%" cellspacing="1" cellpadding="4">
+					<tbody>
+						<!-- IF { $error } -->
+						<tr>
+							<th align="center" colspan="2">Error</th>
+						</tr>
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">{ $error }</th>
+						</tr>
+						<!-- ENDIF -->
+						<tr>
+							<th align="center" colspan="2">Administrator Configuration</th>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Username: </b></td>
+					
+							<td class="row2"><input class="post" name="username" value="{ $username }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Password: </b></td>
+							<td class="row2"><input class="post" name="password" value="{ $password }" type="password"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Password ( Confirm ): </b></td>
+							<td class="row2"><input class="post" name="password_confirm" value="{ $password_confirm }" type="password"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Email address: </b></td>
+							<td class="row2"><input class="post" name="email" value="{ $email }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Email address  ( Confirm ): </b></td>
+							<td class="row2"><input class="post" name="email_confirm" value="{ $email_confirm }" type="text"></td>
+						</tr>
+						<tr>
+							<th align="center" colspan="2">Site Configuration</th>
+						</tr>
+						<tr>
+							<td align="center" colspan="2" class="row2">Default Value are usually correct, please review</th>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Site Name: </b></td>
+							<td class="row2"><input class="post" name="site_name" value="{ $site_name }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Site Domain: </b></td>
+							<td class="row2"><input class="post" name="site_domain" value="{ $site_domain }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Site path: </b></td>
+							<td class="row2"><input class="post" name="site_path" value="{ $site_path }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Site Port: </b><br><span class="gensmall">Leave this blank unless you know the server operates on a non-standard port.</span></td>
+							<td class="row2"><input class="post" name="site_port" value="{ $site_port }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Cookie Domain: </b></td>
+							<td class="row2"><input class="post" name="cookie_domain" value="{ $cookie_domain }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Cookie Path: </b></td>
+					
+							<td class="row2"><input class="post" name="cookie_path" value="{ $cookie_path }" type="text"></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Cookie Name: </b></td>
+							<td class="row2"><input class="post" name="cookie_name" value="{ $cookie_name }" type="text"></td>
+						</tr>
+						<!-- IF { $config_content } -->
+						<tr>
+							<th align="center" colspan="2">Config.php Content</th>
+						</tr>
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">Copy the content below to your config.php file and upload to you site root</th>
+						</tr>
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">
+							<textarea name="config_content" style="width: 100%" rows="15">{ $config_content }</textarea>
+							</th>
+						</tr>
+						<!-- ENDIF -->
+						<tr>
+							<input type="hidden" name="stage" value="4" />
+							<input type="hidden" name="agreement_signed" value="1" />
+							<th colspan="2" align="center"><input class="button" name="submit" value="Finalize Installation" type="submit"></th>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+	</div>
+</body>
+
+</html>
