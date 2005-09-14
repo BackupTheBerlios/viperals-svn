@@ -529,19 +529,12 @@ class core_template
     */
 	function _compile_tag_define($options)
 	{
-		$options = explode('=', $options);
-		$size = count($options);
-		$output = '';
+		list($name, $value) = explode('=', $options, 2);
 
-		for ($loop = 0; $loop < $size; $loop++)
-		{
-			//need to addslashed, check for variable type
-			$value = trim($options[($loop + 1)]);
-			$output .= "\$this->_vars['defines']['".trim($options[$loop])."'] = ".(is_integer($value) ? $value : "'".str_replace("'", "\'", $value)."'");
-			$loop++;
-		}
+		$value = trim($value);
+		$output = "\$this->_vars['defines']['".trim($name)."'] = ".(is_integer($value) ? $value : "'".str_replace("'", "\'", $value)."'");
 
-		return "<?php $output ?>";
+		return "<?php $output; ?>";
 	}
 	
     /*

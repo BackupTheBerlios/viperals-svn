@@ -85,7 +85,7 @@ $_CLASS['core_error_handler']->start();
 
 if (empty($site_db))
 {
-	trigger_error('<p style="text-align:center">Site isn\'t Installed<br/><a href="install/installer.php">Click here to install</a></p>', E_USER_ERROR);
+	trigger_error('<p style="text-align:center">Site isn\'t Installed<br/><a href="installer.php">Click here to install</a></p>', E_USER_ERROR);
 }
 
 require_once($site_file_root.'includes/tables.php');

@@ -421,7 +421,7 @@ class sessions
 		}
 
 		$sql_array = array(
-			'session_data'			=> ($this->data['session_data']) ? serialize($this->data['session_data']) : '',
+			'session_data'			=> !empty($this->data['session_data']) ? serialize($this->data['session_data']) : '',
 			'session_page'			=> (string) $this->page,
 			'session_time'			=> (int) $this->time,
 			'session_url'			=> (string) $this->url,

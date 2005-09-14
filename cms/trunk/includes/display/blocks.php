@@ -333,7 +333,7 @@ class core_blocks
 		global $site_file_root, $_CLASS;
 // think about disabling the block automatically if there's url problems
 // update core_rss file
-		if ($this->block['block_content'] && (!$this->block['block_rss_expires'] || $this->block['block_rss_expires'] > time()))
+		if ($this->block['block_content'] && (!$this->block['block_rss_expires'] || $this->block['block_rss_expires'] > (int) $_CLASS['core_user']->time))
 		{
 			$this->content = $this->block['block_content'];
 
@@ -388,7 +388,7 @@ class core_blocks
 
 		if ($this->block['block_rss_rate'] !== -1)
 		{
-			$this->block['block_rss_expires'] = ($this->block['block_rss_rate']) ? gmtime() + (int) $this->block['block_rss_rate'] : 0;
+			$this->block['block_rss_expires'] = ($this->block['block_rss_rate']) ? (int) $_CLASS['core_user']->time + $this->block['block_rss_rate'] : 0;
 			
 			$sql = 'UPDATE '.BLOCKS_TABLE."
 				SET block_content = '".$_CLASS['core_db']->escape($this->content)."', block_rss_expires = ".$this->block['block_rss_expires']." 
