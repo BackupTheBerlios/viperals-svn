@@ -21,7 +21,6 @@
 $Id$
 */
 
-// Convert to template
 if (!defined('VIPERAL'))
 {
     die;
@@ -49,7 +48,7 @@ if (!$_CLASS['core_user']->is_user && !$_CORE_CONFIG['quick_message']['anonymous
 	return;
 }
 
-$this->content .= '<form name="post" method="post" action="'.generate_link('Quick_Message&amp;mode=add').'">';
+$this->content .= '<form onsubmit="return quick_message_submit();" method="post" action="'.generate_link('Quick_Message&amp;mode=add').'">';
 
 if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['quick_message']['anonymous_posting'] == '2')
 {
@@ -57,8 +56,8 @@ if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['quick_message']['anonymous_
 }
 
 $this->content .= 'Message <br/> <textarea id="message" name="message" style="width:90%;" rows="3"></textarea><br /><br />
-			<input class="button" type="button" name="submit" onclick="quick_message_submit()" value="Post" />
-			<input class="button" type="button" name="submit" onclick="quick_message_refresh()" value="Refresh" />
+			<input class="button" type="submit" name="submit" value="Post" />
+			<input class="button" type="button" name="submit" onsubmit="quick_message_refresh()" value="Refresh" />
 		</div></form>';
 
 ?>

@@ -12,18 +12,27 @@ function quick_message_submit()
 
 	ajax = new core_ajax();
 
+	if (!ajax)
+	{
+		return true;
+	}
+
 	var onreadystatechange = function()
 	{
 		if (ajax.state_ready() && ajax.responseText())
 		{
 			var area = document.getElementById('qm_block');
 			area.innerHTML = ajax.responseText();
+
+			message.value = '';
 		}
 	}
 
 	ajax.onreadystatechange(onreadystatechange);
 
 	ajax.send('index.php?mod=Quick_Message&mode=ajax_add', '&poster_name=' + poster_name.value + '&message=' + message.value);
+
+	return false;
 }
 
 function quick_message_refresh()
