@@ -33,7 +33,7 @@ if (!defined('QUICK_MESSAGE_TABLE'))
 	define('QUICK_MESSAGE_TABLE', $table_prefix.'quick_message');
 }
 
-class Quick_Message_install
+class Quick_Message_configurator
 {
 	function install()
 	{

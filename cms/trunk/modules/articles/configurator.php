@@ -33,7 +33,7 @@ if (!defined('ARTICLES_TABLE'))
 	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
 
-class articles_install
+class articles_configurator
 {
 	var $error = array();
 	
