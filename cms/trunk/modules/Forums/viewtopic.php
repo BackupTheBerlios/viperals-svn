@@ -170,7 +170,8 @@ $sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_attachment, t.topi
 	f.forum_id, f.forum_password, f.forum_rules, f.forum_rules_link, f.forum_rules_flags, f.forum_rules_bbcode_uid,
 	f.forum_rules_bbcode_bitfield' . $extra_fields . '
 		FROM ' . FORUMS_FORUMS_TABLE . ' f, ' . FORUMS_TOPICS_TABLE . " t  $join_sql_table 
-		WHERE t.topic_id = $topic_id";
+		WHERE t.topic_id = $topic_id
+		AND f.forum_id = $forum_id";
 
 $result = $_CLASS['core_db']->query($sql);
 $topic_data = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -1246,22 +1247,43 @@ if (!mb_strpos($_CLASS['core_user']->data['session_url'], '&amp;t='.$topic_id))
 // Mark topics read
 if ($update_mark)
 {
-	// Now lets get the all topics that are in the markable range,
-	// with is the max topics displayed on the forum's viewforum page
+	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
+	{
+		// Now lets get the all topics that are in the markable range,
+		// with is the max topics displayed on the forum's viewforum page
 
-	// Get the user's last mark time for this forums
-	$sql = 'SELECT mark_time FROM '.FORUMS_TRACK_TABLE . ' 
-		WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-			AND forum_id = $forum_id AND topic_id = 0";
+		// Get the user's last mark time for this forums
+// add user view options
+		$sql = 'SELECT mark_time FROM '.FORUMS_TRACK_TABLE . ' 
+			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . " 
+				AND forum_id = $forum_id AND topic_id = 0";
+	
+		$result = $_CLASS['core_db']->query($sql);
+		$mark_time_forum = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['mark_time'] : 0;
+		$_CLASS['core_db']->free_result($result);
+			
+		$sql = 'SELECT t.topic_id, t.topic_last_post_time, tr.mark_time FROM ' . FORUMS_TOPICS_TABLE . ' t
+				LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tr ON (tr.topic_id = t.topic_id AND tr.user_id = '.$_CLASS['core_user']->data['user_id'].")
+					WHERE t.forum_id = $forum_id
+						ORDER BY t.topic_last_post_time DESC";
+	}
+	else
+	{
+		$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
 
-	$result = $_CLASS['core_db']->query($sql);
-	$forum_marktime = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['mark_time'] : 0;
-	$_CLASS['core_db']->free_result($result);
+		if (!is_array($tracking))
+		{
+			$tracking = array();
+		}
 		
-	$sql = 'SELECT t.topic_id, t.topic_last_post_time, tr.mark_time FROM ' . FORUMS_TOPICS_TABLE . ' t
-			LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tr ON (tr.topic_id = t.topic_id AND tr.user_id = '.$_CLASS['core_user']->data['user_id'].")
-				WHERE t.forum_id = $forum_id
+		$forum_id36 = base_convert($forum_id, 10, 36);
+		$mark_time_forum = isset($tracking[$forum_id36][0]) ? (int) base_convert($tracking[$forum_id36][0], 36, 10) : 0;
+
+// add user view options
+		$sql = 'SELECT topic_id, topic_last_post_time FROM ' . FORUMS_TOPICS_TABLE . "
+					WHERE forum_id = $forum_id
 					ORDER BY topic_last_post_time DESC";
+	}
 
 	$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page']);
 	$update_forum_mark = true;
@@ -1271,16 +1293,23 @@ if ($update_mark)
 		// DESC order so the first post is the last post
 		$last_forum_post = $row['topic_last_post_time'];
 
+// add user view options
 		do
 		{
-			$last_mark_time = max($row['mark_time'], $forum_marktime);
+			if (!$_CLASS['core_user']->is_user || !$config['load_db_lastread'])
+			{
+				$topic_id36 = base_convert($topic_id, 10, 36);
+				$row['mark_time'] = isset($tracking[$forum_id36][$topic_id36]) ? (int) base_convert($tracking[$forum_id36][$topic_id36], 36, 10) : 0;
+			}
+
+			$last_mark_time = max($row['mark_time'], $mark_time_forum);
 
 			if ($row['topic_last_post_time'] > $last_mark_time && $row['topic_id'] != $topic_id)
 			{
 				// We have a winner/loser
 				// Set so the forum isn't marked
 				$update_forum_mark = false;
-
+echo 'test';
 				break;
 			}
 		}
@@ -1336,23 +1365,30 @@ function topic_last_read($topic_id, $forum_id)
 	}
 	else
 	{
-		$topic_last_read = 0;
+		$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
 
-		if (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']))
+		if (!is_array($tracking))
 		{
-			$tracking_topics = unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']));
-
-			if (isset($tracking_topics[$forum_id]))
-			{
-				$topic_last_read = base_convert(max($tracking_topics[$forum_id]), 36, 10);
-				$topic_last_read = max($topic_last_read, $_CLASS['core_user']->data['session_last_visit']);
-			}
-
-			unset($tracking_topics);
+			return 0;
 		}
-	}
 
-	return $topic_last_read;
+		$forum_id36 = base_convert($forum_id, 10, 36);
+		$topic_id36 = base_convert($topic_id, 10, 36);
+
+		$topic_last_read = $forum_last_read = 0;
+
+		if (isset($tracking[$forum_id36][0]))
+		{
+			$forum_last_read = (int) base_convert($tracking[$forum_id36][0], 36, 10);
+		}
+
+		if (isset($tracking[$forum_id36][$topic_id36]))
+		{
+			$topic_last_read = (int) base_convert($tracking[$forum_id36][$topic_id36], 36, 10);
+		}
+
+		return (int) max($forum_last_read, $topic_last_read);
+	}
 }
 
 ?>

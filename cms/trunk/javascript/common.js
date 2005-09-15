@@ -73,6 +73,11 @@ core_ajax.prototype.responseText = function()
 	return this.request.responseText;
 }
 
+core_ajax.prototype.state_not_ready = function()
+{
+	return (this.request.readyState < 4);
+}
+
 core_ajax.prototype.state_ready = function()
 {
 	return (this.request.readyState == 4 && this.request.status == 200);

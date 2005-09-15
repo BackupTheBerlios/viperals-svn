@@ -9,6 +9,10 @@
 *	
 */
 
+// Move this to like a global javascript file
+var is_ie		= (navigator.appName == "Microsoft Internet Explorer");
+var is_gecko	= (navigator.userAgent.indexOf('Gecko') != -1)
+
 var slider_id = new Array();
 var slider_height = new Array();
 var active_menu = false;
@@ -16,9 +20,8 @@ var active_menu = false;
 function get_offsets(element)
 {
 	var offsets = new Array();
-	var window_offset = (window.pageYOffset) ? window.pageYOffset : (document.body.scrollTop) ? document.body.scrollTop : document.documentElement.scrollTop;
 
-	offsets['top']	= Number(window_offset) + element.offsetTop;
+	offsets['top']	= element.offsetTop;
 	offsets['left']	= element.offsetLeft;
 
 	while ((element = element.offsetParent) != null)
@@ -35,7 +38,7 @@ function menu_init(object_name)
 	var menu		= document.getElementById(object_name + '_menu');
 	var object		= document.getElementById(object_name);
 
-	if (menu == null|| object == null)
+	if (menu == null || object == null)
 	{
 		return;
 	}
@@ -91,8 +94,8 @@ function menu_init(object_name)
 */
 
 	menu.style.display	= 'none';
-	menu.style.position	= 'absolute';
-	menu.style.zIndex = 1000;
+	menu.style.position	= is_gecko ? 'fixed' : 'absolute';
+	menu.style.zIndex = 1;
 	object.style.cursor = 'pointer';
 }
 
@@ -119,7 +122,13 @@ function menu_show(object_name)
 
 	menu.style.clip = 'rect(auto, auto, 0px, auto)';
 	menu.style.display	= '';
-	
+
+	if (!is_gecko)
+	{
+		var window_offset = (window.pageYOffset) ? window.pageYOffset : (document.body.scrollTop) ? document.body.scrollTop : document.documentElement.scrollTop;
+		object_offsets['top']	= Number(window_offset) + object_offsets['top'];
+	}
+
 	if ((object_offsets['left'] + menu.offsetWidth) > document.body.clientWidth)
 	{
 		// It to wide to show on the right so we have to put it on the left

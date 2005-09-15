@@ -55,8 +55,7 @@ function display_forums($root_data = '', $display_moderators = true)
 	else
 	{
 		$sql_from = $lastread_select = $sql_lastread = '';
-
-		$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
+		$tracking_topics = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
 	}
 
 	$sql = "SELECT f.* $lastread_select 
@@ -154,9 +153,10 @@ function display_forums($root_data = '', $display_moderators = true)
 			}
 		}
 
-		if (!$config['load_db_lastread'] || !$_CLASS['core_user']->is_user)
+		if (!$_CLASS['core_user']->is_user || !$config['load_db_lastread'])
 		{
-			$row['mark_time'] = isset($tracking_topics[$forum_id][0]) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0;
+			$forum_id36 = base_convert($forum_id, 10, 36);
+			$row['mark_time'] = isset($tracking_topics[$forum_id36][0]) ? (int) base_convert($tracking_topics[$forum_id36][0], 36, 10) : 0;
 		}
 
 		if ($row['mark_time'] < $row['forum_last_post_time'])
@@ -182,7 +182,7 @@ function display_forums($root_data = '', $display_moderators = true)
 	// Grab moderators ... if necessary
 	if ($display_moderators)
 	{
-		get_moderators($forum_moderators, $forum_ids);
+		$forum_moderators = get_moderators($forum_ids);
 	}
 
 	// Loop through the forums
@@ -400,38 +400,16 @@ function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_
 					break;
 			}
 		}
-		
-		if ($_CLASS['core_user']->is_user)
-		{
-			$unread_topic = $new_votes = true;
 
-			if ($mark_time >= $topic_row['topic_last_post_time'])
-			{
-				$unread_topic = false;
-			}
-/*
-			if ($mark_time >= $topic_row['poll_last_vote'])
-			{
-				$new_votes = false;
-			}
-*/
-		}
-		/*else
+		$unread_topic = true;
+
+		if ($mark_time >= $topic_row['topic_last_post_time'])
 		{
 			$unread_topic = false;
-			//$unread_topic = $new_votes = false;
-		}*/
-	
-//		$folder_new .= ($new_votes) ? '_vote' : '';
+		}
 
 		$folder_img = ($unread_topic) ? $folder_new : $folder;
 		$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($topic_row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
-
-		// Posted image?
-		if (!empty($topic_row['mark_type']))
-		{
-			$folder_img .= '_posted';
-		}
 	}
 
 	if ($topic_row['poll_start'])

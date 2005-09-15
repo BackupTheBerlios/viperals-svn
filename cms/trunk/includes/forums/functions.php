@@ -280,9 +280,9 @@ function get_forum_parents(&$forum_data)
 
 	$forum_parents = array();
 	
-	if ($forum_data['parent_id'] > 0)
+	if ($forum_data['parent_id'])
 	{
-		if ($forum_data['forum_parents'] == '')
+		if (!$forum_data['forum_parents'])
 		{
 			$sql = 'SELECT forum_id, forum_name, forum_type
 				FROM ' . FORUMS_FORUMS_TABLE . '
@@ -318,9 +318,7 @@ function get_moderators($forum_id = false)
 {
 	global $config, $_CLASS;
 
-	// Have we disabled the display of moderators? If so, then return
-	// from whence we came ... 
-	if (empty($config['load_moderators']))
+	if (!$config['load_moderators'])
 	{
 		return array();
 	}
@@ -342,7 +340,7 @@ function get_moderators($forum_id = false)
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$forum_moderators[$row['forum_id']][] = (!empty($row['user_id'])) ? '<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>' : '<a href="' . generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . $row['groupname'] . '</a>';
+		$forum_moderators[$row['forum_id']][] = empty($row['user_id']) ? '<a href="' . generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>' : '<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
 	}
 	$_CLASS['core_db']->free_result($result);
 
@@ -618,7 +616,7 @@ function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status
 	);
 }
 
-// Marks a topic or form as read
+// Marks a topic or forum as read
 function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 {
 	global $config, $_CLASS, $_CORE_CONFIG;
@@ -694,12 +692,19 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			}
 			else
 			{
-				$tracking = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
+				$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
+				
+				if (!is_array($tracking))
+				{
+					$tracking = array();
+				}
 
 				foreach ($forum_id as $f_id)
 				{
-					unset($tracking[$f_id]);
-					$tracking[$f_id][0] = base_convert($time - $config['board_startdate'], 10, 36);
+					$forum_id36 = base_convert($f_id, 10, 36);
+
+					unset($tracking[$forum_id36]);
+					$tracking[$forum_id36][0] = base_convert($time, 10, 36);
 				}
 
 				$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
@@ -732,11 +737,13 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 			}
 			else
 			{
-				$tracking = array();
-				if (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']))
-				{
-					$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
+				$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
 
+				if (!is_array($tracking))
+				{
+					$tracking = array();
+				}
+					/*
 					// If the cookie grows larger than 2000 characters we will remove
 					// the smallest value
 					if (strlen($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']) > 2000)
@@ -751,18 +758,21 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 							}
 						}
 						unset($tracking[$m_fkey][$m_tkey]);
-					}
-				}
+					}*/
 
-				if (isset($tracking[$forum_id]) && base_convert($tracking[$forum_id][0], 36, 10) < $time)
+				$topic_id36 = base_convert($topic_id, 10, 36);
+				$forum_id36 = base_convert($forum_id, 10, 36);
+
+				if (isset($tracking[$forum_id36][$topic_id36]) && base_convert($tracking[$forum_id36][$topic_id36], 36, 10) < $time)
 				{
-					$tracking[$forum_id][base_convert($topic_id, 10, 36)] = base_convert($time - $config['board_startdate'], 10, 36);
+					$tracking[$forum_id36][$topic_id36] = base_convert($time, 10, 36);
 
 					$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
 				}
-				else if (!isset($tracking[$forum_id]))
+				elseif (!isset($tracking[$forum_id36][$topic_id36]))
 				{
-					$tracking[$forum_id][0] = base_convert($time - $config['board_startdate'], 10, 36);
+					$tracking[$forum_id36][$topic_id36] = base_convert($time, 10, 36);
+
 					$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
 				}
 				unset($tracking);
@@ -1376,7 +1386,6 @@ function page_header()
 		'S_USER_LANG'			=> $_CLASS['core_user']->data['user_lang'], 
 		'S_USER_BROWSER' 		=> ($_CLASS['core_user']->data['session_browser']) ? $_CLASS['core_user']->data['session_browser'] : $_CLASS['core_user']->lang['UNKNOWN_BROWSER'],
 		'S_CONTENT_DIRECTION' 	=> $_CLASS['core_user']->lang['DIRECTION'],
-		'S_CONTENT_ENCODING' 	=> 'UTF-8',
 		'S_CONTENT_DIR_LEFT' 	=> $_CLASS['core_user']->lang['LEFT'],
 		'S_CONTENT_DIR_RIGHT' 	=> $_CLASS['core_user']->lang['RIGHT'],
 		'S_TIMEZONE'			=> ($_CLASS['core_user']->data['user_dst'] || (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['default_dst'])) ? sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz/3600], $_CLASS['core_user']->lang['tz']['dst']) : sprintf($_CLASS['core_user']->lang['ALL_TIMES'], $_CLASS['core_user']->lang['tz'][$tz/3600], ''),

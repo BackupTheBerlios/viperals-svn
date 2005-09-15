@@ -23,7 +23,7 @@ $Id$
 
 $file = get_variable('file', 'REQUEST', false);
 
-$approved_files = array('viewforum', 'viewtopic', 'report', 'faq', 'posting', 'download', 'mcp', 'search');
+$approved_files = array('ajax', 'viewforum', 'viewtopic', 'report', 'faq', 'posting', 'download', 'mcp', 'search');
 
 if (!$file || !in_array($file, $approved_files))
 {

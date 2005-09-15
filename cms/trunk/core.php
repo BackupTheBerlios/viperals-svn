@@ -147,7 +147,7 @@ else
 	}
 }
 
-$_CLASS['core_db']->report_error(false);
+$_CLASS['core_db']->report_error(true);
 unset($config_error);
 
 $_CLASS['core_cache']->remove('core_config');

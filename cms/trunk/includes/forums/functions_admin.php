@@ -657,7 +657,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 
 	switch ($_CLASS['core_db']->db_layer)
 	{
-		case 'mysql4':
+		case 'mysql':
 		case 'mysqli':
 			$sql = 'DELETE t.*
 				FROM ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_TOPICS_TABLE . ' t2
@@ -777,7 +777,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 		case 'topic_moved':
 			switch ($_CLASS['core_db']->db_layer)
 			{
-				case 'mysql4':
+				case 'mysql':
 				case 'mysqli':
 					$sql = 'DELETE FROM ' . FORUMS_TOPICS_TABLE . '
 						USING ' . FORUMS_TOPICS_TABLE . ' t1, ' . FORUMS_TOPICS_TABLE . " t2
@@ -814,7 +814,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 		case 'topic_approved':
 			switch ($_CLASS['core_db']->db_layer)
 			{
-				case 'mysql4':
+				case 'mysql':
 				case 'mysqli':
 					$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_POSTS_TABLE . " p
 						SET t.topic_approved = p.post_approved
@@ -1596,59 +1596,40 @@ function cache_moderators()
 	global $_CLASS;
 
 	// Clear table
-	$sql = ($_CLASS['core_db']->db_layer != 'sqlite') ? 'TRUNCATE ' . MODERATOR_TABLE : 'DELETE FROM ' . MODERATOR_TABLE;
-	$_CLASS['core_db']->query($sql);
+	//$sql = (strpos($_CLASS['core_db']->db_layer, 'sqlite') === false) ? 'TRUNCATE ' . MODERATOR_TABLE : 'DELETE FROM ' . MODERATOR_TABLE;
+	$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_MODERATOR_TABLE);
 
 	// Holding array
 	$m_sql = array();
 	$user_id_sql = '';
 
 	$sql = 'SELECT a.forum_id, u.user_id, u.username
-		FROM  ' . ACL_OPTIONS_TABLE . '  o, ' . ACL_USERS_TABLE . ' a,  ' . USERS_TABLE . "  u
+		FROM  ' . FORUMS_ACL_OPTIONS_TABLE . '  o, ' . FORUMS_ACL_TABLE . ' a,  ' . USERS_TABLE . "  u
 		WHERE o.auth_option = 'm_'
 			AND a.auth_option_id = o.auth_option_id
-			AND a.auth_setting = " . ACL_YES . ' 
+			AND a.auth_setting = " . ACL_YES . '
 			AND u.user_id = a.user_id';
 	$result = $_CLASS['core_db']->query($sql);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$m_sql['f_' . $row['forum_id'] . '_u_' . $row['user_id']] = $row['forum_id'] . ', ' . $row['user_id'] . ", '" . $row['username'] . "', NULL, NULL";
+		$m_sql['f_' . $row['forum_id'] . '_u_' . $row['user_id']] = $row['forum_id'] . ', ' . $row['user_id'] . ", '" . $row['username'] . "', NULL, NULL, 1";
 		$user_id_sql .= (($user_id_sql) ? ', ' : '') . $row['user_id'];
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	// Remove users who have group memberships with DENY moderator permissions
-	if ($user_id_sql)
-	{
-		$sql = 'SELECT a.forum_id, ug.user_id
-			FROM  ' . ACL_OPTIONS_TABLE . '  o, ' . ACL_GROUPS_TABLE . ' a,  ' . USER_GROUP_TABLE . "  ug
-			WHERE o.auth_option = 'm_'
-				AND a.auth_option_id = o.auth_option_id
-				AND a.auth_setting = " . ACL_NO . " 
-				AND a.group_id = ug.group_id
-				AND ug.user_id IN ($user_id_sql)";
-		$result = $_CLASS['core_db']->query($sql);
-
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			unset($m_sql['f_' . $row['forum_id'] . '_u_' . $row['user_id']]);
-		}
-		$_CLASS['core_db']->free_result($result);
-	}
-
 	$sql = 'SELECT a.forum_id, g.group_name, g.group_id
-		FROM  ' . ACL_OPTIONS_TABLE . '  o, ' . ACL_GROUPS_TABLE . ' a,  ' . GROUPS_TABLE . "  g
+		FROM  ' . FORUMS_ACL_OPTIONS_TABLE . '  o, ' . FORUMS_ACL_TABLE . ' a,  ' . GROUPS_TABLE . "  g
 		WHERE o.auth_option = 'm_'
 			AND a.auth_option_id = o.auth_option_id
 			AND a.auth_setting = " . ACL_YES . '
 			AND g.group_id = a.group_id
-			AND g.group_type NOT IN (' . GROUP_HIDDEN . ', ' . GROUP_SPECIAL . ')';
+			AND g.group_type <> ' . GROUP_HIDDEN;
 	$result = $_CLASS['core_db']->query($sql);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$m_sql['f_' . $row['forum_id'] . '_g_' . $row['group_id']] = $row['forum_id'] . ', NULL, NULL, ' . $row['group_id'] . ", '" . $row['group_name'] . "'";
+		$m_sql['f_' . $row['forum_id'] . '_g_' . $row['group_id']] = $row['forum_id'] . ', NULL, NULL, ' . $row['group_id'] . ", '" . $row['group_name'] . "', 1";
 	}
 	$_CLASS['core_db']->free_result($result);
 
@@ -1656,29 +1637,30 @@ function cache_moderators()
 	{
 		switch ($_CLASS['core_db']->db_layer)
 		{
-			case 'mysql':
-			
-				$sql = 'INSERT INTO ' . MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, groupname) 
+			case 'mysql3':
+				$sql = 'INSERT INTO ' . FORUMS_MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, group_name, display_on_index) 
 					VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\1)',  $m_sql));
 				$_CLASS['core_db']->query($sql);
-				break;
+			break;
 
-			case 'mysql4':
+			case 'mysql':
 			case 'mysqli':
 			case 'mssql':
 			case 'sqlite':
-				$sql = 'INSERT INTO ' . MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, groupname)
+			case 'sqlite_pdo':
+				$sql = 'INSERT INTO ' . FORUMS_MODERATOR_TABLE . ' (forum_id, user_id, username, group_id, group_name, display_on_index)
 					 ' . implode(' UNION ALL ', preg_replace('#^(.*)$#', 'SELECT \1',  $m_sql));
 				$_CLASS['core_db']->query($sql);
-				break;
+			break;
 
 			default:
 				foreach ($m_sql as $k => $sql)
 				{
-					$sql = 'INSERT INTO ' . MODERATOR_TABLE . " (forum_id, user_id, username, group_id, groupname) 
+					$sql = 'INSERT INTO ' . FORUMS_MODERATOR_TABLE . " (forum_id, user_id, username, group_id, group_name, display_on_index) 
 						VALUES ($sql)";
 					$_CLASS['core_db']->query($sql);
 				}
+			break;
 		}
 	}
 }
@@ -1889,10 +1871,19 @@ if (class_exists('auth'))
 				$forum_id = array($forum_id);
 			}
 
+			$holding_auth = array();
+
 			// Set any flags as required
 			foreach ($auth as $auth_option => $setting)
 			{
+				if ($setting == ACL_NO)
+				{
+					unset($auth[$auth_option]);
+					continue;
+				}
+
 				$postion = strpos($auth_option, '_');
+
 				if ($postion == false)
 				{
 					continue;
@@ -1900,9 +1891,9 @@ if (class_exists('auth'))
 
 				$flag = substr($auth_option, 0, $postion + 1);
 
-				if (empty($auth[$flag]) && (empty($holding_auth[$flag]) || ($holding_auth[$flag] == ACL_NO && $setting == ACL_YES)))
+				if (empty($auth[$flag]))
 				{
-					$holding_auth[$flag] =  $setting;
+					$auth[$flag] = $setting;
 				}
 			}
 
@@ -1936,12 +1927,17 @@ if (class_exists('auth'))
 			$sql_ary = array();
 			foreach ($forum_id as $forum)
 			{
-				$delete_option_ids = $update_option_ids =array();
+				$delete_option_ids = $update_option_ids = array();
 
 				foreach ($auth as $auth_option => $setting)
 				{
-					$auth_option_id = $option_ids[$auth_option];
+					if (!isset($option_ids[$auth_option]))
+					{
+						continue;
+					}
 
+					$auth_option_id = $option_ids[$auth_option];
+					
 					switch ($setting)
 					{
 						case ACL_UNSET:
@@ -1984,7 +1980,6 @@ if (class_exists('auth'))
 				}
 			}
 			unset($cur_auth);
-
 			
 			foreach ($sql_ary as $sql_type => $sql_subary)
 			{
@@ -1995,11 +1990,11 @@ if (class_exists('auth'))
 					case 'insert':
 						switch ($_CLASS['core_db']->db_layer)
 						{
-							case 'mysql':
+							case 'mysql3':
 								$sql = 'VALUES ' . implode(', ', preg_replace('#^(.*?)$#', '(\1)', $sql_subary));
 							break;
 
-							case 'mysql4':
+							case 'mysql':
 							case 'mysqli':
 							case 'mssql':
 							case 'sqlite':

@@ -23,9 +23,9 @@
 	<tr>
 		<td class="row1" width="50" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
 		<!-- IF { $forumrow:CLICKS } -->
-		<td class="row1" id="forum_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } -->onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
+		<td class="row1" id="forum_{ $forumrow:FORUM_ID }"<!-- IF { $MODIFY_FORUM } --> onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
 		<!-- ELSE -->
-		<td class="row1" colspan="4" id="forum_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } -->onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF -->  width="100%">
+		<td class="row1" colspan="4" id="forum_{ $forumrow:FORUM_ID }"<!-- IF { $MODIFY_FORUM } --> onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
 		<!-- ENDIF -->
 			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
 			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p></td>
@@ -36,7 +36,7 @@
 	<!-- ELSE -->
 	<tr>
 		<td class="row1" width="50" height="40" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
-		<td class="row1" height="40" id="forum_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } -->onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
+		<td class="row1" height="40" id="forum_{ $forumrow:FORUM_ID }"<!-- IF { $MODIFY_FORUM } --> onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
 			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
 			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p>
 			<!-- IF { $forumrow:MODERATORS } -->

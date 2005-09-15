@@ -710,10 +710,10 @@ $_CLASS['core_db']->table_create('commit');
 $_CLASS['core_db']->table_create('start', $table_prefix.'forums_moderator_cache');
 
 $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
-$_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
-$_CLASS['core_db']->add_table_field_char('username', 50);
-$_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000));
-$_CLASS['core_db']->add_table_field_char('groupname', 50);
+$_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_char('username', 50, true);
+$_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_char('group_name', 50, true);
 $_CLASS['core_db']->add_table_field_int('display_on_index', array('max' => 1));
 
 $_CLASS['core_db']->add_table_index('forum_id');

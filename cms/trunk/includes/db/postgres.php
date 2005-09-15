@@ -66,7 +66,10 @@ class db_postgres
 			$connection_string[] = 'password='.$db['password'];
 		}
 
-		$connection_string[] = 'dbname='.$db['database'];
+		if ($db['database'])
+		{
+			$connection_string[] = 'dbname='.$db['database'];
+		}
 
 		if ($this->link_identifier)
 		{

@@ -199,7 +199,7 @@ switch ($submit)
 					}
 				}
 
-				if (sizeof($auth_setting))
+				if (!empty($auth_setting))
 				{
 					// Loop through all user/group ids
 					foreach ($ug_data as $id)
@@ -211,14 +211,14 @@ switch ($submit)
 
 			// Do we need to recache the moderator lists? We do if the mode
 			// was mod or auth_settings['mod'] is a non-zero size array
-			if ($mode == 'mod' || (isset($auth_settings['mod']) && sizeof($auth_settings['mod'])))
+			if ($mode == 'mod' || !empty($auth_settings['mod']))
 			{
 				cache_moderators();
 			}
 
 			// Remove users who are now moderators or admins from everyones foes
 			// list
-			if ($mode == 'mod' || (isset($auth_settings['mod']) && sizeof($auth_settings['mod'])) || $mode == 'admin' || (isset($auth_settings['admin']) && sizeof($auth_settings['admin'])))
+			if ($mode == 'mod' || !empty($auth_settings['mod']) || $mode == 'admin' || !empty($auth_settings['admin']))
 			{
 				update_foes();
 			}

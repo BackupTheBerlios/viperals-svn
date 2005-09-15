@@ -39,7 +39,7 @@ Switch (get_variable('mode', 'POST', false))
 			die;
 		}
 
-		$title = mb_strtolower(htmlentities($title, ENT_QUOTES, 'UTF-8'));
+		$title = htmlentities($title, ENT_QUOTES, 'UTF-8');
 		$array = array('forum_name' => $title);
 		
 		$_CLASS['core_db']->report_error(false);

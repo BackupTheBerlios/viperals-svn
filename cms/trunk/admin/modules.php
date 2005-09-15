@@ -66,6 +66,29 @@ if (isset($_REQUEST['mode']))
 				check_type($module['module_type']);
 			
 				$status = ($module['module_status'] == STATUS_ACTIVE) ? STATUS_DISABLED : STATUS_ACTIVE;
+				
+				if (file_exists($site_file_root.'modules/'.$module['module_name'].'/configurator.php'))
+				{
+					require_once($site_file_root.'modules/'.$module['module_name'].'/configurator.php');
+					
+					$name = $module['module_name'].'_configurator';
+
+					if (class_exists($name))
+					{
+						$module_configurer = new $name;
+
+						if (method_exists('status_change'))
+						{
+							$report = $module_configurer->status_change($status, $module['module_status']);
+		
+							if ($report !== true)
+							{
+								trigger_error(is_string($report) ? $report : 'STATUS_CHANGE_FAILED');
+							}
+						}
+					}
+				}
+
 				$result = $_CLASS['core_db']->query('UPDATE '. CORE_MODULES_TABLE . " SET module_status = $status WHERE module_id = $id");
 			break;
 
@@ -83,20 +106,27 @@ if (isset($_REQUEST['mode']))
 
 				if (display_confirmation())
 				{
-					$error = true;
+					$status = true;
 
-					if (file_exists($site_file_root.'modules/'.$module['module_name'].'/install.php'))
+					if (file_exists($site_file_root.'modules/'.$module['module_name'].'/configurator.php'))
 					{
-						require_once($site_file_root.'modules/'.$module['module_name'].'/install.php');
-	
-						$name = $module['module_name'].'_install';
-						$install = new $name;
-						$error = $install->install();
-	
-						if ($error !== true)
+						require_once($site_file_root.'modules/'.$module['module_name'].'/configurator.php');
+						
+						$name = $module['module_name'].'_configurator';
+
+						if (class_exists($name))
 						{
-							// do something better than this
-							trigger_error($error);
+							$module_configurer = new $name;
+	
+							if (method_exists('install'))
+							{
+								$status = $module_configurer->install();
+			
+								if ($status !== true)
+								{
+									trigger_error(is_string($status) ? $status : 'INSTALLATION_FAILED');
+								}
+							}
 						}
 					}
 
@@ -118,14 +148,26 @@ if (isset($_REQUEST['mode']))
 				
 				if (display_confirmation())
 				{
-					if (file_exists($site_file_root.'modules/'.$module['module_name'].'/install.php'))
+					if (file_exists($site_file_root.'modules/'.$module['module_name'].'/configurator.php'))
 					{
-						require_once($site_file_root.'modules/'.$module['module_name'].'/install.php');
+						require_once($site_file_root.'modules/'.$module['module_name'].'/configurator.php');
 						
-						$name = $module['module_name'].'_install';
-						$install = new $name;
-						
-						$install->uninstall();
+						$name = $module['module_name'].'_configurator';
+
+						if (class_exists($name))
+						{
+							$module_configurer = new $name;
+	
+							if (method_exists('uninstall'))
+							{
+								$status = $module_configurer->uninstall();
+			
+								if ($status !== true)
+								{
+									trigger_error(is_string($status) ? $status : 'UNISTALLATION_FAILED');
+								}
+							}
+						}
 					}
 
 					$_CLASS['core_db']->query('UPDATE ' . CORE_MODULES_TABLE . ' set module_status = ' . STATUS_PENDING . ' WHERE module_id = '.$id);

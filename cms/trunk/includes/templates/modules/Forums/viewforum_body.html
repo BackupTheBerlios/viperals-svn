@@ -167,10 +167,10 @@
 			<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $topicrow:PAGINATION } ] </p>
 			<!-- ENDIF -->
 		</td>
-		<td class="row2" align="center" width="100"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
+		<td class="row2" align="center" width="100" nowrap="nowrap"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
 		<td class="row1" align="center" width="50"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
 		<td class="row2" align="center" width="50"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
-		<td class="row1" align="center" width="120">
+		<td class="row1" align="center" width="150" nowrap="nowrap">
 			<p class="topicdetails">{ $topicrow:LAST_POST_TIME }</p>
 			<p class="topicdetails"><!-- IF { $topicrow:U_LAST_POST_AUTHOR } --><a href="{ $topicrow:U_LAST_POST_AUTHOR }">{ $topicrow:LAST_POST_AUTHOR }</a><!-- ELSE -->{ $topicrow:LAST_POST_AUTHOR }<!-- ENDIF -->
 			<a href="{ $topicrow:U_LAST_POST }">{ $topicrow:LAST_POST_IMG }</a>

@@ -311,7 +311,7 @@ class db_mysql3
 		return preg_replace('#(.*?)#e', "\$this->escape('\\1')", $value);
 	}
 	
-	function optimize_tables($table = '')
+	function optimize_tables($table = false)
 	{
 		global $_CORE_CONFIG;
 	
@@ -332,9 +332,13 @@ class db_mysql3
 				{
 					$table .= ', ' . $row[0];
 				}
+				else
+				{
+					$table = $row[0];
+				}
 			}
 
-			$this->sql_freeresult($result);
+			$this->free_result($result);
 		}
 
 		if ($table)

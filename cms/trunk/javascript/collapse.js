@@ -48,19 +48,6 @@ function delete_cookie(cookie_name)
 	document.cookie = cookie_name + '=' + '; expires=Thu, 01-Jan-70 00:00:01 GMT' +  '; path=/';
 }
 
-function array_search(needle, haystack, strict)
-{
-	for (var i in haystack)
-	{
-		if (haystack[i] == needle)
-		{
-			return i;
-		}
-	}
-
-	return null;
-}
-
 function switch_collapse(identifier, no_slide, cookie)
 {
 	var area = document.getElementById(identifier);
