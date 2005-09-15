@@ -18,7 +18,7 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 // Get mode
 $mode	= request_var('mode', '');
 $action	= request_var('action', '');
-$submit = (isset($_POST['submit'])) ? true : false;
+$submit = isset($_POST['submit']);
 
 // Set config vars
 $display_vars = array(

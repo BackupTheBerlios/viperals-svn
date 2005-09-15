@@ -234,10 +234,10 @@ function display_forums($root_data = '', $display_moderators = true)
 					}
 				}
 
-				if (sizeof($links))
+				if (!empty($links))
 				{
 					$subforums_list = implode(', ', $links);
-					$l_subforums = (sizeof($subforums[$forum_id]) == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
+					$l_subforums = (count($subforums[$forum_id]) == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
 				}
 
 				unset($links);
@@ -291,7 +291,7 @@ function display_forums($root_data = '', $display_moderators = true)
 		$l_moderator = $moderators_list = '';
 		if ($display_moderators && !empty($forum_moderators[$forum_id]))
 		{
-			$l_moderator = (sizeof($forum_moderators[$forum_id]) == 1) ? $_CLASS['core_user']->lang['MODERATOR'] : $_CLASS['core_user']->lang['MODERATORS'];
+			$l_moderator = (count($forum_moderators[$forum_id]) == 1) ? $_CLASS['core_user']->lang['MODERATOR'] : $_CLASS['core_user']->lang['MODERATORS'];
 			$moderators_list = implode(', ', $forum_moderators[$forum_id]);
 		}
 
@@ -329,8 +329,8 @@ function display_forums($root_data = '', $display_moderators = true)
 	$_CLASS['core_template']->assign_array(array(
 		'MODIFY_FORUM'		=> $_CLASS['auth']->acl_get('a_forum'),
 		'U_MARK_FORUMS'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
-		'S_HAS_SUBFORUM'	=>	($visible_forums) ? true : false,
-		'L_SUBFORUM'		=>	($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
+		'S_HAS_SUBFORUM'	=> ($visible_forums) ? true : false,
+		'L_SUBFORUM'		=> ($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
 	));
 
 	return $active_forum_ary;

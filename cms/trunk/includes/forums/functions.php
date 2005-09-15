@@ -168,24 +168,6 @@ function request_var($var_name, $default, $multibyte = false)
 	return $var;
 }
 
-// Generates an alphanumeric random string of given length
-function gen_rand_string($num_chars)
-{
-	$chars = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',  'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',  'U', 'V', 'W', 'X', 'Y', 'Z', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-
-	list($sec, $usec) = explode(' ', microtime());
-	mt_srand((float) $sec + ((float) $usec * 100000));
-
-	$max_chars = sizeof($chars) - 1;
-	$rand_str = '';
-	for ($i = 0; $i < $num_chars; $i++)
-	{
-		$rand_str .= $chars[mt_rand(0, $max_chars)];
-	}
-
-	return $rand_str;
-}
-
 function get_userdata($user)
 {
 	global $_CLASS;
@@ -916,7 +898,7 @@ function obtain_attach_extensions($forum_id = false)
 			}
 			
 			// Store allowed extensions forum wise
-			$extensions['_allowed_'][$extension] = (!sizeof($allowed_forums)) ? 0 : $allowed_forums;
+			$extensions['_allowed_'][$extension] = empty($allowed_forums) ? 0 : $allowed_forums;
 		}
 		$_CLASS['core_db']->free_result($result);
 
@@ -934,7 +916,7 @@ function obtain_attach_extensions($forum_id = false)
 			if (is_array($check))
 			{
 				// Check for private messaging
-				if (sizeof($check) == 1 && $check[0] == 0)
+				if (count($check) == 1 && $check[0] == 0)
 				{
 					$allowed = true;
 				}
@@ -1096,7 +1078,7 @@ function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_
 	global $config, $_CLASS;
 
 	$unset_array = array();
-	$tpl_size = sizeof($attachments);
+	$tpl_size = count($attachments);
 
 	preg_match_all('#<!\-\- ia([0-9]+) \-\->(.*?)<!\-\- ia\1 \-\->#', $text, $matches, PREG_PATTERN_ORDER);
 	//print_r($matches);
@@ -1142,7 +1124,7 @@ function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_
 // Check if extension is allowed to be posted within forum X (forum_id 0 == private messaging)
 function extension_allowed($forum_id, $extension, &$extensions)
 {
-	if (!sizeof($extensions))
+	if (empty($extensions))
 	{
 		$extensions = obtain_attach_extensions();
 	}
@@ -1157,11 +1139,11 @@ function extension_allowed($forum_id, $extension, &$extensions)
 	if (is_array($check))
 	{
 		// Check for private messaging
-		if (sizeof($check) == 1 && $check[0] == 0)
+		if (count($check) == 1 && $check[0] == 0)
 		{
 			return true;
 		}
-		
+
 		return (!in_array($forum_id, $check)) ? false : true;
 	}
 	else

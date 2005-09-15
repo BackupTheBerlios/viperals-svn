@@ -88,6 +88,7 @@ if (!$attachment['in_message'])
 else
 {
 	$row['forum_id'] = 0;
+
 	if (!$_CLASS['auth']->acl_get('u_pm_download') || !$config['auth_download_pm'])
 	{
 		trigger_error('SORRY_AUTH_VIEW_ATTACH');
@@ -103,7 +104,7 @@ if (!extension_allowed($row['forum_id'], $attachment['extension'], $extensions))
 
 if (!download_allowed())
 {
-	trigger_error($_CLASS['core_user']->lang['LINKAGE_FORBIDDEN']);
+	trigger_error('LINKAGE_FORBIDDEN');
 }
 
 $download_mode = (int) $extensions[$attachment['extension']]['download_mode'];
@@ -293,7 +294,7 @@ function download_allowed()
 	if (!$allowed)
 	{
 		$sql = 'SELECT site_ip, site_hostname, ip_exclude
-			FROM ' . SITELIST_TABLE;
+			FROM ' . FORUMS_SITELIST_TABLE;
 		$result = $_CLASS['core_db']->sql_query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))

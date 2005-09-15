@@ -33,7 +33,6 @@ function tite_edit_add(id, mode)
 	input.size = 50;
 	input.className = 'post';
 	input.value = title.innerHTML;
-	//input.title = title.innerHTML;
 	input.id = mode + '_input_' + id;
 	input.onblur =	function()
 	{

@@ -166,7 +166,7 @@ class core_auth
 	
 				if (!$code || !$confirm_code || $code !== $confirm_code)
 				{
-				//	$error = 'CONFIRM_CODE_WRONG';
+					$error = 'CONFIRM_CODE_WRONG';
 				}
 			}
 

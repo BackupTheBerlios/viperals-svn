@@ -946,4 +946,17 @@ $_CLASS['core_db']->add_table_index(array('user_id', 'folder_id'));
 
 $_CLASS['core_db']->table_create('commit');
 
+
+
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_sitelist');
+
+$_CLASS['core_db']->add_table_field_int('site_id', array('max' => 16000000, 'auto_increment' => true));
+$_CLASS['core_db']->add_table_field_char('site_ip', 40);
+$_CLASS['core_db']->add_table_field_char('site_hostname', 255);
+$_CLASS['core_db']->add_table_field_int('ip_exclude', array('max' => 1));
+
+$_CLASS['core_db']->add_table_index('site_id', 'primary');
+
+$_CLASS['core_db']->table_create('commit');
+
 ?>

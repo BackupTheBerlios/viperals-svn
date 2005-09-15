@@ -21,8 +21,6 @@ class ucp_prefs extends module
 		$error = $data = array();
 		$s_hidden_fields = '';
 
-		require_once($site_file_root.'includes/forums/functions_user.php');
-
 		switch($mode)
 		{
 			case 'personal':
@@ -129,7 +127,7 @@ class ucp_prefs extends module
 				$theme = (isset($theme)) ? $theme : $_CLASS['core_user']->data['user_theme'];
 				$tz = (isset($tz)) ? $tz * 3600 : $_CLASS['core_user']->data['user_timezone'] / 3600;
 
-				$_CLASS['core_template']->assign(array( 
+				$_CLASS['core_template']->assign_array(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
 
 					'VIEW_EMAIL_YES'	=> $view_email_yes, 
@@ -304,7 +302,7 @@ class ucp_prefs extends module
 				$wordcensor_yes = ($wordcensor) ? ' checked="checked"' : '';
 				$wordcensor_no = (!$wordcensor) ? ' checked="checked"' : '';
 
-				$_CLASS['core_template']->assign(array( 
+				$_CLASS['core_template']->assign_array(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
 					
 					'VIEW_IMAGES_YES'		=> $images_yes, 
@@ -390,7 +388,7 @@ class ucp_prefs extends module
 				$notify_yes = ($notify) ? ' checked="checked"' : '';
 				$notify_no = (!$notify) ? ' checked="checked"' : '';
 
-				$_CLASS['core_template']->assign(array( 
+				$_CLASS['core_template']->assign_array(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
 
 					'DEFAULT_BBCODE_YES'	=> $bbcode_yes, 
@@ -407,7 +405,7 @@ class ucp_prefs extends module
 				break;
 		}
 
-		$_CLASS['core_template']->assign(array( 
+		$_CLASS['core_template']->assign_array(array( 
 			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PREFS_' . strtoupper($mode)],
 			'S_PRIVMSGS'		=> false,
 

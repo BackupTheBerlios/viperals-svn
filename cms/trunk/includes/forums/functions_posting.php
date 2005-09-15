@@ -199,7 +199,7 @@ function upload_attachment($form_name, $forum_id, $local = false, $local_storage
 	$file->clean_filename('unique', $_CLASS['core_user']->data['user_id'] . '_');
 	$file->move_file($config['upload_path']);
 		
-	if (sizeof($file->error))
+	if (!empty($file->error))
 	{
 		$file->remove();
 		$filedata['error'] = array_merge($filedata['error'], $file->error);
@@ -502,21 +502,21 @@ function posting_gen_inline_attachments(&$attachment_data)
 {
 	global $_CLASS;
 
-	if (sizeof($attachment_data))
+	if (empty($attachment_data))
 	{
-		$s_inline_attachment_options = '';
-		
-		foreach ($attachment_data as $i => $attachment)
-		{
-			$s_inline_attachment_options .= '<option value="' . $i . '">' . $attachment['real_filename'] . '</option>';
-		}
-
-		$_CLASS['core_template']->assign('S_INLINE_ATTACHMENT_OPTIONS', $s_inline_attachment_options);
-
-		return true;
+		return false;
 	}
 
-	return false;
+	$s_inline_attachment_options = '';
+	
+	foreach ($attachment_data as $i => $attachment)
+	{
+		$s_inline_attachment_options .= '<option value="' . $i . '">' . $attachment['real_filename'] . '</option>';
+	}
+
+	$_CLASS['core_template']->assign('S_INLINE_ATTACHMENT_OPTIONS', $s_inline_attachment_options);
+
+	return true;
 }
 
 // Build topic types able to be selected
@@ -581,7 +581,7 @@ function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 		
 	$_CLASS['core_template']->assign('S_SHOW_ATTACH_BOX', true);
 
-	if (sizeof($attachment_data))
+	if (!empty($attachment_data))
 	{
 		$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
 		
@@ -618,7 +618,7 @@ function posting_gen_attachment_entry(&$attachment_data, &$filename_data)
 		'FILESIZE'		=> $config['max_filesize'])
 	);
 
-	return sizeof($attachment_data);
+	return count($attachment_data);
 }
 
 // Load Drafts
@@ -659,7 +659,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 	}
 	$_CLASS['core_db']->free_result($result);
 				
-	if (sizeof($topic_ids))
+	if (!empty($topic_ids))
 	{
 		$sql = 'SELECT topic_id, forum_id, topic_title
 			FROM ' . FORUMS_TOPICS_TABLE . '
@@ -674,7 +674,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 	}
 	unset($topic_ids);
 	
-	if (sizeof($draftrows))
+	if (!empty($draftrows))
 	{
 		$_CLASS['core_template']->assign_array('S_SHOW_DRAFTS', true);
 

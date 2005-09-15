@@ -35,138 +35,193 @@ if (!defined('QUICK_MESSAGE_TABLE'))
 
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
-
-switch (get_variable('mode', 'GET', false))
+if ($mode = get_variable('mode', 'REQUEST', false))
 {
-	case 'add':
-		if (empty($_POST['submit']) || $_CLASS['core_user']->is_bot)
-		{
-			redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
-		}
-
-		$message = trim(get_variable('message', 'POST', false));
-
-		if (!$message)
-		{
-			trigger_error('NO_MESSAGE');
-		}
-
-		$length = mb_strlen($message);
-
-		if ($length > $_CORE_CONFIG['quick_message']['length_max'])
-		{ 
-			trigger_error('LONG_MESSAGE');
-		}
-
-	// use limit
-		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
-		$count = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-	// add a count check here so it admin ajustable
-		if ($count['count'] > 0)
-		{
-			trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['last_post_check'] / 60));
-		}
-
-		$_CLASS['core_db']->free_result($result);
-
-		if ($_CLASS['core_user']->is_user)
-		{
-			$user_id =  $_CLASS['core_user']->data['user_id'];
-			$user_name = $_CLASS['core_user']->data['username'];
-		}
-		else
-		{
-			$user_id = 0;
-			$user_name = get_variable('poster_name', 'POST', false);
-
-			if (!$user_name)
+	switch ($mode)
+	{
+		case 'ajax_refresh':
+			require_once($site_file_root.'modules/Quick_Message/functions.php');
+	
+			echo qm_block_content();
+	
+			script_close();
+		break;
+	
+		case 'add':
+		case 'ajax_add':
+			if ($_CLASS['core_user']->is_bot)
 			{
-				if ($_CORE_CONFIG['quick_message']['anonymous_posting'] != '2')
+				redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
+			}
+	
+			$message = trim(get_variable('message', 'POST', false));
+	
+			if (!$message)
+			{
+				if ($mode === 'ajax_add')
 				{
-					trigger_error('NO_NAME');
+					die;
 				}
+	
+				trigger_error('NO_MESSAGE');
+			}
+	
+			$length = mb_strlen($message);
+	
+			if ($length > $_CORE_CONFIG['quick_message']['length_max'])
+			{ 
+				if ($mode === 'ajax_add')
+				{
+					die;
+				}
+	
+				trigger_error('LONG_MESSAGE');
+			}
+	
+		// use limit
+			$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
+			$count = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+	
+		// add a count check here so it admin ajustable
+			if ($count['count'] > 0)
+			{
+				if ($mode === 'ajax_add')
+				{
+					die;
+				}
+	
+				trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['last_post_check'] / 60));
+			}
+	
+			$_CLASS['core_db']->free_result($result);
+	
+			if ($_CLASS['core_user']->is_user)
+			{
+				$user_id =  $_CLASS['core_user']->data['user_id'];
+				$user_name = $_CLASS['core_user']->data['username'];
 			}
 			else
 			{
-				$length = mb_strlen($user_name);
-
-				if ($length < 2)
+				$user_id = 0;
+				$user_name = get_variable('poster_name', 'POST', false);
+	
+				if (!$user_name)
 				{
-					trigger_error('SHORT_NAME');
+					if ($_CORE_CONFIG['quick_message']['anonymous_posting'] != '2')
+					{
+						if ($mode === 'ajax_add')
+						{
+							die;
+						}
+						trigger_error('NO_NAME');
+					}
 				}
-
-				if ($length > 10)
+				else
 				{
-					trigger_error('LONG_NAME');
-				}
-
-				require($site_file_root.'includes/functions_user.php');
-			
-				if ($error = validate_username($user_name))
-				{
-					trigger_error($error);
+					$length = mb_strlen($user_name);
+	
+					if ($length < 2)
+					{
+						if ($mode === 'ajax_add')
+						{
+							die;
+						}
+						trigger_error('SHORT_NAME');
+					}
+	
+					if ($length > 10)
+					{
+						if ($mode = 'ajax_add')
+						{
+							die;
+						}
+						trigger_error('LONG_NAME');
+					}
+	
+					require($site_file_root.'includes/functions_user.php');
+				
+					if ($error = validate_username($user_name))
+					{
+						if ($mode === 'ajax_add')
+						{
+							die;
+						}
+						trigger_error($error);
+					}
 				}
 			}
-		}
-
-		$sql = 'INSERT INTO '.QUICK_MESSAGE_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
-			'poster_name'	=> (string) $user_name,
-			'poster_id'		=> (int) $user_id,
-			'poster_ip'		=> (string) $_CLASS['core_user']->ip,
-			'message_text'	=> (string) $message,
-			'message_time'	=> (int) $_CLASS['core_user']->time,
-		));
-
-		$_CLASS['core_db']->query($sql);
-
-		redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
-	break;
-
-	case 'delete':
-		global $_CORE_CONFIG, $_CLASS;
-
-		$id = get_variable('id', 'GET', false, 'integer');
-
-		if (!$id)
-		{
-			die;
-		}
-
-		$result = $_CLASS['core_db']->query_limit('SELECT message_id, poster_id, poster_name, poster_ip, message_time FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time DESC', 1);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-		
-		if (!$row)
-		{
-			trigger_error('NO_MESSAGE');
-		}
-
-		$return = true;
-
-		if ($row['message_id'] == $id)
-		{
-			if ($row['message_time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
+	
+			$sql = 'INSERT INTO '.QUICK_MESSAGE_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+				'poster_name'	=> (string) $user_name,
+				'poster_id'		=> (int) $user_id,
+				'poster_ip'		=> (string) $_CLASS['core_user']->ip,
+				'message_text'	=> (string) $message,
+				'message_time'	=> (int) $_CLASS['core_user']->time,
+			));
+	
+			$_CLASS['core_db']->query($sql);
+	
+			if ($mode === 'ajax_add')
 			{
-				if (($row['poster_id'] && $row['poster_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['poster_id'] && $row['poster_ip'] == $_CLASS['core_user']->ip))
+				require_once($site_file_root.'modules/Quick_Message/functions.php');
+	
+				echo qm_block_content();
+	
+				script_close();
+			}
+	
+			redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
+		break;
+	
+		case 'delete':
+			global $_CORE_CONFIG, $_CLASS;
+	
+			$id = get_variable('id', 'GET', false, 'integer');
+	
+			if (!$id)
+			{
+				die;
+			}
+	
+			$result = $_CLASS['core_db']->query_limit('SELECT message_id, poster_id, poster_name, poster_ip, message_time FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time DESC', 1);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+			
+			if (!$row)
+			{
+				trigger_error('NO_MESSAGE');
+			}
+	
+			$return = true;
+	
+			if ($row['message_id'] == $id)
+			{
+				if ($row['message_time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['delete_time']))
 				{
-					$return = false;
+					if (($row['poster_id'] && $row['poster_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['poster_id'] && $row['poster_ip'] == $_CLASS['core_user']->ip))
+					{
+						$return = false;
+					}
 				}
 			}
-		}
-
-		if ($return)
-		{
-			trigger_error('MESSAGE_NOT_DELETABLE');
-		}
-
-		$sql = 'DELETE FROM ' . QUICK_MESSAGE_TABLE . ' WHERE message_id = '.$id;
-		$_CLASS['core_db']->query($sql);
-
-		//trigger_error('MESSAGE_DELETED');
-		redirect(($_CLASS['core_user']->data['session_url']) ? generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)) : '');
-	break;
+	
+			if ($return)
+			{
+				trigger_error('MESSAGE_NOT_DELETABLE');
+			}
+	
+			$sql = 'DELETE FROM ' . QUICK_MESSAGE_TABLE . ' WHERE message_id = '.$id;
+			$_CLASS['core_db']->query($sql);
+	
+			//trigger_error('MESSAGE_DELETED');
+			redirect(($_CLASS['core_user']->data['session_url']) ? generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)) : '');
+		break;
+		
+		default:
+			script_close();
+		break;
+	}
 }
 
 $start = get_variable('start', 'GET', 0, 'integer');
@@ -202,7 +257,7 @@ do
 {
 	if ($row['poster_name'])
 	{
-		$user_name = htmlentities($row['poster_name'], ENT_QUOTES, 'UTF-8');;
+		$user_name = htmlentities($row['poster_name'], ENT_QUOTES, 'UTF-8');
 		$userlink = ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']) : false;
 	}
 	else

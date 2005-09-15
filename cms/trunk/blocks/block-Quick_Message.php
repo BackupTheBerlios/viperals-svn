@@ -21,82 +21,26 @@
 $Id$
 */
 
+// Convert to template
 if (!defined('VIPERAL'))
 {
     die;
 }
 
-global $table_prefix;
+global $table_prefix, $site_file_root, $_CORE_CONFIG;
 
+/*
 if (!defined('QUICK_MESSAGE_TABLE'))
 {
 	define('QUICK_MESSAGE_TABLE', $table_prefix.'quick_message');
 }
+*/
 
-global $prefix, $_CLASS, $_CORE_CONFIG;
+require_once($site_file_root.'modules/Quick_Message/functions.php');
 
-$this->content = '<div style="width: 100%; height: '.$_CORE_CONFIG['quick_message']['height'].'px; overflow: auto;">';
+$this->content = '<div id="qm_block">'.qm_block_content().'</div>';
 
-$result = $_CLASS['core_db']->query_limit('SELECT * from '.QUICK_MESSAGE_TABLE.' ORDER BY message_time DESC', 10);
-
-while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-{
-	/*
-		php 4 doesn't support mb html_entity_decode :-(
-		Make a core function for this
-	*/
-	//$words_array = explode(' ',html_entity_decode($row['message_text'], ENT_QUOTES, 'UTF-8'));
-	$words_array = explode(' ', $row['message_text']);
-
-	$row['message_text'] = '';
-
-    foreach($words_array as $words)
-    {
-		if (substr($words, 0, 4) != '[url')
-		{
-			$row['message_text'] .= ' '.wordwrap($words, 18, "\n", 1);
-		}
-		else
-		{
-			$row['message_text'] .= $words;
-		}
-    }
-
-	$row['message_text'] = htmlentities($row['message_text'], ENT_QUOTES, 'UTF-8');
-
-	unset($words_array, $words);
-	
-	$this->content .= '<div style="padding: 4px;">';
-	
-	if ($row['poster_name'])
-	{
-		$row['poster_name'] = htmlentities($row['poster_name'], ENT_QUOTES, 'UTF-8');
-
-		if ($row['poster_id']) 
-		{
-			$this->content .= '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']).'"><b>' . $row['poster_name'] . ': </b></a>';
-		}
-		else
-		{
-			$this->content .= '<b>' . $row['poster_name'] . ': </b>'; 
-		}
-	}
-	else
-	{
-		$this->content .= '<b>' . $_CLASS['core_user']->lang['ANONYMOUS'] . ': </b>';
-	}
-
-	if ($row['poster_id'])
-	{
-		$row['message_text'] = preg_replace('#\[url=([^\[]+?)\](.*?)\[/url\]#s', '<a href="$1" target="_blank">$2</a>', $row['message_text']);
-	}
-
-	$this->content .= $row['message_text'].'<br />'. $_CLASS['core_user']->format_date($row['message_time']) .'</div><hr/>';
-}
-
-$_CLASS['core_db']->free_result($result);
-
-$this->content .= '</div><div align="center"><a href="'.generate_link('Quick_Message').'">Message History</a><br />';
+$this->content .= '<script type="text/javascript" src="javascript/quick_messages.js"></script><div align="center"><a href="'.generate_link('Quick_Message').'">Message History</a><br />';
 
 if (!$_CLASS['core_user']->is_user && !$_CORE_CONFIG['quick_message']['anonymous_posting'])
 {
@@ -109,11 +53,12 @@ $this->content .= '<form name="post" method="post" action="'.generate_link('Quic
 
 if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['quick_message']['anonymous_posting'] == '2')
 {
-	$this->content .= 'Name: <br /><input class="post" type="text" style="width:90%;" name="poster_name" size="10" maxlength="10" /><br />';
+	$this->content .= 'Name: <br /><input class="post" type="text" style="width:90%;" id="poster_name" name="poster_name" size="10" maxlength="10" /><br />';
 }
 
-$this->content .= 'Message <br/> <textarea name="message" style="width:90%;" rows="3"></textarea><br /><br />
-			<input class="button" type="submit" name="submit" value="Post" />
+$this->content .= 'Message <br/> <textarea id="message" name="message" style="width:90%;" rows="3"></textarea><br /><br />
+			<input class="button" type="button" name="submit" onclick="quick_message_submit()" value="Post" />
+			<input class="button" type="button" name="submit" onclick="quick_message_refresh()" value="Refresh" />
 		</div></form>';
 
 ?>

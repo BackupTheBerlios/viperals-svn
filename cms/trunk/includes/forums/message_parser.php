@@ -755,7 +755,8 @@ class parse_message extends bbcode_firstpass
 
 		// Parse smilies
 		if ($allow_smilies)
-		{
+		{	
+$config['max_' . $mode . '_smilies'] = 0;
 			$this->smilies($config['max_' . $mode . '_smilies']);
 		}
 		$num_urls = 0;
@@ -781,7 +782,7 @@ class parse_message extends bbcode_firstpass
 		if ($allow_magic_url)
 		{
 			$this->magic_url();
-	
+$config['max_' . $mode . '_urls'] = 0;
 			if ($config['max_' . $mode . '_urls'])
 			{
 				$num_urls += preg_match_all('#\<!-- (l|m|w|e) --\>.*?\<!-- \1 --\>#', $this->message, $matches);
@@ -789,7 +790,8 @@ class parse_message extends bbcode_firstpass
 		}
 		
 		// Check number of links
-		if ($config['max_' . $mode . '_urls'] && $num_urls > $config['max_' . $mode . '_urls'])
+//max_sig_urls
+		if (isset($config['max_' . $mode . '_urls']) && $config['max_' . $mode . '_urls'] && $num_urls > $config['max_' . $mode . '_urls'])
 		{
 			$this->warn_msg[] = sprintf($_CLASS['core_user']->lang['TOO_MANY_URLS'], $config['max_' . $mode . '_urls']);
 			return $this->warn_msg;

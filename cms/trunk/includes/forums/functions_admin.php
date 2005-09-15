@@ -100,7 +100,7 @@ function size_select($select_name, $size_compare)
 
 	$select_field = '<select name="' . $select_name . '">';
 
-	$size = sizeof($size_types_text);
+	$size = count($size_types_text);
 	for ($i = 0, $size; $i < $size; $i++)
 	{
 		$selected = ($size_compare == $size_types[$i]) ? ' selected="selected"' : '';
@@ -339,7 +339,7 @@ function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
 		$where_ids = array_unique($where_ids);
 	}
 
-	if (!sizeof($where_ids))
+	if (empty($where_ids))
 	{
 		return array('topics' => 0, 'posts' => 0);
 	}
@@ -360,9 +360,9 @@ function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
 	}
 	$_CLASS['core_db']->free_result();
 
-	$return['topics'] = sizeof($topic_ids);
+	$return['topics'] = count($topic_ids);
 
-	if (!sizeof($topic_ids))
+	if (!$return['topics'])
 	{
 		return $return;
 	}
@@ -455,7 +455,7 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 		sync('forum', 'forum_id', $forum_ids, true);
 	}
 
-	return sizeof($post_ids);
+	return count($post_ids);
 }
 
 // Delete Attachments
@@ -471,7 +471,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 		$ids = array_unique($ids);
 	}
 	
-	if (!sizeof($ids))
+	if (empty($ids))
 	{
 		return false;
 	}
@@ -556,7 +556,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 	$topic_ids = array_unique($topic_ids);
 
 	// Update post indicators
-	if (sizeof($post_ids))
+	if (!empty($post_ids))
 	{
 		if ($mode == 'post' || $mode == 'topic')
 		{
@@ -582,7 +582,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 			$_CLASS['core_db']->free_result($result);
 
 			$unset_ids = array_diff($post_ids, $remaining);
-			if (sizeof($unset_ids))
+			if (!empty($unset_ids))
 			{
 				$_CLASS['core_db']->query('UPDATE ' . FORUMS_POSTS_TABLE . ' 
 					SET post_attachment = 0
@@ -604,7 +604,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 			$_CLASS['core_db']->free_result($result);
 
 			$unset_ids = array_diff($post_ids, $remaining);
-			if (sizeof($unset_ids))
+			if (!empty($unset_ids))
 			{
 				$_CLASS['core_db']->query('UPDATE ' . FORUMS_PRIVMSGS_TABLE . ' 
 					SET message_attachment = 0
@@ -613,7 +613,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 		}
 	}
 
-	if (sizeof($topic_ids))
+	if (!empty($topic_ids))
 	{
 		// Update topic indicator
 		if ($mode == 'topic')
@@ -639,7 +639,7 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 			$_CLASS['core_db']->free_result($result);
 
 			$unset_ids = array_diff($topic_ids, $remaining);
-			if (sizeof($unset_ids))
+			if (!empty($unset_ids))
 			{
 				$_CLASS['core_db']->query('UPDATE ' . FORUMS_TOPICS_TABLE . ' 
 					SET topic_attachment = 0
@@ -681,7 +681,7 @@ function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 				$topic_ids[] = $row['topic_id'];
 			}
 
-			if (sizeof($topic_ids))
+			if (!empty($topic_ids))
 			{
 				$sql = 'DELETE FROM ' . FORUMS_TOPICS_TABLE . '
 					WHERE topic_id IN (' . implode(',', $topic_ids) . ')';
@@ -750,7 +750,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 		}
 		else
 		{
-			if (!sizeof($where_ids))
+			if (empty($where_ids))
 			{
 				// Empty array with IDs. This means that we don't have any work to do. Just return.
 				return;
@@ -763,7 +763,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 	}
 	else
 	{
-		if (!sizeof($where_ids))
+		if (empty($where_ids))
 		{
 			return;
 		}
@@ -836,7 +836,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 					$_CLASS['core_db']->free_result();
 
-					if (!sizeof($topic_ids))
+					if (empty($topic_ids))
 					{
 						return;
 					}
@@ -890,7 +890,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$post_ids[] = $post_id;
 			}
 
-			if (sizeof($post_ids))
+			if (!empty($post_ids))
 			{
 				$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 					SET post_reported = 1 - post_reported
@@ -928,7 +928,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				}
 			}
 
-			if (sizeof($topic_ids))
+			if (!empty($topic_ids))
 			{
 				$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 					SET topic_reported = 1 - topic_reported
@@ -980,7 +980,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				$post_ids[] = $post_id;
 			}
 
-			if (sizeof($post_ids))
+			if (!empty($post_ids))
 			{
 				$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 					SET post_attachment = 1 - post_attachment
@@ -1018,7 +1018,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				}
 			}
 
-			if (sizeof($topic_ids))
+			if (!empty($topic_ids))
 			{
 				$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 					SET topic_attachment = 1 - topic_attachment
@@ -1090,7 +1090,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			}
 
 			// 4: Retrieve last_post infos
-			if (sizeof($post_ids))
+			if (!empty($post_ids))
 			{
 				$sql = 'SELECT p.post_id, p.poster_id, p.post_time, p.post_username, u.username
 					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
@@ -1148,7 +1148,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 				}
 
-				if (sizeof($sql))
+				if (!empty($sql))
 				{
 					$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 						SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . '
@@ -1234,18 +1234,18 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			}
 
 			// Now we delete empty topics and orphan posts
-			if (sizeof($delete_posts))
+			if (!empty($delete_posts))
 			{
 				delete_posts('topic_id', array_keys($delete_posts), FALSE);
 				unset($delete_posts);
 			}
-			if (!sizeof($topic_data))
+			if (empty($topic_data))
 			{
 				// If we get there, topic ids were invalid or topics did not contain any posts
 				delete_topics($where_type, $where_ids, TRUE);
 				return;
 			}
-			if (sizeof($delete_topics))
+			if (!empty($delete_topics))
 			{
 				$delete_topic_ids = array();
 				foreach ($delete_topics as $topic_id => $void)
@@ -1289,7 +1289,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$_CLASS['core_db']->free_result($result);
 
 			// approved becomes unapproved, and vice-versa
-			if (sizeof($approved_unapproved_ids))
+			if (!empty($approved_unapproved_ids))
 			{
 				$sql = 'UPDATE ' . TOPICS_TABLE . '
 					SET topic_approved = 1 - topic_approved
@@ -1348,7 +1348,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					}
 				}
 
-				if (sizeof($sql))
+				if (!empty($sql))
 				{
 					$sql = 'UPDATE ' . TOPICS_TABLE . '
 						SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . '
@@ -1363,7 +1363,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			// if some topics have been resync'ed then resync parent forums
 			// except when we're only syncing a range, we don't want to sync forums during
 			// batch processing.
-			if ($resync_parents && sizeof($resync_forums) && $where_type != 'range')
+			if ($resync_parents && !empty($resync_forums) && $where_type != 'range')
 			{
 				sync('forum', 'forum_id', $resync_forums, TRUE);
 			}
@@ -1469,7 +1469,7 @@ function remove_comments(&$output)
 	$output = '';
 
 	// try to keep mem. use down
-	$linecount = sizeof($lines);
+	$linecount = count($lines);
 
 	$in_comment = false;
 	for($i = 0; $i < $linecount; $i++)
@@ -1515,7 +1515,7 @@ function split_sql_file($sql, $delimiter)
 	$matches = array();
 
 	// this is faster than calling count($oktens) every time thru the loop.
-	$token_count = sizeof($tokens);
+	$token_count = count($tokens);
 	for ($i = 0; $i < $token_count; $i++)
 	{
 		// Don't wanna add an empty string as the last thing in the array.
@@ -1633,7 +1633,7 @@ function cache_moderators()
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	if (sizeof($m_sql))
+	if (!empty($m_sql))
 	{
 		switch ($_CLASS['core_db']->db_layer)
 		{
@@ -1807,7 +1807,7 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	if (sizeof($topic_id_list))
+	if (!empty($topic_id_list))
 	{
 		$topic_id_list = array_unique($topic_id_list);
 
@@ -2208,7 +2208,7 @@ function update_post_information($type, $ids)
 		}
 	}
 
-	if (sizeof($last_post_ids))
+	if (!empty($last_post_ids))
 	{
 		$sql = 'SELECT p.' . $type . '_id, p.post_id, p.post_time, p.poster_id, p.post_username, u.user_id, u.username
 			FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
@@ -2227,7 +2227,7 @@ function update_post_information($type, $ids)
 	}
 	unset($empty_forums, $ids, $last_post_ids);
 
-	if (!sizeof($update_sql))
+	if (empty($update_sql))
 	{
 		return;
 	}

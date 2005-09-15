@@ -185,7 +185,7 @@ class ucp_groups extends module
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_DISPLAY_FORM', true,
 			'S_UCP_ACTION' => ''
 		));

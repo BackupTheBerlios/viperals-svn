@@ -26,7 +26,7 @@ class ucp_attachments extends module
 		$confirm = (isset($_POST['confirm'])) ? true : false;
 		$delete_ids = isset($_REQUEST['attachment']) ? array_keys(array_map('intval', $_REQUEST['attachment'])) : array();
 		
-		if ($delete && sizeof($delete_ids))
+		if (!empty($delete_ids))
 		{
 			$s_hidden_fields = '<input type="hidden" name="delete" value="1" />';
 			foreach ($delete_ids as $attachment_id)
@@ -128,9 +128,13 @@ class ucp_attachments extends module
 			} 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 		}
+		else
+		{
+			$_CLASS['core_template']->assign('S_ATTACHMENT_ROWS', false);
+		}
 		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign(array( 
+		$_CLASS['core_template']->assign_array(array( 
 			'PAGE_NUMBER'			=> on_page($num_attachments, $config['posts_per_page'], $start),
 			'PAGINATION'			=> generate_pagination("Control_Panel&amp;i=$id&amp;sk=$sort_key&amp;sd=$sort_dir", $num_attachments, $config['posts_per_page'], $start),
 			'TOTAL_ATTACHMENTS'		=> $num_attachments,

@@ -16,7 +16,7 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 }
 
 // Get general vars
-$update		= (isset($_POST['update'])) ? true : false;
+$update		= isset($_POST['update']);
 $mode		= request_var('mode', '');
 $action		= request_var('action', '');
 $forum_id	= request_var('f', 0);
@@ -42,7 +42,7 @@ switch ($mode)
 
 if (!$_CLASS['auth']->acl_get($acl))
 {
-	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
+	trigger_error('NO_ADMIN');
 }
 
 
@@ -80,8 +80,6 @@ if ($update)
 				'forum_id'		=>	$forum_id
 			);
 
-			// No break here
-
 		case 'add':
 			$forum_data += array(
 				'parent_id'				=> $parent_id,
@@ -107,10 +105,16 @@ if ($update)
 				'prune_sticky'			=> request_var('prune_sticky', FALSE),
 				'forum_password'		=> request_var('forum_password', ''),
 				'forum_password_confirm'=> request_var('forum_password_confirm', ''),
-				'forum_posts'			=> 0,
-				'forum_topics'			=> 0,
-				'forum_topics_real'		=> 0,
 			);
+	
+			if ($mode === 'add')
+			{
+				$forum_data += array(
+					'forum_posts'			=> 0,
+					'forum_topics'			=> 0,
+					'forum_topics_real'		=> 0,
+				);
+			}
 
 			if ($forum_data['forum_rules'])
 			{
@@ -130,7 +134,7 @@ if ($update)
 				$forum_data['forum_rules_bbcode_bitfield'] = $message_parser->bbcode_bitfield;
 				unset($message_parser);
 			}
-					
+
 			$errors = update_forum_data($forum_data);
 
 			if ($errors)
@@ -138,16 +142,15 @@ if ($update)
 				break;
 			}
 
-			// 
 			$_CLASS['auth']->acl_clear_prefetch();
 
 			// Redirect to permissions
-			$message = ($mode == 'add') ? $_CLASS['core_user']->lang['FORUM_CREATED'] : $_CLASS['core_user']->lang['FORUM_UPDATED'];
+			$message = ($mode === 'add') ? $_CLASS['core_user']->lang['FORUM_CREATED'] : $_CLASS['core_user']->lang['FORUM_UPDATED'];
 			$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['REDIRECT_ACL'], '<a href="'.generate_link('Forums&amp;file=admin_permissions&amp;mode=forum&amp;submit_usergroups=true&amp;ug_type=forum&amp;action=usergroups&amp;f[forum][]=' . $forum_data['forum_id'], array('admin' => true)) . '">', '</a>');
 			$show_prev_info = ($mode == 'edit') ? true : false;
 
 			trigger_error($message);
-			break;
+		break;
 	}
 }
 
@@ -155,7 +158,7 @@ switch ($mode)
 {
 	case 'add':
 	case 'edit':
-		if (isset($_POST['update']))
+		if ($update)
 		{
 			extract($forum_data);
 		}
@@ -254,25 +257,25 @@ switch ($mode)
 		}
 
 		$statuslist = '<option value="' . ITEM_UNLOCKED . '"' . (($forum_status == ITEM_UNLOCKED) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['UNLOCKED'] . '</option><option value="' . ITEM_LOCKED . '"' . (($forum_status == ITEM_LOCKED) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['LOCKED'] . '</option>';
-$enable_icons = isset($enable_icons) ? $enable_icons : 0;
-$enable_indexing = isset($enable_indexing) ? $enable_indexing : 0;
-$enable_prune = isset($enable_prune) ? $enable_prune : 0;
-$display_on_index = isset($display_on_index) ? $display_on_index : 0;
-$forum_flags = isset($forum_flags) ? $forum_flags : 0;
 
-$bbcode_checked = isset($bbcode_checked) ? $bbcode_checked : false;
-$smilies_checked = isset($smilies_checked) ? $smilies_checked : false;
-$urls_checked = isset($urls_checked) ? $urls_checked : false;
-
-$old_forum_type = isset($old_forum_type) ? $old_forum_type : '';
-$forum_image = isset($forum_image) ? $forum_image : '';
-$prune_freq = isset($prune_freq) ? $prune_freq : '';
-$prune_days = isset($prune_days) ? $prune_days : '';
-$prune_viewed = isset($prune_viewed) ? $prune_viewed : '';
-$forum_link = isset($forum_link) ? $forum_link : '';
-
-$forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
-
+		$enable_icons = isset($enable_icons) ? $enable_icons : 0;
+		$enable_indexing = isset($enable_indexing) ? $enable_indexing : 0;
+		$enable_prune = isset($enable_prune) ? $enable_prune : 0;
+		$display_on_index = isset($display_on_index) ? $display_on_index : 0;
+		$forum_flags = isset($forum_flags) ? $forum_flags : 0;
+		
+		$bbcode_checked = isset($bbcode_checked) ? $bbcode_checked : false;
+		$smilies_checked = isset($smilies_checked) ? $smilies_checked : false;
+		$urls_checked = isset($urls_checked) ? $urls_checked : false;
+		
+		$old_forum_type = isset($old_forum_type) ? $old_forum_type : '';
+		$forum_image = isset($forum_image) ? $forum_image : '';
+		$prune_freq = isset($prune_freq) ? $prune_freq : '';
+		$prune_days = isset($prune_days) ? $prune_days : '';
+		$prune_viewed = isset($prune_viewed) ? $prune_viewed : '';
+		$forum_link = isset($forum_link) ? $forum_link : '';
+		
+		$forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		$indexing_yes = ($enable_indexing) ? ' checked="checked"' : '';
 		$indexing_no = (!$enable_indexing) ? ' checked="checked"' : '';
@@ -345,18 +348,8 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 			// deleting all posts or moving them to another forum (if applicable)
 
 ?><br /><input type="radio" name="action" value="delete" checked="checked" /> <?php echo $_CLASS['core_user']->lang['DELETE_ALL_POSTS'];
-
-			$sql = 'SELECT forum_id
-				FROM ' . FORUMS_FORUMS_TABLE . '
-				WHERE forum_type = ' . FORUM_POST . "
-					AND forum_id <> $forum_id";
-			$result = $_CLASS['core_db']->query($sql);
-
-			if ($_CLASS['core_db']->fetch_row_assoc($result))
-			{
 ?>&nbsp;<input type="radio" name="action" value="move" /> <?php echo $_CLASS['core_user']->lang['MOVE_POSTS_TO'] ?> <select name="to_forum_id"><?php echo $forums_list ?></select><?php
 
-			}
 		}
 
 ?></td>
@@ -365,14 +358,12 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		if ($forum_type == FORUM_POST)
 		{
-
 ?>
 	<tr>
 		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['FORUM_STATUS'] ?>: </b></td>
 		<td class="row2"><select name="forum_status"><?php echo $statuslist ?></select></td>
 	</tr>
 <?php
-
 		}
 
 ?>
@@ -384,7 +375,6 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		if ($forum_type == FORUM_LINK)
 		{
-
 ?>
 	<tr>
 		<td class="row1"><b><?php echo $_CLASS['core_user']->lang['FORUM_LINK'] ?>: </b><br /><span class="gensmall"><?php echo $_CLASS['core_user']->lang['FORUM_LINK_EXPLAIN']; ?></span></td>
@@ -395,7 +385,6 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 		<td class="row2"><input type="radio" name="forum_link_track" value="1"<?php echo $forum_link_track_yes; ?> /> <?php echo $_CLASS['core_user']->lang['YES']; ?> &nbsp; <input type="radio" name="forum_link_track" value="0"<?php echo $forum_link_track_no; ?> /> <?php echo $_CLASS['core_user']->lang['NO']; ?></td>
 	</tr>
 <?php
-
 		}
 
 ?>
@@ -655,7 +644,7 @@ $forum_topics_per_page = isset($topics_per_page) ? $topics_per_page : '';
 
 		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
 		{
-			trigger_error($_CLASS['core_user']->lang['NO_FORUM']);
+			trigger_error('NO_FORUM');
 		}
 		$_CLASS['core_db']->free_result($result);
 
@@ -1431,7 +1420,7 @@ function delete_forum_content($forum_id)
 	switch ($_CLASS['core_db']->db_layer)
 	{
 // Needs updating and testing
-/*		case 'mysql4':
+/*		case 'mysql':
 		case 'mysqli':
 			// Select then delete all attachments
 			$sql = 'SELECT a.topic_id

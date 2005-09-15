@@ -17,22 +17,20 @@ class ucp_zebra extends module
 	{
 		global $_CLASS;
 		
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'ERROR'				=> false,
 			'USERNAMES'			=> false,
-			'S_USERNAME_OPTIONS'=> false)
-		);
+			'S_USERNAME_OPTIONS'=> false
+		));
 		
 		$s_hidden_fields = '';
 
 		if (!empty($_POST['submit']) || !empty($_GET['add']))
 		{
-			$data['usernames'] = request_var('usernames', array(0));
-			$data['add'] = request_var('add', '');
+			$data['usernames'] = get_variable('usernames', 'POST', false, 'array');
+			$data['add'] = get_variable('add', 'POST', false);
 
-			$error = validate_data($data, array('add'	=> array('string', false)));
-			
-			if ($data['add'] && !sizeof($error))
+			if ($data['add'] && empty($error))
 			{
 				$data['add'] = explode("\n", $data['add']);
 
@@ -97,7 +95,7 @@ class ucp_zebra extends module
 							unset($perms);
 						}
 
-						if (sizeof($user_id_ary))
+						if (!empty($user_id_ary))
 						{
 							$sql_mode = ($mode == 'friends') ? 'friend' : 'foe';
 
@@ -119,7 +117,7 @@ class ucp_zebra extends module
 					$_CLASS['core_db']->free_result($result);
 				}
 			}
-			else if ($data['usernames'] && !sizeof($error))
+			elseif ($data['usernames'] && empty($error))
 			{
 				// Force integer values
 				$data['usernames'] = array_map('intval', $data['usernames']);
@@ -130,7 +128,7 @@ class ucp_zebra extends module
 				$_CLASS['core_db']->query($sql);
 			}
 			
-			if (!sizeof($error))
+			if (empty($error))
 			{
 				$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
 				$message = $_CLASS['core_user']->lang[strtoupper($mode) . '_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
@@ -157,7 +155,7 @@ class ucp_zebra extends module
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign(array( 
+		$_CLASS['core_template']->assign_array(array( 
 			'L_TITLE'				=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
 
 			'U_SEARCH_USER'			=> generate_link('Members_List&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 

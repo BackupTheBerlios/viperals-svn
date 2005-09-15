@@ -95,6 +95,8 @@ foreach ($holding_array as $name => $setting)
 	}
 }
 
+unset($holding_array);
+
 $error = array();
 $stage = isset($_POST['stage']) ? (int) $_POST['stage'] : 0;
 
@@ -320,7 +322,7 @@ if ($stage === 3)
 		require_once($site_file_root.'includes/tables.php');
 	
 		$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE;
-		$result = $_CLASS['core_db']->query($sql);
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
 		$_CLASS['core_db']->free_result($result);
 	
 		if ($result)
@@ -349,67 +351,79 @@ if ($stage === 3)
 	
 		$config_data = "<?php\n\n";
 
-		foreach ($site_db as $name => $value)
+		$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE;
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
+		$_CLASS['core_db']->free_result($result);
+	
+		if (!$result)
 		{
-			if (is_bool($value))
-			{
-				$value = ($value) ? 'true' : 'false';
-			}
-			elseif (!is_int($value))
-			{
-				$value = "'$value'";
-			}
-
-			$config_data .= "\$site_db['$name'] = $value;\n";
-		}
-
-		$config_data .= "\n";
-		$config_data .= "\$table_prefix\t= '$table_prefix';\n";
-		$config_data .= "\$user_prefix\t= '$user_prefix';\n\n";
-		$config_data .= "\$acm_type\t\t= 'file';\n\n";
-		$config_data .= "if (!defined('INDEX_PAGE'))\n{\n\tdefine('INDEX_PAGE', 'index.php');\n}\n\n";
-		$config_data .= "if (!defined('ADMIN_PAGE'))\n{\n\tdefine('ADMIN_PAGE', 'admin.php');\n}\n\n";
-		$config_data .= '?>';
-
-		if (file_put_contents($site_file_root.'config.php', $config_data))
-		{
-			$config_data = false;
+			$stage = 2;
+			$error[] = 'Installation failed<br/> Please confirm that your using the currect database layer';
 		}
 		else
 		{
-			$error[] = 'Failed to write to your config.php file<br/>Please upload the content listed in the "Config.php Content" Section';
+			foreach ($site_db as $name => $value)
+			{
+				if (is_bool($value))
+				{
+					$value = ($value) ? 'true' : 'false';
+				}
+				elseif (!is_int($value))
+				{
+					$value = "'$value'";
+				}
+	
+				$config_data .= "\$site_db['$name'] = $value;\n";
+			}
+	
+			$config_data .= "\n";
+			$config_data .= "\$table_prefix\t= '$table_prefix';\n";
+			$config_data .= "\$user_prefix\t= '$user_prefix';\n\n";
+			$config_data .= "\$acm_type\t\t= 'file';\n\n";
+			$config_data .= "if (!defined('INDEX_PAGE'))\n{\n\tdefine('INDEX_PAGE', 'index.php');\n}\n\n";
+			$config_data .= "if (!defined('ADMIN_PAGE'))\n{\n\tdefine('ADMIN_PAGE', 'admin.php');\n}\n\n";
+			$config_data .= '?>';
+	
+			if (file_put_contents($site_file_root.'config.php', $config_data))
+			{
+				$config_data = false;
+			}
+			else
+			{
+				$error[] = 'Failed to write to your config.php file<br/>Please upload the content listed in the "Config.php Content" Section';
+			}
+			
+			$path = dirname(getenv('SCRIPT_NAME'));
+	
+			if (substr($path, -1) != '/')
+			{
+				$path .= '/';
+			}
+	
+			$path = str_replace('install/', '', $path);
+			$domain = !empty($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
+	
+			$_CLASS['core_template']->assign_array(array(
+				'site_name'			=> 'New CMS Site',
+				'site_domain'		=> $domain,
+				'site_path'			=> $path,
+				'site_port'			=> ($_SERVER['SERVER_PORT'] == 80) ? '' : $_SERVER['SERVER_PORT'],
+				'cookie_domain'		=> $domain,
+				'cookie_path'		=> $path,
+				'cookie_name'		=> 'cms',
+				'username'			=> '',
+				'password'			=> '',
+				'password_confirm'	=> '',
+				'email'				=> '',
+				'email_confirm'		=> '',
+				'error'				=> empty($error) ? false : implode('<br/>', $error),
+				'config_content'	=> $config_data
+			));
+	
+			$_CLASS['core_template']->display('installer/stage3.html');
+	
+			script_close();
 		}
-		
-		$path = dirname(getenv('SCRIPT_NAME'));
-
-		if (substr($path, -1) != '/')
-		{
-			$path .= '/';
-		}
-
-		$path = str_replace('install/', '', $path);
-		$domain = !empty($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
-
-		$_CLASS['core_template']->assign_array(array(
-			'site_name'			=> 'New CMS Site',
-			'site_domain'		=> $domain,
-			'site_path'			=> $path,
-			'site_port'			=> ($_SERVER['SERVER_PORT'] == 80) ? '' : $_SERVER['SERVER_PORT'],
-			'cookie_domain'		=> $domain,
-			'cookie_path'		=> $path,
-			'cookie_name'		=> 'cms',
-			'username'			=> '',
-			'password'			=> '',
-			'password_confirm'	=> '',
-			'email'				=> '',
-			'email_confirm'		=> '',
-			'error'				=> empty($error) ? false : implode('<br/>', $error),
-			'config_content'	=> $config_data
-		));
-
-		$_CLASS['core_template']->display('installer/stage3.html');
-
-		script_close();
 	}
 }
 

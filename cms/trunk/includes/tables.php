@@ -191,6 +191,7 @@ define('FORUMS_PRIVMSGS_FOLDER_TABLE', $table_prefix.'forums_privmsgs_folder');
 define('FORUMS_PRIVMSGS_RULES_TABLE', $table_prefix.'forums_privmsgs_rules');
 define('FORUMS_REPORTS_TABLE', $table_prefix.'forums_reports');
 define('FORUMS_REASONS_TABLE', $table_prefix.'forums_reports_reasons');
+define('FORUMS_SITELIST_TABLE', $table_prefix.'forums_sitelist');
 define('FORUMS_SEARCH_TABLE', $table_prefix.'forums_search_results');
 define('FORUMS_SEARCH_WORD_TABLE', $table_prefix.'forums_search_wordlist');
 define('FORUMS_SEARCH_MATCH_TABLE', $table_prefix.'forums_search_wordmatch');

@@ -149,8 +149,14 @@ function check_maintance_status($return = false)
 
 	if ($_CORE_CONFIG['maintenance']['active'])
 	{
-		if ($_CORE_CONFIG['maintenance']['start'] < time())
+		if ($_CORE_CONFIG['maintenance']['start'] < gmtime())
 		{
+// TEMP fix maybe
+			if (get_variable('mod', 'REQUEST', false) === 'system' && get_variable('mode', 'REQUEST', false) === 'confirmation_image')
+			{
+				return $maintance_status = false;
+			}
+
 			if (VIPERAL == 'Admin' || (isset($_CLASS['core_user']) && $_CLASS['core_user']->is_admin))
 			{
 				return $maintance_status = false;

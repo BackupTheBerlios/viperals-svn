@@ -541,4 +541,195 @@ function validate_username($username)
 	return true;
 }
 
+
+
+/***
+Temp copy from phpBB function_user.php
+***/
+function validate_string($string, $optional = false, $min = 0, $max = 0)
+{
+	if (empty($string) && $optional)
+	{
+		return false;
+	}
+
+	if ($min && strlen($string) < $min)
+	{
+		return 'TOO_SHORT';
+	}
+	else if ($max && strlen($string) > $max)
+	{
+		return 'TOO_LONG';
+	}
+
+	return false;
+}
+
+function validate_num($num, $optional = false, $min = 0, $max = 1E99)
+{
+	if (empty($num) && $optional)
+	{
+		return false;
+	}
+
+	if ($num < $min)
+	{
+		return 'TOO_SMALL';
+	}
+	else if ($num > $max) 
+	{
+		return 'TOO_LARGE';
+	}
+
+	return false;
+}
+
+function validate_match($string, $optional = false, $match)
+{
+	if (empty($string) && $optional)
+	{
+		return false;
+	}
+
+	if (!preg_match($match, $string))
+	{
+		return 'WRONG_DATA';
+	}
+	return false;
+}
+
+// TODO?
+// Ability to limit types of email address ... not by banning, seperate table
+// capability to require (or deny) use of certain addresses when user is
+// registering from certain IP's/hosts
+
+// Check to see if email address is banned or already present in the DB
+function validate_email($email)
+{
+	global $_CORE_CONFIG, $_CLASS;
+
+	if (strtolower($_CLASS['core_user']->data['user_email']) == strtolower($email))
+	{
+		return false;
+	}
+
+	if (!preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email))
+	{
+		return 'EMAIL_INVALID';
+	}
+
+	$sql = 'SELECT ban_email
+		FROM ' . BANLIST_TABLE;
+	$result = $_CLASS['core_db']->query($sql);
+
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		if (preg_match('#^' . str_replace('*', '.*?', $row['ban_email']) . '$#i', $email))
+		{
+			return 'EMAIL_BANNED';
+		}
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	if (!$_CORE_CONFIG['user']['allow_emailreuse'])
+	{
+		$sql = 'SELECT user_email_hash
+			FROM ' . USERS_TABLE . "
+			WHERE user_email_hash = " . crc32(strtolower($email)) . strlen($email);
+		$result = $_CLASS['core_db']->query($sql);
+
+		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			return 'EMAIL_TAKEN';
+		}
+		$_CLASS['core_db']->free_result($result);
+	}
+
+	return false;
+}
+
+//
+// Avatar functions
+//
+
+function avatar_delete($id)
+{
+	global $config, $_CORE_CONFIG;
+
+	if (file_exists($config['avatar_path'] . '/' . $id))
+	{
+		@unlink($config['avatar_path'] . '/' . $id);
+	}
+
+	return false;
+ }
+
+function avatar_remote($data, &$error)
+{
+	global $config, $_CLASS;
+
+	if (!preg_match('#^(http|https|ftp)://#i', $data['remotelink']))
+	{
+		$data['remotelink'] = 'http://' . $data['remotelink'];
+	}
+
+	if (!preg_match('#^(http|https|ftp)://(.*?\.)*?[a-z0-9\-]+?\.[a-z]{2,4}:?([0-9]*?).*?\.(gif|jpg|jpeg|png)$#i', $data['remotelink']))
+	{
+		$error[] = $_CLASS['core_user']->lang['AVATAR_URL_INVALID'];
+		return false;
+	}
+
+	if ((!($data['width'] || $data['height']) || $data['remotelink'] != $_CLASS['core_user']->data['user_avatar']) && ($config['avatar_max_width'] || $config['avatar_max_height']))
+	{
+		list($width, $height) = @getimagesize($data['remotelink']);
+
+		if (!$width || !$height)
+		{
+			$error[] = $_CLASS['core_user']->lang['AVATAR_NO_SIZE'];
+			return false;
+		}
+		else if ($width > $config['avatar_max_width'] || $height > $config['avatar_max_height'])
+		{
+			$error[] = sprintf($_CLASS['core_user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_max_width'], $config['avatar_max_height']);
+			return false;
+		}
+	}
+	else if ($data['width'] > $config['avatar_max_width'] || $data['height'] > $config['avatar_max_height'])
+	{
+		$error[] = sprintf($_CLASS['core_user']->lang['AVATAR_WRONG_SIZE'], $config['avatar_max_width'], $config['avatar_max_height']);
+		return false;
+	}
+
+	return array(AVATAR_REMOTE, $data['remotelink'], $width, $height);
+}
+
+function avatar_upload($data, &$error)
+{
+	global $site_file_root, $config, $_CLASS;
+
+	// Init upload class
+	include_once($site_file_root.'includes/forums/functions_upload.php');
+	
+	$upload = new fileupload('AVATAR_', array('jpg', 'jpeg', 'gif', 'png'), $config['avatar_filesize'], $config['avatar_min_width'], $config['avatar_min_height'], $config['avatar_max_width'], $config['avatar_max_height']);
+							
+	if (!empty($_FILES['uploadfile']['name']))
+	{
+		$file = $upload->form_upload('uploadfile');
+	}
+	else
+	{
+		$file = $upload->remote_upload($data['uploadurl']);
+	}
+
+	$file->clean_filename('real', $_CLASS['core_user']->data['user_id'] . '_');
+	$file->move_file($config['avatar_path']);
+
+	if (sizeof($file->error))
+	{
+		$file->remove();
+		$error = array_merge($error, $file->error);
+	}
+	
+	return array(AVATAR_UPLOAD, $file->get('realname'), $file->get('width'), $file->get('height'));
+}
 ?>

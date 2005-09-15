@@ -1,19 +1,29 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 // -------------------------------------------------------------
 //
-// COPYRIGHT : © 2001, 2004 phpBB Group
+// COPYRIGHT : 2001, 2004 phpBB Group
 // WWW       : http://www.phpbb.com/
 //
 // -------------------------------------------------------------
@@ -181,14 +191,6 @@ class auth
 
 		$hold_ary = $this->acl_raw_data($userdata['user_id'], false, false);
 		$hold_ary = empty($hold_ary[$userdata['user_id']]) ? '' : $hold_ary[$userdata['user_id']];
-
-		foreach ($this->acl_options['global'] as $opt => $id)
-		{
-			if (strstr($opt, 'a_'))
-			{
-				$hold_ary[0][$opt] = 1;
-			}
-		}
 
 		$hold_str = '';
 		if (is_array($hold_ary))
