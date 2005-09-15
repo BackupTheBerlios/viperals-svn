@@ -140,8 +140,9 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 					}
 	
 					require($site_file_root.'includes/functions_user.php');
-				
-					if ($error = validate_username($user_name))
+					$status = validate_username($user_name);
+
+					if ($status !== true)
 					{
 						if ($mode === 'ajax_add')
 						{

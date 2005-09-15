@@ -5,11 +5,6 @@ function quick_message_submit()
 	var message = document.getElementById('message');
 	var poster_name = document.getElementById('poster_name');
 
-	if (!poster_name)
-	{
-		poster_name = '';
-	}
-
 	ajax = new core_ajax();
 
 	if (!ajax)
@@ -30,7 +25,9 @@ function quick_message_submit()
 
 	ajax.onreadystatechange(onreadystatechange);
 
-	ajax.send('index.php?mod=Quick_Message&mode=ajax_add', '&poster_name=' + poster_name.value + '&message=' + message.value);
+	poster_name = (poster_name) ? 'poster_name=' + poster_name.value : '';
+
+	ajax.send('index.php?mod=Quick_Message&mode=ajax_add', poster_name + '&message=' + message.value);
 
 	return false;
 }

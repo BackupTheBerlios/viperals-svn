@@ -57,7 +57,7 @@ if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['quick_message']['anonymous_
 
 $this->content .= 'Message <br/> <textarea id="message" name="message" style="width:90%;" rows="3"></textarea><br /><br />
 			<input class="button" type="submit" name="submit" value="Post" />
-			<input class="button" type="button" name="submit" onsubmit="quick_message_refresh()" value="Refresh" />
+			<input class="button" type="button" name="submit" onclick="quick_message_refresh()" value="Refresh" />
 		</div></form>';
 
 ?>
