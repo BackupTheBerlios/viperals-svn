@@ -87,7 +87,7 @@ else
 	{
 		$sql_lastread = $lastread_select = '';
 		$tracking_topics = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
-	
+
 		if (!is_array($tracking_topics))
 		{
 			$tracking_topics = array();
@@ -444,7 +444,8 @@ if (!empty($topic_list))
 		{
 			if ($mark_forum_read)
 			{
-				$mark_forum_read = ($row['topic_last_post_time'] < $mark_time_topic) ? (int) $mark_time_topic : false;
+				$mark_forum_read = ($row['topic_last_post_time'] > $mark_time_topic) ? false : max((int)$mark_forum_read, $mark_time_topic);
+			//echo $row['topic_last_post_time']. ' - '.$mark_time_topic.' :';
 			}
 			$mark_time = $mark_time_topic;
 		}

@@ -164,7 +164,7 @@ class core_template
 
 		$set = false;
 
-		if (!empty($_CLASS['core_display']) && file_exists($_CLASS['core_display']->theme_path.'/template/'.$name))
+		if (!empty($_CLASS['core_display']->theme_path) && file_exists($_CLASS['core_display']->theme_path.'/template/'.$name))
 		{
 			$this->template_dir = $_CLASS['core_display']->theme_path.'/template/';
 			$this->theme_themplate = true;

@@ -29,14 +29,13 @@ class sessions
 
 	var $sid_link_prefex = 'sid';
 	var $sid_link = false;
+	var $need_sid = true;
 
 	var $autologin_code = false;
 
 	function start()
 	{
 		global $_CLASS, $_CORE_CONFIG, $SID, $mod;
-
-		$this->server_local = ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1') ? true : false;
 
 		$session_id = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE');
 		$session_id_url = get_variable('sid', 'GET');
@@ -47,12 +46,11 @@ class sessions
 			if (!$session_id || $session_id !== $session_id_url)
 			{
 				$session_id = $session_id_url;
-				$this->sid_link = 'sid='.$session_id;
 			}
 		}
-		else
+		elseif (!defined('NEED_SID'))
 		{
-			$this->sid_link = defined('NEED_SID') ? 'sid='.$session_id : false;
+			$this->need_sid = false;
 		}
 
 		if ($session_id)
@@ -104,7 +102,14 @@ class sessions
 					$this->is_admin = ($this->data['session_admin'] == ADMIN_IS_ADMIN);
 
 					check_maintance_status();
+					
+					if ($this->is_bot)
+					{
+						$this->need_sid = false;
+					}
+
 					$this->load = check_load_status();
+					$this->sid_link = 'sid='.$this->data['session_id'];
 
 					return true;
 				}
@@ -209,7 +214,8 @@ class sessions
 			$this->set_cookie('sid', $session_id, 0);
 		}
 
-		$this->sid_link = ($this->is_bot) ? false : 'sid='.$this->data['session_id'];
+		$this->need_sid = ($this->is_bot) ? false : true;
+		$this->sid_link = 'sid='.$this->data['session_id'];
 
 		$this->data['sessions'] = array();
 

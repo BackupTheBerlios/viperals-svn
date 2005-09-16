@@ -1269,13 +1269,14 @@ if ($update_mark)
 	}
 	else
 	{
+		
 		$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
 
 		if (!is_array($tracking))
 		{
 			$tracking = array();
 		}
-		
+
 		$forum_id36 = base_convert($forum_id, 10, 36);
 		$mark_time_forum = isset($tracking[$forum_id36][0]) ? (int) base_convert($tracking[$forum_id36][0], 36, 10) : 0;
 
@@ -1287,33 +1288,29 @@ if ($update_mark)
 
 	$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page']);
 	$update_forum_mark = true;
+	$last_forum_post = 0;
 
-	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		// DESC order so the first post is the last post
-		$last_forum_post = $row['topic_last_post_time'];
+		$last_forum_post = max($last_forum_post, $row['topic_last_post_time']);
 
-// add user view options
-		do
+		if (!$_CLASS['core_user']->is_user || !$config['load_db_lastread'])
 		{
-			if (!$_CLASS['core_user']->is_user || !$config['load_db_lastread'])
-			{
-				$topic_id36 = base_convert($topic_id, 10, 36);
-				$row['mark_time'] = isset($tracking[$forum_id36][$topic_id36]) ? (int) base_convert($tracking[$forum_id36][$topic_id36], 36, 10) : 0;
-			}
-
-			$last_mark_time = max($row['mark_time'], $mark_time_forum);
-
-			if ($row['topic_last_post_time'] > $last_mark_time && $row['topic_id'] != $topic_id)
-			{
-				// We have a winner/loser
-				// Set so the forum isn't marked
-				$update_forum_mark = false;
-echo 'test';
-				break;
-			}
+			$topic_id36 = base_convert($topic_id, 10, 36);
+			$row['mark_time'] = isset($tracking[$forum_id36][$topic_id36]) ? (int) base_convert($tracking[$forum_id36][$topic_id36], 36, 10) : 0;
 		}
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+
+		$last_mark_time = max($row['mark_time'], $mark_time_forum);
+
+		if ($row['topic_last_post_time'] > $last_mark_time && $row['topic_id'] != $topic_id)
+		{
+			// We have a winner/loser
+			// Set so the forum isn't marked
+			$update_forum_mark = false;
+
+			break;
+		}
 	}
 	$_CLASS['core_db']->free_result($result);
 
@@ -1348,6 +1345,7 @@ function topic_last_read($topic_id, $forum_id)
 	{
 		return gmtime();
 	}
+
 
 	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 	{

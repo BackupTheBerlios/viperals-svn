@@ -26,17 +26,14 @@ if (!defined('VIPERAL'))
     die;
 }
 
-error_reporting(E_ALL);
-//error_reporting(0);
-
-if (!extension_loaded('mbstring'))
-{
-	require_once($site_file_root.'includes/compatiblity/mbstring.php');
-}
-
 set_magic_quotes_runtime(0);
-mb_internal_encoding('UTF-8');
-//mb_http_output('UTF-8');
+
+//Error reporting tyoe
+define('ERROR_NONE', 0);
+define('ERROR_ONPAGE', 1);
+define('ERROR_DEBUGGER', 2);
+define('SERVER_LOCAL', (strpos($_SERVER['HTTP_HOST'], 'localhost') === 0 || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') === 0));
+define('STRIP_SLASHES', get_magic_quotes_gpc());
 
 // Remove registered globals
 if ((bool) ini_get('register_globals'))
@@ -47,7 +44,19 @@ if ((bool) ini_get('register_globals'))
 	}
 }
 
-define('STRIP_SLASHES', get_magic_quotes_gpc());
+//change $site_file_root to a defined
+if (!$site_file_root)
+{
+	$site_file_root = str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/';
+}
+
+if (!extension_loaded('mbstring'))
+{
+	require_once($site_file_root.'includes/compatiblity/mbstring.php');
+}
+
+mb_internal_encoding('UTF-8');
+//mb_http_output('UTF-8');
 
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
@@ -63,11 +72,6 @@ if (empty($_SERVER['REQUEST_URI']))
 		$_SERVER['REQUEST_URI'] .= '?'.$_SERVER['QUERY_STRING'];
 	}
 }
-
-//Error reporting tyoe
-define('ERROR_NONE', 0);
-define('ERROR_ONPAGE', 1);
-define('ERROR_DEBUGGER', 2);
 
 require_once($site_file_root.'includes/display/template.php');
 require_once($site_file_root.'includes/functions.php');
@@ -85,7 +89,13 @@ $_CLASS['core_error_handler']->start();
 
 if (empty($site_db))
 {
-	trigger_error('<p style="text-align:center">Site isn\'t Installed<br/><a href="installer.php">Click here to install</a></p>', E_USER_ERROR);
+	if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
+	{
+		header('HTTP/1.0 503 Service Unavailable');
+		die;
+	}
+
+	trigger_error('503:<p style="text-align:center">Site isn\'t Installed<br/><a href="installer.php">Click here to install</a></p>', E_USER_ERROR);
 }
 
 require_once($site_file_root.'includes/tables.php');
@@ -107,7 +117,7 @@ unset($sitedb);
 $_CLASS['core_db']->report_error(false);
 
 // Error messages just incase we can't get our configs
-$config_error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB3</center>';
+$config_error = '503:<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB3</center>';
 
 if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 {
@@ -117,6 +127,12 @@ if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 		
 	if (!$result = $_CLASS['core_db']->query($sql))
 	{
+		if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
+		{
+			header('HTTP/1.0 503 Service Unavailable');
+			die;
+		}
+
 		trigger_error($config_error, E_USER_ERROR);
 	}
 	
@@ -136,15 +152,23 @@ if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 else
 {
 	$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE . ' WHERE config_cache = 0';
-		
-	if ($result = $_CLASS['core_db']->query($sql))
+	
+	if (!$result = $_CLASS['core_db']->query($sql))
 	{
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
 		{
-			$_CORE_CONFIG[$row['config_section']][$row['config_name']] = $row['config_value'];
+			header('HTTP/1.0 503 Service Unavailable');
+			die;
 		}
-		$_CLASS['core_db']->free_result($result);
+
+		trigger_error($config_error, E_USER_ERROR);
 	}
+
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$_CORE_CONFIG[$row['config_section']][$row['config_name']] = $row['config_value'];
+	}
+	$_CLASS['core_db']->free_result($result);
 }
 
 $_CLASS['core_db']->report_error(true);
@@ -153,13 +177,17 @@ unset($config_error);
 $_CLASS['core_cache']->remove('core_config');
 $_CLASS['core_cache']->remove('config');
 
-if (VIPERAL == 'FEED')
+if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
 {
 	if (check_maintance_status(true) === true || check_load_status(true) === true)
 	{
-		header("HTTP/1.0 503 Service Unavailable");
+		header('HTTP/1.0 503 Service Unavailable');
 		die;
 	}
+}
+
+if (VIPERAL === 'FEED')
+{
 	return;
 }
 
@@ -182,7 +210,7 @@ if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['only_registered']
 	// conformation image 
 	login_box(array('full_screen'	=> true));
 }
-		
+
 if ($_CLASS['core_user']->is_admin)
 {
 	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options'];	
@@ -202,19 +230,6 @@ $_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options']
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
 	// error here
-}
-
-$install_prefix = 'test_';
-$time = gmtime();
-
-if (!function_exists('field_unix_time'))
-{
-	function field_unix_time($name, $null = false)
-	{
-		global $_CLASS;
-	
-		$_CLASS['core_db']->add_table_field_int($name, array('max' => 200000000, 'null' => $null));
-	}
 }
 
 function get_memory_usage()

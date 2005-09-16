@@ -406,7 +406,7 @@ class core_user extends sessions
 			$name = $_CORE_CONFIG['server']['cookie_name'] . '_' . $name;
 		}
 
-		if ($this->server_local)
+		if (SERVER_LOCAL)
 		{
 			setcookie($name, $cookie_data, $cookie_time, $_CORE_CONFIG['server']['cookie_path']);
 		}

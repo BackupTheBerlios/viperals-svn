@@ -39,16 +39,7 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 {
 	switch ($mode)
 	{
-		case 'ajax_refresh':
-			require_once($site_file_root.'modules/Quick_Message/functions.php');
-	
-			echo qm_block_content();
-	
-			script_close();
-		break;
-	
 		case 'add':
-		case 'ajax_add':
 			if ($_CLASS['core_user']->is_bot)
 			{
 				redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
@@ -58,11 +49,6 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 	
 			if (!$message)
 			{
-				if ($mode === 'ajax_add')
-				{
-					die;
-				}
-	
 				trigger_error('NO_MESSAGE');
 			}
 	
@@ -70,11 +56,6 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 	
 			if ($length > $_CORE_CONFIG['quick_message']['length_max'])
 			{ 
-				if ($mode === 'ajax_add')
-				{
-					die;
-				}
-	
 				trigger_error('LONG_MESSAGE');
 			}
 	
@@ -86,11 +67,6 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 		// add a count check here so it admin ajustable
 			if ($count['count'] > 0)
 			{
-				if ($mode === 'ajax_add')
-				{
-					die;
-				}
-	
 				trigger_error(sprintf($_CLASS['core_user']->lang['SAME_MESSAGE'], $_CORE_CONFIG['quick_message']['last_post_check'] / 60));
 			}
 	
@@ -110,10 +86,6 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 				{
 					if ($_CORE_CONFIG['quick_message']['anonymous_posting'] != '2')
 					{
-						if ($mode === 'ajax_add')
-						{
-							die;
-						}
 						trigger_error('NO_NAME');
 					}
 				}
@@ -123,19 +95,11 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 	
 					if ($length < 2)
 					{
-						if ($mode === 'ajax_add')
-						{
-							die;
-						}
 						trigger_error('SHORT_NAME');
 					}
 	
 					if ($length > 10)
 					{
-						if ($mode = 'ajax_add')
-						{
-							die;
-						}
 						trigger_error('LONG_NAME');
 					}
 	
@@ -144,10 +108,6 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 
 					if ($status !== true)
 					{
-						if ($mode === 'ajax_add')
-						{
-							die;
-						}
 						trigger_error($error);
 					}
 				}
@@ -162,16 +122,7 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 			));
 	
 			$_CLASS['core_db']->query($sql);
-	
-			if ($mode === 'ajax_add')
-			{
-				require_once($site_file_root.'modules/Quick_Message/functions.php');
-	
-				echo qm_block_content();
-	
-				script_close();
-			}
-	
+
 			redirect(generate_link($_CLASS['core_user']->data['session_url'], array('full' => true)));
 		break;
 	

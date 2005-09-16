@@ -1,5 +1,5 @@
 // By Ryan Marshall ( viperal1@gmail.com )
-
+//svn checkout svn://svn.berlios.de/viperals/cms/trunk /net/pork/export/nfs/home/groups/viperals/htdocs
 function tite_edit_init(id, mode)
 {
 	var area = document.getElementById(mode + '_' + id)
@@ -59,7 +59,7 @@ function tite_edit_add(id, mode)
 
 				var input = document.getElementById(mode + '_input_' + id);
 
-				ajax.send('index.php?mod=Forums&file=ajax', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
+				ajax.send('ajax.php?mod=Forums', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
 
 				tite_edit_remove(id, mode);
 			}
@@ -126,7 +126,7 @@ function tite_edit_onblur(id, mode)
 
 	var input = document.getElementById(mode + '_input_' + id);
 
-	ajax.send('index.php?mod=Forums&file=ajax', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
+	ajax.send('ajax.php?mod=Forums', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
 
 	tite_edit_remove(id, mode);
 }

@@ -354,7 +354,7 @@ if ($stage === 3)
 		$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE;
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
 		$_CLASS['core_db']->free_result($result);
-	
+
 		if (!$result)
 		{
 			$stage = 2;
@@ -375,7 +375,7 @@ if ($stage === 3)
 	
 				$config_data .= "\$site_db['$name'] = $value;\n";
 			}
-	
+
 			$config_data .= "\n";
 			$config_data .= "\$table_prefix\t= '$table_prefix';\n";
 			$config_data .= "\$user_prefix\t= '$user_prefix';\n\n";
@@ -383,7 +383,7 @@ if ($stage === 3)
 			$config_data .= "if (!defined('INDEX_PAGE'))\n{\n\tdefine('INDEX_PAGE', 'index.php');\n}\n\n";
 			$config_data .= "if (!defined('ADMIN_PAGE'))\n{\n\tdefine('ADMIN_PAGE', 'admin.php');\n}\n\n";
 			$config_data .= '?>';
-	
+
 			if (file_put_contents($site_file_root.'config.php', $config_data))
 			{
 				$config_data = false;
@@ -392,17 +392,17 @@ if ($stage === 3)
 			{
 				$error[] = 'Failed to write to your config.php file<br/>Please upload the content listed in the "Config.php Content" Section';
 			}
-			
+
 			$path = dirname(getenv('SCRIPT_NAME'));
-	
+
 			if (substr($path, -1) != '/')
 			{
 				$path .= '/';
 			}
-	
+
 			$path = str_replace('install/', '', $path);
-			$domain = !empty($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
-	
+			$domain = empty($_SERVER['SERVER_NAME']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
+
 			$_CLASS['core_template']->assign_array(array(
 				'site_name'			=> 'New CMS Site',
 				'site_domain'		=> $domain,
@@ -419,7 +419,7 @@ if ($stage === 3)
 				'error'				=> empty($error) ? false : implode('<br/>', $error),
 				'config_content'	=> $config_data
 			));
-	
+
 			$_CLASS['core_template']->display('installer/stage3.html');
 	
 			script_close();

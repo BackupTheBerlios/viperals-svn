@@ -23,7 +23,7 @@ $Id$
 
 class core_display
 {
-	var $header = array('js'=>'', 'regular'=>'', 'meta'=>'', 'body'=>'');
+	var $header = array('js' => array(), 'regular' => array(), 'meta' => array());
 	var $displayed = array('header'=> false, 'footer'=> false);
 	var $message = '';
 
@@ -156,36 +156,37 @@ class core_display
 
 		if ($_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_new_privmsg'] && $_CLASS['core_user']->user_data_get('popuppm'))
 		{
-			$this->header['js'] .= '<script type="text/javascript">window.open(\''. preg_replace('/&amp;/', '&', generate_link('Control_Panel&i=pm&mode=popup', array('full' => true)))."', '_phpbbprivmsg','height=135,resizable=yes,status=no,width=400');</script>";
+			$this->header['js'][] = '<script type="text/javascript">window.open(\''. preg_replace('/&amp;/', '&', generate_link('Control_Panel&i=pm&mode=popup', array('full' => true)))."', '_phpbbprivmsg','height=135,resizable=yes,status=no,width=400');</script>";
 			$_CLASS['core_db']->sql_query('UPDATE ' . USERS_TABLE . ' SET user_new_privmsg = 0 WHERE user_id = ' . $_CLASS['core_user']->data['user_id']);
 		}
 
-		$this->header['regular'] .= '<meta name="generator" content="Viperal CMS ( www.viperal.com ) Copyright(c) '.date('Y').'" />';
+		$this->header['regular'][] = '<meta name="generator" content="Viperal CMS ( www.viperal.com ) Copyright(c) '.date('Y').'" />';
 
 		if (file_exists('favicon.ico'))
 		{
-			$this->header['regular'] .= '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
+			$this->header['regular'][] = '<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />';
 		}
 
-		$this->header['regular'] .= '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'feed.php?feed=rdf" />';
+		$this->header['regular'][] = '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'feed.php?feed=rdf" />';
 
 		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['start'] < time())
 		{
 			$this->message = '<b>System is in maintenance mode</b><br />';
 		}
 
-		$this->header['js'] = '<script type="text/javascript" src="javascript/common.js"></script>';
+		$this->header['js'][] = '<script type="text/javascript" src="javascript/common.js"></script>';
+		$this->header['js'][] = "<script type=\"text/javascript\">\nvar cms_session_id = '{$_CLASS['core_user']->data['session_id']}';\nvar cms_cookie_path = '{$_CORE_CONFIG['server']['cookie_path']}';\nvar cms_cookie_domain = '{$_CORE_CONFIG['server']['cookie_domain']}';\n</script>";
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
 			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.(is_array($_CORE_MODULE['module_title']) ? implode(' &gt; ', $_CORE_MODULE['module_title']) : $_CORE_MODULE['module_title']),
 			'SITE_BASE'			=>	generate_base_url(),
-			'SITE_CHARSET'		=>	'UTF-8',
+			'SID'				=>	empty($_CLASS['core_user']->data['session_id']) ? '' : $_CLASS['core_user']->data['session_id'],
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
 			'HEADER_MESSAGE'	=>	$this->message,
-			'HEADER_REGULAR'	=>	$this->header['meta'].$this->header['regular'],
-			'HEADER_JS' 		=>	$this->header['js'],
-			'HEADER_BODY' 		=>	$this->header['body']				
+			'HEADER_META'		=>	empty($this->header['meta']) ? '' : implode("\n", $this->header['meta']),
+			'HEADER_REGULAR'	=>	empty($this->header['regular']) ? '' : implode("\n", $this->header['regular']),
+			'HEADER_JS' 		=>	empty($this->header['js']) ? '' : implode("\n", $this->header['js']),
 		));
 
 		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_TOP);
@@ -299,7 +300,7 @@ class core_display
 	{
 		global $_CLASS;
 
-		$this->header['meta'] .= '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(false, array('full' => true))) . '">';
+		$this->header['meta'][] = '<meta http-equiv="refresh" content="' . $time . ';url=' . (($url) ? $url : generate_link(false, array('full' => true))) . '">';
 	}
 }
 

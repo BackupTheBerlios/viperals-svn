@@ -12,42 +12,6 @@ if (typeof slider_id == 'undefined')
 	var slider_height = new Array();
 }
 
-function get_cookie(cookie_name)
-{
-	var cookie_prefix = cookie_name + "=";
-	var cookie_length = document.cookie.length;
-
-	if (cookie_length > 0)
-	{
-		var start = document.cookie.indexOf(cookie_prefix);
-
-		if (start != -1)
-		{
-			start += cookie_prefix.length;
-			var end = document.cookie.indexOf(';', start);
-
-			if (end == -1)
-			{
-				end = cookie_length;
-			}
-
-			return unescape(document.cookie.substring(start, end));
-		}
-	}
-
-	return null;
-}
-
-function set_cookie(cookie_name, value, expires)
-{
-	document.cookie = cookie_name + '=' + escape(value) + '; path=/; expires=' + expires.toGMTString();
-}
-
-function delete_cookie(cookie_name)
-{
-	document.cookie = cookie_name + '=' + '; expires=Thu, 01-Jan-70 00:00:01 GMT' +  '; path=/';
-}
-
 function switch_collapse(identifier, no_slide, cookie)
 {
 	var area = document.getElementById(identifier);

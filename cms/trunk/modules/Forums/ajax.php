@@ -28,6 +28,11 @@ if (!defined('VIPERAL'))
 
 header('Content-Type: text/html');
 
+require_once($site_file_root.'includes/forums/functions.php');
+load_class($site_file_root.'includes/forums/auth.php', 'auth');
+
+$_CLASS['auth']->acl($_CLASS['core_user']->data);
+
 Switch (get_variable('mode', 'POST', false))
 {
 	case 'forum_edit_title':

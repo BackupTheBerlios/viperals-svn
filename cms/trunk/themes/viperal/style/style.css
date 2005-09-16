@@ -296,7 +296,14 @@ p.searchbarreg { margin: 0px; float: right; font-size: 100%; white-space: nowrap
 p.forumdesc { margin: 0px 4px 0px 0px; padding: 4px; font-size: 100%; }
 a.forumlink { color: #069; font-size: 120%; font-weight: bold; }
 
-p.topictitle { margin: 1px 0px; display: inline; font-size: 100%; font-weight: bold; }
+.topictitle
+{
+	margin: 1px 0px;
+	display: inline;
+	font-size: 100%;
+	font-weight: bold;
+}
+
 p.topicauthor { margin: 1px 0px; font-size: 100%; }
 p.topicdetails { margin: 1px 0px; font-size: 95%; }
 
@@ -410,11 +417,6 @@ a:active, a:visited
 a:hover
 {
 	color: #000000; text-decoration: none;
-}
-
-a.topictitle:visited
-{
-	color: #5493B4; text-decoration: none;
 }
 
 a.th:link, a.th:active, a.th:visited

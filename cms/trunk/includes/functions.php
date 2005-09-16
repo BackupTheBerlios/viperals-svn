@@ -116,8 +116,10 @@ function check_load_status($return = false)
 	return $load_status;
 }
 
-function get_server_load()
+function get_server_load($return = true)
 {
+	global $_CORE_CONFIG, $_CLASS;
+
 	$load = 0;
 
 	if (file_exists('/proc/loadavg'))
@@ -134,7 +136,17 @@ function get_server_load()
 		list($load) = explode(',', $load);
 	}*/
 
+	if (!$return && $load)
+	{
+		if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
+		{
+			header('HTTP/1.0 503 Service Unavailable');
+			trigger_error('503:'.$_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
+		}
+	}
+
 	return $load;
+
 }
 
 function check_maintance_status($return = false)
@@ -167,6 +179,11 @@ function check_maintance_status($return = false)
 				return $maintance_status = true;
 			}
 
+			if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
+			{	
+				header('HTTP/1.0 503 Service Unavailable');
+			}
+
 			trigger_error('503:'.$_CORE_CONFIG['maintenance']['text'], E_USER_ERROR);
 		}
 
@@ -189,7 +206,7 @@ function check_theme($theme)
 
 function display_confirmation($message = '', $hidden = '', $image = false)
 {
-	global $_CLASS, $SID;
+	global $_CLASS;
 // Add user entered confirmation code as a choose, maybe ...
 	if (isset($_POST['cancel']))
 	{
@@ -391,7 +408,7 @@ function generate_link($link = false, $link_options = false)
 	{
 		$link = $file;
 
-		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->sid_link))
+		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
 		{
 			$link .= '?'.$_CLASS['core_user']->sid_link;
 		}
@@ -405,7 +422,7 @@ function generate_link($link = false, $link_options = false)
 
 		$link = $file.'?mod='.$link;
 
-		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->sid_link))
+		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
 		{
 			$link .= '&amp;'.$_CLASS['core_user']->sid_link;
 		}

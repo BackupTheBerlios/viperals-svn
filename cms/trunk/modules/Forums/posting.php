@@ -315,7 +315,7 @@ if ($mode == 'edit' && !$preview && !$refresh && !$submit && !$_CLASS['auth']->a
 		trigger_error('USER_CANNOT_EDIT');
 	}
 
-	if (!($posting_data['post_time'] > time() - $config['edit_time'] || !$config['edit_time']))
+	if ($config['edit_time'] && $posting_data['post_time'] > ($current_time - $config['edit_time']))
 	{
 		trigger_error('CANNOT_EDIT_TIME');
 	}
@@ -437,7 +437,7 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 
 	$_CLASS['core_db']->transaction('commit');
 
-	markread('topic', $forum_id, $topic_id, $current_time);
+	//markread('topic', $forum_id, $topic_id, $current_time);
 
 	add_log('mod', $forum_id, $topic_id, sprintf($_CLASS['core_user']->lang['LOGM_BUMP'], $posting_data['topic_title']));
 
@@ -1363,7 +1363,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		return;
 	}
 
-	$current_time = gmtime();
+	$current_time = $_CLASS['core_user']->time;
 
 	if ($mode == 'post')
 	{
@@ -1862,7 +1862,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	}
 
 	// Mark this topic as read and posted to.
-	markread('topic', $data['forum_id'], $data['topic_id'], $data['post_time']);
+	//markread('topic', $data['forum_id'], $data['topic_id'], $data['post_time']);
 
 	// Send Notifications
 	if ($mode != 'edit' && $mode != 'delete' && (!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')))

@@ -609,7 +609,7 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 	}
 
 	// Default tracking type
-	$time = ($marktime) ? $marktime : gmtime();
+	$time = ($marktime) ? $marktime : $_CLASS['core_user']->time;
 
 	switch ($mode)
 	{
@@ -725,22 +725,23 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 				{
 					$tracking = array();
 				}
-					/*
-					// If the cookie grows larger than 2000 characters we will remove
-					// the smallest value
-					if (strlen($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']) > 2000)
+
+				/*
+				// If the cookie grows larger than 2000 characters we will remove
+				// the smallest value
+				if (strlen($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track']) > 2000)
+				{
+					foreach ($tracking as $f => $t_ary)
 					{
-						foreach ($tracking as $f => $t_ary)
+						if (!isset($m_value) || min($t_ary) < $m_value)
 						{
-							if (!isset($m_value) || min($t_ary) < $m_value)
-							{
-								$m_value = min($t_ary);
-								$m_tkey = array_search($m_value, $t_ary);
-								$m_fkey = $f;
-							}
+							$m_value = min($t_ary);
+							$m_tkey = array_search($m_value, $t_ary);
+							$m_fkey = $f;
 						}
-						unset($tracking[$m_fkey][$m_tkey]);
-					}*/
+					}
+					unset($tracking[$m_fkey][$m_tkey]);
+				}*/
 
 				$topic_id36 = base_convert($topic_id, 10, 36);
 				$forum_id36 = base_convert($forum_id, 10, 36);
@@ -754,7 +755,6 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 				elseif (!isset($tracking[$forum_id36][$topic_id36]))
 				{
 					$tracking[$forum_id36][$topic_id36] = base_convert($time, 10, 36);
-
 					$_CLASS['core_user']->set_cookie('track', serialize($tracking), time() + 31536000);
 				}
 				unset($tracking);
