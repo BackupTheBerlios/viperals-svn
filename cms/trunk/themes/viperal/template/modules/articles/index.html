@@ -1,0 +1,26 @@
+<!-- DISPLAY_HEADER -->
+
+<div class="articles_block">
+	<!-- LOOP $articles -->
+	<div class="title" onclick="switch_collapse('a_{ $articles:id }');" style="cursor:pointer">{ $articles:title }</div>
+		<div class="content"<!-- IF { $articles:collapse } --> style="display: none"<!-- ENDIF --> id="a_{ $articles:id }">
+			{ $articles:content }
+			<br clear="all">
+			<p>
+				<!-- IF { $articles:full_story } --><a href="{ $articles:link_content }" > { $L_READMORE } ..</a><!-- ENDIF -->
+				<hr />
+				<div style="float: left; Top: -2.5em;">
+					<a onclick="window.open('{ $articles:link_print }', 'print{ $articles:id }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600,height=400'); return false;" href="{ $articles:link_print }" ><img src="themes/viperal/images/print.png" alt="" /></a>
+					<a onclick="window.open('{ $articles:link_send }', 'send{ $articles:id }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600'); return false;" href="{ $articles:link_send }" ><img src="themes/viperal/images/mail.png" alt="" /></a>
+				</div>
+				<div style="float: right; Top: -2.5em;">{ $L_POSTED } { $articles:time }<br/>
+					<!-- IF { $articles:link_poster } -->By: <a href="{ $articles:link_poster }">{ $articles:poster } </a><!-- ELSE -->By: { $articles:poster } <!-- ENDIF -->
+				</div>
+			</p>
+		</div>
+	<br /><br />
+	<!-- ENDLOOP $articles -->
+	<p align="center"> { $articles_pagination }</p>
+</div>
+
+<!-- DISPLAY_FOOTER -->

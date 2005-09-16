@@ -1,0 +1,19 @@
+<!-- DISPLAY_HEADER -->
+
+<div class="articles_block">
+	<div class="title" onclick="blockswitch2('{ $ARTICLES_ID }');" style="cursor:pointer">{ $ARTICLES_TITLE }</div>
+		<div class="content">
+			{ $ARTICLES_TEXT }
+			<br /><br />
+		<hr />
+		<div style="float: left; Top: -2.5em;">
+			<a onclick="window.open('{ $ARTICLES_LINK_PRINT }', 'print{ $ARTICLES_ID }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600,height=400'); return false;" href="{ $ARTICLES_LINK_PRINT }" ><img src="themes/viperal/images/print.png" alt="" /></a>
+			<a onclick="window.open('{ $ARTICLES_LINK_SEND }', 'send{ $ARTICLES_ID }', 'status=no,toolbar=no,scrollbars=yes,titlebar=no,menubar=no,width=600'); return false;" href="{ $ARTICLES_LINK_SEND }" ><img src="themes/viperal/images/mail.png" alt="" /></a>
+		</div>
+		 <div style="text-align: left; margin-left: 60%">Posted: { $ARTICLES_TIME }<br/>
+		 <!-- IF { $ARTICLES_POSTER_LINK } -->By: <a href="{ $ARTICLES_POSTER_LINK }">{ $ARTICLES_POSTER } </a><!-- ELSE -->By: { $ARTICLES_POSTER } <!-- ENDIF --></div></div>
+		<br />
+	</div>
+<br />
+
+<!-- DISPLAY_FOOTER -->
