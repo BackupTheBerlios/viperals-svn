@@ -23,7 +23,7 @@ $Id$
 
 function confirmation_image($code = false, $size = false)
 {
-	global $_CLASS, $site_file_root;
+	global $_CLASS;
 
 	if (!$code && !($code = $_CLASS['core_user']->session_data_get('confirmation_code')))
 	{
@@ -44,8 +44,9 @@ function confirmation_image($code = false, $size = false)
 	{
 		$image_width = 5;
 		$image_height = 0;
-		//$font = $site_file_root.'includes/fonts/angltrr.ttf';
-		$font = $site_file_root.'includes/fonts/tomnr.ttf';
+		
+		//$font = SITE_FILE_ROOT.'includes/fonts/angltrr.ttf';
+		$font = SITE_FILE_ROOT.'includes/fonts/tomnr.ttf';
 
 		$count = strlen($code);
 		for ($loop = 0; $loop < $count; $loop++)
@@ -104,7 +105,7 @@ function confirmation_image($code = false, $size = false)
 		return;
 	}
 
-	$font = imageloadfont($site_file_root.'includes/fonts/tomnr.gdf');
+	$font = imageloadfont(SITE_FILE_ROOT.'includes/fonts/tomnr.gdf');
 
 	// needs work
 	if (!$font)
@@ -201,7 +202,7 @@ function activate()
 	}
 	else
 	{
-		include_once($site_file_root.'includes/functions_user.php');
+		include_once(SITE_FILE_ROOT.'includes/functions_user.php');
 		user_activate($user_id);
 
 		set_core_config('user', 'newest_user_id', $row['user_id'], false);

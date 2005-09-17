@@ -26,9 +26,7 @@ class cache_file extends cache
 
 	function cache_file()
 	{
-		global $site_file_root;
-
-		$this->cache_dir = $site_file_root.'cache/';
+		$this->cache_dir = SITE_FILE_ROOT.'cache/';
 
 		if (!is_writable($this->cache_dir))
 		{

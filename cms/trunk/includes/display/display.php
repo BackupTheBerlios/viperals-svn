@@ -38,9 +38,9 @@ class core_display
 	*/
 	function add_module($module, $homepage = true)
 	{
-		global $_CLASS, $site_file_root;
+		global $_CLASS;
 
-		if (!$module || !file_exists($site_file_root.'modules/'.$module['module_name'].'/index.php'))
+		if (!$module || !file_exists(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/index.php'))
 		{
 			return '404:_PAGE_NOT_FOUND';
 		}
@@ -218,9 +218,7 @@ class core_display
 
 		if ($_CORE_MODULE = $this->get_module())
 		{
-			global $site_file_root;
-
-			require($site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/index.php');
+			require(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/index.php');
 		}
 
 		$this->displayed['footer'] = true;

@@ -1,17 +1,26 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 define('VIPERAL', 'CMS');
 
 error_reporting(0);
@@ -21,8 +30,8 @@ if (extension_loaded('zlib'))
 	ob_start('ob_gzhandler');
 }
 
-//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
-$site_file_root = '';
+define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
+
 $lang = 'en';
 
 if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
@@ -31,14 +40,14 @@ if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
 	foreach ($accept_lang_array as $accept_lang)
 	{
 		$accept_lang = substr($accept_lang, 0, 2);
-		if (file_exists($site_file_root.'language/' . $accept_lang . '/error.php'))
+		if (file_exists(SITE_FILE_ROOT.'language/' . $accept_lang . '/error.php'))
 		{
 			$lang = $accept_lang;
 			break;
 		}
 		
 		$accept_lang = substr($accept_lang, 0, 2) . '_' . strtoupper(substr($accept_lang, 3, 2));
-		if (file_exists($site_file_root.'language/' . $accept_lang . '/error.php'))
+		if (file_exists(SITE_FILE_ROOT.'language/' . $accept_lang . '/error.php'))
 		{
 			$lang = $accept_lang;
 			break;
@@ -46,8 +55,8 @@ if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
 	}
 }
 
-require($site_file_root.'language/' . $lang . '/error.php');
-require($site_file_root.'includes/display/template.php');
+require(SITE_FILE_ROOT.'language/' . $lang . '/error.php');
+require(SITE_FILE_ROOT.'includes/display/template.php');
 
 $_CLASS['core_template'] =& new core_template();
 

@@ -143,7 +143,7 @@ class core_error_handler
 
 	function error_handler($errtype, $error, $errfile, $errline)
 	{
-		global $_CLASS, $site_file_root, $_CORE_CONFIG;
+		global $_CLASS, $_CORE_CONFIG;
 
 		if ($this->report != ERROR_NONE)
 		{
@@ -152,7 +152,7 @@ class core_error_handler
 			//damn windows
 			$errfile = str_replace('\\','/', $errfile);
 			// Remove the root paths, site files, along with document root
-			$errfile = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $errfile));
+			$errfile = str_replace(SITE_FILE_ROOT, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $errfile));
 		}
 
 		switch ($errtype)

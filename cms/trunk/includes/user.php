@@ -187,11 +187,18 @@ class core_user extends sessions
 		$this->data['session_time'] = $this->data['session_admin'] = 0;
 
 		$this->sid_link = $this->is_user = $this->is_bot = $this->is_admin = false;
+
+		if (isset($_CLASS['core_auth']))
+		{
+			unset($_CLASS['core_auth']);
+		}
+
+		load_class(false, 'core_auth', 'auth_db');
 	}
 
 	function user_setup($theme = false)
 	{
-		global $_CLASS, $_CORE_CONFIG, $site_file_root;
+		global $_CLASS, $_CORE_CONFIG;
 
 		if ($this->user_setup)
 		{
@@ -250,13 +257,13 @@ class core_user extends sessions
 				}
 			}
 
-			$path = $site_file_root.'themes/'.$theme;
+			$path = SITE_FILE_ROOT.'themes/'.$theme;
 			
 			$_CLASS['core_display']->load_theme($theme, $path);
 		}
 
 		$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
-		$this->lang_path = $site_file_root.'language/' . $this->lang_name . '/';
+		$this->lang_path = SITE_FILE_ROOT.'language/' . $this->lang_name . '/';
 
 		$this->time_format = ($this->data['user_time_format']) ? $this->data['user_time_format'] : $_CORE_CONFIG['global']['default_dateformat'];
 		$this->timezone = ($this->data['user_timezone']) ? $this->data['user_timezone'] : $_CORE_CONFIG['global']['default_timezone'];
@@ -266,8 +273,6 @@ class core_user extends sessions
 
 	function add_img($img_file = false, $module = false, $lang = false)
 	{
-		global $site_file_root;
-
 		$img_file = ($img_file) ? "$img_file.php" : 'index.php';
 
 		if (!$img_file || !ereg('/', $img_file))
@@ -283,7 +288,7 @@ class core_user extends sessions
 			}
 			else
 			{
-				include($site_file_root.'modules/'.$module."/images/$img_file");
+				include(SITE_FILE_ROOT.'modules/'.$module."/images/$img_file");
 			}
 		}
 		else
@@ -324,7 +329,6 @@ class core_user extends sessions
 		
 	function add_lang($lang_file = false, $module = false)
 	{
-		global $site_file_root;
 //Need a check for if the lang file exsists
 	
 		//print_r(debug_backtrace());
@@ -343,7 +347,7 @@ class core_user extends sessions
 		{
 			if (mb_strpos($lang_file, '/') !== false)
 			{
-				include($site_file_root."language/$this->lang_name/$lang_file");
+				include(SITE_FILE_ROOT."language/$this->lang_name/$lang_file");
 
 				return;
 			}
@@ -359,12 +363,12 @@ class core_user extends sessions
 		{
 			global $_CORE_MODULE;
 			
-			include($site_file_root.'modules/'.$_CORE_MODULE['module_name']."/language/$this->lang_name/$lang_file");
+			include(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name']."/language/$this->lang_name/$lang_file");
 
 			return;
 		}
 		
-		include($site_file_root."modules/$module/language/$this->lang_name/$lang_file");		
+		include(SITE_FILE_ROOT."modules/$module/language/$this->lang_name/$lang_file");		
 	}
 
 	function user_data_get($name, $default = false)

@@ -40,13 +40,9 @@ class sessions
 		$session_id = get_variable($_CORE_CONFIG['server']['cookie_name'] . '_sid', 'COOKIE');
 		$session_id_url = get_variable('sid', 'GET');
 
-		if ($session_id_url)
+		if ($session_id_url && (!$session_id || $session_id !== $session_id_url))
 		{
-			// session id in url > cookie
-			if (!$session_id || $session_id !== $session_id_url)
-			{
-				$session_id = $session_id_url;
-			}
+			$session_id = $session_id_url;
 		}
 		elseif (!defined('NEED_SID'))
 		{

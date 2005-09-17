@@ -15,13 +15,10 @@
 define('VIPERAL', 'Admin');
 //define('NEED_SID', true);
 
-//echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = '';
-
-require($site_file_root.'core.php');
+require('core.php');
 
 $_CLASS['core_user']->user_setup(null);
-$_CLASS['core_display']->load_theme('viperal_admin', $site_file_root.'themes_admin/viperal_admin');
+$_CLASS['core_display']->load_theme('viperal_admin', SITE_FILE_ROOT.'themes_admin/viperal_admin');
 
 $_CLASS['core_user']->add_lang('admin/common.php');
 
@@ -62,17 +59,17 @@ if ($mod)
 if (!$mod || !$_CORE_MODULE)
 {
 	$_CORE_MODULE = array('module_title' => '', 'module_name' => '');
-	$file_path = $site_file_root.'admin/index.php';
+	$file_path = SITE_FILE_ROOT.'admin/index.php';
 }
 else
 {
-	if (file_exists($site_file_root.'admin/'.$_CORE_MODULE['module_name'].'.php'))
+	if (file_exists(SITE_FILE_ROOT.'admin/'.$_CORE_MODULE['module_name'].'.php'))
 	{
-		$file_path = $site_file_root.'admin/'.$_CORE_MODULE['module_name'].'.php';
+		$file_path = SITE_FILE_ROOT.'admin/'.$_CORE_MODULE['module_name'].'.php';
 	}
 	else
 	{
-		$file_path = (file_exists($site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/admin/index.php')) ? $site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/admin/index.php' : false;
+		$file_path = (file_exists(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/admin/index.php')) ? SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/admin/index.php' : false;
 	}
 }
 
@@ -92,7 +89,7 @@ if ($_CORE_MODULE['module_name'])
 $_CORE_MODULE['module_title'] = $_CLASS['core_user']->lang['ADMIN'].' &gt; '.$_CORE_MODULE['module_title'];
 $_CORE_MODULE['module_sides'] = BLOCK_ALL;
 	
-require($site_file_root.'admin/menu.php');
+require(SITE_FILE_ROOT.'admin/menu.php');
 
 $main_menu = build_menu($menu);
 
@@ -105,7 +102,7 @@ $_CLASS['core_template']->assign_array(array(
 ));
 
 
-//load_class($site_file_root.'includes/core_editor.php', 'core_editor');
+//load_class(SITE_FILE_ROOT.'includes/core_editor.php', 'core_editor');
 //$_CLASS['core_editor']->setup();
 require($file_path);
     

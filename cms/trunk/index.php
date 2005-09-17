@@ -1,24 +1,32 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 define('VIPERAL', 'CMS');
-//print_r($_GET);
 
-//echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = '';
+error_reporting(E_ALL);
 
-require($site_file_root.'core.php');
+//require(SITE_FILE_ROOT.'core.php');
+require('core.php');
 
 $mod = get_variable('mod', 'REQUEST', false);
 
@@ -26,8 +34,9 @@ if (!$mod)
 {
 	// Set as homepage 
 	$_CLASS['core_display']->homepage = true;
-	//$_CORE_CONFIG['index_page'];
-	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE module_name IN ( 'Contact' )");
+	$_CORE_CONFIG['global']['index_page'] = 'articles';
+
+	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE module_name = '{$_CORE_CONFIG['global']['index_page']}'");
 
 	While ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
@@ -43,6 +52,7 @@ if (!$mod)
 
 		$_CLASS['core_user']->user_setup();
 		$_CLASS['core_display']->display_header();
+
 		// Hey admin we don't have a modules set
 		if ($_CLASS['core_auth']->admin_auth('modules'))
 		{
@@ -54,17 +64,20 @@ if (!$mod)
 }
 else
 {
-	if ($mod == 'system')
+	if ($mod === 'system')
 	{
-		include_once($site_file_root.'includes/system.php');
+		require_once(SITE_FILE_ROOT.'includes/system.php');
 
 		$mode = get_variable('mode', 'REQUEST', false);
+
 		if (!$mode || !function_exists($mode))
 		{
+			header("HTTP/1.0 503 Service Unavailable");
 			script_close(false);
 		}
 
 		$mode();
+
 		script_close(false);
 	}
 
@@ -87,7 +100,7 @@ else
 	$_CORE_MODULE = $_CLASS['core_display']->get_module();
 }
 
-$path = $site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/index.php';
+$path = SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/index.php';
 $_CLASS['core_user']->page = $_CORE_MODULE['module_name'];
 
 require_once($path);

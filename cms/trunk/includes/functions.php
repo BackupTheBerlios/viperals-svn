@@ -195,13 +195,7 @@ function check_maintance_status($return = false)
 
 function check_theme($theme)
 {
-	global $site_file_root;
-
-	if (file_exists($site_file_root.'themes/'.$theme.'/index.php'))
-	{
-		return true;
-	}
-	return false;
+	return file_exists(SITE_FILE_ROOT.'themes/'.$theme.'/index.php');
 }
 
 function display_confirmation($message = '', $hidden = '', $image = false)
@@ -575,14 +569,14 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 
 function script_close($save = true)
 {
-	global $_CORE_CONFIG, $site_file_root, $_CLASS;
+	global $_CORE_CONFIG, $_CLASS;
 
 	if (!empty($_CLASS['core_user']))
 	{
 		// phpbb 2.1.2 only remove.
-		if (file_exists($site_file_root.'cache/queue.php'))
+		if (file_exists(SITE_FILE_ROOT.'cache/queue.php'))
 		{
-			require_once($site_file_root.'includes/forums/functions_messenger.php');
+			require_once(SITE_FILE_ROOT.'includes/forums/functions_messenger.php');
 			$queue = new queue();
 			$queue->process();
 		}
@@ -718,7 +712,7 @@ function select_language($default = '')
 
 function select_theme($default = false)
 {
-	global $site_file_root, $_CLASS;
+	global $_CLASS;
 
 	if (!$default)
 	{
@@ -726,13 +720,13 @@ function select_theme($default = false)
 	}
 
 	$theme_array = array();
-	$handle = opendir($site_file_root.'themes');
+	$handle = opendir(SITE_FILE_ROOT.'themes');
 	
 	while ($file = readdir($handle))
 	{
 		if (!mb_strpos($file, '.'))
 		{
-			if (file_exists($site_file_root."themes/$file/index.php"))
+			if (file_exists(SITE_FILE_ROOT."themes/$file/index.php"))
 			{
 				$theme_array[] = array('file' => $file, 'template'=> true);
 			}

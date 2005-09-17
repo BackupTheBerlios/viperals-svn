@@ -144,9 +144,12 @@ class core_blocks
 		global $_CLASS;
 
 		$this->content = '';
-
-		foreach($this->blocks_array[$position] as $this->block)
+		$count = count($this->blocks_array[$position]);
+		
+		for ($i = 0; $i < $count; $i++)
 		{
+			$this->block =& $this->blocks_array[$position][$i];
+
 			if ($this->block['block_auth'] && !$_CLASS['core_auth']->auth($this->block['block_auth']) && !$_CLASS['core_auth']->admin_power('blocks'))
 			{
 				continue;
@@ -217,15 +220,15 @@ class core_blocks
 	*/
 	function block_file()
 	{
-		global $_CLASS, $site_file_root;
+		global $_CLASS;
 
-		if ($this->block['block_file'] && file_exists($site_file_root.'blocks/'.$this->block['block_file']))
+		if ($this->block['block_file'] && file_exists(SITE_FILE_ROOT.'blocks/'.$this->block['block_file']))
 		{
 			$this->info = false;
 
 			//$_CLASS['core_error_handler']->debug_start($this->block['block_title']);
 
-			include($site_file_root.'blocks/'.$this->block['block_file']);
+			include(SITE_FILE_ROOT.'blocks/'.$this->block['block_file']);
 
 			//$_CLASS['core_error_handler']->debug_stop($this->block['block_title']);
 
@@ -330,7 +333,7 @@ class core_blocks
 
 	function block_feed()
 	{
-		global $site_file_root, $_CLASS;
+		global $_CLASS;
 // think about disabling the block automatically if there's url problems
 // update core_rss file
 		if ($this->block['block_content'] && (!$this->block['block_rss_expires'] || $this->block['block_rss_expires'] > (int) $_CLASS['core_user']->time))
@@ -349,9 +352,9 @@ class core_blocks
 			return;
 		}
 
-		if ($this->block['block_file'] && file_exists($site_file_root.'blocks/rss/'.$this->block['block_file']))
+		if ($this->block['block_file'] && file_exists(SITE_FILE_ROOT.'blocks/rss/'.$this->block['block_file']))
 		{
-			include($site_file_root.'blocks/rss/'.$this->block['block_file']);
+			include(SITE_FILE_ROOT.'blocks/rss/'.$this->block['block_file']);
 			
 			if (!$this->content)
 			{
@@ -360,7 +363,7 @@ class core_blocks
 		}
 		else
 		{
-			load_class($site_file_root.'includes/core_rss.php', 'core_rss');
+			load_class(SITE_FILE_ROOT.'includes/core_rss.php', 'core_rss');
 			$_CLASS['core_rss']->setup(false, array('title', 'link'));
 				
 			if (!$_CLASS['core_rss']->get_rss($this->block['block_rss_url']))

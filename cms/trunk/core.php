@@ -26,6 +26,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
+//ini_set('display_errors', 1);
 set_magic_quotes_runtime(0);
 
 //Error reporting tyoe
@@ -44,15 +45,17 @@ if ((bool) ini_get('register_globals'))
 	}
 }
 
-//change $site_file_root to a defined
-if (!$site_file_root)
+if (!defined('SITE_FILE_ROOT'))
 {
-	$site_file_root = str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/';
+	define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 }
+
+// TEMP
+$site_file_root = SITE_FILE_ROOT;
 
 if (!extension_loaded('mbstring'))
 {
-	require_once($site_file_root.'includes/compatiblity/mbstring.php');
+	require_once(SITE_FILE_ROOT.'includes/compatiblity/mbstring.php');
 }
 
 mb_internal_encoding('UTF-8');
@@ -73,10 +76,10 @@ if (empty($_SERVER['REQUEST_URI']))
 	}
 }
 
-require_once($site_file_root.'includes/display/template.php');
-require_once($site_file_root.'includes/functions.php');
-require_once($site_file_root.'includes/handler.php');
-require_once($site_file_root.'config.php');
+require_once(SITE_FILE_ROOT.'includes/display/template.php');
+require_once(SITE_FILE_ROOT.'includes/functions.php');
+require_once(SITE_FILE_ROOT.'includes/handler.php');
+require_once(SITE_FILE_ROOT.'config.php');
 
 // Load basic classes
 load_class(false, 'core_template');
@@ -98,10 +101,10 @@ if (empty($site_db))
 	trigger_error('503:<p style="text-align:center">Site isn\'t Installed<br/><a href="installer.php">Click here to install</a></p>', E_USER_ERROR);
 }
 
-require_once($site_file_root.'includes/tables.php');
-require_once($site_file_root.'includes/db/'.$site_db['type'].'.php');
-require_once($site_file_root.'includes/cache/cache.php');
-require_once($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
+require_once(SITE_FILE_ROOT.'includes/tables.php');
+require_once(SITE_FILE_ROOT.'includes/db/'.$site_db['type'].'.php');
+require_once(SITE_FILE_ROOT.'includes/cache/cache.php');
+require_once(SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php');
 
 load_class(false, 'core_cache', 'cache_'.$acm_type);
 load_class(false, 'core_db', 'db_'.$site_db['type']);
@@ -171,6 +174,7 @@ else
 	$_CLASS['core_db']->free_result($result);
 }
 
+$_CORE_CONFIG['email']['site_mail'] = 'viperal1@gmail.com';
 $_CLASS['core_db']->report_error(true);
 unset($config_error);
 
@@ -192,12 +196,12 @@ if (VIPERAL === 'FEED')
 }
 
 // Load user based classes, and display options
-require($site_file_root.'includes/session.php');
-require($site_file_root.'includes/user.php');
-require($site_file_root.'includes/auth/auth.php');
-require($site_file_root.'includes/auth/auth_db.php');
-require($site_file_root.'includes/display/blocks.php');
-require($site_file_root.'includes/display/display.php');
+require(SITE_FILE_ROOT.'includes/session.php');
+require(SITE_FILE_ROOT.'includes/user.php');
+require(SITE_FILE_ROOT.'includes/auth/auth.php');
+require(SITE_FILE_ROOT.'includes/auth/auth_db.php');
+require(SITE_FILE_ROOT.'includes/display/blocks.php');
+require(SITE_FILE_ROOT.'includes/display/display.php');
 
 load_class(false, 'core_display');
 load_class(false, 'core_blocks');

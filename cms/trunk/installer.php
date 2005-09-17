@@ -24,12 +24,11 @@ define('VIPERAL', 'INSTALLER');
 
 error_reporting(E_ALL);
 
-//echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = '';
+define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 
 if (!extension_loaded('mbstring'))
 {
-	require_once($site_file_root.'includes/compatiblity/mbstring.php');
+	require_once(SITE_FILE_ROOT.'includes/compatiblity/mbstring.php');
 }
 
 set_magic_quotes_runtime(0);
@@ -46,8 +45,8 @@ if ((bool) ini_get('register_globals'))
 	}
 }
 
-require_once($site_file_root.'includes/functions.php');
-require_once($site_file_root.'includes/display/template.php');
+require_once(SITE_FILE_ROOT.'includes/functions.php');
+require_once(SITE_FILE_ROOT.'includes/display/template.php');
 
 load_class(false, 'core_template');
 
@@ -107,9 +106,9 @@ if ($stage && !$_POST['agreement_signed'])
 
 if ($stage === 4)
 {
-	if (file_exists($site_file_root.'config.php'))
+	if (file_exists(SITE_FILE_ROOT.'config.php'))
 	{
-		require_once($site_file_root.'config.php');
+		require_once(SITE_FILE_ROOT.'config.php');
 	}
 
 	$site_name		= get_variable('site_name', 'POST');
@@ -154,7 +153,7 @@ if ($stage === 4)
 
 	if (isset($site_db))
 	{
-		load_class($site_file_root.'includes/db/'.$site_db['type'].'.php', 'core_db', 'db_'.$site_db['type']);
+		load_class(SITE_FILE_ROOT.'includes/db/'.$site_db['type'].'.php', 'core_db', 'db_'.$site_db['type']);
 
 		$_CLASS['core_db']->connect($site_db);
 		$config_content = '';
@@ -167,9 +166,9 @@ if ($stage === 4)
 
 	if (empty($error))
 	{
-		require_once($site_file_root.'includes/tables.php');
-		require_once($site_file_root.'includes/cache/cache.php');
-		require_once($site_file_root.'includes/cache/cache_' . $acm_type . '.php');
+		require_once(SITE_FILE_ROOT.'includes/tables.php');
+		require_once(SITE_FILE_ROOT.'includes/cache/cache.php');
+		require_once(SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php');
 
 		load_class(false, 'core_cache', 'cache_'.$acm_type);
 
@@ -229,7 +228,7 @@ if ($stage === 3)
 {
 	if ($db_layer && in_array($db_layer, array_keys($database_array)))
 	{
-		load_class($site_file_root.'includes/db/'.$db_layer.'.php', 'core_db', 'db_'.$db_layer);
+		load_class(SITE_FILE_ROOT.'includes/db/'.$db_layer.'.php', 'core_db', 'db_'.$db_layer);
 
 		$site_db = array();
 		$site_db['type']		= $db_layer;
@@ -319,7 +318,7 @@ if ($stage === 3)
 		$user_prefix	= get_variable('user_prefix', 'POST');
 		$table_prefix	= get_variable('table_prefix', 'POST');
 		
-		require_once($site_file_root.'includes/tables.php');
+		require_once(SITE_FILE_ROOT.'includes/tables.php');
 	
 		$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE;
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -338,11 +337,11 @@ if ($stage === 3)
 	else
 	{
 		$_CLASS['core_db']->transaction();
-		require($site_file_root.'install/build_tables.php');
+		require(SITE_FILE_ROOT.'install/build_tables.php');
 		$_CLASS['core_db']->transaction('commit');
 	
 		$_CLASS['core_db']->transaction();
-		require($site_file_root.'install/build_data.php');
+		require(SITE_FILE_ROOT.'install/build_data.php');
 		$_CLASS['core_db']->transaction('commit');
 		
 		$_CLASS['core_db']->optimize_tables();
@@ -384,7 +383,7 @@ if ($stage === 3)
 			$config_data .= "if (!defined('ADMIN_PAGE'))\n{\n\tdefine('ADMIN_PAGE', 'admin.php');\n}\n\n";
 			$config_data .= '?>';
 
-			if (file_put_contents($site_file_root.'config.php', $config_data))
+			if (file_put_contents(SITE_FILE_ROOT.'config.php', $config_data))
 			{
 				$config_data = false;
 			}

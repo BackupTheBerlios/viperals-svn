@@ -27,7 +27,7 @@ function quick_message_submit()
 
 	poster_name = (poster_name) ? 'poster_name=' + poster_name.value : '';
 
-	ajax.send('index.php?mod=Quick_Message&mode=ajax_add', poster_name + '&message=' + message.value);
+	ajax.send('ajax.php?mod=Quick_Message&mode=ajax_add', poster_name + '&message=' + message.value);
 
 	return false;
 }
@@ -47,5 +47,5 @@ function quick_message_refresh()
 
 	ajax.onreadystatechange(onreadystatechange);
 
-	ajax.send('index.php?mod=Quick_Message&mode=ajax_refresh', null);
+	ajax.send('ajax.php?mod=Quick_Message&mode=ajax_refresh', null);
 }

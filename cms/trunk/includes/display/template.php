@@ -41,8 +41,7 @@ class core_template
 
     function core_template()
     {
-		global $site_file_root;
-		$this->cache_dir = $site_file_root.'cache/template/';
+		$this->cache_dir = SITE_FILE_ROOT.'cache/template/';
     }
     
     /*
@@ -160,23 +159,56 @@ class core_template
     */
 	function generate_dirs($name)
 	{
-		global $_CLASS, $site_file_root;
+		global $_CLASS;
 
 		$set = false;
+		$lang = array();
 
-		if (!empty($_CLASS['core_display']->theme_path) && file_exists($_CLASS['core_display']->theme_path.'/template/'.$name))
-		{
-			$this->template_dir = $_CLASS['core_display']->theme_path.'/template/';
-			$this->theme_themplate = true;
-			$set = true;
-		}
-		elseif (file_exists($site_file_root.'includes/templates/'.$name))
-		{
-			$this->template_dir = $site_file_root.'includes/templates/';
-			$this->theme_themplate = false;
-			$set = true;
-		}
+		$lang[] = 'en';
 		
+		if (isset($_CLASS['core_user']) && $_CLASS['core_user']->lang_name !== 'en')
+		{
+			$lang[] = $this->lang_name;
+		}
+
+		$count = count($lang);
+
+		for ($i = 0; $i < $count; $i++)
+		{
+			if (!empty($_CLASS['core_display']->theme_path) && file_exists($_CLASS['core_display']->theme_path."/template/{$lang[$i]}/$name"))
+			{
+				$this->template_dir = $_CLASS['core_display']->theme_path."/template/{$lang[$i]}/";
+				$this->cache_prefix = "{$_CLASS['core_display']->theme_name}#{$lang[$i]}#";
+				$set = true;
+
+				break;
+			}
+			elseif (file_exists(SITE_FILE_ROOT."includes/templates/{$lang[$i]}/$name"))
+			{
+				$this->template_dir = SITE_FILE_ROOT."includes/templates/{$lang[$i]}/";
+				$this->cache_prefix = "core#{$lang[$i]}#";
+				$set = true;
+				
+				break;
+			}
+		}
+	
+		if (!$set)
+		{
+			if (!empty($_CLASS['core_display']->theme_path) && file_exists($_CLASS['core_display']->theme_path.'/template/'.$name))
+			{
+				$this->template_dir = $_CLASS['core_display']->theme_path.'/template/';
+				$this->cache_prefix = $_CLASS['core_display']->theme_name.'#';
+				$set = true;
+			}
+			elseif (file_exists(SITE_FILE_ROOT.'includes/templates/'.$name))
+			{
+				$this->template_dir = SITE_FILE_ROOT.'includes/templates/';
+				$this->cache_prefix = "core#";
+				$set = true;
+			}
+		}
+
 		return $set;
 	}
 
@@ -186,7 +218,7 @@ class core_template
 
 		$file_name = str_replace(array('.', '/'), '#', $name);
 
-		return ($this->theme_themplate ? $_CLASS['core_display']->theme_name.'#' : '') . "$file_name.php";
+		return $this->cache_prefix."$file_name.php";
 	}
 
     function is_compiled($name)
@@ -410,7 +442,7 @@ class core_template
 	{
 		global $_CLASS;
 
-		return $_CLASS['core_user']->get_lang($lang);
+		return isset($_CLASS['core_user']) ? $_CLASS['core_user']->get_lang($lang) : $lang;
 	}
 
 	function _parse_content($code)
@@ -432,7 +464,7 @@ class core_template
 				continue;
 			}
 			
-			$values[1][$loop] = '<?php echo '.$parse.'; ?>';
+			$values[1][$loop] = "<?php echo $parse; ?> ";
 		}
 	
 		return str_replace($values[0], $values[1], $code);

@@ -662,7 +662,7 @@ function avatar_delete($id)
 	}
 
 	return false;
- }
+}
 
 function avatar_remote($data, &$error)
 {
@@ -705,10 +705,10 @@ function avatar_remote($data, &$error)
 
 function avatar_upload($data, &$error)
 {
-	global $site_file_root, $config, $_CLASS;
+	global $config, $_CLASS;
 
 	// Init upload class
-	include_once($site_file_root.'includes/forums/functions_upload.php');
+	include_once(SITE_FILE_ROOT.'includes/forums/functions_upload.php');
 	
 	$upload = new fileupload('AVATAR_', array('jpg', 'jpeg', 'gif', 'png'), $config['avatar_filesize'], $config['avatar_min_width'], $config['avatar_min_height'], $config['avatar_max_width'], $config['avatar_max_height']);
 							

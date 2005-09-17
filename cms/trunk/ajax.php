@@ -19,10 +19,8 @@ if (empty($_GET['sid']))
 	die;
 }
 
-//echo str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/'; die;
-$site_file_root = '';
-
-require($site_file_root.'core.php');
+//require(SITE_FILE_ROOT.'core.php');
+require('core.php');
 
 $mod = get_variable('mod', 'REQUEST', false);
 
@@ -32,22 +30,6 @@ if (!$mod)
 }
 else
 {
-	/*
-	if ($mod === 'system')
-	{
-		include_once($site_file_root.'includes/system.php');
-
-		$mode = get_variable('mode', 'REQUEST', false);
-		if (!$mode || !function_exists($mode))
-		{
-			script_close(false);
-		}
-
-		$mode();
-		script_close(false);
-	}
-	*/
-
 	$sql = 'SELECT * FROM '.CORE_MODULES_TABLE.'
 				WHERE module_type = ' . MODULE_NORMAL . "
 				AND module_name = '" . $_CLASS['core_db']->escape($mod) . "'";
@@ -68,7 +50,7 @@ else
 	$_CORE_MODULE = $_CLASS['core_display']->get_module();
 }
 
-$path = $site_file_root.'modules/'.$_CORE_MODULE['module_name'].'/ajax.php';
+$path = SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/ajax.php';
 $_CLASS['core_user']->page = $_CORE_MODULE['module_name'];
 
 require_once($path);

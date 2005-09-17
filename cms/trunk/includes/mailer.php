@@ -95,7 +95,6 @@ class core_mailer
 		foreach ($address as $array)
 		{
 			$array['name'] = trim($array['name']);
-//"=?UTF-8?B?VmlwZXJhbA==?="
 			$formatted[] = ($array['name'] && $this->named_addresses) ?  '"' . mail_encode($array['name'], $this->encoding) . '" <' . $array['address'] . '>' : $array['address'];
 		}
 		return implode(', ', $formatted);
@@ -121,7 +120,6 @@ class core_mailer
 
 		if (!$from)
 		{
-			// modify_lines ?
 			$from = '<' . $_CORE_CONFIG['email']['site_mail'] . '>';
 		}
 
@@ -179,13 +177,12 @@ class core_mailer
 		{
 			$headers[] = 'Content-Type: text/plain; charset='.$this->encoding;
 			$headers[] = 'Content-Transfer-Encoding: 8bit';
-			$message = "\n".strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message)))."\n";
+			$message = "\n".$this->message."\n";
 		}
 
 		if ($_CORE_CONFIG['email']['smtp'])
 		{
 			$smtp = new smtp_mailer;
-
 			if ($connect = $smtp->connect($_CORE_CONFIG['email']['smtp_host'], $_CORE_CONFIG['email']['smtp_port']))
 			{
 				$login = $smtp->login($_CORE_CONFIG['email']['smtp_username'], $_CORE_CONFIG['email']['smtp_password']);
@@ -217,11 +214,15 @@ class core_mailer
 
 			if (!$result)
 			{
+				$this->error = 'Mail Send failed';
+
 				return false;
 			}
 			
 			return true;
 		}
+
+		$this->error = 'Mail Function not found';
 
 		return false;
 	}
@@ -286,7 +287,6 @@ class smtp_mailer
 	// If login fails we disconnect, may do it differently later on
 	function login($user, $password)
 	{
-		$user = ''; $password='';
 		if (!$this->connection)
 		{
 			$this->error = 'No connection';
@@ -370,7 +370,7 @@ class smtp_mailer
 		foreach ($this->recipients as $email)
 		{
 			$name = false;
-			
+
 			if (is_array($email))
 			{
 				$name = $email['name'];
