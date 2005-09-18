@@ -62,7 +62,8 @@ class filespec
 			$this->mimetype = 'application/octetstream';
 		}
 		
-		$this->extension = array_pop(explode('.', strtolower($this->realname)));
+		$this->extension = explode('.', strtolower($this->realname));
+		$this->extension = array_pop($this->extension);
 
 		// Try to get real filesize from temporary folder (not always working) ;)
 		$this->filesize = (@filesize($this->filename)) ? @filesize($this->filename) : $this->filesize;
@@ -102,7 +103,8 @@ class filespec
 
 			case 'unique':
 			default:
-				$this->realname = $prefix . md5(unique_id()) . '.' . $this->extension;
+				$this->realname = $prefix . md5(uniqid(mt_rand(), true)) . '.' . $this->extension;
+			break;
 		}
 	}
 
@@ -631,7 +633,7 @@ class fileupload
 
 	function valid_extension(&$file)
 	{
-		return (in_array($file->get('extension'), $this->allowed_extensions)) ? true : false;
+		return in_array($file->get('extension'), $this->allowed_extensions);
 	}
 
 	function valid_dimensions(&$file)

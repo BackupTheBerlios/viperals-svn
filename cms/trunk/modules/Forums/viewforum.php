@@ -317,7 +317,7 @@ $_CLASS['core_template']->assign_array(array(
 	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
 	'S_SEARCHBOX_ACTION'	=> generate_link('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
-	'U_MCP' 			=> ($_CLASS['auth']->acl_gets('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
+	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
 	'U_POST_NEW_TOPIC'	=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id), 
 	'U_VIEW_FORUM'		=> generate_link("Forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param&amp;start=$start"), 
 	'U_MARK_TOPICS' 	=> generate_link("Forums&amp;file=viewforum&amp;f=$forum_id&amp;mark=topics"))
@@ -501,13 +501,13 @@ if (!empty($topic_list))
 			'TOPIC_ICON_IMG'        => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['img'] : '',
 			'TOPIC_ICON_IMG_WIDTH'  => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['width'] : '',
 			'TOPIC_ICON_IMG_HEIGHT' => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['height'] : '',
-			'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+			'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 
 			'S_TOPIC_TYPE'			=> $row['topic_type'], 
 			'S_UNREAD_TOPIC'		=> $unread_topic,
 
-			'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_gets('m_', $forum_id)) ? true : false,
-			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_gets('m_approve', $forum_id)) ? true : false,
+			'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_get('m_', $forum_id)) ? true : false,
+			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_get('m_approve', $forum_id)) ? true : false,
 
 			'U_LAST_POST'       => generate_link($view_topic_url . $SID . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false, false, false),	
 			'U_LAST_POST_AUTHOR'=> ($_CLASS['core_user']->is_user && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',

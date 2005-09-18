@@ -435,8 +435,7 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 {
 	global $config, $_CLASS;
 
-	$return_tpl = array();
-
+	$datas = array();
 	$extensions = obtain_attach_extensions();
 
 	foreach ($attachment_data as $attachment)
@@ -449,7 +448,7 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 		$data['lang_size'] = ($attachment['filesize'] >= 1048576) ? round((round($attachment['filesize'] / 1048576 * 100) / 100), 2) .$_CLASS['core_user']->lang['MB'] : (($attachment['filesize'] >= 1024) ? round((round($attachment['filesize'] / 1024 * 100) / 100), 2)  . $_CLASS['core_user']->lang['KB']: $attachment['filesize'] . $_CLASS['core_user']->lang['BYTES']);
 		$data['lang_views'] = (!$attachment['download_count']) ? $_CLASS['core_user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
 
-		$data['icon'] = ($extensions[$attachment['extension']]['upload_icon']) ? $config['upload_icons_path'] . '/' . trim($extensions[$attachment['extension']]['upload_icon']) : false;
+		$data['icon'] = (isset($extensions[$attachment['extension']]['upload_icon']) && $extensions[$attachment['extension']]['upload_icon']) ? $config['upload_icons_path'] . '/' . trim($extensions[$attachment['extension']]['upload_icon']) : false;
 		$data['name'] = basename($attachment['real_filename']);
 		$data['comment'] = str_replace("\n", '<br />', censor_text($attachment['comment']));
 
@@ -459,8 +458,6 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 		{
 			$data['category'] = 'DENIED';
 			$data['lang'] = sprintf($_CLASS['core_user']->get_lang('EXTENSION_DISABLED_AFTER_POSTING'), $attachment['extension']);
-
-			continue;
 		}
 		else
 		{

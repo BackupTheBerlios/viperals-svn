@@ -173,9 +173,9 @@
 						<br clear="all" />
 						<!-- ENDIF -->
 
-						<div class="postbody" style="min-height: 100px;">{ $postrow:MESSAGE }</div>
-
 						<!-- IF { $postrow:ATTACHMENTS } -->
+						<div class="postbody">{ $postrow:MESSAGE }</div>
+
 						<br clear="all" /><br />
 						
 						<table class="tablebg" width="100%" cellspacing="1">
@@ -184,10 +184,35 @@
 							</tr>
 							<!-- LOOP $postrow:ATTACHMENTS -->
 							<tr>
-								<td class="row2">{ $postrow:ATTACHMENTS:DISPLAY_ATTACHMENT }</td>
+								<td class="row2">
+								<!-- IF { $postrow:ATTACHMENTS:category } == 'DENIED' -->
+									<span class="postbody">[ { $postrow:ATTACHMENTS:lang }]</span><br /><br />
+								<!-- ELSEIF { $postrow:ATTACHMENTS:category } == 'IMAGE' -->
+									<!-- IF { $postrow:ATTACHMENTS:comment } -->
+									<span class="gensmall"><b>{ $L_COMMENT }:</b> { $postrow:ATTACHMENTS:comment }</span><hr />
+									<!-- ENDIF --><img src="{ $postrow:ATTACHMENTS:image_src }" alt="{ $postrow:ATTACHMENTS:name }" /></span>
+									<br /><span class="gensmall"><strong>{ $postrow:ATTACHMENTS:name }</strong><br/> { $L_VIEWED } { $postrow:ATTACHMENTS:lang_views } </span>
+								<!-- ELSEIF { $postrow:ATTACHMENTS:category } == 'THUMBNAIL' -->
+									<!-- IF { $postrow:ATTACHMENTS:comment } -->
+									<span class="gensmall"><b>{ $L_COMMENT }:</b> { $postrow:ATTACHMENTS:comment }</span><hr />
+									<!-- ENDIF -->		<a href="{ $postrow:ATTACHMENTS:link }" target="_blank"><img src="{ $postrow:ATTACHMENTS:image_src }" alt="{ $postrow:ATTACHMENTS:name }" border="0" /></a></span>
+									<br /><span class="gensmall"><strong>{ $postrow:ATTACHMENTS:name }</strong><br/> { $L_VIEWED } { $postrow:ATTACHMENTS:lang_views } </span>
+								<!-- ELSE -->
+									<!-- IF { $postrow:ATTACHMENTS:comment } -->
+									<span class="gensmall"><b>{ $L_FILE_COMMENT }:</b> { $postrow:ATTACHMENTS:comment }</span><hr />
+									<!-- ENDIF -->
+									<!-- IF { $postrow:ATTACHMENTS:icon } --><img src="{ $postrow:ATTACHMENTS:icon }" alt="" border="0" /><!-- ENDIF --> <a href="{ $postrow:ATTACHMENTS:link }" target="_blank">{ $postrow:ATTACHMENTS:name }</a>
+									<span class="gensmall">
+									<br />{ $L_FILESIZE } { $postrow:ATTACHMENTS:lang_size }
+									<br />{ $L_DOWNLOADED } { $postrow:ATTACHMENTS:lang_views }
+									</span>
+								<!-- ENDIF -->
+								</td>
 							</tr>
 							<!-- ENDLOOP -->
 						</table>
+						<!-- ELSE -->
+							<div class="postbody" style="min-height: 100px;">{ $postrow:MESSAGE }</div>
 						<!-- ENDIF -->
 
 						<!-- IF { $postrow:S_DISPLAY_NOTICE } -->

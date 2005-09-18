@@ -157,7 +157,7 @@ class auth
 		else
 		{
 			$acl |= $this->acl_get($opts, $f);
-		}		
+		}
 
 		return $acl;
 	}

@@ -38,7 +38,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_dateformat', 'D M d, Y g:i a', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_timezone', '-5', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'link_optimization', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'index_page', 'News', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'index_page', 'contact', 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('maintenance', 'active', '1', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('maintenance', 'start', '', 1)");
@@ -462,4 +462,39 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_t
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('mcp', 'MAIN', 'main', 1, 1, 'front\r\nforum_view\r\ntopic_view\r\npost_details', 'acl_m_')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('mcp', 'QUEUE', 'queue', 2, 1, 'unapproved_topics\r\nunapproved_posts\r\nreports', 'acl_m_approve')");
 
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Images', 1, 1, 1, '', 0, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Archives', 0, 1, 1, '', 0, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Plain Text', 0, 0, 1, '', 0, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Documents', 0, 0, 1, '', 0, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Real Media', 3, 0, 2, '', 0, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Windows Media', 2, 0, 1, '', 0, '')");
+
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (1, 'gif')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (1, 'png')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (1, 'jpeg')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (1, 'jpg')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (1, 'tif')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (1, 'tga')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (2, 'gtar')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (2, 'gz')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (2, 'tar')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (2, 'zip')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (2, 'rar')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (2, 'ace')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (3, 'txt')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (3, 'c')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (3, 'h')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (3, 'cpp')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (3, 'hpp')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (3, 'diz')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'xls')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'doc')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'dot')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'pdf')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'ai')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'ps')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (4, 'ppt')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (5, 'rm')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (6, 'wma')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (6, 'wmv')");
 ?>

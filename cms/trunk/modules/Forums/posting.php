@@ -1097,7 +1097,7 @@ generate_forum_rules($forum_data);
 $s_hidden_fields = ($mode == 'reply' || $mode == 'quote') ? '<input type="hidden" name="topic_cur_post_id" value="' . $topic_last_post_id . '" />' : '';
 $s_hidden_fields .= ($draft_id || isset($_REQUEST['draft_loaded'])) ? '<input type="hidden" name="draft_loaded" value="' . ((isset($_REQUEST['draft_loaded'])) ? intval($_REQUEST['draft_loaded']) : $draft_id) . '" />' : '';
 
-$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_attachments'] || !$_CLASS['auth']->acl_gets('f_attach', 'u_attach', $forum_id)) ? '' : ' enctype="multipart/form-data"';
+$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_attachments'] || !$_CLASS['auth']->acl_gets(array('f_attach', 'u_attach'), $forum_id)) ? '' : ' enctype="multipart/form-data"';
 
 // Start assigning vars for main posting page ...
 $_CLASS['core_template']->assign_array(array(
@@ -1182,8 +1182,7 @@ else
 }
 
 // Attachment entry
-// Not using acl_gets here, because it is using OR logic
-if ($_CLASS['auth']->acl_get('f_attach', $forum_id) && $_CLASS['auth']->acl_get('u_attach') && $config['allow_attachments'] && $form_enctype)
+if ($form_enctype)
 {
 	posting_gen_attachment_entry($attachment_data, $filename_data);
 }
@@ -1731,6 +1730,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					'poster_id'			=> $poster_id,
 					'physical_filename'	=> basename($attach_row['physical_filename']),
 					'real_filename'		=> basename($attach_row['real_filename']),
+					'download_count'	=> 0,
 					'comment'			=> $attach_row['comment'],
 					'extension'			=> $attach_row['extension'],
 					'mimetype'			=> $attach_row['mimetype'],
@@ -1748,7 +1748,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			}
 		}
 
-		if (sizeof($data['attachment_data']))
+		if (!empty($data['attachment_data']))
 		{
 			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 				SET post_attachment = 1

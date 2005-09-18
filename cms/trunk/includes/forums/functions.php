@@ -184,7 +184,7 @@ function get_userdata($user)
 // Create forum rules for given forum 
 function generate_forum_rules(&$forum_data)
 {
-	global $_CLASS, $site_file_root;
+	global $_CLASS;
 	
 	if (!$forum_data['forum_rules'] && !$forum_data['forum_rules_link'])
 	{
@@ -194,7 +194,7 @@ function generate_forum_rules(&$forum_data)
 
 	if ($forum_data['forum_rules'])
 	{
-		require_once($site_file_root.'includes/forums/bbcode.php');
+		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 		$bbcode = new bbcode($forum_data['forum_rules_bbcode_bitfield']);
 		
 		$bbcode->bbcode_second_pass($forum_data['forum_rules'], $forum_data['forum_rules_bbcode_uid']);
@@ -337,8 +337,8 @@ function gen_forum_auth_level($mode, $forum_id)
 	$rules = array(
 		($_CLASS['auth']->acl_get('f_post', $forum_id)) ? $_CLASS['core_user']->lang['RULES_POST_CAN'] : $_CLASS['core_user']->lang['RULES_POST_CANNOT'],
 		($_CLASS['auth']->acl_get('f_reply', $forum_id)) ? $_CLASS['core_user']->lang['RULES_REPLY_CAN'] : $_CLASS['core_user']->lang['RULES_REPLY_CANNOT'],
-		($_CLASS['auth']->acl_gets('f_edit', 'm_edit', $forum_id)) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
-		($_CLASS['auth']->acl_gets('f_delete', 'm_delete', $forum_id)) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
+		($_CLASS['auth']->acl_gets(array('f_edit', 'm_edit'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
+		($_CLASS['auth']->acl_gets(array('f_delete', 'm_delete'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
 		($_CLASS['auth']->acl_get('f_attach', $forum_id) && $_CLASS['auth']->acl_get('u_attach', $forum_id)) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT']
 	);
 
@@ -545,9 +545,9 @@ function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status
 				$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_WATCH_TABLE . ' '.$_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
 			}
 
-			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
-			//$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
-			//trigger_error($message);
+			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
+			$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
+			trigger_error($message);
 		}
 	}
 	else
@@ -573,9 +573,9 @@ function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status
 				$_CLASS['core_db']->query($sql);
 			}
 
-			//$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
-			//$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
-			//trigger_error($message);
+			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
+			$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
+			trigger_error($message);
 		}
 		else
 		{
@@ -875,7 +875,7 @@ function obtain_attach_extensions($forum_id = false)
 	{
 		// The rule is to only allow those extensions defined. ;)
 		$sql = 'SELECT e.extension, g.*
-			FROM ' . EXTENSIONS_TABLE . ' e, ' . EXTENSION_GROUPS_TABLE . ' g
+			FROM ' . FORUMS_EXTENSIONS_TABLE . ' e, ' . FORUMS_EXTENSION_GROUPS_TABLE . ' g
 			WHERE e.group_id = g.group_id
 				AND g.allow_group = 1';
 		$result = $_CLASS['core_db']->query($sql);
@@ -904,7 +904,7 @@ function obtain_attach_extensions($forum_id = false)
 
 		$_CLASS['core_cache']->put('extensions', $extensions);
 	}
-	
+
 	if ($forum_id !== false)
 	{
 		$return = array();

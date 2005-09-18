@@ -484,7 +484,7 @@ $_CLASS['core_db']->add_table_field_int('download_mode', array('max' => 1));
 $_CLASS['core_db']->add_table_field_char('upload_icon', 100);
 $_CLASS['core_db']->add_table_field_int('max_filesize', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_text('allowed_forums', 2000);
-$_CLASS['core_db']->add_table_field_int('allow_in_pm', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('allow_in_pm', array('max' => 1, 'null' => true));
 
 $_CLASS['core_db']->add_table_index('group_id', 'primary');
 

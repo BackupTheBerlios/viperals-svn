@@ -155,34 +155,36 @@ function confirmation_image($code = false, $size = false)
 
 function activate()
 {
-	global $_CLASS;
+	global $_CLASS, $_CORE_CONFIG;
 
-	$user_id = get_variable('user_id', 'GET', 0, 'integer');
+	$user_id = get_variable('user_id', 'GET', false, 'integer');
 	$key = get_variable('key', 'GET', false);
 
 	if (!$user_id || !$key)
 	{
 		trigger_error('CANT_ACTIVATED');
 	}
-	
+
 	$sql = 'SELECT username, user_status, user_group, user_new_password, user_new_password_encoding, user_act_key
 		FROM ' . USERS_TABLE . " WHERE user_id = $user_id AND user_type = ".USER_NORMAL;
 
-	$result = $_CLASS['core_db']->sql_query($sql);
-	$row = $_CLASS['core_db']->sql_fetchrow($result);
-	$_CLASS['core_db']->sql_freeresult($result);
+	$result = $_CLASS['core_db']->query($sql);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
 	if (!$row)
 	{
 		trigger_error('NO_USER');
 	}
-	
-	if ($row['user_status'] != USER_UNACTIVATED && !$row['user_new_password'])
+
+	settype($row['user_status'], 'int');
+
+	if ($row['user_status'] !== STATUS_PENDING && !$row['user_new_password'])
 	{
-		trigger_error(($row['user_status'] == USER_ACTIVE) ? 'ALREADY_ACTIVATED' : 'CANT_ACTIVATED');
+		trigger_error(($row['user_status'] === STATUS_ACTIVE) ? 'ALREADY_ACTIVATED' : 'CANT_ACTIVATED');
 	}
 
-	if ($row['user_act_key'] != $key)
+	if ($row['user_act_key'] !== $key)
 	{
 		trigger_error('WRONG_ACTIVATION_KEY');
 	}
@@ -193,26 +195,30 @@ function activate()
 		'user_new_password_encoding'=> null
 	);
 
-	if ($row['user_status'] != USER_UNACTIVATED)
-	{
-		$sql_ary += array(
-			'user_password'				=> $row['user_new_password'],
-			'user_password_encoding'	=> $row['user_new_password_encoding'],
-		);
-	}
-	else
+	if ($row['user_status'] === STATUS_PENDING)
 	{
 		include_once(SITE_FILE_ROOT.'includes/functions_user.php');
 		user_activate($user_id);
 
 		set_core_config('user', 'newest_user_id', $row['user_id'], false);
 		set_core_config('user', 'newest_username', $row['username'], false);
+		set_core_config('user', 'total_users', $_CORE_CONFIG['user']['total_users'] + 1, false);
+	}
+	else
+	{
+		$sql_ary += array(
+			'user_password'				=> $row['user_new_password'],
+			'user_password_encoding'	=> $row['user_new_password_encoding'],
+		);
 	}
 
 	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
-		WHERE user_id = ' . $row['user_id'];
+		WHERE user_id = ' . $user_id;
+	$result = $_CLASS['core_db']->query($sql);
 
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$message = ($row['user_status'] === STATUS_PENDING) ? $_CLASS['core_user']->get_lang('ACCOUNT_ACTIVE') : $_CLASS['core_user']->get_lang('PASSWORD_ACTIVATED');
+
+	trigger_error($message. '<br /><br />' . sprintf($_CLASS['core_user']->get_lang('RETURN_INDEX'),  '<a href="'. generate_link() .'">', '</a>'));
 }
 
 function login()

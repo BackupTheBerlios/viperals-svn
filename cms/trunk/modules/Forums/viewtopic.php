@@ -831,7 +831,7 @@ unset($id_cache);
 // Pull attachment data
 if (!empty($attach_list))
 {
-	if ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id))
+	if ($_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $forum_id))
 	{
 		include($site_file_root.'includes/forums/functions_display.php');
 
@@ -1052,10 +1052,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	// Remove this foreach.
 	if (isset($attachments[$row['post_id']]) && !empty($attachments[$row['post_id']]))
 	{
-		foreach ($attachments[$row['post_id']] as $attachment)
-		{
-			$post_attachments[] = array('DISPLAY_ATTACHMENT'	=> $attachment);
-		}
+		$post_attachments = display_attachments($forum_id, $attachments[$row['post_id']], $null);
 	}
 
 	if ($unread = ($row['post_time'] > $topic_last_read))
@@ -1107,7 +1104,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'U_JABBER'			=> $user_cache[$poster_id]['jabber'], 
 
 		'U_REPORT'			=> generate_link('Forums&amp;file=report&amp;p=' . $row['post_id']),
-		'U_MCP_REPORT'		=> ($_CLASS['auth']->acl_gets('m_', 'a_', 'f_report', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
+		'U_MCP_REPORT'		=> ($_CLASS['auth']->acl_gets(array('m_', 'a_', 'f_report'), $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
 		'U_MCP_APPROVE'		=> ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
 		'U_MCP_DETAILS'		=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link('Forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
 		'U_MINI_POST'		=> generate_link('Forums&amp;file=viewtopic&amp;p=' . $row['post_id']) . '#' . $row['post_id'],
@@ -1116,10 +1113,10 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'POST_ID'           => $row['post_id'],
 		'S_IGNORE_POST' 	=> false, 
 		
-		'S_POST_UNAPPROVED'	=> ($row['post_approved']) ? FALSE : TRUE,
+		'S_POST_UNAPPROVED'	=> !$row['post_approved'],
 		'S_POST_REPORTED'	=> ($row['post_reported'] && $_CLASS['auth']->acl_get('m_', $forum_id)) ? TRUE : FALSE,
 		'S_DISPLAY_NOTICE'	=> ($display_notice && $row['post_attachment']) ? true : false, 
-		'S_FRIEND'			=> ($row['friend']) ? true : false,
+		'S_FRIEND'			=> $row['friend'],
 		'S_UNREAD_POST'		=> $unread,
 		'S_FIRST_UNREAD'	=> false,
 	);

@@ -202,7 +202,8 @@ define('FORUMS_WORDS_TABLE', $table_prefix.'forums_words');
 define('FORUMS_WATCH_TABLE', $table_prefix.'forums_watch');
 define('FORUMS_TRACK_TABLE', $table_prefix.'forums_tracking');
 define('FORUMS_RANKS_TABLE', $table_prefix.'forums_ranks');
-
+define('FORUMS_EXTENSIONS_TABLE', $table_prefix.'forums_extensions');
+define('FORUMS_EXTENSION_GROUPS_TABLE', $table_prefix.'forums_extension_groups');
 
 define('ADMIN_AUTH_TABLE', $table_prefix.'admins');
 
@@ -220,8 +221,6 @@ define('SESSIONS_AUTOLOGIN_TABLE', $table_prefix.'sessions_auto_login');
 define('SESSIONS_TABLE', $table_prefix.'sessions');
 
 
-define('EXTENSIONS_TABLE', $table_prefix.'forums_extensions');
-define('EXTENSION_GROUPS_TABLE', $table_prefix.'forums_extension_groups');
 
 define('USERS_TABLE', $user_prefix.'users');
 define('USERS_NOTES_TABLE', $table_prefix.'forums_users_notes');

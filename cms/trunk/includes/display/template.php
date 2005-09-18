@@ -464,7 +464,7 @@ class core_template
 				continue;
 			}
 			
-			$values[1][$loop] = "<?php echo $parse; ?> ";
+			$values[1][$loop] = "<?php echo $parse; ?>";
 		}
 	
 		return str_replace($values[0], $values[1], $code);

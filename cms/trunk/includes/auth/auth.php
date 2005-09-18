@@ -44,15 +44,16 @@ class core_auth
 					FROM ' . USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->escape($user_name) . "'";
 
 		$result = $_CLASS['core_db']->query($sql);
-		$status = false;
 	
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if (encode_password($user_password, $row['user_password_encoding']) == $row['user_password'])
+			if (encode_password($user_password, $row['user_password_encoding']) === $row['user_password'])
 			{
-				if ($row['user_status'] != STATUS_ACTIVE)
+				settype($row['user_status'], 'int');
+
+				if ($row['user_status'] !== STATUS_ACTIVE)
 				{
-					$status =  ($row['user_status'] == STATUS_DISABLED) ? 'ACTIVE_ERROR' : 'UNACTIVATED_ERROR';
+					return ($row['user_status'] === STATUS_DISABLED) ? 'ACTIVE_ERROR' : 'UNACTIVATED_ERROR';
 				}
 
 				return (int) $row['user_id'];
@@ -60,8 +61,8 @@ class core_auth
 		}
 
 		$_CLASS['core_db']->free_result($result);
-		
-		return $status;
+
+		return false;
 	}
 
 	function admin_auth()

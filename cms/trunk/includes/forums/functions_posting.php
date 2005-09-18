@@ -813,31 +813,36 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 {
 	global $config, $_CORE_CONFIG, $_CLASS, $site_file_root;
 
-return;
+	$titles = array(
+		'notify_topic'		=> 'Topic Reply Notification - '. $topic_title,
+		'notify_newtopic'	=> 'New Topic Notification - '. $topic_title,
+		'notify_forum'		=> 'Forum Post Notification - '. $forum_name,
+	);
 
 	if ($mode == 'reply' || $mode == 'quote')
 	{
+		$topic_title = $subject;
+
 		$notify_type = 'topic';
-		$template = 'topic_notify'; //forum_notify
+		$template = 'notify_topic'; //forum_notify
 		$where = "(w.forum_id = $forum_id OR w.topic_id = $topic_id)";
 	}
 	else
 	{
+		$topic_title = $topic_title;
+
 		$notify_type = 'forum';
-		$template = 'newtopic_notify';
+		$template = 'notify_newtopic';
 		$where = 'w.forum_id = '.$forum_id;
 	}
 
-	$topic_title = ($topic_notification) ? $topic_title : $subject;
 	$topic_title = censor_text($topic_title);
-
 	$holding = array();
 
 // Add use of notification type
 
 	// Lets get all the users that are set to be notified
-	// $sql = 'SELECT w.notify_type, u.user_id, u.username, u.user_email, u.user_lang, u.user_notify_type, u.user_jabber 
-	$sql = 'SELECT w.notify_type, u.user_id, u.username, u.user_email, u.user_lang
+	$sql = 'SELECT w.notify_type, w.forum_id, u.user_id, u.username, u.user_email, u.user_lang
 		FROM '.FORUMS_WATCH_TABLE.' w, ' . USERS_TABLE . " u
 		WHERE $where
 			AND w.notify_status = 0
@@ -845,7 +850,7 @@ return;
 			AND u.user_id = w.user_id';
 	$result = $_CLASS['core_db']->query($sql);
 
-	while ($user = $_CLASS['core_db']->fetch_user_assoc($result))
+	while ($user = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$ignore_array[$user['user_id']] = $user['user_id'];
 
@@ -873,11 +878,13 @@ return;
 	// Now we remove the users that aren't allowed to read the forum
 	$acl_list = $_CLASS['auth']->acl_get_list(array_keys($ignore_array), 'f_read', $forum_id);
 
-	foreach($forum_ary[$forum_id]['f_read'] as $user_id)
+	if (!empty($acl_list))
 	{
-		unset($ignore_array[$user_id]);
+		foreach ($acl_list[$forum_id]['f_read'] as $user_id)
+		{
+			unset($ignore_array[$user_id]);
+		}
 	}
-
 	$processed = $delete_array = $update_array = array();
 
 	foreach ($holding as $user)
@@ -925,11 +932,10 @@ return;
 		$count = count($user_list);
 		for ($i = 0; $i < $count; $i++)
 		{
-			$mailer->to($user_list[$i]['user_id'], $user_list[$i]['username']);
+			$mailer->to($user_list[$i]['user_email'], $user_list[$i]['username']);
 		}
 
-// this has to change
-		$mailer->subject($_CLASS['core_user']->get_lang('FORUM_NOTIFICATION'));
+		$mailer->subject($titles[$template]);
 
 		$_CLASS['core_template']->assign_array(array(
 			'EMAIL_SIG'		=> $email_sig,
@@ -937,17 +943,19 @@ return;
 			'TOPIC_TITLE'	=> $topic_title,  
 			'FORUM_NAME'	=> $forum_name,
 
-			'U_FORUM'				=> generate_link("Forums&amp;file=viewtopic&f=$forum_id&e=0", array('sid' => false, 'full' => true)),
-			'U_TOPIC'				=> generate_link("Forums&amp;file=viewtopic&t=$topic_id&e=0", array('sid' => false, 'full' => true)),
-			'U_NEWEST_POST'			=> generate_link("Forums&amp;file=viewtopic&t=$topic_id&p=$post_id&e=$post_id", array('sid' => false, 'full' => true)),
-			'U_STOP_WATCHING_TOPIC' => generate_link("Forums&amp;file=viewtopic&t=$topic_id&unwatch=topic", array('sid' => false, 'full' => true)),
-			'U_STOP_WATCHING_FORUM' => generate_link("Forums&amp;file=viewforum&f=$forum_id&unwatch=forum", array('sid' => false, 'full' => true)), 
+			'U_FORUM'				=> generate_link("Forums&file=viewforum&f=$forum_id&e=0", array('sid' => false, 'full' => true)),
+			'U_TOPIC'				=> generate_link("Forums&file=viewtopic&t=$topic_id&e=0", array('sid' => false, 'full' => true)),
+			'U_NEWEST_POST'			=> generate_link("Forums&file=viewtopic&t=$topic_id&p=$post_id&e=$post_id", array('sid' => false, 'full' => true)),
+			'U_STOP_WATCHING_TOPIC' => generate_link("Forums&file=viewtopic&t=$topic_id&unwatch=topic", array('sid' => false, 'full' => true)),
+			'U_STOP_WATCHING_FORUM' => generate_link("Forums&file=viewforum&f=$forum_id&unwatch=forum", array('sid' => false, 'full' => true)), 
 		));
-
-		//$mailer->message = trim($_CLASS['core_template']->display('fdsgfd'.$template, true));
-		//$mailer->send();
 		
-		unset($mailer);
+		$mailer->message = trim($_CLASS['core_template']->display("email/forums/$template.txt", true));
+
+		if (!$mailer->send())
+		{
+			//echo $mailer->error;
+		}
 	}
 
 	$_CLASS['core_db']->transaction();
@@ -968,7 +976,7 @@ return;
 				AND user_id IN (" . implode(', ', $update_array['forum']) . ")");
 	}
 
-	$_CLASS['core_db']->sql_transaction('commit');
+	$_CLASS['core_db']->transaction('commit');
 }
 
 ?>
