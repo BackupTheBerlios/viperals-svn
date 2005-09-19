@@ -20,7 +20,7 @@ require('core.php');
 $_CLASS['core_user']->user_setup(null);
 $_CLASS['core_display']->load_theme('viperal_admin', SITE_FILE_ROOT.'themes_admin/viperal_admin');
 
-$_CLASS['core_user']->add_lang('admin/common.php');
+//$_CLASS['core_user']->add_lang('admin/common.php');
 
 $_CORE_MODULE['module_title'] = $_CLASS['core_user']->lang['ADMIN'];
 $_CORE_MODULE['module_sides'] = BLOCK_ALL;

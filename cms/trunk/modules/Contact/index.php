@@ -95,16 +95,16 @@ function send_feedback($sender_name, $sender_email, $message, $preview = false)
 		'MESSAGE' 		=> $message,
 	));
 
-	$body = trim($_CLASS['core_template']->display('modules/Contact/email/index.html', true));
+	$body = trim($_CLASS['core_template']->display('email/contact/index.txt', true));
 
 	if ($preview)
 	{
-		$_CLASS['core_template']->assign('PREVIEW', $body);
+		$_CLASS['core_template']->assign('PREVIEW', modify_lines($body, '<br/>'));
 
 		return;
 	}
 
-	require_once($site_file_root.'includes/mailer.php');
+	require_once(SITE_FILE_ROOT.'includes/mailer.php');
 
 	$mailer = new core_mailer;
 	$mailer->to($_CORE_CONFIG['email']['site_mail'], false);
