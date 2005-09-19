@@ -865,10 +865,11 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				}
 			}
 
-			$sql = 'SELECT DISTINCT(post_id)
+		/*	$sql = 'SELECT DISTINCT(post_id)
 				FROM ' . FORUMS_REPORTS_TABLE . '
 				WHERE post_id IN (' . implode(', ', $post_ids) . ')';
 			$result = $_CLASS['core_db']->query($sql);
+		*/
 
 			$post_ids = array();
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -1191,7 +1192,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			$sql = 'SELECT t.topic_id, t.post_approved, COUNT(t.post_id) AS total_posts, MIN(t.post_id) AS first_post_id, MAX(t.post_id) AS last_post_id
 				FROM ' . FORUMS_POSTS_TABLE . " t
 				$where_sql
-				GROUP BY t.topic_id"; //, t.post_approved";
+				GROUP BY t.topic_id, t.post_approved";
 			$result = $_CLASS['core_db']->query($sql);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))

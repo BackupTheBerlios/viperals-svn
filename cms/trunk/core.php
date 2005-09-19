@@ -81,6 +81,8 @@ require_once(SITE_FILE_ROOT.'includes/functions.php');
 require_once(SITE_FILE_ROOT.'includes/handler.php');
 require_once(SITE_FILE_ROOT.'config.php');
 
+@register_shutdown_function('script_close');
+
 // Load basic classes
 load_class(false, 'core_template');
 load_class(false, 'core_error_handler');
@@ -108,11 +110,6 @@ require_once(SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php');
 
 load_class(false, 'core_cache', 'cache_'.$acm_type);
 load_class(false, 'core_db', 'db_'.$site_db['type']);
-
-if (function_exists('register_shutdown_function'))
-{
-	register_shutdown_function('script_close');
-}
 
 $_CLASS['core_db']->connect($site_db);
 unset($sitedb);

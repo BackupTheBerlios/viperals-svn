@@ -136,12 +136,12 @@ function update_last_post_information($type, $id)
 
 function upload_attachment($form_name, $forum_id, $local = false, $local_storage = '', $is_message = false)
 {
-	global $_CLASS, $site_file_root, $config;
+	global $_CLASS, $config;
 
 	$filedata = array();
 	$filedata['error'] = array();
 
-	include_once($site_file_root. 'includes/forums/functions_upload.php');
+	include_once(SITE_FILE_ROOT. 'includes/forums/functions_upload.php');
 	$upload = new fileupload();
 	
 	if (!$local)
@@ -159,8 +159,7 @@ function upload_attachment($form_name, $forum_id, $local = false, $local_storage
 		return $filedata;
 	}
 
-	$extensions = array();
-	obtain_attach_extensions($extensions, $forum_id);
+	$extensions = obtain_attach_extensions($forum_id);
 
 	$upload->set_allowed_extensions(array_keys($extensions['_allowed_']));
 
@@ -727,7 +726,7 @@ function load_drafts($topic_id = 0, $forum_id = 0, $id = 0)
 // Topic Review
 function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id = 0, $show_quote_button = true)
 {
-	global $_CLASS, $bbcode, $site_file_root, $config;
+	global $_CLASS, $bbcode, $config;
 
 	// Go ahead and pull all data for this topic
 	$sql = 'SELECT u.username, u.user_id, p.post_id, p.post_username, p.post_subject, p.post_text, p.enable_smilies, p.bbcode_uid, p.bbcode_bitfield, p.post_time
@@ -756,7 +755,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 	// Instantiate BBCode class
 	if (!isset($bbcode) && $bbcode_bitfield)
 	{
-		require_once($site_file_root.'includes/forums/bbcode.php');
+		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
 
@@ -811,7 +810,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 // User Notification
 function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id, $topic_id, $post_id)
 {
-	global $config, $_CORE_CONFIG, $_CLASS, $site_file_root;
+	global $config, $_CORE_CONFIG, $_CLASS;
 
 	$titles = array(
 		'notify_topic'		=> 'Topic Reply Notification - '. $topic_title,
@@ -923,7 +922,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 
 	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
 
-	require_once($site_file_root.'includes/mailer.php');
+	require_once(SITE_FILE_ROOT.'includes/mailer.php');
 
 	foreach ($processed as $template => $user_list)
 	{

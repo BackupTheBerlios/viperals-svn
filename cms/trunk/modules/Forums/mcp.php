@@ -45,15 +45,6 @@ class module
 	{
 		global $_CLASS, $config;
 		
-		$_CLASS['core_template']->assign(array(
-			'L_OPTIONS'				=> $_CLASS['core_user']->lang['OPTIONS'],
-			'L_MESSAGE'				=> $_CLASS['core_user']->lang['MESSAGE'],
-			'L_YES'					=> $_CLASS['core_user']->lang['YES'],
-			'L_NO'					=> $_CLASS['core_user']->lang['NO'],
-			'L_RESET'				=> $_CLASS['core_user']->lang['RESET'],
-			)
-		);
-		
 		$sql = 'SELECT module_id, module_title, module_filename, module_subs, module_acl
 			FROM ' . FORUMS_MODULES_TABLE . "
 			WHERE module_type = '{$module_type}'
@@ -166,6 +157,16 @@ class module
 		{
 			trigger_error('MODULE_NOT_EXIST');
 		}
+//$_CLASS['core_blocks']->load_blocks();
+$_CLASS['core_blocks']->blocks_loaded = true;
+
+		$data = array(
+			'block_title'		=> 'Forum Administration',
+			'block_position'	=> BLOCK_LEFT,
+			'block_file'		=> 'block-forums_mcp.php',
+		);
+
+		$_CLASS['core_blocks']->add_block($data);
 
 		$this->type = $module_type;
 		$this->id	= $module_id;
@@ -253,24 +254,26 @@ class module
 					WHERE forum_id IN (' . implode(', ', $forum_list) . ')
 						AND topic_approved = 0';
 				$result = $_CLASS['core_db']->query($sql);
-				$total_topics = $_CLASS['core_db']->sql_fetchfield('total', 0, $result);
+				$row = $_CLASS['core_db']->fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
 
-				return ($total_topics) ? $total_topics : $_CLASS['core_user']->lang['NONE'];
-				break;
+				return ($row['total']) ? (int) $row['total'] : $_CLASS['core_user']->lang['NONE'];
+			break;
 
 			case 'unapproved_posts':
 
 				$sql = 'SELECT COUNT(*) AS total
-						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t 
+						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t 
 						WHERE p.forum_id IN (' . implode(', ', $forum_list) . ')
 							AND p.post_approved = 0
 							AND t.topic_id = p.topic_id
 							AND t.topic_first_post_id <> p.post_id';
 				$result = $_CLASS['core_db']->query($sql);
-				$total_posts = $_CLASS['core_db']->sql_fetchfield('total', 0, $result);
+				$row = $_CLASS['core_db']->fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
 
-				return ($total_posts) ? $total_posts : $_CLASS['core_user']->lang['NONE'];
-				break;
+				return ($row['total']) ? (int) $row['total'] : $_CLASS['core_user']->lang['NONE'];
+			break;
 		}
 	}
 
@@ -706,7 +709,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 	$s_limit_days = $s_sort_key = $s_sort_dir = $sort_url = '';
 	gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $sort_url);
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_SELECT_SORT_DIR'	=>	$s_sort_dir,
 		'S_SELECT_SORT_KEY' =>	$s_sort_key,
 		'S_SELECT_SORT_DAYS'=>	$s_limit_days)
@@ -723,7 +726,10 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 	}
 }
 
-//
+/*
+	This needs to be redone
+*/
+
 function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 {
 	global $_CLASS;
@@ -741,14 +747,8 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	$sql = "SELECT forum_id FROM $table
 		WHERE $sql_id = {$ids[0]}";
 	$result = $_CLASS['core_db']->query($sql);
-	$forum_id = (int) $_CLASS['core_db']->sql_fetchfield('forum_id', 0, $result);
+	list($forum_id) = $_CLASS['core_db']->fetch_row_num($result);
 	$_CLASS['core_db']->free_result($result);
-
-	if (!$forum_id)
-	{
-		// Global Announcement?
-		$forum_id = request_var('f', 0);
-	}
 
 	if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $forum_id))
 	{
@@ -772,7 +772,7 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	return $forum_id;
+	return (int) $forum_id;
 }
 
 // LITTLE HELPER

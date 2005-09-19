@@ -149,7 +149,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 
 	$url = 'Control_Panel&amp;i='.$id;
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'AUTHOR_NAME'		=> ($user_info['user_colour']) ? '<span style="color:#' . $user_info['user_colour'] . '">' . $user_info['username'] . '</span>' : $user_info['username'],
 		'AUTHOR_RANK' 		=> $user_info['rank_title'],
 		'RANK_IMAGE' 		=> $user_info['rank_image'],
@@ -343,7 +343,7 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 		$prev_id = $id;
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'QUOTE_IMG' => $_CLASS['core_user']->img('btn_quote', $_CLASS['core_user']->lang['REPLY_WITH_QUOTE']),
 		'TITLE'		=> $title,
 

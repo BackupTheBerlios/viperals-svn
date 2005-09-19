@@ -1073,7 +1073,7 @@ function smiley_text($text, $force_option = false)
 }
 
 // Inline Attachment processing
-function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_id = 0, $preview = false)
+function parse_inline_attachments(&$text, $attachments, &$update_count, $forum_id = 0, $preview = false)
 {
 	global $config, $_CLASS;
 
@@ -1081,6 +1081,7 @@ function parse_inline_attachments(&$text, &$attachments, &$update_count, $forum_
 	$tpl_size = count($attachments);
 
 	preg_match_all('#<!\-\- ia([0-9]+) \-\->(.*?)<!\-\- ia\1 \-\->#', $text, $matches, PREG_PATTERN_ORDER);
+
 	//print_r($matches);
 	if (count($matches[1]))
 	{

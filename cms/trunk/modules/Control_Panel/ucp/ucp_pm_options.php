@@ -17,7 +17,7 @@ function message_options($id, $mode, $global_privmsgs_rules, $global_rule_condit
 
 	$redirect_url = generate_link('Control_Panel&i=pm&mode=options');
 	
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'ERROR_MESSAGE'				=> false,
 		'S_RULE_DEFINED'			=> false,
 		'S_COND_DEFINED'			=> false,
@@ -404,7 +404,7 @@ function message_options($id, $mode, $global_privmsgs_rules, $global_rule_condit
 		}
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_FULL_FOLDER_OPTIONS'	=> $s_full_folder_options,
 		'S_TO_FOLDER_OPTIONS'	=> $s_to_folder_options,
 		'S_FOLDER_OPTIONS'		=> $s_folder_options,
@@ -501,7 +501,7 @@ function define_check_option($hardcoded, $check_option, $check_lang)
 		}
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_CHECK_DEFINED'	=> true,
 		'S_CHECK_SELECT'	=> ($hardcoded) ? false : true,
 		'CHECK_CURRENT'		=> isset($check_lang[$check_option]) ? $check_lang[$check_option] : '',
@@ -545,7 +545,7 @@ function define_action_option($hardcoded, $action_option, $action_lang, $folder)
 		}
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_ACTION_DEFINED'	=> true,
 		'S_ACTION_SELECT'	=> ($hardcoded) ? false : true,
 		'ACTION_CURRENT'	=> $l_action,
@@ -567,7 +567,7 @@ function define_rule_option($hardcoded, $rule_option, $rule_lang, $check_ary)
 		}
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_RULE_DEFINED'	=> true,
 		'S_RULE_SELECT'		=> !$hardcoded,
 		'RULE_CURRENT'		=> isset($rule_lang[$rule_option]) ? $rule_lang[$rule_option] : '',
@@ -580,7 +580,7 @@ function define_cond_option($hardcoded, $cond_option, $rule_option, $global_rule
 {
 	global $_CLASS;
 	
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_COND_DEFINED'	=> true,
 		'S_COND_SELECT'		=> (!$hardcoded && isset($global_rule_conditions[$rule_option])) ? true : false)
 	);
@@ -588,7 +588,7 @@ function define_cond_option($hardcoded, $cond_option, $rule_option, $global_rule
 	// Define COND_OPTION
 	if (!isset($global_rule_conditions[$rule_option]))
 	{
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'COND_OPTION'	=> 'none',
 			'COND_CURRENT'	=> false)
 		);
@@ -604,7 +604,7 @@ function define_cond_option($hardcoded, $cond_option, $rule_option, $global_rule
 		case 'text':
 			$rule_string = request_var('rule_string', '');
 
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'S_TEXT_CONDITION'	=> true,
 				'CURRENT_STRING'	=> $rule_string,
 				'CURRENT_USER_ID'	=> 0,
@@ -645,7 +645,7 @@ function define_cond_option($hardcoded, $cond_option, $rule_option, $global_rule
 				$_CLASS['core_db']->free_result($result);
 			}
 
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'S_USER_CONDITION'	=> true,
 				'CURRENT_STRING'	=> $rule_string,
 				'CURRENT_USER_ID'	=> $rule_user_id,
@@ -659,7 +659,7 @@ function define_cond_option($hardcoded, $cond_option, $rule_option, $global_rule
 			$rule_group_id = request_var('rule_group_id', 0);
 			$rule_string = request_var('rule_string', '');
 
-			$_CLASS['core_template']->assign(array(
+			$_CLASS['core_template']->assign_array(array(
 				'S_GROUP_CONDITION'	=> true,
 				'CURRENT_STRING'	=> $rule_string,
 				'CURRENT_USER_ID'	=> 0,
@@ -674,7 +674,7 @@ function define_cond_option($hardcoded, $cond_option, $rule_option, $global_rule
 			return;
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'COND_OPTION'	=> $condition,
 		'COND_CURRENT'	=> $current_value)
 	);

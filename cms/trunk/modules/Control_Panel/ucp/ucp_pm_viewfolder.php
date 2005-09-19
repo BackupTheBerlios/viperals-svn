@@ -12,7 +12,7 @@
 // -------------------------------------------------------------
 
 // * Called from ucp_pm with mode == 'view_messages' && action == 'view_folder'
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 	'S_SHOW_RECIPIENTS'	=> false,
 	'messagerow'		=> false,
 	'S_PM_ICONS'		=> false
@@ -60,7 +60,7 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_UNREAD'		=> ($type == 'unread'),
 		'S_MARK_OPTIONS'=> $s_mark_options)
 	);
@@ -175,7 +175,7 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 		
 		unset($folder_info['rowset']);
 		
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_SHOW_RECIPIENTS'	=> ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX) ? true : false,
 			'S_SHOW_COLOUR_LEGEND'	=> true)
 		);
@@ -272,7 +272,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 		$sql_limit_time = '';
 	}
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'PAGINATION'		=> generate_pagination("$url&amp;mode=view_messages&amp;action=view_folder&amp;f=$folder_id&amp;$u_sort_param", $pm_count, $config['topics_per_page'], $start),
 		'PAGE_NUMBER'		=> on_page($pm_count, $config['topics_per_page'], $start),
 		'TOTAL_MESSAGES'	=> (($pm_count == 1) ? $_CLASS['core_user']->lang['VIEW_PM_MESSAGE'] : sprintf($_CLASS['core_user']->lang['VIEW_PM_MESSAGES'], $pm_count)),

@@ -461,11 +461,11 @@ if ($stage === 1)
 	{
 		$continue = false;
 	}
-	
+
 	$_CLASS['core_template']->assign_array(array(
 		'error'				=> false,
 		'magic_quotes_gpc'	=> ((bool) ini_get('magic_quotes_gpc') === false),
-		'output_buffering'	=> ((bool) ini_get('output_buffering') === false),
+		'output_buffering'	=> ((int) ini_get('output_buffering') > 0),
 		'register_globals'	=> ((bool) ini_get('register_globals') === false),
 		'safe_mode'			=> ((bool) ini_get('safe_mode') === false),
 

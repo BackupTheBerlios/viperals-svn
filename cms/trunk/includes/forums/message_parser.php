@@ -41,7 +41,7 @@ if (!function_exists('stripos'))
 	}
 }
 
-require_once($site_file_root.'includes/forums/bbcode.php');
+require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 
 // BBCODE_FIRSTPASS
 //
@@ -89,6 +89,7 @@ class bbcode_firstpass extends bbcode
 			// Because we add bbcode_uid to all tags, the message length
 			// will increase whenever a tag is found
 			$new_size = strlen($this->message);
+
 			if ($size != $new_size)
 			{
 				$this->bbcode_bitfield |= (1 << $bbcode_data['bbcode_id']);
@@ -122,10 +123,13 @@ class bbcode_firstpass extends bbcode
 		
 		$this->parsed_items = array('code' => 0, 'quote' => 0, 'attachment' => 0, 'b' => 0, 'i' => 0, 'url' => 0, 'img' => 0, 'size' => 0, 'color' => 0, 'u' => 0, 'list' => 0, 'email' => 0, 'flash' => 0);
 		
+		/*
 		if (!is_array($rowset))
 		{
-			global $_CLASS;
 			$rowset = array();
+
+			
+			global $_CLASS;
 
 			$sql = 'SELECT bbcode_id, bbcode_tag, first_pass_match, first_pass_replace
 				FROM ' . FORUMS_BBCODES_TABLE;
@@ -136,6 +140,7 @@ class bbcode_firstpass extends bbcode
 				$rowset[] = $row;
 			}
 			$_CLASS['core_db']->free_result($result);
+			
 		}
 		
 		foreach ($rowset as $row)
@@ -145,6 +150,7 @@ class bbcode_firstpass extends bbcode
 				'regexp'	=>	array($row['first_pass_match'] => str_replace('$uid', $this->bbcode_uid, $row['first_pass_replace']))
 			);
 		}
+		*/
 	}
 	
 	function check_bbcode($bbcode, &$in)
@@ -301,52 +307,57 @@ class bbcode_firstpass extends bbcode
 			{
 				case 'php':
 					$remove_tags = false;
-					$str_from = array('&lt;', '&gt;');
-					$str_to = array('<', '>');
+
+					$str_from = array('&lt;', '&gt;', '&amp;', '&quot;', '&\#039;', '&nbsp;');
+					$str_to = array('<', '>', '&', '"', "'", ' ');
 
 					$code = str_replace($str_from, $str_to, $code);
-					if (!preg_match('/^\<\?.*?\?\>/is', $code))
+
+					if (!preg_match('/^\<\?(.*?)\?\>/is', $code))
 					{
 						$remove_tags = true;
-						$code = "<?php $code ?>";
+						$code = "<?php $code";
 					}
 
+					
 					$conf = array('highlight.bg', 'highlight.comment', 'highlight.default', 'highlight.html', 'highlight.keyword', 'highlight.string');
+
 					foreach ($conf as $ini_var)
 					{
 						ini_set($ini_var, str_replace('highlight.', 'syntax', $ini_var));
 					}
 					
-					// Because highlight_string is specialcharing the text (but we already did this before), we have to reverse this in order to get correct results
-					$code = strtr($code, array_flip(get_html_translation_table(HTML_ENTITIES)));
-  	                                         
-					ob_start();
-					highlight_string($code);
-					$code = ob_get_contents();
-					ob_end_clean();
 
-					$str_from = array('<font color="syntax', '</font>', '<code>', '</code>','[', ']', '.', ':');
-					$str_to = array('<span class="syntax', '</span>', '', '', '&#91;', '&#93;', '&#46;', '&#58');
+					$code = highlight_string($code, true);
 
-					if ($remove_tags)
+					if (version_compare(PHP_VERSION, '5.0', '<'))
 					{
-						$str_from[] = '<span class="syntaxdefault">&lt;?php </span>';
-						$str_to[] = '';
-						$str_from[] = '<span class="syntaxdefault">&lt;?php ';
-						$str_to[] = '<span class="syntaxdefault">';
+						$code = str_replace('<font color="syntax', '<span class="syntax', $code);
+						$code = str_replace('<font color="', '<span style="color: ', $code);
+						$code = str_replace('</font>', '</span>', $code);
 					}
+					else
+					{
+						$code = str_replace('<span style="color: syntax', '<span class="syntax', $code);
+					}
+
+					$str_from = array('<code>', '</code>','[', ']', '.', ':', '&amp;#058;');
+					$str_to = array('', '', '&#91;', '&#93;', '&#46;', '&#58', '&#058;');
 
 					$code = str_replace($str_from, $str_to, $code);
-					$code = preg_replace('#^(<span class="[a-z_]+">)\n?(.*?)\n?(</span>)$#is', '$1$2$3', $code);
 
 					if ($remove_tags)
 					{
-						$code = preg_replace('#(<span class="[a-z]+">)?\?&gt;</span>#', '', $code);
+						// if theres any problems with this, find the first "php" without span remove it
+						// then find the first </span> and remove it
+						$pos = ($pos = mb_strpos($code, 'php&nbsp;</span>')) ? $pos + 16 : mb_strpos($code, 'php </span>') + 16;
+						$code = mb_substr($code, $pos);
 					}
-
+									
+					$code = preg_replace('#^(<span class="[a-z_]+">)\n?(.*?)\n?(</span>)$#is', '$1$2$3', $code);
 					$code = preg_replace('#^<span class="[a-z]+"><span class="([a-z]+)">(.*)</span></span>#s', '<span class="$1">$2</span>', $code);
 					$code = preg_replace('#(?:[\n\r\s\t]|&nbsp;)*</span>$#', '</span>', $code);
-
+				
 					$out .= "[code=$stx:" . $this->bbcode_uid . ']' . trim($code) . '[/code:' . $this->bbcode_uid . ']';
 				break;
 
@@ -355,6 +366,7 @@ class bbcode_firstpass extends bbcode
 					$str_to = array('&lt;', '&gt;', '&#91;', '&#93;', '&#46;', '&#58');
 
 					$out .= '[code:' . $this->bbcode_uid . ']' . str_replace($str_from, $str_to, $code) . '[/code:' . $this->bbcode_uid . ']';
+				break;
 			}
 
 			if (preg_match('#(.*?)\[code(?:=([a-z]+))?\](.+)#is', $in, $m))
@@ -756,8 +768,7 @@ class parse_message extends bbcode_firstpass
 		// Parse smilies
 		if ($allow_smilies)
 		{	
-$config['max_' . $mode . '_smilies'] = 0;
-			$this->smilies($config['max_' . $mode . '_smilies']);
+			$this->smilies(isset($config['max_' . $mode . '_smilies']) ? $config['max_' . $mode . '_smilies'] : 0);
 		}
 		$num_urls = 0;
 		
@@ -765,7 +776,9 @@ $config['max_' . $mode . '_smilies'] = 0;
 		if ($allow_bbcode && strpos($this->message, '[') !== false)
 		{
 			$this->bbcode_init();
+
 			$disallow = array('img', 'flash', 'quote');
+
 			foreach ($disallow as $bool)
 			{
 				if (!${'allow_' . $bool . '_bbcode'})
@@ -782,8 +795,8 @@ $config['max_' . $mode . '_smilies'] = 0;
 		if ($allow_magic_url)
 		{
 			$this->magic_url();
-$config['max_' . $mode . '_urls'] = 0;
-			if ($config['max_' . $mode . '_urls'])
+
+			if (isset($config['max_' . $mode . '_urls']) && $config['max_' . $mode . '_urls'])
 			{
 				$num_urls += preg_match_all('#\<!-- (l|m|w|e) --\>.*?\<!-- \1 --\>#', $this->message, $matches);
 			}
@@ -982,11 +995,11 @@ $config['max_' . $mode . '_urls'] = 0;
 	// Parse Attachments
 	function parse_attachments($form_name, $mode, $forum_id, $submit, $preview, $refresh, $is_message = false)
 	{
-		global $config, $_CLASS, $site_file_root, $forum_id;
+		global $config, $_CLASS, $forum_id;
 
 		$error = array();
 
-		$num_attachments = sizeof($this->attachment_data);
+		$num_attachments = count($this->attachment_data);
 		$this->filename_data['filecomment'] = request_var('filecomment', '', true);
 		$upload_file = (isset($_FILES[$form_name]) && $_FILES[$form_name]['name'] != 'none' && trim($_FILES[$form_name]['name'])) ? true : false;
 		
@@ -1006,7 +1019,7 @@ $config['max_' . $mode . '_urls'] = 0;
 				
 				$error = $filedata['error'];
 
-				if ($filedata['post_attach'] && !sizeof($error))
+				if ($filedata['post_attach'] && empty($error))
 				{
 					$new_entry = array(
 						'physical_filename'	=> $filedata['physical_filename'],
@@ -1022,7 +1035,7 @@ $config['max_' . $mode . '_urls'] = 0;
 
 					$this->attachment_data = array_merge(array(0 => $new_entry), $this->attachment_data);
 					$this->message = preg_replace('#\[attachment=([0-9]+)\](.*?)\[\/attachment\]#e', "'[attachment='.(\\1 + 1).']\\2[/attachment]'", $this->message);
-					
+
 					$this->filename_data['filecomment'] = '';
 
 					// This Variable is set to false here, because Attachments are entered into the

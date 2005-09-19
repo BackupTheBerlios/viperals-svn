@@ -75,7 +75,8 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 	$forum_topics = ($total == -1) ? $forum_info['forum_topics'] : $total;
 	$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . (time() - ($sort_days * 86400)) : '';
 
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
+		'S_TOPIC_ICONS'			=> false,
 		'FORUM_NAME'			=> $forum_info['forum_name'],
 
 		'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', 'TOPIC_REPORTED'),
@@ -97,40 +98,39 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 	);
 
 	// Grab icons
-	$icons = array();
-	obtain_icons($icons);
+	$icons = obtain_icons();
 	
 	$topic_rows = array();
 
 	$sql = 'SELECT t.*
-		FROM ' . TOPICS_TABLE . " t
+		FROM ' . FORUMS_TOPICS_TABLE . " t
 		WHERE (t.forum_id = $forum_id OR t.forum_id = 0)
 			" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1') . "
 			AND t.topic_type IN (" . POST_ANNOUNCE . ", " . POST_GLOBAL . ")
 			$limit_time_sql
 		ORDER BY $sort_order_sql";
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$topic_rows[] = $row;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	$sql = 'SELECT t.*
-		FROM ' . TOPICS_TABLE . " t
+		FROM ' . FORUMS_TOPICS_TABLE . " t
 		WHERE t.forum_id = $forum_id
 			" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND t.topic_approved = 1') . '
 			AND t.topic_type IN (' . POST_NORMAL . ', ' . POST_STICKY . ")
 			$limit_time_sql
 		ORDER BY t.topic_type DESC, $sort_order_sql";
-	$result = $_CLASS['core_db']->sql_query_limit($sql, $topics_per_page, $start);
+	$result = $_CLASS['core_db']->query_limit($sql, $topics_per_page, $start);
 
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$topic_rows[] = $row;
 	}
-	$_CLASS['core_db']->sql_freeresult($result);
+	$_CLASS['core_db']->free_result($result);
 
 	foreach ($topic_rows as $row)
 	{
@@ -205,9 +205,10 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 			'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $row['forum_id']) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 			'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 			//'TOPIC_FOLDER_IMG_SRC'	=> $user->img($folder_img, $folder_alt, false, '', 'src'),
-			'TOPIC_ICON_IMG'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['img'] : '',
-			'TOPIC_ICON_IMG_WIDTH'	=> (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['width'] : '',
-			'TOPIC_ICON_IMG_HEIGHT' => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['height'] : '',
+
+			'TOPIC_ICON_IMG'	=> empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['img'],
+			'TOPIC_ICON_IMG_WIDTH'	=> empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['width'],
+			'TOPIC_ICON_IMG_HEIGHT' => empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['height'],
 			
 			'TOPIC_TYPE'		=> $topic_type,
 			'TOPIC_TITLE'		=> $topic_title,
@@ -216,9 +217,10 @@ function mcp_forum_view($id, $mode, $action, $url, $forum_info)
 			'TOPIC_ID'			=> $row['topic_id'],
 			'S_TOPIC_CHECKED'	=> ($topic_id_list && in_array($row['topic_id'], $topic_id_list)) ? 'checked="checked" ' : '',
 
-			'S_TOPIC_REPORTED'	=> ($row['topic_reported']) ? true : false,
-			'S_TOPIC_UNAPPROVED'=> ($row['topic_approved']) ? false : true)
-		);
+			'S_TOPIC_REPORTED'	=> ($row['topic_reported']),
+			'S_TOPIC_UNAPPROVED'=> !($row['topic_approved']),
+			'NEWEST_POST_IMG' => false
+		));
 	}
 	unset($topic_rows);
 }
@@ -227,29 +229,30 @@ function mcp_resync_topics($topic_ids)
 {
 	global $_CLASS;
 
-	if (!($forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', 'm_')))
+	if (!($forum_id = check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_')))
 	{
 		return;
 	}
 
-	if (!sizeof($topic_ids))
+	if (empty($topic_ids))
 	{
 		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_TOPIC_SELECTED']);
+
 		return;
 	}
-	
+
 	// Sync everything and perform extra checks separately
 	sync('topic_reported', 'topic_id', $topic_ids, false, true);
 	sync('topic_attachment', 'topic_id', $topic_ids, false, true);
 	sync('topic', 'topic_id', $topic_ids, true, false);
 
 	$sql = 'SELECT topic_id, forum_id, topic_title
-		FROM ' . TOPICS_TABLE . '
+		FROM ' . FORUMS_TOPICS_TABLE . '
 		WHERE topic_id IN (' . implode(', ', $topic_ids) . ')';
-	$result = $_CLASS['core_db']->sql_query($sql);
+	$result = $_CLASS['core_db']->query($sql);
 
 	// Log this action
-	while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		add_log('mod', $row['forum_id'], $row['topic_id'], 'LOG_TOPIC_RESYNC', $row['topic_title']);
 	}

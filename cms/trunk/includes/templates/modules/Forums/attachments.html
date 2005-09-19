@@ -3,22 +3,32 @@
 		<span class="postbody">[ { $attachments:lang }]</span><br /><br />
 	<!-- ELSEIF { $attachments:category } == 'IMAGE' -->
 		<!-- IF { $attachments:comment } -->
-		<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachments:comment }</span><hr />
-		<!-- ENDIF -->		<img src="{ $attachments:image_src }" alt="{ $attachments:name }" /></span>
-		<br /><span class="gensmall"><strong>{ $attachments:name }</strong><br/> { $L_VIEWED } { $attachments:lang_views } </span>
+			<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachments:comment }</span><hr />
+		<!-- ENDIF -->
+		<img src="{ $attachments:image_src }" alt="{ $attachments:name }" />
+		<br />
+		<span class="gensmall">
+			<strong>{ $attachments:name }</strong>
+			<br/> { $L_VIEWED } { $attachments:lang_views }
+		</span>
 	<!-- ELSEIF { $attachments:category } == 'THUMBNAIL' -->
 		<!-- IF { $attachments:comment } -->
-		<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachments:comment }</span><hr />
-		<!-- ENDIF -->		<a href="{ $attachments:link }" target="_blank"><img src="{ $attachments:image_src }" alt="{ $attachments:name }" border="0" /></a></span>
-		<br /><span class="gensmall"><strong>{ $attachments:name }</strong><br/> { $L_VIEWED } { $attachments:lang_views } </span>
+			<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachments:comment }</span><hr />
+		<!-- ENDIF -->
+		<a href="{ $attachments:link }" target="_blank"><img src="{ $attachments:image_src }" alt="{ $attachments:name }" border="0" /></a></span>
+		<br />
+		<span class="gensmall">
+			<strong>{ $attachments:name }</strong>
+			<br />{ $L_VIEWED } { $attachments:lang_views }
+		</span>
 	<!-- ELSE -->
 		<!-- IF { $attachments:comment } -->
 		<span class="gensmall"><b>{ $L_FILE_COMMENT }:</b> { $attachments:comment }</span><hr />
 		<!-- ENDIF -->
 		<!-- IF { $attachments:icon } --><img src="{ $attachments:icon }" alt="" border="0" /><!-- ENDIF --> <a href="{ $attachments:link }" target="_blank">{ $attachments:name }</a>
 		<span class="gensmall">
-		<br />{ $L_FILESIZE } { $attachments:lang_size }
-		<br />{ $L_DOWNLOADED } { $attachments:lang_views }
+			<br />{ $L_FILESIZE } { $attachments:lang_size }
+			<br />{ $L_DOWNLOADED } { $attachments:lang_views }
 		</span>
 	<!-- ENDIF -->
 <!-- ENDLOOP $attachments -->

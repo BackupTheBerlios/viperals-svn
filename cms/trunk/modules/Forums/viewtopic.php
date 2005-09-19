@@ -341,9 +341,6 @@ $ranks = obtain_ranks();
 // Grab icons
 $icons =  obtain_icons();
 
-// Grab extensions if needed
-$extensions = ($topic_data['topic_attachment']) ? obtain_attach_extensions() : array();
-
 // Moderators
 $forum_moderators = get_moderators($forum_id);
 
@@ -352,7 +349,6 @@ generate_forum_nav($topic_data);
 
 // Generate Forum Rules
 generate_forum_rules($topic_data);
-
 
 gen_forum_auth_level('topic', $forum_id);
 
@@ -915,8 +911,9 @@ $_CLASS['core_template']->assign('S_NUM_POSTS', count($post_list));
 
 // Output the posts
 //foreach ($rowset as $i => $row)
+$end = sizeof($post_list);
 
-for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
+for ($i = 0; $i < $end; ++$i)
 {
 	$row =& $rowset[$post_list[$i]];
 	$force_encoding = '';
@@ -948,26 +945,26 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	}
 
 	// Parse the message and subject
-	$message = $row['post_text'];
+	$row['post_text'] = str_replace("\n", '<br />', $row['post_text']);
 
 	// If the board has HTML off but the post has HTML on then we process it, else leave it alone
 	if ($row['enable_html'] && (!$config['allow_html'] || !$_CLASS['auth']->acl_get('f_html', $forum_id)))
 	{
-		$message = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $message);
+		$row['post_text'] = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $row['post_text']);
 	}
 
 	// Second parse bbcode here
 	if ($row['bbcode_bitfield'])
 	{
-		$bbcode->bbcode_second_pass($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
+		$bbcode->bbcode_second_pass($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield']);
 	}
 
 	// Always process smilies after parsing bbcodes
-	$message = smiley_text($message);
+	$row['post_text'] = smiley_text($row['post_text']);
 
 	if (isset($attachments[$row['post_id']]) && !empty($attachments[$row['post_id']]))
 	{
-		$unset_attachments = parse_inline_attachments($message, $attachments[$row['post_id']], $update_count, $forum_id);
+		$unset_attachments = parse_inline_attachments($row['post_text'], $attachments[$row['post_id']], $update_count, $forum_id);
 
 		// Needed to let not display the inlined attachments at the end of the post again
 		foreach ($unset_attachments as $index)
@@ -981,19 +978,15 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	{
 		// This was shamelessly 'borrowed' from volker at multiartstudio dot de
 		// via php.net's annotated manual
-		$message = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . str_replace('\\', '\\\\', addslashes($highlight_match)) . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $message . '<'), 1, -1));
+		$row['post_text'] = str_replace('\"', '"', substr(preg_replace('#(\>(((?>([^><]+|(?R)))*)\<))#se', "preg_replace('#\b(" . str_replace('\\', '\\\\', addslashes($highlight_match)) . ")\b#i', '<span class=\"posthilit\">\\\\1</span>', '\\0')", '>' . $row['post_text'] . '<'), 1, -1));
 	}
 
 	if ($row['enable_html'] && ($config['allow_html'] && $_CLASS['auth']->acl_get('f_html', $forum_id)))
 	{
 		// Remove Comments from post content
-		$message = preg_replace('#<!\-\-(.*?)\-\->#is', '', $message);
+		$row['post_text'] = preg_replace('#<!\-\-(.*?)\-\->#is', '', $row['post_text']);
 	}
 	
-	// Replace naughty words such as farty pants
-	$row['post_subject'] = censor_text($row['post_subject']);
-	$message = str_replace("\n", '<br />', censor_text($message));
-
 	// Editing information
 	if (($row['post_edit_count'] && $config['display_last_edited']) || $row['post_edit_reason'])
 	{
@@ -1047,21 +1040,13 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		$icons[$row['icon_id']] = array('img' => '' , 'width' => '', 'height' => '');
 	}
 
-	$post_attachments = array();
-
-	// Remove this foreach.
-	if (isset($attachments[$row['post_id']]) && !empty($attachments[$row['post_id']]))
-	{
-		$post_attachments = display_attachments($forum_id, $attachments[$row['post_id']], $null);
-	}
-
 	if ($unread = ($row['post_time'] > $topic_last_read))
 	{
 		$update_mark = ($update_mark) ? (int) max($row['post_time'], $update_mark) : $row['post_time'];
 	}
 
 	$postrow = array(
-		'ATTACHMENTS'	=> count($post_attachments) ? $post_attachments : false,
+		'ATTACHMENTS'	=> empty($attachments[$row['post_id']]) ? false : display_attachments($forum_id, $attachments[$row['post_id']], $null),
 		'POSTER_NAME' 	=> $row['poster'],
 		'POSTER_RANK' 	=> $user_cache[$poster_id]['rank_title'],
 		'RANK_IMAGE' 	=> $user_cache[$poster_id]['rank_image'],
@@ -1071,8 +1056,8 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'POSTER_AVATAR' => $user_cache[$poster_id]['avatar'],
 		
 		'POST_DATE' 	=> $_CLASS['core_user']->format_date($row['post_time']),
-		'POST_SUBJECT' 	=> $row['post_subject'],
-		'MESSAGE' 		=> $message,
+		'POST_SUBJECT' 	=> censor_text($row['post_subject']),
+		'MESSAGE' 		=> censor_text($row['post_text']),
 		'SIGNATURE' 	=> ($row['enable_sig']) ? $user_cache[$poster_id]['sig'] : '',
 		'EDITED_MESSAGE'=> $l_edited_by,
 		'EDIT_REASON'	=> $row['post_edit_reason'],
@@ -1132,7 +1117,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	
 	$prev_post_id = $row['post_id'];
 
-	unset($rowset[$i], $post_attachments, $attachments[$row['post_id']]);
+	unset($rowset[$i], $attachments[$row['post_id']]);
 }
 
 unset($rowset, $user_cache);

@@ -22,7 +22,7 @@ function compose_pm($id, $mode, $action)
 		$action = 'post';
 	}
 	
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'S_DISPLAY_FORM'				=> false,
 		'S_DRAFT_LOADED'				=> false, 
 		'S_SHOW_DRAFTS'					=> false,
@@ -555,8 +555,8 @@ $config['auth_bbcode_pm'] = true;
 
 		if (empty($error))
 		{
-			$_CLASS['core_template']->assign(array(
-				'POST_DATE'					=> $_CLASS['core_user']->format_date($post_time),
+			$_CLASS['core_template']->assign_array(array(
+				'POST_DATE'				=> $_CLASS['core_user']->format_date($post_time),
 			
 				'PREVIEW_SUBJECT'		=> $preview_subject,
 				'PREVIEW_MESSAGE'		=> $preview_message, 
@@ -728,7 +728,7 @@ $config['auth_bbcode_pm'] = true;
 	$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_pm_attach'] || !$_CLASS['auth']->acl_get('u_pm_attach')) ? '' : ' enctype="multipart/form-data"';
 
 	// Start assigning vars for main posting page ...
-	$_CLASS['core_template']->assign(array(
+	$_CLASS['core_template']->assign_array(array(
 		'L_POST_A'					=> $page_title,
 		'L_ICON'					=> $_CLASS['core_user']->lang['PM_ICON'], 
 		'L_MESSAGE_BODY_EXPLAIN'	=> (intval($config['max_post_chars'])) ? sprintf($_CLASS['core_user']->lang['MESSAGE_BODY_EXPLAIN'], intval($config['max_post_chars'])) : '',

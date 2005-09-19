@@ -194,7 +194,7 @@ if ($poll_start)
 	$_CLASS['core_db']->free_result($result);
 }
 
-$orig_poll_options_size = sizeof($poll_options);
+$orig_poll_options_size = count($poll_options);
 $message_parser = new parse_message();
 
 if (isset($post_text))
@@ -227,7 +227,10 @@ if ($posting_data['post_attachment'] && !$submit && !$refresh && !$preview && $m
 		ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
 	$result = $_CLASS['core_db']->query($sql);
 
-	$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->fetch_row_assocset($result));
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$message_parser->attachment_data[] = $row;
+	}
 
 	$_CLASS['core_db']->free_result($result);
 }
@@ -242,7 +245,7 @@ else
 }
 
 $enable_urls = $posting_data['enable_magic_url'];
-$enable_html = (isset($enable_html)) ? $enable_html : $config['allow_html'];
+$enable_html = isset($enable_html) ? $enable_html : $config['allow_html'];
 
 if (!in_array($mode, array('quote', 'edit', 'delete')))
 {
@@ -403,14 +406,6 @@ if ($mode == 'delete')
 	trigger_error('USER_CANNOT_DELETE');
 }
 
-// HTML, BBCode, Smilies, Images and Flash status
-$html_status	= ($config['allow_html'] && $_CLASS['auth']->acl_get('f_html', $forum_id));
-$bbcode_status	= ($config['allow_bbcode'] && $_CLASS['auth']->acl_get('f_bbcode', $forum_id));
-$smilies_status	= ($config['allow_smilies'] && $_CLASS['auth']->acl_get('f_smilies', $forum_id));
-$img_status		= ($_CLASS['auth']->acl_get('f_img', $forum_id));
-$flash_status	= ($_CLASS['auth']->acl_get('f_flash', $forum_id));
-$quote_status	= ($_CLASS['auth']->acl_get('f_quote', $forum_id));
-
 // Bump Topic
 if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped, $topic_last_post_time, $topic_poster, $topic_last_poster_id)))
 {
@@ -521,6 +516,14 @@ if ($draft_id && $_CLASS['core_user']->is_user && $_CLASS['auth']->acl_get('u_sa
 		$draft_id = 0;
 	}
 }
+
+// HTML, BBCode, Smilies, Images and Flash status
+$html_status	= ($config['allow_html'] && $_CLASS['auth']->acl_get('f_html', $forum_id));
+$bbcode_status	= ($config['allow_bbcode'] && $_CLASS['auth']->acl_get('f_bbcode', $forum_id));
+$smilies_status	= ($config['allow_smilies'] && $_CLASS['auth']->acl_get('f_smilies', $forum_id));
+$img_status		= ($_CLASS['auth']->acl_get('f_img', $forum_id));
+$flash_status	= ($_CLASS['auth']->acl_get('f_flash', $forum_id));
+$quote_status	= ($_CLASS['auth']->acl_get('f_quote', $forum_id));
 
 // Load Drafts
 if ($load && $drafts)
@@ -680,14 +683,14 @@ if ($submit || $preview || $refresh)
 	}
 
 	// Validate username
-	if (($posting_data['username'] && !$_CLASS['core_user']->is_user) || ($mode == 'edit' && (!$posting_data['poster_id'] || $posting_data['poster_id'] == ANONYMOUS)))
+	if ($posting_data['username'] && (!$_CLASS['core_user']->is_user || ($mode == 'edit' && (!$posting_data['poster_id'] || $posting_data['poster_id'] == ANONYMOUS))))
 	{
 		require_once($site_file_root.'includes/functions_user.php');
 		$result = validate_username($posting_data['username']);
 
 		if ($result !== true)
 		{
-			$error[] = $result;
+			$error[] = $_CLASS['core_user']->get_lang($result);
 		}
 	}
 
@@ -758,7 +761,7 @@ if ($submit || $preview || $refresh)
 		}
 	}
 
-	if (sizeof($message_parser->warn_msg))
+	if (!empty($message_parser->warn_msg))
 	{
 		$error[] = implode('<br />', $message_parser->warn_msg);
 	}
@@ -877,11 +880,11 @@ if ($submit || $preview || $refresh)
 		}
 	}	
 
-	$post_subject = stripslashes($subject);
+	$post_subject = $subject;
 }
 
 // Preview
-if (!sizeof($error) && $preview)
+if (empty($error) && $preview)
 {
 	$posting_data['post_time'] = ($mode == 'edit') ? $posting_data['post_time'] : $current_time;
 
@@ -921,7 +924,7 @@ if (!sizeof($error) && $preview)
 		$parse_poll->format_display($enable_html, $enable_bbcode, $enable_urls, $enable_smilies);
 		
 		$_CLASS['core_template']->assign_array(array(
-			'S_HAS_POLL_OPTIONS'=> (sizeof($poll_options)),
+			'S_HAS_POLL_OPTIONS'=> !empty($poll_options),
 			'S_IS_MULTI_CHOICE'	=> ($poll_max_options > 1) ? true : false,
 
 			'POLL_QUESTION'		=> $parse_poll->message,
@@ -943,45 +946,40 @@ if (!sizeof($error) && $preview)
 	}
 
 	// Attachment Preview
-	if (sizeof($message_parser->attachment_data))
+	if (!empty($message_parser->attachment_data))
 	{
 		require($site_file_root.'includes/forums/functions_display.php');
 		$extensions = $update_count = array();
 
 		$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
 		$attachment_data = $message_parser->attachment_data;
+
 		$unset_attachments = parse_inline_attachments($preview_message, $attachment_data, $update_count, $forum_id, true);
-		
+
+		// Needed to let not display the inlined attachments at the end of the post again
 		foreach ($unset_attachments as $index)
 		{
 			unset($attachment_data[$index]);
 		}
+		
+		$_CLASS['core_template']->assign('attachment', display_attachments($forum_id, $attachment_data, $null));
 
-		foreach ($attachment_data as $i => $attachment)
-		{
-			$_CLASS['core_template']->assign_vars_array('attachment', array(
-				'DISPLAY_ATTACHMENT'	=> $attachment)
-			);
-		}
 		unset($attachment_data, $attachment);
 	}
 
-	if (!sizeof($error))
-	{
-		$_CLASS['core_template']->assign_array(array(
-			'PREVIEW_SUBJECT'		=> $preview_subject,
-			'PREVIEW_MESSAGE'		=> $preview_message,
-			'PREVIEW_SIGNATURE'		=> $preview_signature,
+	$_CLASS['core_template']->assign_array(array(
+		'PREVIEW_SUBJECT'		=> $preview_subject,
+		'PREVIEW_MESSAGE'		=> $preview_message,
+		'PREVIEW_SIGNATURE'		=> $preview_signature,
 
-			'S_DISPLAY_PREVIEW'		=> true)
-		);
-	}
+		'S_DISPLAY_PREVIEW'		=> true
+	));
 
 	unset($post_text);
 }
 
 // Decode text for message display
-$bbcode_uid = ($mode == 'quote' && !$preview && !$refresh && !sizeof($error)) ? $bbcode_uid : $message_parser->bbcode_uid;
+$bbcode_uid = ($mode == 'quote' && !$preview && !$refresh && empty($error)) ? $bbcode_uid : $message_parser->bbcode_uid;
 $message_parser->decode_message($bbcode_uid);
 
 if ($mode == 'quote' && !$preview && !$refresh)
@@ -999,7 +997,7 @@ $attachment_data = $message_parser->attachment_data;
 $filename_data = $message_parser->filename_data;
 $post_text = $message_parser->message;
 
-if (sizeof($poll_options) && $poll_title)
+if (!empty($poll_options) && $poll_title)
 {
 	$message_parser->message = $poll_title;
 	$message_parser->bbcode_uid = $bbcode_uid;
@@ -1108,7 +1106,7 @@ $_CLASS['core_template']->assign_array(array(
 	'FORUM_NAME' 			=> $forum_name,
 	'FORUM_DESC'			=> ($forum_desc) ? strip_tags($forum_desc) : '',
 	'TOPIC_TITLE' 			=> $posting_data['topic_title'],
-	'MODERATORS' 			=> (sizeof($moderators)) ? implode(', ', $moderators[$forum_id]) : '',
+	'MODERATORS' 			=> empty($moderators) ? '' : implode(', ', $moderators[$forum_id]),
 	'USERNAME'				=> ((!$preview && $mode != 'quote') || $preview) ? $posting_data['username'] : '',
 	'SUBJECT'				=> $post_subject,
 	'MESSAGE'				=> $post_text,
@@ -1119,7 +1117,7 @@ $_CLASS['core_template']->assign_array(array(
 	'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
 	'MINI_POST_IMG'			=> $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
 	'POST_DATE'				=> ($posting_data['post_time']) ? $_CLASS['core_user']->format_date($posting_data['post_time']) : '',
-	'ERROR'					=> (sizeof($error)) ? implode('<br />', $error) : '', 
+	'ERROR'					=> empty($error) ? '' : implode('<br />', $error), 
 	'TOPIC_TIME_LIMIT'		=> (int) $topic_time_limit,
 	'EDIT_REASON'			=> $posting_data['post_edit_reason'],
 
@@ -1274,7 +1272,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 				$sql_data[FORUMS_FORUMS_TABLE] = 'forum_posts = forum_posts - 1';
 			}
 
-			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_first_post_id = ' . intval($row['post_id']) . ", topic_first_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->sql_escape($row['post_username']) : $_CLASS['core_db']->sql_escape($row['username'])) . "'";
+			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_first_post_id = ' . intval($row['post_id']) . ", topic_first_poster_name = '" . (($row['poster_id'] == ANONYMOUS) ? $_CLASS['core_db']->escape($row['post_username']) : $_CLASS['core_db']->escape($row['username'])) . "'";
 			$sql_data[FORUMS_TOPICS_TABLE] .= ', topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 
 			$next_post_id = (int) $row['post_id'];
@@ -1291,7 +1289,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_bumped = 0, topic_bumper = 0, topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 
 			$update = update_last_post_information('topic', $topic_id);
-			if (sizeof($update))
+			if (!empty($update))
 			{
 				$sql_data[FORUMS_TOPICS_TABLE] .= ', ' . implode(', ', $update);
 				$next_post_id = (int) str_replace('topic_last_post_id = ', '', $update[0]);
@@ -1401,11 +1399,11 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'enable_smilies' 	=> $data['enable_smilies'],
 				'enable_magic_url' 	=> $data['enable_urls'],
 				'enable_sig' 		=> $data['enable_sig'],
-				'post_username'		=> (!$_CLASS['core_user']->is_user) ? stripslashes($username) : '',
+				'post_username'		=> (!$_CLASS['core_user']->is_user) ? $username : '',
 				'post_subject'		=> $subject,
 				'post_text' 		=> $data['message'],
 				'post_checksum'		=> $data['message_md5'],
-				'post_attachment'	=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
+				'post_attachment'	=> (isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],
 				'post_edit_locked'	=> $data['post_edit_locked']
@@ -1450,12 +1448,12 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'enable_smilies' 	=> $data['enable_smilies'],
 				'enable_magic_url' 	=> $data['enable_urls'],
 				'enable_sig' 		=> $data['enable_sig'],
-				'post_username'		=> ($username && $data['poster_id'] == ANONYMOUS) ? stripslashes($username) : '',
+				'post_username'		=> ($username && $data['poster_id'] == ANONYMOUS) ? $username : '',
 				'post_subject'		=> $subject,
 				'post_edit_reason'	=> $data['post_edit_reason'],
 				'post_edit_user'	=> (int) $data['post_edit_user'],
 				'post_checksum'		=> $data['message_md5'],
-				'post_attachment'	=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
+				'post_attachment'	=> (isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],
 				'post_edit_locked'	=> $data['post_edit_locked'])
@@ -1480,11 +1478,11 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'icon_id'				=> $data['icon_id'],
 				'topic_approved'		=> ($_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) && !$_CLASS['auth']->acl_get('m_approve')) ? 0 : 1,
 				'topic_title' 			=> $subject,
-				'topic_first_poster_name' => (!$_CLASS['core_user']->is_user && $username) ? stripslashes($username) : $_CLASS['core_user']->data['username'],
+				'topic_first_poster_name' => (!$_CLASS['core_user']->is_user && $username) ? $username : $_CLASS['core_user']->data['username'],
 				'topic_type'			=> $topic_type,
 				'topic_time_limit'		=> ($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) ? ($data['topic_time_limit'] * 86400) : 0,
 				'topic_status'			=> $data['topic_status'],
-				'topic_attachment'		=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
+				'topic_attachment'		=> (isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0,
 				'topic_replies_real'	=> 0,
 				'topic_replies'			=> 0,
 				'topic_views'			=> 0,
@@ -1531,15 +1529,15 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'icon_id'					=> $data['icon_id'],
 				'topic_approved'			=> ($_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) && !$_CLASS['auth']->acl_get('m_approve')) ? 0 : 1,
 				'topic_title' 				=> $subject,
-				'topic_first_poster_name'	=> stripslashes($username),
+				'topic_first_poster_name'	=> $username,
 				'topic_type'				=> $topic_type,
 				'topic_time_limit'			=> ($topic_type == POST_STICKY || $topic_type == POST_ANNOUNCE) ? ($data['topic_time_limit'] * 86400) : 0,
-				'poll_title'				=> ($poll['poll_options']) ? $poll['poll_title'] : '',
-				'poll_start'				=> ($poll['poll_options']) ? (($poll['poll_start']) ? $poll['poll_start'] : $current_time) : 0,
-				'poll_max_options'			=> ($poll['poll_options']) ? $poll['poll_max_options'] : 1,
-				'poll_length'				=> ($poll['poll_options']) ? ($poll['poll_length'] * 86400) : 0,
-				'poll_vote_change'			=> $poll['poll_vote_change'],
-				'topic_attachment'			=> ($post_mode == 'edit_topic') ? ((isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0) : $data['topic_attachment']
+				'poll_title'				=> isset($poll['poll_options']) ? $poll['poll_title'] : '',
+				'poll_start'				=> isset($poll['poll_options']) ? (($poll['poll_start']) ? $poll['poll_start'] : $current_time) : 0,
+				'poll_max_options'			=> isset($poll['poll_options']) ? $poll['poll_max_options'] : 1,
+				'poll_length'				=> isset($poll['poll_options']) ? ($poll['poll_length'] * 86400) : 0,
+				'poll_vote_change'			=> isset($poll['poll_vote_change']) ? $poll['poll_vote_change'] : 0,
+				'topic_attachment'			=> ($post_mode == 'edit_topic') ? ((isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0) : $data['topic_attachment']
 			);
 			break;
 	}
@@ -1669,7 +1667,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			$_CLASS['core_db']->free_result($result);
 		}
 		
-		$size = sizeof($poll['poll_options']);
+		$size = count($poll['poll_options']);
+
 		for ($i = 0, $size; $i < $size; $i++)
 		{
 			if (trim($poll['poll_options'][$i]))
@@ -1677,13 +1676,13 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				if (!$cur_poll_options[$i])
 				{
 					$sql = 'INSERT INTO ' . FORUMS_POLL_OPTIONS_TABLE . "  (poll_option_id, topic_id, poll_option_text)
-						VALUES ($i, " . $data['topic_id'] . ", '" . $_CLASS['core_db']->sql_escape($poll['poll_options'][$i]) . "')";
+						VALUES ($i, " . $data['topic_id'] . ", '" . $_CLASS['core_db']->escape($poll['poll_options'][$i]) . "')";
 					$_CLASS['core_db']->query($sql);
 				}
 				else if ($poll['poll_options'][$i] != $cur_poll_options[$i])
 				{
 					$sql = "UPDATE " . FORUMS_POLL_OPTIONS_TABLE . "
-						SET poll_option_text = '" . $_CLASS['core_db']->sql_escape($poll['poll_options'][$i]) . "'
+						SET poll_option_text = '" . $_CLASS['core_db']->escape($poll['poll_options'][$i]) . "'
 						WHERE poll_option_id = " . $cur_poll_options[$i]['poll_option_id'] . "
 							AND topic_id = " . $data['topic_id'];
 					$_CLASS['core_db']->query($sql);
@@ -1691,17 +1690,17 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			}
 		}
 
-		if (sizeof($poll['poll_options']) < sizeof($cur_poll_options))
+		if (count($poll['poll_options']) < count($cur_poll_options))
 		{
 			$sql = 'DELETE FROM ' . FORUMS_POLL_OPTIONS_TABLE . '
-				WHERE poll_option_id >= ' . sizeof($poll['poll_options']) . '
+				WHERE poll_option_id >= ' . count($poll['poll_options']) . '
 					AND topic_id = ' . $data['topic_id'];
 			$_CLASS['core_db']->query($sql);
 		}
 	}
 
 	// Submit Attachments
-	if (sizeof($data['attachment_data']) && $data['post_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit')))
+	if (!empty($data['attachment_data']) && $data['post_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit')))
 	{
 		$space_taken = $files_added = 0;
 
@@ -1711,7 +1710,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			{
 				// update entry in db if attachment already stored in db and filespace
 				$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . "
-					SET comment = '" . $_CLASS['core_db']->sql_escape($attach_row['comment']) . "'
+					SET comment = '" . $_CLASS['core_db']->escape($attach_row['comment']) . "'
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
 				$_CLASS['core_db']->query($sql);
 			}
@@ -1775,7 +1774,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		}
 
 		$update = update_last_post_information('topic', $data['topic_id']);
-		if (sizeof($update))
+
+		if (!empty($update))
 		{
 			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = implode(', ', $update);
 		}
@@ -1789,7 +1789,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	if ($post_mode == 'edit_topic')
 	{
 		$update = update_last_post_information('topic', $data['topic_id']);
-		if (sizeof($update))
+
+		if (!empty($update))
 		{
 			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = implode(', ', $update);
 		}
@@ -1867,7 +1868,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Send Notifications
 	if ($mode != 'edit' && $mode != 'delete' && (!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')))
 	{
-		user_notification($mode, stripslashes($subject), stripslashes($data['topic_title']), stripslashes($data['forum_name']), $data['forum_id'], $data['topic_id'], $data['post_id']);
+		user_notification($mode, $subject, $data['topic_title'], $data['forum_name'], $data['forum_id'], $data['topic_id'], $data['post_id']);
 	}
 
 	if ($mode == 'post')

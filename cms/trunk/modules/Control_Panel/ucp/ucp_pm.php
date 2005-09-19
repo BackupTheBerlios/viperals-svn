@@ -110,7 +110,7 @@ class ucp_pm extends module
 					}
 				}
 
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'MESSAGE'			=> $l_new_message,
 					'U_JS_RETURN_INBOX'	=> $indox_link,
 					'S_NOT_LOGGED_IN'	=> ($_CLASS['core_user']->data['user_id'] == ANONYMOUS) ? true : false,
@@ -320,7 +320,7 @@ class ucp_pm extends module
 				$folder_status = get_folder_status($folder_id, $folder);
 				$url = 'Control_Panel&amp;i='.$id;
 
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'CUR_FOLDER_ID'				=> $folder_id,
 					'CUR_FOLDER_NAME'			=> $folder_status['folder_name'],
 					'NUM_NOT_MOVED'				=> $num_not_moved,
@@ -359,7 +359,7 @@ class ucp_pm extends module
 				}
 				else if ($action == 'view_message')
 				{
-					$_CLASS['core_template']->assign(array(
+					$_CLASS['core_template']->assign_array(array(
 						'S_VIEW_MESSAGE'=> true,
 						'MSG_ID'		=> $msg_id)
 					);
@@ -382,7 +382,7 @@ class ucp_pm extends module
 			break;
 		}
 
-		$_CLASS['core_template']->assign(array( 
+		$_CLASS['core_template']->assign_array(array( 
 			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PM_' . strtoupper($mode)],
 			'S_UCP_ACTION'      => generate_link("Control_Panel&amp;i=$id&amp;mode=$mode" . ((isset($action)) ? "&amp;action=$action" : '')))
 		);

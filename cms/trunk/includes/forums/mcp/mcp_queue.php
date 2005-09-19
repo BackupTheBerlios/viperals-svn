@@ -83,7 +83,7 @@ class mcp_queue extends module
 
 				if ($post_info['topic_first_post_id'] != $post_id && topic_review($post_info['topic_id'], $post_info['forum_id'], 'topic_review', 0, false))
 				{
-					$_CLASS['core_template']->assign(array(
+					$_CLASS['core_template']->assign_array(array(
 						'S_TOPIC_REVIEW'	=> true,
 						'TOPIC_TITLE'		=> $post_info['topic_title'])
 					);
@@ -102,7 +102,7 @@ class mcp_queue extends module
 				}
 				$message = smiley_text($message);
 
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'S_MCP_QUEUE'			=> true,
 					'S_APPROVE_ACTION'		=> generate_link("Forums&amp;file=mcp&amp;i=queue&amp;p=$post_id&amp;f=$forum_id"),
 					
@@ -155,12 +155,13 @@ class mcp_queue extends module
 					}
 
 					$sql = 'SELECT SUM(forum_topics) as sum_forum_topics 
-						FROM ' . FORUMS_TABLE . "
+						FROM ' . FORUMS_FORUMS_TABLE . "
 						WHERE forum_id IN ($forum_list)";
-					$result = $_CLASS['core_db']->sql_query($sql);
-					$forum_info['forum_topics'] = (int) $_CLASS['core_db']->sql_fetchfield('sum_forum_topics', 0, $result);
-					$_CLASS['core_db']->sql_freeresult($result);
+					$result = $_CLASS['core_db']->query($sql);
+					$row = $_CLASS['core_db']->fetch_row_assoc($result);
+					$_CLASS['core_db']->free_result($result);
 
+					$forum_info['forum_topics'] = (int) $row['sum_forum_topics'];
 				}
 				else
 				{
@@ -188,18 +189,18 @@ class mcp_queue extends module
 				if ($mode == 'unapproved_posts')
 				{
 					$sql = 'SELECT p.post_id
-						FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t' . (($sort_order_sql{0} == 'u') ? ', ' . USERS_TABLE . ' u' : '') . "
+						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t' . (($sort_order_sql{0} == 'u') ? ', ' . USERS_TABLE . ' u' : '') . "
 						WHERE p.forum_id IN ($forum_list)
 							AND p.post_approved = 0
 							" . (($sort_order_sql{0} == 'u') ? 'AND u.user_id = p.poster_id' : '') . "
 							AND t.topic_id = p.topic_id
 							AND t.topic_first_post_id <> p.post_id
 						ORDER BY $sort_order_sql";
-					$result = $_CLASS['core_db']->sql_query_limit($sql, $config['topics_per_page'], $start);
+					$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
 
 					$i = 0;
 					$post_ids = array();
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$post_ids[] = $row['post_id'];
 						$row_num[$row['post_id']] = $i++;
@@ -208,19 +209,19 @@ class mcp_queue extends module
 					if (sizeof($post_ids))
 					{
 						$sql = 'SELECT f.forum_id, f.forum_name, t.topic_id, t.topic_title, p.post_id, p.post_username, p.poster_id, p.post_time, u.username
-							FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . ' f, ' . TOPICS_TABLE . ' t, ' . USERS_TABLE . " u
+							FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f, ' . FORUMS_TOPICS_TABLE . ' t, ' . USERS_TABLE . " u
 							WHERE p.post_id IN (" . implode(', ', $post_ids) . ")
 								AND t.topic_id = p.topic_id
 								AND f.forum_id = p.forum_id
 								AND u.user_id = p.poster_id";
 
-						$result = $_CLASS['core_db']->sql_query($sql);
+						$result = $_CLASS['core_db']->query($sql);
 						$post_data = $rowset = array();
-						while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+						while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 						{
 							$post_data[$row['post_id']] = $row;
 						}
-						$_CLASS['core_db']->sql_freeresult($result);
+						$_CLASS['core_db']->free_result($result);
 
 						foreach ($post_ids as $post_id)
 						{
@@ -236,19 +237,19 @@ class mcp_queue extends module
 				else
 				{
 					$sql = 'SELECT f.forum_id, f.forum_name, t.topic_id, t.topic_title, t.topic_time AS post_time, t.topic_poster AS poster_id, t.topic_first_post_id AS post_id, t.topic_first_poster_name AS username
-						FROM ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . " f
+						FROM ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . " f
 						WHERE t.topic_approved = 0
 							AND t.forum_id IN ($forum_list)
 							AND f.forum_id = t.forum_id
 						ORDER BY $sort_order_sql";
-					$result = $_CLASS['core_db']->sql_query_limit($sql, $config['topics_per_page'], $start);
+					$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
 
 					$rowset = array();
-					while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$rowset[] = $row;
 					}
-					$_CLASS['core_db']->sql_freeresult($result);
+					$_CLASS['core_db']->free_result($result);
 				}
 
 				foreach ($rowset as $row)
@@ -282,7 +283,7 @@ class mcp_queue extends module
 				unset($rowset);
 
 				// Now display the page
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'L_DISPLAY_ITEMS'		=> ($mode == 'unapproved_posts') ? $_CLASS['core_user']->lang['DISPLAY_POSTS'] : $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
 					'S_FORUM_OPTIONS'		=> $forum_options)
 				);
@@ -383,41 +384,41 @@ function approve_post($post_id_list)
 		
 		if (sizeof($topic_approve_sql))
 		{
-			$sql = 'UPDATE ' . TOPICS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 				SET topic_approved = 1
 				WHERE topic_id IN (' . implode(', ', $topic_approve_sql) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 
 		if (sizeof($post_approve_sql))
 		{
-			$sql = 'UPDATE ' . POSTS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 				SET post_approved = 1
 				WHERE post_id IN (' . implode(', ', $post_approve_sql) . ')';
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 
 		if (sizeof($topic_replies_sql))
 		{
 			foreach ($topic_replies_sql as $topic_id => $num_replies)
 			{
-				$sql = 'UPDATE ' . TOPICS_TABLE . "
+				$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . "
 					SET topic_replies = topic_replies + $num_replies
 					WHERE topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 
 		if ($forum_topics || $forum_posts)
 		{
-			$sql = 'UPDATE ' . FORUMS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 				SET ';
 			$sql .= ($forum_topics) ? "forum_topics = forum_topics + $forum_topics" : '';
 			$sql .= ($forum_topics && $forum_posts) ? ', ' : '';
 			$sql .= ($forum_posts) ? "forum_posts = forum_posts + $forum_posts" : '';
 			$sql .= " WHERE forum_id = $forum_id";
 
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 		
 		if ($total_topics)
@@ -503,7 +504,7 @@ function approve_post($post_id_list)
 	}
 	else
 	{
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_NOTIFY_POSTER'	=> true,
 			'S_APPROVE'			=> true)
 		);
@@ -553,9 +554,9 @@ function disapprove_post($post_id_list)
 		$sql = 'SELECT reason_name 
 			FROM ' . REASONS_TABLE . " 
 			WHERE reason_id = $reason_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		if (!($row = $_CLASS['core_db']->sql_fetchrow($result)) || (!$reason && $row['reason_name'] == 'other'))
+		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)) || (!$reason && $row['reason_name'] == 'other'))
 		{
 			$additional_msg = 'Please give an appropiate reason for disapproval';
 			unset($_POST['confirm']);
@@ -566,7 +567,7 @@ function disapprove_post($post_id_list)
 			$disapprove_reason .= ($reason) ? "\n\n" . $_REQUEST['reason'] : '';
 			unset($reason);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	if (confirm_box(true))
@@ -611,7 +612,7 @@ function disapprove_post($post_id_list)
 			$sql = 'UPDATE ' . FORUMS_TABLE . "
 				SET forum_topics_real = forum_topics_real - $forum_topics_real
 				WHERE forum_id = $forum_id";
-			$_CLASS['core_db']->sql_query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 
 		if (sizeof($topic_replies_real_sql))
@@ -621,7 +622,7 @@ function disapprove_post($post_id_list)
 				$sql = 'UPDATE ' . TOPICS_TABLE . "
 					SET topic_replies_real = topic_replies_real - $num_replies
 					WHERE topic_id = $topic_id";
-				$_CLASS['core_db']->sql_query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 
@@ -688,9 +689,9 @@ function disapprove_post($post_id_list)
 		$sql = 'SELECT * 
 			FROM ' . REASONS_TABLE . ' 
 			ORDER BY reason_priority ASC';
-		$result = $_CLASS['core_db']->sql_query($sql);
+		$result = $_CLASS['core_db']->query($sql);
 
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$row['reason_name'] = strtoupper($row['reason_name']);
 
@@ -705,9 +706,9 @@ function disapprove_post($post_id_list)
 				'S_SELECTED'	=>	($row['reason_id'] == $reason_id) ? true : false)
 			);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'S_NOTIFY_POSTER'	=> true,
 			'S_APPROVE'			=> false,
 			'REASON'			=> $reason,

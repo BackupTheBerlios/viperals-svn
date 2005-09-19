@@ -101,89 +101,9 @@ class bbcode
 		// Remove the uid from tags that have not been transformed into HTML
 		$message = str_replace(':' . $this->bbcode_uid, '', $message);
 
-		// remove
-		$match_count = preg_match_all("#\<!--php-->(.*?)\<!--/php-->#si", $message, $matches);
-		
-		if ($match_count)
-		{
-			$conf = array('highlight.bg', 'highlight.comment', 'highlight.default', 'highlight.html', 'highlight.keyword', 'highlight.string');
-
-			foreach ($conf as $ini_var)
-			{
-				ini_set($ini_var, str_replace('highlight.', 'syntax', $ini_var));
-			}
-
-			for ($i = 0; $i < $match_count; $i++)
-			{
-				$after = $this->decode_php($matches[1][$i]);
-				$after = '<div class="codetitle"><b>PHP:</b></div><div class="codecontent">'.$after.'</div>';
-				
-				$before = '<!--php-->' . $matches[1][$i] . '<!--/php-->';
-				$message = str_replace($before, $after, $message);
-			}
-		}
 		return $message;
 	}
 	
-	function decode_php($text)
-	{
-		$text = trim($text);
-
-		$remove_tags = false;
-
-		//$text = strtr($text, array_flip(get_html_translation_table(HTML_ENTITIES)));
-
-		$str_from = array('&lt;', '&gt;', '&#39;');
-		$str_to = array('<', '>', '\'');
-
-		$text = str_replace($str_from, $str_to, $text);
-
-		if (!preg_match('/^\<\?(.*?)\?\>/is', $text))
-		{
-			$remove_tags = true;
-			$text = "<?php $text ?>";
-		}
-
-
-		if (version_compare(PHP_VERSION, '4.2.0', '<'))
-		{
-			ob_start();
-			highlight_string($text);
-			$text = ob_get_contents();
-			ob_end_clean();
-		}
-		else
-		{
-			$text = highlight_string($text, true);
-		}
-
-		$str_from = array('<font color="syntax', '</font>', '<code>', '</code>','[', ']', '.', ':', '&amp;#058;');
-		$str_to = array('<span class="syntax', '</span>', '', '', '&#91;', '&#93;', '&#46;', '&#58', '&#058;');
-
-		if ($remove_tags)
-		{
-			$str_from[] = '<span class="syntaxdefault">&lt;?php </span>';
-			$str_to[] = '';
-			$str_from[] = '<span class="syntaxkeyword">&lt;?</span><span class="syntaxdefault">php </span>';
-			$str_to[] = '';
-			$str_from[] = '<span class="syntaxdefault">&lt;?php ';
-			$str_to[] = '<span class="syntaxdefault">';
-		}
-
-		$text = str_replace($str_from, $str_to, $text);
-		$text = preg_replace('#^(<span class="[a-z_]+">)\n?(.*?)\n?(</span>)$#is', '$1$2$3', $text);
-
-		if ($remove_tags)
-		{
-			$text = preg_replace('#(<span class="[a-z]+">)?\?&gt;</span>#', '', $text);
-		}
-
-		$text = preg_replace('#^<span class="[a-z]+"><span class="([a-z]+)">(.*)</span></span>#s', '<span class="$1">$2</span>', $text);
-		$text = preg_replace('#(?:[\n\r\s\t]|&nbsp;)*</span>$#', '</span>', $text);
-	
-		return $text;
-	}
-
 	//
 	// bbcode_cache_init()
 	//
@@ -225,7 +145,7 @@ class bbcode
 			$rowset = array();
 
 			$sql = 'SELECT *
-				FROM ' . FORUMS_BBCODES_TABLE . "
+				FROM ' . BBCODES_TABLE . "
 				WHERE bbcode_id IN ($sql)";
 
 			$result = $_CLASS['core_db']->query($sql);
@@ -250,24 +170,28 @@ class bbcode
 						)
 					);
 				break;
+
 				case 1:
 					$this->bbcode_cache[$bbcode_id] = array('str' => array(
 						'[b:$uid]'	=>	$this->bbcode_tpl('b_open', $bbcode_id),
 						'[/b:$uid]'	=>	$this->bbcode_tpl('b_close', $bbcode_id)
 					));
 				break;
+
 				case 2:
 					$this->bbcode_cache[$bbcode_id] = array('str' => array(
 						'[i:$uid]'	=>	$this->bbcode_tpl('i_open', $bbcode_id),
 						'[/i:$uid]'	=>	$this->bbcode_tpl('i_close', $bbcode_id)
 					));
 				break;
+
 				case 3:
 					$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 						'#\[url:$uid\]((.*?))\[/url:$uid\]#s'		=>	$this->bbcode_tpl('url', $bbcode_id),
 						'#\[url=([^\[]+?):$uid\](.*?)\[/url:$uid\]#s'	=>	$this->bbcode_tpl('url', $bbcode_id)
 					));
 				break;
+
 				case 4:
 					if ($_CLASS['core_user']->optionget('viewimg'))
 					{
@@ -282,27 +206,32 @@ class bbcode
 						));
 					}
 				break;
+
 				case 5:
 					$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 						'#\[size=([\-\+]?[1-2]?[0-9]):$uid\](.*?)\[/size:$uid\]#s'	=>	$this->bbcode_tpl('size', $bbcode_id)
 					));
 				break;
+
 				case 6:
 					$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 						'!\[color=(#[0-9A-F]{6}|[a-z\-]+):$uid\](.*?)\[/color:$uid\]!s'	=>	$this->bbcode_tpl('color', $bbcode_id)
 					));
 				break;
+
 				case 7:
 					$this->bbcode_cache[$bbcode_id] = array('str' => array(
 						'[u:$uid]'	=>	$this->bbcode_tpl('u_open', $bbcode_id),
 						'[/u:$uid]'	=>	$this->bbcode_tpl('u_close', $bbcode_id)
 					));
 				break;
+
 				case 8:
 					$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 						'#\[code(?:=([a-z]+))?:$uid\](.*?)\[/code:$uid\]#ise'	=>	"\$this->bbcode_second_pass_code('\$1', '\$2')"
 					));
 				break;
+
 				case 9:
 					$this->bbcode_cache[$bbcode_id] = array(
 						'preg' => array(
@@ -320,12 +249,14 @@ class bbcode
 						),
 					);
 				break;
+
 				case 10:
 					$this->bbcode_cache[$bbcode_id] = array('preg' => array(
 							'#\[email:$uid\]((.*?))\[/email:$uid\]#is'				=>	$this->bbcode_tpl('email', $bbcode_id),
 							'#\[email=([^\[]+):$uid\](.*?)\[/email:$uid\]#is'	=>	$this->bbcode_tpl('email', $bbcode_id)
 					));
 				break;
+
 				case 11:
 					if ($_CLASS['core_user']->optionget('viewflash'))
 					{
@@ -340,6 +271,7 @@ class bbcode
 						));
 					}
 				break;
+
 				case 12:
 					$this->bbcode_cache[$bbcode_id] = array(
 						'str'	=> array(
@@ -347,7 +279,8 @@ class bbcode
 						'preg'	=> array(
 							'#\[attachment=([0-9]+):$uid\]#'	=> $this->bbcode_tpl('inline_attachment_open', $bbcode_id))
 					);
-					break;
+				break;
+
 				default:
 					if (isset($rowset[$bbcode_id]))
 					{
