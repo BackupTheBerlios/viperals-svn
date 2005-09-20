@@ -350,7 +350,7 @@ class bbcode_firstpass extends bbcode
 					{
 						// if theres any problems with this, find the first "php" without span remove it
 						// then find the first </span> and remove it
-						$pos = ($pos = mb_strpos($code, 'php&nbsp;</span>')) ? $pos + 16 : mb_strpos($code, 'php </span>') + 16;
+						$pos = ($pos = mb_strpos($code, 'php&nbsp;</span>')) ? $pos + 16 : mb_strpos($code, 'php </span>') + 11;
 						$code = mb_substr($code, $pos);
 					}
 									

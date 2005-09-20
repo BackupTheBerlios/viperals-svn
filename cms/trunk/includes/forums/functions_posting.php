@@ -858,7 +858,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 		
 		if ($notify_type == 'topic' && $user['forum_id'])
 		{
-			$holding[$user['user_id']]['template'] = 'notify_forum';
+			$holding[$user['user_id']]['template'] = 'forum_notify';
 			$holding[$user['user_id']]['update'] = 'forum';
 		}
 		else

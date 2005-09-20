@@ -434,7 +434,8 @@ function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
 
 	$_CLASS['core_db']->transaction();
 
-	$table_ary = array(FORUMS_POSTS_TABLE, FORUMS_REPORTS_TABLE, FORUMS_SEARCH_MATCH_TABLE);
+	//$table_ary = array(FORUMS_POSTS_TABLE, FORUMS_REPORTS_TABLE, FORUMS_SEARCH_MATCH_TABLE);
+	$table_ary = array(FORUMS_POSTS_TABLE, FORUMS_SEARCH_MATCH_TABLE);
 	
 	foreach ($table_ary as $table)
 	{
