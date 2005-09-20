@@ -55,7 +55,6 @@ class sessions
 				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
 				WHERE s.session_id = '" . $_CLASS['core_db']->escape($session_id) . "'
 					AND u.user_id = s.session_user_id";
-
 			$result = $_CLASS['core_db']->query($sql);
 
 			$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -83,7 +82,7 @@ class sessions
 				if ($valid)
 				{
 					// Set session update a minute or so after last update or if page changes
-					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] != $this->url))
+					if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] !== $this->url))
 					{
 						$this->save_session = true;
 					}
@@ -166,6 +165,30 @@ class sessions
 		if (isset($this->data['session_id']) && $this->data['session_id'])
 		{
 			$this->session_destroy(false, false);
+		}
+
+		if ($this->is_bot)
+		{
+			$sql = 'SELECT u.*, s.*
+				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . ' u
+				WHERE s.session_user_id = '. (int) $this->data['user_id'] .'
+					AND u.user_id = s.session_user_id';
+
+			$result = $_CLASS['core_db']->query($sql);
+			$temp = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+			
+			if ($temp)
+			{
+				$this->data = $temp;
+
+				if (($this->time - $this->data['session_time']) > 60 || ($this->data['session_url'] !== $this->url))
+				{
+					$this->save_session = true;
+				}
+
+				return true;
+			}
 		}
 
 		$this->data['session_last_visit'] = ($this->data['user_last_visit']) ? $this->data['user_last_visit'] : $this->time;

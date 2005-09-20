@@ -165,18 +165,21 @@ class auth
 	function acl_get_list($user_id = false, $opts = false, $forum_id = false)
 	{
 		$hold_ary = $this->acl_raw_data($user_id, $opts, $forum_id);
+		
+		if (empty($hold_ary))
+		{
+			return array();
+		}
 
 		$auth_ary = array();
+
 		foreach ($hold_ary as $user_id => $forum_ary)
 		{
 			foreach ($forum_ary as $forum_id => $auth_option_ary)
 			{
 				foreach ($auth_option_ary as $auth_option => $auth_setting)
 				{
-					if ($auth_setting == ACL_YES)
-					{
-						$auth_ary[$forum_id][$auth_option][] = $user_id;
-					}
+					$auth_ary[$forum_id][$auth_option][] = $user_id;
 				}
 			}
 		}
@@ -248,31 +251,26 @@ class auth
 	{
 		global $_CLASS;
 
-		if (!$user_id)
-		{
-// not sure if that is needed anywhere. maybe add the others later...
-			return;
-		}
-
 		$sql_user = ($user_id) ? (is_array($user_id) ? 'user_id IN (' . implode(', ', $user_id) . ')' : 'user_id = '.$user_id) : '';
 		$sql_forum = ($forum_id) ? (is_array($forum_id) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id = '.$forum_id) : '';
 		$sql_opts = ($opts) ? (is_array($opts) ? ' AND ao.auth_option IN (' . implode(', ', preg_replace('#^[\s]*?(.*?)[\s]*?$#e', "\"'\" . \$_CLASS['core_db']->escape('\\1') . \"'\"", $opts)) . ')' : "AND ao.auth_option = '".$_CLASS['core_db']->escape($opts)."'") : '';
-		$groups = $group_members = $hold_ary = array();
+		$groups = $group_id_array = $group_members = $hold_ary = array();
 
-		$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND member_status <> ".STATUS_PENDING;
-// This is the why phpBB3 seems to be, the why they wanted it to act may have been the above.
-// atleast when you look at the coding....	
-		//$sql = 'SELECT group_id, user_id FROM ' . USERS_TABLE .' WHERE '.$sql_user;
-		$result = $_CLASS['core_db']->query($sql);
-
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		if ($sql_user)
 		{
-			$groups[] = $row['group_id'];
-			$group_members[$row['group_id']][] = $row['user_id'];
-		}
+			$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND member_status <> ".STATUS_PENDING;
 
-// make sure AND ( bla=blaa OR blaa2=baa2 ) works right with all databases
-		$sql_user = empty($groups) ? ' AND a.' . $sql_user :  'AND (a.'.$sql_user.' OR a.group_id IN ('.implode(', ', $groups).'))';
+			$result = $_CLASS['core_db']->query($sql);
+	
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			{
+				$groups[] = $row['group_id'];
+				$group_members[$row['group_id']][] = $row['user_id'];
+			}
+			$_CLASS['core_db']->free_result($result);
+
+			$sql_user = empty($groups) ? ' AND a.' . $sql_user :  'AND (a.'.$sql_user.' OR a.group_id IN ('.implode(', ', $groups).'))';
+		}
 
 		// Sort by group_id since we want user setting to over right grp..  specific > broad
 		$sql = 'SELECT ao.auth_option, a.user_id, a.group_id, a.forum_id, a.auth_setting
@@ -292,17 +290,43 @@ class auth
 
 			if ($row['group_id'])
 			{
-				foreach ($group_members[$row['group_id']] as $user_id)
-				{
-					$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
-				}
+				$group_id_array[$row['group_id']] = $row;
 
 				continue;
 			}
 
 			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
 		}
-//print_r($hold_ary);
+		$_CLASS['core_db']->free_result($result);
+
+		if (!empty($group_id_array))
+		{
+			if (empty($group_members))
+			{
+				$sql = 'SELECT user_group, user_id FROM ' . USERS_TABLE .' WHERE user_group IN ('.implode(', ', array_keys($group_id_array)).') AND user_status = '.STATUS_ACTIVE;
+				$result = $_CLASS['core_db']->query($sql);
+	
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+				{
+					$group_members[$row['user_group']][] = $row['user_id'];
+				}
+				$_CLASS['core_db']->free_result($result);
+			}
+
+			foreach ($group_id_array as $group_id => $row)
+			{
+				if (empty($group_members[$group_id]))
+				{
+					continue;
+				}
+
+				foreach ($group_members[$group_id] as $user_id)
+				{
+					$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+				}
+			}
+		}
+
 		return $hold_ary;
 	}
 

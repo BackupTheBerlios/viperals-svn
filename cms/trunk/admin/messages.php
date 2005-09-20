@@ -234,7 +234,7 @@ function messages_get_data(&$data, &$error)
 	{
 		$start = strtotime($data['block_starts']);
 
-		if (!$start || $start == -1)
+		if (!$start || $start === -1)
 		{
 			$error .= $_CLASS['core_user']->lang['ERROR_START_TIME'].'<br />';
 		}
@@ -244,7 +244,7 @@ function messages_get_data(&$data, &$error)
 	{
 		$expires = strtotime($data['block_expires']);
 
-		if (!$expires || $expires == -1)
+		if (!$expires || $expires === -1)
 		{
 			$error .= $_CLASS['core_user']->lang['ERROR_END_TIME'].'<br />';
 		}

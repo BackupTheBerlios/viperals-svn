@@ -62,7 +62,8 @@ $ranks = obtain_ranks();
 // What do you want to do today? ... oops, I think that line is taken ...
 switch ($mode)
 {
-	case 'leaders':
+
+	case 'forum_leaders':
 		// Display a listing of board admins, moderators
 
 		$_CLASS['core_user']->add_lang('groups', 'Forums');
@@ -90,7 +91,7 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT forum_id, forum_name 
-			FROM ' . FORUMS_TABLE . '
+			FROM ' . FORUMS_FORUMS_TABLE . '
 			WHERE forum_type = ' . FORUM_POST;
 		$result = $_CLASS['core_db']->query($sql);
 		
@@ -105,7 +106,7 @@ switch ($mode)
 			FROM ' . USERS_TABLE . ' u, ' . GROUPS_TABLE . ' g
 			LEFT JOIN ' . USER_GROUP_TABLE . ' ug ON (ug.group_id = g.group_id AND ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')
 			WHERE u.user_id IN (' . implode(', ', $admin_id_ary + $mod_id_ary) . ')
-				AND u.group_id = g.group_id
+				AND u.user_group = g.group_id
 			ORDER BY g.group_name ASC, u.username ASC';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -158,7 +159,7 @@ switch ($mode)
 		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_template']->assign('PM_IMG', $_CLASS['core_user']->img('btn_pm', $_CLASS['core_user']->lang['MESSAGE']));
-		break;
+	break;
 
 	case 'contact':
 		$_CLASS['core_template']->assign_array(array(
@@ -305,6 +306,7 @@ switch ($mode)
 		if (!$member || (!$_CLASS['core_auth']->admin_power('users') && $member['user_status'] != STATUS_ACTIVE))
 		{
 			$_CLASS['core_db']->free_result($result);
+
 			trigger_error(($member) ? 'USER_INACTIVE' : 'NO_USER');
 		}
 		
@@ -334,55 +336,45 @@ switch ($mode)
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
-		$member['session_time'] = (isset($row['session_time'])) ? $row['session_time'] : 0;
+		$member['session_time'] = isset($row['session_time']) ? $row['session_time'] : 0;
 		unset($row);
 
+		$num_real_posts = $_CLASS['core_user']->data['user_posts'];
+
+		/*
 		// Obtain list of forums where this users post count is incremented
 		$auth2 = new auth();
 		$auth2->acl($member);
-		$f_postcount_ary = $auth2->acl_getf('f_postcount');
-
-		$sql_forums = array();
-		foreach ($f_postcount_ary as $forum_id => $allow)
+		
+		if ($permission_array = $auth2->acl_getf('f_postcount'))
 		{
-			if ($allow['f_postcount'])
-			{
-				$sql_forums[] = $forum_id;
-			}
-		}
+			$sql_forums = array_keys($permission_array);
 
-		$post_count_sql = (sizeof($sql_forums)) ? 'AND f.forum_id IN (' . implode(', ', $sql_forums) . ')' : '';
-		unset($sql_forums, $f_postcount_ary, $auth2);
+			// Grab all the relevant data
+			$sql = 'SELECT COUNT(*) AS num_posts
+				FROM ' . FORUMS_POSTS_TABLE . "
+					WHERE poster_id = $user_id
+					AND forum_id IN (" . implode(', ', $sql_forums) . ')';
 
-		// Grab all the relevant data
-		$sql = 'SELECT COUNT(p.post_id) AS num_posts
-			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . " f
-			WHERE p.poster_id = $user_id
-				AND f.forum_id = p.forum_id
-				$post_count_sql";
-		$result = $_CLASS['core_db']->query($sql);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
+			$result = $_CLASS['core_db']->query($sql);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+	
+			$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $row['num_posts']);
 
-		$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $row['num_posts']);
+			unset($sql_forums, $permission_array, $auth2);
+
+		}		
+		$active_f_row = $active_t_row = array();
+		*/
 
 		// Change post_count_sql to an forum_id array the user is able to see
-		$f_forum_ary = $_CLASS['auth']->acl_getf('f_read');
-
-		$sql_forums = array();
-		foreach ($f_forum_ary as $forum_id => $allow)
+		if ($permission_array = $_CLASS['auth']->acl_getf('f_read'))
 		{
-			if (isset($allow['f_read']) && $allow['f_read'])
-			{
-				$sql_forums[] = $forum_id;
-			}
-		}
-
-		$post_count_sql = (sizeof($sql_forums)) ? 'AND f.forum_id IN (' . implode(', ', $sql_forums) . ')' : '';
-		unset($sql_forums, $f_forum_ary);
-
-		if ($post_count_sql)
-		{
+			$sql_forums = array_keys($permission_array);
+	
+			$post_count_sql = 'AND f.forum_id IN (' . implode(', ', $sql_forums) . ')';
+	
 			$sql = 'SELECT f.forum_id, f.forum_name, COUNT(post_id) AS num_posts
 				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . " f
 				WHERE p.poster_id = $user_id
@@ -407,10 +399,8 @@ switch ($mode)
 
 			$active_t_row = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
-		}
-		else
-		{
-			$active_f_row = $active_t_row = array();
+	
+			unset($sql_forums, $permission_array, $post_count_sql);
 		}
 
 		// Do the relevant calculations
@@ -1136,12 +1126,11 @@ function get_user_rank($user_rank, $user_posts, &$rank_title, &$rank_img)
 
 function show_profile($data)
 {
-	global $config, $_CORE_CONFIG, $_CLASS, $ranks, $SID;
+	global $config, $_CORE_CONFIG, $_CLASS;
 
-	$username = $data['username'];
 	$user_id = $data['user_id'];
-
 	$rank_title = $rank_img = '';
+
 	get_user_rank($data['user_rank'], $data['user_posts'], $rank_title, $rank_img);
 	
 	if (!empty($data['user_allow_viewemail']) || $_CLASS['auth']->acl_get('a_email'))
@@ -1152,37 +1141,35 @@ function show_profile($data)
 	{
 		$email = '';
 	}
-	
-	$last_visit = (!empty($data['session_time'])) ? $data['session_time'] : $data['user_last_visit'];
 
-	// Dump it out to the template
-	// TODO
-	// Add permission check for IM clients
+	$last_visit = ($data['session_time']) ? $data['session_time'] : $data['user_last_visit'];
+	$online = ($data['session_time'] >= ($_CLASS['core_user']->time - ($config['load_online_time'] * 60)));
+
 	return array(
-		'USERNAME'		=> $username,
-		'USER_COLOR'	=> (!empty($data['user_colour'])) ? $data['user_colour'] : '',
+		'USERNAME'		=> $data['username'],
+		'USER_COLOR'	=> ($data['user_colour']) ? $data['user_colour'] : '',
 		'RANK_TITLE'	=> $rank_title,
 
-		'JOINED'		=> $_CLASS['core_user']->format_date($data['user_reg_date'], $_CLASS['core_user']->lang['DATE_FORMAT']),
-		'VISITED'		=> (empty($last_visit)) ? ' - ' : $_CLASS['core_user']->format_date($last_visit, $_CLASS['core_user']->lang['DATE_FORMAT']),
+		'JOINED'		=> $_CLASS['core_user']->format_date($data['user_reg_date']),
+		'VISITED'		=> ($last_visit) ? ' - ' : $_CLASS['core_user']->format_date($last_visit),
 		'POSTS'			=> ($data['user_posts']) ? $data['user_posts'] : 0,
 
-		'ONLINE_IMG'	=> (intval($data['session_time']) >= time() - ($config['load_online_time'] * 60)) ? $_CLASS['core_user']->img('btn_online', $_CLASS['core_user']->lang['USER_ONLINE']) : $_CLASS['core_user']->img('btn_offline', $_CLASS['core_user']->lang['USER_ONLINE']),
+		'ONLINE_IMG'	=> ($online) ? $_CLASS['core_user']->img('btn_online', $_CLASS['core_user']->lang['USER_ONLINE']) : $_CLASS['core_user']->img('btn_offline', $_CLASS['core_user']->lang['USER_ONLINE']),
 		'RANK_IMG'		=> $rank_img,
-		'ICQ_STATUS_IMG'=> (!empty($data['user_icq'])) ? '<img src="http://web.icq.com/whitepages/online?icq=' . $data['user_icq'] . '&amp;img=5" width="18" height="18" border="0" />' : '',
-		
+		'ICQ_STATUS_IMG'=> ($data['user_icq']) ? '<img src="http://web.icq.com/whitepages/online?icq=' . $data['user_icq'] . '&amp;img=5" width="18" height="18" border="0" />' : '',
+
 		'U_PROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$user_id),
-		'U_SEARCH_USER'	=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($username) . '&amp;show_results=posts') : '',
+		'U_SEARCH_USER'	=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($data['username']) . '&amp;show_results=posts') : '',
 		'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$user_id) : '',
 		'U_EMAIL'		=> $email,
-		'U_WWW'			=> (!empty($data['user_website'])) ? $data['user_website'] : '',
+		'U_WWW'			=> ($data['user_website']) ? $data['user_website'] : '',
 		'U_ICQ'			=> ($data['user_icq']) ? generate_link('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$user_id) : '',
 		'U_AIM'			=> ($data['user_aim']) ? generate_link('Members_List&amp;mode=contact&amp;action=aim&amp;u='.$user_id) : '',
 		'U_YIM'			=> ($data['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . $data['user_yim'] . '&.src=pg' : '',
 		'U_MSN'			=> ($data['user_msnm']) ? generate_link('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$user_id) : '',
 		'U_JABBER'		=> ($data['user_jabber']) ? generate_link('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$user_id) : '',
 
-		'S_ONLINE'		=> (intval($data['session_time']) >= time() - 300) ? true : false
+		'S_ONLINE'		=> $online
 	);
 }
 

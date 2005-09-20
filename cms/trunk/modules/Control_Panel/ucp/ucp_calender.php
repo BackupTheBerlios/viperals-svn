@@ -4,7 +4,12 @@ class ucp_calender extends module
 {
 	function ucp_calender($id, $mode)
 	{
-		global $_CLASS, $site_file_root;
+		global $_CLASS, $table_prefix, $site_file_root;
+
+		if (!defined('CALENDER_TABLE'))
+		{
+			define('CALENDER_TABLE', $table_prefix.'calender');
+		}
 
 		$link = 'Control_Panel&amp;i='.$id;
 		
@@ -13,6 +18,7 @@ class ucp_calender extends module
 		$year = get_variable('year', 'REQUEST', false, 'integer');
 		
 		load_class($site_file_root.'includes/display/calender.php', 'calender');
+		$_CLASS['calender']->table = CALENDER_TABLE;
 		$_CLASS['calender']->set_date($day, $month, $year);
 		
 		if (isset($_GET['mode']) && $_GET['mode'] == 'details')
@@ -34,7 +40,7 @@ class ucp_calender extends module
 				$previous_month = generate_link($link.'&amp;mode=day_view&amp;year='.$month_flanks['previous_month']['year'].'&amp;month='.$month_flanks['previous_month']['month']);
 				$next_month = generate_link($link.'&amp;mode=day_view&amp;year='.$month_flanks['next_month']['year'].'&amp;month='.$month_flanks['next_month']['month']);
 				
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'L_SUNDAY'				=> $_CLASS['core_user']->lang['datetime']['Sun'],
 					'L_MONDAY'				=> $_CLASS['core_user']->lang['datetime']['Mon'],
 					'L_TUESDAY'				=> $_CLASS['core_user']->lang['datetime']['Tue'],
@@ -54,11 +60,15 @@ class ucp_calender extends module
 			case 'add_event':
 				if (isset($_POST['submit']))
 				{
-					$this->add_event();
+					if ($this->add_event() === false)
+					{
+						echo implode('<br/>', $this->error);
+					}
+					
 					break;
 				}
 
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'S_UCP_ACTION'	=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"),
 				));
 
@@ -71,15 +81,14 @@ class ucp_calender extends module
 				$data = false;
 				$data = $_CLASS['calender']->get_events_details($id);
 				
-				$_CLASS['core_template']->assign(array(
-					'CAL_TITLE'			=> $data['title'],
-					'CAL_DESCRIPTION'	=> $data['description'],
+				$_CLASS['core_template']->assign_array(array(
+					'CAL_TITLE'			=> $data['calender_title'],
+					'CAL_DESCRIPTION'	=> $data['calender_text'],
 					'CAL_START_TIME'	=> $_CLASS['core_user']->format_date($data['start_time']),
 					'CAL_END_TIME'		=> $_CLASS['core_user']->format_date($data['end_time']),
 				));
 			
-				$_CLASS['core_template']->display('modules/Control_Panel/ucp_calender_details.html');
-				$_CLASS['core_display']->display_footer();
+				$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_calender_details.html');
 			break;
 			
 			case 'month_view':
@@ -90,7 +99,7 @@ class ucp_calender extends module
 
 				$month_flanks = $_CLASS['calender']->flank_months();
 
-				$_CLASS['core_template']->assign(array(
+				$_CLASS['core_template']->assign_array(array(
 					'L_SUNDAY'				=> $_CLASS['core_user']->lang['datetime']['Sunday'],
 					'L_MONDAY'				=> $_CLASS['core_user']->lang['datetime']['Monday'],
 					'L_TUESDAY'				=> $_CLASS['core_user']->lang['datetime']['Tuesday'],
@@ -120,41 +129,53 @@ class ucp_calender extends module
 		global $_CLASS;
 
 		$data_array = array(
-			'title'			=> get_variable('title', 'POST', false),
-			'description'	=> get_variable('description', 'POST', false),
-			'note'			=> get_variable('note', 'POST', false),
-			'start_time'	=> get_variable('start', 'POST', false),
-			'end_time'		=> get_variable('end', 'POST', false),
-			'recur'			=> false,
+			'calender_title'	=> get_variable('title', 'POST', false),
+			'calender_text'		=> get_variable('description', 'POST', false),
+			'calender_notes'	=> get_variable('note', 'POST', false),
+			'calender_starts'	=> get_variable('start', 'POST', false),
+			'calender_expires'	=> get_variable('end', 'POST', false),
+			//'recur'			=> false,
 		);
 
-		$error = '';
+		$error = array();
 
-		if (($start_time = strtotime($data_array['start_time'])) === -1)
+		$start_time = strtotime($data_array['calender_starts']);
+
+		if (!$start_time || $start_time === -1)
 		{
-			$error .= $_CLASS['core_user']->get_lang('ERROR_START_TIME').'<br />';
+			$error[] = $_CLASS['core_user']->get_lang('ERROR_START_TIME');
 		}
 
-		if (($end_time = strtotime($data_array['end_time'])) === -1)
+		$end_time = strtotime($data_array['calender_expires']);
+
+		if (!$end_time || $end_time === -1)
 		{
-			$error .= $_CLASS['core_user']->get_lang('ERROR_END_TIME').'<br />';
+			$error[] = $_CLASS['core_user']->get_lang('ERROR_END_TIME');
 		}
 		
 		if (!$error && $start_time > $end_time)
 		{
-			$error .= $_CLASS['core_user']->get_lang('ERROR_').'<br />';
+			$error[] = $_CLASS['core_user']->get_lang('ERROR_');
 		}
 
-		if (!$error)
+		if (!empty($error))
 		{
-			//$duration = $start_time - $end_time;
-			//$start_time = $date = implode(''. explode(':', date('H:i', $start_time)));;
+			$this->error = $error;
 
-			$data_array['start_time'] = $data_array['start_date'] = $start_time;
-			$data_array['end_time'] = $data_array['end_date'] = $end_time;
-			
-			$_CLASS['core_db']->sql_query('INSERT INTO cms_calender ' . $_CLASS['core_db']->sql_build_array('INSERT', $data_array));
+			return false;
 		}
+
+		//$duration = $start_time - $end_time;
+		//$start_time = $date = implode(''. explode(':', date('H:i', $start_time)));;
+
+		$data_array['calender_starts'] = $start_time;
+		$data_array['calender_expires'] = $end_time;
+		
+		$_CLASS['core_db']->query('INSERT INTO ' . CALENDER_TABLE .' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data_array));
+
+		$data_array['calender_id'] = $_CLASS['core_db']->insert_id(CALENDER_TABLE, 'calender_id');
+
+		return $data_array;
 	}
 }
 

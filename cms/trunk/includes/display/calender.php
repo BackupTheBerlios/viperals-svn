@@ -1,17 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal )								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 class calender
 {
@@ -19,7 +27,7 @@ class calender
 	var $month;
 	var $year;
 	var $month_data_array = array();
-	var $table = 'cms_calender';
+	var $table = false;
 	
 	// Use me, use me plz....
 	var $time_offset = 0;
@@ -29,7 +37,6 @@ class calender
 	*/
 	function set_date($day, $month = false, $year = false)
 	{
-		//(int)
 		$this->month = (!$month || $month > 12 || $month < 1) ? date('n') : $month;
 		
 		if ($year)
@@ -42,6 +49,7 @@ class calender
 			$this->year = date('Y');
 			$this->year_current = true;
 		}
+		//checkdate ( int month, int day, int year )
 
 		$this->last_day = date("t", mktime(0, 0, 0, $this->month, 1, $this->year));
 		$this->first_day = date("w", mktime(0, 0, 0, $this->month, 1, $this->year)) + 1;
@@ -149,7 +157,7 @@ class calender
 			{
 				$_CLASS['core_template']->assign_vars_array($template_name, array(
 					'NUMBER'	=> false
-					));
+				));
 				continue;
 			}
 			
@@ -160,7 +168,7 @@ class calender
 					'NUMBER'	=> $num,
 					'LINK'		=> ($num != $this->day || !$current_month) ? generate_link($link.'&amp;year='.$this->year.'&amp;month='.$this->month.'&amp;mode=day_view&amp;day='.$num) : false,
 					'DATA'		=> empty($this->month_data_array[($num - 1)]) ? false : $this->month_data_array[($num - 1)],
-					));
+				));
 			}
 
 			if ($num == $this->last_day)
@@ -185,39 +193,47 @@ class calender
 		
 		$date = explode(':', date('n:d:y', $time));
 		
-		$day['start'] = mktime(0, 0, 0, $date[0], $date[1], $date[2]);
+		$day['start'] = mktime(0, 0, 0, $date[0], $date[1], $date[2]) + 60;
 		$day['end'] = mktime(24, 0, 0, $date[0], $date[1], $date[2]) - 1;
 
 		$sql = 'SELECT * FROM '. $this->table .'
-					WHERE start_date <= '. $day['end'] .' 
-					AND end_date >= '. $day['start'];
+					WHERE calender_starts <= '. $day['end'] .' 
+					AND calender_expires >= '. $day['start'];
 					
 		$result = $_CLASS['core_db']->query($sql);
 		
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if ($row['recur'] && ($row['start_date'] < $day['start']))
+			if ($row['calender_recur_rate'] && ($row['calender_starts'] < $day['start']))
 			{
-				$row['start_date'] = $row['start_date'] + ($row['recur'] * ceil(($day['start'] - $row['start_date']) / $row['recur']));
+				$row['calender_starts'] = $row['calender_starts'] + ($row['calender_recur_rate'] * ceil(($day['start'] - $row['calender_starts']) / $row['calender_recur_rate']));
 								
-				if ($row['start_date'] > $day['end'])
+				if ($row['calender_starts'] > $day['end'])
 				{
 					continue;
 				}
 			}
 
-			$time = explode(':', $row['start_time']);
+			if ($row['calender_start_time'])
+			{
+				$temp_time = explode(':', $row['calender_start_time']);
 
-			$start_time = mktime($time[0], $time[1], 0, $date[0], $date[1], $date[2]);
-			$end_time = $start_time + $row['duration'];
+				$start_time = mktime($temp_time[0], $temp_time[1], 0, $date[0], $date[1], $date[2]);
+				$end_time = $start_time + $row['duration'];
+			}
+			else
+			{
+				$start_time = ($row['calender_starts'] > $day['start']) ? $day['start'] : $row['calender_starts'];
+				$end_time = $row['calender_expires'];
+			}
  
 			$_CLASS['core_template']->assign_vars_array($template_name, array(
-					'TITLE'			=> $row['title'],
-					'ID'			=> $row['id'],
-					'DESCRIPTION'	=> $row['description'],
-					'LINK'			=> generate_link("$link&amp;mode=details&amp;id=".$row['id']),
-					'START_TIME'	=> $_CLASS['core_user']->format_date($start_time, 'g:i A'),
-					'END_TIME'		=> $_CLASS['core_user']->format_date($end_time, 'g:i A'),
+					'TITLE'				=> $row['calender_title'],
+					'ID'				=> $row['calender_id'],
+					'DESCRIPTION'		=> $row['calender_text'],
+					'LINK'				=> generate_link("$link&amp;mode=details&amp;id=".$row['calender_id']),
+					'START_TIME'		=> $_CLASS['core_user']->format_date($start_time, 'g:i A'),
+					'END_TIME'			=> $_CLASS['core_user']->format_date($end_time, 'g:i A'),
 			));
 		}
 		$_CLASS['core_db']->free_result($result);
@@ -238,8 +254,8 @@ class calender
 		$month['end'] = mktime(24, 0, 0, $date[0], $date[1], $date[2]) - 1;
 
 		$sql = 'SELECT * FROM '. $this->table .'
-					WHERE start_date <= '. $month['end'] .' 
-					AND end_date >= '. $month['start'];
+					WHERE calender_starts <= '. $month['end'] .' 
+					AND calender_expires >= '. $month['start'];
 		
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -248,9 +264,9 @@ class calender
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			// Does time between start and end span more than one day ?
-			if (($row['end_date'] - $row['start_date']) >= 86400)
+			if (($row['calender_expires'] - $row['calender_starts']) >= 86400)
 			{
-				$days = $this->generate_days($row['start_date'], $row['end_date'], $month['start'], $month['end'],  $row['recur']);
+				$days = $this->generate_days($row['calender_starts'], $row['calender_expires'], $month['start'], $month['end'],  $row['calender_recur_rate']);
 
 				foreach ($days as $day => $null)
 				{
@@ -261,19 +277,20 @@ class calender
 						continue;
 					}
 		
-					$row['link']  = generate_link($link.'&amp;mode=details&amp;id='.$row['id']);
+					$row['calender_link']  = generate_link($link.'&amp;mode=details&amp;id='.$row['calender_id']);
 					$this->month_data_array[$day][] = $row;
 				}
 			}
 			else
 			{
-				$day = date('j', $row['start_date']) - 1;
+				$day = date('j', $row['calender_starts']) - 1;
+
 				if (count($this->month_data_array[$day]) >= $limit)
 				{
 					continue;
 				}
 	
-				$row['link']  = generate_link($link.'&amp;mode=details&amp;id='.$row['id']);
+				$row['calender_link']  = generate_link($link.'&amp;mode=details&amp;id='.$row['calender_id']);
 				$this->month_data_array[$day][] = $row;
 			}
 		}
@@ -281,46 +298,56 @@ class calender
 		$_CLASS['core_db']->free_result($result);		
 	}
 
-	function generate_days($start_time, $end_time, $start_date, $end_date, $recurring = 86400)
+	function generate_days($calender_start_time, $end_time, $calender_starts, $calender_expires, $calender_recur = 86400)
 	{
 		global $_CLASS;
 
 		// Never know how some versions may treat things, or what other people may do.
-		settype($start_time, 'integer');
-		settype($start_date, 'integer');
+		settype($calender_start_time, 'integer');
+		settype($calender_starts, 'integer');
 		settype($end_time, 'integer');
-		settype($end_date, 'integer');
+		settype($calender_expires, 'integer');
 
-		// we don't want useless loops if the recurrence less than 1 day
-		if (is_numeric($recurring))
+		$calender_recurring = false;
+
+		if (is_string($calender_recur) && in_array($calender_recur, 'everyday', 'every_other', 'weekly', 'monthly', 'years'))
 		{
-			$recurring = ($recurring > 86400) ? (int) $recurring : 86400;
+			Switch ($calender_recur)
+			{
+				Case 'weekly':
+					
+				Case 'monthly':
+			}
 		}
-// Add recurrence for months, years (maybe)..
-// Damit why couldn't there always be 31 days in a month :-(
-
-		$end_time = ($end_time < $end_date) ? (int) $end_time : (int) $end_date;
-
-		// Get the closest time to our start_date, if start_time is before that start_date
-		if ($start_time < $start_date)
+		
+		// we don't want useless loops if the calender_recurrence less than 1 day
+		if (!$calender_recurring)
 		{
-			$start_time = $start_time + ($recurring * ceil(($start_date - $start_time) / $recurring));
+			$calender_recurring = ($calender_recurring > 86400) ? (int) $calender_recurring : 86400;
 		}
 
-		// mainly a check for the above, since recurrence can be out of the start/end date range
-		if ($start_time > $end_date)
+		$end_time = ($end_time < $calender_expires) ? (int) $end_time : (int) $calender_expires;
+
+		// Get the closest time to our calender_starts, if calender_start_time is before that calender_starts
+		if ($calender_start_time < $calender_starts)
+		{
+			$calender_start_time = $calender_start_time + ($calender_recurring * ceil(($calender_starts - $calender_start_time) / $calender_recurring));
+		}
+
+		// mainly a check for the above, since calender_recurrence can be out of the start/end date range
+		if ($calender_start_time > $calender_expires)
 		{
 			return array(); //return empty array.
 		}
 
-		$loop_time = $start_time;
+		$loop_time = $calender_start_time;
 		$days = array();
 
 		While ($loop_time < $end_time)
 		{
 			$days[date('j', $loop_time)] = true;
 
-			$loop_time += $recurring;
+			$loop_time += $calender_recurring;
 		}
 		
 		return $days;
@@ -331,19 +358,32 @@ class calender
 		global $_CLASS;
 		
 		$sql = 'SELECT * FROM '. $this->table .'
-					WHERE id = '.$id;
+					WHERE calender_id = '.$id;
 					
 		$result = $_CLASS['core_db']->query($sql);
 		
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
-		$time = explode(':', $row['start_time']);
-		//echo $row['start_time'];
-// Needs fixing
-		$row['start_time'] = mktime($time[0], $time[1], 0, 0, 0, 2005);
-		//echo $row['start_time'];
-		$row['end_time'] = $row['start_time'] + $row['duration'];
+		if ($row['calender_start_time'])
+		{
+			if (!$time)
+			{
+				$time = mktime(12, 0, 0, $this->month, $this->day, $this->year);
+			}
+	
+			$date = explode(',', date('n,t,Y', $time));
+
+			$temp_time = explode(':', $row['calender_start_time']);
+
+			$row['start_time'] = mktime($temp_time[0], $temp_time[1], 0, $date[0], $date[1], $date[2]);
+			$row['end_time'] = $start_time + $row['duration'];
+		}
+		else
+		{
+			$row['start_time'] = $row['calender_starts'];
+			$row['end_time'] = $row['calender_expires'];
+		}
 
 		return $row;
 	}

@@ -54,7 +54,7 @@ if (isset($_REQUEST['mode']))
 		switch ($_REQUEST['mode'])
 		{
 			case 'change':
-				$result = $_CLASS['core_db']->query('SELECT module_status, module_type FROM '.CORE_MODULES_TABLE.' WHERE module_id = '.$id);
+				$result = $_CLASS['core_db']->query('SELECT module_name, module_status, module_type FROM '.CORE_MODULES_TABLE.' WHERE module_id = '.$id);
 				$module = $_CLASS['core_db']->fetch_row_assoc($result);
 				$_CLASS['core_db']->free_result($result);
 			
@@ -77,7 +77,7 @@ if (isset($_REQUEST['mode']))
 					{
 						$module_configurer = new $name;
 
-						if (method_exists('status_change'))
+						if (method_exists($module_configurer, 'status_change'))
 						{
 							$report = $module_configurer->status_change($status, $module['module_status']);
 		
@@ -118,7 +118,7 @@ if (isset($_REQUEST['mode']))
 						{
 							$module_configurer = new $name;
 	
-							if (method_exists('install'))
+							if (method_exists($module_configurer, 'install'))
 							{
 								$status = $module_configurer->install();
 			
@@ -158,7 +158,7 @@ if (isset($_REQUEST['mode']))
 						{
 							$module_configurer = new $name;
 	
-							if (method_exists('uninstall'))
+							if (method_exists($module_configurer, 'uninstall'))
 							{
 								$status = $module_configurer->uninstall();
 			

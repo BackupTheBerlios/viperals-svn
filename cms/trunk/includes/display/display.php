@@ -176,11 +176,12 @@ class core_display
 
 		$this->header['js'][] = '<script type="text/javascript" src="javascript/common.js"></script>';
 		$this->header['js'][] = "<script type=\"text/javascript\">\nvar cms_session_id = '{$_CLASS['core_user']->data['session_id']}';\nvar cms_cookie_path = '{$_CORE_CONFIG['server']['cookie_path']}';\nvar cms_cookie_domain = '{$_CORE_CONFIG['server']['cookie_domain']}';\n</script>";
+		$this->header['meta'][] = '<base href="'.generate_base_url().'" />';
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
 			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.(is_array($_CORE_MODULE['module_title']) ? implode(' &gt; ', $_CORE_MODULE['module_title']) : $_CORE_MODULE['module_title']),
-			'SITE_BASE'			=>	generate_base_url(),
+			'SITE_URL'			=>	generate_base_url(),
 			'SID'				=>	empty($_CLASS['core_user']->data['session_id']) ? '' : $_CLASS['core_user']->data['session_id'],
 			'SITE_NAME'			=>	$_CORE_CONFIG['global']['site_name'],
 			'HEADER_MESSAGE'	=>	$this->message,

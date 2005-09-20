@@ -374,18 +374,25 @@ function generate_base_url()
 function generate_link($link = false, $link_options = false)
 {
 	global $_CLASS, $_CORE_MODULE;
+	//static $SEO = array('?', '&', '&amp;');
 
 	$options = array(
 		'admin'		=> false,
 		'full'		=> false,
 		'sid'		=> true,
-		'force_sid' => false
+		'force_sid' => false,
+		'seo'		=> true
 	);
 
 	if (is_array($link_options))
 	{
 		$options = array_merge($options, $link_options);
 	} 
+$options['seo'] = false;
+	if ($options['admin'])
+	{
+		$options['seo'] = false;
+	}
 
 	if ($link && strpos($link, '#'))
 	{
@@ -400,31 +407,46 @@ function generate_link($link = false, $link_options = false)
 
 	if (!$link)
 	{
-		$link = $file;
-
 		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
 		{
-			$link .= '?'.$_CLASS['core_user']->sid_link;
+			$options['seo'] = false;
+
+			$link = $file.'?'.$_CLASS['core_user']->sid_link;
+		}
+		else
+		{
+			$link = ($options['seo']) ? 'index' : $file;
 		}
 	}
 	else
 	{
+		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
+		{
+			$link .= '&amp;'.$_CLASS['core_user']->sid_link;
+		}
+
 		if ($link{0} == '&')
 		{
 			$link = $_CORE_MODULE['name'].$link;
 		}
 
-		$link = $file.'?mod='.$link;
-
-		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
+		if (!$options['seo'])
 		{
-			$link .= '&amp;'.$_CLASS['core_user']->sid_link;
+			$link = $file.'?mod='.$link;
+		}
+		else
+		{
+			$link = str_replace(array('?', '&amp;', '&'), '/', $link);
 		}
     }
 
     if ($what_you_call_this)
     {
-		$link .= '#'.$what_you_call_this;
+		$link .= ($options['seo']) ? '.html#'.$what_you_call_this : '#'.$what_you_call_this;
+	}
+	elseif ($options['seo'])
+	{
+		$link .= '.html';
 	}
 
     return ($options['full']) ? generate_base_url().$link : $link;
