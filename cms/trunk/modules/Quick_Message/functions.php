@@ -35,7 +35,7 @@ if (!defined('QUICK_MESSAGE_TABLE'))
 
 function qm_block_content()
 {
-	global $prefix, $_CLASS, $_CORE_CONFIG;
+	global $_CLASS, $_CORE_CONFIG;
 	
 	$content = '<div style="width: 100%; height: '.$_CORE_CONFIG['quick_message']['height'].'px; overflow: auto;">';
 	

@@ -39,7 +39,11 @@ $Id$
 
 $_CLASS['core_user']->add_lang('viewtopic');
 
-$topic_id = request_var('t', 0);
+if (!$topic_id = get_variable('t', 'REQUEST', false, 'int'))
+{
+	trigger_error('TOPIC_NOT_EXIST');
+}
+
 $topic_info = get_topic_data(array($topic_id));
 
 if (empty($topic_info[$topic_id]))
@@ -49,18 +53,32 @@ if (empty($topic_info[$topic_id]))
 
 $topic_info = $topic_info[$topic_id];
 
-// Set up some vars
-$icon_id = request_var('icon', 0);
-$subject = request_var('subject', '');
-$start = request_var('start', 0);
-$to_topic_id = request_var('to_topic_id', 0);
-$to_forum_id = request_var('to_forum_id', 0);
-$post_id_list = request_var('post_id_list', array(0));
+$url = 'Forums&amp;file=mcp&amp;t='.$topic_id;
 
+$action = get_variable('action', 'REQUEST');
+$icon_id = get_variable('icon', 'REQUEST', false, 'int');
+$subject = get_variable('subject', 'POST');
+
+$start = get_variable('start', 'REQUEST', false, 'int');
+
+$to_topic_id = get_variable('to_topic_id', 'REQUEST', false, 'int');
+$to_forum_id = get_variable('to_forum_id', 'REQUEST', false, 'int');
+
+$post_id_list = array_unique(request_var('post_id_list', array(0)));
+//echo $action;
 // Split Topic?
-if ($action == 'split_all' || $action == 'split_beyond')
+if ($action === 'split_all' || $action === 'split_beyond')
 {
-	split_topic($action, $topic_id, $to_forum_id, $subject);
+	if (empty($post_id_list))
+	{
+		trigger_error('NO_POST_SELECTED');
+	}
+
+	if ($message = split_topic($action, $post_id_list, $topic_id, $to_forum_id, $subject))
+	{
+		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->get_lang($message));
+	}
+
 	$action = 'split';
 }
 
@@ -68,29 +86,29 @@ if ($action == 'split_all' || $action == 'split_beyond')
 if ($action == 'merge_posts')
 {
 	merge_posts($topic_id, $to_topic_id);
+
 	$action = 'merge';
 }
 
 $topics_per_page = ($topic_info['forum_topics_per_page']) ? $topic_info['forum_topics_per_page'] : $config['topics_per_page'];
 
-if ($action == 'split' && !$subject)
+if ($action === 'split' && !$subject)
 {
 	$subject = $topic_info['topic_title'];
 }
 
-// Jumpbox, sort selects and that kind of things
-make_jumpbox($url . '&amp;mode=forum_view', $topic_info['forum_id'], false, 'm_');
-$where_sql = ($action == 'reports') ? 'WHERE post_reported = 1 AND ' : 'WHERE';
+$where_sql = ($action === 'reports') ? 'WHERE post_reported = 1 AND ' : 'WHERE';
 mcp_sorting('viewtopic', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $topic_info['forum_id'], $topic_id, $where_sql);
 
 $forum_topics = ($total == -1) ? $topic_info['forum_topics'] : $total;
-$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . (time() - ($sort_days * 86400)) : '';
+$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . ($_CLASS['core_user']->time - ($sort_days * 86400)) : '';
 
 if ($total == -1)
 {
 	$total = $topic_info['topic_replies'] + 1;
 }
-$posts_per_page = max(0, request_var('posts_per_page', intval($config['posts_per_page'])));
+
+$posts_per_page = max(0, get_variable('posts_per_page', 'POST', intval($config['posts_per_page'])));
 
 $sql = 'SELECT u.username, u.user_colour, p.*
 	FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
@@ -102,6 +120,7 @@ $result = $_CLASS['core_db']->query_limit($sql, $posts_per_page, $start);
 
 $rowset = array();
 $bbcode_bitfield = 0;
+
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	$rowset[] = $row;
@@ -210,7 +229,7 @@ $_CLASS['core_template']->assign_array(array(
 	'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED', false, true),
 	'UNAPPROVED_IMG'	=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED', false, true),
 
-	'S_MCP_ACTION'		=> generate_link("$url&amp;mode=$mode&amp;action=$action&amp;start=$start"),
+	'S_MCP_ACTION'		=> generate_link("$url&amp;mode=$mode".(($start) ? '&amp;start='.$start : '')),
 	'S_FORUM_SELECT'	=> '<select name="to_forum_id">' . (($to_forum_id) ? make_forum_select($to_forum_id) : make_forum_select($topic_info['forum_id'])) . '</select>',
 	'S_CAN_SPLIT'		=> ($_CLASS['auth']->acl_get('m_split', $topic_info['forum_id']) && $action != 'merge') ? true : false,
 	'S_CAN_MERGE'		=> ($_CLASS['auth']->acl_get('m_merge', $topic_info['forum_id']) && $action != 'split') ? true : false,
@@ -231,64 +250,54 @@ $_CLASS['core_template']->assign_array(array(
 );
 
 page_header();
+make_jumpbox($url . '&amp;mode=forum_view', $topic_info['forum_id'], false, 'm_');
+
 $_CLASS['core_display']->display($_CLASS['core_user']->get_lang('MCP'), 'modules/Forums/mcp_topic.html');
 
-function split_topic($mode, $topic_id, $to_forum_id, $subject)
+function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 {
 	global $_CLASS ;
 
-	$post_id_list   = request_var('post_id_list', array(0));
-	$start			= request_var('start', 0);
+	$start	= request_var('start', 0);
 		
-	if (!sizeof($post_id_list))
+	if (empty($post_id_list) || !check_ids($post_id_list, FORUMS_POSTS_TABLE, 'post_id', 'm_split'))
 	{
-		trigger_error('NO_POST_SELECTED');
-	}
-	
-	if (!($forum_id = check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_split')))
-	{
-		return;
+		return false;
 	}
 
-	$post_id = $post_id_list[0];
-	$post_info = get_post_data(array($post_id));
+	//$post_id = $post_id_list[0];
 
-	if (!sizeof($post_info))
+	$post_info = get_post_data($post_id_list);
+
+	if (empty($post_info))
 	{
-		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_POST_SELECTED']);
-		return;
+		return 'NO_POST_SELECTED';
 	}
 
-	$post_info = $post_info[$post_id];
 	$subject = trim($subject);
 
-	// Make some tests
 	if (!$subject)
 	{
-		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['EMPTY_SUBJECT']);
-		return;
+		return 'EMPTY_SUBJECT';
 	}
 
 	if ($to_forum_id <= 0)
 	{
-		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_DESTINATION_FORUM']);
-		return;
+		return 'NO_DESTINATION_FORUM';
 	}
 
 	$forum_info = get_forum_data(array($to_forum_id), 'm_split');
 
-	if (!sizeof($forum_info))
+	if (empty($forum_info))
 	{
-		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NOT_MODERATOR']);
-		return;
+		return 'NOT_MODERATOR_DESTINATION';
 	}
 
 	$forum_info = $forum_info[$to_forum_id];
 
 	if ($forum_info['forum_type'] != FORUM_POST)
 	{
-		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['FORUM_NOT_POSTABLE']);
-		return;
+		return 'DESTINATION_FORUM_NOT_POSTABLE';
 	}
 
 	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
@@ -309,6 +318,8 @@ function split_topic($mode, $topic_id, $to_forum_id, $subject)
 
 	if (confirm_box(true))
 	{
+		//$post_info = $post_info[$post_id];
+
 		if ($mode == 'split_beyond')
 		{
 			mcp_sorting('viewtopic', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $forum_id, $topic_id);

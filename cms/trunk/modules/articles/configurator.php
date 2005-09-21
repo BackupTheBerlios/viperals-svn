@@ -26,7 +26,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-global $prefix;
+global $table_prefix;
 
 if (!defined('ARTICLES_TABLE'))
 {

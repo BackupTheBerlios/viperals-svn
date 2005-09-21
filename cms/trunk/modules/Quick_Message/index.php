@@ -103,7 +103,7 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 						trigger_error('LONG_NAME');
 					}
 	
-					require($site_file_root.'includes/functions_user.php');
+					require(SITE_FILE_ROOT.'includes/functions_user.php');
 					$status = validate_username($user_name);
 
 					if ($status !== true)
@@ -192,7 +192,6 @@ if (!$row)
 	));
 
 	$_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
-	script_close();
 }
 
 $delete_link = '';
@@ -271,7 +270,5 @@ $_CLASS['core_template']->assign_array(array(
 ));
 
 $_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
-	
-script_close();
 
 ?>

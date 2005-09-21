@@ -70,7 +70,11 @@ class module
 			if ($row['module_acl'])
 			{
 				$is_auth = false;
-				eval('$is_auth = (' . preg_replace(array('#acl_([a-z_]+)#e', '#cfg_([a-z_]+)#e'), array('$_CLASS[\'auth\']->acl_get("\\1")', '$config["\\1"]'), trim($row['module_acl'])) . ');');
+				//echo $row['module_acl'];
+				$row['module_acl'] = preg_replace(array('#acl_([a-z_]+)#', '#cfg_([a-z_]+)#'), array('$_CLASS[\'auth\']->acl_get("\\1")', '$config["\\1"]'), trim($row['module_acl']));
+				//echo $row['module_acl'];
+
+				eval('$is_auth = ('.$row['module_acl'].');');
 
 				// The user is not authorised to use this module, skip it
 				if (!$is_auth)

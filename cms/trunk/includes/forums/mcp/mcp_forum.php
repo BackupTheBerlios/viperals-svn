@@ -33,10 +33,13 @@ $Id$
 // 
 // -------------------------------------------------------------
 
-//
-// TODO:
-//
+$forum_id = get_variable('f', 'REQUEST', false, 'int');
 
+if (!$forum_id || !$_CLASS['auth']->acl_get('m_', $forum_id))
+{
+	trigger_error('MODULE_NOT_EXIST');
+}
+	
 $_CLASS['core_user']->add_lang('viewforum');
 $forum_info = get_forum_data($forum_id, 'm_');
 
@@ -46,6 +49,9 @@ if (empty($forum_info[$forum_id]))
 }
 
 $forum_info = $forum_info[$forum_id];
+
+$url = 'Forums&amp;file=mcp&amp;f='.$forum_id;
+$action = get_variable('action', 'REQUEST');
 		
 if ($action === 'merge_select')
 {
@@ -53,28 +59,27 @@ if ($action === 'merge_select')
 	unset($_POST['sk'], $_POST['sd'], $_REQUEST['sk'], $_REQUEST['sd']);
 }
 
-$start = request_var('start', 0);
-$topic_id_list = request_var('topic_id_list', array(0));
-$post_id_list = request_var('post_id_list', array(0));
-$topic_id = request_var('t', 0);
+$start = get_variable('start', 'REQUEST', false, 'int');
+$topic_id_list = array_unique(request_var('topic_id_list', array(0)));
+$post_id_list = array_unique(request_var('post_id_list', array(0)));
+$topic_id = get_variable('t', 'REQUEST', false, 'int');;
 
 // Resync Topics
 if ($action == 'resync')
 {
-	$topic_ids = request_var('topic_id_list', array(0));
-
-	if (!sizeof($topic_ids))
+	if (empty($topic_id_list))
 	{
 		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->lang['NO_TOPIC_SELECTED']);
 	}
 	else
 	{
-		mcp_resync_topics($topic_ids);
+		mcp_resync_topics($topic_id_list);
 	}
 }
 
 $selected_ids = '';
-if (sizeof($post_id_list))
+
+if (!empty($post_id_list))
 {
 	foreach ($post_id_list as $num => $post_id)
 	{
@@ -87,8 +92,11 @@ make_jumpbox(generate_link($url . "&amp;action=$action&amp;mode=$mode", $forum_i
 $topics_per_page = ($forum_info['forum_topics_per_page']) ? $forum_info['forum_topics_per_page'] : $config['topics_per_page'];
 
 mcp_sorting('viewforum', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $forum_id);
+
 $forum_topics = ($total == -1) ? $forum_info['forum_topics'] : $total;
 $limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . (time() - ($sort_days * 86400)) : '';
+
+$pagination = generate_pagination($url . "&amp;action=$action&amp;mode=$mode" . (($action == 'merge_select') ? $selected_ids : ''), $forum_topics, $topics_per_page, $start);
 
 $_CLASS['core_template']->assign_array(array(
 	'S_TOPIC_ICONS'			=> false,
@@ -105,14 +113,14 @@ $_CLASS['core_template']->assign_array(array(
 	'S_CAN_APPROVE'			=> $_CLASS['auth']->acl_get('m_approve', $forum_id),
 
 	'U_VIEW_FORUM'			=> generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id),
-	'S_MCP_ACTION'			=> generate_link($url . "&amp;action=$action&amp;mode=$mode&amp;start=$start" . (($action == 'merge_select') ? $selected_ids : '')),
+	'S_MCP_ACTION'			=> generate_link($url . "&amp;mode=$mode&amp;start=$start" . (($action == 'merge_select') ? $selected_ids : '')),
 
-	'PAGINATION'			=> generate_pagination($url . "&amp;action=$action&amp;mode=$mode" . (($action == 'merge_select') ? $selected_ids : ''), $forum_topics, $topics_per_page, $start),
+	'PAGINATION'		=> $pagination['formated'],
+	'PAGINATION_ARRAY'	=> $pagination['array'],
 	'PAGE_NUMBER'			=> on_page($forum_topics, $topics_per_page, $start),
 	'TOTAL'					=> $forum_topics)
 );
 
-// Grab icons
 $icons = obtain_icons();
 
 $topic_rows = array();
@@ -210,7 +218,7 @@ foreach ($topic_rows as $row)
 	$topic_title = censor_text($row['topic_title']);
 		
 	$_CLASS['core_template']->assign_vars_array('topicrow', array(
-		'U_VIEW_TOPIC'		=> generate_link("Forums&amp;file=mcp&amp;f=$forum_id&amp;t={$row['topic_id']}&amp;mode=topic_view"),
+		'U_VIEW_TOPIC'		=> generate_link("Forums&amp;file=mcp&amp;t={$row['topic_id']}&amp;mode=topic_view"),
 
 		'S_SELECT_TOPIC'	=> ($action == 'merge_select' && $row['topic_id'] != $topic_id) ? true : false,
 		'U_SELECT_TOPIC'	=> generate_link($url . '&amp;mode=topic_view&amp;action=merge&amp;to_topic_id=' . $row['topic_id'] . $selected_ids),
@@ -221,7 +229,7 @@ foreach ($topic_rows as $row)
 		'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 		//'TOPIC_FOLDER_IMG_SRC'	=> $user->img($folder_img, $folder_alt, false, '', 'src'),
 
-		'TOPIC_ICON_IMG'	=> empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['img'],
+		'TOPIC_ICON_IMG'		=> empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['img'],
 		'TOPIC_ICON_IMG_WIDTH'	=> empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['width'],
 		'TOPIC_ICON_IMG_HEIGHT' => empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['height'],
 		
@@ -246,7 +254,7 @@ function mcp_resync_topics($topic_ids)
 {
 	global $_CLASS;
 
-	if (!($forum_id = check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_')))
+	if (!check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_'))
 	{
 		return;
 	}
@@ -274,10 +282,9 @@ function mcp_resync_topics($topic_ids)
 		add_log('mod', $row['forum_id'], $row['topic_id'], 'LOG_TOPIC_RESYNC', $row['topic_title']);
 	}
 
-	$msg = (sizeof($topic_ids) == 1) ? $_CLASS['core_user']->lang['TOPIC_RESYNC_SUCCESS'] : $_CLASS['core_user']->lang['TOPICS_RESYNC_SUCCESS'];
-	$_CLASS['core_template']->assign('MESSAGE', $msg);
+	$msg = (count($topic_ids) == 1) ? $_CLASS['core_user']->lang['TOPIC_RESYNC_SUCCESS'] : $_CLASS['core_user']->lang['TOPICS_RESYNC_SUCCESS'];
 
-	return;
+	$_CLASS['core_template']->assign('MESSAGE', $msg);
 }
 
 ?>

@@ -154,9 +154,8 @@ $pagination = generate_pagination('articles', $row['total'], $limit, $start);
 $_CLASS['core_template']->assign_array(array(
 	'articles_pagination' 		=> $pagination['formated'],
 	'articles_pagination_array' => $pagination['array']
-
 ));
 
-$_CLASS['core_template']->display('modules/articles/index.html');
+$_CLASS['core_display']->display(false, 'modules/articles/index.html');
 
 ?>

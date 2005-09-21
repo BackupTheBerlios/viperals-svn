@@ -346,17 +346,6 @@ function display_forums($root_data = '', $display_moderators = true)
 	return $active_forum_ary;
 }
 
-function topic_topic_author(&$topic_row)
-{
-	global $_CLASS;
-
-	$topic_author = ($topic_row['topic_poster'] != ANONYMOUS) ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $topic_row['topic_poster']) . '">' : '';
-	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? $topic_row['topic_first_poster_name'] : (($topic_row['topic_first_poster_name'] != '') ? $topic_row['topic_first_poster_name'] : $_CLASS['core_user']->lang['GUEST']);
-	$topic_author .= ($topic_row['topic_poster'] != ANONYMOUS) ? '</a>' : '';
-
-	return $topic_author;
-}
-
 function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_alt, &$topic_type)
 {
 	global $_CLASS, $config;

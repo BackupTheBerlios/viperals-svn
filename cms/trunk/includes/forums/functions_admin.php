@@ -329,9 +329,10 @@ function move_posts($post_ids, $topic_id, $auto_sync = true)
 	}
 }
 
-function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
+function delete_topics($where_type, $where_ids, $auto_sync = true)
 {
 	global $_CLASS;
+
 	$forum_ids = $topic_ids = array();
 
 	if (is_array($where_ids))
@@ -397,7 +398,7 @@ function delete_topics($where_type, $where_ids, $auto_sync = TRUE)
 	return $return;
 }
 
-function delete_posts($where_type, $where_ids, $auto_sync = TRUE)
+function delete_posts($where_type, $where_ids, $auto_sync = true)
 {
 	global $_CLASS;
 
@@ -1293,7 +1294,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			// approved becomes unapproved, and vice-versa
 			if (!empty($approved_unapproved_ids))
 			{
-				$sql = 'UPDATE ' . TOPICS_TABLE . '
+				$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 					SET topic_approved = 1 - topic_approved
 					WHERE topic_id IN (' . implode(', ', $approved_unapproved_ids) . ')';
 				$_CLASS['core_db']->query($sql);
@@ -1324,7 +1325,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 				// This routine assumes that post_attachment values are correct
 				// if they are not, use sync('post_attachment') first
 				$sql = 'SELECT t.topic_id, p.post_id
-					FROM ' . TOPICS_TABLE . ' t, ' . POSTS_TABLE . " p
+					FROM ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_POSTS_TABLE . " p
 					$where_sql_and p.topic_id = t.topic_id
 						AND p.post_attachment = 1
 					GROUP BY t.topic_id";
@@ -1352,7 +1353,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 
 				if (!empty($sql))
 				{
-					$sql = 'UPDATE ' . TOPICS_TABLE . '
+					$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 						SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . '
 						WHERE topic_id = ' . $topic_id;
 					$_CLASS['core_db']->query($sql);

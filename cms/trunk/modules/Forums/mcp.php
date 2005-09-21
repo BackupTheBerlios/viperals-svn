@@ -29,230 +29,6 @@ if (!defined('VIPERAL'))
 
 require_once($site_file_root.'includes/forums/functions_admin.php');
 
-// ---------
-// FUNCTIONS
-//
-class module
-{
-	var $id = 0;
-	var $type;
-	var $name;
-	var $mode;
-	var $url;
-
-	// Private methods, should not be overwritten
-	function create($module_type, $module_url, $post_id, $topic_id, $forum_id, $selected_mod = false, $selected_submod = false)
-	{
-		global $_CLASS, $config;
-		
-		$sql = 'SELECT module_id, module_title, module_filename, module_subs, module_acl
-			FROM ' . FORUMS_MODULES_TABLE . "
-			WHERE module_type = '{$module_type}'
-				AND module_enabled = 1
-			ORDER BY module_order ASC";
-		$result = $_CLASS['core_db']->query($sql);
-
-		$i = 0;
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			// Authorisation is required for the basic module
-			if ($row['module_acl'])
-			{
-				$is_auth = false;
-				eval('$is_auth = (' . preg_replace(array('#acl_([a-z_]+)#e', '#cfg_([a-z_]+)#e'), array('(int) $_CLASS[\'auth\']->acl_get("\\1", ' . $forum_id . ')', '(int) $config["\\1"]'), trim($row['module_acl'])) . ');');
-
-				// The user is not authorised to use this module, skip it
-				if (!$is_auth)
-				{
-					continue;
-				}
-			}
-
-			$selected = ($row['module_filename'] == $selected_mod || $row['module_id'] == $selected_mod || (!$selected_mod && !$i)) ?  true : false;
-
-			// Get the localised lang string if available, or make up our own otherwise
-			$module_lang = strtoupper($module_type) . '_' . $row['module_title'];
-
-			$_CLASS['core_template']->assign_vars_array($module_type . '_section', array(
-				'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
-				'S_SELECTED'	=> $selected, 
-				'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $row['module_id']))
-			);
-
-			if ($selected)
-			{
-				$module_id = $row['module_id'];
-				$module_name = $row['module_filename'];
-
-				if ($row['module_subs'])
-				{
-					$j = 0;
-					$submodules_ary = explode("\n", $row['module_subs']);
-					foreach ($submodules_ary as $submodule)
-					{
-						$submodule = trim($submodule);
-						if (!$submodule)
-						{
-							continue;
-						}
-
-						$submodule = explode(',', $submodule);
-						$submodule_title = array_shift($submodule);
-						//print_r( $submodule);
-						$is_auth = true;
-						foreach ($submodule as $auth_option)
-						{
-							eval('$is_auth = (' . preg_replace(array('#acl_([a-z_]+)#e', '#cfg_([a-z_]+)#e'), array('(int) $_CLASS[\'auth\']->acl_get("\\1", ' . $forum_id . ')', '(int) $config["\\1"]'), trim($auth_option)) . ');');
-
-							if (!$is_auth)
-							{
-								break;
-							}
-						}
-
-						if (!$is_auth)
-						{
-							continue;
-						}
-
-						// Only show those rows we are able to access
-						if (($submodule_title == 'post_details' && !$post_id) || 
-							($submodule_title == 'topic_view' && !$topic_id) ||
-							($submodule_title == 'forum_view' && !$forum_id))
-						{
-							continue;
-						}
-			
-						$suffix = ($post_id) ? "&amp;p=$post_id" : '';
-						$suffix .= ($topic_id) ? "&amp;t=$topic_id" : '';
-						$suffix .= ($forum_id) ? "&amp;f=$forum_id" : '';
-											
-						$selected = ($submodule_title == $selected_submod || (!$selected_submod && !$j)) ? true : false;
-
-						// Get the localised lang string if available, or make up our own otherwise
-						$module_lang = strtoupper($module_type . '_' . $module_name . '_' . $submodule_title);
-
-						$_CLASS['core_template']->assign_vars_array("{$module_type}_subsection", array(
-							'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
-							'S_SELECTED'	=> $selected,
-							'ADD_ITEM'		=> $this->add_menu_item($row['module_filename'], $submodule_title),
-							'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title . $suffix))
-						);
-
-						if ($selected)
-						{
-							$this->mode = $submodule_title;
-						}
-
-						$j++;
-					}
-				}
-			}
-
-			$i++;
-		}
-		$_CLASS['core_db']->free_result($result);
-
-		if (!$module_id)
-		{
-			trigger_error('MODULE_NOT_EXIST');
-		}
-//$_CLASS['core_blocks']->load_blocks();
-$_CLASS['core_blocks']->blocks_loaded = true;
-
-		$data = array(
-			'block_title'		=> 'Forum Administration',
-			'block_position'	=> BLOCK_LEFT,
-			'block_file'		=> 'block-forums_mcp.php',
-		);
-
-		$_CLASS['core_blocks']->add_block($data);
-
-		$this->type = $module_type;
-		$this->id	= $module_id;
-		$this->name = $module_name;
-		$this->url = 'Forums&amp;file=mcp';
-		$this->url .= ($post_id) ? "&amp;p=$post_id" : '';
-		$this->url .= ($topic_id) ? "&amp;t=$topic_id" : '';
-		$this->url .= ($forum_id) ? "&amp;f=$forum_id" : '';
-	}
-
-	function load($type = false, $name = false, $mode = false, $run = true)
-	{
-		global $site_file_root;
-
-		if ($type)
-		{
-			$this->type = $type;
-		}
-
-		if ($name)
-		{
-			$this->name = $name;
-		}
-
-		if (!class_exists($this->type . '_' . $this->name))
-		{
-			require($site_file_root."includes/forums/{$this->type}/{$this->type}_{$this->name}.php");
-		}
-	}
-
-	// Add Item to Submodule Title
-	function add_menu_item($module_name, $mode)
-	{
-		global $_CLASS;
-
-		if ($module_name != 'queue')
-		{
-			return '';
-		}
-
-		$forum_id = request_var('f', 0);
-		if ($forum_id && $_CLASS['auth']->acl_get('m_approve', $forum_id))
-		{
-			$forum_list = array($forum_id);
-		}
-		else
-		{
-			$forum_list = get_forum_list('m_approve');
-		}
-
-		switch ($mode)
-		{
-			case 'unapproved_topics':
-
-				$sql = 'SELECT COUNT(*) AS total
-					FROM ' . FORUMS_TOPICS_TABLE . '
-					WHERE forum_id IN (' . implode(', ', $forum_list) . ')
-						AND topic_approved = 0';
-				$result = $_CLASS['core_db']->query($sql);
-				$row = $_CLASS['core_db']->fetch_row_assoc($result);
-				$_CLASS['core_db']->free_result($result);
-
-				return ($row['total']) ? (int) $row['total'] : $_CLASS['core_user']->lang['NONE'];
-			break;
-
-			case 'unapproved_posts':
-
-				$sql = 'SELECT COUNT(*) AS total
-						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t 
-						WHERE p.forum_id IN (' . implode(', ', $forum_list) . ')
-							AND p.post_approved = 0
-							AND t.topic_id = p.topic_id
-							AND t.topic_first_post_id <> p.post_id';
-				$result = $_CLASS['core_db']->query($sql);
-				$row = $_CLASS['core_db']->fetch_row_assoc($result);
-				$_CLASS['core_db']->free_result($result);
-
-				return ($row['total']) ? (int) $row['total'] : $_CLASS['core_user']->lang['NONE'];
-			break;
-		}
-	}
-}
-//
-// FUNCTIONS
-// ---------
-
 $_CLASS['core_user']->add_img();
 $_CLASS['core_user']->add_lang('mcp');
 
@@ -267,29 +43,19 @@ if (!$_CLASS['core_user']->is_user)
 	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_EXPLAIN_MCP']));
 }
 
-$mcp = new module();
+if (!$_CLASS['auth']->acl_get('m_'))
+{
+	trigger_error('YOUR_NO_MODERATOR');
+}
 
-// Basic parameter data
-$mode	= request_var('mode', '');
-$module = request_var('i', '');
+$mode	= get_variable('mode', 'REQUEST', 'front');
+$action = get_variable('action', 'REQUEST');
+$quick_mod = isset($_REQUEST['quickmod']);
 
-// Make sure we are using the correct module
-if ($mode == 'approve' || $mode == 'disapprove')
+if ($mode === 'approve' || $mode === 'disapprove')
 {
 	$module = 'queue';
 }
-
-$quickmod = isset($_REQUEST['quickmod']);
-$action = request_var('action', '');
-/*
-$action_ary = request_var('action', array('' => 0));
-
-if (!empty($action_ary))
-{
-	list($action, ) = each($action);
-}
-unset($action_ary);
-*/
 
 if ($action == 'merge_select')
 {
@@ -312,69 +78,13 @@ if (in_array($mode, array('resync')))
 	$quickmod = false;
 }
 
-if (!$quickmod)
+if (!$quick_mod)
 {
-	$post_id = get_variable('p', 'REQUEST', false, 'int');
-	$topic_id = get_variable('t', 'REQUEST', false, 'int');
-	$forum_id = get_variable('f', 'REQUEST', false, 'int');
-
-	$url = 'Forums&amp;file=mcp';
-	$url .= ($post_id) ? "&amp;p=$post_id" : '';
-	$url .= ($topic_id) ? "&amp;t=$topic_id" : '';
-	$url .= ($forum_id) ? "&amp;f=$forum_id" : '';
-
-	if ($post_id)
-	{
-		// We determine the topic and forum id here, to make sure the moderator really has moderative rights on this post
-		$sql = 'SELECT topic_id, forum_id
-			FROM ' . FORUMS_POSTS_TABLE . "
-			WHERE post_id = $post_id";
-		$result = $_CLASS['core_db']->query($sql);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-		$topic_id = (int) $row['topic_id'];
-		$forum_id = (int) $row['forum_id'];
-	}
-	elseif ($topic_id)
-	{
-		$sql = 'SELECT forum_id
-			FROM ' . FORUMS_TOPICS_TABLE . "
-			WHERE topic_id = $topic_id";
-		$result = $_CLASS['core_db']->query($sql);
-		$row = $_CLASS['core_db']->fetch_row_assoc($result);
-		$_CLASS['core_db']->free_result($result);
-
-		$forum_id = (int) $row['forum_id'];
-	}
-
-	if ($forum_id && !$_CLASS['auth']->acl_get('m_', $forum_id))
-	{
-		trigger_error('MODULE_NOT_EXIST');
-	}
-
-	if (!$forum_id && !$_CLASS['auth']->acl_get('m_'))
-	{
-		$forum_list = get_forum_list('m_');
-
-		if (empty($forum_list))
-		{
-			trigger_error('MODULE_NOT_EXIST');
-		}
-
-		// We do not check all forums, only the first one should be sufficiant.
-		$forum_id = $forum_list[0];
-	}
-
-// remove
-	// Instantiate module system and generate list of available modules
-	$mcp->create('mcp', 'Forums&amp;file=mcp', $post_id, $topic_id, $forum_id, $module);
-
 	switch ($mode)
 	{
 		case 'front':
 			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_front.php');
-			$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
+			//$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
 		break;
 
 		case 'forum_view':
@@ -483,16 +193,17 @@ function get_topic_data($topic_ids, $acl_list = false)
 function get_post_data($post_ids, $acl_list = false)
 {
 	global $_CLASS;
+
 	$rowset = array();
 
 	$sql = 'SELECT p.*, u.*, t.*, f.*
-		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u, ' . FORUMS_TOPICS_TABLE . ' t
-			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON f.forum_id = p.forum_id
+		FROM ' . FORUMS_POSTS_TABLE . ' p LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON (f.forum_id = p.forum_id),
+		' . USERS_TABLE . ' u, ' . FORUMS_TOPICS_TABLE . ' t
 		WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 			AND u.user_id = p.poster_id
 			AND t.topic_id = p.topic_id';
 	$result = $_CLASS['core_db']->query($sql);
-		
+
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
@@ -721,7 +432,7 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	return empty($ids) ? false : $forum_ids;
+	return empty($ids) ? false : array_unique($forum_ids);
 }
 
 // LITTLE HELPER

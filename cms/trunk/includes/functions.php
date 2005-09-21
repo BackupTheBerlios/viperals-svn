@@ -198,7 +198,7 @@ function check_theme($theme)
 	return file_exists(SITE_FILE_ROOT.'themes/'.$theme.'/index.php');
 }
 
-function display_confirmation($message = '', $hidden = '', $image = false)
+function display_confirmation($message = '', $hidden = '', $template = false, $image = false)
 {
 	global $_CLASS;
 // Add user entered confirmation code as a choose, maybe ...
@@ -241,9 +241,9 @@ function display_confirmation($message = '', $hidden = '', $image = false)
 		'HIDDEN_FIELDS'	=> $hidden
 	));
 
-	$_CLASS['core_template']->display('confirmation.html');
+	$_CLASS['core_template']->display($template ? $template : 'confirmation.html');
 
-	script_close();
+	script_close(false);
 }
 
 function encode_password($pure, $encoding)
@@ -427,7 +427,7 @@ $options['seo'] = false;
 
 		if ($link{0} == '&')
 		{
-			$link = $_CORE_MODULE['name'].$link;
+			$link = $_CORE_MODULE['module_name'].$link;
 		}
 
 		if (!$options['seo'])

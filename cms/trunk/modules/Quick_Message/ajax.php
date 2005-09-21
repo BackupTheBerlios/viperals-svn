@@ -39,7 +39,7 @@ $mode = get_variable('mode', 'REQUEST', false);
 switch ($mode)
 {
 	case 'ajax_refresh':
-		require_once($site_file_root.'modules/Quick_Message/functions.php');
+		require_once(SITE_FILE_ROOT.'modules/Quick_Message/functions.php');
 
 		echo qm_block_content();
 
@@ -110,7 +110,7 @@ switch ($mode)
 					die;
 				}
 
-				require($site_file_root.'includes/functions_user.php');
+				require(SITE_FILE_ROOT.'includes/functions_user.php');
 				$status = validate_username($user_name);
 
 				if ($status !== true)
@@ -130,7 +130,7 @@ switch ($mode)
 
 		$_CLASS['core_db']->query($sql);
 
-		require_once($site_file_root.'modules/Quick_Message/functions.php');
+		require_once(SITE_FILE_ROOT.'modules/Quick_Message/functions.php');
 
 		echo qm_block_content();
 

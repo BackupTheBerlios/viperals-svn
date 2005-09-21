@@ -51,7 +51,15 @@
 		<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $topicrow:PAGINATION } ] </p>
 		<!-- ENDIF -->
 		</td>
-		<td class="row2" align="center" width="100"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
+		<td class="row2" align="center" width="100">
+			<p class="topicauthor">
+				<!-- IF { $topicrow:LINK_AUTHOR } -->
+				<a href="{ $topicrow:LINK_AUTHOR }">{ $topicrow:AUTHOR }</a>
+				<!-- ELSE -->
+				{ $topicrow:AUTHOR }
+				<!-- ENDIF -->
+			</p>
+		</td>
 		<td class="row1" align="center" width="50"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
 		<td class="row2" align="center" width="50"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
 		<td class="row1" align="center" width="120">
@@ -167,7 +175,15 @@
 			<p class="gensmall"> [ { $GOTO_PAGE_IMG }{ $L_GOTO_PAGE }: { $topicrow:PAGINATION } ] </p>
 			<!-- ENDIF -->
 		</td>
-		<td class="row2" align="center" width="100" nowrap="nowrap"><p class="topicauthor">{ $topicrow:TOPIC_AUTHOR }</p></td>
+		<td class="row2" align="center" width="100" nowrap="nowrap">
+			<p class="topicauthor">
+				<!-- IF { $topicrow:LINK_AUTHOR } -->
+				<a href="{ $topicrow:LINK_AUTHOR }">{ $topicrow:AUTHOR }</a>
+				<!-- ELSE -->
+				{ $topicrow:AUTHOR }
+				<!-- ENDIF -->
+			</p>
+		</td>
 		<td class="row1" align="center" width="50"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
 		<td class="row2" align="center" width="50"><p class="topicdetails">{ $topicrow:VIEWS }</p></td>
 		<td class="row1" align="center" width="150" nowrap="nowrap">

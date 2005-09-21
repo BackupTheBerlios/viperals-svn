@@ -608,7 +608,7 @@ $_CLASS['core_db']->add_table_field_int('icon_id', array('max' => 200));
 $_CLASS['core_db']->add_table_field_int('topic_attachment', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('topic_approved', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('topic_reported', array('max' => 1, 'null' => true)); 
-field_unix_time('topic_time_limit');
+field_unix_time('topic_time_limit', true);
 $_CLASS['core_db']->add_table_field_int('topic_replies_real', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_char('topic_first_poster_name', 50);
 $_CLASS['core_db']->add_table_field_int('topic_last_poster_id', array('max' => 16000000, 'null' => true));

@@ -53,12 +53,13 @@
 				<!-- ENDIF --><!-- IF { $S_CAN_FORK } -->
 				<option value="fork">{ $L_FORK }</option>
 				<!-- ENDIF --><!-- IF { $S_CAN_LOCK } -->
-				<option value="lock">{ $L_LOCK }</option><option value="unlock">{ $L_UNLOCK }</option>
+				<option value="lock">{ $L_LOCK }</option>
+				<option value="unlock">{ $L_UNLOCK }</option>
 				<!-- ENDIF --><!-- IF { $S_CAN_SYNC } -->
 				<option value="resync">{ $L_RESYNC }</option>
 				<!-- ENDIF -->
 			</select>
-			<input class="btnmain" type="submit" value="{ $L_SUBMIT }" />
+			<input class="button" type="submit" value="{ $L_SUBMIT }" />
 		</td>
 	</tr>
 </table>

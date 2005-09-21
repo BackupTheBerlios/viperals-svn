@@ -484,15 +484,20 @@ if (!empty($topic_list))
 		$_CLASS['core_template']->assign_vars_array('topicrow', array(
 			'FORUM_ID' 			=> $forum_id,
 			'TOPIC_ID' 			=> $topic_id,
-			'TOPIC_AUTHOR' 		=> topic_topic_author($row),
+
+			'AUTHOR' 			=> ($row['topic_poster'] == ANONYMOUS) ? (($row['topic_first_poster_name']) ? $row['topic_first_poster_name'] : $_CLASS['core_user']->get_lang('GUEST')) : $row['topic_first_poster_name'],
+			'LINK_AUTHOR' 		=> ($row['topic_poster'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['topic_poster']),
+
 			'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
 			'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
 			'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
 			'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
+
 			'PAGINATION'		=> $pagination['formated'],
 			'PAGINATION_ARRAY'	=> $pagination['array'],
+
 			'REPLIES' 			=> $replies,
-			'VIEWS' 			=> (int) $row['topic_views'],
+			'VIEWS' 			=> $row['topic_views'],
 			'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
 			'TOPIC_TYPE' 		=> $topic_type,
 
@@ -500,23 +505,27 @@ if (!empty($topic_list))
 			'NEWEST_POST_IMG' 	=> $newest_post_img,
 			'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 			//'TOPIC_FOLDER_IMG_SRC'	=> $_CLASS['core_user']->img($folder_img, $folder_alt, false, '', 'src'),
-			'TOPIC_ICON_IMG'        => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['img'] : '',
-			'TOPIC_ICON_IMG_WIDTH'  => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['width'] : '',
-			'TOPIC_ICON_IMG_HEIGHT' => (!empty($icons[$row['icon_id']])) ? $icons[$row['icon_id']]['height'] : '',
-			'ATTACH_ICON_IMG'       => ($_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+
+			'TOPIC_ICON_IMG'        => empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['img'],
+			'TOPIC_ICON_IMG_WIDTH'  => empty($icons[$row['icon_id']]) ? '' :  $icons[$row['icon_id']]['width'],
+			'TOPIC_ICON_IMG_HEIGHT' => empty($icons[$row['icon_id']]) ? '' :  $icons[$row['icon_id']]['height'],
+	
+			'ATTACH_ICON_IMG'       => ($row['topic_attachment'] && $_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $forum_id)) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 
 			'S_TOPIC_TYPE'			=> $row['topic_type'], 
 			'S_UNREAD_TOPIC'		=> $unread_topic,
 
-			'S_TOPIC_REPORTED'		=> (!empty($row['topic_reported']) && $_CLASS['auth']->acl_get('m_', $forum_id)) ? true : false,
-			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_get('m_approve', $forum_id)) ? true : false,
+			'S_TOPIC_REPORTED'		=> ($row['topic_reported'] && $_CLASS['auth']->acl_get('m_report', $forum_id)),
+			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_get('m_approve', $forum_id)),
 
-			'U_LAST_POST'       => generate_link($view_topic_url . $SID . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id'], false, false, false),	
-			'U_LAST_POST_AUTHOR'=> ($_CLASS['core_user']->is_user && $row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+			'U_LAST_POST'       => generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),	
+			'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 			'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
-			'U_MCP_REPORT'		=> generate_link("Forums&amp;file=mcp&amp;mode=reports&amp;t=$topic_id"),
+
+			'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
 			'U_MCP_QUEUE'       => generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
-			'S_TOPIC_TYPE_SWITCH'   => ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test)
+
+			'S_TOPIC_TYPE_SWITCH'=> ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test)
 		);
 
 		$s_type_switch = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;

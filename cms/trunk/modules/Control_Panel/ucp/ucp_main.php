@@ -138,68 +138,68 @@ class ucp_main extends module
 				$_CLASS['core_db']->free_result($result);
 
 /// 
+				$num_real_posts = $_CLASS['core_user']->data['user_posts'];
+				$active_f_row = $active_t_row = array();
+
 				$_CLASS['auth']->acl_getf('f_read');
-				$post_count_ary = $_CLASS['auth']->acl_getf('f_postcount');
-				
-				$forum_ary = array();
-				foreach ($post_count_ary as $forum_id => $allowed)
+/*
+				if ($post_count_ary = $_CLASS['auth']->acl_getf('f_postcount'))
 				{
-					if ($allowed['f_read'] && $allowed['f_postcount'])
+					$forum_ary = array();
+					foreach ($post_count_ary as $forum_id => $allowed)
 					{
-						$forum_ary[] = $forum_id;
+						if ($allowed['f_read'] && $allowed['f_postcount'])
+						{
+							$forum_ary[] = $forum_id;
+						}
+					}
+	
+					$post_count_sql = (sizeof($forum_ary)) ? 'AND f.forum_id IN (' . implode(', ', $forum_ary) . ')' : '';
+					unset($forum_ary, $post_count_ary);
+	
+					if ($post_count_sql)
+					{
+						// NOTE: The following three queries could be a problem for big boards
+						
+						// Grab all the relevant data
+						$sql = 'SELECT COUNT(p.post_id) AS num_posts   
+							FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f
+							WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
+								AND f.forum_id = p.forum_id 
+								$post_count_sql";
+						$result = $_CLASS['core_db']->query($sql);
+						list($num_posts) = $_CLASS['core_db']->fetch_row_num($result);
+						$_CLASS['core_db']->free_result($result);
+	
+						$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $num_posts);
+	
+						$sql = 'SELECT f.forum_id, f.forum_name, COUNT(post_id) AS num_posts   
+							FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f 
+							WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
+								AND f.forum_id = p.forum_id 
+								$post_count_sql
+							GROUP BY f.forum_id, f.forum_name  
+							ORDER BY num_posts DESC"; 
+						$result = $_CLASS['core_db']->query_limit($sql, 1);
+	
+						$active_f_row = $_CLASS['core_db']->fetch_row_assoc($result);
+						$_CLASS['core_db']->free_result($result);
+	
+						$sql = 'SELECT t.topic_id, t.topic_title, COUNT(p.post_id) AS num_posts   
+							FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . ' f  
+							WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
+								AND t.topic_id = p.topic_id  
+								AND f.forum_id = t.forum_id 
+								$post_count_sql
+							GROUP BY t.topic_id, t.topic_title  
+							ORDER BY num_posts DESC";
+						$result = $_CLASS['core_db']->query_limit($sql, 1);
+	
+						$active_t_row = $_CLASS['core_db']->fetch_row_assoc($result);
+						$_CLASS['core_db']->free_result($result);
 					}
 				}
-
-				$post_count_sql = (sizeof($forum_ary)) ? 'AND f.forum_id IN (' . implode(', ', $forum_ary) . ')' : '';
-				unset($forum_ary, $post_count_ary);
-
-				if ($post_count_sql)
-				{
-					// NOTE: The following three queries could be a problem for big boards
-					
-					// Grab all the relevant data
-					$sql = 'SELECT COUNT(p.post_id) AS num_posts   
-						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f
-						WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-							AND f.forum_id = p.forum_id 
-							$post_count_sql";
-					$result = $_CLASS['core_db']->query($sql);
-					list($num_posts) = $_CLASS['core_db']->fetch_row_num($result);
-					$_CLASS['core_db']->free_result($result);
-
-					$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $num_posts);
-
-					$sql = 'SELECT f.forum_id, f.forum_name, COUNT(post_id) AS num_posts   
-						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f 
-						WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-							AND f.forum_id = p.forum_id 
-							$post_count_sql
-						GROUP BY f.forum_id, f.forum_name  
-						ORDER BY num_posts DESC"; 
-					$result = $_CLASS['core_db']->query_limit($sql, 1);
-
-					$active_f_row = $_CLASS['core_db']->fetch_row_assoc($result);
-					$_CLASS['core_db']->free_result($result);
-
-					$sql = 'SELECT t.topic_id, t.topic_title, COUNT(p.post_id) AS num_posts   
-						FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . FORUMS_FORUMS_TABLE . ' f  
-						WHERE p.poster_id = ' . $_CLASS['core_user']->data['user_id'] . " 
-							AND t.topic_id = p.topic_id  
-							AND f.forum_id = t.forum_id 
-							$post_count_sql
-						GROUP BY t.topic_id, t.topic_title  
-						ORDER BY num_posts DESC";
-					$result = $_CLASS['core_db']->query_limit($sql, 1);
-
-					$active_t_row = $_CLASS['core_db']->fetch_row_assoc($result);
-					$_CLASS['core_db']->free_result($result);
-				}
-				else
-				{
-					$num_real_posts = 0;
-					$active_f_row = $active_t_row = array();
-				}
-
+			*/
 				// Do the relevant calculations 
 				$memberdays = max(1, round((time() - $_CLASS['core_user']->data['user_reg_date']) / 86400));
 				$posts_per_day = $_CLASS['core_user']->data['user_posts'] / $memberdays;
