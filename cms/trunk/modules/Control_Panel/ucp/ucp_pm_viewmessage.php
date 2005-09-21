@@ -14,7 +14,7 @@
 function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 {
 	global $_CLASS, $_CORE_CONFIG, $site_file_root, $config;
-	
+
 	$_CLASS['core_user']->add_lang('viewtopic');
 	$msg_id		= (int) $msg_id;
 	$folder_id	= (int) $folder_id;
@@ -83,8 +83,6 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 	{
 		if ($config['auth_download_pm'] && $_CLASS['auth']->acl_get('u_pm_download'))
 		{
-			require($site_file_root.'includes/forums/functions_display.php');
-
 			$sql = 'SELECT * 
 				FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 				WHERE post_msg_id = $msg_id
@@ -113,19 +111,39 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		}
 	}
 
-	// Assign inline attachments
+	$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', false);
+
 	if (!empty($attachments))
 	{
+		require_once(SITE_FILE_ROOT.'includes/forums/functions_display.php');
+		$null = array();
+
 		$unset_attachments = parse_inline_attachments($message, $attachments, $update_count, 0);
-	
-		// Needed to let not display the inlined attachments at the end of the message again
+
+		// Needed to let not display the inlined attachments at the end of the post again
 		foreach ($unset_attachments as $index)
 		{
 			unset($attachments[$index]);
 		}
+		unset($unset_attachments);
+			
+		if (!empty($attachments))
+		{
+			$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
+			$_CLASS['core_template']->assign('attachment', display_attachments(0, $attachments, $update_count, true));
+		}
+
+		unset($attachment_data, $null);
 	}
 
-	$user_info['sig'] = '';
+	if (!mb_strpos($_CLASS['core_user']->data['session_url'], '&amp;t='.$msg_id) && !empty($update_count))
+	{
+		// Update the attachment download counts
+		$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
+			SET download_count = download_count + 1 
+			WHERE attach_id IN (' . implode(', ', array_unique($update_count)) . ')';
+		$_CLASS['core_db']->query($sql);
+	}
 
 	$signature = ($message_row['enable_sig'] && $config['allow_sig'] && $_CLASS['auth']->acl_get('u_sig') && $_CLASS['core_user']->optionget('viewsigs')) ? $user_info['user_sig'] : '';
 	
@@ -189,25 +207,12 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		'U_NEXT_PM'			=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=next"),
 
 		'S_MESSAGE_REPORTED'=> ($message_row['message_reported'] && $_CLASS['auth']->acl_get('m_')) ? true : false,
-		'S_HAS_ATTACHMENTS' => (sizeof($attachments)) ? true : false,
 		'S_DISPLAY_NOTICE'	=> $display_notice && $message_row['message_attachment'],
 
 		'U_PRINT_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=print"),
 		'U_EMAIL_PM'		=> ($_CORE_CONFIG['email']['email_enable']) ? 'Email' : '',
 		'U_FORWARD_PM'		=> generate_link("$url&amp;mode=compose&amp;action=forward&amp;f=$folder_id&amp;p=" . $message_row['msg_id'])
 	));
-
-	// Display not already displayed Attachments for this post, we already parsed them. ;)
-	if (isset($attachments) && sizeof($attachments))
-	{
-		foreach ($attachments as $attachment)
-		{
-			
-			$_CLASS['core_template']->assign_vars_array('attachment', array(
-				'DISPLAY_ATTACHMENT' => $attachment)
-			);
-		}
-	}
 
 	if (!isset($_REQUEST['view']) || $_REQUEST['view'] != 'print')
 	{
@@ -378,11 +383,10 @@ function get_user_informations($user_id, $user_row)
 
 	if ($config['load_onlinetrack'])
 	{
-		$sql = 'SELECT session_user_id, MAX(session_hidden) AS session_hidden
+		$sql = 'SELECT MAX(session_hidden) AS session_hidden
 			FROM ' . SESSIONS_TABLE . " 
 			WHERE session_user_id = $user_id
-			AND session_time < " . ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']) . '
-				GROUP BY session_user_id';
+			AND session_time < " . ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']);
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
 
 		$update_time = $config['load_online_time'] * 60;
@@ -398,14 +402,16 @@ function get_user_informations($user_id, $user_row)
 	if ($user_row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
 	{
 		$avatar_img = '';
+
 		switch ($user_row['user_avatar_type'])
 		{
 			case AVATAR_UPLOAD:
 				$avatar_img = $config['avatar_path'] . '/';
-				break;
+			break;
+
 			case AVATAR_GALLERY:
 				$avatar_img = $config['avatar_gallery_path'] . '/';
-				break;
+			break;
 		}
 		$avatar_img .= $user_row['user_avatar'];
 
@@ -414,10 +420,10 @@ function get_user_informations($user_id, $user_row)
 
 	if (!empty($user_row['user_rank']))
 	{
-		$user_row['rank_title'] = (!empty($ranks['special'][$user_row['user_rank']]['rank_title'])) ? $ranks['special'][$user_row['user_rank']]['rank_title'] : '';
-		$user_row['rank_image'] = (!empty($ranks['special'][$user_row['user_rank']]['rank_image'])) ? '<img src="' . $config['ranks_path'] . '/' . $ranks['special'][$user_row['user_rank']]['rank_image'] . '" border="0" alt="' . $ranks['special'][$user_row['user_rank']]['rank_title'] . '" title="' . $ranks['special'][$user_row['user_rank']]['rank_title'] . '" /><br />' : '';
+		$user_row['rank_title'] = empty($ranks['special'][$user_row['user_rank']]['rank_title']) ? '' : $ranks['special'][$user_row['user_rank']]['rank_title'];
+		$user_row['rank_image'] = empty($ranks['special'][$user_row['user_rank']]['rank_image']) ? '' : '<img src="' . $config['ranks_path'] . '/' . $ranks['special'][$user_row['user_rank']]['rank_image'] . '" border="0" alt="' . $ranks['special'][$user_row['user_rank']]['rank_title'] . '" title="' . $ranks['special'][$user_row['user_rank']]['rank_title'] . '" /><br />';
 	}
-	elseif (isset($ranks['normal']))
+/*	elseif (isset($ranks['normal']))
 	{
 		foreach ($ranks['normal'] as $rank)
 		{
@@ -425,10 +431,12 @@ function get_user_informations($user_id, $user_row)
 			{
 				$user_row['rank_title'] = $rank['rank_title'];
 				$user_row['rank_image'] = (!empty($rank['rank_image'])) ? '<img src="' . $config['ranks_path'] . '/' . $rank['rank_image'] . '" border="0" alt="' . $rank['rank_title'] . '" title="' . $rank['rank_title'] . '" /><br />' : '';
+
 				break;
 			}
 		}
 	}
+*/
 	else
 	{
 		$user_row['rank_title'] = $user_row['rank_image'] = '';

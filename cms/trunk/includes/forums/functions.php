@@ -916,20 +916,20 @@ function obtain_attach_extensions($forum_id = false)
 			if (is_array($check))
 			{
 				// Check for private messaging
-				if (count($check) == 1 && $check[0] == 0)
+				if (count($check) === 1 && $check[0] == 0)
 				{
 					$allowed = true;
 				}
 				else
 				{
-					$allowed = (!in_array($forum_id, $check)) ? false : true;
+					$allowed = in_array($forum_id, $check);
 				}
 			}
 			else
 			{
-				$allowed = ($forum_id == 0) ? false : true;
+				$allowed = true;
 			}
-			
+
 			if ($allowed)
 			{
 				$return['_allowed_'][$extension] = 0;
@@ -1125,7 +1125,7 @@ function parse_inline_attachments(&$text, $attachments, &$update_count, $forum_i
 // Check if extension is allowed to be posted within forum X (forum_id 0 == private messaging)
 function extension_allowed($forum_id, $extension, &$extensions)
 {
-	if (empty($extensions))
+	if (!is_array($extensions))
 	{
 		$extensions = obtain_attach_extensions();
 	}
@@ -1145,11 +1145,11 @@ function extension_allowed($forum_id, $extension, &$extensions)
 			return true;
 		}
 
-		return (!in_array($forum_id, $check)) ? false : true;
+		return in_array($forum_id, $check);
 	}
 	else
 	{
-		return ($forum_id == 0) ? false : true;
+		return true;
 	}
 
 	return false;
@@ -1157,9 +1157,9 @@ function extension_allowed($forum_id, $extension, &$extensions)
 
 function page_header()
 {
-	global $config, $SID, $_CLASS, $_CORE_CONFIG;
+	global $config, $_CLASS, $_CORE_CONFIG;
 
-	define('HEADER_INC', TRUE);
+//	define('HEADER_INC', TRUE);
 
 	// Generate logged in/logged out status
 	if ($_CLASS['core_user']->is_user)

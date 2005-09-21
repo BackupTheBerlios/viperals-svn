@@ -160,8 +160,11 @@ function upload_attachment($form_name, $forum_id, $local = false, $local_storage
 	}
 
 	$extensions = obtain_attach_extensions($forum_id);
-
-	$upload->set_allowed_extensions(array_keys($extensions['_allowed_']));
+	
+	if (!empty($extensions['_allowed_']))
+	{
+		$upload->set_allowed_extensions(array_keys($extensions['_allowed_']));
+	}
 
 	if ($local)
 	{

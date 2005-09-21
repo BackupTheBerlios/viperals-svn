@@ -56,11 +56,12 @@ class ucp_pm extends module
 			trigger_error('NO_MESSAGE');
 		}
 
-		// Is PM disabled?
-		if (!$config['allow_privmsg'])
-		{
-			trigger_error('PM_DISABLED');
-		}
+		$_CLASS['core_template']->assign_array(array(
+			'S_UNREAD'				=> false,
+			'TOTAL_MESSAGES'		=> false,
+			'S_DISPLAY_HISTORY'		=> false,
+			'S_BCC_RECIPIENT'		=> false,
+		));
 
 // This is loaded 2x with drafts
 		$_CLASS['core_user']->add_lang('posting','Forums');

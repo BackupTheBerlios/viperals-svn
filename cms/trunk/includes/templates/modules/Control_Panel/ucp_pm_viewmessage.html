@@ -81,7 +81,30 @@
 						</tr>
 						<!-- LOOP $attachment -->
 						<tr>
-							<td class="row2">{ $attachment:DISPLAY_ATTACHMENT }</td>
+							<td class="row2">
+							<!-- IF { $attachment:category } == 'DENIED' -->
+								<span class="postbody">[ { $attachment:lang }]</span><br /><br />
+							<!-- ELSEIF { $attachment:category } == 'IMAGE' -->
+								<!-- IF { $attachment:comment } -->
+								<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachment:comment }</span><hr />
+								<!-- ENDIF --><img src="{ $attachment:image_src }" alt="{ $attachment:name }" /></span>
+								<br /><span class="gensmall"><strong>{ $attachment:name }</strong><br/> { $L_VIEWED } { $attachment:lang_views } </span>
+							<!-- ELSEIF { $attachment:category } == 'THUMBNAIL' -->
+								<!-- IF { $attachment:comment } -->
+								<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachment:comment }</span><hr />
+								<!-- ENDIF -->		<a href="{ $attachment:link }" target="_blank"><img src="{ $attachment:image_src }" alt="{ $attachment:name }" border="0" /></a></span>
+								<br /><span class="gensmall"><strong>{ $attachment:name }</strong><br/> { $L_VIEWED } { $attachment:lang_views } </span>
+							<!-- ELSE -->
+								<!-- IF { $attachment:comment } -->
+								<span class="gensmall"><b>{ $L_FILE_COMMENT }:</b> { $attachment:comment }</span><hr />
+								<!-- ENDIF -->
+								<!-- IF { $attachment:icon } --><img src="{ $attachment:icon }" alt="" border="0" /><!-- ENDIF --> <a href="{ $attachment:link }" target="_blank">{ $attachment:name }</a>
+								<span class="gensmall">
+								<br />{ $L_FILESIZE } { $attachment:lang_size }
+								<br />{ $L_DOWNLOADED } { $attachment:lang_views }
+								</span>
+							<!-- ENDIF -->
+							</td>
 						</tr>
 						<!-- ENDLOOP -->
 					</table>

@@ -35,7 +35,7 @@
 		<!-- ENDIF -->
 				<br/>
 				<!-- LOOP $days:DATA -->
-					<a href="{ $days:DATA:link }" onclick="window.open('{ $days:DATA:link }','_event{ $days:DATA:id }','width=500,height=400,scrollbars=yes');return false;" target="_event{ $days:DATA:id }">{ $days:DATA:title }</a><br/>
+					<a href="{ $days:DATA:calender_link }" onclick="window.open('{ $days:DATA:calender_link }','_event{ $days:DATA:calender_id }','width=500,height=400,scrollbars=yes');return false;" target="_event{ $days:DATA:calender_id }">{ $days:DATA:calender_title }</a><br/>
 				<!-- ENDLOOP -->
 			</td>
 	<!-- ELSE -->

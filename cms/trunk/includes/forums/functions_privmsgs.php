@@ -1203,12 +1203,12 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 
 	if (!empty($sql_data))
 	{
-		if ($mode == 'post' || $mode == 'reply' || $mode == 'quote' || $mode == 'forward')
+		if ($mode === 'post' || $mode === 'reply' || $mode === 'quote' || $mode === 'forward')
 		{
 			$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_PRIVMSGS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_data));
 			$data['msg_id'] = $_CLASS['core_db']->insert_id(FORUMS_PRIVMSGS_TABLE, 'msg_id');
 		}
-		else if ($mode == 'edit')
+		else if ($mode === 'edit')
 		{
 			$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TABLE . ' 
 				SET message_edit_count = message_edit_count + 1, ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data) . ' 
@@ -1217,13 +1217,12 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		}
 	}
 	
-	if ($mode != 'edit')
+	if ($mode !== 'edit')
 	{
 		if ($sql)
 		{
 			$_CLASS['core_db']->query($sql);
 		}
-		unset($sql);
 
 		foreach ($recipients as $user_id => $type)
 		{
@@ -1277,7 +1276,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			if ($attach_row['attach_id'])
 			{
 				// update entry in db if attachment already stored in db and filespace
-				$sql = 'UPDATE ' . ATTACHMENTS_TABLE . " 
+				$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . " 
 					SET comment = '" . $_CLASS['core_db']->sql_escape($attach_row['comment']) . "' 
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
 				$_CLASS['core_db']->query($sql);
@@ -1287,6 +1286,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				// insert attachment into db 
 				$attach_sql = array(
 					'post_msg_id'		=> $data['msg_id'],
+					'download_count'	=> 0,
 					'topic_id'			=> 0,
 					'in_message'		=> 1,
 					'poster_id'			=> $_CLASS['core_user']->data['user_id'],
@@ -1300,11 +1300,10 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 					'thumbnail'			=> $attach_row['thumbnail']
 				);
 
-				$sql = 'INSERT INTO ' . ATTACHMENTS_TABLE . ' ' . 
-					$_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
-				$_CLASS['core_db']->query($sql);
+				$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_ATTACHMENTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $attach_sql));
 
 				$space_taken += $attach_row['filesize'];
+
 				$files_added++;
 			}
 		}

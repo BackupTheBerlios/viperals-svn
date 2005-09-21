@@ -39,7 +39,7 @@ $_CLASS['core_user']->add_img(false, 'Forums');
 $_CLASS['core_template']->assign_array(array(
 	'S_SEARCH_USER'	=> false,
 	'S_SHOW_GROUP'	=> false
-	));
+));
 
 // Grab data
 $mode		= request_var('mode', '');
@@ -348,13 +348,11 @@ switch ($mode)
 		
 		if ($permission_array = $auth2->acl_getf('f_postcount'))
 		{
-			$sql_forums = array_keys($permission_array);
-
 			// Grab all the relevant data
 			$sql = 'SELECT COUNT(*) AS num_posts
 				FROM ' . FORUMS_POSTS_TABLE . "
 					WHERE poster_id = $user_id
-					AND forum_id IN (" . implode(', ', $sql_forums) . ')';
+					AND forum_id IN (" . implode(', ', array_keys($permission_array)) . ')';
 
 			$result = $_CLASS['core_db']->query($sql);
 			$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -362,7 +360,7 @@ switch ($mode)
 	
 			$num_real_posts = min($_CLASS['core_user']->data['user_posts'], $row['num_posts']);
 
-			unset($sql_forums, $permission_array, $auth2);
+			unset($permission_array, $auth2);
 
 		}		
 		$active_f_row = $active_t_row = array();
@@ -371,9 +369,7 @@ switch ($mode)
 		// Change post_count_sql to an forum_id array the user is able to see
 		if ($permission_array = $_CLASS['auth']->acl_getf('f_read'))
 		{
-			$sql_forums = array_keys($permission_array);
-	
-			$post_count_sql = 'AND f.forum_id IN (' . implode(', ', $sql_forums) . ')';
+			$post_count_sql = 'AND f.forum_id IN (' . implode(', ', array_keys($permission_array)) . ')';
 	
 			$sql = 'SELECT f.forum_id, f.forum_name, COUNT(post_id) AS num_posts
 				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . " f
@@ -400,7 +396,7 @@ switch ($mode)
 			$active_t_row = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
 	
-			unset($sql_forums, $permission_array, $post_count_sql);
+			unset($permission_array, $post_count_sql);
 		}
 
 		// Do the relevant calculations

@@ -485,8 +485,9 @@ if (!empty($poll_start))
 		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 		$poll_bbcode = new bbcode();
 		
-		$size = !empty($poll_info);
-		for ($i = 0, $size; $i < $size; $i++)
+		$count = count($poll_info);
+
+		for ($i = 0; $i < $count; $i++)
 		{
 			$poll_bbcode->bbcode_second_pass($poll_info[$i]['poll_option_text'], $poll_info[$i]['bbcode_uid'], $poll_option['bbcode_bitfield']);
 			$poll_info[$i]['poll_option_text'] = smiley_text($poll_info[$i]['poll_option_text']);
@@ -907,13 +908,11 @@ $i_total = count($rowset) - 1;
 $prev_post_id = '';
 $first_unread_makred = false;
 
-$_CLASS['core_template']->assign('S_NUM_POSTS', count($post_list));
-
 // Output the posts
-//foreach ($rowset as $i => $row)
-$end = sizeof($post_list);
+$count = count($post_list);
+$_CLASS['core_template']->assign('S_NUM_POSTS', $count);
 
-for ($i = 0; $i < $end; ++$i)
+for ($i = 0; $i < $count; ++$i)
 {
 	$row =& $rowset[$post_list[$i]];
 	$force_encoding = '';
@@ -1046,7 +1045,7 @@ for ($i = 0; $i < $end; ++$i)
 	}
 
 	$postrow = array(
-		'ATTACHMENTS'	=> empty($attachments[$row['post_id']]) ? false : display_attachments($forum_id, $attachments[$row['post_id']], $null),
+		'ATTACHMENTS'	=> empty($attachments[$row['post_id']]) ? false : display_attachments($forum_id, $attachments[$row['post_id']], $update_count),
 		'POSTER_NAME' 	=> $row['poster'],
 		'POSTER_RANK' 	=> $user_cache[$poster_id]['rank_title'],
 		'RANK_IMAGE' 	=> $user_cache[$poster_id]['rank_image'],
@@ -1212,7 +1211,7 @@ $_CLASS['core_template']->assign_array(array(
 if (!mb_strpos($_CLASS['core_user']->data['session_url'], '&amp;t='.$topic_id))
 {
 	$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
-		SET topic_views = topic_views + 1, topic_last_view_time = ' . gmtime() . "
+		SET topic_views = topic_views + 1, topic_last_view_time = ' . $_CLASS['core_user']->time . "
 		WHERE topic_id = $topic_id";
 	$_CLASS['core_db']->query($sql);
 
@@ -1327,7 +1326,6 @@ function topic_last_read($topic_id, $forum_id)
 	{
 		return gmtime();
 	}
-
 
 	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 	{

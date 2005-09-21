@@ -107,7 +107,7 @@ switch ($mode)
 	break;
 
 	case 'smilies':
-		require_once($site_file_root.'includes/forums/functions_posting.php');
+		require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
 
 		generate_smilies('window', $forum_id);
 
@@ -129,9 +129,9 @@ if (!$posting_data)
 	trigger_error('NO_POST');
 }
 
-require_once($site_file_root.'includes/forums/message_parser.php');
-require_once($site_file_root.'includes/forums/functions_admin.php');
-require_once($site_file_root.'includes/forums/functions_posting.php');
+require_once(SITE_FILE_ROOT.'includes/forums/message_parser.php');
+require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
+require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
 
 // remove
 extract($posting_data);
@@ -490,7 +490,6 @@ $_CLASS['core_template']->assign_array(array(
 		'S_INLINE_ATTACHMENT_OPTIONS' => false,
 		'S_TOPIC_TYPE_ANNOUNCE' => false,
 		'S_TOPIC_TYPE_STICKY' => false,
-		'S_HAS_ATTACHMENTS' => false,
 		'S_DISPLAY_REVIEW'	=> false,
 ));
 
@@ -685,7 +684,7 @@ if ($submit || $preview || $refresh)
 	// Validate username
 	if ($posting_data['username'] && (!$_CLASS['core_user']->is_user || ($mode == 'edit' && (!$posting_data['poster_id'] || $posting_data['poster_id'] == ANONYMOUS))))
 	{
-		require_once($site_file_root.'includes/functions_user.php');
+		require_once(SITE_FILE_ROOT.'includes/functions_user.php');
 		$result = validate_username($posting_data['username']);
 
 		if ($result !== true)
@@ -945,13 +944,14 @@ if (empty($error) && $preview)
 		unset($preview_poll_options);
 	}
 
+	$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', false);
+
 	// Attachment Preview
 	if (!empty($message_parser->attachment_data))
 	{
-		require($site_file_root.'includes/forums/functions_display.php');
-		$extensions = $update_count = array();
+		require_once(SITE_FILE_ROOT.'includes/forums/functions_display.php');
+		$null = array();
 
-		$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
 		$attachment_data = $message_parser->attachment_data;
 
 		$unset_attachments = parse_inline_attachments($preview_message, $attachment_data, $update_count, $forum_id, true);
@@ -961,10 +961,15 @@ if (empty($error) && $preview)
 		{
 			unset($attachment_data[$index]);
 		}
-		
-		$_CLASS['core_template']->assign('attachment', display_attachments($forum_id, $attachment_data, $null));
+		unset($unset_attachments);
+			
+		if (!empty($attachment_data))
+		{
+			$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
+			$_CLASS['core_template']->assign('attachment', display_attachments($forum_id, $attachment_data, $null, true));
+		}
 
-		unset($attachment_data, $attachment);
+		unset($attachment_data, $null);
 	}
 
 	$_CLASS['core_template']->assign_array(array(
@@ -975,7 +980,7 @@ if (empty($error) && $preview)
 		'S_DISPLAY_PREVIEW'		=> true
 	));
 
-	unset($post_text);
+	unset($preview_message, $preview_subject, $preview_signature, $preview_signature);
 }
 
 // Decode text for message display

@@ -16,7 +16,7 @@ $_CLASS['core_template']->assign_array(array(
 	'S_SHOW_RECIPIENTS'	=> false,
 	'messagerow'		=> false,
 	'S_PM_ICONS'		=> false
-	));
+));
 
 function view_folder($id, $mode, $folder_id, $folder, $type)
 {

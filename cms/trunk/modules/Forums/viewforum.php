@@ -402,6 +402,7 @@ while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 $_CLASS['core_db']->free_result($result);
 
 $topic_list = ($store_reverse) ? array_merge($announcement_list, array_reverse($topic_list)) : array_merge($announcement_list, $topic_list);
+unset($announcement_list);
 
 // we only update the mark if this is made into an (int) time
 // We don't check when $start is used
@@ -421,6 +422,7 @@ if (!empty($topic_list))
 	}
 
 	$s_type_switch = 0;
+
 	foreach ($topic_list as $topic_id)
 	{
 		$row =& $rowset[$topic_id];
@@ -518,7 +520,11 @@ if (!empty($topic_list))
 		);
 
 		$s_type_switch = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
+
+		unset($row, $rowset[$topic_id]);
 	}
+
+	unset($topic_list);
 }
 
 // Update the marktime only if $mark_forum_read is set to a time

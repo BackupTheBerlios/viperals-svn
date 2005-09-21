@@ -15,7 +15,7 @@
 
 function compose_pm($id, $mode, $action)
 {
-	global $_CLASS, $site_file_root, $config;
+	global $_CLASS, $config;
 	
 	if (!$action)
 	{
@@ -33,8 +33,10 @@ function compose_pm($id, $mode, $action)
 		'to_recipient'					=> false,
 		'bcc_recipient'					=> false, 
 		'S_DISPLAY_HISTORY'				=> false,
-		'S_DISPLAY_PREVIEW'				=> false)
-	);
+		'S_DISPLAY_PREVIEW'				=> false,
+		'S_DELETE_ALLOWED'				=> false,
+		'S_SHOW_TOPIC_ICONS'			=> false,
+	));
 
 	// Grab only parameters needed here
 	$to_user_id     = request_var('u', 0);
@@ -165,7 +167,7 @@ function compose_pm($id, $mode, $action)
 			break;
 
 		case 'smilies':
-			require_once($site_file_root.'includes/forums/functions_posting.php');
+			require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
 	
 			generate_smilies('window', 0);
 	
@@ -241,9 +243,9 @@ function compose_pm($id, $mode, $action)
 		$icon_id = 0;
 	}
 
-	require_once($site_file_root.'includes/forums/functions_admin.php');
-	require_once($site_file_root.'includes/forums/functions_posting.php');
-	require_once($site_file_root.'includes/forums/message_parser.php');
+	require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
+	require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
+	require_once(SITE_FILE_ROOT.'includes/forums/message_parser.php');
 
 	$message_parser = new parse_message();
 
@@ -341,11 +343,18 @@ function compose_pm($id, $mode, $action)
 	}
 
 $config['auth_bbcode_pm'] = true;
+/*
 	$html_status	= ($config['allow_html'] && $config['auth_html_pm'] && $_CLASS['auth']->acl_get('u_pm_html'));
 	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm'] && $_CLASS['auth']->acl_get('u_pm_bbcode'));
 	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm'] && $_CLASS['auth']->acl_get('u_pm_smilies'));
 	$img_status		= ($config['auth_img_pm'] && $_CLASS['auth']->acl_get('u_pm_img'));
 	$flash_status	= ($config['auth_flash_pm'] && $_CLASS['auth']->acl_get('u_pm_flash'));
+*/
+	$html_status	= ($config['allow_html'] && $config['auth_html_pm']);
+	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm']);
+	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm']);
+	$img_status		= ($config['auth_img_pm']);
+	$flash_status	= ($config['auth_flash_pm']);
 
 	// Save Draft
 	if ($save && $_CLASS['auth']->acl_get('u_savedrafts'))
@@ -544,31 +553,45 @@ $config['auth_bbcode_pm'] = true;
 		// Attachment Preview
 		if (!empty($message_parser->attachment_data))
 		{
-			require($site_file_root.'includes/forums/functions_display.php');
-			$extensions = $update_count = array();
+			require_once(SITE_FILE_ROOT.'includes/forums/functions_display.php');
+			$null = array();
 					
-			$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
-			display_attachments(0, 'attachment', $message_parser->attachment_data, $update_count, true);
+			$attachment_data = $message_parser->attachment_data;
+
+			$unset_attachments = parse_inline_attachments($preview_message, $attachment_data, $null, 0, true);
+
+			// Needed to let not display the inlined attachments at the end of the post again
+			foreach ($unset_attachments as $index)
+			{
+				unset($attachment_data[$index]);
+			}
+			unset($unset_attachments);
+	
+			if (!empty($attachment_data))
+			{
+				$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
+
+				$_CLASS['core_template']->assign('attachment', display_attachments(0, $attachment_data, $null, true));
+			}
+			
+			unset($attachment_data, $null);
 		}
 
 		$preview_subject = censor_text($subject);
 
-		if (empty($error))
-		{
-			$_CLASS['core_template']->assign_array(array(
-				'POST_DATE'				=> $_CLASS['core_user']->format_date($post_time),
-			
-				'PREVIEW_SUBJECT'		=> $preview_subject,
-				'PREVIEW_MESSAGE'		=> $preview_message, 
-				'PREVIEW_SIGNATURE'		=> $preview_signature, 
-				'S_DISPLAY_PREVIEW'		=> true)
-				);				
-		}
-		unset($message_text);
+		$_CLASS['core_template']->assign_array(array(
+			'POST_DATE'				=> $_CLASS['core_user']->format_date($post_time),
+			'PREVIEW_SUBJECT'		=> $preview_subject,
+			'PREVIEW_MESSAGE'		=> $preview_message, 
+			'PREVIEW_SIGNATURE'		=> $preview_signature, 
+			'S_DISPLAY_PREVIEW'		=> true
+		));
+
+		unset($preview_message, $preview_subject, $preview_signature, $preview_signature);
 	}
 
 	// Decode text for message display
-	$bbcode_uid = (($action == 'quote' || $action == 'forward')&& !$preview && !$refresh && empty($error)) ? $bbcode_uid : $message_parser->bbcode_uid;
+	$bbcode_uid = (($action == 'quote' || $action == 'forward') && !$preview && !$refresh && empty($error)) ? $bbcode_uid : $message_parser->bbcode_uid;
 
 	$message_parser->decode_message($bbcode_uid);
 
@@ -609,6 +632,7 @@ $config['auth_bbcode_pm'] = true;
 
 	// Generate PM Icons
 	$s_pm_icons = false;
+
 	if ($config['enable_pm_icons'])
 	{
 		$s_pm_icons = posting_gen_topic_icons($action, $icon_id);
@@ -689,10 +713,10 @@ $config['auth_bbcode_pm'] = true;
 		}
 	}
 
-	$html_checked		= (isset($enable_html)) ? !$enable_html : (($config['allow_html'] && $_CLASS['auth']->acl_get('u_pm_html')) ? !$_CLASS['core_user']->optionget('html') : 1);
-	$bbcode_checked		= (isset($enable_bbcode)) ? !$enable_bbcode : (($config['allow_bbcode'] && $_CLASS['auth']->acl_get('u_pm_bbcode')) ? !$_CLASS['core_user']->optionget('bbcode') : 1);
-	$smilies_checked	= (isset($enable_smilies)) ? !$enable_smilies : (($config['allow_smilies'] && $_CLASS['auth']->acl_get('u_pm_smilies')) ? !$_CLASS['core_user']->optionget('smilies') : 1);
-	$urls_checked		= (isset($enable_urls)) ? !$enable_urls : 0;
+	$html_checked		= isset($enable_html) ? !$enable_html : (($config['allow_html']) ? !$_CLASS['core_user']->optionget('html') : 1);
+	$bbcode_checked		= isset($enable_bbcode) ? !$enable_bbcode : (($config['allow_bbcode']) ? !$_CLASS['core_user']->optionget('bbcode') : 1);
+	$smilies_checked	= isset($enable_smilies) ? !$enable_smilies : (($config['allow_smilies']) ? !$_CLASS['core_user']->optionget('smilies') : 1);
+	$urls_checked		= isset($enable_urls) ? !$enable_urls : 0;
 	$sig_checked		= $enable_sig;
 
 	switch ($action)
@@ -773,8 +797,6 @@ $config['auth_bbcode_pm'] = true;
 // For composing messages, handle list actions
 function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_to, $add_bcc)
 {
-	global $_REQUEST, $site_file_root;
-
 	// Delete User [TO/BCC]
 	if ($remove_u)
 	{
@@ -816,7 +838,7 @@ function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_
 		// Reveal the correct user_ids
 		if (!empty($usernames))
 		{
-			require_once($site_file_root.'includes/functions_user.php');
+			require_once(SITE_FILE_ROOT.'includes/functions_user.php');
 
 			$user_id_ary = user_get_id($usernames, $difference);
 			
