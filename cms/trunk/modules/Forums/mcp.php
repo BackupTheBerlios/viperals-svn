@@ -194,35 +194,7 @@ $_CLASS['core_blocks']->blocks_loaded = true;
 		if (!class_exists($this->type . '_' . $this->name))
 		{
 			require($site_file_root."includes/forums/{$this->type}/{$this->type}_{$this->name}.php");
-
-			if ($run)
-			{
-				if (!isset($this->mode))
-				{
-					$this->mode = $mode;
-				}
-
-				eval("\$this->module = new {$this->type}_{$this->name}(\$this->id, \$this->mode, \$this->url);");
-				if (method_exists($this->module, 'init'))
-				{
-					$this->module->init();
-				}
-			}
 		}
-	}
-
-	// Displays the appropriate template with the given title
-	function display($page_title, $tpl_name)
-	{
-		global $_CLASS;
-
-		$_CLASS['core_display']->display_header($page_title);
-		
-		page_header();
-
-		$_CLASS['core_template']->display('modules/Forums/'.$tpl_name);
-
-		$_CLASS['core_display']->display_footer();
 	}
 
 	// Add Item to Submodule Title
@@ -276,32 +248,6 @@ $_CLASS['core_blocks']->blocks_loaded = true;
 			break;
 		}
 	}
-
-	// Public methods to be overwritten by modules
-	function module()
-	{
-		// Module name
-		// Module filename
-		// Module description
-		// Module version
-		// Module compatibility
-		return false;
-	}
-
-	function init()
-	{
-		return false;
-	}
-
-	function install()
-	{
-		return false;
-	}
-
-	function uninstall()
-	{
-		return false;
-	}
 }
 //
 // FUNCTIONS
@@ -325,20 +271,7 @@ $mcp = new module();
 
 // Basic parameter data
 $mode	= request_var('mode', '');
-$mode2	= (isset($_REQUEST['quick'])) ? request_var('mode2', '') : '';
 $module = request_var('i', '');
-
-if (is_array($mode))
-{
-	list($mode, ) = each($mode);
-}
-
-if ($mode2)
-{
-	$mode = $mode2;
-	$action = '';
-	unset($mode2);
-}
 
 // Make sure we are using the correct module
 if ($mode == 'approve' || $mode == 'disapprove')
@@ -346,15 +279,17 @@ if ($mode == 'approve' || $mode == 'disapprove')
 	$module = 'queue';
 }
 
-$quickmod = (isset($_REQUEST['quickmod'])) ? true : false;
+$quickmod = isset($_REQUEST['quickmod']);
 $action = request_var('action', '');
+/*
 $action_ary = request_var('action', array('' => 0));
 
-if (sizeof($action_ary))
+if (!empty($action_ary))
 {
 	list($action, ) = each($action);
 }
 unset($action_ary);
+*/
 
 if ($action == 'merge_select')
 {
@@ -379,10 +314,15 @@ if (in_array($mode, array('resync')))
 
 if (!$quickmod)
 {
-	$post_id = request_var('p', 0);
-	$topic_id = request_var('t', 0);
-	$forum_id = request_var('f', 0);
-	
+	$post_id = get_variable('p', 'REQUEST', false, 'int');
+	$topic_id = get_variable('t', 'REQUEST', false, 'int');
+	$forum_id = get_variable('f', 'REQUEST', false, 'int');
+
+	$url = 'Forums&amp;file=mcp';
+	$url .= ($post_id) ? "&amp;p=$post_id" : '';
+	$url .= ($topic_id) ? "&amp;t=$topic_id" : '';
+	$url .= ($forum_id) ? "&amp;f=$forum_id" : '';
+
 	if ($post_id)
 	{
 		// We determine the topic and forum id here, to make sure the moderator really has moderative rights on this post
@@ -396,8 +336,7 @@ if (!$quickmod)
 		$topic_id = (int) $row['topic_id'];
 		$forum_id = (int) $row['forum_id'];
 	}
-
-	if ($topic_id && !$forum_id)
+	elseif ($topic_id)
 	{
 		$sql = 'SELECT forum_id
 			FROM ' . FORUMS_TOPICS_TABLE . "
@@ -409,12 +348,16 @@ if (!$quickmod)
 		$forum_id = (int) $row['forum_id'];
 	}
 
-	// If we do not have a forum id and the user is not a super moderator (global options are set to false, even if the user is able to moderator at least one forum
+	if ($forum_id && !$_CLASS['auth']->acl_get('m_', $forum_id))
+	{
+		trigger_error('MODULE_NOT_EXIST');
+	}
+
 	if (!$forum_id && !$_CLASS['auth']->acl_get('m_'))
 	{
 		$forum_list = get_forum_list('m_');
 
-		if (!sizeof($forum_list))
+		if (empty($forum_list))
 		{
 			trigger_error('MODULE_NOT_EXIST');
 		}
@@ -422,13 +365,40 @@ if (!$quickmod)
 		// We do not check all forums, only the first one should be sufficiant.
 		$forum_id = $forum_list[0];
 	}
-	
-	// Instantiate module system and generate list of available modules
-	$mcp->create('mcp', 'Forums&amp;file=mcp', $post_id, $topic_id, $forum_id, $module, $mode);
 
-	// Load and execute the relevant module
-	$mcp->load('mcp', false, $mode);
-	exit;
+// remove
+	// Instantiate module system and generate list of available modules
+	$mcp->create('mcp', 'Forums&amp;file=mcp', $post_id, $topic_id, $forum_id, $module);
+
+	switch ($mode)
+	{
+		case 'front':
+			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_front.php');
+			$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
+		break;
+
+		case 'forum_view':
+			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_forum.php');
+		break;
+		
+		case 'topic_view':
+			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_topic.php');
+		break;
+			
+		case 'post_details':
+			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_post.php');
+			
+			mcp_post_details($id, $mode, $action, $url);
+			
+			$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_post.html');
+		break;
+
+		default:
+			require_once(SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php');
+		break;
+	}
+
+	script_close(false);
 }
 
 switch ($mode)
@@ -437,25 +407,23 @@ switch ($mode)
 	case 'unlock':
 	case 'lock_post':
 	case 'unlock_post':
-		$mcp->load('mcp', 'main', $mode);
-		break;
 	case 'make_sticky':
 	case 'make_announce':
 	case 'make_global':
 	case 'make_normal':
-		$mcp->load('mcp', 'main', $mode);
-		break;
 	case 'fork':
 	case 'move':
-		$mcp->load('mcp', 'main', $mode);
-		break;
 	case 'delete_post':
 	case 'delete_topic':
-		$mcp->load('mcp', 'main', $mode);
-		break;
+		require_once(SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php');
+	break;
+
 	default:
 		trigger_error("$mode not allowed as quickmod");
+	break;
 }
+
+script_close(false);
 
 // Build simple hidden fields from array
 function build_hidden_fields($field_ary)
@@ -484,9 +452,8 @@ function build_hidden_fields($field_ary)
 function get_topic_data($topic_ids, $acl_list = false)
 {
 	global $_CLASS;
-	$rowset = array();
 
-	if (implode(', ', $topic_ids) == '')
+	if (empty($topic_ids))
 	{
 		return array();
 	}
@@ -496,7 +463,9 @@ function get_topic_data($topic_ids, $acl_list = false)
 			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
 		WHERE t.topic_id IN (' . implode(', ', $topic_ids) . ')';
 	$result = $_CLASS['core_db']->query($sql);
-		
+
+	$rowset = array();
+
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
@@ -726,53 +695,33 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 	}
 }
 
-/*
-	This needs to be redone
-*/
-
 function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 {
 	global $_CLASS;
 
 	if (!is_array($ids) || !$ids)
 	{
-		return 0;
+		return false;
 	}
 
-	// a small logical error, since global announcement are assigned to forum_id == 0
-	// If the first topic id is a global announcement, we can force the forum. Though only global announcements can be
-	// tricked... i really do not know how to prevent this atm.
-
-	// With those two queries we make sure all ids are within one forum...
-	$sql = "SELECT forum_id FROM $table
-		WHERE $sql_id = {$ids[0]}";
-	$result = $_CLASS['core_db']->query($sql);
-	list($forum_id) = $_CLASS['core_db']->fetch_row_num($result);
-	$_CLASS['core_db']->free_result($result);
-
-	if ($acl_list && !$_CLASS['auth']->acl_get($acl_list, $forum_id))
-	{
-		trigger_error('NOT_AUTHORIZED');
-	}
-
-	if (!$forum_id)
-	{
-		trigger_error('Missing forum_id, has to be in url if global announcement...');
-	}
-
-	$sql = "SELECT $sql_id FROM $table
-		WHERE $sql_id IN (" . implode(', ', $ids) . ")
-			AND (forum_id = $forum_id OR forum_id = 0)";
+	$sql = "SELECT forum_id, $sql_id FROM $table
+		WHERE $sql_id IN (" . implode(', ', $ids) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 
 	$ids = array();
+
+// Should make this better
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$ids[] = $row[$sql_id];
+		if (!$acl_list || $_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
+		{
+			$forum_ids[] = $row['forum_id'];
+			$ids[] = $row[$sql_id];
+		}
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	return (int) $forum_id;
+	return empty($ids) ? false : $forum_ids;
 }
 
 // LITTLE HELPER

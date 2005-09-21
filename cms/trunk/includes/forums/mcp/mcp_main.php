@@ -1,15 +1,25 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright © 2004 by Viperal									//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 // -------------------------------------------------------------
 //
@@ -17,258 +27,172 @@
 //
 // FILENAME  : mcp_main.php
 // STARTED   : Mon Sep 02, 2003
-// COPYRIGHT : © 2003 phpBB Group
+// COPYRIGHT : 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
 
-class mcp_main extends module
+global $_CLASS;
+
+$action = request_var('action', '');
+$quickmod = request_var('quickmod', '');
+
+switch ($mode)
 {
-	function mcp_main($id, $mode, $url)
-	{
-		global $_CLASS, $site_file_root, $db;
-		
-		$action = request_var('action', '');
-		$quickmod = request_var('quickmod', '');
+	case 'lock':
+	case 'unlock':
+		$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 
-		if (is_array($action))
+		if (empty($topic_ids))
 		{
-			list($action, ) = each($action);
+			trigger_error('NO_TOPIC_SELECTED');
 		}
 
-		switch ($mode)
+		lock_unlock($mode, $topic_ids);
+	break;
+
+	case 'lock_post':
+	case 'unlock_post':
+		$post_ids = (!$quickmod) ? request_var('post_id_list', array(0)) : array(request_var('p', 0));
+
+		if (empty($post_ids))
 		{
-			case 'lock':
-			case 'unlock':
-				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
-		
-				if (!sizeof($topic_ids))
-				{
-					trigger_error('NO_TOPIC_SELECTED');
-				}
-
-				lock_unlock($mode, $topic_ids);
-				break;
-
-			case 'lock_post':
-			case 'unlock_post':
-
-				$post_ids = (!$quickmod) ? request_var('post_id_list', array(0)) : array(request_var('p', 0));
-		
-				if (!sizeof($post_ids))
-				{
-					trigger_error('NO_POST_SELECTED');
-				}
-
-				lock_unlock($mode, $post_ids);
-				break;
-
-			case 'make_announce':
-			case 'make_sticky':
-			case 'make_global':
-			case 'make_normal':
-				
-				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
-		
-				if (!sizeof($topic_ids))
-				{
-					trigger_error('NO_TOPIC_SELECTED');
-				}
-
-				change_topic_type($mode, $topic_ids);
-			
-				break;
-
-			case 'move':
-				$_CLASS['core_user']->add_lang('viewtopic');
-
-				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
-		
-				if (!sizeof($topic_ids))
-				{
-					trigger_error('NO_TOPIC_SELECTED');
-				}
-
-				mcp_move_topic($topic_ids);
-			
-				break;
-
-			case 'fork':
-				$_CLASS['core_user']->add_lang('viewtopic');
-
-				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
-		
-				if (!sizeof($topic_ids))
-				{
-					trigger_error('NO_TOPIC_SELECTED');
-				}
-
-				mcp_fork_topic($topic_ids);
-			
-				break;
-
-			case 'delete_topic':
-				$_CLASS['core_user']->add_lang('viewtopic');
-
-				$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
-		
-				if (!sizeof($topic_ids))
-				{
-					trigger_error('NO_TOPIC_SELECTED');
-				}
-
-				mcp_delete_topic($topic_ids);
-				break;
-
-			case 'delete_post':
-				$_CLASS['core_user']->add_lang('posting');
-
-				$post_ids = (!$quickmod) ? request_var('post_id_list', array(0)) : array(request_var('p', 0));
-		
-				if (!sizeof($post_ids))
-				{
-					trigger_error('NO_POST_SELECTED');
-				}
-
-				mcp_delete_post($post_ids);
-				break;
-
-			case 'front':
-				require($site_file_root.'includes/forums/mcp/mcp_front.php');
-
-				mcp_front_view($id, $mode, $action, $url);
-
-				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
-				break;
-
-			case 'forum_view':
-				require($site_file_root.'includes/forums/mcp/mcp_forum.php');
-				
-				$_CLASS['core_user']->add_lang('viewforum');
-
-				$forum_id = request_var('f', 0);
-
-				$forum_info = get_forum_data($forum_id, 'm_');
-
-				if (!sizeof($forum_info))
-				{
-					$this->mcp_main('mcp', 'front', $url);
-					exit;
-				}
-
-				$forum_info = $forum_info[$forum_id];
-
-				mcp_forum_view($id, $mode, $action, $url, $forum_info);
-				
-				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_forum.html');
-				break;
-
-			case 'topic_view':
-				require($site_file_root.'includes/forums/mcp/mcp_topic.php');
-				
-				mcp_topic_view($id, $mode, $action, $url);
-				
-				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_topic.html');
-				break;
-				
-			case 'post_details':
-				require($site_file_root.'includes/forums/mcp/mcp_post.php');
-				
-				mcp_post_details($id, $mode, $action, $url);
-				
-				$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_post.html');
-				break;			
-
-			default:
-				trigger_error("Unknown mode: $mode");
+			trigger_error('NO_POST_SELECTED');
 		}
-	}
 
-	function install()
-	{
-	}
+		lock_unlock($mode, $post_ids);
+	break;
 
-	function uninstall()
-	{
-	}
+	case 'make_announce':
+	case 'make_sticky':
+	case 'make_global':
+	case 'make_normal':
+		
+		$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
 
-	function module()
-	{
-		$details = array(
-			'name'			=> 'MCP - Main',
-			'description'	=> 'Front end for Moderator Control Panel', 
-			'filename'		=> 'main',
-			'version'		=> '0.1.0', 
-			'phpbbversion'	=> '2.2.0'
-		);
-		return $details;
-	}
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		change_topic_type($mode, $topic_ids);
+	break;
+
+	case 'move':
+		$_CLASS['core_user']->add_lang('viewtopic');
+
+		$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		mcp_move_topic($topic_ids);
+	break;
+
+	case 'fork':
+		$_CLASS['core_user']->add_lang('viewtopic');
+
+		$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		mcp_fork_topic($topic_ids);
+	break;
+
+	case 'delete_topic':
+		$_CLASS['core_user']->add_lang('viewtopic');
+
+		$topic_ids = (!$quickmod) ? request_var('topic_id_list', array(0)) : array(request_var('t', 0));
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		mcp_delete_topic($topic_ids);
+	break;
+
+	case 'delete_post':
+		$_CLASS['core_user']->add_lang('posting');
+
+		$post_ids = (!$quickmod) ? request_var('post_id_list', array(0)) : array(request_var('p', 0));
+
+		if (empty($post_ids))
+		{
+			trigger_error('NO_POST_SELECTED');
+		}
+
+		mcp_delete_post($post_ids);
+	break;
+
+	default:
+		trigger_error("Unknown mode: $mode");
 }
-
-
-
 
 // Lock/Unlock Topic/Post
 function lock_unlock($mode, $ids)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
-	if ($mode == 'lock' || $mode == 'unlock')
+	if ($mode === 'lock' || $mode === 'unlock')
 	{
-		$table = TOPICS_TABLE;
+		$table = FORUMS_TOPICS_TABLE;
 		$sql_id = 'topic_id';
 		$set_id = 'topic_status';
 		$l_prefix = 'TOPIC';
 	}
 	else
 	{
-		$table = POSTS_TABLE;
+		$table = FORUMS_POSTS_TABLE;
 		$sql_id = 'post_id';
 		$set_id = 'post_edit_locked';
 		$l_prefix = 'POST';
 	}
 	
-	if (!($forum_id = check_ids($ids, $table, $sql_id, 'm_lock')))
-	{
+	if (!check_ids($ids, $table, $sql_id, 'm_lock'))
+	{// redirect maybe
 		return;
 	}
-	
-	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
 
-	$s_hidden_fields = build_hidden_fields(array(
+	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);//generate_link('Forums')
+	$message = $_CLASS['core_user']->get_lang(strtoupper($mode) . '_' . $l_prefix . ((count($ids) === 1) ? '' : 'S'));
+
+	$hidden_fields = build_hidden_fields(array(
 		$sql_id . '_list'	=> $ids,
 		'mode'				=> $mode,
 		'redirect'			=> $redirect)
 	);
-	$success_msg = '';
 
-	if (confirm_box(true))
+	$success_msg = false;
+
+	if (display_confirmation($message, $hidden_fields))
 	{
 		$sql = "UPDATE $table
 			SET $set_id = " . (($mode == 'lock' || $mode == 'lock_post') ? ITEM_LOCKED : ITEM_UNLOCKED) . "
 			WHERE $sql_id IN (" . implode(', ', $ids) . ")";
-		$db->sql_query($sql);
+		$_CLASS['core_db']->query($sql);
 
-		$data = ($mode == 'lock' || $mode == 'unlock') ? get_topic_data($ids) : get_post_data($ids);
+		$data = ($mode === 'lock' || $mode === 'unlock') ? get_topic_data($ids) : get_post_data($ids);
 
 		foreach ($data as $id => $row)
 		{
-			add_log('mod', $forum_id, $row['topic_id'], 'LOG_' . strtoupper($mode), $row['topic_title']);
+			add_log('mod', $row['forum_id'], $row['topic_id'], 'LOG_' . strtoupper($mode), $row['topic_title']);
 		}
-		
-		$success_msg = $l_prefix . ((sizeof($ids) == 1) ? '' : 'S') . '_' . (($mode == 'lock' || $mode == 'lock_post') ? 'LOCKED' : 'UNLOCKED') . '_SUCCESS';
-	}
-	else
-	{
-		confirm_box(false, strtoupper($mode) . '_' . $l_prefix . ((sizeof($ids) == 1) ? '' : 'S'), $s_hidden_fields);
+
+		$success_msg = $l_prefix . ((count($ids) === 1) ? '' : 'S') . '_' . (($mode == 'lock' || $mode == 'lock_post') ? 'LOCKED' : 'UNLOCKED') . '_SUCCESS';
 	}
 
-	$redirect = request_var('redirect', generate_link('Forums'));
+	$redirect = generate_link($redirect);
 
 	if (!$success_msg)
 	{
-		url_redirect($redirect);
+		redirect($redirect);
 	}
 	else
 	{

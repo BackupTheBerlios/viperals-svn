@@ -317,7 +317,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 
 	// Get those messages not yet placed into any box
 	// NOTE: Expand Group Information to all groups the user/author is in? 
-	$sql = 'SELECT t.*, p.*, u.username, u.group_id as author_in_group
+	$sql = 'SELECT t.*, p.*, u.username, u.user_group as author_in_group
 		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
 		WHERE t.user_id = $user_id
 			AND p.author_id = u.user_id
