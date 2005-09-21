@@ -1258,7 +1258,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 		case 'delete_first_post':
 			$sql = 'SELECT p.post_id, p.poster_id, p.post_username, u.username 
-				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_USERS_TABLE . " u
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . " u
 				WHERE p.topic_id = $topic_id 
 					AND p.poster_id = u.user_id 
 				ORDER BY p.post_time ASC";

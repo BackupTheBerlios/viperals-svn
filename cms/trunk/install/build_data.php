@@ -46,7 +46,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, 
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'allow_html_email', '1', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'email_enable', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'email_function_name', 'mb_mail', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'email_function_name', 'mail', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp', '', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_host', '', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_port', '', 1)");

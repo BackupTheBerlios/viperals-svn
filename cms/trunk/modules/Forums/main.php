@@ -37,12 +37,12 @@ if (!defined('VIPERAL'))
     die;
 }
 
-load_class($site_file_root.'includes/forums/auth.php', 'auth');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'auth');
 
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_img();
 
-require($site_file_root.'includes/forums/functions_display.php');
+require(SITE_FILE_ROOT.'includes/forums/functions_display.php');
 display_forums('', $config['load_moderators']);
 
 // Grab group details for legend display

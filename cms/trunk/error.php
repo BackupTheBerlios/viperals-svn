@@ -60,11 +60,16 @@ require(SITE_FILE_ROOT.'includes/display/template.php');
 
 $_CLASS['core_template'] =& new core_template();
 
-header(empty($error[$_GET['error']]['header']) ? $error['404']['header'] : $error[$_GET['error']]['header']);
+$_SERVER['REDIRECT_STATUS'] = isset($_SERVER['REDIRECT_STATUS']) ? $_SERVER['REDIRECT_STATUS'] : (isset($_GET['error']) ? $_GET['error'] : 404);
 
-$_CLASS['core_template']->assign('MESSAGE_TEXT',  (empty($error[$_GET['error']]['lang']) ? $error['404']['lang'] : $error[$_GET['error']]['lang']));
-		
-$_CLASS['core_template']->display('error.html');
+header(empty($error[$_SERVER['REDIRECT_STATUS']]['header']) ? $error['404']['header'] : $error[$_SERVER['REDIRECT_STATUS']]['header']);
+
+$_CLASS['core_template']->assign_array(array(
+	'MESSAGE_TEXT'	=> empty($error[$_SERVER['REDIRECT_STATUS']]['lang']) ? $error['404']['lang'] : $error[$_SERVER['REDIRECT_STATUS']]['lang'],
+	'SITE_LINK'		=> 'http://'.(empty($_SERVER['SERVER_NAME']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']),
+));
+	
+$_CLASS['core_template']->display('error_document.html');
 	
 die;
 

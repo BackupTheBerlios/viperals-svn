@@ -39,7 +39,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-require($site_file_root.'includes/forums/functions_display.php');
+require(SITE_FILE_ROOT.'includes/forums/functions_display.php');
 
 // Start initial var setup
 $forum_id	= request_var('f', 0);
@@ -204,7 +204,7 @@ Need test this first
 // Do the forum Prune thang - cron type job ...
 if ($forum_data['prune_next'] < time() && $forum_data['enable_prune'])
 {
-	require_once($site_file_root.'includes/forums/functions_admin.php');
+	require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
 
 	if ($forum_data['prune_days'])
 	{

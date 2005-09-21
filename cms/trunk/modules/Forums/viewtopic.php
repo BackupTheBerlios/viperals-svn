@@ -482,7 +482,7 @@ if (!empty($poll_start))
 
 	if ($poll_info[0]['bbcode_bitfield'])
 	{
-		require_once($site_file_root.'includes/forums/bbcode.php');
+		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 		$poll_bbcode = new bbcode();
 		
 		$size = !empty($poll_info);
@@ -829,7 +829,7 @@ if (!empty($attach_list))
 {
 	if ($_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $forum_id))
 	{
-		include($site_file_root.'includes/forums/functions_display.php');
+		include(SITE_FILE_ROOT.'includes/forums/functions_display.php');
 
 		$sql = 'SELECT * 
 			FROM ' . FORUMS_ATTACHMENTS_TABLE . '
@@ -899,7 +899,7 @@ if (!empty($attach_list))
 // Instantiate BBCode if need be
 if ($bbcode_bitfield)
 {
-	require_once($site_file_root.'includes/forums/bbcode.php');
+	require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 	$bbcode = new bbcode($bbcode_bitfield);
 }
 

@@ -49,9 +49,9 @@ $data = array(
 
 $_CLASS['core_blocks']->add_block($data);
 
-load_class($site_file_root.'includes/forums/auth.php', 'auth');
-require_once($site_file_root.'includes/forums/functions.php');
-require_once($site_file_root.'includes/forums/functions_admin.php');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'auth');
+require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
+require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
 
 $_CLASS['core_user']->add_lang('admin', 'Forums');
 //$_CLASS['core_user']->add_img(false, 'Forums');
@@ -59,13 +59,13 @@ $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $file = get_variable('file', 'REQUEST', 'main');
 
-if (file_exists($site_file_root.'includes/forums/admin/'.$file.'.php'))
+if (file_exists(SITE_FILE_ROOT.'includes/forums/admin/'.$file.'.php'))
 {
-	require($site_file_root.'includes/forums/admin/'.$file.'.php');
+	require(SITE_FILE_ROOT.'includes/forums/admin/'.$file.'.php');
 }
 else
 {
-	require($site_file_root.'includes/forums/admin/main.php');
+	require(SITE_FILE_ROOT.'includes/forums/admin/main.php');
 }
 
 

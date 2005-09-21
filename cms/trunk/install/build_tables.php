@@ -959,4 +959,17 @@ $_CLASS['core_db']->add_table_index('site_id', 'primary');
 
 $_CLASS['core_db']->table_create('commit');
 
+
+$_CLASS['core_db']->table_create('start', $table_prefix.'forums_search_results');
+
+$_CLASS['core_db']->add_table_field_int('search_id', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_char('session_id', 40);
+field_unix_time('search_time', true);
+$_CLASS['core_db']->add_table_field_text('search_array', 16000000);
+
+$_CLASS['core_db']->add_table_index('search_id', 'primary');
+$_CLASS['core_db']->add_table_index('session_id', 'primary');
+
+$_CLASS['core_db']->table_create('commit');
+
 ?>
