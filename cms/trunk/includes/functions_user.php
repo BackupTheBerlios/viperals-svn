@@ -153,6 +153,21 @@ function user_add(&$data)
 		'user_allow_email'		=> 1,
 	);
 
+	$default_data['user_data'] = serialize(array(
+		'viewimg' => 1,
+		'viewflash' => 1,
+		'viewsmilies' => 1,
+		'viewsigs'	=> 1,
+		'viewavatars' => 1,
+		'viewcensors' => 1,
+
+		'bbcode' => 1,
+		'html'	=> 1,
+		'smilies' => 1,
+		'attachsig' => 1,
+		'html'	=> 1,
+	));
+
 	$data = array_merge($default_data, $data);
 
 // add a required array here, then find feilds that are not in the data array

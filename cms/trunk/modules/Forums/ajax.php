@@ -79,6 +79,55 @@ Switch (get_variable('mode', 'POST', false))
 
 		echo $title;
 	break;
+	
+	case 'topic_lock_unlock':
+		$topic_id = get_variable('id', 'POST', false, 'int');
+		$lock = get_variable('lock', 'POST', 0, 'int');
+
+		if (!$topic_id)
+		{
+			die;
+		}
+
+		$result = $_CLASS['core_db']->query('SELECT forum_id FROM ' . FORUMS_TOPICS_TABLE . ' WHERE topic_id = '.$topic_id);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+
+		if (!$row || !$_CLASS['auth']->acl_get('m_lock', $row['forum_id']))
+		{
+			die;
+		}
+
+		$status = ($lock) ? ITEM_LOCKED : ITEM_UNLOCKED;
+		//	WHERE topic_id IN (" . implode(', ', $topic_id) . ")";
+
+		$sql = 'UPDATE '. FORUMS_TOPICS_TABLE ." 
+			SET topic_status = $status
+			WHERE topic_id = $topic_id";
+		$_CLASS['core_db']->query($sql);
+
+		echo ($lock) ? 'lock' : 'unlock';
+	break;
+	
+	case 'forum_lock_unlock':
+		$forum_id = get_variable('id', 'POST', false, 'int');
+		$lock = get_variable('lock', 'POST', 0, 'int');
+
+		if (!$forum_id || !$_CLASS['auth']->acl_get('a_forum', $forum_id))
+		{
+			die;
+		}
+
+		$status = ($lock) ? ITEM_LOCKED : ITEM_UNLOCKED;
+		//	WHERE topic_id IN (" . implode(', ', $topic_id) . ")";
+
+		$sql = 'UPDATE '. FORUMS_FORUMS_TABLE ." 
+			SET forum_status = $status
+			WHERE forum_id = $forum_id";
+		$_CLASS['core_db']->query($sql);
+
+		echo ($lock) ? 'lock' : 'unlock';
+	break;
 }
 
 ?>

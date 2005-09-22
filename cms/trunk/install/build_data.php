@@ -159,9 +159,22 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, sm
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':|', 'neutral.png', 'Neutral', 19, 19, 21, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':mrgreen:', 'mrgreen.png', 'Mr. Green', 19, 19, 22, 0)");
 
-$admin_data = $_CLASS['core_db']->escape('a:6:{s:7:"viewimg";b:1;s:9:"viewflash";b:1;s:11:"viewsmilies";b:1;s:8:"viewsigs";b:1;s:11:"viewavatars";b:1;s:11:"viewcensors";b:1;}');
-$guest_data = $_CLASS['core_db']->escape('a:6:{s:7:"viewimg";b:1;s:9:"viewflash";b:1;s:11:"viewsmilies";b:1;s:8:"viewsigs";b:1;s:11:"viewavatars";b:1;s:11:"viewcensors";b:1;}');
-$bot_data = $_CLASS['core_db']->escape('a:6:{s:7:"viewimg";b:1;s:9:"viewflash";b:1;s:11:"viewsmilies";b:1;s:8:"viewsigs";b:1;s:11:"viewavatars";b:1;s:11:"viewcensors";b:1;}');
+$data = serialize(array(
+	'viewimg' => 1,
+	'viewflash' => 1,
+	'viewsmilies' => 1,
+	'viewsigs'	=> 1,
+	'viewavatars' => 1,
+	'viewcensors' => 1,
+
+	'bbcode' => 1,
+	'html'	=> 1,
+	'smilies' => 1,
+	'attachsig' => 1,
+	'html'	=> 1,
+));
+
+$admin_data = $guest_data = $bot_data = $_CLASS['core_db']->escape($data);
 
 $_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (0, 2, 1, 'Anonymous', '', '', '', $time, '', 1, 0, 0, 0, 0, '$guest_data')");
 $_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (1, 2, 4, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'md5', '', $time, '', '', 1, 1, 1, 1, 1, '$admin_data')");

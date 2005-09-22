@@ -202,7 +202,8 @@ if ($forum_data['forum_topics_per_page'])
 /*
 Need test this first
 // Do the forum Prune thang - cron type job ...
-if ($forum_data['prune_next'] < time() && $forum_data['enable_prune'])
+
+if ($forum_data['enable_prune'] && $forum_data['prune_next'] < $_CLASS['core_user']->time)
 {
 	require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
 
@@ -220,7 +221,7 @@ if ($forum_data['prune_next'] < time() && $forum_data['enable_prune'])
 
 if ($_CLASS['auth']->acl_get('f_subscribe', $forum_id))
 {
-	$notify_status = (isset($forum_data['notify_status'])) ? $forum_data['notify_status'] : NULL;
+	$notify_status = isset($forum_data['notify_status']) ? $forum_data['notify_status'] : null;
 	$s_watching_forum = watch_topic_forum('forum', $_CLASS['core_user']->data['user_id'], $forum_id, 0, $notify_status);
 }
 else
@@ -244,7 +245,7 @@ gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $
 // Limit topics to certain time frame, obtain correct topic count
 if ($sort_days)
 {
-	$min_post_time = time() - ($sort_days * 86400);
+	$min_post_time = $_CLASS['core_user']->time - ($sort_days * 86400);
 
 	$sql = 'SELECT COUNT(topic_id) AS num_topics
 		FROM ' . FORUMS_TOPICS_TABLE . "
@@ -288,6 +289,14 @@ $_CLASS['core_template']->assign_array(array(
 	'MODERATORS'		=> empty($moderators[$forum_id]) ? '' : implode(', ', $moderators[$forum_id]),
 
 	'POST_IMG' 				=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', $post_alt) : $_CLASS['core_user']->img('btn_post', $post_alt),
+
+	'MOD_TOPIC_LOCK'	=>	$_CLASS['auth']->acl_get('m_lock', $forum_id),
+	'MOD_TOPIC_TITLE'	=>	$_CLASS['auth']->acl_get('m_', $forum_id),
+
+	'FORUM_IMG'			=>	$_CLASS['core_user']->img('forum', 'NO_NEW_POSTS'),
+	'FORUM_NEW_IMG'		=>	$_CLASS['core_user']->img('forum_new', 'NEW_POSTS'),
+	'FORUM_LOCKED_IMG'	=>	$_CLASS['core_user']->img('forum_locked', 'NO_NEW_POSTS_LOCKED'),
+
 	'FOLDER_IMG' 			=> $_CLASS['core_user']->img('folder', 'NO_NEW_POSTS'),
 	'FOLDER_NEW_IMG' 		=> $_CLASS['core_user']->img('folder_new', 'NEW_POSTS'),
 	'FOLDER_HOT_IMG' 		=> $_CLASS['core_user']->img('folder_hot', 'NO_NEW_POSTS_HOT'),
@@ -466,13 +475,15 @@ if (!empty($topic_list))
 
 		if ($row['topic_status'] == ITEM_MOVED)
 		{
+// currently no marking supported
 			$topic_id = $row['topic_moved_id'];
 		}
 
 		// Get folder img, topic status/type related informations
 		$folder_img = $folder_alt = $topic_type = '';
-		$unread_topic = topic_status($row, $replies, $mark_time, $folder_img, $folder_alt, $topic_type);
-		
+	//	$status = topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
+		topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
+
 		$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 		// Generate all the URIs ...
@@ -500,6 +511,8 @@ if (!empty($topic_list))
 			'VIEWS' 			=> $row['topic_views'],
 			'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
 			'TOPIC_TYPE' 		=> $topic_type,
+
+			'TOPIC_LOCKED' 		=> ($row['topic_status'] == ITEM_LOCKED) ? 1 : 0,
 
 			'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
 			'NEWEST_POST_IMG' 	=> $newest_post_img,

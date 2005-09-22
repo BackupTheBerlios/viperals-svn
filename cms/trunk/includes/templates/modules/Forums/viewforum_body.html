@@ -35,7 +35,7 @@
 
 	<!-- LOOP $topicrow -->
 	<tr>
-		<td class="row1" align="center" width="25">{ $topicrow:TOPIC_FOLDER_IMG }</td>
+		<td class="row1" align="center" width="25" id="topic_folder_status_{ $topicrow:TOPIC_ID }">{ $topicrow:TOPIC_FOLDER_IMG }</td>
 		<!-- IF { $S_TOPIC_ICONS } -->
 		<td class="row1" align="center" width="25"><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /></td>
 		<!-- ENDIF -->
@@ -159,11 +159,11 @@
 	</tr>
 	<!-- ENDIF -->
 	<tr>
-		<td class="row1" align="center" width="25">{ $topicrow:TOPIC_FOLDER_IMG }</td>
+		<td class="row1" align="center" width="25" id="topic_folder_status_{ $topicrow:TOPIC_ID }" <!-- IF { $MOD_TOPIC_LOCK } --> onmouseover="lock_unlock_init('{ $topicrow:TOPIC_ID }', 'topic', { $topicrow:TOPIC_LOCKED });" <!-- ENDIF -->>{ $topicrow:TOPIC_FOLDER_IMG }</td>
 		<!-- IF { $S_TOPIC_ICONS } -->
 		<td class="row1" align="center" width="25"><!-- IF { $topicrow:TOPIC_ICON_IMG } --><img src="{ $T_ICONS_PATH }{ $topicrow:TOPIC_ICON_IMG }" width="{ $topicrow:TOPIC_ICON_IMG_WIDTH }" height="{ $topicrow:TOPIC_ICON_IMG_HEIGHT }" alt="" title="" /><!-- ENDIF --></td>
 		<!-- ENDIF -->
-		<td class="row1" id="topic_{ $topicrow:TOPIC_ID }" onmouseover="tite_edit_init('{ $topicrow:TOPIC_ID }', 'topic');">
+		<td class="row1" id="topic_{ $topicrow:TOPIC_ID }" <!-- IF { $MOD_TOPIC_TITLE } --> onmouseover="tite_edit_init('{ $topicrow:TOPIC_ID }', 'topic');" <!-- ENDIF -->>
 			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } -->
 				<a href="{ $topicrow:U_MCP_QUEUE }">{ $UNAPPROVED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
@@ -258,40 +258,58 @@
 
 <table width="100%" cellspacing="0">
 	<tr>
-		<td align="left" valign="top"><table cellspacing="3" cellpadding="0" border="0">
-			<tr>
-				<td width="20" align="left">{ $FOLDER_NEW_IMG }</td>
-				<td class="gensmall">{ $L_NEW_POSTS }</td>
-				<td>&nbsp;&nbsp;</td>
-				<td width="20" align="center">{ $FOLDER_IMG }</td>
-				<td class="gensmall">{ $L_NO_NEW_POSTS }</td>
-				<td>&nbsp;&nbsp;</td>
-				<td width="20" align="center">{ $FOLDER_ANNOUNCE_IMG }</td>
-				<td class="gensmall">{ $L_ICON_ANNOUNCEMENT }</td>
-			</tr>
-			<tr>
-				<td width="20" align="center">{ $FOLDER_HOT_NEW_IMG }</td>
-				<td class="gensmall">{ $L_NEW_POSTS_HOT }</td>
-				<td>&nbsp;&nbsp;</td>
-				<td width="20" align="center">{ $FOLDER_HOT_IMG }</td>
-				<td class="gensmall">{ $L_NO_NEW_POSTS_HOT }</td>
-				<td>&nbsp;&nbsp;</td>
-				<td width="20" align="center">{ $FOLDER_STICKY_IMG }</td>
-				<td class="gensmall">{ $L_ICON_STICKY }</td>
-			</tr>
-			<tr>
-				<td class="gensmall">{ $FOLDER_LOCKED_NEW_IMG }</td>
-				<td class="gensmall">{ $L_NEW_POSTS_LOCKED }</td>
-				<td>&nbsp;&nbsp;</td>
-				<td class="gensmall">{ $FOLDER_LOCKED_IMG }</td>
-				<td class="gensmall">{ $L_NO_NEW_POSTS_LOCKED }</td>
-				<td>&nbsp;&nbsp;</td>
-				<td width="20" align="center">{ $FOLDER_MOVED_IMG }</td>
-				<td class="gensmall">{ $L_MOVED_TOPIC }</td>
-			</tr>
-		</table>
+		<td align="left" valign="top">
+			<table cellspacing="3" cellpadding="0" border="0">
+				<tr>
+					<td align="center">{ $FOLDER_NEW_IMG }</td>
+					<td class="gensmall">{ $L_NEW_POSTS }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center" id="topic_unlocked_status">{ $FOLDER_IMG }</td>
+					<td class="gensmall">{ $L_NO_NEW_POSTS }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center">{ $FOLDER_ANNOUNCE_IMG }</td>
+					<td class="gensmall">{ $L_ICON_ANNOUNCEMENT }</td>
+				</tr>
+				<tr>
+					<td align="center">{ $FOLDER_HOT_NEW_IMG }</td>
+					<td class="gensmall">{ $L_NEW_POSTS_HOT }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center">{ $FOLDER_HOT_IMG }</td>
+					<td class="gensmall">{ $L_NO_NEW_POSTS_HOT }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center">{ $FOLDER_STICKY_IMG }</td>
+					<td class="gensmall">{ $L_ICON_STICKY }</td>
+				</tr>
+				<tr>
+					<td class="gensmall" align="center">{ $FOLDER_LOCKED_NEW_IMG }</td>
+					<td class="gensmall">{ $L_NEW_POSTS_LOCKED }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td class="gensmall" align="center" id="topic_locked_status">{ $FOLDER_LOCKED_IMG }</td>
+					<td class="gensmall">{ $L_NO_NEW_POSTS_LOCKED }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center">{ $FOLDER_MOVED_IMG }</td>
+					<td class="gensmall">{ $L_MOVED_TOPIC }</td>
+				</tr>
+				<!-- IF { $S_HAS_SUBFORUM } -->
+				<tr>
+					<td colspan="8" align="center">
+						<br/><b>Forums Status Legend</b>
+					</td>
+				</tr>
+				<tr>
+					<td align="center">{ $FORUM_NEW_IMG }</td>
+					<td class="gensmall">{ $L_NEW_POSTS }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center" id="forum_unlocked_status">{ $FORUM_IMG }</td>
+					<td class="gensmall">{ $L_NO_NEW_POSTS }</td>
+					<td>&nbsp;&nbsp;</td>
+					<td align="center" id="forum_locked_status">{ $FORUM_LOCKED_IMG }</td>
+					<td class="gensmall">{ $L_FORUM_LOCKED }</td>
+				</tr>
+				<!-- ENDIF -->
+			</table>
 		</td>
-		<td align="right">
+		<td valign="top" align="right">
 			<span class="gensmall">
 			<!-- LOOP $rules -->{ $rules:RULE }<br /><!-- ENDLOOP -->
 			</span>
@@ -299,6 +317,8 @@
 	</tr>
 </table>
 <!-- ENDIF -->
+
+
 <br clear="all" />
 
 <table width="100%" cellspacing="0">

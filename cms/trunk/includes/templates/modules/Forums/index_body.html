@@ -35,7 +35,7 @@
 	</tr>
 	<!-- ELSE -->
 	<tr>
-		<td class="row1" width="50" height="40" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
+		<td class="row1" width="50" height="40" align="center" id="forum_folder_status_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } --> onmouseover="lock_unlock_init('{ $forumrow:FORUM_ID }', 'forum', { $forumrow:FORUM_LOCKED });" <!-- ENDIF -->>{ $forumrow:FORUM_FOLDER_IMG }</td>
 		<td class="row1" height="40" id="forum_{ $forumrow:FORUM_ID }"<!-- IF { $MODIFY_FORUM } --> onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
 			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a>
 			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p>
@@ -157,10 +157,10 @@
 		<td width="20" align="center">{ $FORUM_NEW_IMG }</td>
 		<td><span class="gensmall">{ $L_NEW_POSTS }</span></td>
 		<td>&nbsp;&nbsp;</td>
-		<td width="20" align="center">{ $FORUM_IMG }</td>
+		<td width="20" align="center" id="forum_unlocked_status">{ $FORUM_IMG }</td>
 		<td><span class="gensmall">{ $L_NO_NEW_POSTS }</span></td>
 		<td>&nbsp;&nbsp;</td>
-		<td width="20" align="center">{ $FORUM_LOCKED_IMG }</td>
+		<td width="20" align="center" id="forum_locked_status">{ $FORUM_LOCKED_IMG }</td>
 		<td><span class="gensmall">{ $L_FORUM_LOCKED }</span></td>
 	</tr>
 </table>

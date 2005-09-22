@@ -1,12 +1,65 @@
 // By Ryan Marshall ( viperal1@gmail.com )
 //svn checkout svn://svn.berlios.de/viperals/cms/trunk /net/pork/export/nfs/home/groups/viperals/htdocs
-function tite_edit_init(id, mode)
+
+function lock_unlock_init(id, mode, status)
 {
-	var area = document.getElementById(mode + '_' + id)
+	var area = document.getElementById(mode + '_folder_status_' + id);
 
 	if (!area)
 	{
-		return
+		return;
+	}
+
+	area.onmouseover = '';
+	area.ondblclick = function()
+	{
+		lock_unlock(id, mode, status);
+	}
+}
+
+// make this support more than 1 id
+function lock_unlock(id, mode, status)
+{
+	var area = document.getElementById(mode + '_folder_status_' + id);
+
+	ajax = new core_ajax();
+	var lock = (status) ? 0 : 1;
+
+	var onreadystatechange = function()
+	{
+		if (ajax.state_ready() && ajax.responseText())
+		{
+			if (ajax.responseText() == 'unlock')
+			{ 
+				var new_status = 0;
+				var status = document.getElementById(mode +'_unlocked_status');
+			}
+			else
+			{
+				var new_status = 1;
+				var status = document.getElementById(mode +'_locked_status');
+			}
+
+			area.innerHTML = status.innerHTML;
+			area.ondblclick = function()
+			{
+				lock_unlock(id, mode, new_status);
+			}
+		}
+	}
+
+	ajax.onreadystatechange(onreadystatechange);
+
+	ajax.send('ajax.php?mod=Forums', '&mode=' + mode + '_lock_unlock&lock=' + lock + '&id=' + id);
+}
+
+function tite_edit_init(id, mode)
+{
+	var area = document.getElementById(mode + '_' + id);
+
+	if (!area)
+	{
+		return;
 	}
 
 	area.onmouseover = '';

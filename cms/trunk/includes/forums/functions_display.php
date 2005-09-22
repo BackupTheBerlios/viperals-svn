@@ -319,6 +319,9 @@ function display_forums($root_data = '', $display_moderators = true)
 			//'FORUM_FOLDER_IMG_SRC'	=> ($row['forum_image']) ? $row['forum_image'] : $_CLASS['core_user']->img($folder_image, $folder_alt, false, '', 'src'),
 			'FORUM_NAME'		=> $row['forum_name'],
 			'FORUM_DESC'		=> $row['forum_desc'], 
+			'FORUM_LOCKED' 		=> ($row['forum_status'] == ITEM_LOCKED) ? 1 : 0,
+
+			
 			$l_post_click_count	=> $post_click_count,
 			'TOPICS'			=> $row['forum_topics'],
 			'LAST_POST_TIME'	=> $last_post_time,
@@ -346,27 +349,27 @@ function display_forums($root_data = '', $display_moderators = true)
 	return $active_forum_ary;
 }
 
-function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_alt, &$topic_type)
+function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img, &$folder_alt, &$topic_type)
 {
 	global $_CLASS, $config;
-	
+
 	$folder = $folder_new = '';
-	$unread_topic = false;
+	$unread = ($mark_time < $topic_row['topic_last_post_time']);
 
 	if ($topic_row['topic_status'] == ITEM_MOVED)
 	{
 		$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_MOVED'];
 		$folder_img = 'folder_moved';
 		$folder_alt = 'VIEW_TOPIC_MOVED';
+		$status = 9;
 	}
 	else
 	{
 		if ($topic_row['topic_status'] == ITEM_LOCKED)
 		{
 			$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_LOCKED'];
-			$folder = 'folder_locked';
-			$folder_new = 'folder_locked_new';
-			
+			$folder_img = ($unread) ? 'folder_locked_new' :'folder_locked';
+			$status = ($unread) ? 11 : 10;
 		}
 		else
 		{
@@ -375,40 +378,32 @@ function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_
 				case POST_GLOBAL:
 				case POST_ANNOUNCE:
 					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
-					$folder = 'folder_announce';
-					$folder_new = 'folder_announce_new';
-					break;
+					$folder_img = ($unread) ? 'folder_announce_new' : 'folder_announce';
+					$status = ($unread) ? 8 : 7;
+				break;
 	
 				case POST_STICKY:
 					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_STICKY'];
-					$folder = 'folder_sticky';
-					$folder_new = 'folder_sticky_new';
-					break;
+					$folder_img = ($unread) ? 'folder_sticky_new' : 'folder_sticky';
+					$status = ($unread) ? 6 : 5;
+				break;
 	
 				default:
 					if ($replies >= $config['hot_threshold'])
 					{
-						$folder = 'folder_hot';
-						$folder_new = 'folder_hot_new';
+						$folder_img = ($unread) ? 'folder_hot_new': 'folder_hot';
+						$status = ($unread) ? 4 : 3;
 					}
 					else
 					{
-						$folder = 'folder';
-						$folder_new = 'folder_new';
+						$folder_img = ($unread) ? 'folder_new' : 'folder';
+						$status = ($unread) ? 2 : 1;
 					}
-					break;
+				break;
 			}
 		}
 
-		$unread_topic = true;
-
-		if ($mark_time >= $topic_row['topic_last_post_time'])
-		{
-			$unread_topic = false;
-		}
-
-		$folder_img = ($unread_topic) ? $folder_new : $folder;
-		$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($topic_row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
+		$folder_alt = ($unread) ? 'NEW_POSTS' : (($topic_row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
 	}
 
 	if ($topic_row['poll_start'])
@@ -416,7 +411,7 @@ function topic_status(&$topic_row, $replies, $mark_time, &$folder_img, &$folder_
 		$topic_type .= $_CLASS['core_user']->lang['VIEW_TOPIC_POLL'];
 	}
 
-	return $unread_topic;
+	return $status;
 }
 
 // Display Attachments
