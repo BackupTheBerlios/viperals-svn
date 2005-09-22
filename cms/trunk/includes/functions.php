@@ -452,6 +452,28 @@ $options['seo'] = false;
     return ($options['full']) ? generate_base_url().$link : $link;
 }
 
+function generate_hidden_fields($fields)
+{
+	$hidden_fields = '';
+
+	foreach ($fields as $name => $value)
+	{
+		if (is_array($value))
+		{
+			foreach ($value as $key => $value2)
+			{
+				$hidden_fields .= '<input type="hidden" name="' . $name . '[' . $key . ']" value="' . $value2 . '" />';
+			}
+		}
+		else
+		{
+			$hidden_fields .= '<input type="hidden" name="' . $name . '" value="' . $value . '" />';
+		}
+	}
+
+	return $hidden_fields;
+}
+
 function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
 {
 	global $_CLASS;

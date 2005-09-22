@@ -22,8 +22,6 @@
 *
 *
 *	Display Unread Messages - mode=unread
-*	Display Messages (default to inbox) - mode=view_messages
-*	Display single message - mode=view_messages&action=view_message&p=[msg_id] or &p=[msg_id] (short linkage)
 *
 *	if the folder id with (&f=[folder_id]) is used when displaying messages, one query will be saved. If it is not used, phpBB needs to grab
 *	the folder id first in order to display the input boxes and folder names and such things. ;) phpBB always checks this against the database to make
@@ -47,7 +45,7 @@ class ucp_pm extends module
 {
 	function ucp_pm($id, $mode)
 	{
-		global $_CLASS, $site_file_root, $config;
+		global $_CLASS, $config;
 
 		$action = '';
 		
@@ -69,46 +67,47 @@ class ucp_pm extends module
 		$_CLASS['core_template']->assign('S_PRIVMSGS', true);
 
 		// Folder directly specified?
-		$folder_specified = request_var('folder', '');
+		$folder_specified = get_variable('folder', 'REQUEST');
 		
-		if (!in_array($folder_specified, array('inbox', 'outbox', 'sentbox')))
+		if ($folder_specified)
 		{
-			$folder_specified = (int) $folder_specified;
-		}
-		else
-		{
-			$folder_specified = ($folder_specified == 'inbox') ? PRIVMSGS_INBOX : (($folder_specified == 'outbox') ? PRIVMSGS_OUTBOX : PRIVMSGS_SENTBOX);
-		}
+			if (is_numeric($folder_specified))
+			{
+				$folder_specified = (int) $folder_specified;
+			}
+			else
+			{
+				$folder_specified = ($folder_specified === 'sentbox') ? PRIVMSGS_SENTBOX : (($folder_specified === 'outbox') ? PRIVMSGS_OUTBOX : PRIVMSGS_INBOX);
+			}
 
-		if (!$folder_specified)
-		{
-			$mode = (!$mode) ? request_var('mode', 'view_messages') : $mode;
-		}
-		else
-		{
 			$mode = 'view_messages';
 		}
+		else
+		{
+			$mode = (!$mode) ? get_variable('mode', 'REQUEST', 'view_messages') : $mode;
+		}
 
-		require($site_file_root.'includes/forums/functions_privmsgs.php');
+		require(SITE_FILE_ROOT.'includes/forums/functions_privmsgs.php');
 		
-		$tpl_file = 'ucp_pm_' . $mode . '.html';
+		$_CLASS['core_template']->assign_array(array( 
+			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PM_' . strtoupper($mode)],
+			'S_UCP_ACTION'      => generate_link("Control_Panel&amp;i=$id&amp;mode=$mode" . ((isset($action)) ? "&amp;action=$action" : '')))
+		);
+
 		switch ($mode)
 		{
 			// New private messages popup
 			case 'popup':
 			
 				$indox_link = generate_link('Control_Panel&amp;i=pm&amp;folder=inbox');
-				
-				if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
+
+				if ($_CLASS['core_user']->data['user_new_privmsg'])
 				{
-					if ($_CLASS['core_user']->data['user_new_privmsg'])
-					{
-						$l_new_message = ($_CLASS['core_user']->data['user_new_privmsg'] == 1 ) ? $_CLASS['core_user']->lang['YOU_NEW_PM'] : $_CLASS['core_user']->lang['YOU_NEW_PMS'];
-					}
-					else
-					{
-						$l_new_message = $_CLASS['core_user']->lang['YOU_NO_NEW_PM'];
-					}
+					$l_new_message = ($_CLASS['core_user']->data['user_new_privmsg'] == 1) ? $_CLASS['core_user']->lang['YOU_NEW_PM'] : $_CLASS['core_user']->lang['YOU_NEW_PMS'];
+				}
+				else
+				{
+					$l_new_message = $_CLASS['core_user']->lang['YOU_NO_NEW_PM'];
 				}
 
 				$_CLASS['core_template']->assign_array(array(
@@ -119,8 +118,9 @@ class ucp_pm extends module
 					'U_INBOX'			=> $indox_link
 				));
 
-				break;
-			
+				$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_pm_popup.html');
+			break;
+
 			// Compose message
 			case 'compose':
 				$action = request_var('action', 'post');
@@ -132,11 +132,11 @@ class ucp_pm extends module
 					trigger_error('NO_AUTH_SEND_MESSAGE');
 				}
 
-				require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_compose.php');
+				require(SITE_FILE_ROOT.'modules/Control_Panel/ucp/ucp_pm_compose.php');
 				compose_pm($id, $mode, $action);
 			
-				$tpl_file = 'ucp_posting_body.html';
-				break;
+				$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_posting_body.html');
+			break;
 			
 			case 'options':
 				$sql = 'SELECT group_message_limit
@@ -152,14 +152,14 @@ class ucp_pm extends module
 				
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 
-				require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_options.php');
+				require(SITE_FILE_ROOT.'modules/Control_Panel/ucp/ucp_pm_options.php');
 				message_options($id, $mode, $global_privmsgs_rules, $global_rule_conditions);
 				break;
 
 			case 'drafts':
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 			
-				require($site_file_root.'modules/Control_Panel/ucp/ucp_main.php');
+				require(SITE_FILE_ROOT.'modules/Control_Panel/ucp/ucp_main.php');
 				$module = new ucp_main($id, $mode);
 				unset($module);
 				exit;
@@ -167,16 +167,23 @@ class ucp_pm extends module
 
 			case 'unread':
 			case 'view_messages':
-			
+				/*
+				if (!$_CLASS['auth']->acl_get('u_readpm'))
+				{
+					trigger_error('NO_AUTH_READ_MESSAGE');
+				}
+				*/
+
 				$sql = 'SELECT group_message_limit
 					FROM ' . GROUPS_TABLE . '
 					WHERE group_id = ' . $_CLASS['core_user']->data['user_group'];
 				$result = $_CLASS['core_db']->query($sql);
+
 				list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
 				$_CLASS['core_db']->free_result($result);
-				
+
 				$_CLASS['core_user']->data['message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
-				
+
 				if ($folder_specified)
 				{
 					$folder_id = $folder_specified;
@@ -184,21 +191,21 @@ class ucp_pm extends module
 				}
 				else
 				{
-					$folder_id = request_var('f', PRIVMSGS_INBOX);
-					$action = request_var('action', 'view_folder');
+					$folder_id = get_variable('f', 'REQUEST', PRIVMSGS_INBOX, 'int');
+					$action = get_variable('action', 'REQUEST', 'view_folder');
 				}
 
-				$msg_id = request_var('p', 0);
-				$view	= request_var('view', '');
+				if ($folder_id === PRIVMSGS_NO_BOX)
+				{
+					$folder_id = PRIVMSGS_INBOX;
+				}
+					
+				$msg_id = get_variable('p', 'REQUEST', 0, 'int');
+				$view	= get_variable('view', 'REQUEST');
 				
-				if ($msg_id && $action == 'view_folder')
+				if ($msg_id && $action === 'view_folder')
 				{
 					$action = 'view_message';
-				}
-
-				if (!$_CLASS['auth']->acl_get('u_readpm'))
-				{
-					trigger_error('NO_AUTH_READ_MESSAGE');
 				}
 
 // First Handle Mark actions and moving messages
@@ -206,17 +213,17 @@ class ucp_pm extends module
 				// Move PM
 				if (isset($_REQUEST['move_pm']))
 				{
-					$move_msg_ids	= (isset($_POST['marked_msg_id'])) ? array_map('intval', $_POST['marked_msg_id']) : array();
-					$dest_folder	= request_var('dest_folder', PRIVMSGS_NO_BOX);
-					$cur_folder_id	= request_var('cur_folder_id', PRIVMSGS_NO_BOX);
+					$msg_ids		= isset($_POST['marked_msg_id']) ? array_unique(array_map('intval', $_POST['marked_msg_id'])) : array();
+					$cur_folder_id	= get_variable('cur_folder_id', 'POST', PRIVMSGS_INBOX, 'int');
+					$dest_folder	= get_variable('dest_folder', 'POST', PRIVMSGS_INBOX, 'int');
 
-					if (move_pm($_CLASS['core_user']->data['user_id'], $_CLASS['core_user']->data['message_limit'], $move_msg_ids, $dest_folder, $cur_folder_id))
+					if (move_pm($_CLASS['core_user']->data['user_id'], $_CLASS['core_user']->data['message_limit'], $msg_ids, $dest_folder, $cur_folder_id))
 					{
 						// Return to folder view if single message moved
 						if ($action == 'view_message')
 						{
 							$msg_id		= 0;
-							$folder_id	= request_var('cur_folder_id', PRIVMSGS_NO_BOX);
+							$folder_id	= $cur_folder_id;
 							$action		= 'view_folder';
 						}
 					}
@@ -225,46 +232,53 @@ class ucp_pm extends module
 				// Message Mark Options
 				if (isset($_REQUEST['submit_mark']))
 				{
-					handle_mark_actions($_CLASS['core_user']->data['user_id'], request_var('mark_option', ''));
+					$mark_option = get_variable('mark_option', 'POST');
+					$msg_ids		= isset($_POST['marked_msg_id']) ? array_unique(array_map('intval', $_POST['marked_msg_id'])) : array();
+					$cur_folder_id	= get_variable('cur_folder_id', 'POST', PRIVMSGS_INBOX, 'int');
+
+					Switch ($mark_option)
+					{
+						case 'mark_read':
+						case 'mark_unread':
+								$read_status = ($mark_option === 'mark_read');
+								set_read_status($read_status, $msg_ids, $_CLASS['core_user']->data['user_id'], $cur_folder_id);
+						break;
+
+						default:
+							// redo this
+							handle_mark_actions($_CLASS['core_user']->data['user_id'], $mark_option, $msg_ids, $cur_folder_id);
+						break;
+					}
 				}
 
 				// If new messages arrived, place them into the appropiate folder
 				$num_not_moved = 0;
+
 				if ($_CLASS['core_user']->data['user_new_privmsg'] && $action == 'view_folder')
 				{
-					place_pm_into_folder($global_privmsgs_rules, request_var('release', 0));
+					place_pm_into_folder($global_privmsgs_rules, get_variable('release', 'POST', false));
 					$num_not_moved = $_CLASS['core_user']->data['user_new_privmsg'];
 				}
 		
-				if (!$msg_id && $folder_id == PRIVMSGS_NO_BOX && $mode == 'unread')
-				{
-					$folder_id = PRIVMSGS_INBOX;
-				}
-				else if ($msg_id && $folder_id == PRIVMSGS_NO_BOX)
-				{
-					$sql = 'SELECT folder_id
-						FROM ' . FORUMS_PRIVMSGS_TO_TABLE . "
-						WHERE msg_id = $msg_id
-							AND user_id = " . $_CLASS['core_user']->data['user_id'];
-					$result = $_CLASS['core_db']->query_limit($sql, 1);
-					
-					if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
-					{
-						trigger_error('NO_MESSAGE');
-					}					
-					$folder_id = (int) $row['folder_id'];
-				}
-			
 				$message_row = array();
+
 				if ($mode == 'view_messages' && $action == 'view_message' && $msg_id)
 				{
 					// Get Message user want to see
-					
-					if ($view == 'next' || $view == 'previous')
+					if ($view === 'next' || $view === 'previous')
 					{
-						$sql_condition = ($view == 'next') ? '>' : '<';
-						$sql_ordering = ($view == 'next') ? 'ASC' : 'DESC';
+						if ($view === 'next')
+						{
+							$sql_condition = '>';
+							$sql_ordering = 'ASC';
+						}
+						else
+						{
+							$sql_condition = '<';
+							$sql_ordering = 'DESC';
+						}
 
+// Redo this for sqlite
 						$sql = 'SELECT t.msg_id
 							FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_PRIVMSGS_TABLE . " p2
 							WHERE p2.msg_id = $msg_id
@@ -284,6 +298,8 @@ class ucp_pm extends module
 						{
 							$msg_id = $row['msg_id'];
 						}
+
+						$_CLASS['core_db']->free_result($result);
 					}
 	
 					$sql = 'SELECT t.*, p.*, u.*
@@ -294,14 +310,19 @@ class ucp_pm extends module
 							AND t.msg_id = p.msg_id
 							AND p.msg_id = $msg_id";
 					$result = $_CLASS['core_db']->query_limit($sql, 1);
+					$message_row = $_CLASS['core_db']->fetch_row_assoc($result);
+					$_CLASS['core_db']->free_result($result);
 
-					if (!($message_row = $_CLASS['core_db']->fetch_row_assoc($result)))
+					if (!$message_row)
 					{
 						trigger_error('NO_MESSAGE');
 					}
 
 					// Update unread status
-					update_unread_status($message_row['unread'], $message_row['msg_id'], $_CLASS['core_user']->data['user_id'], $folder_id);
+					if ($message_row['unread'])
+					{
+						set_read_status(true, $message_row['msg_id'], $_CLASS['core_user']->data['user_id'], $folder_id);
+					}
 				}
 				
 				get_folder($_CLASS['core_user']->data['user_id'], $folder, $folder_id);
@@ -353,10 +374,11 @@ class ucp_pm extends module
 
 				if ($mode == 'unread' || $action == 'view_folder')
 				{
-					require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_viewfolder.php');
+					require(SITE_FILE_ROOT.'modules/Control_Panel/ucp/ucp_pm_viewfolder.php');
 					view_folder($id, $mode, $folder_id, $folder, (($mode == 'unread') ? 'unread' : 'folder'));
 
-					$tpl_file = 'ucp_pm_viewfolder.html';
+					$_CLASS['core_display']->display(false,  'modules/Control_Panel/ucp_pm_viewfolder.html');
+
 				}
 				else if ($action == 'view_message')
 				{
@@ -370,33 +392,16 @@ class ucp_pm extends module
 						trigger_error('NO_MESSAGE');
 					}
 					
-					require($site_file_root.'modules/Control_Panel/ucp/ucp_pm_viewmessage.php');
+					require(SITE_FILE_ROOT.'modules/Control_Panel/ucp/ucp_pm_viewmessage.php');
 					view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row);
 
-					$tpl_file = ($view == 'print') ? 'ucp_pm_viewmessage_print.html' : 'ucp_pm_viewmessage.html';
-				}
-				
-				break;
+					$_CLASS['core_display']->display(false, 'modules/Control_Panel/'.(($view == 'print') ? 'ucp_pm_viewmessage_print.html' : 'ucp_pm_viewmessage.html'));
+				}	
+			break;
 
 			default:
 				trigger_error('NO_ACTION_MODE');
 			break;
-		}
-
-		$_CLASS['core_template']->assign_array(array( 
-			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PM_' . strtoupper($mode)],
-			'S_UCP_ACTION'      => generate_link("Control_Panel&amp;i=$id&amp;mode=$mode" . ((isset($action)) ? "&amp;action=$action" : '')))
-		);
-		
-		if (((isset($view)) && $view == 'print') || ($mode == 'popup'))
-		{
-			//page_header($page_title);
-			$_CLASS['core_template']->display('modules/Control_Panel/'.$tpl_file);
-			$_CLASS['core_display']->display_footer();
-		}
-		else
-		{
-			$this->display($_CLASS['core_user']->lang['UCP_PM'], $tpl_file);
 		}
 	}
 }

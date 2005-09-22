@@ -29,6 +29,151 @@ if (!defined('VIPERAL'))
 
 require_once($site_file_root.'includes/forums/functions_admin.php');
 
+/*
+$sections = array(0 => array (
+    'module_id' => '9',
+    'module_title' => 'MAIN',
+    'module_filename' => 'main',
+    'module_subs' => 'front
+forum_view
+topic_view
+post_details',
+    'module_acl' => 'acl_m_',
+  ),
+  1 => array (
+    'module_id' => '10',
+    'module_title' => 'QUEUE',
+    'module_filename' => 'queue',
+    'module_subs' => 'unapproved_topics
+unapproved_posts
+reports',
+    'module_acl' => 'acl_m_approve',
+));
+
+foreach  ($sections as $row)
+{
+	$selected = ($row['module_filename'] == 'kk') ?  true : false;
+
+	// Get the localised lang string if available, or make up our own otherwise
+	$module_lang = 'MCP_' . $row['module_title'];
+
+	$_CLASS['core_template']->assign_vars_array('mcp_section', array(
+		'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
+		'S_SELECTED'	=> $selected, 
+		'U_TITLE'		=> generate_link()
+	));
+
+	if ($selected)
+	{
+		$module_id = $row['module_id'];
+		$module_name = $row['module_filename'];
+
+		if ($row['module_subs'])
+		{
+			$submodules_ary = explode("\n", $row['module_subs']);
+
+			foreach ($submodules_ary as $submodule_title)
+			{
+				$submodule_title = trim($submodule_title);
+
+				if (!$submodule_title)
+				{
+					continue;
+				}
+				
+			
+				// Only show those rows we are able to access
+				if (($submodule_title == 'post_details' && !$post_id) || ($submodule_title == 'topic_view' && !$topic_id) || ($submodule_title == 'forum_view' && !$forum_id))
+				{
+					continue;
+				}
+				
+
+				$suffix = ($post_id) ? "&amp;p=$post_id" : '';
+				$suffix .= ($topic_id) ? "&amp;t=$topic_id" : '';
+				$suffix .= ($forum_id) ? "&amp;f=$forum_id" : '';
+
+				$selected = ($submodule_title == 'kll') ? true : false;
+
+				// Get the localised lang string if available, or make up our own otherwise
+				$module_lang = strtoupper($module_type . '_' . $module_name . '_' . $submodule_title);
+
+				$_CLASS['core_template']->assign_vars_array("{$module_type}_subsection", array(
+					'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
+					'S_SELECTED'	=> $selected,
+					'ADD_ITEM'		=> $this->add_menu_item($row['module_filename'], $submodule_title),
+					'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title . $suffix))
+				);
+
+			}
+		}
+	}
+}
+
+//$_CLASS['core_blocks']->load_blocks();
+$_CLASS['core_blocks']->blocks_loaded = true;
+
+$data = array(
+	'block_title'		=> 'Forum Administration',
+	'block_position'	=> BLOCK_LEFT,
+	'block_file'		=> 'block-forums_mcp.php',
+);
+
+$_CLASS['core_blocks']->add_block($data);
+*/
+
+// Add Item to Submodule Title
+function add_menu_item($module_name, $mode)
+{
+	global $_CLASS;
+
+	if ($module_name != 'queue')
+	{
+		return '';
+	}
+
+	$forum_id = request_var('f', 0);
+	if ($forum_id && $_CLASS['auth']->acl_get('m_approve', $forum_id))
+	{
+		$forum_list = array($forum_id);
+	}
+	else
+	{
+		$forum_list = get_forum_list('m_approve');
+	}
+
+	switch ($mode)
+	{
+		case 'unapproved_topics':
+
+			$sql = 'SELECT COUNT(*) AS total
+				FROM ' . FORUMS_TOPICS_TABLE . '
+				WHERE forum_id IN (' . implode(', ', $forum_list) . ')
+					AND topic_approved = 0';
+			$result = $_CLASS['core_db']->query($sql);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+
+			return ($row['total']) ? (int) $row['total'] : $_CLASS['core_user']->lang['NONE'];
+		break;
+
+		case 'unapproved_posts':
+
+			$sql = 'SELECT COUNT(*) AS total
+					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t 
+					WHERE p.forum_id IN (' . implode(', ', $forum_list) . ')
+						AND p.post_approved = 0
+						AND t.topic_id = p.topic_id
+						AND t.topic_first_post_id <> p.post_id';
+			$result = $_CLASS['core_db']->query($sql);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+
+			return ($row['total']) ? (int) $row['total'] : $_CLASS['core_user']->lang['NONE'];
+		break;
+	}
+}
+
 $_CLASS['core_user']->add_img();
 $_CLASS['core_user']->add_lang('mcp');
 
@@ -135,29 +280,6 @@ switch ($mode)
 
 script_close(false);
 
-// Build simple hidden fields from array
-function build_hidden_fields($field_ary)
-{
-	$s_hidden_fields = '';
-
-	foreach ($field_ary as $name => $vars)
-	{
-		if (is_array($vars))
-		{
-			foreach ($vars as $key => $value)
-			{
-				$s_hidden_fields .= '<input type="hidden" name="' . $name . '[' . $key . ']" value="' . $value . '" />';
-			}
-		}
-		else
-		{
-			$s_hidden_fields .= '<input type="hidden" name="' . $name . '" value="' . $vars . '" />';
-		}
-	}
-
-	return $s_hidden_fields;
-}
-
 // Get simple topic data
 function get_topic_data($topic_ids, $acl_list = false)
 {
@@ -170,7 +292,7 @@ function get_topic_data($topic_ids, $acl_list = false)
 
 	$sql = 'SELECT f.*, t.*
 		FROM ' . FORUMS_TOPICS_TABLE . ' t
-			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
+			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON (t.forum_id = f.forum_id)
 		WHERE t.topic_id IN (' . implode(', ', $topic_ids) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -435,7 +557,10 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	return empty($ids) ? false : array_unique($forum_ids);
 }
 
-// LITTLE HELPER
-//
+// REMOVE
 
+function build_hidden_fields($array)
+{
+	return generate_hidden_fields($array);
+}
 ?>

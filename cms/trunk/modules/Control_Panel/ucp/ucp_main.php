@@ -201,7 +201,7 @@ class ucp_main extends module
 				}
 			*/
 				// Do the relevant calculations 
-				$memberdays = max(1, round((time() - $_CLASS['core_user']->data['user_reg_date']) / 86400));
+				$memberdays = max(1, round(($_CLASS['core_user']->time - $_CLASS['core_user']->data['user_reg_date']) / 86400));
 				$posts_per_day = $_CLASS['core_user']->data['user_posts'] / $memberdays;
 				$percentage = ($config['num_posts']) ? min(100, ($num_real_posts / $config['num_posts']) * 100) : 0;
 
@@ -427,7 +427,7 @@ class ucp_main extends module
 					// Get folder img, topic status/type related informations
 					$folder_img = $folder_alt = $topic_type = '';
 
-					$unread_topic = topic_status($row, $replies, $row['mark_time'], $folder_img, $folder_alt, $topic_type);
+					topic_status($row, $replies, $row['mark_time'], $unread_topic, $folder_img, $folder_alt, $topic_type);
 					$newest_post_img = ($unread_topic) ? '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 					$view_topic_url = "Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id";
@@ -582,7 +582,7 @@ class ucp_main extends module
 					
 					// Get folder img, topic status/type related informations
 					$folder_img = $folder_alt = $topic_type = '';
-					$unread_topic = topic_status($row, $replies, time(), time(), $folder_img, $folder_alt, $topic_type);
+					topic_status($row, $replies, $_CLASS['core_user']->time, $unread_topic, $folder_img, $folder_alt, $topic_type);
 
 					$view_topic_url = "Forums&amp;file=viewtopic&amp;t=$topic_id";
 //					$last_post_img = '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;p=" . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']) . '">' . $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST') . '</a>';

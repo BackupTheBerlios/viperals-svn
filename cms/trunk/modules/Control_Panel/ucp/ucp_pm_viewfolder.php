@@ -37,12 +37,12 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 		);
 	}
 
-	$mark_options = array('mark_important', 'delete_marked');
+	$mark_options = array('mark_important', 'delete_marked', 'mark_read', 'mark_unread');
 
 	$s_mark_options = '';
 	foreach ($mark_options as $mark_option)
 	{
-		$s_mark_options .= '<option value="' . $mark_option . '">' . $_CLASS['core_user']->lang[strtoupper($mark_option)] . '</option>';
+		$s_mark_options .= '<option value="' . $mark_option . '">' . $_CLASS['core_user']->get_lang(strtoupper($mark_option)) . '</option>';
 	}
 
 	$friend = $foe = array();

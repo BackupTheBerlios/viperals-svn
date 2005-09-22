@@ -427,6 +427,11 @@ class core_user extends sessions
 	{
 		$img = $this->get_img($img);
 
+		if (!$img['src'])
+		{
+			return false;
+		}
+
 		$width = ($width || $img['width']) ? ' width="' . (($width) ? $width : $img['width']) . '"' : '';
 		$height = ($img['height']) ? ' height="' . $img['height'] . '"' : '';
 

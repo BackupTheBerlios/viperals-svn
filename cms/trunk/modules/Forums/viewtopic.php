@@ -84,9 +84,9 @@ $forum_id = $row['forum_id'];
 $topic_id = ($topic_id) ? $topic_id : $row['topic_id'];
 $topic_last_post_time = isset($row['topic_last_post_time']) ? $row['topic_last_post_time'] : false;
 
-if ($view == 'next' || $view == 'previous')
+if ($view === 'next' || $view === 'previous')
 {
-	if ($view == 'next')
+	if ($view === 'next')
 	{
 		$sql_condition = '>';
 		$sql_ordering = 'ASC';

@@ -767,6 +767,8 @@ $config['auth_bbcode_pm'] = true;
 		'MINI_POST_IMG'			=> $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['PM']),
 		'ERROR'					=> empty($error) ? '' : implode('<br />', $error), 
 
+		'T_SMILIES_PATH'		=> "{$config['smilies_path']}/",
+
 		'S_EDIT_POST'			=> ($action == 'edit'),
 		'S_SHOW_PM_ICONS'		=> $s_pm_icons,
 		'S_HTML_ALLOWED'		=> $html_status,
@@ -781,7 +783,7 @@ $config['auth_bbcode_pm'] = true;
 		'S_SAVE_ALLOWED'		=> $_CLASS['auth']->acl_get('u_savedrafts'),
 		'S_HAS_DRAFTS'			=> ($_CLASS['auth']->acl_get('u_savedrafts') && $drafts),
 		'S_FORM_ENCTYPE'		=> $form_enctype,
-
+		
 		'S_POST_ACTION' 		=> generate_link($s_action),
 		'S_HIDDEN_ADDRESS_FIELD'=> $s_hidden_address_field,
 		'S_HIDDEN_FIELDS'		=> $s_hidden_fields)
