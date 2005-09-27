@@ -1,5 +1,8 @@
 // By Ryan Marshall ( viperal1@gmail.com )
 
+var is_ie		= (navigator.appName == 'Microsoft Internet Explorer');
+var is_gecko	= (navigator.userAgent.indexOf('Gecko') != -1)
+
 function get_cookie(cookie_name)
 {
 	var cookie_prefix = cookie_name + "=";

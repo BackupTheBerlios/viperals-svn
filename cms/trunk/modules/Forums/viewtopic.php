@@ -183,7 +183,7 @@ if (!$topic_data || $topic_data['forum_status'] == ITEM_DELETING || (!$topic_dat
 }
 
 //Check for read permission
-if (!$_CLASS['auth']->acl_get('f_read', $forum_id) && !$_CLASS['auth']->acl_get('m_', $forum_id))
+if (!$_CLASS['auth']->acl_get('f_read', $forum_id))// && !$_CLASS['auth']->acl_get('m_', $forum_id)
 {
 	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 	{

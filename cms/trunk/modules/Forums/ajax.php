@@ -29,9 +29,9 @@ if (!defined('VIPERAL'))
 header('Content-Type: text/html');
 
 require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
-load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'auth');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
 
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
+$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
 
 Switch (get_variable('mode', 'POST', false))
 {
@@ -39,7 +39,7 @@ Switch (get_variable('mode', 'POST', false))
 		$forum_id = get_variable('id', 'POST', false, 'int');
 		$title = get_variable('title', 'POST', false);
 		
-		if (!$forum_id || !$title || !$_CLASS['auth']->acl_get('a_forum'))
+		if (!$forum_id || !$title || !$_CLASS['forums_auth']->acl_get('a_forum'))
 		{
 			die;
 		}
@@ -66,7 +66,7 @@ Switch (get_variable('mode', 'POST', false))
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
-		if (!$row || !$_CLASS['auth']->acl_get('m_edit', $row['forum_id']))
+		if (!$row || !$_CLASS['forums_auth']->acl_get('m_edit', $row['forum_id']))
 		{
 			die;
 		}
@@ -93,7 +93,7 @@ Switch (get_variable('mode', 'POST', false))
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
-		if (!$row || !$_CLASS['auth']->acl_get('m_lock', $row['forum_id']))
+		if (!$row || !$_CLASS['forums_auth']->acl_get('m_lock', $row['forum_id']))
 		{
 			die;
 		}
@@ -113,7 +113,7 @@ Switch (get_variable('mode', 'POST', false))
 		$forum_id = get_variable('id', 'POST', false, 'int');
 		$lock = get_variable('lock', 'POST', 0, 'int');
 
-		if (!$forum_id || !$_CLASS['auth']->acl_get('a_forum', $forum_id))
+		if (!$forum_id || !$_CLASS['forums_auth']->acl_get('a_forum', $forum_id))
 		{
 			die;
 		}

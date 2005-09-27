@@ -169,7 +169,7 @@ class core_display
 
 		$this->header['regular'][] = '<link rel="alternate" type="application/xml" title="RSS" href="'.generate_base_url().'feed.php?feed=rdf" />';
 
-		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['start'] < time())
+		if ($_CORE_CONFIG['maintenance']['active'] && $_CORE_CONFIG['maintenance']['start'] < $_CLASS['core_user']->time)
 		{
 			$this->message = '<b>System is in maintenance mode</b><br />';
 		}

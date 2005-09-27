@@ -155,7 +155,7 @@ class bbcode_firstpass extends bbcode
 	
 	function check_bbcode($bbcode, &$in)
 	{
-		$in = trim($in);
+		$in = str_replace("\r\n", "\n", str_replace('\"', '"', trim($in)));
 
 		if (!$in)
 		{

@@ -593,8 +593,8 @@ $_CLASS['core_db']->add_table_field_int('forum_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_char('topic_title', 50);
 $_CLASS['core_db']->add_table_field_int('topic_poster', array('max' => 16000000));
 field_unix_time('topic_time');
-$_CLASS['core_db']->add_table_field_int('topic_views', array('max' => 16000000, 'null' => true));
-$_CLASS['core_db']->add_table_field_int('topic_replies', array('max' => 16000000, 'null' => true));  
+$_CLASS['core_db']->add_table_field_int('topic_views', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_int('topic_replies', array('max' => 16000000));  
 $_CLASS['core_db']->add_table_field_int('topic_status', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('topic_type', array('max' => 1));
 
@@ -602,14 +602,14 @@ $_CLASS['core_db']->add_table_field_int('topic_type', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('topic_last_post_id', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('topic_first_post_id', array('max' => 16000000, 'null' => true));
 
-$_CLASS['core_db']->add_table_field_int('topic_moved_id', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('topic_moved_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('icon_id', array('max' => 200));
 
 $_CLASS['core_db']->add_table_field_int('topic_attachment', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('topic_approved', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('topic_reported', array('max' => 1, 'null' => true)); 
 field_unix_time('topic_time_limit', true);
-$_CLASS['core_db']->add_table_field_int('topic_replies_real', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('topic_replies_real', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_char('topic_first_poster_name', 50);
 $_CLASS['core_db']->add_table_field_int('topic_last_poster_id', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_char('topic_last_poster_name', 50, true);
@@ -899,7 +899,7 @@ $_CLASS['core_db']->table_create('start', $table_prefix.'forums_privmsgs_folder'
 $_CLASS['core_db']->add_table_field_int('folder_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_char('folder_name', 40);
-$_CLASS['core_db']->add_table_field_int('pm_count', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('pm_count', array('max' => 16000000));
 
 $_CLASS['core_db']->add_table_index('folder_id', 'primary');
 $_CLASS['core_db']->add_table_index('user_id');

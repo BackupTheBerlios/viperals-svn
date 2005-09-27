@@ -27,52 +27,38 @@ class ucp_prefs extends module
 
 				if ($submit)
 				{
-					$var_ary = array(
-						'dateformat'		=> (string) $_CORE_CONFIG['global']['default_dateformat'], 
-						'lang'				=> (string) $_CORE_CONFIG['global']['default_lang'], 
-						'tz'				=> (float) $_CORE_CONFIG['global']['default_timezone'] / 3600,
-						'theme'				=> (string) $_CORE_CONFIG['global']['default_theme'], 
-						'dst'				=> (bool) $_CORE_CONFIG['global']['default_dst'], 
-						'viewemail'			=> false, 
-						'massemail'			=> true, 
-						'hideonline'		=> false, 
-						'notifymethod'		=> 0, 
-						'notifypm'			=> true, 
-						'popuppm'			=> false, 
-						'allowpm'			=> true,
-						'report_pm_notify'	=> false
-					);
+					$time_format	= get_variable('time_format', 'REQUEST', null);
+					$lang			= get_variable('lang', 'REQUEST', null);
+					$tz				= get_variable('tz', 'REQUEST', null);
+					$dst			= get_variable('dst', 'REQUEST', null);
 
-					foreach ($var_ary as $var => $default)
-					{
-						$data[$var] = request_var($var, $default);
-					}
+					$theme 		= get_variable('theme', 'REQUEST', null);
+	
+					$viewemail		= (bool) get_variable('viewemail', 'REQUEST', true, 'interger');
+					$massemail		= (bool) get_variable('massemail', 'REQUEST', false, 'interger');
+					$hideonline	= (bool) get_variable('hideonline', 'REQUEST', true, 'interger');
+					$notifypm		= (bool) get_variable('notifypm', 'REQUEST', true, 'interger');
 
-					$var_ary = array(
-						'lang'			=> array('match', false, '#^[a-z_]{2,}$#i'),
-						'tz'			=> array('num', false, -13, 13),
-					);
+					$popuppm	= (bool) get_variable('popuppm', 'REQUEST', true, 'interger');
+					$allowpm	= (bool) get_variable('allowpm', 'REQUEST', true, 'interger');
+				//$report_pm_notify	= (bool) get_variable('report_pm_notify', 'REQUEST', true, 'interger');
 
-					$error = validate_data($data, $var_ary);
-					extract($data);
-					unset($data);
-
-					if (!sizeof($error))
+					if (empty($error))
 					{
 						$_CLASS['core_user']->optionset('popuppm', $popuppm);
-						$_CLASS['core_user']->optionset('report_pm_notify', $report_pm_notify);
+						//$_CLASS['core_user']->optionset('report_pm_notify', $report_pm_notify);
 						
 						$sql_ary = array(
 							'user_allow_pm'			=> $allowpm, 
 							'user_allow_viewemail'	=> $viewemail, 
 							'user_allow_massemail'	=> $massemail, 
-							'user_allow_viewonline'	=> ($_CLASS['auth']->acl_get('u_hideonline')) ? !$hideonline : $_CLASS['core_user']->data['user_allow_viewonline'], 
-							'user_notify_type'		=> $notifymethod, 
+							'user_allow_viewonline'	=> ($_CLASS['forums_auth']->acl_get('u_hideonline')) ? !$hideonline : $_CLASS['core_user']->data['user_allow_viewonline'], 
+							//'user_notify_type'		=> $notifymethod, 
 							//'user_notify_pm'		=> $notifypm,
 							'user_data'				=> serialize($_CLASS['core_user']->data['user_data']), 
 
 							'user_dst'				=> $dst,
-							'user_time_format'		=> $dateformat,
+							'user_time_format'		=> $time_format,
 							'user_lang'				=> $lang,
 							'user_timezone'			=> $tz * 3600,
 							'user_theme'			=> $theme,
@@ -153,8 +139,8 @@ class ucp_prefs extends module
 					'DATE_FORMAT'		=> $dateformat, 
 
 					'S_LANG_OPTIONS'	=> select_language($lang), 
-					'S_THEME_OPTIONS'	=> select_theme($theme),
-					'S_TZ_OPTIONS'		=> select_tz($tz),
+					'S_THEME_OPTIONS'	=> select_theme($theme, true),
+					'S_TZ_OPTIONS'		=> select_tz($tz, true),
 					'S_CAN_HIDE_ONLINE'	=> true, 
 					'S_SELECT_NOTIFY'	=> ($config['jab_enable'] && $_CLASS['core_user']->data['user_jabber'] && @extension_loaded('xml')) ? true : false)
 				);
@@ -164,47 +150,30 @@ class ucp_prefs extends module
 
 				if ($submit)
 				{
-					$var_ary = array(
-						'topic_sk'	=> (string) 't',
-						'topic_sd'	=> (string) 'd',
-						'topic_st'	=> 0,
+					$topic_sk 	= get_variable('topic_sk', 'REQUEST', 't');
+					$topic_sd	= get_variable('topic_sd', 'REQUEST', 'd');
+					$topic_st	= get_variable('topic_st', 'REQUEST', 0, 'interger');
+					
+					$post_sk 	= get_variable('post_sk', 'REQUEST', 't');
+					$post_sd	= get_variable('post_sd', 'REQUEST', 'd');
+					$post_st	= get_variable('post_st', 'REQUEST', 0, 'interger');
+	
+					$images		= (bool) get_variable('images', 'REQUEST', true, 'interger');
+					$flash		= (bool) get_variable('flash', 'REQUEST', false, 'interger');
+					$smilies	= (bool) get_variable('smilies', 'REQUEST', true, 'interger');
+					$sigs		= (bool) get_variable('sigs', 'REQUEST', true, 'interger');
+					$avatars	= (bool) get_variable('avatars', 'REQUEST', true, 'interger');
+					$wordcensor	= (bool) get_variable('wordcensor', 'REQUEST', true, 'interger');
 
-						'post_sk'	=> (string) 't',
-						'post_sd'	=> (string) 'a',
-						'post_st'	=> 0,
-
-						'images'	=> true, 
-						'flash'		=> false, 
-						'smilies'	=> true, 
-						'sigs'		=> true, 
-						'avatars'	=> true, 
-						'wordcensor'=> false, 
-					);
-
-					foreach ($var_ary as $var => $default)
-					{
-						$data[$var] = request_var($var, $default);
-					}
-
-					$var_ary = array(
-						'topic_sk'	=> array('string', false, 1, 1),
-						'topic_sd'	=> array('string', false, 1, 1),
-						'post_sk'	=> array('string', false, 1, 1),
-						'post_sd'	=> array('string', false, 1, 1),
-					);
-
-					$error = validate_data($data, $var_ary);
-					extract($data);
-					unset($data);
-
-					if (!sizeof($error))
+					if (empty($error))
 					{
 						$_CLASS['core_user']->optionset('viewimg', $images);
 						$_CLASS['core_user']->optionset('viewflash', $flash);
 						$_CLASS['core_user']->optionset('viewsmilies', $smilies);
 						$_CLASS['core_user']->optionset('viewsigs', $sigs);
 						$_CLASS['core_user']->optionset('viewavatars', $avatars);
-						if ($_CLASS['auth']->acl_get('u_chgcensors'))
+
+						if ($_CLASS['forums_auth']->acl_get('u_chgcensors'))
 						{
 							$_CLASS['core_user']->optionset('viewcensors', $wordcensor);
 						}
@@ -229,18 +198,15 @@ class ucp_prefs extends module
 						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
 						trigger_error($message);
 					}
-					// Replace "error" strings with their real, localised form
-					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 				}
 
-				$topic_sk = (isset($topic_sk)) ? $topic_sk : ((!empty($_CLASS['core_user']->data['user_tpic_sortby_type'])) ? $_CLASS['core_user']->data['user_topic_sortby_type'] : 't');
-				$post_sk = (isset($post_sk)) ? $post_sk : ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't');
+				$topic_sd = empty($_CLASS['core_user']->data['user_topic_sortby_dir']) ? 'd' : $_CLASS['core_user']->data['user_topic_sortby_dir'];
+				$topic_sk = empty($_CLASS['core_user']->data['user_tpic_sortby_type']) ? 't' : $_CLASS['core_user']->data['user_topic_sortby_type'];
+				$topic_st = empty($_CLASS['core_user']->data['user_topic_show_days']) ? 0 : $_CLASS['core_user']->data['user_topic_show_days'];
 
-				$topic_sd = (isset($topic_sd)) ? $topic_sd : ((!empty($_CLASS['core_user']->data['user_topic_sortby_dir'])) ? $_CLASS['core_user']->data['user_topic_sortby_dir'] : 'd');
-				$post_sd = (isset($post_sd)) ? $post_sd : ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'd');
-				
-				$topic_st = (isset($topic_st)) ? $topic_st : ((!empty($_CLASS['core_user']->data['user_topic_show_days'])) ? $_CLASS['core_user']->data['user_topic_show_days'] : 0);
-				$post_st = (isset($post_st)) ? $post_st : ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0);
+				$post_sd = empty($_CLASS['core_user']->data['user_post_sortby_dir']) ? 'd' : $_CLASS['core_user']->data['user_post_sortby_dir'];
+				$post_sk = empty($_CLASS['core_user']->data['user_post_sortby_type']) ? 't' : $_CLASS['core_user']->data['user_post_sortby_type'];
+				$post_st = empty($_CLASS['core_user']->data['user_post_show_days']) ? 0 : $_CLASS['core_user']->data['user_post_show_days'];
 
 				$sort_dir_text = array('a' => $_CLASS['core_user']->lang['ASCENDING'], 'd' => $_CLASS['core_user']->lang['DESCENDING']);
 				
@@ -282,28 +248,29 @@ class ucp_prefs extends module
 					}
 					${'s_sort_' . $sort_option . '_dir'} .= '</select>';
 				}
-				
-				$images = (isset($images)) ? $images : $_CLASS['core_user']->optionget('viewimg');
+
+				$images 	= $_CLASS['core_user']->optionget('viewimg');
+				$flash		= $_CLASS['core_user']->optionget('viewflash');
+				$smilies	= $_CLASS['core_user']->optionget('viewsmilies');
+				$sigs		= $_CLASS['core_user']->optionget('viewsigs');
+				$avatars	= $_CLASS['core_user']->optionget('viewavatars');
+				$wordcensor = $_CLASS['core_user']->optionget('viewcensors');
+
 				$images_yes = ($images) ? ' checked="checked"' : '';
 				$images_no = (!$images) ? ' checked="checked"' : '';
-				$flash = (isset($flash)) ? $flash : $_CLASS['core_user']->optionget('viewflash');
 				$flash_yes = ($flash) ? ' checked="checked"' : '';
 				$flash_no = (!$flash) ? ' checked="checked"' : '';
-				$smilies = (isset($smilies)) ? $smilies : $_CLASS['core_user']->optionget('viewsmilies');
 				$smilies_yes = ($smilies) ? ' checked="checked"' : '';
 				$smilies_no = (!$smilies) ? ' checked="checked"' : '';
-				$sigs = (isset($sigs)) ? $sigs : $_CLASS['core_user']->optionget('viewsigs');
 				$sigs_yes = ($sigs) ? ' checked="checked"' : '';
 				$sigs_no = (!$sigs) ? ' checked="checked"' : '';
-				$avatars = (isset($avatars)) ? $avatars : $_CLASS['core_user']->optionget('viewavatars');
 				$avatars_yes = ($avatars) ? ' checked="checked"' : '';
 				$avatars_no = (!$avatars) ? ' checked="checked"' : '';
-				$wordcensor = (isset($wordcensor)) ? $wordcensor : $_CLASS['core_user']->optionget('viewcensors');
 				$wordcensor_yes = ($wordcensor) ? ' checked="checked"' : '';
 				$wordcensor_no = (!$wordcensor) ? ' checked="checked"' : '';
 
 				$_CLASS['core_template']->assign_array(array( 
-					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
+					'ERROR'				=> empty($error) ? '' : implode('<br />', $error),
 					
 					'VIEW_IMAGES_YES'		=> $images_yes, 
 					'VIEW_IMAGES_NO'		=> $images_no, 
@@ -318,78 +285,64 @@ class ucp_prefs extends module
 					'DISABLE_CENSORS_YES'	=> $wordcensor_yes, 
 					'DISABLE_CENSORS_NO'	=> $wordcensor_no,
 
-					'S_CHANGE_CENSORS'		=> ($_CLASS['auth']->acl_get('u_chgcensors')) ? true : false, 
+					'S_CHANGE_CENSORS'		=> $_CLASS['forums_auth']->acl_get('u_chgcensors'), 
 
 					'S_TOPIC_SORT_DAYS'		=> $s_limit_topic_days,
 					'S_TOPIC_SORT_KEY'		=> $s_sort_topic_key,
 					'S_TOPIC_SORT_DIR'		=> $s_sort_topic_dir,
 					'S_POST_SORT_DAYS'		=> $s_limit_post_days,
 					'S_POST_SORT_KEY'		=> $s_sort_post_key,
-					'S_POST_SORT_DIR'		=> $s_sort_post_dir)
-				);
-				
-				break;
+					'S_POST_SORT_DIR'		=> $s_sort_post_dir
+				));
+			break;
 
 			case 'post':
-
 				if ($submit)
 				{
-					$var_ary = array(
-						'bbcode'	=> true, 
-						'html'		=> false, 
-						'smilies'	=> true,
-						'sig'		=> true, 
-						'notify'	=> false, 
-					);
-
-					foreach ($var_ary as $var => $default)
-					{
-						$$var = request_var($var, $default);
-					}
+					$bbcode 	= (bool) get_variable('bbcode', 'REQUEST', true, 'interger');
+					$html		= (bool) get_variable('html', 'REQUEST', false, 'interger');
+					$smilies	= (bool) get_variable('smilies', 'REQUEST', true, 'interger');
+					$sig		= (bool) get_variable('sig', 'REQUEST', true, 'interger');
+					$notify		= (bool) get_variable('notify', 'REQUEST', false, 'interger');
 
 					$_CLASS['core_user']->optionset('bbcode', $bbcode);
 					$_CLASS['core_user']->optionset('html', $html);
 					$_CLASS['core_user']->optionset('smilies', $smilies);
 					$_CLASS['core_user']->optionset('attachsig', $sig);
 
-					if (!sizeof($error))
-					{
-						$sql_ary = array(
-							'user_data'		=> serialize($_CLASS['core_user']->data['user_data']),
-							'user_notify'	=> $notify,
-						);
+					$sql_ary = array(
+						'user_data'		=> serialize($_CLASS['core_user']->data['user_data']),
+						'user_notify'	=> $notify,
+					);
 
-						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
-							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
-						$_CLASS['core_db']->sql_query($sql);
+					$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
+								WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
+					$_CLASS['core_db']->sql_query($sql);
 
-						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
-						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
-						trigger_error($message);
-					}
-					// Replace "error" strings with their real, localised form
-					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
+					$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
+					$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
+					trigger_error($message);
 				}
-				
-				$bbcode = (isset($bbcode)) ? $bbcode : $_CLASS['core_user']->optionget('bbcode');
+
+				$bbcode = $_CLASS['core_user']->optionget('bbcode');
+				$html = $_CLASS['core_user']->optionget('html');
+				$smilies = $_CLASS['core_user']->optionget('smilies');
+				$notify = $_CLASS['core_user']->data['user_notify'];
+
 				$bbcode_yes = ($bbcode) ? ' checked="checked"' : '';
-				$bbcode_no = (!$bbcode) ? ' checked="checked"' : '';
-				$html = (isset($html)) ? $html : $_CLASS['core_user']->optionget('html');
+				$bbcode_no = (!$bbcode) ? ' checked="checked"' : '';		
 				$html_yes = ($html) ? ' checked="checked"' : '';
 				$html_no = (!$html) ? ' checked="checked"' : '';
-				$smilies = (isset($smilies)) ? $smilies : $_CLASS['core_user']->optionget('smilies');
 				$smilies_yes = ($smilies) ? ' checked="checked"' : '';
 				$smilies_no = (!$smilies) ? ' checked="checked"' : '';
-				$sig = (isset($sig)) ? $sig : $_CLASS['core_user']->optionget('attachsig');
+				$sig = $_CLASS['core_user']->optionget('attachsig');
 				$sig_yes = ($sig) ? ' checked="checked"' : '';
 				$sig_no = (!$sig) ? ' checked="checked"' : '';
-				$notify = (isset($notify)) ? $notify : $_CLASS['core_user']->data['user_notify'];
 				$notify_yes = ($notify) ? ' checked="checked"' : '';
 				$notify_no = (!$notify) ? ' checked="checked"' : '';
 
-				$_CLASS['core_template']->assign_array(array( 
-					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',
+				$_CLASS['core_template']->assign_array(array(
+					'ERROR'				=> empty($error) ? '' :  implode('<br />', $error),
 
 					'DEFAULT_BBCODE_YES'	=> $bbcode_yes, 
 					'DEFAULT_BBCODE_NO'		=> $bbcode_no, 
@@ -400,18 +353,20 @@ class ucp_prefs extends module
 					'DEFAULT_SIG_YES'		=> $sig_yes, 
 					'DEFAULT_SIG_NO'		=> $sig_no, 
 					'DEFAULT_NOTIFY_YES'	=> $notify_yes, 
-					'DEFAULT_NOTIFY_NO'		=> $notify_no,)
-				);
-				break;
+					'DEFAULT_NOTIFY_NO'		=> $notify_no,
+				));
+			break;
+			
+			default:
+				die;
+			break;
 		}
 
 		$_CLASS['core_template']->assign_array(array( 
 			'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PREFS_' . strtoupper($mode)],
-			'S_PRIVMSGS'		=> false,
-
 			'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
-			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"))
-		);
+			'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode")
+		));
 
 		$this->display($_CLASS['core_user']->lang['UCP_PROFILE'], 'ucp_prefs_' . $mode . '.html');
 	}

@@ -212,7 +212,7 @@ if (in_array($mode, array('split', 'split_all', 'split_beyond', 'merge', 'merge_
 {
 	$_REQUEST['action'] = $action = $mode;
 	$mode = 'topic_view';
-	$quickmod = false;
+	$quick_mod = false;
 }
 
 // Forum view modes
@@ -220,7 +220,7 @@ if (in_array($mode, array('resync')))
 {
 	$_REQUEST['action'] = $action = $mode;
 	$mode = 'forum_view';
-	$quickmod = false;
+	$quick_mod = false;
 }
 
 if (!$quick_mod)
@@ -229,15 +229,18 @@ if (!$quick_mod)
 	{
 		case 'front':
 			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_front.php');
+			script_close(false);
 			//$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
 		break;
 
 		case 'forum_view':
 			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_forum.php');
+			script_close(false);
 		break;
 		
 		case 'topic_view':
 			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_topic.php');
+			script_close(false);
 		break;
 			
 		case 'post_details':
@@ -246,39 +249,143 @@ if (!$quick_mod)
 			mcp_post_details($id, $mode, $action, $url);
 			
 			$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_post.html');
-		break;
-
-		default:
-			require_once(SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php');
+			script_close(false);
 		break;
 	}
 
-	script_close(false);
+	//script_close(false);
 }
 
+require_once(SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php');
+	
 switch ($mode)
 {
 	case 'lock':
 	case 'unlock':
+		$topic_ids = get_topic_ids($quick_mod);
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		lock_unlock($mode, $topic_ids);
+	break;
+
 	case 'lock_post':
 	case 'unlock_post':
-	case 'make_sticky':
+		$post_ids = get_post_ids($quick_mod);
+
+		if (empty($post_ids))
+		{
+			trigger_error('NO_POST_SELECTED');
+		}
+
+		lock_unlock($mode, $post_ids);
+	break;
+
 	case 'make_announce':
+	case 'make_sticky':
 	case 'make_global':
 	case 'make_normal':
-	case 'fork':
+		$topic_ids = get_topic_ids($quick_mod);
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		change_topic_type($mode, $topic_ids);
+	break;
+
 	case 'move':
-	case 'delete_post':
+		$_CLASS['core_user']->add_lang('viewtopic');
+
+		$topic_ids = get_topic_ids($quick_mod);
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		mcp_move_topic($topic_ids);
+	break;
+
+	case 'fork':
+		$_CLASS['core_user']->add_lang('viewtopic');
+
+		$topic_ids = get_topic_ids($quick_mod);
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		mcp_fork_topic($topic_ids);
+	break;
+
 	case 'delete_topic':
-		require_once(SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php');
+		$_CLASS['core_user']->add_lang('viewtopic');
+
+		$topic_ids = get_topic_ids($quick_mod);
+
+		if (empty($topic_ids))
+		{
+			trigger_error('NO_TOPIC_SELECTED');
+		}
+
+		mcp_delete_topic($topic_ids);
+	break;
+
+	case 'delete_post':
+		$_CLASS['core_user']->add_lang('posting');
+
+		$post_ids = get_post_ids($quick_mod);
+
+		if (empty($post_ids))
+		{
+			trigger_error('NO_POST_SELECTED');
+		}
+
+		mcp_delete_post($post_ids);
 	break;
 
 	default:
-		trigger_error("$mode not allowed as quickmod");
+		trigger_error("Unknown mode: $mode");
 	break;
 }
 
 script_close(false);
+
+function get_topic_ids($quick_mod)
+{
+	$topic_ids = array_unique(get_variable('topic_id_list', 'POST', array(), 'array:int'));
+
+	if (empty($topic_ids))
+	{
+		if ($topic_ids = get_variable('t', 'REQUEST', false, 'int'))
+		{
+			$topic_ids = array($topic_ids);
+		}
+	}
+
+	return $topic_ids;
+}
+
+function get_post_ids($quick_mod)
+{
+	$post_ids = array_unique(get_variable('post_id_list', 'POST', array(), 'array:int'));
+
+	if (empty($post_ids))
+	{
+		if ($post_ids = get_variable('p', 'REQUEST', false, 'int'))
+		{
+			$post_ids = array($post_ids);
+		}
+	}
+
+	return $post_ids;
+}
 
 // Get simple topic data
 function get_topic_data($topic_ids, $acl_list = false)
@@ -377,7 +484,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 	global $_CLASS;
 
 	$sort_days = request_var('sort_days', 0);
-	$min_time = ($sort_days) ? time() - ($sort_days * 86400) : 0;
+	$min_time = ($sort_days) ? $_CLASS['core_user']->time - ($sort_days * 86400) : 0;
 
 	switch ($mode)
 	{

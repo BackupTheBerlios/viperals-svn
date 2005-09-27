@@ -49,7 +49,9 @@ $data = array(
 
 $_CLASS['core_blocks']->add_block($data);
 
-load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'auth');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
+$_CLASS['auth'] =& $_CLASS['forums_auth'];
+
 require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
 require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
 

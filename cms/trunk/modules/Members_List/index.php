@@ -28,7 +28,8 @@ if (!defined('VIPERAL'))
 }
 
 require_once($site_file_root.'includes/forums/functions.php');
-load_class($site_file_root.'includes/forums/auth.php', 'auth');
+load_class($site_file_root.'includes/forums/auth.php', 'forums_auth');
+$_CLASS['auth'] =& $_CLASS['forums_auth'];
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
@@ -46,10 +47,9 @@ $mode		= request_var('mode', '');
 $action		= request_var('action', '');
 $user_id	= request_var('u', ANONYMOUS);
 $group_id	= request_var('g', 0);
-$topic_id	= request_var('t', 0);
 
 $start		= request_var('start', 0);
-$submit		= (isset($_POST['submit'])) ? true : false;
+$submit		= isset($_POST['submit']);
 
 $sort_key	= request_var('sk', 'c');
 $sort_dir	= request_var('sd', 'a');
@@ -400,7 +400,7 @@ switch ($mode)
 		}
 
 		// Do the relevant calculations
-		$memberdays = max(1, round((time() - $member['user_reg_date']) / 86400));
+		$memberdays = max(1, round(($_CLASS['core_user']->time - $member['user_reg_date']) / 86400));
 		$posts_per_day = $member['user_posts'] / $memberdays;
 		$percentage = ($config['num_posts']) ? min(100, ($num_real_posts / $config['num_posts']) * 100) : 0;
 
@@ -502,15 +502,16 @@ switch ($mode)
 		
 		$_CLASS['core_template']->assign_array(array(
 			'MESSAGE' => false,
-			'SUBJECT' => false)
-		);
+			'SUBJECT' => false
+		));
 		
 		if (!$_CORE_CONFIG['email']['email_enable'])
 		{
 			trigger_error('EMAIL_DISABLED');
 		}
 
-		if (($user_id == ANONYMOUS || !$config['board_email_form']) && !$topic_id)
+		// do soemthing better than this
+		if (($user_id === ANONYMOUS || !$config['board_email_form']) && !$topic_id)
 		{
 			trigger_error('NO_EMAIL');
 		}
@@ -521,17 +522,20 @@ switch ($mode)
 		}
 
 		// Are we trying to abuse the facility?
-		if (time() - $_CLASS['core_user']->data['user_emailtime'] < $config['flood_interval'])
+		/*
+		if (($_CLASS['core_user']->time - $_CLASS['core_user']->data['user_last_email']) < $config['flood_interval'])
 		{
 			trigger_error('FLOOD_EMAIL_LIMIT');
 		}
+		*/
 
-		$name		= strip_tags(request_var('name', ''));
-		$email		= strip_tags(request_var('email', ''));
-		$email_lang = request_var('lang', '');
-		$subject	= request_var('subject', '');
-		$message	= request_var('message', '');
-		$cc			= (!empty($_POST['cc_email'])) ? true : false;
+		$name		= strip_tags(get_variable('name', 'POST'));
+		$email		= strip_tags(get_variable('email', 'POST'));
+		$subject	= get_variable('subject', 'POST');
+		$message	= get_variable('message', 'POST');
+		$cc			= !empty($_POST['cc_email']);
+		$topic_id	= get_variable('t', 'REQUEST', false, 'int');
+
 
 		// Are we sending an email to a user on this board? Or are we sending a
 		// topic heads-up message?
@@ -543,13 +547,14 @@ switch ($mode)
 				WHERE user_id = $user_id
 					AND user_type = ". USER_NORMAL . ' AND user_status = ' . STATUS_ACTIVE;
 			$result = $_CLASS['core_db']->query($sql);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
-			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
+			if (!$row)
 			{
 				trigger_error('NO_USER');
 			}
-			$_CLASS['core_db']->free_result($result);
-
+			
 			// Can we send email to this user?
 			if (!$row['user_allow_viewemail'] && !$_CLASS['auth']->acl_get('a_user'))
 			{
@@ -562,26 +567,22 @@ switch ($mode)
 				FROM ' . FORUMS_TOPICS_TABLE . "
 				WHERE topic_id = $topic_id";
 			$result = $_CLASS['core_db']->query($sql);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
 
-			if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
+			if (!$row)
 			{
 				trigger_error('NO_TOPIC');
 			}
-			$_CLASS['core_db']->free_result($result);
 
 			if (!$_CLASS['auth']->acl_get('f_read', $row['forum_id']))
 			{
 				trigger_error('NO_FORUM_READ');
 			}
-
-			if (!$_CLASS['auth']->acl_get('f_email', $row['forum_id']))
-			{
-				trigger_error('NO_EMAIL');
-			}
 		}
 
-		// User has submitted a message, handle it
 		$error = array();
+
 		if ($submit)
 		{
 			if (!$topic_id)
@@ -598,7 +599,7 @@ switch ($mode)
 			}
 			else
 			{
-				if (!$email || !preg_match('#^.*?@(.*?\.)?[a-z0-9\-]+\.[a-z]{2,4}$#i', $email))
+				if (!$email || !check_email($email))
 				{
 					$error[] = $_CLASS['core_user']->lang['EMPTY_ADDRESS_EMAIL'];
 				}
@@ -609,56 +610,66 @@ switch ($mode)
 				}
 			}
 
-			if (!sizeof($error))
+			if (empty($error))
 			{
+				/*
 				$sql = 'UPDATE ' . USERS_TABLE . '
-					SET user_emailtime = ' . gmtime() . '
+					SET user_last_email = ' . $_CLASS['core_user']->time . '
 					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 				$result = $_CLASS['core_db']->query($sql);
+				*/
 
 				// Add class loader
-				require_once($site_file_root.'includes/forums/functions_messenger.php');
 
-				$email_tpl	= (!$topic_id) ? 'profile_send_email' : 'email_notify';
-				$email_lang = (!$topic_id) ? $row['user_lang'] : $email_lang;
-				$email		= (!$topic_id) ? $row['user_email'] : $email;
+				require_once(SITE_FILE_ROOT.'includes/mailer.php');
+			
+				$mailer = new core_mailer;
 
-				$messenger = new messenger();
-
-				$messenger->template($email_tpl, $email_lang);
-				$messenger->subject($subject);
-
-				$messenger->replyto($_CLASS['core_user']->data['user_email']);
-				$messenger->to($email, $row['username']);
-
-				if (!$topic_id)
+				if ($topic_id)
 				{
-					$messenger->im($row['user_jabber'], $row['username']);
+					$template	= 'email_notify.txt';
+					$email		= $email;
+					$subject	= $row['topic_title'];
+				}
+				else
+				{
+					$template	= 'profile_send_email.txt';
+					$email		= $row['user_email'];
+					$name 		= $row['username'];
+					$subject .= 'Email a friend';
 				}
 
+
+				$mailer->to($email, $name);
+				$mailer->reply_to($_CLASS['core_user']->data['user_email'], $_CLASS['core_user']->data['username']);
+
+				$mailer->subject($subject);
+			
 				if ($cc)
 				{
-					$messenger->cc($_CLASS['core_user']->data['user_email'], $_CLASS['core_user']->data['username']);
+					$mailer->cc($_CLASS['core_user']->data['user_email'], $_CLASS['core_user']->data['username']);
 				}
 
-				$messenger->headers('X-AntiAbuse: Board servername - ' . $config['server_name']);
-				$messenger->headers('X-AntiAbuse: User_id - ' . $_CLASS['core_user']->data['user_id']);
-				$messenger->headers('X-AntiAbuse: Username - ' . $_CLASS['core_user']->data['username']);
-				$messenger->headers('X-AntiAbuse: User IP - ' . $_CLASS['core_user']->ip);
 
-				$messenger->assign_vars(array(
-					'SITENAME'		=> $_CORE_CONFIG['global']['sitename'],
+				//$mailer->extra_header('X-AntiAbuse: Board servername - ' . $config['server_name']);
+				$mailer->extra_header('X-AntiAbuse: User_id - ' . $_CLASS['core_user']->data['user_id']);
+				$mailer->extra_header('X-AntiAbuse: Username - ' . $_CLASS['core_user']->data['username']);
+				$mailer->extra_header('X-AntiAbuse: User IP - ' . $_CLASS['core_user']->ip);
+
+				$_CLASS['core_template']->assign_array(array(
+					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 					'BOARD_EMAIL'	=> $config['board_contact'],
 					'FROM_USERNAME' => stripslashes($_CLASS['core_user']->data['username']),
-					'TO_USERNAME'   => ($topic_id) ? stripslashes($name) : stripslashes($row['username']),
+					'TO_USERNAME'   => ($topic_id) ? $name : $row['username'],
 					'MESSAGE'		=> $message,
 					'TOPIC_NAME'	=> ($topic_id) ? strtr($row['topic_title'], array_flip(get_html_translation_table(HTML_ENTITIES))) : '',
 
 					'U_TOPIC'	=> ($topic_id) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'] . "&t=$topic_id", true, true, false) : '')
 				);
 
-				$messenger->send($row['user_notify_type']);
-				$messenger->save_queue();
+				$mailer->message = trim($_CLASS['core_template']->display('email/members_list/'.$template, true));
+				echo $mailer->message; die;
+				$mailer->send();
 
 				$_CLASS['core_display']->meta_refresh(3, generate_link());
 				$message = (!$topic_id) ? sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="' . generate_link() . '">', '</a>') : sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'],  '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=" . $row['topic_id']) . '">', '</a>');
@@ -994,7 +1005,7 @@ switch ($mode)
 
 		$sql = 'SELECT session_user_id, MAX(session_time) AS session_time
 			FROM ' . SESSIONS_TABLE . '
-			WHERE session_time >= ' . (time() - $_CORE_CONFIG['server']['session_length']) . '
+			WHERE session_time >= ' . ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']) . '
 				AND session_user_id <> ' . ANONYMOUS . '
 			GROUP BY session_user_id';
 		$result = $_CLASS['core_db']->query($sql);

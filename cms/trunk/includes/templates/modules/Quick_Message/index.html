@@ -1,12 +1,12 @@
 <!-- DISPLAY_HEADER -->
 
-{ $A_TABLE_OPEN }
+{ $THEME_TABLE_OPEN }
 
 <table class="tablebg" width="100%" cellpadding="1" cellspacing="1">
 	<tbody>
 		<tr>
 			<th width="20%">{ $L_POSTER }</th>
-			<th width="80%" colspan="2">{ $L_MESSAGE }</th>
+			<th width="80%">{ $L_MESSAGE }</th>
 		</tr>
 		<tr>
 			<td class="spacer" colspan="2" height="7"></td>
@@ -40,18 +40,12 @@
 					{ $L_NO_POST }
 				</td>
 			</tr>
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $quick_message -->
 
-		<!-- IF { $Q_MESSAGE_PAGINATION } -->
-		<tr class="row2">
-			<td style="padding: 5px;" valign="middle" colspan="2">
-				<div style="padding-right: 5px; text-align: right;">{ $Q_MESSAGE_PAGINATION }</div>
-			</td>
-		</tr>
-		<!-- ENDIF -->
+
 	</tbody>
 </table>
 
-{ $A_TABLE_CLOSE }
+{ $THEME_TABLE_CLOSE }
 
 <!-- DISPLAY_FOOTER -->

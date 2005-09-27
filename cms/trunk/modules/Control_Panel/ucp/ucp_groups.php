@@ -185,12 +185,10 @@ class ucp_groups extends module
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign_array(array(
-			'S_DISPLAY_FORM', true,
-			'S_UCP_ACTION' => ''
-		));
+		$_CLASS['core_template']->assign('S_UCP_ACTION', generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
 
 		$this->display($_CLASS['core_user']->get_lang('UCP_GROUPS'), 'ucp_groups_membership.html');
+		
 	}
 }
 

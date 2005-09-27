@@ -195,8 +195,7 @@ function get_folder($user_id, &$folder, $folder_id = false)
 function clean_sentbox($num_sentbox_messages)
 {
 	global $_CLASS, $config;
-// TEMP
-$_CLASS['core_user']->data['user_message_limit'] = isset($_CLASS['core_user']->data['user_message_limit']) ? $_CLASS['core_user']->data['user_message_limit'] : false;
+
 	$message_limit = ($_CLASS['core_user']->data['user_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['core_user']->data['user_message_limit'];
 	
 	// Check Message Limit - 
@@ -212,12 +211,18 @@ $_CLASS['core_user']->data['user_message_limit'] = isset($_CLASS['core_user']->d
 		$result = $_CLASS['core_db']->query_limit($sql, ($num_sentbox_messages - $message_limit));
 
 		$delete_ids = array();
+
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$delete_ids[] = $row['msg_id'];
 		}
 		$_CLASS['core_db']->free_result($result);
+
+		$_CLASS['core_db']->transaction();
+
 		delete_pm($_CLASS['core_user']->data['user_id'], $delete_ids, PRIVMSGS_SENTBOX);
+
+		$_CLASS['core_db']->transaction('commit');
 	}
 }
 
@@ -275,12 +280,15 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	{
 		return;
 	}
+$_CLASS['core_user']->data['user_message_rules'] = 0;
+$_CLASS['core_user']->data['user_full_folder'] = FULL_FOLDER_NONE;
 
 	$user_new_privmsg = (int) $_CLASS['core_user']->data['user_new_privmsg'];
 	$user_message_rules = (int) $_CLASS['core_user']->data['user_message_rules'];
 	$user_id = (int) $_CLASS['core_user']->data['user_id'];
 
 	$user_rules = $zebra = array();
+
 	if ($user_message_rules)
 	{
 		$sql = 'SELECT * 
@@ -288,7 +296,10 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			WHERE user_id = $user_id";
 		$result = $_CLASS['core_db']->query($sql);
 
-		$user_rules = $_CLASS['core_db']->fetch_row_assocset($result);
+		while($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$user_rules[] = $row;
+		}
 		$_CLASS['core_db']->free_result($result);
 
 		if (!empty($user_rules))
@@ -306,6 +317,8 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 		}
 	}
 
+// I don't like no box
+	/*
 	if ($release)
 	{
 		$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TO_TABLE . ' 
@@ -314,6 +327,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 				AND user_id = $user_id";
 		$_CLASS['core_db']->query($sql);
 	}
+	*/
 
 	// Get those messages not yet placed into any box
 	// NOTE: Expand Group Information to all groups the user/author is in? 
@@ -326,16 +340,18 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	$result = $_CLASS['core_db']->query($sql);
 
 	$action_ary = $move_into_folder = array();
+
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$row['to']		= explode(':', $row['to_address']);
 		$row['bcc']		= explode(':', $row['bcc_address']);
-		$row['friend']	= (isset($zebra[$row['author_id']])) ? $zebra[$row['author_id']]['friend'] : 0;
-		$row['foe']		= (isset($zebra[$row['author_id']])) ? $zebra[$row['author_id']]['foe'] : 0;
-		$row['user_in_group'] = $_CLASS['core_user']->data['group_id'];
-						
+		$row['friend']	= isset($zebra[$row['author_id']]) ? $zebra[$row['author_id']]['friend'] : 0;
+		$row['foe']		= isset($zebra[$row['author_id']]) ? $zebra[$row['author_id']]['foe'] : 0;
+		$row['user_in_group'] = $_CLASS['core_user']->data['user_group'];
+		
 		// Check Rule - this should be very quick since we have all informations we need
 		$is_match = false;
+
 		foreach ($user_rules as $rule_row)
 		{
 			if (($action = check_rule($global_privmsgs_rules, $rule_row, $row, $user_id)) !== false)
@@ -368,7 +384,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			{
 				continue;
 			}
-	
+
 			switch ($rule_ary['action'])
 			{
 				case ACTION_PLACE_INTO_FOLDER:
@@ -376,7 +392,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 					$_folder_id = (int) $rule_ary['folder_id'];
 					$move_into_folder[$_folder_id][] = $msg_id;
 					$num_new++;
-					break;
+				break;
 
 				case ACTION_MARK_AS_READ:
 					if ($rule_ary['unread'])
@@ -384,11 +400,11 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 						$unread_ids[] = $msg_id;
 					}
 					$move_into_folder[PRIVMSGS_INBOX][] = $msg_id;
-					break;
+				break;
 
 				case ACTION_DELETE_MESSAGE:
 					$delete_ids[] = $msg_id;
-					break;
+				break;
 
 				case ACTION_MARK_AS_IMPORTANT:
 					if (!$rule_ary['important'])
@@ -396,30 +412,30 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 						$important_ids[] = $msg_id;
 					}
 					$move_into_folder[PRIVMSGS_INBOX][] = $msg_id;
-					break;
-
-				default:
+				break;
 			}
 		}
 	}
 
-	$num_new += sizeof(array_unique($delete_ids));
-	$num_unread += sizeof(array_unique($delete_ids));
-	$num_unread += sizeof(array_unique($unread_ids));
+	$num_new += count(array_unique($delete_ids));
+	$num_unread += count(array_unique($delete_ids));
+	$num_unread += count(array_unique($unread_ids));
 
 	// Do not change the order of processing
 	// The number of queries needed to be executed here highly depends on the defined rules and are
 	// only gone through if new messages arrive.
 	$num_not_moved = 0;
 
+	$_CLASS['core_db']->transaction();
+
 	// Delete messages
-	if (sizeof($delete_ids))
+	if (!empty($delete_ids))
 	{
 		delete_pm($user_id, $delete_ids, PRIVMSGS_NO_BOX);
 	}
 
 	// Set messages to Unread
-	if (sizeof($unread_ids))
+	if (!empty($unread_ids))
 	{
 		$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TO_TABLE . ' 
 			SET unread = 0
@@ -430,10 +446,10 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	}
 
 	// mark messages as important
-	if (sizeof($important_ids))
+	if (!empty($important_ids))
 	{
 		$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TO_TABLE . '
-			SET marked = !marked
+			SET marked = 1
 			WHERE folder_id = ' . PRIVMSGS_NO_BOX . "
 				AND user_id = $user_id
 				AND msg_id IN (" . implode(', ', $important_ids) . ')';
@@ -443,7 +459,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	// Move into folder
 	$folder = array();
 
-	if (sizeof($move_into_folder))
+	if (!empty($move_into_folder))
 	{
 		// Determine Full Folder Action - we need the move to folder id later eventually
 		$full_folder_action = ($_CLASS['core_user']->data['user_full_folder'] == FULL_FOLDER_NONE) ? ($config['full_folder_action'] - (FULL_FOLDER_NONE*(-1))) : $_CLASS['core_user']->data['user_full_folder'];
@@ -462,20 +478,21 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 
 		if (in_array(PRIVMSGS_INBOX, array_keys($move_into_folder)))
 		{
-			$sql = 'SELECT folder_id, COUNT(*) as num_messages
+			$sql = 'SELECT COUNT(*) as num_messages
 				FROM ' . FORUMS_PRIVMSGS_TO_TABLE . "
 				WHERE user_id = $user_id
-					AND folder_id = " . PRIVMSGS_INBOX . "
-				GROUP BY folder_id";
-			$result = $_CLASS['core_db']->query_limit($sql, 1);
-			
-			$folder[PRIVMSGS_INBOX] = (int) $_CLASS['core_db']->sql_fetchfield('num_messages', 0, $result);
-			$_CLASS['core_db']->free_result($result);			
+					AND folder_id = " . PRIVMSGS_INBOX;
+
+			$result = $_CLASS['core_db']->query_limit($sql);
+			list($count) = $_CLASS['core_db']->fetch_row_num($result);
+			$_CLASS['core_db']->free_result($result);	
+
+			$folder[PRIVMSGS_INBOX] = (int) $count;
 		}
 	}
 
 	// Here we have ideally only one folder to move into
-	$message_limit = (!$_CLASS['core_user']->data['user_message_limit']) ? $config['pm_max_msgs'] : $_CLASS['core_user']->data['user_message_limit'];
+	$message_limit = ($_CLASS['core_user']->data['user_message_limit']) ? $_CLASS['core_user']->data['user_message_limit'] : $config['pm_max_msgs'];
 
 	foreach ($move_into_folder as $folder_id => $msg_ary)
 	{
@@ -484,12 +501,12 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 
 		// Check Message Limit - we calculate with the complete array, most of the time it is one message
 		// But we are making sure that the other way around works too (more messages in queue than allowed to be stored)
-		if ($message_limit && $folder[$folder_id] && ($folder[$folder_id] + sizeof($msg_ary)) > $message_limit)
+		if ($message_limit && $folder[$folder_id] && ($folder[$folder_id] + count($msg_ary)) > $message_limit)
 		{
 			$full_folder_action = ($_CLASS['core_user']->data['user_full_folder'] == FULL_FOLDER_NONE) ? ($config['full_folder_action'] - (FULL_FOLDER_NONE*(-1))) : $_CLASS['core_user']->data['user_full_folder'];
 
 			// If destination folder itself is full...
-			if ($full_folder_action >= 0 && ($folder[$full_folder_action] + sizeof($msg_ary)) > $message_limit)
+			if ($full_folder_action >= 0 && ($folder[$full_folder_action] + count($msg_ary)) > $message_limit)
 			{
 				$full_folder_action = $config['full_folder_action'] - (FULL_FOLDER_NONE*(-1));
 			}
@@ -499,7 +516,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			{
 				$dest_folder = $full_folder_action;
 			}
-			else if ($full_folder_action == FULL_FOLDER_DELETE)
+			elseif ($full_folder_action == FULL_FOLDER_DELETE)
 			{
 				// Delete some messages ;)
 				$sql = 'SELECT t.msg_id
@@ -508,7 +525,7 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 						AND t.user_id = $user_id
 						AND t.folder_id = $dest_folder
 					ORDER BY p.message_time ASC";
-				$result = $_CLASS['core_db']->query_limit($sql, (($folder[$dest_folder] + sizeof($msg_ary)) - $message_limit));
+				$result = $_CLASS['core_db']->query_limit($sql, (($folder[$dest_folder] + count($msg_ary)) - $message_limit));
 
 				$delete_ids = array();
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -519,10 +536,10 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 				delete_pm($user_id, $delete_ids, $dest_folder);
 			}
 		}
-		
+
 		if ($full_folder_action == FULL_FOLDER_HOLD)
 		{
-			$num_not_moved += sizeof($msg_ary);
+			$num_not_moved += count($msg_ary);
 			$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TO_TABLE . '
 				SET folder_id = ' . PRIVMSGS_HOLD_BOX . '
 				WHERE folder_id = ' . PRIVMSGS_NO_BOX . "
@@ -543,19 +560,19 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 			if ($dest_folder != PRIVMSGS_INBOX)
 			{
 				$sql = 'UPDATE ' . FORUMS_PRIVMSGS_FOLDER_TABLE . '
-					SET pm_count = pm_count + ' . (int) $_CLASS['core_db']->sql_affectedrows() . "
+					SET pm_count = pm_count + ' . (int) $_CLASS['core_db']->affected_rows() . "
 					WHERE folder_id = $dest_folder
 						AND user_id = $user_id";
 				$_CLASS['core_db']->query($sql);
 			}
 			else
 			{
-				$num_new += $_CLASS['core_db']->sql_affectedrows();
+				$num_new += $_CLASS['core_db']->affected_rows();
 			}
 		}
 	}
 
-	if (sizeof($action_ary))
+	if (!empty($action_ary))
 	{
 		// Move from OUTBOX to SENTBOX
 		// We are not checking any full folder status here... SENTBOX is a special treatment (old messages get deleted)
@@ -570,16 +587,20 @@ function place_pm_into_folder(&$global_privmsgs_rules, $release = false)
 	if ($num_unread || $num_new)
 	{
 		$set_sql = ($num_unread) ? 'user_unread_privmsg = user_unread_privmsg - ' . $num_unread : '';
+
 		if ($num_new)
 		{
-			$set_sql .= ($set_sql != '') ? ', ' : '';
+			$set_sql .= ($set_sql) ? ', ' : '';
 			$set_sql .= 'user_new_privmsg = user_new_privmsg - ' . $num_new;
 		}
-		
+
 		$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
+
 		$_CLASS['core_user']->data['user_new_privmsg'] -= $num_new;
 		$_CLASS['core_user']->data['user_unread_privmsg'] -= $num_unread;
 	}
+
+	$_CLASS['core_db']->transaction('commit');
 
 	return $num_not_moved;
 }
@@ -690,6 +711,8 @@ function set_read_status($read, $msg_id, $user_id, $folder_id)
 
 	$sql_msg = is_array($msg_id) ? 'IN ('.implode(', ', $msg_id).')' : '= '.(int) $msg_id;
 
+	$_CLASS['core_db']->transaction();
+
 	$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TO_TABLE . " 
 		SET unread = $read
 		WHERE msg_id $sql_msg
@@ -706,6 +729,8 @@ function set_read_status($read, $msg_id, $user_id, $folder_id)
 			WHERE user_id = $user_id";
 		$_CLASS['core_db']->query($sql);
 	}
+	
+	$_CLASS['core_db']->transaction('commit');
 }
 
 // Handle all actions possible with marked messages
@@ -742,6 +767,8 @@ function handle_mark_actions($user_id, $mark_action, $msg_ids, $cur_folder_id)
 				break;
 			}
 
+			$_CLASS['core_db']->transaction();
+
 			foreach ($mark_list as $mark => $ids)
 			{
 				$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TO_TABLE . "
@@ -749,6 +776,8 @@ function handle_mark_actions($user_id, $mark_action, $msg_ids, $cur_folder_id)
 					WHERE msg_id IN (" . implode(', ', $ids) . ')';
 				$_CLASS['core_db']->query($sql);
 			}
+
+			$_CLASS['core_db']->transaction('commit');
 		break;
 
 		case 'delete_marked':
@@ -756,8 +785,12 @@ function handle_mark_actions($user_id, $mark_action, $msg_ids, $cur_folder_id)
 
 			if (display_confirmation($_CLASS['core_user']->get_lang('DELETE_MARKED_PM'), generate_hidden_fields($hidden_fields)))
 			{
+				$_CLASS['core_db']->transaction();
+
 				delete_pm($user_id, $msg_ids, $cur_folder_id);
-				
+
+				$_CLASS['core_db']->transaction('commit');
+
 				$success_msg = (count($msg_ids) === 1) ? 'MESSAGE_DELETED' : 'MESSAGES_DELETED';
 				$redirect = generate_link('Control_Panel&amp;i=pm&amp;folder='.$cur_folder_id);
 				$_CLASS['core_display']->meta_refresh(3, $redirect);
@@ -766,14 +799,17 @@ function handle_mark_actions($user_id, $mark_action, $msg_ids, $cur_folder_id)
 			}
 		break;
 
+		/*
 		case 'export_as_xml':
 		case 'export_as_csv':
 		case 'export_as_txt':
 			$export_as = str_replace('export_as_', '', $mark_action);
-			break;
+		break;
+		*/
 
 		default:
 			return false;
+		break;
 	}
 
 	return true;
@@ -1117,21 +1153,23 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 		// u|g => array($user_id => 'to'|'bcc')
 		foreach (array('u', 'g') as $ug_type)
 		{
-			if (isset($data['address_list'][$ug_type]) && sizeof($data['address_list'][$ug_type]))
+			if (!empty($data['address_list'][$ug_type]))
 			{
 				foreach ($data['address_list'][$ug_type] as $id => $field)
 				{
 					$field = ($field == 'to') ? 'to' : 'bcc';
+
 					if ($ug_type == 'u')
 					{
 						$recipients[$id] = $field;
 					}
+
 					${$field}[] = $ug_type . '_' . (int) $id;
 				}
 			}
 		}
 
-		if (isset($data['address_list']['g']) && sizeof($data['address_list']['g']))
+		if (!empty($data['address_list']['g']))
 		{
 			$sql = 'SELECT group_id, user_id
 				FROM ' . USER_GROUP_TABLE . '
@@ -1147,14 +1185,14 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			$_CLASS['core_db']->free_result($result);
 		}
 
-		if (!sizeof($recipients))
+		if (empty($recipients))
 		{
 			trigger_error('NO_RECIPIENT');
 		}
 	}
 
 	$sql = '';
-	
+
 	switch ($mode)
 	{
 		case 'reply':
@@ -1189,7 +1227,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'to_address'		=> implode(':', $to),
 				'bcc_address'		=> implode(':', $bcc)
 			);
-			break;
+		break;
 
 		case 'edit':
 			$sql_data = array(
@@ -1219,7 +1257,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_PRIVMSGS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_data));
 			$data['msg_id'] = $_CLASS['core_db']->insert_id(FORUMS_PRIVMSGS_TABLE, 'msg_id');
 		}
-		else if ($mode === 'edit')
+		elseif ($mode === 'edit')
 		{
 			$sql = 'UPDATE ' . FORUMS_PRIVMSGS_TABLE . ' 
 				SET message_edit_count = message_edit_count + 1, ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data) . ' 
@@ -1241,11 +1279,11 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'msg_id'	=> $data['msg_id'],
 				'user_id'	=> $user_id,
 				'author_id'	=> $_CLASS['core_user']->data['user_id'],
-				'folder_id'	=> PRIVMSGS_INBOX,
+				'folder_id'	=> PRIVMSGS_NO_BOX,
 				'msg_new'	=> 1,
 				'unread'	=> 1,
-				'forwarded'	=> ($mode == 'forward') ? 1 : 0))
-			);
+				'forwarded'	=> ($mode == 'forward') ? 1 : 0)
+			));
 		}
 
 		$sql = 'UPDATE ' . USERS_TABLE . ' 
@@ -1348,9 +1386,9 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	}
 
 	// Send Notifications
-	if ($mode != 'edit')
+	if ($mode !== 'edit')
 	{
-		pm_notification($mode, stripslashes($_CLASS['core_user']->data['username']), $recipients, stripslashes($subject), stripslashes($data['message']));
+		pm_notification($mode, $_CLASS['core_user']->data['username'], $recipients, $subject, $data['message']);
 	}
 
 	return $data['msg_id'];

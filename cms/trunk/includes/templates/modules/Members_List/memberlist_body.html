@@ -83,10 +83,6 @@
 			<!-- IF { $leader_row:U_PM } --><td class="gen" align="center"><a href="{ $leader_row:U_PM }">{ $PM_IMG }</a></td><!-- ENDIF -->
 			<td class="gen" align="center"><!-- IF { $leader_row:U_EMAIL } --><a href="{ $leader_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF --></td>
 			<td class="gen" align="center"><!-- IF { $leader_row:U_WWW } --><a href="{ $leader_row:U_WWW }" target="_blank">{ $WWW_IMG }</a><!-- ENDIF --></td>
-			<!-- IF isset({ $leader_row:S_PROFILE_FIELD1 }) -->
-			<!-- Use a construct like this to include admin defined profile fields. Replace FIELD1 with the name of your field. -->
-			<td class="gen" align="center">{$leader_row:PROFILE_FIELD1_VALUE}</td>
-			<!-- ENDIF -->
 			<!-- IF { $S_SEARCH_USER } --><td align="center"><input type="checkbox" name="user" value="{$leader_row:USERNAME}" /></td><!-- ENDIF -->
 
 		</tr>
@@ -113,12 +109,7 @@
 			<td class="gen" align="center"><a href="{ $member_row:U_PM }">{ $PM_IMG }</a></td><!-- ENDIF -->
 			<td class="gen" align="center"><!-- IF { $member_row:U_EMAIL } --><a href="{ $member_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF --></td>
 			<td class="gen" align="center"><!-- IF { $member_row:U_WWW } --><a href="{ $member_row:U_WWW }" target="_blank">{ $WWW_IMG }</a><!-- ENDIF --></td>
-			<!-- IF isset({ $member_row:S_PROFILE_FIELD1 }) -->
-			<!-- Use a construct like this to include admin defined profile fields. Replace FIELD1 with the name of your field. -->
-			<td class="gen" align="center">{ $member_row:PROFILE_FIELD1_VALUE }</td>
-			<!-- ENDIF -->
 			<!-- IF { $S_SEARCH_USER } --><td align="center"><input type="checkbox" name="user" value="{ $member_row:USERNAME }" /></td><!-- ENDIF -->
-
 		</tr>
 		<!-- LOOPELSE -->
 		<tr>

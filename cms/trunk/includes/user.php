@@ -34,8 +34,7 @@ class core_user extends sessions
 	var $img = array();
 
 	var $time_format;
-	var $timezone;
-	var $dst;
+	var $time_offset;
 
 	var $is_admin;
 	var $is_bot;
@@ -99,10 +98,10 @@ class core_user extends sessions
 		// user and gmt
 		if ($conversion == 'gmt')
 		{
-			return ($time - $this->timezone - $this->dst);
+			return ($time - $this->time_offset);
 		}
 
-		return $time + $this->timezone + $this->dst;
+		return $time + $this->time_offset;
 	}
 
 	function login($id = ANONYMOUS, $admin_login = false, $hidden = false, $auto_log = false)
@@ -266,7 +265,12 @@ class core_user extends sessions
 		$this->lang_path = SITE_FILE_ROOT.'language/' . $this->lang_name . '/';
 
 		$this->time_format = ($this->data['user_time_format']) ? $this->data['user_time_format'] : $_CORE_CONFIG['global']['default_dateformat'];
-		$this->timezone = ($this->data['user_timezone']) ? $this->data['user_timezone'] : $_CORE_CONFIG['global']['default_timezone'];
+		$this->time_offset = ($this->data['user_timezone']) ? $this->data['user_timezone'] : $_CORE_CONFIG['global']['default_timezone'];
+
+		if ($this->data['user_dst'])
+		{
+			$this->time_offset += 3600;
+		}
 
 		require($this->lang_path . 'common.php');
 	}

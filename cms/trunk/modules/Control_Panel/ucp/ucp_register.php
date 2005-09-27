@@ -29,7 +29,7 @@ class ucp_register extends module
 		
 		$coppa		= isset($_REQUEST['coppa']) ? (int) $_REQUEST['coppa'] : null;
 		$submit		= isset($_POST['submit']);
-$_CORE_CONFIG['user']['activation'] = USER_ACTIVATION_SELF;
+
 		if ($_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_DISABLE
 			|| ($coppa || $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_SELF || $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_ADMIN)
 			&& !$_CORE_CONFIG['email']['email_enable'])

@@ -30,7 +30,7 @@ $Id$
 
 // Will be keeping my eye of 'other products' to ensure these things don't
 // mysteriously appear elsewhere, think up your own solutions!
-class auth
+class forums_auth
 {
 	var $founder = false;
 	var $acl = array();
@@ -121,10 +121,12 @@ class auth
 
 	function acl_getf($opt)
 	{
-		static $cache;
+		$cache = false;
 
 		if (isset($this->acl_options['local'][$opt]))
 		{
+			$cache = array();
+
 			foreach ($this->acl as $f => $bitstring)
 			{
 				if (!isset($cache[$f][$opt]))
@@ -132,6 +134,7 @@ class auth
 					$cache[$f][$opt] = false;
 
 					$cache[$f][$opt] = $bitstring{$this->acl_options['local'][$opt]};
+
 					if (isset($this->acl_options['global'][$opt]))
 					{
 						$cache[$f][$opt] |= $this->acl[0]{$this->acl_options['global'][$opt]};

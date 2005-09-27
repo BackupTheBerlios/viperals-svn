@@ -30,7 +30,7 @@ class ucp_profile extends module
 		$preview	= isset($_POST['preview']);
 		$submit		= isset($_POST['submit']);
 
-		$module_link	= generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
+		$module_link = generate_link("Control_Panel&amp;i=$id&amp;mode=$mode");
 
 		$error = $data = array();
 		$s_hidden_fields = '';
@@ -478,8 +478,8 @@ class ucp_profile extends module
 		$_CLASS['core_template']->assign_array(array(
 			'L_TITLE'					=> $_CLASS['core_user']->lang['UCP_PROFILE_' . strtoupper($mode)],
 			'S_HIDDEN_FIELDS'			=> $s_hidden_fields,
-			'S_UCP_ACTION'				=> $module_link)
-		);
+			'S_UCP_ACTION'				=> $module_link
+		));
 
 		$this->display($_CLASS['core_user']->lang['UCP_PROFILE'], 'ucp_profile_' . $mode . '.html');
 	}

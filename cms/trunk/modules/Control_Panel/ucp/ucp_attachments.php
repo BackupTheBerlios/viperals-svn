@@ -42,6 +42,7 @@ class ucp_attachments extends module
 				$refresh_url = generate_link('Control_Panel&amp;i='.$id);
 				$_CLASS['core_display']->meta_refresh(3, $refresh_url);
 				$message = ((sizeof($delete_ids) == 1) ? $_CLASS['core_user']->lang['ATTACHMENT_DELETED'] : $_CLASS['core_user']->lang['ATTACHMENTS_DELETED']) . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="' . $refresh_url . '">', '</a>');
+
 				trigger_error($message);
 			}
 		}

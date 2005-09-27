@@ -17,7 +17,8 @@ if (!defined('VIPERAL'))
 }
 
 require_once($site_file_root.'includes/forums/functions.php');
-load_class($site_file_root.'includes/forums/auth.php', 'auth');
+load_class($site_file_root.'includes/forums/auth.php', 'forums_auth');
+$_CLASS['auth'] =& $_CLASS['forums_auth'];
 
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
@@ -33,7 +34,7 @@ $ucp = new module();
 
 //define the undefineds
 $_CLASS['core_template']->assign_array(array(
-	'S_DISPLAY_FORM'		=> true,
+	'S_DISPLAY_FORM'		=> false,
 	'S_SHOW_PM_BOX'			=> false,
 	'S_SHOW_COLOUR_LEGEND'	=> false,
 	'USERNAME'				=> '',

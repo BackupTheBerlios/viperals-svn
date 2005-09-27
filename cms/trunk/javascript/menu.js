@@ -9,13 +9,17 @@
 *	
 */
 
-// Move this to like a global javascript file
-var is_ie		= (navigator.appName == "Microsoft Internet Explorer");
-var is_gecko	= (navigator.userAgent.indexOf('Gecko') != -1)
-
 var slider_id = new Array();
 var slider_height = new Array();
 var active_menu = false;
+var menu_time_out = false;
+
+/*
+document.onclick		= function (e)
+{
+	menu_hide();
+}
+*/
 
 function get_offsets(element)
 {
@@ -43,9 +47,10 @@ function menu_init(object_name)
 		return;
 	}
 
+	/*
 	object.onclick = function()
 	{
-		/* Open or close the menu */
+		// Open or close the menu 
 		if (menu.style.display == 'none')
 		{
 			menu_show(object_name);
@@ -57,41 +62,71 @@ function menu_init(object_name)
 
 		return false;
 	}
-	
-/*
-	need to read more to get these working :-(
+	*/
 
-	object.onmouseover = function()
+// Clean this section up
+	menu.onmouseover = function(e)
 	{
-		//menu_show(object_name);
-	}
-	
-	object.onmouseout = function(e)
-	{
-		menu_hide(object_name);
+		if (e)
+		{
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		if (menu_time_out)
+		{
+			clearTimeout(menu_time_out);
+			menu_time_out = false;
+		}
 	}
 
 	menu.onmouseout = function(e)
 	{
-		menu_hide(object_name);
-	}
-
-	menu.onmouseover = function(e)
-	{
-		this.onmouseout = function(e)
+		if (e)
 		{
-			menu_hide(object_name);
+			e.preventDefault();
+			e.stopPropagation();
 		}
 
-		e.preventDefault();
-		e.stopPropagation();
+		if (menu_time_out)
+		{
+			clearTimeout(menu_time_out);
+			menu_time_out = false;
+		}
+		menu_time_out = window.setTimeout('menu_hide()', 200);
 	}
 
-	menu.onmouseout = function()
+	object.onmouseover = function(e)
 	{
-		menu_hide(object_name);
+		if (e)
+		{
+			e.preventDefault();
+			e.stopPropagation();
+		}
+		
+		if (menu_time_out)
+		{
+			clearTimeout(menu_time_out);
+			menu_time_out = false;
+		}
+		menu_show(object_name);
 	}
-*/
+
+	menu.onmouseout = function(e)
+	{
+		if (e)
+		{
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		if (menu_time_out)
+		{
+			clearTimeout(menu_time_out);
+			menu_time_out = false;
+		}
+		menu_time_out = window.setTimeout('menu_hide()', 100);
+	}
 
 	menu.style.display	= 'none';
 	menu.style.position	= is_gecko ? 'fixed' : 'absolute';
@@ -101,18 +136,23 @@ function menu_init(object_name)
 
 function menu_show(object_name)
 {
+	// If a menu is open, lets close it
+	if (active_menu)
+	{
+		if (active_menu == object_name)
+		{
+			return;
+		}
+
+		menu_hide(active_menu);
+	}
+
 	var menu		= document.getElementById(object_name + '_menu');
 	var object		= document.getElementById(object_name);
 
 	if (menu == null|| object == null)
 	{
 		return;
-	}
-
-	// If a menu is open, lets close it
-	if (active_menu)
-	{
-		menu_hide(active_menu);
 	}
 
 	active_menu = object_name;
@@ -148,6 +188,11 @@ function menu_hide(object_name)
 {
 	if (!object_name)
 	{
+		if (!active_menu)
+		{
+			return
+		}
+
 		object_name = active_menu;
 	}
 

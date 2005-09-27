@@ -194,7 +194,7 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 
 				$last_post_time = ($_CLASS['core_user']->time - ($sort_days * 24 * 3600));
 
-				$sql = 'SELECT DISTINCT t.topic_id
+				$sql = 'SELECT DISTINCT t.topic_id, t.topic_last_post_time
 					FROM ' . FORUMS_POSTS_TABLE . ' p
 					LEFT JOIN ' . FORUMS_TOPICS_TABLE . " t ON (t.topic_approved = 1 AND p.topic_id = t.topic_id)
 					WHERE p.post_time > $last_post_time
@@ -773,13 +773,13 @@ if ($search_keywords || $search_author || $search_id || $search_session_id)
 			{
 				$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
 	
-				$folder_img = $folder_alt = $topic_type = '';
-				topic_status($row, $replies, $_CLASS['core_user']->time, $folder_img, $folder_alt, $topic_type);
+				$folder_img = $unread_topic = $folder_alt = $topic_type = '';
+				topic_status($row, $replies, $_CLASS['core_user']->time, $unread_topic, $folder_img, $folder_alt, $topic_type);
 
 				$pagination = generate_pagination($view_topic_url, $replies, $config['posts_per_page'], 0);
 
 				$tpl_ary = array(
-					'TOPIC_AUTHOR' 		=> topic_topic_author($row),
+					'TOPIC_AUTHOR' 		=> ($row['topic_poster'] == ANONYMOUS) ? (($row['topic_first_poster_name']) ? $row['topic_first_poster_name'] : $_CLASS['core_user']->get_lang('GUEST')) : $row['topic_first_poster_name'],
 					'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
 					'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
 					'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),

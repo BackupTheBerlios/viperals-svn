@@ -22,9 +22,7 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 {
 	global $_CLASS, $config;
 	
-	// Grab icons
-	$icons = array();
-	obtain_icons($icons);
+	$icons = obtain_icons();
 
 	$color_rows = array('marked', 'replied', 'message_reported', 'friend', 'foe');
 	
@@ -68,7 +66,7 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 	$folder_info = get_pm_from($folder_id, $folder, $_CLASS['core_user']->data['user_id'], "Control_Panel&amp;i=$id", $type);
 
 	// Okay, lets dump out the page ...
-	if (sizeof($folder_info['pm_list']))
+	if (!empty($folder_info['pm_list']))
 	{
 		// Build Recipient List if in outbox/sentbox - max two additional queries
 		$recipient_list = $address_list = $address = array();
@@ -190,7 +188,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 
 	$start		= request_var('start', 0);
 
-	//$sort_days	= request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
+	//$sort_days = request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
 	//$sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
 	//$sort_dir	= request_var('sd', ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'd'));
 

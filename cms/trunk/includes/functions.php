@@ -26,6 +26,7 @@ function check_email($email)
 {
 	//Code Copyright 2004 phpBB Group - http://www.phpbb.com/
 	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
+	//preg_match('#^.*?@(.*?\.)?[a-z0-9\-]+\.[a-z]{2,4}$#i', $email)
 }
 
 function check_bot_status($browser, $ip)
@@ -195,6 +196,11 @@ function check_maintance_status($return = false)
 
 function check_theme($theme)
 {
+	if (mb_strpos($theme, '.') !== false)
+	{
+		return false;
+	}
+
 	return file_exists(SITE_FILE_ROOT.'themes/'.$theme.'/index.php');
 }
 
@@ -330,7 +336,7 @@ function get_variable($var_name, $type, $default = false, $var_type = 'string')
 		{
 		 	case 'int':
 		 	case 'integer':
-				$variable = is_numeric($variable) ? (int) $variable : $default;
+				return is_numeric($variable) ? (int) $variable : $default;
 			break;
 
 			case 'array':
@@ -344,14 +350,33 @@ function get_variable($var_name, $type, $default = false, $var_type = 'string')
 				{
 					$variable[$key] = strip_slashes(trim(modify_lines(str_replace('\xFF', ' ', $value), "\n")));
 				}
+
+				return $variable;
+			break;
+			
+			case 'array:int':
+			case 'array:integer':
+				if (!is_array($variable))
+				{
+					return $default;
+				}
+
+// need to add a function here to loop multi... arrays
+				foreach ($variable as $key => $value)
+				{
+					if (is_numeric($value))
+					{
+						$variable[$key] = (int) $value;
+					}
+				}
+
+				return $variable;
 			break;
 
 			default:
-				$variable = strip_slashes(trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n")));
+				return strip_slashes(trim(modify_lines(str_replace('\xFF', ' ', $variable), "\n")));
 			break;
 		}
-
-		return $variable;
 	}
 }
 
@@ -728,7 +753,14 @@ function redirect($url = false, $save = false)
 {
 	$url = ($url) ? str_replace('&amp;', '&', $url) : generate_link();
 
-	header('Location: ' . $url);
+	if (preg_match('#Microsoft|WebSTAR|Xitami#', $_SERVER['SERVER_SOFTWARE']))
+	{
+		header('Refresh: 0; url=' . $url);
+	}
+	else
+	{
+		header('Location: ' . $url);
+	}
 
 	header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
 	header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');
@@ -754,11 +786,18 @@ function select_language($default = '')
 {
 }
 
-function select_theme($default = false)
+function select_theme($default = false, $system = false)
 {
 	global $_CLASS;
 
-	if (!$default)
+	$select = '';
+
+	if ($system)
+	{
+		$selected = (!$default) ? ' selected="selected"' : '';
+		$select .= "<option value=\"\" $selected> - Site Default - </option>\n";
+	}
+	elseif (!$default)
 	{
 		$default = $_CLASS['core_display']->theme_name;
 	}
@@ -768,7 +807,7 @@ function select_theme($default = false)
 	
 	while ($file = readdir($handle))
 	{
-		if (!mb_strpos($file, '.'))
+		if (mb_strpos($file, '.') === false)
 		{
 			if (file_exists(SITE_FILE_ROOT."themes/$file/index.php"))
 			{
@@ -780,7 +819,6 @@ function select_theme($default = false)
 	closedir($handle);
 	
 	$count = count($theme_array);
-	$select = '';
 
 	for ($i = 0; $i < $count; $i++)
 	{
@@ -797,20 +835,27 @@ function tz_array()
 			'1', '2', '3','3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '8', '9.5', '10', '11', '12');
 }
 
-function select_tz($default = false)
+function select_tz($default = false, $system = false)
 {
 	global $_CLASS;
 
-	$tz_array = tz_array();
-
-	$count = count($tz_array);
 	$select = '';
-	
-	/*if (!$default)
+
+	if ($system)
 	{
-		$default = $_CORE_CONFIG['global']['default_timezone'];
-	}*/
-	
+		$selected = (!$default) ? ' selected="selected"' : '';
+		$select .= "<option value=\"\" $selected> - Site Default - </option>\n";
+	}
+	/*
+	elseif (!$default)
+	{
+		$default = $_CORE_CONFIG['global']['default_timezone'] / 3600;
+	}
+	*/
+
+	$tz_array = tz_array();
+	$count = count($tz_array);
+
 	for ($i = 0; $i < $count; $i++)
 	{
 		$selected = ($tz_array[$i] == $default) ? ' selected="selected"' : '';

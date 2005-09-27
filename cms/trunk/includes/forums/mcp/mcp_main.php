@@ -33,111 +33,6 @@ $Id$
 // 
 // -------------------------------------------------------------
 
-global $_CLASS;
-
-$action = request_var('action', '');
-$quickmod = request_var('quickmod', '');
-
-switch ($mode)
-{
-	case 'lock':
-	case 'unlock':
-		$topic_ids = (!$quickmod) ? array_unique(request_var('topic_id_list', array(0))) : array(request_var('t', 0));
-
-		if (empty($topic_ids))
-		{
-			trigger_error('NO_TOPIC_SELECTED');
-		}
-
-		lock_unlock($mode, $topic_ids);
-	break;
-
-	case 'lock_post':
-	case 'unlock_post':
-		$post_ids = (!$quickmod) ? array_unique(request_var('post_id_list', array(0))) : array(request_var('p', 0));
-
-		if (empty($post_ids))
-		{
-			trigger_error('NO_POST_SELECTED');
-		}
-
-		lock_unlock($mode, $post_ids);
-	break;
-
-	case 'make_announce':
-	case 'make_sticky':
-	case 'make_global':
-	case 'make_normal':
-		
-		$topic_ids = (!$quickmod) ? array_unique(request_var('topic_id_list', array(0))) : array(request_var('t', 0));
-
-		if (empty($topic_ids))
-		{
-			trigger_error('NO_TOPIC_SELECTED');
-		}
-
-		change_topic_type($mode, $topic_ids);
-	break;
-
-	case 'move':
-		$_CLASS['core_user']->add_lang('viewtopic');
-
-		$topic_ids = (!$quickmod) ? array_unique(request_var('topic_id_list', array(0))) : array(request_var('t', 0));
-
-		if (empty($topic_ids))
-		{
-			trigger_error('NO_TOPIC_SELECTED');
-		}
-
-		mcp_move_topic($topic_ids);
-	break;
-
-	case 'fork':
-		$_CLASS['core_user']->add_lang('viewtopic');
-
-		$topic_ids = (!$quickmod) ? array_unique(request_var('topic_id_list', array(0))) : array(request_var('t', 0));
-
-		if (empty($topic_ids))
-		{
-			trigger_error('NO_TOPIC_SELECTED');
-		}
-
-		mcp_fork_topic($topic_ids);
-	break;
-
-	case 'delete_topic':
-		$_CLASS['core_user']->add_lang('viewtopic');
-
-		$topic_ids = (!$quickmod) ? array_unique(request_var('topic_id_list', array(0))) : array(request_var('t', 0));
-
-		if (empty($topic_ids))
-		{
-			trigger_error('NO_TOPIC_SELECTED');
-		}
-
-		mcp_delete_topic($topic_ids);
-	break;
-
-	case 'delete_post':
-		$_CLASS['core_user']->add_lang('posting');
-
-		$post_ids = (!$quickmod) ? array_unique(request_var('post_id_list', array(0))) : array(request_var('p', 0));
-
-		if (empty($post_ids))
-		{
-			trigger_error('NO_POST_SELECTED');
-		}
-
-		mcp_delete_post($post_ids);
-	break;
-
-	default:
-		trigger_error("Unknown mode: $mode");
-	break;
-}
-
-trigger_error('I need to put something here');
-
 // Lock/Unlock Topic/Post
 function lock_unlock($mode, $ids)
 {
@@ -209,7 +104,7 @@ function change_topic_type($mode, $topic_ids)
 {
 	global $db, $_CLASS;
 
-	if (!($forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', 'm_')))
+	if (!check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_'))
 	{
 		return;
 	}
@@ -219,64 +114,68 @@ function change_topic_type($mode, $topic_ids)
 		case 'make_announce':
 			$new_topic_type = POST_ANNOUNCE;
 			$check_acl = 'f_announce';
-			$l_new_type = (sizeof($topic_ids) == 1) ? 'MCP_MAKE_ANNOUNCEMENT' : 'MCP_MAKE_ANNOUNCEMENTS';
-			break;
+			$l_new_type = (count($topic_ids) === 1) ? 'MCP_MAKE_ANNOUNCEMENT' : 'MCP_MAKE_ANNOUNCEMENTS';
+		break;
+
 		case 'make_global':
 			$new_topic_type = POST_GLOBAL;
 			$check_acl = 'f_announce';
-			$l_new_type = (sizeof($topic_ids) == 1) ? 'MCP_MAKE_GLOBAL' : 'MCP_MAKE_GLOBALS';
-			break;
+			$l_new_type = (count($topic_ids) === 1) ? 'MCP_MAKE_GLOBAL' : 'MCP_MAKE_GLOBALS';
+		break;
+
 		case 'make_sticky':
 			$new_topic_type = POST_STICKY;
 			$check_acl = 'f_sticky';
-			$l_new_type = (sizeof($topic_ids) == 1) ? 'MCP_MAKE_STICKY' : 'MCP_MAKE_STICKIES';
-			break;
+			$l_new_type = (count($topic_ids) === 1) ? 'MCP_MAKE_STICKY' : 'MCP_MAKE_STICKIES';
+		break;
+
 		default:
 			$new_topic_type = POST_NORMAL;
 			$check_acl = '';
-			$l_new_type = (sizeof($topic_ids) == 1) ? 'MCP_MAKE_NORMAL' : 'MCP_MAKE_NORMALS';
-			break;
+			$l_new_type = (count($topic_ids) === 1) ? 'MCP_MAKE_NORMAL' : 'MCP_MAKE_NORMALS';
+		break;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
+	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 
-	$s_hidden_fields = build_hidden_fields(array(
+	$hidden_fields = build_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
-		'f'				=> $forum_id,
 		'mode'			=> $mode,
-		'redirect'		=> $redirect)
-	);
+		'redirect'		=> $redirect
+	));
 	$success_msg = '';
 
-	if (confirm_box(true))
+	if (display_confirmation($_CLASS['core_user']->get_lang($l_new_type), $hidden_fields))
 	{
-		if ($new_topic_type != POST_GLOBAL)
+		if ($new_topic_type !== POST_GLOBAL)
 		{
-			$sql = 'UPDATE ' . TOPICS_TABLE . "
+			$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . "
 				SET topic_type = $new_topic_type
 				WHERE topic_id IN (" . implode(', ', $topic_ids) . ')
 					AND forum_id <> 0';
-			$db->query($sql);
+			$_CLASS['core_db']->query($sql);
 
-			// Reset forum id if a global topic is within the array
+// do select first
+			/*
 			if ($forum_id)
 			{
 				$sql = 'UPDATE ' . TOPICS_TABLE . "
 					SET topic_type = $new_topic_type, forum_id = $forum_id
 						WHERE topic_id IN (" . implode(', ', $topic_ids) . ')
 						AND forum_id = 0';
-				$db->query($sql);
+				$_CLASS['core_db']->query($sql);
 			}
+			*/
 		}
 		else
 		{
 			$sql = 'UPDATE ' . TOPICS_TABLE . "
 				SET topic_type = $new_topic_type, forum_id = 0
 				WHERE topic_id IN (" . implode(', ', $topic_ids) . ")";
-			$db->query($sql);
+			$_CLASS['core_db']->query($sql);
 		}
 
-		$success_msg = (sizeof($topic_ids) == 1) ? 'TOPIC_TYPE_CHANGED' : 'TOPICS_TYPE_CHANGED';
+		$success_msg = (count($topic_ids) === 1) ? 'TOPIC_TYPE_CHANGED' : 'TOPICS_TYPE_CHANGED';
 
 		$data = get_topic_data($topic_ids);
 
@@ -285,12 +184,8 @@ function change_topic_type($mode, $topic_ids)
 			add_log('mod', $forum_id, $topic_id, 'LOG_TOPIC_TYPE_CHANGED', $row['topic_title']);
 		}
 	}
-	else
-	{
-		confirm_box(false, $l_new_type, $s_hidden_fields);
-	}
 
-	$redirect = request_var('redirect', generate_link('Forums'));
+	$redirect = generate_link($redirect);
 
 	if (!$success_msg)
 	{
@@ -431,7 +326,7 @@ function mcp_move_topic($topic_ids)
 		// Now sync forums
 		sync('forum', 'forum_id', $forum_ids);
 
-		$success_msg = (sizeof($topic_ids) == 1) ? 'TOPIC_MOVED_SUCCESS' : 'TOPICS_MOVED_SUCCESS';
+		$success_msg = (count($topic_ids) === 1) ? 'TOPIC_MOVED_SUCCESS' : 'TOPICS_MOVED_SUCCESS';
 	}
 
 	$redirect = generate_link($redirect);
@@ -456,7 +351,7 @@ function mcp_move_topic($topic_ids)
 // Delete Topics
 function mcp_delete_topic($topic_ids)
 {
-	global $_CLASS, $db;
+	global $_CLASS;
 
 	if (!check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_delete'))
 	{
@@ -486,8 +381,6 @@ function mcp_delete_topic($topic_ids)
 		}
 
 		$return = delete_topics('topic_id', $topic_ids, true);
-
-		// TODO: Adjust total post count...
 	}
 
 	$redirect = generate_link($redirect);
@@ -499,7 +392,7 @@ function mcp_delete_topic($topic_ids)
 	else
 	{
 		$_CLASS['core_display']->meta_refresh(3, $redirect);
-		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_id) . '">', '</a>'));
+		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="'. $redirect . '">', '</a>'));
 	}
 }
 
@@ -508,33 +401,35 @@ function mcp_delete_post($post_ids)
 {
 	global $_CLASS, $db;
 
-	if (!($forum_id = check_ids($post_ids, POSTS_TABLE, 'post_id', 'm_delete')))
+	if (!check_ids($post_ids, FORUMS_POSTS_TABLE, 'post_id', 'm_delete'))
 	{
 		return;
 	}
 
-	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
+	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 
-	$s_hidden_fields = build_hidden_fields(array(
+	$hidden_fields = build_hidden_fields(array(
 		'post_id_list'	=> $post_ids,
-		'f'				=> $forum_id,
 		'mode'			=> 'delete_post',
-		'redirect'		=> $redirect)
-	);
-	$success_msg = '';
+		'redirect'		=> $redirect
+	));
 
-	if (confirm_box(true))
+	$success_msg = '';
+	$message = $_CLASS['core_user']->get_lang((count($post_ids) === 1) ? 'DELETE_POST' : 'DELETE_POSTS');
+
+	if (display_confirmation($message, $hidden_fields))
 	{
 		// Count the number of topics that are affected
 		// I did not use COUNT(DISTINCT ...) because I remember having problems
 		// with it on older versions of MySQL -- Ashe
 
 		$sql = 'SELECT DISTINCT topic_id
-			FROM ' . POSTS_TABLE . '
+			FROM ' . FORUMS_POSTS_TABLE . '
 			WHERE post_id IN (' . implode(', ', $post_ids) . ')';
 		$result = $db->query($sql);
 
 		$topic_id_list = array();
+
 		while ($row = $db->sql_fetchrow($result))
 		{
 			$topic_id_list[] = $row['topic_id'];
@@ -596,12 +491,8 @@ function mcp_delete_post($post_ids)
 			}
 		}
 	}
-	else
-	{
-		confirm_box(false, (sizeof($post_ids) == 1) ? 'DELETE_POST' : 'DELETE_POSTS', $s_hidden_fields);
-	}
 
-	$redirect = request_var('redirect', generate_link('Forums'));
+	$redirect = generate_link('Forums');
 
 	if (!$success_msg)
 	{
@@ -624,7 +515,7 @@ function mcp_fork_topic($topic_ids)
 		return;
 	}
 
-	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);//generate_link('Forums')
+	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 	$to_forum_id = get_variable('to_forum_id', 'POST', 0, 'int');
 
 	$additional_msg = $success_msg = '';
@@ -846,7 +737,7 @@ function mcp_fork_topic($topic_ids)
 	else
 	{
 		$_CLASS['core_display']->meta_refresh(3, generate_link('Forums&amp;file=viewforum&amp;f='.$to_forum_id));
-		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'.generate_link('Forums&amp;file=viewforum&amp;f=' . $to_forum_id) . '">', '</a>');
+		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_NEW_FORUM'], '<a href="'. $redirect . '">', '</a>');
 
 		trigger_error($_CLASS['core_user']->lang[$success_msg] . '<br /><br />' . $return_link);
 	}

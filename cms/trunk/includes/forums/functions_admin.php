@@ -113,19 +113,19 @@ function size_select($select_name, $size_compare)
 }
 
 // Obtain authed forums list
-function get_forum_list($acl_list = 'f_list', $id_only = TRUE, $postable_only = FALSE, $no_cache = FALSE)
+function get_forum_list($acl_list = 'f_list', $id_only = true, $postable_only = false)
 {
 	global $_CLASS;
 	static $forum_rows;
+	
+//print_r($_CLASS['forums_auth']->acl_getf('f_read'));
 
-	if (!isset($forum_rows))
+	if (empty($forum_rows))
 	{
 		// This query is identical to the jumpbox one
-		$expire_time = ($no_cache) ? 0 : 120;
 		$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, left_id, right_id
-			FROM ' . FORUMS_FORUMS_TABLE . '
-			ORDER BY left_id ASC';
-		$result = $_CLASS['core_db']->query($sql, $expire_time);
+			FROM ' . FORUMS_FORUMS_TABLE . ' ORDER BY left_id ASC';
+		$result = $_CLASS['core_db']->query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
@@ -135,6 +135,7 @@ function get_forum_list($acl_list = 'f_list', $id_only = TRUE, $postable_only = 
 	}
 
 	$rowset = array();
+
 	foreach ($forum_rows as $row)
 	{
 		if ($postable_only && $row['forum_type'] != FORUM_POST)
@@ -142,7 +143,7 @@ function get_forum_list($acl_list = 'f_list', $id_only = TRUE, $postable_only = 
 			continue;
 		}
 
-		if ($acl_list == '' || ($acl_list != '' && $_CLASS['auth']->acl_gets($acl_list, $row['forum_id'])))
+		if (!$acl_list || $_CLASS['auth']->acl_gets($acl_list, $row['forum_id']))
 		{
 			$rowset[] = ($id_only) ? $row['forum_id'] : $row;
 		}
@@ -375,6 +376,7 @@ function delete_topics($where_type, $where_ids, $auto_sync = true)
 	$_CLASS['core_db']->transaction();
 
 	$table_ary = array(FORUMS_TRACK_TABLE, FORUMS_POLL_VOTES_TABLE, FORUMS_POLL_OPTIONS_TABLE, FORUMS_WATCH_TABLE, FORUMS_TOPICS_TABLE);
+
 	foreach ($table_ary as $table)
 	{
 		$sql = "DELETE FROM $table 
@@ -990,7 +992,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 					WHERE post_id IN (' . implode(', ', $post_ids) . ')';
 				$_CLASS['core_db']->query($sql);
 			}
-			break;
+		break;
 
 		case 'topic_attachment':
 			if ($sync_extra)
@@ -1859,9 +1861,9 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 }
 
 // Extension of auth class for changing permissions
-if (class_exists('auth'))
+if (class_exists('forums_auth'))
 {
-	class auth_admin extends auth
+	class auth_admin extends forums_auth
 	{
 		// Set a user or group ACL record
 		function acl_set($ug_type, &$forum_id, &$ug_id, &$auth)

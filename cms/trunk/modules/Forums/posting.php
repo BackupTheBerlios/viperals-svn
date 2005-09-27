@@ -1542,7 +1542,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'poll_max_options'			=> isset($poll['poll_options']) ? $poll['poll_max_options'] : 1,
 				'poll_length'				=> isset($poll['poll_options']) ? ($poll['poll_length'] * 86400) : 0,
 				'poll_vote_change'			=> isset($poll['poll_vote_change']) ? $poll['poll_vote_change'] : 0,
-				'topic_attachment'			=> ($post_mode == 'edit_topic') ? ((isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0) : $data['topic_attachment']
+				'topic_attachment'			=> ($post_mode == 'edit_topic') ? ((isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0) : (int) $data['topic_attachment']
 			);
 			break;
 	}
@@ -1743,9 +1743,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					'thumbnail'			=> $attach_row['thumbnail']
 				);
 
-				$sql = 'INSERT INTO ' . FORUMS_ATTACHMENTS_TABLE . ' ' .
-					$_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
-				$_CLASS['core_db']->query($sql);
+				$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_ATTACHMENTS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $attach_sql));
 
 				$space_taken += $attach_row['filesize'];
 				$files_added++;
@@ -1855,13 +1853,21 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Topic Notification
 	if (!$data['notify_set'] && $data['notify'])
 	{
-		$sql = 'INSERT INTO ' . FORUMS_TOPICS_WATCH_TABLE . ' (user_id, topic_id)
-			VALUES (' . $_CLASS['core_user']->data['user_id'] . ', ' . $data['topic_id'] . ')';
-		$_CLASS['core_db']->query($sql);
+		$notify_sql = array(
+			'user_id'		=> $_CLASS['core_user']->data['user_id'],
+			'forum_id'		=> $data['forum_id'],
+			'topic_id'		=> $data['topic_id'],
+			'notify_type'	=> $poster_id,
+			'notify_status'	=> 0,
+		);
+				
+		$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_WATCH_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $notify_sql));
+
+		unset($notify_sql);
 	}
 	else if ($data['notify_set'] && !$data['notify'])
 	{
-		$sql = 'DELETE FROM ' . FORUMS_TOPICS_WATCH_TABLE . '
+		$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . '
 			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 				AND topic_id = ' . $data['topic_id'];
 		$_CLASS['core_db']->query($sql);

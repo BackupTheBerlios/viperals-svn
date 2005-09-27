@@ -33,7 +33,9 @@ if (!$file || !in_array($file, $approved_files))
 unset($approved_files);
 
 require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
-load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'auth');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
+
+$_CLASS['auth'] =& $_CLASS['forums_auth'];
 
 $_CLASS['auth']->acl($_CLASS['core_user']->data);
 

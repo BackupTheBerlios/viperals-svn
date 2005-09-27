@@ -466,28 +466,30 @@ class db_postgres
 		if (function_exists('pg_version'))
 		{
 			$version = pg_version($this->link_identifier);
-			return $version['server'];	
+
+			if (isset($version['server']))
+			{
+				return $version['server'];
+			}
+		}
+
+		$result = $this->query('SELECT VERSION() AS version');
+		$row = $this->fetch_row_assoc($result);
+		$this->free_result($result);
+
+		if (!$row)
+		{
+			return;
+		}
+
+		if ($return_dbname)
+		{	// should we return the full info ?
+			return $row['version'];
 		}
 		else
 		{
-			$result = $this->query('SELECT VERSION() AS version');
-			$row = $this->fetch_row_assoc($result);
-			$this->free_result($result);
-
-			if (!$row)
-			{
-				return;
-			}
-
-			if ($return_dbname)
-			{	// should we return the full info ?
-				return $row['version'];
-			}
-			else
-			{
-				$version = explode(' ', $row['version']);
-				return $version[1];
-			}
+			$version = explode(' ', $row['version']);
+			return $version[1];
 		}
 	}
 

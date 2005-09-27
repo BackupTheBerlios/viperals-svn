@@ -68,7 +68,7 @@ class ucp_pm extends module
 
 		// Folder directly specified?
 		$folder_specified = get_variable('folder', 'REQUEST');
-		
+
 		if ($folder_specified)
 		{
 			if (is_numeric($folder_specified))
@@ -148,13 +148,15 @@ class ucp_pm extends module
 
 				$_CLASS['core_db']->free_result($result);
 				
-				(int) $_CLASS['core_user']->data['message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
+				(int) $_CLASS['core_user']->data['user_message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
 				
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
 
 				require(SITE_FILE_ROOT.'modules/Control_Panel/ucp/ucp_pm_options.php');
 				message_options($id, $mode, $global_privmsgs_rules, $global_rule_conditions);
-				break;
+
+				$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_pm_options.html');
+			break;
 
 			case 'drafts':
 				get_folder($_CLASS['core_user']->data['user_id'], $folder);
@@ -182,7 +184,7 @@ class ucp_pm extends module
 				list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
 				$_CLASS['core_db']->free_result($result);
 
-				$_CLASS['core_user']->data['message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
+				$_CLASS['core_user']->data['user_message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
 
 				if ($folder_specified)
 				{
@@ -199,7 +201,7 @@ class ucp_pm extends module
 				{
 					$folder_id = PRIVMSGS_INBOX;
 				}
-					
+
 				$msg_id = get_variable('p', 'REQUEST', 0, 'int');
 				$view	= get_variable('view', 'REQUEST');
 				
@@ -217,7 +219,7 @@ class ucp_pm extends module
 					$cur_folder_id	= get_variable('cur_folder_id', 'POST', PRIVMSGS_INBOX, 'int');
 					$dest_folder	= get_variable('dest_folder', 'POST', PRIVMSGS_INBOX, 'int');
 
-					if (move_pm($_CLASS['core_user']->data['user_id'], $_CLASS['core_user']->data['message_limit'], $msg_ids, $dest_folder, $cur_folder_id))
+					if (move_pm($_CLASS['core_user']->data['user_id'], $_CLASS['core_user']->data['user_message_limit'], $msg_ids, $dest_folder, $cur_folder_id))
 					{
 						// Return to folder view if single message moved
 						if ($action == 'view_message')
@@ -324,9 +326,9 @@ class ucp_pm extends module
 						set_read_status(true, $message_row['msg_id'], $_CLASS['core_user']->data['user_id'], $folder_id);
 					}
 				}
-				
+
 				get_folder($_CLASS['core_user']->data['user_id'], $folder, $folder_id);
-			
+	
 				$s_folder_options = $s_to_folder_options = '';
 				foreach ($folder as $f_id => $folder_ary)
 				{
@@ -337,7 +339,7 @@ class ucp_pm extends module
 				}
 
 				clean_sentbox($folder[PRIVMSGS_SENTBOX]['num_messages']);
-	
+
 				// Header for message view - folder and so on
 				$folder_status = get_folder_status($folder_id, $folder);
 				$url = 'Control_Panel&amp;i='.$id;
@@ -380,7 +382,7 @@ class ucp_pm extends module
 					$_CLASS['core_display']->display(false,  'modules/Control_Panel/ucp_pm_viewfolder.html');
 
 				}
-				else if ($action == 'view_message')
+				elseif ($action == 'view_message')
 				{
 					$_CLASS['core_template']->assign_array(array(
 						'S_VIEW_MESSAGE'=> true,
