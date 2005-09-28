@@ -37,9 +37,10 @@ class viperal_theme
 		$this->table_close	= '</div></div></div>';
 		
 		$_CLASS['core_template']->assign_array(array(
-			'A_TABLE_OPEN'	=> $this->table_open,
-			'A_TABLE_CLOSE'	=> $this->table_close,
-			'A_STYLESHEET'	=> 'themes/viperal/style/style.css',
+			'THEME_TABLE_OPEN'	=> $this->table_open,
+			'THEME_TABLE_CLOSE'	=> $this->table_close,
+			'THEME_STYLESHEET'	=> 'themes/viperal/style/style.css',
+			'THEME_PATH'		=> 'themes/viperal',
 		));
 	}
 

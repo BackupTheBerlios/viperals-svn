@@ -22,7 +22,7 @@ $Id$
 */
 define('VIPERAL', 'INSTALLER');
 
-error_reporting(E_ALL);
+error_reporting(0);
 
 define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 
@@ -465,7 +465,7 @@ if ($stage === 1)
 	$_CLASS['core_template']->assign_array(array(
 		'error'				=> false,
 		'magic_quotes_gpc'	=> ((bool) ini_get('magic_quotes_gpc') === false),
-		'output_buffering'	=> ((int) ini_get('output_buffering') > 0),
+		'output_buffering'	=> ((int) ini_get('output_buffering') === 0),
 		'register_globals'	=> ((bool) ini_get('register_globals') === false),
 		'safe_mode'			=> ((bool) ini_get('safe_mode') === false),
 

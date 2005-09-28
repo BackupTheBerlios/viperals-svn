@@ -1491,6 +1491,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'topic_replies_real'	=> 0,
 				'topic_replies'			=> 0,
 				'topic_views'			=> 0,
+				'topic_moved_id'		=> 0
 			);
 
 			if (isset($poll['poll_options']) && !empty($poll['poll_options']))
@@ -1544,7 +1545,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'poll_vote_change'			=> isset($poll['poll_vote_change']) ? $poll['poll_vote_change'] : 0,
 				'topic_attachment'			=> ($post_mode == 'edit_topic') ? ((isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0) : (int) $data['topic_attachment']
 			);
-			break;
+		break;
 	}
 
 	$_CLASS['core_db']->transaction();

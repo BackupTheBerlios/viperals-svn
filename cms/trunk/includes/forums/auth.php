@@ -267,12 +267,13 @@ class forums_auth
 	
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$groups[] = $row['group_id'];
+				$groups[$row['group_id']] = true;
 				$group_members[$row['group_id']][] = $row['user_id'];
 			}
 			$_CLASS['core_db']->free_result($result);
 
-			$sql_user = empty($groups) ? ' AND a.' . $sql_user :  'AND (a.'.$sql_user.' OR a.group_id IN ('.implode(', ', $groups).'))';
+			$sql_user = empty($groups) ? ' AND a.' . $sql_user :  'AND (a.'.$sql_user.' OR a.group_id IN ('.implode(', ', array_keys($groups)).'))';
+			unset($groups);
 		}
 
 		// Sort by group_id since we want user setting to over right grp..  specific > broad
@@ -293,7 +294,7 @@ class forums_auth
 
 			if ($row['group_id'])
 			{
-				$group_id_array[$row['group_id']] = $row;
+				$group_id_array[$row['group_id']][] = $row;
 
 				continue;
 			}
@@ -316,7 +317,7 @@ class forums_auth
 				$_CLASS['core_db']->free_result($result);
 			}
 
-			foreach ($group_id_array as $group_id => $row)
+			foreach ($group_id_array as $group_id => $rows)
 			{
 				if (empty($group_members[$group_id]))
 				{
@@ -325,7 +326,10 @@ class forums_auth
 
 				foreach ($group_members[$group_id] as $user_id)
 				{
-					$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+					foreach($rows as $row)
+					{
+						$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+					}
 				}
 			}
 		}
