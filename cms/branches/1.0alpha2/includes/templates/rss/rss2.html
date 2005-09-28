@@ -1,0 +1,22 @@
+<rss version="2.0" 
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+	<channel>
+		<title>{ $SITE_NAME }</title>
+		<link>{ $SITE_URL }</link>
+		<dc:language>en-us</dc:language>
+		<dc:creator>Viperal CMS</dc:creator>
+		<dc:date>{ $TIME }</dc:date>
+		<!-- LOOP $items -->
+		<item>
+			<title>{ $items:TITLE }</title>
+			<link>{ $items:LINK }</link>
+			<description>{ $items:DESCRIPTION }</description>
+			<dc:subject></dc:subject>
+			<dc:date>{ $items:TIME }</dc:date>
+		</item>
+		<!-- ENDLOOP -->
+	</channel>
+</rss>

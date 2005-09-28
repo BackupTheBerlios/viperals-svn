@@ -1,0 +1,46 @@
+<!-- DISPLAY_HEADER -->
+
+{ $THEME_TABLE_OPEN }
+
+<form method="post" action="{ $ACTION }" >
+    <table width="100%">
+		<tr>
+			<td style="padding: 10px;" valign="top">
+				<label><b>{ $L_YOURNAME }:</b></label><br />
+				<input class="post" type="text" name="sender_name" value="{ $SENDER_NAME }" size="30" /><br /><br />
+
+				<label><b>{ $L_YOUREMAIL }:</b></label><br />
+				<input class="post" type="text" name="sender_email" value="{ $SENDER_EMAIL }" size="30" /><br /><br />
+	
+				<input class="button" type="submit" name="contact" value="{ $L_SUBMIT }" />
+				<input class="button" type="submit" name="preview" value="{ $L_PREVIEW }" /><br /><br /><hr />
+				<div align="center">{ $L_FEEDBACK_NOTE }</div>
+			</td>
+			<td style="width:90%;">
+			<!-- IF { $ERROR } -->
+				<font class="error">{ $ERROR }</font><br/>
+		<!-- ENDIF -->
+				<strong>{ $L_MESSAGE }:</strong><br />
+				<textarea  name="message" id="message" editor_enabled="true" style="width:98%; height:180px" cols="63" rows="15">{ $MESSAGE }</textarea><br /><br />
+			</td>
+		</tr>
+    </table>
+</form>
+
+<!-- IF isset({ $PREVIEW }) -->
+<table width="100%">
+	<tr>
+		<td style="padding: 10px;" width="30%" valign="top">
+			Message Preview
+		</td>
+		<td style="width:90%;">
+			<hr />
+			{ $PREVIEW }
+		</td>
+	</tr>
+</table>
+<!-- ENDIF -->
+
+{ $THEME_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

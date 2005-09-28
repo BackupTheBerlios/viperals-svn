@@ -1,0 +1,80 @@
+<!-- DISPLAY_HEADER -->
+
+{ $THEME_TABLE_OPEN }
+
+<form action="{ $S_LOGIN_ACTION }" method="post">
+
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="4">
+	<tr> 
+		<th colspan="2">{ $L_LOGIN }</th>
+		<th align="center">{ $L_OPTIONS }</th>
+	</tr>
+	<!-- IF { $LOGIN_EXPLAIN } -->
+	<tr>
+		<td class="row1" colspan="2" align="center"><span class="gensmall">{ $LOGIN_EXPLAIN }</td>
+		<td class="row1" valign="top" rowspan="<!-- IF { $U_CONFIRM_IMAGE } -->7<!-- ELSE -->3<!-- ENDIF -->">
+					<input type="checkbox" name="auto_login" tabindex="4" /> <span class="gensmall">{ $L_LOG_ME_IN }</span><br/>
+					<input type="checkbox" name="hidden" tabindex="5" /> <span class="gensmall">{ $L_HIDE_ME }</span>
+		</td>
+	</tr>
+	<!-- ENDIF -->
+			<!-- IF { $LOGIN_ERROR } -->
+			<tr>
+				<td class="row1" class="gensmall" colspan="2" align="center"><span class="error">{ $LOGIN_ERROR }</span></td>
+				<!-- IF !{ $LOGIN_EXPLAIN } -->
+				<td class="row1" valign="top" rowspan="<!-- IF { $U_CONFIRM_IMAGE } -->7<!-- ELSE -->3<!-- ENDIF -->">
+					<input type="checkbox" name="auto_login" tabindex="4" /> <span class="gensmall">{ $L_LOG_ME_IN }</span><br/>
+					<input type="checkbox" name="hidden" tabindex="5" /> <span class="gensmall">{ $L_HIDE_ME }</span>
+				</td>
+				<!-- ENDIF -->
+			</tr>
+			<!-- ENDIF -->
+			<tr class="row2"> 
+				<td><b class="gensmall">{ $L_USERNAME }:</b></td>
+				<td><input class="post" type="text" name="username" size="25" maxlength="40" value="{ $USERNAME }" tabindex="1" /><br /><a class="gensmall" href="{ $U_REGISTER }">{ $L_REGISTER }</a></td>
+				<!-- IF !{ $LOGIN_ERROR } && !{ $LOGIN_EXPLAIN } -->
+				<td class="row1" valign="top" rowspan="<!-- IF { $U_CONFIRM_IMAGE } -->6<!-- ELSE -->2<!-- ENDIF -->">
+					<input type="checkbox" name="auto_login" tabindex="4" /> <span class="gensmall">{ $L_LOG_ME_IN }</span><br/>
+					<input type="checkbox" name="hidden" tabindex="5" /> <span class="gensmall">{ $L_HIDE_ME }</span>
+				</td>
+				<!-- ENDIF -->
+			</tr>
+			<tr class="row2"> 
+				<td><b class="gensmall">{$L_PASSWORD}:</b></td>
+				<td>
+					<input class="post" type="password" name="password" size="25" maxlength="25" tabindex="2" />
+					<!-- IF { $U_SEND_PASSWORD } --><br /><a class="gensmall" href="{ $U_SEND_PASSWORD }">{ $L_FORGOT_PASS }</a><!-- ENDIF -->
+					<!-- IF { $U_RESEND_ACTIVATION } --><br /><a class="gensmall" href="{ $U_RESEND_ACTIVATION }">{ $L_RESEND_ACTIVATION }</a><!-- ENDIF -->
+				 </td>
+			</tr>
+			<!-- IF !{ $S_DISPLAY_FULL_LOGIN } -->
+			<tr class="row2"> 
+				<td>&nbsp;</td>
+				<td><input type="checkbox" name="autologin" tabindex="4" /> <span class="gensmall">{ $L_LOG_ME_IN }</span><br/>
+				<input type="checkbox" name="viewonline" tabindex="5" /> <span class="gensmall">{ $L_HIDE_ME }</span>
+				</td>
+			</tr>
+
+			<!-- ENDIF -->
+			<!-- IF { $U_CONFIRM_IMAGE } -->
+			<tr> 
+				<th colspan="2" align="center">{ $L_CONFIRMATION_CODE }</th>
+			</tr>
+			<tr> 
+				<td colspan="2" align="center" class="row1"><span class="gensmall">Enter the code exactly as you see it in the image<br/><b>This is case sensitive</b></span></td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center" class="row2">{ $U_CONFIRM_IMAGE }</td>
+			</tr>
+			<tr>
+				<td colspan="2" align="center" class="row1"><input class="post" name="confirm_code" size="10" maxlength="6" type="text" tabindex="3"></td>
+			</tr>
+			<!-- ENDIF -->
+	<tr> 
+		<td class="cat" colspan="3" align="center">{ $S_HIDDEN_FIELDS }<input type="submit" name="login" class="button" value="{ $L_LOGIN }" tabindex="4"/></td>
+	</tr>
+</table></form>
+
+{ $THEME_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

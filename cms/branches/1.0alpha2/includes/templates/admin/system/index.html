@@ -1,0 +1,175 @@
+<!-- DISPLAY_HEADER -->
+
+<style type="text/css">@import url(javascript/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="javascript/jscalendar/calendar.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/calendar-setup.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/lang/calendar-en.js"></script>
+
+{ $A_TABLE_OPEN }
+
+
+
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+		<!-- IF { $SYSTEM_MODE } == 'site' -->
+			<td width="50%" class="row2" align="center">{ $L_SITE_SETTINGS }</td>
+			<td width="50%" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $LINK_SYSTEM }'; return false;" align="center"><a href="{ $LINK_SYSTEM }">{ $L_SYSTEM_SETTINGS }</a></td>
+		<!-- ELSE -->
+			<td width="50%" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $LINK_SITE }'; return false;" align="center"><a href="{ $LINK_SITE }">{ $L_SITE_SETTINGS }</a></td>
+			<td width="50%" class="row2" align="center">{ $L_SYSTEM_SETTINGS }</td>
+		<!-- ENDIF -->
+		</tr>
+	</tbody>
+</table>
+
+<div style="padding: 3px"></div>
+
+<form action="{ $ACTION }" method="post">
+	<table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
+		<tbody>
+		<!-- IF { $SYSTEM_MODE } == 'site' -->
+		<tr>
+			<th colspan="2">{ $L_SITE }</th>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SITE_NAME }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="site_name" value="{ $SITE_NAME }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SITE_URL }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="site_url" value="{ $SITE_URL }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_START_DATE }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="startdate" value="{ $START_DATE }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_LINK_OPTIMIZATION }: </b></td>
+			<td class="row2"><input name="link_optimization" value="1" <!-- IF { $LINK_OPTIMIZATION } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_YES }&nbsp;&nbsp;<input name="link_optimization" value="0" <!-- IF !{ $LINK_OPTIMIZATION } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
+		</tr>
+		<tr>
+	
+			<td class="row1" width="50%"><b>{ $L_DEFAULT_THEME }: </b></td>
+			<td class="row2">
+				<select name="default_theme">
+					{ $SELECT_THEME }
+				</select>
+			</td>
+		</tr>
+		<tr>
+		<td class="row1" width="50%" valign="top"><b>{ $L_FOOTER_MESSAGE }: </b></td>
+			<td class="row2">
+			<textarea name="foot1" rows="5" cols="40">{ $FOOTER_FIRST }</textarea><br /><br />
+			<textarea name="foot2" rows="5" cols="40">{ $FOOTER_SECOND }</textarea>
+		</tr>
+	<!-- ELSEIF { $SYSTEM_MODE } == 'system' -->
+		<tr>
+			<th colspan="2">{ $L_MAINTENANCE }</th>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_MAINTENANCE }: </b></td>
+			<td class="row2"><input name="maintenance" value="1" <!-- IF { $MAINTENANCE } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_YES }&nbsp;&nbsp;<input name="maintenance" value="0" <!-- IF !{ $MAINTENANCE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }<br /></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_MAINTENANCE_START }: </b></td>
+			<td class="row2">
+			<input class="post" size="40" maxlength="255" id="maintenance_start" name="maintenance_start" value="{ $MAINTENANCE_START }" type="text">
+				<img src="java/jscalendar/calendar.png" style="cursor: pointer;" id="time_trigger" />
+				
+			</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%" valign="top"><b>{ $L_MAINTENANCE_TEXT }: </b></td>
+			<td class="row2"><br /><textarea name="maintenance_text" rows="5" cols="40">{ $MAINTENANCE_MSG }</textarea></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_DEBUGGING }: </b></td>
+			<td class="row2"><select name="error_options"><option value="0"<!-- IF { $ERROR } == '0' --> selected="selected" <!-- ENDIF -->>None</option><option value="1"<!-- IF { $ERROR } == '1' --> selected="selected" <!-- ENDIF -->>On page</option><option value="2"<!-- IF { $ERROR } == '2' --> selected="selected" <!-- ENDIF -->>Debug Screen</option></select></td>
+		</tr>
+		<tr>
+			<th colspan="2">Server Settings</th>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Domain Name: </b><br><span class="gensmall">The domain name this board runs from</span></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="site_domain" value="{ $SITE_DOMAIN }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Server Port: </b><br><span class="gensmall">The port your server is running on, usually 80, only change if different</span></td>
+			<td class="row2"><input class="post" size="5" maxlength="5" name="site_port" value="{ $SITE_PORT }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Script path: </b><br><span class="gensmall">Site located relative to the domain name</span></td>
+	
+			<td class="row2"><input class="post" maxlength="255" name="site_path" value="{ $SITE_PATH }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SITE_SECURE }: </b><br><span class="gensmall">{ $L_COOKIE_SECURE_EXPLAIN }</span></td>
+			<td class="row2"><input name="site_secure" value="0" <!-- IF !{ $SITE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Disabled&nbsp;&nbsp;<input name="site_secure" value="1" <!-- IF { $SITE_SECURE } --> checked="checked" <!-- ENDIF --> type="radio">Enabled</td>
+		</tr>
+
+		<tr>
+			<td class="row1" width="50%"><b>Session IP validation: </b><br><span class="gensmall">Determines how much of the users IP is used to validate a session; All compares the complete address, A.B.C the first x.x.x, A.B the first x.x, None disables checking.</span></td>
+			<td class="row2"><input name="ip_check" value="4" <!-- IF { $IP_CHECK } == 4  -->checked="checked" <!-- ENDIF -->type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" <!-- IF { $IP_CHECK } == 3 -->checked="checked" <!-- ENDIF --> type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" <!-- IF { $IP_CHECK } == 2 --> checked="checked" <!-- ENDIF --> type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" <!-- IF { $IP_CHECK } --> checked="checked" <!-- ENDIF --> type="radio"> None&nbsp;&nbsp;</td>
+	
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Limit system load: </b><br><span class="gensmall">If the 1 minute system load exceeds this value the board will go offline, 1.0 equals ~100% utilisation of one processor. This only functions on UNIX based servers.</span></td>
+			<td class="row2"><input class="post" size="4" maxlength="4" name="limit_load" value="{ $LIMIT_LOAD }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Limit sessions: </b><br><span class="gensmall">If the number of sessions exceeds this value within a one minute period the board will go offline. Set to 0 for unlimited sessions.</span></td>
+	
+			<td class="row2"><input class="post" size="4" maxlength="4" name="limit_sessions" value="{ $LIMIT_SESSIONS }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Session length: </b><br><span class="gensmall">Sessions will expire after this time, in seconds.</span></td>
+			<td class="row2"><input class="post" size="5" maxlength="5" name="session_length" value="{ $SESSION_LENGTH }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>Session Autologin length: </b><br><span class="gensmall">Session Autologin will expire after this time, in seconds.</span></td>
+			<td class="row2"><input class="post" size="5" maxlength="5" name="session_length" value="{ $SESSION_LENGTH }" type="text"></td>
+		</tr>
+		<tr>
+			<th colspan="2">{ $L_COOKIE_SETTINGS }</th>
+		</tr>
+		<tr>
+			<td colspan="2" class="row1">{ $L_COOKIE_SETTINGS_EXPLAIN }</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_COOKIE_DOMAIN }: </b></td>
+			<td class="row2"><input class="post" maxlength="255" name="cookie_domain" value="{ $COOKIE_DOMAIN }" type="text"></td>
+		</tr>
+	
+	
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_COOKIE_NAME }: </b></td>
+			<td class="row2"><input class="post" maxlength="16" name="cookie_name" value="{ $COOKIE_NAME }" type="text"></td>
+		</tr>
+	
+	
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_COOKIE_PATH }: </b></td>
+	
+			<td class="row2"><input class="post" maxlength="255" name="cookie_path" value="{ $COOKIE_PATH }" type="text"></td>
+		</tr>
+
+		<script type="text/javascript">
+			  Calendar.setup(
+				{
+				  inputField  : "maintenance_start",
+				  button      : "time_trigger"
+				}
+			  );
+		</script>
+	<!-- ENDIF -->
+		<tr>
+			<td class="cat" colspan="2" align="center"><input name="submit" value="Submit" class="button" type="submit">&nbsp;&nbsp;<input value="Reset" class="button" type="reset"></td>
+		</tr>
+	</tbody>
+	</table>
+</form>
+
+{ $A_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

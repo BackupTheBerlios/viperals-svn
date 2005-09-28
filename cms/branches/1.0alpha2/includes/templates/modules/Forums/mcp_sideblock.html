@@ -1,0 +1,42 @@
+﻿<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th>{ $L_OPTIONS }</th>
+	</tr>
+	<!-- LOOP $mcp_section -->
+	<tr>
+		<!-- IF { $mcp_section:S_SELECTED } -->
+		<td class="row1"><b class="nav">{ $mcp_section:L_TITLE }</b>
+			<ul class="nav" style="margin: 0px; padding: 0px; list-style-type: none; line-height: 175%;">
+			<!-- LOOP $mcp_subsection -->
+			<li>&#187; <!-- IF { $mcp_subsection:S_SELECTED } --><b>{ $mcp_subsection:L_TITLE }</b><!-- ELSE --><a href="{$mcp_subsection:U_TITLE}">{ $mcp_subsection:L_TITLE }</a><!-- ENDIF --></li>
+			<!-- ENDLOOP $mcp_subsection -->
+			</ul>
+		<!-- ELSE -->
+		<td class="row2" nowrap="nowrap" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $mcp_section:U_TITLE }'"><a class="nav" href="{ $mcp_section:U_TITLE }">{ $mcp_section:L_TITLE }</a>
+		<!-- ENDIF -->
+		</td>
+	</tr>
+	<!-- ENDLOOP $mcp_section -->
+</table>
+
+<div style="padding: 2px;"></div>
+
+<!-- IF isset({ $S_SHOW_COLOUR_LEGEND }) -->
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+	<tr>
+		<th colspan="2">{ $L_MESSAGE_COLOURS }</th>
+	</tr>
+	<!-- LOOP $pm_colour_info -->
+	<tr>
+		<!-- IF { $pm_colour_info:IMG } -->
+			<td class="row1 { $pm_colour_info:CLASS }" width="5"><img src="images/spacer.gif" width="5" alt="{ $pm_colour_info:LANG }" border="0" /></td>
+		<!-- ELSE -->
+			<td class="row1" width="25" align="center">{ $pm_colour_info:IMG }</td>
+		<!-- ENDIF -->
+		<td class="row1"><span class="genmed">{ $pm_colour_info:LANG }</span></td>
+	</tr>
+	<!-- ENDLOOP $pm_colour_info -->
+</table>
+ 
+<div style="padding: 2px;"></div>
+<!-- ENDIF -->

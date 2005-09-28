@@ -1,0 +1,24 @@
+<!-- DISPLAY_HEADER -->
+
+{ $THEME_TABLE_OPEN }
+
+<form action="{ $CONFIRM_ACTION }" method="post">
+	<table class="tablebg" border="0" cellpadding="0" cellspacing="1" width="100%">
+		<tbody>
+			<tr>
+				<td class="row1" colspan="4" align="center" height="28">
+					{ $MESSAGE }{ $HIDDEN_FIELDS }
+				</td>
+			</tr>
+			<tr>
+				<td class="row1" colspan="4" align="center" height="28">
+					<input class="button" name="confirm" value="Submit" type="submit" />&nbsp;&nbsp;<input class="button" value="{ $L_CANCEL }" name="cancel" type="submit" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+
+{ $THEME_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

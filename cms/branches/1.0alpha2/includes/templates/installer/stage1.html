@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Viperal: Agreement</title>
+<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="expires" content="0" />
+
+<style type="text/css">
+<!--
+body
+{
+    font-family: Verdana, Helvetica, sans-serif;
+    font-size: 10px;
+    margin: 0%;
+    padding: 0px;
+    background-color: white;
+    background: url(../images/bg.gif);
+}
+
+.error { color: red; }
+
+#container
+{
+	position: absolute;
+	top: 50%;
+	left: 0px;
+	width: 100%;
+	margin-top: -200px;
+}
+
+#wrapper
+{
+	position: relative;
+	text-align: left;
+	width: 500px;
+	margin: 0px auto;
+}
+
+.spacer
+{
+	background-color: #ECECEC;
+}
+
+.button
+{
+	background-color: #DCE1E5;
+	border: 1px solid #ccc;
+	color: black;
+}
+
+th { height: 28px; color: #FFA34F; font-size: 110%; font-weight: bold; background-color: #006699;white-space: nowrap; }
+.tablebg { background-color: #A9B8C2; }
+
+.row1 { background-color: #ECECEC; padding: 4px; }
+.row2 { background-color: #DCE1E5; padding: 4px; }
+.row3 { background-color: #C0C8D0; padding: 4px; }
+
+a:link { color: #005784; text-decoration: none; }
+a:active { color: #005784; text-decoration: none; }
+a:visited { color: #005784; text-decoration: none; }
+a:hover { color: #000000; text-decoration: none; }
+
+form { margin: 0px; padding: 0px; border: 0px; }
+input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
+.post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}
+
+-->
+</style>
+
+<body>
+	<div id="container">
+		<div id="wrapper">
+			<form action="" method="post">
+				<table class="tablebg" width="100%" cellspacing="1" cellpadding="4">
+					<tbody>
+						<tr>
+							<th colspan="2">PHP Version</th>
+						</tr>
+						<tr>
+							<td class="row2" colspan="2"><b>PHP Version: { $php_version }</b></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Version Supported: </b><br/>Required</td>
+							<td class="row2"><!-- IF { $workable_Version } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_red.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Version higher than recommended: </b></td>
+							<td class="row2"><!-- IF { $recommended_Version } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<th colspan="2">PHP Configuration</th>
+						</tr>
+						<!-- IF { $error } -->
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">{ $error }</th>
+						</tr>
+						<!-- ENDIF -->
+							<tr>
+							<td class="row1" width="50%"><b>Safe Mode - OFF: </b></td>
+							<td class="row2"><!-- IF { $safe_mode } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Magic Quotes GPC - OFF: </b></td>
+							<td class="row2"><!-- IF { $magic_quotes_gpc } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Output Buffering - OFF: </b></td>
+							<td class="row2"><!-- IF { $output_buffering } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>Register Globals - OFF: </b></td>
+							<td class="row2"><!-- IF { $register_globals } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<th colspan="2">PHP Extensions</th>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>mbstring: </b></td>
+							<td class="row2"><!-- IF { $mbstring } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>zlib: </b></td>
+							<td class="row2"><!-- IF { $zlib } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<tr>
+							<td class="row1" width="50%"><b>GD:<br />{ $gd_version }</b></td>
+							<td class="row2"><!-- IF { $gd } --><img src="images/led_green.png" /><!-- ELSE --><img src="images/led_yellow.png" /><!-- ENDIF --></td>
+						</tr>
+						<!-- IF !{ $continue } -->
+						<tr>
+							<td colspan="2" class="row2" style="color: red; text-align:center;">You may not continue, please fix all problems listed in RED</th>
+						</tr>
+						<!-- ENDIF -->
+						<tr>
+							<input type="hidden" name="stage" value="2" />
+							<input type="hidden" name="agreement_signed" value="1" />
+							<th colspan="2" align="center"><input class="button" <!-- IF !{ $continue } -->disabled="disabled"<!-- ENDIF --> name="continue" value="Continue" type="submit"></th>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+	</div>
+</body>
+
+</html>

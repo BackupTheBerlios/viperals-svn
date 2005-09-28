@@ -1,0 +1,125 @@
+<!-- DISPLAY_HEADER -->
+
+<!-- INCLUDE modules/Control_Panel/ucp_header.html -->
+
+<style type="text/css">@import url(javascript/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="javascript/jscalendar/calendar.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/calendar-setup.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/lang/calendar-en.js"></script>
+
+<script type="text/javascript">
+
+function fast_preview()
+{
+	if(document.getElementById('preview_fast').innerHTML == '{ $L_PREVIEW }')
+	{
+		document.getElementById('preview_fast').innerHTML = '{ $L_EDIT }';
+		document.getElementById('message_preview').innerHTML = document.getElementById('description').value;
+		document.getElementById('message_preview').style.display = '';
+		document.getElementById('description').style.display = 'none';
+	}
+	else
+	{
+		document.getElementById('preview_fast').innerHTML = '{ $L_PREVIEW }';
+		document.getElementById('message_preview').innerHTML = '';
+		document.getElementById('message_preview').style.display = 'none';
+		document.getElementById('description').style.display = '';
+	}
+}
+
+</script>
+
+<table width="100%" cellpadding="3" cellspacing="0">
+	<tr>
+		<td width="60%" valign="top">
+			<table class="tablebg" width="100%" cellspacing="1">
+				<tr>
+					<th colspan="2">{ $L_BASIC_INFO }</th>
+				</tr>
+				<tr> 
+					<td class="row2" align="center" colspan="3">
+						<font class="error">No Content check yet, so don't hack plz</font>
+					</td>
+				</tr>
+				<tr>
+					<td class="row1" width="30%">{ $L_TITLE }</td>
+					<td class="row1"><input class="post" name="title" value="" size="39" type="text">
+				</tr>
+				<tr>
+					<td valign="top" class="row1" width="30%">{ $L_DESCRIPTION }<br/><a id="preview_fast" href="#" onclick="fast_preview()">{ $L_PREVIEW }</a></td>
+					<td class="row1">
+						<div id="message_preview" style="display: none; padding:5"></div>
+						<textarea name="description" id="description" rows="5" cols="35" style="display: ;" wrap="virtual" size="40"></textarea>
+					</td>
+				</tr>	
+				<tr>
+					<th colspan="2"></th>
+				</tr>
+				<tr>
+					<td class="row1" width="30%">{ $L_START }</td>
+					<td class="row1"><input class="post" id="start" name="start" value="" size="35" type="text" /> <img src="images/calender_small.png" style="cursor: pointer;"  id="start_trigger" /></td>
+
+				</tr>
+				<tr>
+					<td class="row1" width="30%">{ $L_END }</td>
+					<td class="row1"><input class="post" id="end" name="end" value="" size="35" type="text" /> <img src="images/calender_small.png" style="cursor: pointer;"  id="end_trigger" /></td>
+
+				</tr>
+				<tr>
+					<td class="cat" align="center"><input class="btnmain" name="submit" value="Submit" type="submit">&nbsp;</td>
+					<td class="cat" align="center"></td>
+				</tr>
+			</table>
+		</td>
+		<td width="40%" valign="top">
+	
+			<table class="tablebg" width="100%" cellspacing="1">
+				<tr>
+					<th>{ $L_BASIC_INFO }</th>
+				</tr>
+				<tr>
+					<td class="row1">{ $L_BASIC_INFO }</td>
+				</tr>
+				<tr>
+					<td align="center" class="row1"><a href="#" onclick="if (document.getElementById('options_recu').style.display)
+																		{
+																			document.getElementById('options_recu').style.display = '';
+																			this.innerHTML = '{ $L_HIDE_RECURRENCE }';
+																		}
+																		else
+																		{
+																			document.getElementById('options_recu').style.display = 'none';
+																			this.innerHTML = '{ $L_SHOW_RECURRENCE }';
+																		}">
+					{ $L_SHOW_RECURRENCE }</a></th>
+				</tr>
+				
+				<tr id="options_recu" style="display: none;">
+					<td class="row1">Recurre Every: <input class="post" name="title" value="" size="5" type="text"><span class="genmed"></span><select name="recurrence_rate"><option value="86400">Days</option><option value="86400">1</option></select></td>
+				</tr>
+				
+			</table>
+		</td>
+	</tr>
+</table>
+
+<script type="text/javascript">
+  Calendar.setup(
+    {
+      inputField  : "start",
+      button      : "start_trigger"
+    }
+  );
+</script>
+<script type="text/javascript">
+  Calendar.setup(
+    {
+      inputField  : "end",
+      button      : "end_trigger"
+    }
+  );
+</script>
+
+<!-- INCLUDE modules/Control_Panel/ucp_footer.html -->
+
+<!-- DISPLAY_FOOTER -->

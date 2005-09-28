@@ -1,0 +1,140 @@
+<!-- DISPLAY_HEADER -->
+
+<!-- INCLUDE modules/Members_List/memberlist_header.html -->
+
+<!-- IF { $S_SEARCH_USER } --><!-- INCLUDE modules/Members_List/memberlist_search.html --><!-- ENDIF -->
+
+<!-- IF { $S_SHOW_GROUP } -->
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr> 
+		<th colspan="7">{ $L_GROUP_INFORMATION }</th>
+	</tr>
+	<tr> 
+		<td class="row1" width="20%"><b class="genmed">{ $L_GROUP_NAME }:</b></td>
+		<td class="row2"><b class="gen"<!-- IF { $GROUP_COLOR } --> style="color:#{ $GROUP_COLOR }"<!-- ENDIF -->>{ $GROUP_NAME }</b></td>
+		<td class="row1" width="33%" rowspan="2" align="center">
+			<!-- IF { $AVATAR_IMG } -->{ $AVATAR_IMG }<br /><!-- ENDIF -->
+			<!-- IF { $RANK_IMG } -->{ $RANK_IMG }<!-- ENDIF -->
+			<!-- IF { $GROUP_RANK } --><span class="gensmall">{ $GROUP_RANK }</span><br /><br /><!-- ENDIF -->
+			<!-- IF { $U_PM } --><a href="{ $U_PM }">{ $PM_IMG }</a><!-- ENDIF --></td>
+	</tr>
+	<tr> 
+		<td class="row1" valign="top" width="20%"><b class="genmed">{ $L_GROUP_DESC }:</b></td>
+		<td class="row2"><!-- IF { $GROUP_DESC } --><span class="gen">{ $GROUP_DESC }</span><!-- ENDIF --><p class="forumdesc">{ $GROUP_TYPE }</p></td>
+	</tr>
+</table>
+
+<br clear="all" />
+<!-- ENDIF -->
+
+<form method="post" name="charsearch" action="{ $S_MODE_ACTION }">
+	<table width="100%" cellspacing="1">
+		<tr>
+			<td align="left"><span class="gensmall">{ $L_USERNAME_BEGINS_WITH }: </span><select name="first_char" onchange="this.form.submit();">{ $S_CHAR_OPTIONS }</select>&nbsp;<input type="submit" name="char" value="{ $L_DISPLAY }" class="button" /></td>
+			<!-- IF { $U_FIND_MEMBER } && !{ $S_SEARCH_USER }-->
+				<td class="gensmall" align="right"><a href="{ $U_FIND_MEMBER }">{ $L_FIND_USERNAME }</a></td>
+			<!-- ELSEIF { $S_SEARCH_USER } && { $U_HIDE_FIND_MEMBER } && !{ $S_FORM_NAME } -->
+				<td class="gensmall" align="right"><a href="{ $U_HIDE_FIND_MEMBER }">{ $L_HIDE_MEMBER_SEARCH }</a></td>
+			<!-- ENDIF -->
+		</tr>
+	</table>
+</form>
+
+<!-- IF { $S_SEARCH_USER } -->
+<form method="post" name="results" action="{ $S_MODE_ACTION }" onsubmit="insert_marked(this.user);return false">
+<!-- ELSE -->
+<form method="post" action="{ $S_MODE_ACTION }">
+<!-- ENDIF -->
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th nowrap="nowrap">#</th>
+			<th nowrap="nowrap" width="<!-- IF { $S_SEND_MESSAGE } -->20<!-- ELSE -->34<!-- ENDIF -->%"><a class="th" href="{ $U_SORT_USERNAME }">{ $L_USERNAME }</a></th>
+			<th nowrap="nowrap" width="15%"><a class="th" href="{ $U_SORT_JOINED }">{ $L_JOINED }</a></th>
+			<th nowrap="nowrap" width="10%"><a class="th" href="{ $U_SORT_POSTS }">{ $L_POSTS }</a></th>
+			<th nowrap="nowrap" width="15%"><a class="th" href="{ $U_SORT_RANK }">{ $L_RANK }</a></th>
+		<!-- IF { $S_SEND_MESSAGE } -->
+			<th nowrap="nowrap" width="11%">{ $L_SEND_MESSAGE }</th>
+		<!-- ENDIF -->
+			<th nowrap="nowrap" width="11%"><a class="th" href="{ $U_SORT_EMAIL }">{ $L_EMAIL }</a></th>
+			<th nowrap="nowrap" width="11%"><a class="th" href="{ $U_SORT_WEBSITE }">{ $L_WEBSITE }</a></th>
+		<!-- IF { $S_SEARCH_USER } -->
+			<th width="2%" nowrap="nowrap">{ $L_MARK }</th>
+		<!-- ENDIF -->
+		</tr>
+
+	<!-- IF isset({ $leader_row }) && !{ $S_SEARCH_USER } -->
+		<tr>
+			<td class="cat" colspan="8"><b class="gen">{ $L_GROUP_LEADERS }</b></td>
+		</tr>
+	<!-- ENDIF -->
+	<!-- LOOP $leader_row -->
+		
+		<!-- IF { $leader_row:#LOOP_INDEX } % 2 -->
+		<tr class="row2" style="height:25px">
+		<!-- ELSE -->
+		<tr class="row1" style="height:25px">
+		<!-- ENDIF -->
+
+			<td class="gen" align="center">{ $leader_row:#LOOP_NUMBER }</td>
+			<td class="gen" align="center"><strong><a<!-- IF { $leader_row:USER_COLOR } --> style="color:#{ $leader_row:USER_COLOR }"<!-- ENDIF --> href="{ $leader_row:U_VIEWPROFILE }">{ $leader_row:USERNAME }</a></strong></td>
+			<td class="gensmall" align="center" nowrap="nowrap">{$leader_row:JOINED}</td>
+			<td class="gen" align="center">{ $leader_row:POSTS }</td>
+			<td class="gen" align="center">{ $leader_row:RANK_IMG }</td>
+			<!-- IF { $leader_row:U_PM } --><td class="gen" align="center"><a href="{ $leader_row:U_PM }">{ $PM_IMG }</a></td><!-- ENDIF -->
+			<td class="gen" align="center"><!-- IF { $leader_row:U_EMAIL } --><a href="{ $leader_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF --></td>
+			<td class="gen" align="center"><!-- IF { $leader_row:U_WWW } --><a href="{ $leader_row:U_WWW }" target="_blank">{ $WWW_IMG }</a><!-- ENDIF --></td>
+			<!-- IF { $S_SEARCH_USER } --><td align="center"><input type="checkbox" name="user" value="{$leader_row:USERNAME}" /></td><!-- ENDIF -->
+
+		</tr>
+	<!-- ENDLOOP -->
+
+	<!-- IF isset({ $member_row }) && { $S_SHOW_GROUP } && !{ $S_SEARCH_USER } -->
+		<tr>
+			<td class="cat" colspan="8"><b class="gen">{ $L_GROUP_MEMBERS }</b></td>
+		</tr>
+	<!-- ENDIF -->
+		<!-- LOOP $member_row -->
+
+		<!-- IF { $member_row:#LOOP_INDEX } % 2 -->
+		<tr class="row2" style="height:25px">
+		<!-- ELSE -->
+		<tr class="row1" style="height:25px">
+		<!-- ENDIF -->
+			<td class="gen" align="center">{ $member_row:#LOOP_NUMBER }</td>
+			<td class="gen" align="center"><strong><a<!-- IF { $member_row:USER_COLOR } --> style="color:#{ $member_row:USER_COLOR }"<!-- ENDIF --> href="{ $member_row:U_VIEWPROFILE }">{ $member_row:USERNAME }</a></strong></td>
+			<td class="gensmall" align="center" nowrap="nowrap">{ $member_row:JOINED }</td>
+			<td class="gen" align="center">{ $member_row:POSTS }</td>
+			<td class="gen" align="center">{ $member_row:RANK_IMG }</td>
+			<!-- IF { $member_row:U_PM } -->
+			<td class="gen" align="center"><a href="{ $member_row:U_PM }">{ $PM_IMG }</a></td><!-- ENDIF -->
+			<td class="gen" align="center"><!-- IF { $member_row:U_EMAIL } --><a href="{ $member_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF --></td>
+			<td class="gen" align="center"><!-- IF { $member_row:U_WWW } --><a href="{ $member_row:U_WWW }" target="_blank">{ $WWW_IMG }</a><!-- ENDIF --></td>
+			<!-- IF { $S_SEARCH_USER } --><td align="center"><input type="checkbox" name="user" value="{ $member_row:USERNAME }" /></td><!-- ENDIF -->
+		</tr>
+		<!-- LOOPELSE -->
+		<tr>
+			<td class="row1" colspan="<!-- IF { $S_SEARCH_USER } -->9<!-- ELSE -->8<!-- ENDIF -->" height="28" align="center"><span class="gen">{ $L_NO_MEMBERS }</span></td>
+		</tr>
+		<!-- ENDLOOP -->
+
+		<tr>
+			<td class="cat" colspan="<!-- IF { $S_SEARCH_USER } -->9<!-- ELSE -->8<!-- ENDIF -->" align="center">
+			<!-- IF { $S_SEARCH_USER } --><input class="button" type="submit" value="{$L_SELECT_MARKED}" />
+			<!-- ELSE --><span class="gensmall">{ $L_SELECT_SORT_METHOD }:</span>&nbsp;<select name="sk">{ $S_MODE_SELECT }</select>&nbsp; <span class="gensmall">{ $L_ORDER }</span>&nbsp;<select name="sd">{ $S_ORDER_SELECT }</select>&nbsp;
+			<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" /><!-- ENDIF --></td>
+		</tr>
+	</table>
+</form>
+
+<table width="100%" cellspacing="0" cellpadding="0">
+	<tr>
+		<td class="pagination">{ $PAGE_NUMBER } [ { $TOTAL_USERS } ]</td>
+		<td align="right"><!-- IF { $S_SEARCH_USER } --><b class="nav"><a href="javascript:marklist(true);">{ $L_MARK_ALL }</a> :: <a  href="javascript:marklist(false);">{ $L_UNMARK_ALL }</a></b><br /><!-- ENDIF --><!-- IF { $PAGINATION } --><span class="pagination"><a href="javascript:jumpto();">{ $L_GOTO_PAGE }</a> <!-- IF { $PREVIOUS_PAGE } --><a href="{$PREVIOUS_PAGE}">{ $L_PREVIOUS }</a>&nbsp;&nbsp;<!-- ENDIF -->{ $PAGINATION }<!-- IF { $NEXT_PAGE } -->&nbsp;&nbsp;<a href="{ $NEXT_PAGE }">{$L_NEXT}</a><!-- ENDIF --></span><!-- ENDIF --></td>
+	</tr>
+</table>
+
+<br clear="all" />
+
+<!-- INCLUDE modules/Members_List/memberlist_footer.html -->
+
+<!-- DISPLAY_FOOTER -->

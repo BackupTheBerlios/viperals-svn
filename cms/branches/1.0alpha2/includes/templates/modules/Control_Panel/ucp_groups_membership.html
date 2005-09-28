@@ -1,0 +1,69 @@
+<!-- INCLUDE modules/Control_Panel/ucp_header.html -->
+
+<form name="ucp" method="post" action="{ $S_UCP_ACTION }"<!-- IF isset({ $S_FORM_ENCTYPE }) -->{ $S_FORM_ENCTYPE }<!-- ENDIF --> >
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th colspan="2">{ $L_USERGROUPS }</th>
+		</tr>
+		<tr>
+			<td class="row3" colspan="2"><span class="genmed">{ $L_GROUPS_EXPLAIN }</span></td>
+		</tr>
+		<tr>
+			<th colspan="1">{ $L_GROUP_DETAILS }</th>
+			<th>{ $L_MARK }</th>
+		</tr>
+	
+		<!-- IF isset({ $leader }) -->
+		<tr>
+			<td class="row3" colspan="2"><b class="gensmall">{ $L_GROUP_LEADER }</b></td>
+		</tr>
+		<!-- LOOP $leader -->
+		<tr>
+			<td class="row1"><b class="genmed"><a href="{ $leader:U_VIEW_GROUP }">{ $leader:GROUP_NAME }</a></b><!-- IF { $leader:GROUP_DESC } --><p class="forumdesc">{ $leader:GROUP_DESC }</p><!-- ENDIF --></td>
+			<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $leader:GROUP_RESIGN } --><input type="checkbox" name="group_id[]" value="{ $leader:GROUP_ID }" /><!-- ENDIF --></td>
+		</tr>
+		<!-- ENDLOOP -->
+		<!-- ENDIF -->
+	
+		<!-- IF isset({ $member }) -->
+		<tr>
+			<td class="row3" colspan="2"><b class="gensmall">{ $L_GROUP_MEMBER }</b></td>
+		</tr>
+		<!-- LOOP $member -->
+		<tr>
+			<td class="row1"><b class="genmed"><a href="{ $member:U_VIEW_GROUP }">{ $member:GROUP_NAME }</a></b><!-- IF { $member:GROUP_DESC } --><p class="forumdesc">{ $member:GROUP_DESC }</p><!-- ENDIF --></td>
+			<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $member:GROUP_RESIGN } --><input type="checkbox" name="group_id[]" value="{ $member:GROUP_ID }" /><!-- ENDIF --></td>
+		</tr>
+		<!-- ENDLOOP -->
+		<!-- ENDIF -->
+	
+		<!-- IF isset({ $pending }) -->
+		<tr>
+			<td class="row3" colspan="2"><b class="gensmall">{$L_GROUP_PENDING}</b></td>
+		</tr>
+		<!-- LOOP $pending -->
+		<tr>
+			<td class="row1"><b class="genmed"><a href="{ $pending:U_VIEW_GROUP }">{ $pending:GROUP_NAME }</a></b><!-- IF { $pending:GROUP_DESC } --><p class="forumdesc">{ $pending:GROUP_DESC }</p><!-- ENDIF --></td>
+			<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $pending:GROUP_RESIGN } --><input type="checkbox" name="group_id[]" value="{ $pending:GROUP_ID }" /><!-- ENDIF --></td>
+		</tr>
+		<!-- ENDLOOP -->
+		<!-- ENDIF -->
+	
+		<!-- IF isset({ $nonmember }) -->
+		<tr>
+			<td class="row3" colspan="3"><b class="gensmall">{$L_GROUP_NONMEMBER}</b></td>
+		</tr>
+		<!-- LOOP $nonmember -->
+		<tr>
+			<td class="row1"><b class="genmed"><a href="{$nonmember:U_VIEW_GROUP}">{ $nonmember:GROUP_NAME }</a></b><!-- IF { $nonmember:GROUP_DESC } --><p class="forumdesc">{ $nonmember:GROUP_DESC }</p><!-- ENDIF --></td>
+			<td class="row1" width="6%" align="center" nowrap="nowrap"><!-- IF { $nonmember:GROUP_APPLY } --><input type="checkbox" name="group_id[]" value="{ $nonmember:GROUP_ID }" /><!-- ENDIF --></td>
+		</tr>
+		<!-- ENDLOOP -->
+		<!-- ENDIF -->
+		<tr>
+			<td class="cat" colspan="3"><div style="float:right"><span class="genmed">Select: </span><select name="mode"><option value="apply">Apply marked</option><option value="resign">Resign marked</option><option value="demote">Demote marked</option></select>&nbsp;<input class="button" type="submit" name="submit" value="{ $L_SUBMIT }" />&nbsp;</div></td>
+		</tr>
+	</table>
+</form>
+
+<!-- INCLUDE modules/Control_Panel/ucp_footer.html -->

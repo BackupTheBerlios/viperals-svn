@@ -1,0 +1,100 @@
+<style type="text/css">@import url(java/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="java/jscalendar/calendar_stripped.js"></script>
+<script type="text/javascript" src="java/jscalendar/lang/calendar-en.js"></script>
+<script type="text/javascript" src="java/jscalendar/calendar-setup.js"></script>
+{ $A_TABLE_OPEN }
+<form action="{ $B_ACTION }" method="post">
+	<table class="tablebg" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
+		<tbody>
+		{ if $B_ERROR }
+			<tr> 
+				<td class="row2" align="center" colspan="3">
+					<font color="#990000">{ $B_ERROR }</font>
+				</td>
+			</tr>
+		{ /if }
+			<tr> 
+				<th colspan="3" height="28" valign="middle">{ $B_HEADER }</th>
+			</tr>
+		
+			<tr> 
+				<td class="row1" width="20%"><b class="genmed">{ $L_TITLE }: </b></td>
+		
+				<td class="row2" colspan="2"><input class="post" name="b_title" size="40" maxlength="100" value="{ $B_TITLE }" type="text"></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_ACTIVE }: </b></td>
+				<td class="row2" colspan="2"><input type="radio" name="b_active" value="1"{ if $B_ACTIVE } checked="checked" { /if }/><span class="genmed">{$L_YES}</span>&nbsp;&nbsp;<input type="radio" name="b_active" value="0"{ if !$B_ACTIVE } checked="checked" { /if }/><span class="genmed">{$L_NO}</span></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_STARTS }: </b></td>
+				<td class="row2" >
+					<input class="post" id="b_time" name="b_time" size="35" maxlength="100" value="{ $B_STARTS }" type="text" />
+					<img src="java/jscalendar/calendar.png" style="cursor: pointer;" id="time_trigger" />
+					{ if $B_STARTS }   Currently Set:  { $B_STARTS }{ /if }
+				</td>
+				<td class="row1" align="center" rowspan="2"><b class="genmed">Current Server Time:</b><br/>{ $B_CURRENT_TIME } </td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_EXPIRES }: </b></td>
+				<td class="row2">
+					<input class="post" id="b_expires" name="b_expires" size="35" maxlength="100" value="{ $B_EXPIRES }" type="text" />
+					<img src="java/jscalendar/calendar.png" style="cursor: pointer;"  id="expires_trigger" />
+					{ if $B_EXPIRES }    Currently Set:  { $B_EXPIRES }{ /if }
+				</td>
+			</tr>
+			{ if $B_POSITION }
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_POSITION }: </b></td>
+				<td class="row2" colspan="2"><select name="b_position">{ $B_POSITION }</select></td>
+			</tr>
+			{ /if }
+			{ if $B_RSS_SHOW }
+				<tr> 
+				<td class="row1"><b class="genmed">{ $L_RSS_URL }: </b></td>
+				<td class="row2" colspan="2"><input class="post" name="b_url" size="35" maxlength="100" value="{ $B_RSS_URL }" type="text"></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_RSS_REFRESH }: </b></td>
+				<td class="row2" colspan="2"><input class="post" name="b_refresh" size="35" maxlength="100" value="{ $B_RSS_REFRESH }" type="text">{ if $B_EXPIRES }    Currently Set:  { $B_EXPIRES }{ /if }</td>
+			</tr>
+			{ /if }
+			{ if $B_FILE }
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_FILE }: </b></td>
+				<td class="row2" colspan="2"><select name="b_file">{ $B_FILE }</select> </td>
+		
+			</tr>
+			{ /if }
+			{ if $B_SHOW_CONTENT }
+			<tr> 
+				<td class="row1" valign="top"><b class="genmed">{ $L_HTML_CONTENT }: </b></td>
+				<td class="row2" colspan="2"><textarea name="b_content" id="b_content" editor_enabled="true" style="width:300px; height:200px" cols="63" rows="15">{ $B_CONTENT }</textarea><br /></td>
+			</tr>
+			{ /if }
+			<tr>
+				<td class="cat" colspan="3" align="center" height="28">
+				<input class="btnmain" name="submit" value="Submit" type="submit">&nbsp;&nbsp;<input class="btnlite" value="Reset" name="reset" type="reset"></td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+{literal}
+<script type="text/javascript">
+  Calendar.setup(
+    {
+      inputField  : "b_time",
+      button      : "time_trigger"
+    }
+  );
+</script>
+<script type="text/javascript">
+  Calendar.setup(
+    {
+      inputField  : "b_expires",
+      button      : "expires_trigger"
+    }
+  );
+</script>
+{/literal}
+{ $A_TABLE_CLOSE }

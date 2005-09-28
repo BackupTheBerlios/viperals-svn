@@ -1,0 +1,44 @@
+<div id="forums_option_menu" style="display: none;">
+	<table class="tablebg" border="0" cellpadding="4" cellspacing="1">
+		<tbody>
+			<tr>
+				<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'"  onclick="location.href='{ $U_SEARCH_UNANSWERED }'" nowrap="nowrap"><a href="{ $U_SEARCH_UNANSWERED }" title="">{ $L_SEARCH_UNANSWERED }</a></td>
+			</tr>
+			<tr>
+				<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'"  onclick="location.href='{ $U_SEARCH_ACTIVE_TOPICS}'" nowrap="nowrap"><a href="{ $U_SEARCH_ACTIVE_TOPICS}" title="">{ $L_SEARCH_ACTIVE_TOPICS }</a></td>
+			</tr>
+			<!-- IF { $S_USER_LOGGED_IN } -->
+			<tr>
+				<td class="row2" height="6" nowrap="nowrap"></td>
+			</tr>
+			<tr>
+				<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'"  onclick="location.href='{ $U_SEARCH_ACTIVE_TOPICS}'" nowrap="nowrap"><a href="{ $U_SEARCH_ACTIVE_TOPICS}" title="">{ $L_SEARCH_NEW }</a></td>
+			</tr>
+			<tr>
+				<td class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'"  onclick="location.href='{ $U_SEARCH_SELF }'" nowrap="nowrap"><a href="{ $U_SEARCH_SELF }" title="">{ $L_SEARCH_SELF }</a></td>
+			</tr>
+			<!-- ENDIF -->
+		</tbody>
+	</table>
+</div>
+
+<script type="text/javascript">menu_init_forums('forums_option');</script>
+
+<div id="forums_search_menu" style="display: none;">
+	<form action="{ $U_SEARCH }" method="post">
+		<table class="tablebg" border="0" cellpadding="4" cellspacing="1">
+			<tbody>
+				<tr>
+					<td class="row1">
+						<input type="text" class="post" name="search_keywords" size="20" /><input class="button" value="Go" type="submit"><br>
+					</td>
+				</tr>
+				<tr>
+					<td class="row2" height="6" nowrap="nowrap"></td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+</div>
+
+<script type="text/javascript">menu_init_forums('forums_search');</script>

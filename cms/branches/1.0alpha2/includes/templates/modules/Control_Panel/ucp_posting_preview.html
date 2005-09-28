@@ -1,0 +1,58 @@
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr> 
+		<th>{ $L_PREVIEW }</th>
+	</tr>
+	<tr>  
+		<td class="row1">{ $MINI_POST_IMG }<span class="postdetails">{ $L_POSTED }: { $POST_DATE } &nbsp;&nbsp;&nbsp; { $L_POST_SUBJECT }: { $PREVIEW_SUBJECT }</span></td>
+	</tr>
+
+	<tr> 
+		<td class="row1"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td><div class="postbody">{ $PREVIEW_MESSAGE }</div>
+				<!-- IF { $S_HAS_ATTACHMENTS } -->
+				<br clear="all" /><br />
+
+				<table class="tablebg" width="100%" cellspacing="1">
+					<tr>
+						<td class="row3"><b class="genmed">{ $L_ATTACHMENTS }: </b></td>
+					</tr>
+					<!-- LOOP $attachment -->
+					<tr>
+						<td class="row2">
+						<!-- IF { $attachment:category } == 'DENIED' -->
+							<span class="postbody">[ { $attachment:lang }]</span><br /><br />
+						<!-- ELSEIF { $attachment:category } == 'IMAGE' -->
+							<!-- IF { $attachment:comment } -->
+							<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachment:comment }</span><hr />
+							<!-- ENDIF --><img src="{ $attachment:image_src }" alt="{ $attachment:name }" /></span>
+							<br /><span class="gensmall"><strong>{ $attachment:name }</strong><br/> { $L_VIEWED } { $attachment:lang_views } </span>
+						<!-- ELSEIF { $attachment:category } == 'THUMBNAIL' -->
+							<!-- IF { $attachment:comment } -->
+							<span class="gensmall"><b>{ $L_COMMENT }:</b> { $attachment:comment }</span><hr />
+							<!-- ENDIF -->		<a href="{ $attachment:link }" target="_blank"><img src="{ $attachment:image_src }" alt="{ $attachment:name }" border="0" /></a></span>
+							<br /><span class="gensmall"><strong>{ $attachment:name }</strong><br/> { $L_VIEWED } { $attachment:lang_views } </span>
+						<!-- ELSE -->
+							<!-- IF { $attachment:comment } -->
+							<span class="gensmall"><b>{ $L_FILE_COMMENT }:</b> { $attachment:comment }</span><hr />
+							<!-- ENDIF -->
+							<!-- IF { $attachment:icon } --><img src="{ $attachment:icon }" alt="" border="0" /><!-- ENDIF --> <a href="{ $attachment:link }" target="_blank">{ $attachment:name }</a>
+							<span class="gensmall">
+							<br />{ $L_FILESIZE } { $attachment:lang_size }
+							<br />{ $L_DOWNLOADED } { $attachment:lang_views }
+							</span>
+						<!-- ENDIF -->
+						</td>
+					</tr>
+					<!-- ENDLOOP -->
+				</table>
+				<!-- ENDIF -->
+				<!-- IF { $PREVIEW_SIGNATURE } --><span class="postbody"><br />_________________<br />{ $PREVIEW_SIGNATURE }</span><!-- ENDIF --></td>
+			</tr>
+		</table>
+		</td>
+	</tr>
+</table>
+
+<br clear="all" />

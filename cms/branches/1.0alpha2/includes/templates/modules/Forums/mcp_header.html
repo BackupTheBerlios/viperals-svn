@@ -1,0 +1,48 @@
+<!-- INCLUDE modules/Forums/overall_header.html -->
+
+<script language="javascript" type="text/javascript" defer="defer">
+<!--
+function marklist(form_name, status)
+{
+	for (i = 0; i < document.forms[form_name].length; i++)
+	{
+		document.forms[form_name].elements[i].checked = status;
+	}
+}
+//-->
+</script>
+
+<!-- IF isset({ $TOPIC_TITLE }) || isset({ $FORUM_NAME }) -->
+<h2><!-- IF isset({ $TOPIC_TITLE }) --><a class="titles" href="{ $U_VIEWTOPIC }">{ $TOPIC_TITLE }</a><!-- ELSE --><a class="titles" href="{ $U_VIEW_FORUM }" title="{ $FORUM_DESC }">{ $FORUM_NAME }</a><!-- ENDIF --></h2>
+<br clear="all" />
+<!-- ENDIF -->
+
+<!-- IF isset({ $MESSAGE }) -->
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th>{ $L_MESSAGE }</th>
+	</tr>
+	
+	<tr> 
+		<td class="row1" align="center"><span class="gen">{ $MESSAGE }</span></td>
+		<!-- <br />{ section name=return_linksloop loop=$return_links }{ $return_links[return_linksloop].MESSAGE_LINK }<br /><br />{ /section }-->
+	</tr>
+</table>
+
+<br />
+<!-- ENDIF -->
+
+<!-- IF isset({ $CONFIRM_MESSAGE }) -->
+<table class="tablebg" width="100%" cellspacing="1">
+	<form name="confirm" method="post" action="{$S_CONFIRM_ACTION}"{$S_FORM_ENCTYPE}>
+		<tr>
+			<th><b>{ $L_PLEASE_CONFIRM }</b></th>
+		</tr>
+		<tr> 
+			<td class="row1" align="center"><span class="gen"><br />{ $CONFIRM_MESSAGE }<br /><br />{ $S_HIDDEN_FIELDS }<input class="btnmain" type="submit" name="confirm" value="{ $L_YES }" />&nbsp;&nbsp;<input class="btnlite" type="submit" name="cancel" value="{ $L_NO }" /><br /><br /></span></td>
+		</tr>
+	</form>
+</table>
+
+<br />
+<!-- ENDIF -->

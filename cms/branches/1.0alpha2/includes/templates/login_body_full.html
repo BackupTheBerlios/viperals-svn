@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Viperal: Login</title>
+<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="expires" content="0" />
+
+<style type="text/css">
+<!--
+body
+{
+    font-family: Verdana, Helvetica, sans-serif;
+    font-size: 10px;
+    margin: 0%;
+    padding: 0px;
+    background-color: white;
+    background: url(/images/bg.gif);
+}
+
+.error { color: red; }
+
+#container
+{
+	position: absolute;
+	top: 50%;
+	left: 0px;
+	width: 100%;
+	margin-top: <!-- IF { $U_CONFIRM_IMAGE } -->-160px<!-- ELSE -->-100px<!-- ENDIF -->;
+}
+
+#wrapper
+{
+	position: relative;
+	text-align: left;
+	width: 300px;
+	margin: 0px auto;
+}
+
+.spacer
+{
+	background-color: #ECECEC;
+}
+
+.button
+{
+	background-color: #DCE1E5;
+	border: 1px solid #ccc;
+	color: black;
+}
+
+th { height: 28px; color: #FFA34F; font-size: 110%; font-weight: bold; background-color: #006699;white-space: nowrap; }
+.tablebg { background-color: #A9B8C2; }
+
+.row1 { background-color: #ECECEC; padding: 4px; }
+.row2 { background-color: #DCE1E5; padding: 4px; }
+.row3 { background-color: #C0C8D0; padding: 4px; }
+
+a:link { color: #005784; text-decoration: none; }
+a:active { color: #005784; text-decoration: none; }
+a:visited { color: #005784; text-decoration: none; }
+a:hover { color: #000000; text-decoration: none; }
+
+form { margin: 0px; padding: 0px; border: 0px; }
+input { font-weight: normal; background-color: #FAFAFA; border-style: solid; border-width: 1px; border-color: #ccc; color: black; font-family: Verdana, serif; font-size: 100%; }
+select { color: black; background-color: white; font-family: Verdana, serif; font-size: 100%; font-weight: normal; border-color: black; border-style: solid; border-width: 1px; }
+.post { background-color: white; border-style: solid; border-width: 1px; border-color: #ccc;}
+
+-->
+</style>
+
+<body>
+
+<div id="container">
+	<div id="wrapper">
+		<form action="{$S_LOGIN_ACTION}" method="post">
+			<table align="center" class="tablebg" width="100%" cellspacing="1">
+				<tr> 
+					<th align="center">Login Info</th>
+				</tr>
+				<!-- IF { $LOGIN_EXPLAIN } -->
+				<tr>
+					<td class="row1" colspan="2" align="center"><span class="gensmall">{ $LOGIN_EXPLAIN }</td>
+				</tr>
+				<!-- ENDIF -->
+				<tr> 
+					<td class="row2">
+					<table width="100%" cellspacing="1" cellpadding="4">
+						<!-- IF { $LOGIN_ERROR } -->
+						<tr>
+							<td class="gensmall" colspan="2" align="center"><span class="error">{$LOGIN_ERROR}</span></td>
+						</tr>
+						<!-- ENDIF -->
+						<tr> 
+							<td valign="top"><b class="gensmall">{$L_USERNAME}:</b></td>
+							<td><input class="post" type="text" name="username" size="25" maxlength="40" value="{$USERNAME}" tabindex="1" /><br /><a class="gensmall" href="{$U_REGISTER}">{$L_REGISTER}</a></td>
+						</tr>
+						<tr> 
+							<td valign="top"><b class="gensmall">{$L_PASSWORD}:</b></td>
+							<td>
+								<input class="post" type="password" name="password" size="25" maxlength="25" tabindex="2" />
+								<!-- IF { $U_SEND_PASSWORD } --><br /><a class="gensmall" href="{ $U_SEND_PASSWORD }">{ $L_FORGOT_PASS }</a><!-- ENDIF -->
+								<!-- IF { $U_RESEND_ACTIVATION } --><br /><a class="gensmall" href="{ $U_RESEND_ACTIVATION }">{ $L_RESEND_ACTIVATION }</a><!-- ENDIF -->
+							 </td>
+						</tr>
+						<!-- IF { $S_DISPLAY_FULL_LOGIN } -->
+						<tr> 
+							<td>&nbsp;</td>
+							<td><input type="checkbox" name="autologin" tabindex="4" /> <span class="gensmall">{$L_LOG_ME_IN}</span></td>
+						</tr>
+						<tr>
+							<td>&nbsp;</td>
+							<td><input type="checkbox" name="viewonline" tabindex="5" /> <span class="gensmall">{$L_HIDE_ME}</span></td>
+						</tr>
+						<!-- ENDIF -->
+					</table>
+					</td>
+				</tr>
+				<!-- IF { $U_CONFIRM_IMAGE } -->
+				<tr> 
+					<th  align="center">{ $L_CONFIRMATION_CODE }</th>
+				</tr>
+				<tr> 
+					<td align="center" class="row1"><span class="gensmall">Enter the code exactly as you see it in the image<br/><b>This is case sensitive</b></span></td>
+				</tr>
+				<tr>
+					<td align="center" class="row2">{ $U_CONFIRM_IMAGE }</td>
+				</tr>
+				<tr>
+					<td align="center" class="row1"><input class="post" name="confirm_code" size="10" maxlength="6" type="text" tabindex="3" /></td>
+				</tr>
+				<!-- ENDIF -->
+				<tr> 
+					<th colspan="2" align="center">{$S_HIDDEN_FIELDS}<input type="submit" name="login" class="button" value="{$L_LOGIN}" tabindex="4" /></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+</div>
+
+</body>

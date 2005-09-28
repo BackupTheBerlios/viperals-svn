@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{ $SITE_LANG }" lang="{ $SITE_LANG }">
+<head>
+<title>{ $SITE_TITLE }</title>
+<meta http-equiv="content-Type" content="text/html; charset={ $SITE_CHARSET }" />
+<meta name="author" content="{ $SITE_NAME }" /><meta http-equiv="expires" content="0" />
+<meta name="copyright" content="Copyright { $SITE_NAME } { $SITE_URL }" />
+<meta name="robots" content="index, follow" />
+{ $HEADER_META }
+<link rel="stylesheet" href="{ $THEME_STYLESHEET }" type="text/css" />
+{ $HEADER_REGULAR }
+{ $HEADER_JS }
+<script type="text/javascript" src="javascript/collapse.js"></script>
+
+<!--[if IE]>
+<style>
+	.bodymain
+	{
+		height:1500px;
+	}
+</style>
+<![endif]-->
+</head>
+<body>
+
+<a name="Top"></a>
+
+<div id="header">
+	<a href="{ $THEME_MAININDEX }"><img src="themes/viperal/images/Viperal_Logo.gif" border="0" alt="{ $THEME_SITENAME }" /></a>
+</div>
+
+<!-- include blockleft.html -->
+
+<div class="mainbody" style="margin-left: { $THEME_MARGINLEFT }">
+	<div id="page">
+		You are here: { $PAGE_TITLE }
+	</div>
+	
+	<div class="bodymain" style="margin-right: { $THEME_MARGINRIGHT }">
+	<!-- IF { $HEADER_MESSAGE }-->
+	<div style="color: #999; border-bottom:1px solid #ccc; padding:2px; background-color: #eee; text-align: center;">{ $HEADER_MESSAGE }</div>
+	<!-- ENDIF -->
+
+	<!-- IF isset({ $message_block_top }) -->
+	<div class="messageblock">
+	<!-- LOOP $message_block_top -->
+		<div class="title" onclick="switch_collapse('block_{ $message_block_top:id }');" style="cursor:pointer">{ $message_block_top:title }
+		<!-- IF { $message_block_top:edit_link } -->[ <!-- IF { $message_block_top:expires } -->{ $message_block_top:expires } | <!-- ENDIF -->
+		<a href="{ $message_block_top:edit_link }" >{ $L_EDIT }</a> ]<!-- ENDIF --></div>
+		<div <!-- IF { $message_block_top:collapsed } -->style="display: none;"<!-- ENDIF --> class="content" id="block_{ $message_block_top:id }">{ $message_block_top:content }</div>
+	<br />
+	<!-- ENDLOOP $message_block_top -->
+	</div><br />
+	<!-- ENDIF -->
+
+<!-- IF isset({ $block_center }) -->
+	<!-- LOOP $block_center -->
+	<div class="centerblock">
+		<div class="title">{ $block_center:TITLE }</div>
+			<div class="OpenTable"><div class="outer">
+				<div class="inner">
+					<div class="content">{ $block_center:CONTENT }</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- ENDLOOP $block_center -->
+	<br />
+<!-- ENDIF -->

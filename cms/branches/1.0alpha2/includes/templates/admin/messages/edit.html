@@ -1,0 +1,112 @@
+<!-- DISPLAY_HEADER -->
+
+<style type="text/css">@import url(javascript/jscalendar/skins/aqua/theme.css);</style>
+<script type="text/javascript" src="javascript/jscalendar/calendar.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/calendar-setup.js"></script>
+<script type="text/javascript" src="javascript/jscalendar/lang/calendar-en.js"></script>
+
+{ $A_TABLE_OPEN }
+
+<form action="{ $B_ACTION }" name="message" method="post">
+	<table class="tablebg" align="center" cellpadding="4" cellspacing="1" width="100%">
+		<tbody>
+			<!-- IF { $B_ERROR } -->
+			<tr> 
+				<td class="row2" align="center" colspan="3">
+					<font class="error">{ $B_ERROR }</font>
+				</td>
+			</tr>
+			<!-- ENDIF -->
+
+			<tr> 
+				<th colspan="3" height="28" valign="middle">{ $B_TITLE }</th>
+			</tr>
+		
+			<tr> 
+				<td class="row1" width="20%"><b class="genmed">{ $L_TITLE }: </b></td>
+		
+				<td class="row2" colspan="2"><input class="post" name="title" size="50" maxlength="100" value="{ $B_TITLE }" type="text"><!-- IF { $B_DELETE_LINK } --> <br/> <a href="{ $B_DELETE_LINK }">{ $L_DELETE_THIS }</a> <!-- ENDIF --></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_ACTIVE }: </b></td>
+				<td class="row2" colspan="2"><input name="active" value="2" <!-- IF { $B_ACTIVE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_YES }&nbsp;&nbsp;<input name="active" value="0" <!-- IF !{ $B_ACTIVE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_POSITION }: </b></td>
+				<td class="row2" colspan="2"><select name="b_position">{ $B_POSITION }</select></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_TYPE }: </b></td>
+				<td class="row2" colspan="2"><select name="b_type">{ $B_TYPE }</select></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_STARTS }: </b></td>
+				<td class="row2" >
+					<input class="post" id="starts" name="starts" size="35" maxlength="100" value="{ $B_STARTS }" type="text">
+					<img src="images/calender_small.png" style="cursor: pointer;" id="starts_trigger"/>
+				</td>
+				<td class="row1" align="center" rowspan="2"><b class="genmed">Current Server Time:<br/>{ $B_CURRENT_TIME }: </b></td>
+			</tr>
+			<tr> 
+				<td class="row1"><b class="genmed">{ $L_EXPIRES }: </b></td>
+				<td class="row2">
+					<input class="post" id="expires" name="expires" size="35" maxlength="100" value="{ $B_EXPIRES }" type="text" />
+					<img src="images/calender_small.png" style="cursor: pointer;"  id="expires_trigger" />
+				</td>
+			</tr>
+			<tr> 
+				<td class="row1" valign="top" ><b class="genmed">{ $L_MESSAGE }: </b></td>
+				<td class="row2" colspan="2"><div id="message_preview" style="display: none; padding:5px"></div>
+				<textarea name="content" id="content" editor_enabled="true" style="width:90%; height:400px;" cols="63" rows="15">{ $B_CONTENT }</textarea><br /><br /></td>
+			</tr>
+			<tr>
+				<td class="cat" colspan="3" align="center" height="28">
+					<input type="hidden" name="update" value="{ $B_BID }">
+					<!-- <input class="btnmain" id="preview_fast" value="{ $L_PREVIEW }" type="button" onclick="fast_preview(); return false;"> -->
+					<input class="btnmain" name="submit" value="Submit" type="submit">&nbsp;&nbsp;<input class="btnlite" value="Reset" name="reset" type="reset">
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+
+{ $A_TABLE_CLOSE }
+
+<script type="text/javascript">
+
+function fast_preview()
+{
+	if(document.getElementById('preview_fast').value == '{ $L_PREVIEW }')
+	{
+		document.getElementById('preview_fast').value = 'Edit';
+		document.getElementById('message_preview').innerHTML = document.getElementById('content').value;
+		document.getElementById('message_preview').style.display = '';
+		document.getElementById('content').style.display = 'none';
+
+	}
+	else
+	{
+		document.getElementById('preview_fast').value = '{ $L_PREVIEW }';
+		document.getElementById('message_preview').innerHTML = '';
+		document.getElementById('message_preview').style.display = 'none';
+		document.getElementById('content').style.display = '';
+	}
+}
+
+  Calendar.setup(
+    {
+      inputField  : "starts",         // ID of the input field
+      button      : "starts_trigger"       // ID of the button
+    }
+  );
+</script>
+<script type="text/javascript">
+  Calendar.setup(
+    {
+      inputField  : "expires",         // ID of the input field
+      button      : "expires_trigger"       // ID of the button
+    }
+  );
+</script>
+
+<!-- DISPLAY_FOOTER -->

@@ -1,0 +1,54 @@
+<!-- DISPLAY_HEADER -->
+
+<!-- INCLUDE modules/Control_Panel/ucp_header.html -->
+
+<table class="tablebg" width="100%" cellpadding="5" cellspacing="1px">
+	<tr class="row2">
+		<td width="33%"><a href="{ $PREVIOUS_MONTH }">{ $PREVIOUS_MONTH_NAME } { $PREVIOUS_MONTH_YEAR }</a></td>
+		<td width="33%" align="center"><div style="font-size: 120%"><b>{ $THIS_MONTH_NAME } { $CURRENT_YEAR }</b></div></td>
+		<td width="33%" align="right"><a href="{ $NEXT_MONTH }">{ $NEXT_MONTH_NAME } { $NEXT_MONTH_YEAR }</a></td>
+	</tr>
+</table>
+
+<div style="padding: 2px;"></div>
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<tr>
+		<th width="14%">{ $L_SUNDAY }</th>
+		<th width="14%">{ $L_MONDAY }</th>
+		<th width="14%">{ $L_TUESDAY }</th>
+		<th width="14%">{ $L_WEDNESDAY }</th>
+		<th width="14%">{ $L_THURSDAY }</th>
+		<th width="14%">{ $L_FRIDAY }</th>
+		<th width="14%">{ $L_SATURDAY }</th>
+	</tr>
+	<!-- LOOP $days -->
+
+	<!-- IF ({ $days:#LOOP_INDEX } % 7) == 0 --></tr><tr style="height:80px"><!-- ENDIF -->
+
+	<!-- IF { $days:NUMBER } -->
+		<!-- IF { $days:LINK } -->
+			<td class="row1" valign="top" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $days:LINK }'" style="padding:5px">
+				<a href="{ $days:LINK }"><b>{ $days:NUMBER }</b></a>
+		<!-- ELSE -->
+			<td class="row3" valign="top" style="padding:5px"><b>{ $days:NUMBER }</b>
+		<!-- ENDIF -->
+				<br/>
+				<!-- LOOP $days:DATA -->
+					<a href="{ $days:DATA:calender_link }" onclick="window.open('{ $days:DATA:calender_link }','_event{ $days:DATA:calender_id }','width=500,height=400,scrollbars=yes');return false;" target="_event{ $days:DATA:calender_id }">{ $days:DATA:calender_title }</a><br/>
+				<!-- ENDLOOP -->
+			</td>
+	<!-- ELSE -->
+		<td class="row2" style="padding:5px"></td>
+	<!-- ENDIF -->
+	
+	<!-- ENDLOOP -->
+	<tr>
+		<th colspan="7"></th>
+	</tr>
+
+</table>
+
+<!-- INCLUDE modules/Control_Panel/ucp_footer.html -->
+
+<!-- DISPLAY_FOOTER -->

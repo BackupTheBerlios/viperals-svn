@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Debug Menu</title>
+<link rel="stylesheet" href="themes/viperal/style/style.css" type="text/css">
+</head>
+<body>
+<table class="tablebg" style="width:100%" cellpadding="4" cellspacing="1">
+	<tbody>
+		<tr>
+			<th width="25%"><!-- IF { $MODE } == 'site' -->{ $L_NOTICES }<!-- ELSE --><a href="debug.php?mode=notice"><b>{ $L_NOTICES }</b></a><!-- ENDIF --></th>
+			<th width="25%"><!-- IF { $MODE } == 'wysiwyg' -->{ $L_WARNINGS }<!-- ELSE --><a href="debug.php?mode=warning"><b>{ $L_WARNINGS }</b></a><!-- ENDIF --></th>
+			<th width="25%"><!-- IF { $MODE } == 'users' -->{ $L_QUERIES }<!-- ELSE --><a href="debug.php?mode=queries"><b>{ $L_QUERIES }</b></a><!-- ENDIF --></th>
+		</tr>
+	<tbody>
+</table>
+<table style="width:100%;" align="center" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+<tr>
+
+<td align="center">
+
+<!-- IF { $MODE } == 'warning' -->
+	<!-- IF !isset({ $error_warnings }) -->
+		<div class="error_header">Wow We this page has no Notice  errors</div>
+	<!-- ELSE -->
+			  <div>This page has the following PHP Notice Errors</div>
+		  <hr width="50%">
+		  <p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.
+		    </p>
+	<table class="tablebg" align="center" cellpadding="7" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
+	<tbody>
+		<tr>
+			<th><b>File</b></th>
+			<th><b>Line</b></th>
+			<th><b>Error</b></th>
+		</tr>
+		{section name=error_warningsloop loop=$error_warnings}
+		<tr>
+			<td style="border: 1px solid #ccc;">
+				
+		{$error_warnings[error_warningsloop].errfile}
+			</td>
+			<td style="border: 1px solid #ccc;">
+			{$error_warnings[error_warningsloop].errline}
+			</td>
+			<td style="border: 1px solid #ccc; width:100%;">
+			<b>{$error_warnings[error_warningsloop].msg_text}</b>
+			</td>
+		</tr>
+		{ /section }
+	</tbody>
+</table>
+	<!-- ENDIF -->
+
+<!-- ELSEIF { $MODE } == 'notice' -->
+	<!-- IF !isset({ $error_notice }) -->
+		<div class="error_header">Wow We this page has Notice errors</div>
+	<!-- ELSE -->
+			  <div>This page has the following PHP Notice Errors</div>
+		  <hr width="50%">
+		  <p class="discription"> Run-time warnings (non-fatal errors). Execution of the script is not halted.
+		    </p>
+	<table class="tablebg" align="center" cellpadding="7" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
+	<tbody>
+		<tr>
+			<th><b>File</b></th>
+			<th><b>Line</b></th>
+			<th><b>Error</b></th>
+		</tr>
+		<!-- LOOP $error_notice -->
+		<tr>
+			<td style="border: 1px solid #ccc;">
+				{ $error_notice:errfile }
+			</td>
+			<td style="border: 1px solid #ccc;">
+				{ $error_notice:errline }
+			</td>
+			<td style="border: 1px solid #ccc; width:100%;">
+				<b>{ $error_notice:msg_text }</b>
+			</td>
+		</tr>
+		<!-- ENDLOOP $error_notice -->
+	</tbody>
+</table>
+		<!-- ENDIF -->
+<!-- ELSEIF { $MODE } == 'queries' -->
+
+		<div>This page contains the Query information<br/>This page is accurate to the page you browsing.</div>
+		<hr width="50%">
+		<p class="discription"></p>
+		<!-- IF !isset({ $query }) -->
+		
+			<div class="error_header">Sorry No query data found</div>
+		<!-- ELSE -->
+		<!-- LOOP $query -->
+		<table class="tablebg" align="center" cellpadding="10" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
+			<tbody>
+				<tr>
+					<th colspan="4" width="100%"><b>Query #{ $query:row }</b></th>
+				</tr>
+				<tr>
+					<td colspan="4" width="100%" style="border: 1px solid #ccc;">{ $query:query }</td>
+				</tr>
+				<tr>
+					<th><b>Requested File</b></th>
+					<th><b>File Line</b></th>
+					<th><b>Query time</b></th>
+					<th><b>Rounds Affected</b></th>
+				</tr>
+				<tr>
+					<td width="100%" valign="top" style="border: 1px solid #ccc;"><b>{ $query:file }</b></td>
+					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query:line }</b></td>
+					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query:time }s</b></td>
+					<td valign="top" style="border: 1px solid #ccc;"><b>{ $query:affected }</b></td>
+				</tr>
+			</tbody>
+		</table>
+		<table class="tablebg" align="center" cellpadding="7" cellspacing="2" style="border: 1px solid #ccc; width:100%;">
+		<tbody>
+		<tr>
+			<!-- LOOP $query:header -->
+					<th><b>{ $query:header:value }</b></th>
+			<!-- ENDLOOP -->
+		</tr>
+		<tr>
+			<!-- LOOP $query:queries -->
+					<!-- IF { $query:queries:new } --></tr><tr><!-- ENDIF -->
+					<td style="border: 1px solid #ccc;">
+					{ $query:queries:value }
+					</td>
+			<!-- ENDLOOP -->
+		</tr>
+	</tbody>
+</table>
+<br/>
+	<!-- ENDLOOP $query -->
+	<!-- ENDIF -->
+<!-- ENDIF -->
+
+
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+</body></html>
