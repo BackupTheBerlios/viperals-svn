@@ -713,15 +713,15 @@ function session_users()
 
 	$loaded = array();
 
-	$sql = 'SELECT s.*, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
+	$sql = 'SELECT session_hidden, session_ip, session_page, session_url, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
 				FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
-					WHERE s.session_time >= ' . (gmtime() - (int) $_CORE_CONFIG['server']['session_length']) .'
+					WHERE s.session_time >= ' . ($_CLASS['core_user']->time - (int) $_CORE_CONFIG['server']['session_length']) .'
 				AND u.user_id = s.session_user_id';
 	$result = $_CLASS['core_db']->query($sql);
 
 	$update = false;
 
-	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		// update current user info with current page and url as it is done at the end of script.
 		if (!$update && (($row['user_id'] != ANONYMOUS && $row['user_id'] == $_CLASS['core_user']->data['user_id']) || ($row['user_id'] == ANONYMOUS && $row['session_ip'] == $_CLASS['core_user']->ip)))

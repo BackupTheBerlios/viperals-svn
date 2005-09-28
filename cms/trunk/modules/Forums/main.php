@@ -96,7 +96,7 @@ $_CLASS['core_template']->assign_array(array(
 	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_post_s), $config['num_posts']),
 	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_topic_s), $config['num_topics']),
 	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_user_s), $config['num_users']),
-	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->get_lang('NEWEST_USER'), '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$config['newest_user_id']) . '">', $config['newest_username'], '</a>'), 
+	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->get_lang('NEWEST_USER'), '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$_CORE_CONFIG['user']['newest_user_id']) . '">', $_CORE_CONFIG['user']['newest_username'], '</a>'), 
 	'LEGEND'		=> $legend, 
 	'BIRTHDAY_LIST'	=> $birthday_list, 
 
@@ -112,6 +112,8 @@ $_CLASS['core_template']->assign_array(array(
 
 page_header();
 
-$_CLASS['core_template']->display('modules/Forums/index_body.html');
+$_CLASS['core_display']->footer .= $_CLASS['core_template']->display('modules/Forums/menus.html', true);
+
+$_CLASS['core_display']->display(false, 'modules/Forums/index_body.html');
 
 ?>

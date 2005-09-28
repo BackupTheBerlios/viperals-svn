@@ -83,15 +83,30 @@ $who_where['guest'] = $who_where['user'] = $who_where['staff'] = false;
 $online['guest'] = $online['user'] = $online['hidden'] = $online['total'] = 0;
 $prev_ip = $prev_id = array();
 
+/*
+enable this is you know what your doing
+
 $session_users = session_users();
 
 foreach ($session_users as $row)
+*/
+
+$sql = 'SELECT session_hidden, session_ip, session_page, session_url, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
+			FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
+				WHERE s.session_time > ' . ($_CLASS['core_user']->time - (int) $_CORE_CONFIG['server']['session_length']) .'
+				AND u.user_id = s.session_user_id';
+$result = $_CLASS['core_db']->query($sql);
+
+$update = false;
+
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	if ($row['user_id'] != ANONYMOUS && !in_array($row['user_id'], $prev_ip))
   	{
 		if (!$_CLASS['core_user']->is_admin && (!$row['user_allow_viewonline'] || $row['session_hidden']))
 		{
 			$online['hidden']++;
+
 			continue;
 		}
 		else
@@ -131,7 +146,7 @@ foreach ($session_users as $row)
 	
 	if ($row['user_id'] != ANONYMOUS)
 	{
-		$link = (($row['user_type'] & USER_BOT) ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>' : $row['username']).' &gt;';
+		$link = (($row['user_type'] == USER_BOT) ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>' : $row['username']).' &gt;';
 		$who_where['user'] .= $online['user'] .': '.$link.' <a href="'.$row['session_url'].'">'.$row['session_page'].'</a><br />';
 	}
 	else

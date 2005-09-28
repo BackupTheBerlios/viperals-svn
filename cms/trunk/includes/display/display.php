@@ -24,6 +24,8 @@ $Id$
 class core_display
 {
 	var $header = array('js' => array(), 'regular' => array(), 'meta' => array());
+	var $footer = '';
+
 	var $displayed = array('header'=> false, 'footer'=> false);
 	var $message = '';
 
@@ -188,6 +190,7 @@ class core_display
 			'HEADER_META'		=>	empty($this->header['meta']) ? '' : implode("\n", $this->header['meta']),
 			'HEADER_REGULAR'	=>	empty($this->header['regular']) ? '' : implode("\n", $this->header['regular']),
 			'HEADER_JS' 		=>	empty($this->header['js']) ? '' : implode("\n", $this->header['js']),
+			'FOOTER_CONTENT'	=> $this->footer,
 		));
 
 		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_TOP);

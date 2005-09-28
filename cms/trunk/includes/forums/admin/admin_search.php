@@ -1,113 +1,80 @@
 <?php
-/***************************************************************************
- *                             admin_search.php
- *                            -------------------
- *   begin                : Saturday, Feb 13, 2001
- *   copyright            : (C) 2001 The phpBB Group
- *   email                : support@phpbb.com
- *
- *   $Id: admin_search.php,v 1.7 2004/10/19 19:21:44 acydburn Exp $
- *
- ***************************************************************************/
+/*
+||**************************************************************||
+||  Viperal CMS © :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
 
-/***************************************************************************
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- ***************************************************************************/
-
-include($site_file_root . 'includes/forums/message_parser.'.$phpEx);
+$Id$
+*/
 
 // Check permissions
 if (!$_CLASS['auth']->acl_get('a_search'))
 {
-	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
+	trigger_error('NO_ADMIN');
 }
 
 // Start indexing
-if (isset($_POST['start']) || isset($_GET['batchstart']))
+if (isset($_POST['start']) || isset($_GET['position']))
 {
-	$batchsize = 5000; // Process this many posts per batch
-	$batchcount = request_var('batchcount', 1);
-	$batchstart = request_var('batchstart', 0);
-	$loopcount = 0;
+	$limit = 5000; // Process this many posts per batch
+	$start = get_variable('position', 'REQUEST', 0, 'int');
 
-	$fulltext = new fulltext_search();
+	$count = 0;
 
-	// Search re-indexing is tough on the server ... so we'll check the load
-	// each loop and if we're on a 1min load of 3 or more we'll re-load the page
-	// and try again. No idea how well this will work in practice so we'll see ...
-	if (file_exists('/proc/loadavg'))
+	if (!$start)
 	{
-		if ($load = @file('/proc/loadavg'))
-		{
-			list($load) = explode(' ', $load[0]);
-
-			if ($load > 3)
-			{
-				redirect(adminlink('forums&amp;file=admin_search&batchstart='.$batchstart.'&batchcount='.$batchcount), 3);
-			}
-		}
-	}
-
-	if (!$batchstart)
-	{
-		// Take board offline
-		set_config('board_disable', 1);
-
 		// Empty existing tables
-		$db->sql_query("TRUNCATE " . SEARCH_TABLE);
-		$db->sql_query("TRUNCATE " . SEARCH_WORD_TABLE);
-		$db->sql_query("TRUNCATE " . SEARCH_MATCH_TABLE);
+		$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_TABLE);
+		$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_WORD_TABLE);
+		$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_MATCH_TABLE);
 	}
 
 	// Fetch a batch of posts_text entries
-	$sql = "SELECT COUNT(*) AS total, MAX(post_id) AS max_post_id, MIN(post_id) AS min_post_id
-		FROM " . POSTS_TABLE;
-	$result = $db->sql_query($sql);
+	$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total FROM ' . FORUMS_POSTS_TABLE);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
-	$row = $db->sql_fetchrow($result);
-	$totalposts = $row['total'];
-	$max_post_id = $row['max_post_id'];
-
-	$batchstart = (!$batchstart) ? $row['min_post_id'] : $batchstart;
-	$batchend = $batchstart + $batchsize;
-
-	$db->sql_freeresult($result);
-
-	$sql = "SELECT *
-		FROM " . POSTS_TABLE . "
-		WHERE post_id
-			BETWEEN $batchstart
-				AND $batchend";
-	$result = $db->sql_query($sql);
-
-	if ($row = $db->sql_fetchrow($result))
+	if ($total_posts = $row['total'])
 	{
-		do
+		require_once(SITE_FILE_ROOT . 'includes/forums/message_parser.php');
+		$fulltext = new fulltext_search();
+
+		$sql = 'SELECT post_id, post_subject, post_text
+			FROM ' . FORUMS_POSTS_TABLE . '
+			ORDER BY post_id';
+		$result = $_CLASS['core_db']->query_limit($sql, $limit, $start);
+	
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$fulltext->add('admin', $row['post_id'], $row['post_text'], $row['post_subject']);
+			$count++;
 		}
-		while ($row = $db->sql_fetchrow($result));
+		$_CLASS['core_db']->free_result($result);
 	}
 
-	$db->sql_freeresult($result);
-
-	$batchcount++;
-
-	if (($batchstart + $batchsize) < $max_post_id)
+	if (($start + $count) < $total_posts)
 	{
-		redirect(adminlink('forums&amp;file=admin_search&batchstart=' . ($batchstart + $batchsize) . '&batchcount='.$batchcount), 3);
+		redirect(generate_link('forums&amp;file=admin_search&position=' . ($start + $count), array('admin' => true)), 3);
 	}
 	else
 	{
-		set_config('board_disable', 0);
-
 		// search tidy
 		$fulltext->search_tidy();
+		$_CLASS['core_db']->optimize_tables();
 
 		adm_page_header($_CLASS['core_user']->lang['SEARCH_INDEX']);
 
@@ -123,12 +90,10 @@ if (isset($_POST['start']) || isset($_GET['batchstart']))
 
 	}
 
-	exit;
-
+	die;
 }
 else if (isset($_POST['cancel']))
 {
-	set_config('board_disable', 0);
 	adm_page_header($_CLASS['core_user']->lang['SEARCH_INDEX']);
 
 ?>
@@ -140,11 +105,11 @@ else if (isset($_POST['cancel']))
 <?php
 
 	adm_page_footer();
+	die;
 
 }
-else
-{
-	adm_page_header($_CLASS['core_user']->lang['SEARCH_INDEX']);
+
+adm_page_header($_CLASS['core_user']->lang['SEARCH_INDEX']);
 
 ?>
 
@@ -152,7 +117,7 @@ else
 
 <p><?php echo $_CLASS['core_user']->lang['SEARCH_INDEX_EXPLAIN']; ?></p>
 
-<form method="post" action="<?php echo adminlink('forums&amp;file=admin_search'); ?>"><table cellspacing="1" cellpadding="4" border="0" align="center" bgcolor="#98AAB1">
+<form method="post" action="<?php echo generate_link('forums&amp;file=admin_search', array('admin' => true)); ?>"><table cellspacing="1" cellpadding="4" border="0" align="center" bgcolor="#98AAB1">
 	<tr>
 		<td class="cat" height="28" align="center">&nbsp;<input type="submit" name="start" value="<?php echo $_CLASS['core_user']->lang['START']; ?>" class="btnmain" /> &nbsp; <input type="submit" name="cancel" value="<?php echo $_CLASS['core_user']->lang['CANCEL']; ?>" class="btnmain" />&nbsp;</td>
 	</tr>
@@ -160,8 +125,6 @@ else
 
 <?php
 
-	adm_page_footer();
-
-}
+adm_page_footer();
 
 ?>

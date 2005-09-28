@@ -1371,32 +1371,33 @@ class fulltext_search
 			$new_words = array_diff($unique_add_words, array_keys($word_ids));
 			unset($unique_add_words);
 			
-			if (sizeof($new_words))
+			if (!empty($new_words))
 			{
 				switch ($_CLASS['core_db']->db_layer)
 				{
-					case 'mysql':
-						$sql = 'INSERT INTO ' . FORUMS_SEARCH_WORD_TABLE . ' (word_text)
-							VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\'$1\')',  $new_words));
+					case 'mysql3':
+						$sql = 'INSERT INTO ' . FORUMS_SEARCH_WORD_TABLE . ' (word_text, word_common)
+							VALUES ' . implode(', ', preg_replace('#^(.*)$#', '(\'$1\', 0)',  $new_words));
 						$_CLASS['core_db']->query($sql);
-						break;
+					break;
 
-					case 'mysql4':
+					case 'mysql':
 					case 'mysqli':
 					case 'mssql':
 					case 'sqlite':
-						$sql = 'INSERT INTO ' . FORUMS_SEARCH_WORD_TABLE . ' (word_text) ' . implode(' UNION ALL ', preg_replace('#^(.*)$#', "SELECT '\$1'",  $new_words));
+					case 'sqlite_pdo':
+						$sql = 'INSERT INTO ' . FORUMS_SEARCH_WORD_TABLE . ' (word_text, word_common) ' . implode(' UNION ALL ', preg_replace('#^(.*)$#', "SELECT '\$1', 0",  $new_words));
 						$_CLASS['core_db']->query($sql);
-						break;
+					break;
 
 					default:
 						foreach ($new_words as $word)
 						{
-							$sql = 'INSERT INTO ' . FORUMS_SEARCH_WORD_TABLE . " (word_text)
-								VALUES ('$word')";
+							$sql = 'INSERT INTO ' . FORUMS_SEARCH_WORD_TABLE . " (word_text, word_common)
+								VALUES ('$word', 0)";
 							$_CLASS['core_db']->query($sql);
 						}
-						break;
+					break;
 				}
 			}
 			unset($new_words);
@@ -1406,7 +1407,7 @@ class fulltext_search
 		{
 			$title_match = ($word_in == 'title') ? 1 : 0;
 
-			if (sizeof($word_ary))
+			if (!empty($word_ary))
 			{
 				$sql_in = array();
 				foreach ($word_ary as $word)
@@ -1427,7 +1428,7 @@ class fulltext_search
 		{
 			$title_match = ($word_in == 'title') ? 1 : 0;
 
-			if (sizeof($word_ary))
+			if (!empty($word_ary))
 			{
 				$sql = 'INSERT INTO ' . FORUMS_SEARCH_MATCH_TABLE . " (post_id, word_id, title_match) 
 					SELECT $post_id, word_id, $title_match 
@@ -1478,6 +1479,7 @@ class fulltext_search
 			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$sql_in = array();
+
 				do
 				{
 					$sql_in[] = $row['word_id'];
@@ -1502,9 +1504,9 @@ class fulltext_search
 		// Remove words with no matches ... this is a potentially nasty query
 		$sql = 'SELECT w.word_id
 			FROM ' . FORUMS_SEARCH_WORD_TABLE . ' w
-			LEFT JOIN ' . FORUMS_SEARCH_MATCH_TABLE . ' m ON w.word_id = m.word_id
+			LEFT JOIN ' . FORUMS_SEARCH_MATCH_TABLE . ' m ON (w.word_id = m.word_id)
 				WHERE w.word_common = 0 AND m.word_id IS NULL
-			GROUP BY m.word_id';
+			GROUP BY w.word_id';
 		$result = $_CLASS['core_db']->query($sql);
 
 		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -1523,7 +1525,7 @@ class fulltext_search
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		set_config('search_last_gc', time());
+		set_config('search_last_gc', gmtime());
 	}
 }
 

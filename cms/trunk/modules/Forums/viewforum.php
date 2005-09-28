@@ -555,10 +555,13 @@ if ($forum_data['forum_type'] == FORUM_POST && is_int($mark_forum_read))
 	markread('forum', $forum_id, false, $mark_forum_read);
 }
 
+
 page_header();
 
 make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
 
-$_CLASS['core_template']->display('modules/Forums/viewforum_body.html');
+$_CLASS['core_display']->footer .= $_CLASS['core_template']->display('modules/Forums/menus.html', true);
+
+$_CLASS['core_display']->display(false, 'modules/Forums/viewforum_body.html');
 
 ?>

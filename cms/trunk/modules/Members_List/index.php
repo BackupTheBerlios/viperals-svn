@@ -619,8 +619,6 @@ switch ($mode)
 				$result = $_CLASS['core_db']->query($sql);
 				*/
 
-				// Add class loader
-
 				require_once(SITE_FILE_ROOT.'includes/mailer.php');
 			
 				$mailer = new core_mailer;
@@ -659,16 +657,14 @@ switch ($mode)
 				$_CLASS['core_template']->assign_array(array(
 					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 					'BOARD_EMAIL'	=> $config['board_contact'],
-					'FROM_USERNAME' => stripslashes($_CLASS['core_user']->data['username']),
+					'FROM_USERNAME' => $_CLASS['core_user']->data['username'],
 					'TO_USERNAME'   => ($topic_id) ? $name : $row['username'],
 					'MESSAGE'		=> $message,
 					'TOPIC_NAME'	=> ($topic_id) ? strtr($row['topic_title'], array_flip(get_html_translation_table(HTML_ENTITIES))) : '',
-
-					'U_TOPIC'	=> ($topic_id) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'] . "&t=$topic_id", true, true, false) : '')
+					'U_TOPIC'		=> ($topic_id) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id'] . "&t=$topic_id", array('full' => true, 'sid' => false)) : '')
 				);
 
 				$mailer->message = trim($_CLASS['core_template']->display('email/members_list/'.$template, true));
-				echo $mailer->message; die;
 				$mailer->send();
 
 				$_CLASS['core_display']->meta_refresh(3, generate_link());
@@ -688,21 +684,20 @@ switch ($mode)
 				'S_LANG_OPTIONS'=> ($topic_id) ? language_select($email_lang) : '')
 			);
 		}
+
 		$_CLASS['core_template']->assign_array(array(
-			'USERNAME'		=> (!$topic_id) ? addslashes($row['username']) : '',
-			'ERROR_MESSAGE'	=> (sizeof($error)) ? implode('<br />', $error) : '',
+			'USERNAME'		=> (!$topic_id) ? $row['username'] : '',
+			'ERROR_MESSAGE'	=> empty($error) ? '' : implode('<br />', $error),
 
 			'L_EMAIL_BODY_EXPLAIN'	=> $_CLASS['core_user']->get_lang((!$topic_id) ? 'EMAIL_BODY_EXPLAIN' : 'EMAIL_TOPIC_EXPLAIN'),
 
 			'S_POST_ACTION' => (!$topic_id) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id, array('full' => true)) : generate_link("Members_List&amp;mode=email&amp;f={$row['forum_id']}&amp;t=$topic_id", array('full' => true)),
-			'S_SEND_USER'	=> (!$topic_id) ? true : false,
-			));
-		break;
+			'S_SEND_USER'	=> (!$topic_id),
+		));
+	break;
 
 	case 'group':
-	
 		$_CLASS['core_user']->add_lang('groups', 'Forums');
-		
 	default:
 		// The basic memberlist
 		$page_title = $_CLASS['core_user']->lang['MEMBERLIST'];

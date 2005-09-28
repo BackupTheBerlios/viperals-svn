@@ -22,7 +22,7 @@ $Id$
 */
 define('VIPERAL', 'INSTALLER');
 
-error_reporting(0);
+error_reporting(E_ALL);
 
 define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 
@@ -176,6 +176,9 @@ if ($stage === 4)
 		set_core_config('server', 'site_domain', $site_domain, false);
 		set_core_config('server', 'site_path', $site_path, false);
 		set_core_config('server', 'site_port', $site_port, false);
+
+		set_core_config('email', 'site_email', $email, false);
+
 		set_core_config('server', 'cookie_domain', $cookie_domain, false);
 		set_core_config('server', 'cookie_path', $cookie_path, false);
 		set_core_config('server', 'cookie_name', $cookie_name, false);
@@ -392,7 +395,7 @@ if ($stage === 3)
 				$error[] = 'Failed to write to your config.php file<br/>Please upload the content listed in the "Config.php Content" Section';
 			}
 
-			$path = dirname(getenv('SCRIPT_NAME'));
+			$path = str_replace('\\','/', dirname(getenv('SCRIPT_NAME')));
 
 			if (substr($path, -1) != '/')
 			{

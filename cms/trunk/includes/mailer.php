@@ -95,6 +95,7 @@ class core_mailer
 		foreach ($address as $array)
 		{
 			$array['name'] = trim($array['name']);
+
 			$formatted[] = ($array['name'] && $this->named_addresses) ?  '"' . mail_encode($array['name'], $this->encoding) . '" <' . $array['address'] . '>' : $array['address'];
 		}
 		return implode(', ', $formatted);
@@ -116,11 +117,12 @@ class core_mailer
 			$$type = $this->format_address($address);
 		}
 
-		$_CORE_CONFIG['email']['site_mail'] = trim($_CORE_CONFIG['email']['site_mail']);
+		$_CORE_CONFIG['email']['site_email'] = trim($_CORE_CONFIG['email']['site_email']);
 
 		if (!$from)
 		{
-			$from = '<' . $_CORE_CONFIG['email']['site_mail'] . '>';
+			// modify_lines ?
+			$from = '<' . $_CORE_CONFIG['email']['site_email'] . '>';
 		}
 
 		$headers[] = "From: $from";
@@ -209,7 +211,7 @@ class core_mailer
 		}
 
 		if (function_exists($_CORE_CONFIG['email']['email_function_name']))
-		{//mb_send_mail
+		{
 			$result = $_CORE_CONFIG['email']['email_function_name']($to, $this->subject, $message, implode("\n", $headers));
 
 			if (!$result)
@@ -252,9 +254,6 @@ class smtp_mailer
 	function connect($host, $port = 25)
 	{
 		$port = ((int) $port) ? (int) $port : 25;
-
-		//$host = 'tls://smtp.gmail.com';
-		//$port = 465;
 
 		$this->connection = fsockopen($host, $port, $errno, $errstr, 5);
 
@@ -371,6 +370,7 @@ class smtp_mailer
 		{
 			$name = false;
 
+			//print_r($email);
 			if (is_array($email))
 			{
 				$name = $email['name'];
@@ -433,7 +433,7 @@ class smtp_mailer
 		}
 
 		$this->response = trim($this->response);
-		echo $this->response.'<br/>';
+		//echo $this->response.'<br/>';
 
 		if ($code && substr($this->response, 0, 3) != $code)
 		{

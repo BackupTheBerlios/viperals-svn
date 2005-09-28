@@ -1125,7 +1125,7 @@ function parse_inline_attachments(&$text, $attachments, &$update_count, $forum_i
 // Check if extension is allowed to be posted within forum X (forum_id 0 == private messaging)
 function extension_allowed($forum_id, $extension, &$extensions)
 {
-	if (!is_array($extensions))
+	if (empty($extensions) || !is_array($extensions))
 	{
 		$extensions = obtain_attach_extensions();
 	}

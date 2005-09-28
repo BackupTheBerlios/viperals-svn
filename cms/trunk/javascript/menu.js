@@ -129,7 +129,52 @@ function menu_init(object_name)
 	}
 
 	menu.style.display	= 'none';
-	menu.style.position	= is_gecko ? 'fixed' : 'absolute';
+	menu.style.position	= 'absolute';
+	/*menu.style.position	= (is_gecko) ? 'fixed' : 'absolute';*/
+
+	menu.style.zIndex = 1;
+	object.style.cursor = 'pointer';
+}
+
+function menu_init_forums(object_name)
+{
+	var menu		= document.getElementById(object_name + '_menu');
+	var object		= document.getElementById(object_name);
+
+	if (menu == null || object == null)
+	{
+		return;
+	}
+
+	object.onclick = function()
+	{
+		// Open or close the menu 
+		if (menu.style.display == 'none')
+		{
+			menu_show(object_name);
+		}
+		else
+		{
+			menu_hide(object_name);
+		}
+
+		return false;
+	}
+	
+	object.onmouseover = function(e)
+	{
+		if (e)
+		{
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		menu_show(object_name);
+	}
+
+	menu.style.display	= 'none';
+	menu.style.position	= 'absolute';
+
 	menu.style.zIndex = 1;
 	object.style.cursor = 'pointer';
 }
@@ -163,11 +208,11 @@ function menu_show(object_name)
 	menu.style.clip = 'rect(auto, auto, 0px, auto)';
 	menu.style.display	= '';
 
-	if (!is_gecko)
+	/*if (!is_gecko || true)
 	{
 		var window_offset = (window.pageYOffset) ? window.pageYOffset : (document.body.scrollTop) ? document.body.scrollTop : document.documentElement.scrollTop;
 		object_offsets['top']	= Number(window_offset) + object_offsets['top'];
-	}
+	}*/
 
 	if ((object_offsets['left'] + menu.offsetWidth) > document.body.clientWidth)
 	{
@@ -218,7 +263,7 @@ function slide(identifier, height)
 	if (slider_height[identifier] >= height)
 	{
 		area.style.clip = '';
-		
+
 		stop_slide(identifier);
 	}
 	else

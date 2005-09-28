@@ -63,7 +63,7 @@ if (isset($_REQUEST['mode']))
 				if (display_confirmation())
 				{
 					$_CLASS['core_db']->query('DELETE from ' . ARTICLES_TABLE . ' where articles_id = '.$id);
-					$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order-1 WHERE articles_order > ' . $article['articles_order']);
+					$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order-1 WHERE articles_order > ' . $article['articles_order']);
 				}
 			break;
 
@@ -130,8 +130,8 @@ if (isset($_REQUEST['mode']))
 			
 						if ($articles['articles_order'] < $max_order)
 						{
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order-1 WHERE articles_type = '.$articles['articles_type'].' AND articles_order='.($articles['articles_order'] + 1));
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = '.($articles['articles_order'] + 1).' WHERE articles_id ='. $id);
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order-1 WHERE articles_type = '.$articles['articles_type'].' AND articles_order='.($articles['articles_order'] + 1));
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = '.($articles['articles_order'] + 1).' WHERE articles_id ='. $id);
 			
 							$_CLASS['core_cache']->destroy('articless');
 						}
@@ -144,8 +144,8 @@ if (isset($_REQUEST['mode']))
 			
 						if ($articles['articles_order'] < $max_order)
 						{
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order-1 WHERE articles_type='.$articles['articles_type'].' AND articles_order > '.$articles['articles_order']);
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = '.$max_order.' WHERE articles_id = '.$id);
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order-1 WHERE articles_type='.$articles['articles_type'].' AND articles_order > '.$articles['articles_order']);
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = '.$max_order.' WHERE articles_id = '.$id);
 			
 							$_CLASS['core_cache']->destroy('articless');
 						}
@@ -154,8 +154,8 @@ if (isset($_REQUEST['mode']))
 					case 'up':
 						if ($articles['articles_order'] && $articles['articles_order'] != 1)
 						{
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order+1 WHERE articles_type='.$articles['articles_type'].' AND articles_order = '.($articles['articles_order'] - 1));
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order='.($articles['articles_order'] -1 ).' WHERE articles_id ='. $id);
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order+1 WHERE articles_type='.$articles['articles_type'].' AND articles_order = '.($articles['articles_order'] - 1));
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order='.($articles['articles_order'] - 1 ).' WHERE articles_id ='. $id);
 			
 							$_CLASS['core_cache']->destroy('articless');
 						}
@@ -165,8 +165,8 @@ if (isset($_REQUEST['mode']))
 
 						if ($articles['articles_order'] != 1)
 						{
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order+1 WHERE articles_type='.$articles['articles_type'].' AND articles_order < '.$articles['articles_order']);
-							$result = $_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = 1 WHERE articles_id = '.$id);
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order+1 WHERE articles_type='.$articles['articles_type'].' AND articles_order < '.$articles['articles_order']);
+							$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = 1 WHERE articles_id = '.$id);
 			
 							$_CLASS['core_cache']->destroy('articless');
 						}
@@ -374,11 +374,7 @@ function articles_save($id = false)
 			return articles_edit(false, $data, $error);
 		}
 
-		$result = $_CLASS['core_db']->query('SELECT MAX(articles_order) as articles_order FROM ' . ARTICLES_TABLE);
-		list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
-		$_CLASS['core_db']->free_result($result);
-
-		$data['articles_order'] = (int) $max_order + 1;
+		$data['articles_order'] = (int) 0;
 		$data['articles_posted'] = (int) $_CLASS['core_user']->time;
 		$data['articles_type'] = 1;
 
@@ -386,11 +382,16 @@ function articles_save($id = false)
 		$data['poster_ip'] = $_CLASS['core_user']->ip;
 		$data['poster_name'] = $_CLASS['core_user']->data['username'];
 
+		$_CLASS['core_db']->transaction();
+
 		$_CLASS['core_db']->query('INSERT INTO ' . ARTICLES_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data));
+		$_CLASS['core_db']->query('UPDATE ' . ARTICLES_TABLE . ' SET articles_order = articles_order+1 WHERE articles_type='.$data['articles_type']);
+
+		$_CLASS['core_db']->transaction('commit');
 	}
 
 	$_CLASS['core_display']->meta_refresh('3', generate_link('articles', array('admin' => true)));
-	trigger_error(sprintf($_CLASS['core_user']->lang['SAVED'], generate_link('articles', array('admin' => true))));	
+	trigger_error(sprintf($_CLASS['core_user']->get_lang('SAVED'), generate_link('articles', array('admin' => true))));	
 }
 
 ?>

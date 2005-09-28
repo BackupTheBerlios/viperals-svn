@@ -118,7 +118,7 @@ if ($update)
 
 			if ($forum_data['forum_rules'])
 			{
-				require_once($site_file_root.'includes/forums/message_parser.php');
+				require_once(SITE_FILE_ROOT.'includes/forums/message_parser.php');
 
 				$allow_bbcode = request_var('parse_bbcode', false);
 				$allow_smilies = request_var('parse_smilies', false);
@@ -234,8 +234,8 @@ switch ($mode)
 
 		if ($forum_rules)
 		{
-			require_once($site_file_root.'includes/forums/functions_posting.php');
-			require_once($site_file_root.'includes/forums/message_parser.php');
+			require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
+			require_once(SITE_FILE_ROOT.'includes/forums/message_parser.php');
 			
 			$message_parser = new parse_message($forum_rules);
 			if (isset($forum_rules_bbcode_uid))
@@ -884,6 +884,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 <?php
 
 }
+$_CLASS['core_db']->free_result($result);
 
 ?>
 	<tr>
@@ -1412,8 +1413,8 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 
 function delete_forum_content($forum_id)
 {
-	global $_CLASS, $site_file_root;
-	require_once($site_file_root.'includes/forums/functions_posting.php');
+	global $_CLASS;
+	require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
 
 	$_CLASS['core_db']->transaction();
 

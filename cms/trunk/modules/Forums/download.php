@@ -62,17 +62,19 @@ if ((!$attachment['in_message'] && !$config['allow_attachments']) || ($attachmen
 }
 
 $row = array();
+
 if (!$attachment['in_message'])
 {
 	$sql = 'SELECT p.forum_id, f.forum_password, f.parent_id
 		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f
 		WHERE p.post_id = ' . $attachment['post_msg_id'] . '
 			AND p.forum_id = f.forum_id';
+
 	$result = $_CLASS['core_db']->query_limit($sql, 1);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
-	if ($_CLASS['auth']->acl_gets('f_download', 'u_download', $row['forum_id']))
+	if ($_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $row['forum_id']))
 	{
 		if ($row['forum_password'])
 		{
@@ -82,7 +84,7 @@ if (!$attachment['in_message'])
 	}
 	else
 	{
-		//trigger_error('SORRY_AUTH_VIEW_ATTACH');
+		trigger_error('SORRY_AUTH_VIEW_ATTACH');
 	}
 }
 else
@@ -96,7 +98,8 @@ else
 }
 
 // disallowed ?
-$extensions = array();
+$extensions = obtain_attach_extensions();
+
 if (!extension_allowed($row['forum_id'], $attachment['extension'], $extensions))
 {
 	trigger_error(sprintf($_CLASS['core_user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));

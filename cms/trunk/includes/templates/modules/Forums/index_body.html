@@ -133,6 +133,25 @@
 	</tr>
 </table>
 
+<br clear="all" />
+
+<a name="forums_options"></a>
+
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="0">
+	<tr>
+		<td class="cat" colspan="2"><h4>{ $L_OPTIONS }</h4></td>
+	</tr>
+	<tr>
+		<td class="row1"><img src="{ $T_IMAGE_PATH }whosonline.gif" alt="{ $L_WHO_IS_ONLINE }" /></td>
+		<td class="row1" width="100%" valign="middle">
+			<a href="{ $U_SEARCH_UNANSWERED }">{ $L_SEARCH_UNANSWERED }</a> | <a href="{ $U_SEARCH_ACTIVE_TOPICS}">{ $L_SEARCH_ACTIVE_TOPICS }</a>
+			<!-- IF { $S_USER_LOGGED_IN } -->
+				| <a href="{ $U_SEARCH_NEW }">{ $L_SEARCH_NEW }</a> | <a href="{ $U_SEARCH_SELF }">{ $L_SEARCH_SELF }</a>
+			<!-- ENDIF -->
+		</td>
+	</tr>
+</table>
+
 <!-- IF !{ $S_USER_LOGGED_IN } -->
 <br clear="all" />
 
@@ -145,7 +164,7 @@
 		<span class="gensmall">{ $L_USERNAME }:</span> <input class="post" type="text" name="username" size="10" />&nbsp;
 		 <span class="gensmall">{ $L_PASSWORD }:</span>
 		 <input class="post" type="password" name="password" size="10" />&nbsp; <span class="gensmall">{ $L_LOG_ME_IN }</span> <input class="text" type="checkbox" name="autologin" />&nbsp;
-		 <input type="submit" class="btnmain" name="login" value="{ $L_LOGIN }" /></td>
+		 <input type="submit" class="button" name="login" value="{ $L_LOGIN }" /></td>
 	</tr>
 </table></form>
 <!-- ENDIF -->
