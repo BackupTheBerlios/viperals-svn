@@ -140,7 +140,7 @@ function check_user_id(&$user_id, $bypass = false)
 	return $user_id;
 }
 
-function user_add(&$data)
+function user_add(&$data, $group_add = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
@@ -151,6 +151,9 @@ function user_add(&$data)
 		'user_new_privmsg'		=> 0,
 		'user_allow_pm'			=> 1,
 		'user_allow_email'		=> 1,
+		'user_posts'			=> 0,
+		'user_new_privmsg'		=> 0,
+		'user_unread_privmsg'	=> 0,
 	);
 
 	$default_data['user_data'] = serialize(array(
@@ -178,13 +181,16 @@ function user_add(&$data)
 
 	$data['user_id'] = $_CLASS['core_db']->insert_id(USERS_TABLE, 'user_id');
 
-	$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
-		'group_id'		=> (int) $data['user_group'],
-		'user_id'		=> (int) $data['user_id'],
-		'member_status'	=> $data['user_status']
-	));
-	
-	$_CLASS['core_db']->query($sql);
+	if ($group_add)
+	{
+		$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+			'group_id'		=> (int) $data['user_group'],
+			'user_id'		=> (int) $data['user_id'],
+			'member_status'	=> $data['user_status']
+		));
+		
+		$_CLASS['core_db']->query($sql);
+	}
 
 	$_CLASS['core_db']->transaction('commit');
 }

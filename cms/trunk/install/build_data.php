@@ -27,63 +27,63 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admins (admin_section, u
 
 //$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (id, title, type, content, position, weight, active, file) VALUES (1, 'Control Panel', , 'block-Control_Panel.php')");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'site_name', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'start_date', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_theme', 'viperal', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'foot1', '<a href=\"feed.php?feed=rss1\" title=\"RSS 1.0 / RDF Feed\"><img alt=\"RSS 1.0 / RDF\" src=\"images/rss10_logo.gif\" /></a> <a href=\"feed.php?feed=rss2\" title=\"RSS 2.0 Feed\"><img alt=\"RSS 2.0\" src=\"images/rss20_logo.gif\" /></a> <a href=\"feed.php?feed=rss\" title=\"RSS 0.91 Feed\"><img alt=\"RSS 0.9\" src=\"images/rss090_logo.gif\" /></a>', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'foot2', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_lang', 'en', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_dst', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'only_registered', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_dateformat', 'D M d, Y g:i a', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'default_timezone', '-5', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'link_optimization', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('global', 'index_page', 'contact', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'site_name', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'default_theme', 'viperal', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'foot1', '<a href=\"feed.php?feed=rss1\" title=\"RSS 1.0 / RDF Feed\"><img alt=\"RSS 1.0 / RDF\" src=\"images/rss10_logo.gif\" /></a> <a href=\"feed.php?feed=rss2\" title=\"RSS 2.0 Feed\"><img alt=\"RSS 2.0\" src=\"images/rss20_logo.gif\" /></a> <a href=\"feed.php?feed=rss\" title=\"RSS 0.91 Feed\"><img alt=\"RSS 0.9\" src=\"images/rss090_logo.gif\" /></a>', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'foot2', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'default_lang', 'en', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'default_dst', '0', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'only_registered', '0', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'default_dateformat', 'D M d, Y g:i a', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'default_timezone', '-5', 'float', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'link_optimization', '1', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'index_page', 'contact', 'string', 1)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('maintenance', 'active', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('maintenance', 'start', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('maintenance', 'text', '<p align=\"center\"><b>Sorry we are currently updating this site.<br>\nPlease try again later</b></p>\n<p align=\"center\"><b>Viperal</b>\n</p>', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('maintenance', 'active', '1', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('maintenance', 'start', '', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('maintenance', 'text', '<p align=\"center\"><b>Sorry we are currently updating this site.<br>\nPlease try again later</b></p>\n<p align=\"center\"><b>Viperal</b>\n</p>', 'string', 1)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'allow_html_email', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'email_enable', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'email_function_name', 'mail', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_host', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_port', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_username', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('email', 'smtp_password', '', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'allow_html_email', '1', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'email_enable', '1', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'email_function_name', 'mail', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'smtp', 0, 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'smtp_host', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'smtp_port', '', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'smtp_username', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'smtp_password', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('email', 'site_email', 'none@none.com', 'string', 1)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'allow_name_chars', '.*', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'enable_confirm', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'coppa_enable', '1', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'coppa_fax', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'coppa_mail', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'min_name_chars', '5', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'max_reg_attempts', '10', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'max_name_chars', '50', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'min_pass_chars', '5', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'max_pass_chars', '25', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'allow_email_reuse', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'allow_name_change', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'newest_username', 'admin', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'newest_user_id', '2', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'activation', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'total_users', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('user', 'password_encoding', 'md5', 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'allow_name_chars', '.*', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'enable_confirm', '1', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'coppa_enable', '1', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'coppa_fax', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'coppa_mail', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'min_name_chars', '5', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'max_reg_attempts', '10', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'max_name_chars', '50', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'min_pass_chars', '5', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'max_pass_chars', '25', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'allow_email_reuse', '0', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'allow_name_change', '0', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'newest_username', 'admin', 'string', 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'newest_user_id', '2', 'int', 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'activation', '0', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'total_users', '1', 'int', 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'password_encoding', 'md5', 'string', 1)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'path', '/', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'cookie_domain', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'cookie_name', 'viperal', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'cookie_path', '/', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'limit_load', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'limit_sessions', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'ip_check', '4', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'session_length', '3600', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'error_options', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'site_secure', '0', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'site_domain', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'site_path', '', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_cache) VALUES ('server', 'site_port', '', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'path', '/', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'cookie_domain', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'cookie_name', 'viperal', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'cookie_path', '/', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'limit_load', '0', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'limit_sessions', '0', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'ip_check', '4', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'session_length', '3600', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'error_options', '0', 'int', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'site_secure', '0', 'bool', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'site_domain', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'site_path', '', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'site_port', '', 'int', 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups (group_name, group_type, group_status, group_colour, group_legend, group_description) VALUES ('GUESTS', 1, 2, '', 0, '')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups (group_name, group_type, group_status, group_colour, group_legend, group_description) VALUES ('REGISTERED', 1, 2, '', 0, '')");
@@ -176,14 +176,14 @@ $data = serialize(array(
 
 $admin_data = $guest_data = $bot_data = $_CLASS['core_db']->escape($data);
 
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (0, 2, 1, 'Anonymous', '', '', '', $time, '', 1, 0, 0, 0, 0, '$guest_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (1, 2, 4, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'md5', '', $time, '', '', 1, 1, 1, 1, 1, '$admin_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (2, 2, 5, 'Googlebot', '', '', '', $time, '216.239.46.,64.68.8,66.249.64.', 'Googlebot/', '', 1, 0, 0, 0, 0, '$bot_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (2, 2, 5, 'MSN', '', '', '', $time, '65.54.188.', 'msnbot/', '', 1, 0, 0, 0, 0, '$bot_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (2, 2, 5, 'Yahoo', '', '', '', $time, '66.196.90.1', 'Yahoo! Slurp', '', 1, 0, 0, 0, 0, '$bot_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (2, 2, 5, 'Alexa', '', '', '', $time, '66.28.250.,209.237.238.', 'ia_archiver', '', 1, 0, 0, 0, 0, '$bot_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (2, 2, 5, 'NaverBot', '', '', '', $time, '218.145.25.,61.78.61.,61.78.61.', 'NaverBot-', '', 1, 0, 0, 0, 0, '$bot_data')");
-$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data) VALUES (2, 2, 5, 'Jetbot', '', '', '', $time, '64.71.144.', 'Jetbot/', '', 1, 0, 0, 0, 0, '$bot_data')");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (0, 2, 1, 'Anonymous', '', '', '', $time, '', 1, 0, 0, 0, 0, '$guest_data')");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (1, 2, 4, 'admin', '21232f297a57a5a743894a0e4a801fc3', 'md5', '', $time, '', '', 1, 1, 1, 1, 1, '$admin_data', 0, 0, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (2, 2, 5, 'Googlebot', '', '', '', $time, '216.239.46.,64.68.8,66.249.64.', 'Googlebot/', '', 1, 0, 0, 0, 0, '$bot_data', 0, 0, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (2, 2, 5, 'MSN', '', '', '', $time, '65.54.188.', 'msnbot/', '', 1, 0, 0, 0, 0, '$bot_data', 0, 0, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (2, 2, 5, 'Yahoo', '', '', '', $time, '66.196.90.1', 'Yahoo! Slurp', '', 1, 0, 0, 0, 0, '$bot_data', 0, 0, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (2, 2, 5, 'Alexa', '', '', '', $time, '66.28.250.,209.237.238.', 'ia_archiver', '', 1, 0, 0, 0, 0, '$bot_data', 0, 0, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (2, 2, 5, 'NaverBot', '', '', '', $time, '218.145.25.,61.78.61.,61.78.61.', 'NaverBot-', '', 1, 0, 0, 0, 0, '$bot_data', 0, 0, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$user_prefix."users (user_type, user_status, user_group, username, user_password, user_password_encoding, user_email, user_reg_date, user_ip, user_agent, user_colour, user_allow_viewonline, user_allow_viewemail, user_allow_massemail, user_allow_pm, user_allow_email, user_data, user_new_privmsg, user_unread_privmsg, user_posts) VALUES (2, 2, 5, 'Jetbot', '', '', '', $time, '64.71.144.', 'Jetbot/', '', 1, 0, 0, 0, 0, '$bot_data', 0, 0, 0)");
 
 // Forums
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth_options (auth_option, is_local) VALUES ('f_', 1)");
@@ -307,20 +307,13 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth_options (aut
 // ADMINISTRATOR group
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'u_%'");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'a_%'");
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option IN ('f_poll', 'f_announce', 'f_sticky', 'f_attach', 'f_html')");
 
 // SUPER MODERATOR group
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth (group_id, forum_id, auth_option_id, auth_setting) SELECT 6, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'm_%'");
 
 # REGISTERED/REGISTERED COPPA groups - common forum rights
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 2, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chggrp', 'u_viewonline', 'u_chgname')");
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_subscribe');
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 4, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_votechg', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_report', 'f_subscribe');
-
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 3, 0, auth_option_id, 1 FROM ".$table_prefix."forums_auth_options WHERE auth_option LIKE 'u_%' AND auth_option NOT IN ('u_chgcensors', 'u_chggrp', 'u_viewonline', 'u_chgname')");
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 1, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_subscribe');
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_auth  (group_id, forum_id, auth_option_id, auth_setting) SELECT 5, 2, auth_option_id, 1 FROM phpbb_auth_options WHERE auth_option IN ('f_', 'f_list', 'f_read', 'f_post', 'f_reply', 'f_quote', 'f_edit', 'f_delete', 'f_vote', 'f_votechg', 'f_download', 'f_bbsmiley_code', 'f_smilies', 'f_img', 'f_flash', 'f_sigs', 'f_search', 'f_email', 'f_print', 'f_postcount', 'f_report', 'f_subscribe');
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_attachments', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_bbcode', '1', 0)");
@@ -348,7 +341,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('icons_path', 'images/icons', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('upload_icons_path', 'images/upload_icons', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('ranks_path', 'images/ranks', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('email_enable', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('email_enable', '1', 0)");// maybe keep
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_privmsg', '1', 0)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('load_online_time', '5', 0)");
@@ -360,7 +353,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('load_search_upd', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('load_search_phr', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('load_db_lastread', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('load_db_track', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('load_onlinetrack', '1', 0)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('search_gc', '7200', 0)");
@@ -375,32 +367,16 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('max_search_chars', '10', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('edit_time', '0', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('display_last_edited', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_email_sig', 'Thanks, The Management', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_email', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_contact', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_startdate', ".gmtime().", 0)");
 
-// to be removed
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('email_function_name', 'mail', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('email_package_size', '50', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('smtp_delivery', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('smtp_host', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('smtp_port', '25', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('smtp_auth_method', 'PLAIN', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('smtp_username', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('smtp_password', '', 0)");
-////
+//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_email_sig', 'Thanks, The Management', 0)");
+//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_email', '', 0)");
+//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_contact', '', 0)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('jab_enable', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('jab_host', 'jabber.org', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('jab_port', '5222', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('jab_username', 'viperal_site', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('jab_password', '19site83', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('jab_resource', '', 0)");
-
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_start_date', ".gmtime().", 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('flood_interval', '15', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('bump_interval', '10h', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('search_interval', '', 0)");
+
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('avatar_filesize', '6144', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('avatar_min_width', '20', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('avatar_min_height', '20', 0)");
@@ -440,20 +416,19 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('enable_pm_icons', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('pm_edit_time', '', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_mass_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('record_online_users', '2', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('record_online_date', '1117686190', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('newest_user_id', '334', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('newest_username', 'Grendal', 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('num_users', '0', 1)");
+
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('record_online_users', '0', 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('record_online_date', '0', 1)");
+
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('num_posts', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('num_topics', '0', 1)");
+
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('num_files', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('upload_dir_size', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('search_last_gc', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('last_queue_run', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('full_folder_action', '2', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('bump_type', 'm', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('enable_karma', '1', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_img', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('board_hide_emails', '0', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_sig_bbsmiley_code', '1', 0)");
@@ -462,7 +437,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_sig_img', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_sig_smilies', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('max_post_urls', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('database_last_gc', '0', 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'MAIN', 'main', 1, 1, 'front\r\nsubscribed\r\nbookmarks,cfg_allow_bookmarks\r\ndrafts', '')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'PM', 'pm', 2, 1, 'view_messages\r\ncompose\r\nunread\r\ndrafts\r\noptions', 'cfg_allow_privmsg')");
@@ -472,8 +446,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_t
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'ATTACHMENTS', 'attachments', 6, 1, '', 'acl_u_attach && cfg_allow_attachments')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'GROUPS', 'groups', 7, 1, '', '')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'CALENDER', 'calender', 3, 1, 'month_view\r\nday_view\r\nadd_event', '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('mcp', 'MAIN', 'main', 1, 1, 'front\r\nforum_view\r\ntopic_view\r\npost_details', 'acl_m_')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('mcp', 'QUEUE', 'queue', 2, 1, 'unapproved_topics\r\nunapproved_posts\r\nreports', 'acl_m_approve')");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Images', 1, 1, 1, '', 0, '')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Archives', 0, 1, 1, '', 0, '')");

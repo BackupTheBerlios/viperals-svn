@@ -97,6 +97,8 @@ class articles_configurator
 		$_CLASS['core_db']->query('DROP TABLE ' . ARTICLES_TABLE);
 
 		$_CLASS['core_db']->report_error(true);
+		
+		return true;
 	}
 }
 

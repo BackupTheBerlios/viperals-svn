@@ -81,6 +81,7 @@ $_CLASS['core_db']->table_create('start', $table_prefix.'config');
 $_CLASS['core_db']->add_table_field_char('config_section', 20);
 $_CLASS['core_db']->add_table_field_char('config_name', 20);
 $_CLASS['core_db']->add_table_field_text('config_value', 60000);
+$_CLASS['core_db']->add_table_field_char('config_type', 7);
 $_CLASS['core_db']->add_table_field_int('config_cache', array('max' => 1, 'null' => true));
 
 $_CLASS['core_db']->add_table_index(array('config_section', 'config_name'), 'primary');
@@ -257,8 +258,8 @@ $_CLASS['core_db']->add_table_field_int('user_allow_viewonline', array('max' => 
 $_CLASS['core_db']->add_table_field_int('user_allow_viewemail', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('user_allow_massemail', array('max' => 1));
 
-$_CLASS['core_db']->add_table_field_int('user_new_privmsg', array('max' => 1, 'null' => true));
-$_CLASS['core_db']->add_table_field_int('user_unread_privmsg', array('max' => 1, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('user_new_privmsg', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_unread_privmsg', array('max' => 1));
 
 $_CLASS['core_db']->add_table_field_text('user_sig', 60000, true);
 $_CLASS['core_db']->add_table_field_char('user_from', 100, true);
@@ -279,7 +280,7 @@ $_CLASS['core_db']->add_table_field_char('user_occ', 255, true);
 ///
 
 $_CLASS['core_db']->add_table_field_int('user_notify', array('max' => 1, 'null' => true));
-//$_CLASS['core_db']->add_table_field_int('user_notify_pm', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_notify_pm', array('max' => 10, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('user_notify_type', array('max' => 10, 'null' => true));
 
 $_CLASS['core_db']->add_table_field_int('user_allow_pm', array('max' => 1));
@@ -296,7 +297,7 @@ $_CLASS['core_db']->add_table_field_int('user_post_show_days', array('max' => 20
 $_CLASS['core_db']->add_table_field_char('user_post_sortby_type', 1, true);
 $_CLASS['core_db']->add_table_field_char('user_post_sortby_dir', 1, true);
 
-$_CLASS['core_db']->add_table_field_int('user_posts', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('user_posts', array('max' => 16000000));
 field_unix_time('user_last_post_time', true);
 
 $_CLASS['core_db']->add_table_field_text('user_permissions', 60000, true); // phpBBs rename user_forums_permissions
@@ -385,7 +386,7 @@ $_CLASS['core_db']->table_create('commit');
 */
 $_CLASS['core_db']->table_create('start', $table_prefix.'forums_auth_presets');
 
-$_CLASS['core_db']->add_table_field_int('preset_id', array('max' => 16000));
+$_CLASS['core_db']->add_table_field_int('preset_id', array('max' => 16000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_int('preset_user_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_char('preset_name', 50);
 $_CLASS['core_db']->add_table_field_char('preset_type', 2);
@@ -794,7 +795,7 @@ $_CLASS['core_db']->add_table_field_int('post_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('word_id', array('max' => 3000000000));
 $_CLASS['core_db']->add_table_field_int('title_match', array('max' => 1));
 
-$_CLASS['core_db']->add_table_index('word_id', 'primary');
+$_CLASS['core_db']->add_table_index('word_id');
 
 $_CLASS['core_db']->table_create('commit');
 

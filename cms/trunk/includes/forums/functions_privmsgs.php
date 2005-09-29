@@ -967,7 +967,7 @@ function rebuild_header($check_ary)
 
 		foreach (array('u', 'g') as $type)
 		{
-			if (sizeof($$type))
+			if (!empty($$type))
 			{
 				foreach ($$type as $id)
 				{
@@ -999,7 +999,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 		}
 
 		$address = array();
-		if (sizeof($u))
+		if (!empty($u))
 		{
 			$sql = 'SELECT user_id, username, user_colour 
 				FROM ' . USERS_TABLE . '
@@ -1024,7 +1024,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 			$_CLASS['core_db']->free_result($result);
 		}
 
-		if (sizeof($g))
+		if (!empty($g))
 		{
 			if ($plaintext)
 			{
@@ -1070,7 +1070,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 			}
 		}
 
-		if (sizeof($address) && !$plaintext)
+		if (!empty($address) && !$plaintext)
 		{
 			$_CLASS['core_template']->assign('S_' . strtoupper($check_type) . '_RECIPIENT', true);
 
@@ -1185,6 +1185,9 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			$_CLASS['core_db']->free_result($result);
 		}
 
+		$recipients = array_unique($recipients);
+		unset($recipients[ANONYMOUS]);
+
 		if (empty($recipients))
 		{
 			trigger_error('NO_RECIPIENT');
@@ -1221,7 +1224,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'message_subject'	=> $subject,
 				'message_text' 		=> $data['message'],
 				'message_checksum'	=> $data['message_md5'],
-				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
+				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid'],
 				'to_address'		=> implode(':', $to),
@@ -1241,7 +1244,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'message_subject'	=> $subject,
 				'message_text' 		=> $data['message'],
 				'message_checksum'	=> $data['message_md5'],
-				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && sizeof($data['filename_data'])) ? 1 : 0,
+				'message_attachment'=> (isset($data['filename_data']['physical_filename']) && !empty($data['filename_data'])) ? 1 : 0,
 				'bbcode_bitfield'	=> $data['bbcode_bitfield'],
 				'bbcode_uid'		=> $data['bbcode_uid']
 			);
@@ -1388,6 +1391,8 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	// Send Notifications
 	if ($mode !== 'edit')
 	{
+	//unset($recipients[$_CLASS['core_user']->data['user_id']]);
+
 		pm_notification($mode, $_CLASS['core_user']->data['username'], $recipients, $subject, $data['message']);
 	}
 
@@ -1397,93 +1402,66 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 // PM Notification
 function pm_notification($mode, $author, $recipients, $subject, $message)
 {
-	global $_CLASS, $config;
-return;
-	$subject = censor_text($subject);
-	
-	// Get banned User ID's
-	$sql = 'SELECT ban_userid 
-		FROM ' . BANLIST_TABLE;
-	$result = $_CLASS['core_db']->query($sql);
+	global $_CLASS, $_CORE_CONFIG, $config;
 
-	unset($recipients[ANONYMOUS], $recipients[$_CLASS['core_user']->data['user_id']]);
-	
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		if (isset($row['ban_userid']))
-		{
-			unset($recipients[$row['ban_userid']]);
-		}
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	if (!sizeof($recipients))
+	if (empty($recipients))
 	{
 		return;
 	}
 
-	$recipient_list = implode(', ', array_keys($recipients));
+	$subject = censor_text($subject);
 
-	$sql = 'SELECT user_id, username, user_email, user_lang, user_notify_pm, user_notify_type, user_jabber
+	$recipient_list = implode(', ', array_unique(array_keys($recipients)));
+
+	$sql = 'SELECT user_id, username, user_email, user_lang, user_notify_pm, user_notify_type
 		FROM ' . USERS_TABLE . "
 		WHERE user_id IN ($recipient_list)";
 	$result = $_CLASS['core_db']->query($sql);
 
-	$msg_list_ary = array();
+	$user_list = array();
+// add lang support
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		if ($row['user_notify_pm'] == 1 && trim($row['user_email']))
+		if ($row['user_notify_pm'])
 		{
-			$msg_list_ary[] = array(
-				'method'	=> $row['user_notify_type'],
-				'email'		=> $row['user_email'],
-				'jabber'	=> $row['user_jabber'],
-				'name'		=> $row['username'],
-				'lang'		=> $row['user_lang']
-			);
+			$user_list[] = $row;
 		}
 	}
 	$_CLASS['core_db']->free_result($result);
 	
-	if (!sizeof($msg_list_ary))
+	if (empty($user_list))
 	{
 		return;
 	}
 
-	require_once('includes/forums/functions_messenger.php');
-	$messenger = new messenger();
-
 	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
 
-	foreach ($msg_list_ary as $pos => $addr)
+	require_once(SITE_FILE_ROOT.'includes/mailer.php');
+	$mailer = new core_mailer;
+
+	$count = count($user_list);
+	for ($i = 0; $i < $count; $i++)
 	{
-		$messenger->template('privmsg_notify', $addr['lang']);
-
-		$messenger->replyto($config['board_email']);
-		$messenger->to($addr['email'], $addr['name']);
-		$messenger->im($addr['jabber'], $addr['name']);
-
-		$messenger->assign_vars(array(
-			'EMAIL_SIG'		=> $email_sig,
-			'SITENAME'		=> $config['sitename'],
-			'SUBJECT'		=> $subject,
-			'AUTHOR_NAME'	=> $author,
-			'USERNAME'		=> $addr['name'],
-
-			'U_INBOX'		=> generate_link('Control_Panel&amp;i=pm&mode=unread', array('full' => true, 'sid' => true)))
-		);
-
-		$messenger->send($addr['method']);
-		$messenger->reset();
-	}
-	unset($msg_list_ary);
-
-	if ($messenger->queue)
-	{
-		$messenger->save_queue();
+		$mailer->to($user_list[$i]['user_email'], $user_list[$i]['username']);
 	}
 
-	unset($messenger);
+	$mailer->subject('New Private Message has arrived');
+
+	$_CLASS['core_template']->assign_array(array(
+		'EMAIL_SIG'		=> $email_sig,
+		'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
+		'SUBJECT'		=> $subject,
+		'AUTHOR_NAME'	=> $author,
+
+		'LINK_INBOX'		=> generate_link('Control_Panel&i=pm&mode=unread', array('full' => true, 'sid' => true))
+	));
+
+	$mailer->message = trim($_CLASS['core_template']->display('email/control_panel/pm_notify.txt', true));
+
+	if (!$mailer->send())
+	{
+		//echo $mailer->error;
+	}
 }
 
 ?>

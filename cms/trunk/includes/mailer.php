@@ -43,40 +43,40 @@ class core_mailer
 	function to($address, $name = '')
 	{
 		$this->address_arrays['to'][] = array(
-				'address'	=> $address,
-				'name'		=> $name
+				'address'	=> trim($address),
+				'name'		=> trim($name)
 			);
 	}
 
 	function cc($address, $name = '')
 	{
 		$this->address_arrays['cc'][] = array(
-				'address'	=> $address,
-				'name'		=> $name
+				'address'	=> trim($address),
+				'name'		=> trim($name)
 			);
 	}
 
 	function bcc($address, $name = '')
 	{
 		$this->address_arrays['bcc'][] = array(
-				'address'	=> $address,
-				'name'		=> $name
+				'address'	=> trim($address),
+				'name'		=> trim($name)
 			);
 	}
 
 	function reply_to($address, $name = '')
 	{
 		$this->address_arrays['reply_to'] = array(
-			'address'	=> $address,
-			'name'		=> $name
+			'address'	=> trim($address),
+			'name'		=> trim($name)
 		);
 	}
 
 	function from($address, $name = '')
 	{
 		$this->address_arrays['from'] = array(
-			'address'	=> $address,
-			'name'		=> $name
+			'address'	=> trim($address),
+			'name'		=> trim($name)
 		);
 	}
 
@@ -92,12 +92,19 @@ class core_mailer
 
 	function format_address($address)
 	{
+		if (isset($address['address']))
+		{
+			echo ($address['name'] && $this->named_addresses) ?  '"' . mail_encode($address['name'], $this->encoding) . '" <' . $address['address'] . '>' : $address['address'];
+			return ($address['name'] && $this->named_addresses) ?  '"' . mail_encode($address['name'], $this->encoding) . '" <' . $address['address'] . '>' : $address['address'];
+		}
+
+		$formatted = array();
+
 		foreach ($address as $array)
 		{
-			$array['name'] = trim($array['name']);
-
 			$formatted[] = ($array['name'] && $this->named_addresses) ?  '"' . mail_encode($array['name'], $this->encoding) . '" <' . $array['address'] . '>' : $array['address'];
 		}
+
 		return implode(', ', $formatted);
 	}
 
@@ -105,31 +112,30 @@ class core_mailer
 	{
 		global $_CLASS, $_CORE_CONFIG;
 
-		$to = $cc = $bcc = $reply_to = $from = false;
-
-		foreach ($this->address_arrays as $type => $address)
+		if (empty($this->address_arrays['from']))
 		{
-			if (empty($address))
-			{
-				continue;
-			}
-
-			$$type = $this->format_address($address);
+			$this->from($_CORE_CONFIG['email']['site_email'], $_CORE_CONFIG['global']['site_name']);
 		}
 
-		$_CORE_CONFIG['email']['site_email'] = trim($_CORE_CONFIG['email']['site_email']);
-
-		if (!$from)
-		{
-			// modify_lines ?
-			$from = '<' . $_CORE_CONFIG['email']['site_email'] . '>';
-		}
-
-		$headers[] = "From: $from";
-		$headers[] = 'Date: ' . gmdate('D, d M Y H:i:s T');
+		$headers[] = 'Message-ID: <' . ((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))) . "@" . $_CORE_CONFIG['global']['site_name'] . ">";
 
 		if (!$_CORE_CONFIG['email']['smtp'])
 		{
+			$to = $cc = $bcc = $reply_to = $from = false;
+
+			foreach ($this->address_arrays as $type => $address)
+			{
+				if (empty($address))
+				{
+					continue;
+				}
+	
+				$$type = $this->format_address($address);
+			}
+
+			$headers[] = "From: $from";
+			$headers[] = 'Date: ' . gmdate('D, d M Y H:i:s', gmtime()). ' -0000 (GMT)';
+
 			if ($cc)
 			{
 				$headers[] = "Cc: $cc";
@@ -139,17 +145,20 @@ class core_mailer
 			{
 				$headers[] = "Bcc: $bcc";
 			}
-		}
 
-		if ($reply_to)
+			if ($reply_to)
+			{
+				$headers[] = "Reply-to: $reply_to";
+			}
+		}
+		else
 		{
-			$headers[] = "Reply-to: $reply_to";
+			$headers[] = 'Date: ' . gmdate('D, d M Y H:i:s', gmtime()). ' -0000 (GMT)';
 		}
 
 		$headers[] = 'Return-Path: <' . $_CORE_CONFIG['email']['site_mail'] . ">";
 		$headers[] = 'Sender: <' . $_CORE_CONFIG['email']['site_mail'] . ">";
 		$headers[] = "MIME-Version: 1.0";
-		$headers[] = 'Message-ID: <' . ((function_exists('sha1')) ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true))) . "@" . $_CORE_CONFIG['global']['site_name'] . ">";
 
 		if ($this->html)
 		{
@@ -159,10 +168,10 @@ class core_mailer
 			$headers[] = 'Content-Type: multipart/alternative;';
 			$headers[] = "\tboundary=\"$text_boundary\"";
 
-			$message .= 'This is a multi-part message in MIME format, Please use a MIME-compatible client';
+			$message = "\n".'This is a multi-part message in MIME format, Please use a MIME-compatible client';
 
 			// Plain text
-			$message .= "\n\n$text_boundary\n";
+			$message .= "\n$text_boundary\n";
 			$message .= 'Content-Type: text/plain; charset='.$this->encoding."\n"; //format=
 			$message .= "Content-Transfer-Encoding: 8bit\n\n";
 			$message .= html_entity_decode(strip_tags(preg_replace('#<br */?>#i', "\n", modify_lines($this->message))), ENT_QUOTES);
@@ -199,6 +208,7 @@ class core_mailer
 			$smtp->subject = $this->subject;
 			$smtp->headers = $headers;
 			$smtp->message = $message;
+			$smtp->from = $this->address_arrays['from'];
 			$smtp->recipients = array_merge($this->address_arrays['to'], $this->address_arrays['cc'] , $this->address_arrays['bcc']);
 
 			if (!$smtp->send_mail())
@@ -242,6 +252,9 @@ class smtp_mailer
 	var $host;
 	var $port;
 	var $error;
+
+	var $encoding = 'UTF-8';
+	var $named_addresses = true;
 
 	/*
 		PHP5 destructor
@@ -351,11 +364,22 @@ class smtp_mailer
 		return true;
 	}
 
+	function format_address($address, $header = false)
+	{
+		if ($header)
+		{
+			return ($address['name'] && $this->named_addresses) ?  '"' . mail_encode($address['name'], $this->encoding) . '" <' . $address['address'] . '>' : $address['address'];
+		}
+		
+		//return ($address['name'] && $this->named_addresses) ?  '<' . $address['address'] . '> '.$address['name'] : '<' . $address['address'] . '>';
+		return '<' . $address['address'] . '>';
+	}
+
 	function send_mail()
 	{
 		global $_CORE_CONFIG;
 
-		fwrite($this->connection, 'MAIL FROM: <'.$_CORE_CONFIG['email']['site_mail'].'>'."\r\n");
+		fwrite($this->connection, 'MAIL FROM: '.$this->format_address($this->from)."\r\n");
 
 		if (!$this->check_response(250))
 		{
@@ -368,22 +392,11 @@ class smtp_mailer
 		// Let tell the server who to send this to.
 		foreach ($this->recipients as $email)
 		{
-			$name = false;
-
-			//print_r($email);
-			if (is_array($email))
-			{
-				$name = $email['name'];
-				$email = $email['address'];
-			}
-
-			$email = trim($email);
-
-			fwrite($this->connection, 'RCPT TO: <'.$email.">\r\n");
+			fwrite($this->connection, 'RCPT TO: '.$this->format_address($email)."\r\n");
 
 			if ($this->check_response(250))
 			{
-				$to_header[] = ($name) ? "$name <$email>" : "<$email>";
+				$to_header[] = $this->format_address($email, true);
 			}
 		}
 
@@ -391,6 +404,7 @@ class smtp_mailer
 		if (empty($to_header))
 		{
 			$this->error = 'Nothing to send';
+
 			$this->disconnect();
 			return false;
 		}
@@ -404,6 +418,7 @@ class smtp_mailer
 			return false;
 		}
 
+		fwrite($this->connection, 'From: '.$this->format_address($this->from, true)."\r\n");
 		fwrite($this->connection, 'Subject: '.$this->subject."\r\n");
 		fwrite($this->connection, 'To: '.implode(', ', $to_header)."\r\n");
 		fwrite($this->connection, implode("\r\n", $this->headers)."\r\n\r\n");

@@ -605,7 +605,7 @@ function login_box($login_options = false, $template = false)
 	$_CLASS['core_auth']->do_login($login_options, $template);
 }
 
-function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false, $cache = true)
+function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false, $type = 'string', $cache = true)
 {
 	global $_CLASS, $_CORE_CONFIG;
 
@@ -620,6 +620,7 @@ function set_core_config($section, $name, $value, $clear_cache = true, $auto_add
 			'config_section'=> (string) $section,
 			'config_name'	=> (string) $name,
 			'config_value'	=> (string) $value,
+			'config_type'	=> (string) $type,
 			'config_cache'	=> (int) $cache,
 		);
 

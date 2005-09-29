@@ -826,7 +826,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 		$topic_title = $subject;
 
 		$notify_type = 'topic';
-		$template = 'notify_topic'; //forum_notify
+		$template = 'notify_topic'; //notify_forum
 		$where = "(w.forum_id = $forum_id OR w.topic_id = $topic_id)";
 	}
 	else
@@ -857,11 +857,11 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 		$ignore_array[$user['user_id']] = $user['user_id'];
 
 		$holding[$user['user_id']] = $user;
-		$holding[$user['user_id']]['template'] = ($notify_type == 'topic' && $user['forum_id']) ? 'forum_notify' : $template;
+		$holding[$user['user_id']]['template'] = ($notify_type == 'topic' && $user['forum_id']) ? 'notify_forum' : $template;
 		
 		if ($notify_type == 'topic' && $user['forum_id'])
 		{
-			$holding[$user['user_id']]['template'] = 'forum_notify';
+			$holding[$user['user_id']]['template'] = 'notify_forum';
 			$holding[$user['user_id']]['update'] = 'forum';
 		}
 		else

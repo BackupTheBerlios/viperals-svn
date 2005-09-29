@@ -37,14 +37,6 @@
 			<td class="row2"><input class="post" size="40" maxlength="255" name="site_name" value="{ $SITE_NAME }" type="text"></td>
 		</tr>
 		<tr>
-			<td class="row1" width="50%"><b>{ $L_SITE_URL }: </b></td>
-			<td class="row2"><input class="post" size="40" maxlength="255" name="site_url" value="{ $SITE_URL }" type="text"></td>
-		</tr>
-		<tr>
-			<td class="row1" width="50%"><b>{ $L_START_DATE }: </b></td>
-			<td class="row2"><input class="post" size="40" maxlength="255" name="startdate" value="{ $START_DATE }" type="text"></td>
-		</tr>
-		<tr>
 			<td class="row1" width="50%"><b>{ $L_LINK_OPTIMIZATION }: </b></td>
 			<td class="row2"><input name="link_optimization" value="1" <!-- IF { $LINK_OPTIMIZATION } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_YES }&nbsp;&nbsp;<input name="link_optimization" value="0" <!-- IF !{ $LINK_OPTIMIZATION } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
 		</tr>
@@ -58,10 +50,52 @@
 			</td>
 		</tr>
 		<tr>
-		<td class="row1" width="50%" valign="top"><b>{ $L_FOOTER_MESSAGE }: </b></td>
+			<td class="row1" width="50%" valign="top"><b>{ $L_FOOTER_MESSAGE }: </b></td>
 			<td class="row2">
-			<textarea name="foot1" rows="5" cols="40">{ $FOOTER_FIRST }</textarea><br /><br />
-			<textarea name="foot2" rows="5" cols="40">{ $FOOTER_SECOND }</textarea>
+				<textarea name="foot1" rows="5" cols="40">{ $FOOTER_FIRST }</textarea><br /><br />
+				<textarea name="foot2" rows="5" cols="40">{ $FOOTER_SECOND }</textarea>
+			</td>
+		</tr>
+		<tr>
+			<th colspan="2">{ $L_EMAIL }</th>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_EMAIL_ENABLE }: </b></td>
+			<td class="row2"><input name="email_enable" value="1" <!-- IF { $EMAIL_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_YES }&nbsp;&nbsp;<input name="email_enable" value="0" <!-- IF !{ $EMAIL_ENABLE } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_NO }</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_MAIL_MODE }: </b></td>
+			<td class="row2"><input name="smtp" value="1" <!-- IF { $SMTP } --> checked="checked" <!-- ENDIF --> type="radio"> { $L_SMTP }&nbsp;&nbsp;<input name="smtp" value="0" <!-- IF !{ $SMTP } --> checked="checked" <!-- ENDIF --> type="radio">{ $L_FUNCTION }</td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SITE_EMAIL }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="site_email" value="{ $SITE_EMAIL }" type="text"></td>
+		</tr>
+		<tr>
+			<td colspan="2" class="row2"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_EMAIL_FUNCTION_NAME }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="email_function_name" value="{ $EMAIL_FUNCTION_NAME }" type="text"></td>
+		</tr>
+		<tr>
+			<td colspan="2" class="row2"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SMTP_SERVER }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="smtp_host" value="{ $SMTP_HOST }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SMTP_PORT }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="smtp_port" value="{ $SMTP_PORT }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SMTP_USERNAME }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="smtp_username" value="{ $SMTP_USERNAME }" type="text"></td>
+		</tr>
+		<tr>
+			<td class="row1" width="50%"><b>{ $L_SMTP_PASSWORD }: </b></td>
+			<td class="row2"><input class="post" size="40" maxlength="255" name="smtp_password" value="{ $SMTP_PASSWORD }" type="text"></td>
 		</tr>
 	<!-- ELSEIF { $SYSTEM_MODE } == 'system' -->
 		<tr>
@@ -74,9 +108,8 @@
 		<tr>
 			<td class="row1" width="50%"><b>{ $L_MAINTENANCE_START }: </b></td>
 			<td class="row2">
-			<input class="post" size="40" maxlength="255" id="maintenance_start" name="maintenance_start" value="{ $MAINTENANCE_START }" type="text">
-				<img src="java/jscalendar/calendar.png" style="cursor: pointer;" id="time_trigger" />
-				
+				<input class="post" size="40" maxlength="255" id="maintenance_start" name="maintenance_start" value="{ $MAINTENANCE_START }" type="text">
+				<img src="images/calender_small.png" style="cursor: pointer;" id="time_trigger" />
 			</td>
 		</tr>
 		<tr>
@@ -110,8 +143,7 @@
 
 		<tr>
 			<td class="row1" width="50%"><b>Session IP validation: </b><br><span class="gensmall">Determines how much of the users IP is used to validate a session; All compares the complete address, A.B.C the first x.x.x, A.B the first x.x, None disables checking.</span></td>
-			<td class="row2"><input name="ip_check" value="4" <!-- IF { $IP_CHECK } == 4  -->checked="checked" <!-- ENDIF -->type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" <!-- IF { $IP_CHECK } == 3 -->checked="checked" <!-- ENDIF --> type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" <!-- IF { $IP_CHECK } == 2 --> checked="checked" <!-- ENDIF --> type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" <!-- IF { $IP_CHECK } --> checked="checked" <!-- ENDIF --> type="radio"> None&nbsp;&nbsp;</td>
-	
+			<td class="row2"><input name="ip_check" value="4" <!-- IF { $IP_CHECK } == 4  -->checked="checked" <!-- ENDIF -->type="radio"> All&nbsp;&nbsp;<input name="ip_check" value="3" <!-- IF { $IP_CHECK } == 3 -->checked="checked" <!-- ENDIF --> type="radio"> A.B.C&nbsp;&nbsp;<input name="ip_check" value="2" <!-- IF { $IP_CHECK } == 2 --> checked="checked" <!-- ENDIF --> type="radio"> A.B&nbsp;&nbsp;<input name="ip_check" value="0" <!-- IF !{ $IP_CHECK } --> checked="checked" <!-- ENDIF --> type="radio"> None&nbsp;&nbsp;</td>
 		</tr>
 		<tr>
 			<td class="row1" width="50%"><b>Limit system load: </b><br><span class="gensmall">If the 1 minute system load exceeds this value the board will go offline, 1.0 equals ~100% utilisation of one processor. This only functions on UNIX based servers.</span></td>

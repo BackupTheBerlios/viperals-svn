@@ -54,11 +54,11 @@ class Quick_Message_configurator
 		$_CLASS['core_db']->table_create('commit');
 		
 		// use set config ?
-		set_core_config('quick_message', 'anonymous_posting', 2, false, true);
-		set_core_config('quick_message', 'delete_time', 300, false, true);
-		set_core_config('quick_message', 'height', 200, false, true);
-		set_core_config('quick_message', 'last_post_check', 150, false, true);
-		set_core_config('quick_message', 'length_max', 150, false, true);
+		set_core_config('quick_message', 'anonymous_posting', 2, false, true, 'int');
+		set_core_config('quick_message', 'delete_time', 300, false, true, 'int');
+		set_core_config('quick_message', 'height', 200, false, true, 'int');
+		set_core_config('quick_message', 'last_post_check', 150, false, true, 'int');
+		set_core_config('quick_message', 'length_max', 150, false, true, 'int');
 
 		$_CLASS['core_cache']->destroy('core_config');
 
@@ -85,6 +85,8 @@ class Quick_Message_configurator
 		$_CLASS['core_db']->query('DELETE FROM ' . CORE_CONFIG_TABLE . " WHERE config_section = 'quick_message'");
 
 		$_CLASS['core_db']->report_error(true);
+		
+		return true;
 	}
 }
 
