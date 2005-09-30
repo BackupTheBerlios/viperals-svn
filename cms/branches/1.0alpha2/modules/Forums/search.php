@@ -47,7 +47,8 @@ $_CLASS['core_user']->add_lang('search');
 $_CLASS['core_user']->add_img();
 
 // Is user able to search? Has search been disabled?
-if ($_CLASS['core_user']->is_bot || !$_CLASS['auth']->acl_get('u_search') || !$config['load_search'])
+//!$_CLASS['auth']->acl_get('u_search') 
+if ($_CLASS['core_user']->is_bot || !$config['load_search'])
 {
 	trigger_error('NO_SEARCH');
 }

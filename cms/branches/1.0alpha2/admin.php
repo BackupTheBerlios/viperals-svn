@@ -22,7 +22,7 @@ $_CLASS['core_display']->load_theme('viperal_admin', SITE_FILE_ROOT.'themes_admi
 
 //$_CLASS['core_user']->add_lang('admin/common.php');
 
-$_CORE_MODULE['module_title'] = $_CLASS['core_user']->lang['ADMIN'];
+$_CORE_MODULE['module_title'] = $_CLASS['core_user']->get_lang('ADMIN');
 $_CORE_MODULE['module_sides'] = BLOCK_ALL;
 $_CLASS['core_blocks']->blocks_loaded = true;
 
@@ -86,7 +86,7 @@ if ($_CORE_MODULE['module_name'])
 	}
 }
 
-$_CORE_MODULE['module_title'] = $_CLASS['core_user']->lang['ADMIN'].' &gt; '.$_CORE_MODULE['module_title'];
+$_CORE_MODULE['module_title'] = $_CLASS['core_user']->get_lang('ADMIN').' &gt; '.$_CORE_MODULE['module_title'];
 $_CORE_MODULE['module_sides'] = BLOCK_ALL;
 	
 require(SITE_FILE_ROOT.'admin/menu.php');

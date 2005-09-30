@@ -1231,11 +1231,12 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 	{
 		// Try to delete topic, we may had an previous error causing inconsistency
 		/*
-		if ($post_mode = 'delete_topic')
+		if ($post_mode === 'delete_topic')
 		{
 			delete_topics('topic_id', array($topic_id), false);
 		}
 		*/
+
 		trigger_error('ALREADY_DELETED');
 	}
 
@@ -1259,7 +1260,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 			$sql_data[FORUMS_FORUMS_TABLE] .= implode(', ', update_last_post_information('forum', $forum_id));
 			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
-			break;
+		break;
 
 		case 'delete_first_post':
 			$sql = 'SELECT p.post_id, p.poster_id, p.post_username, u.username 
@@ -1281,7 +1282,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 			$sql_data[FORUMS_TOPICS_TABLE] .= ', topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 
 			$next_post_id = (int) $row['post_id'];
-			break;
+		break;
 			
 		case 'delete_last_post':
 			if ($data['topic_type'] != POST_GLOBAL)
@@ -1311,7 +1312,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 	
 				$next_post_id = (int) $row['last_post_id'];
 			}
-			break;
+		break;
 			
 		case 'delete':
 			$sql = 'SELECT post_id
@@ -1332,6 +1333,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 			$sql_data[FORUMS_TOPICS_TABLE] = 'topic_replies_real = topic_replies_real - 1' . (($data['post_approved']) ? ', topic_replies = topic_replies - 1' : '');
 			$next_post_id = (int) $row['post_id'];
+		break;
 	}
 				
 	$sql_data[USERS_TABLE] = ($_CLASS['auth']->acl_get('f_postcount', $forum_id)) ? 'user_posts = user_posts - 1' : '';

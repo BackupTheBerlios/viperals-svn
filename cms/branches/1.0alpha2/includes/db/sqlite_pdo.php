@@ -55,6 +55,11 @@ class db_sqlite_pdo
 		}
 		catch (PDOException $e)
 		{
+			if (!$this->report_error)
+			{
+				return false;
+			}
+
 			trigger_error('Connection failed: ' . $e->getMessage());
 		}
 

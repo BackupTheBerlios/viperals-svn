@@ -78,11 +78,6 @@ function compose_pm($id, $mode, $action)
 		redirect($redirect);
 	}
 
-	if ($action == 'forward' && (!$config['forward_pm'] || !$_CLASS['auth']->acl_get('u_pm_forward')))
-	{
-		trigger_error('NO_AUTH_FORWARD_MESSAGE');
-	}
-
 	if ($action == 'edit' && !$_CLASS['auth']->acl_get('u_pm_edit'))
 	{
 		trigger_error('NO_AUTH_EDIT_MESSAGE');
@@ -662,9 +657,10 @@ $config['auth_bbcode_pm'] = true;
 		}
 
 		$u = $g = array();
+
 		foreach (array('u', 'g') as $type)
 		{
-			if (isset($result[$type]) && $result[$type])
+			if (isset($result[$type]))
 			{
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result[$type]))
 				{
@@ -723,26 +719,27 @@ $config['auth_bbcode_pm'] = true;
 	{
 		case 'post':
 			$page_title = $_CLASS['core_user']->lang['POST_NEW_PM'];
-			break;
+		break;
 
 		case 'quote':
 			$page_title = $_CLASS['core_user']->lang['POST_QUOTE_PM'];
-			break;
+		break;
 
 		case 'reply':
 			$page_title = $_CLASS['core_user']->lang['POST_REPLY_PM'];
-			break;
+		break;
 
 		case 'edit':
 			$page_title = $_CLASS['core_user']->lang['POST_EDIT_PM'];
-			break;
+		break;
 
 		case 'forward':
 			$page_title = $_CLASS['core_user']->lang['POST_FORWARD_PM'];
-			break;
+		break;
 
 		default:
 			trigger_error('NO_ACTION_MODE');
+		break;
 	}
 
 	$s_hidden_fields = '<input type="hidden" name="lastclick" value="' . $current_time . '" />';
@@ -843,7 +840,9 @@ function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_
 			require_once(SITE_FILE_ROOT.'includes/functions_user.php');
 
 			$user_id_ary = user_get_id($usernames, $difference);
-			
+
+			unset($user_id_ary[ANONYMOUS]);
+
 			if (!empty($user_id_ary))
 			{
 				foreach ($user_id_ary as $user_id)
@@ -854,7 +853,7 @@ function handle_message_list_actions(&$address_list, $remove_u, $remove_g, $add_
 		}
 
 		// Add Friends if specified
-		$friend_list = (is_array($_REQUEST['add_' . $type])) ? array_map('intval', array_keys($_REQUEST['add_' . $type])) : array();
+		$friend_list = is_array($_REQUEST['add_' . $type]) ? array_map('intval', array_keys($_REQUEST['add_' . $type])) : array();
 
 		foreach ($friend_list as $user_id)
 		{

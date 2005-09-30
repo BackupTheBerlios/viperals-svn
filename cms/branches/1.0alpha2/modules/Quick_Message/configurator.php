@@ -85,6 +85,8 @@ class Quick_Message_configurator
 		$_CLASS['core_db']->query('DELETE FROM ' . CORE_CONFIG_TABLE . " WHERE config_section = 'quick_message'");
 
 		$_CLASS['core_db']->report_error(true);
+		
+		return true;
 	}
 }
 

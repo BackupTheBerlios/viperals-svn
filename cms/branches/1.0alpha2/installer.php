@@ -22,7 +22,7 @@ $Id$
 */
 define('VIPERAL', 'INSTALLER');
 
-error_reporting(E_ALL);
+error_reporting(0);
 
 define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 

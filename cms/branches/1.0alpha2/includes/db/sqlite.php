@@ -65,6 +65,11 @@ class db_sqlite
 			return $this->link_identifier;
 		}
 		
+		if (!$this->report_error)
+		{
+			return false;
+		}
+
 		if (!$error)
 		{
 			$error = '<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB1</center>';

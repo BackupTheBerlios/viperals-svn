@@ -279,14 +279,14 @@ $_CLASS['core_db']->add_table_field_char('user_occ', 255, true);
 ///
 
 $_CLASS['core_db']->add_table_field_int('user_notify', array('max' => 1, 'null' => true));
-//$_CLASS['core_db']->add_table_field_int('user_notify_pm', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('user_notify_pm', array('max' => 10, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('user_notify_type', array('max' => 10, 'null' => true));
 
 $_CLASS['core_db']->add_table_field_int('user_allow_pm', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('user_allow_email', array('max' => 1));
 
 $_CLASS['core_db']->add_table_field_char('user_sig_bbcode_uid', 5, true);
-$_CLASS['core_db']->add_table_field_int('user_sig_bbcode_bitfield', array('max' => 1600, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('user_sig_bbcode_bitfield', array('max' => 16000000, 'null' => true));
 
 $_CLASS['core_db']->add_table_field_int('user_topic_show_days', array('max' => 200, 'null' => true));
 $_CLASS['core_db']->add_table_field_char('user_topic_sortby_type', 1, true);
@@ -505,7 +505,7 @@ $_CLASS['core_db']->add_table_field_text('forum_desc', 20000);
 $_CLASS['core_db']->add_table_field_text('forum_rules', 20000, true);
 $_CLASS['core_db']->add_table_field_char('forum_rules_link', 200, true);
 $_CLASS['core_db']->add_table_field_char('forum_rules_flags', 50, true);
-$_CLASS['core_db']->add_table_field_int('forum_rules_bbcode_bitfield', array('max' => 1000000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('forum_rules_bbcode_bitfield', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_char('forum_rules_bbcode_uid', 5, true);
 $_CLASS['core_db']->add_table_field_char('forum_link', 200, true);
 $_CLASS['core_db']->add_table_field_char('forum_password', 40, true);
@@ -876,7 +876,7 @@ $_CLASS['core_db']->add_table_field_char('message_edit_reason', 100, true);
 $_CLASS['core_db']->add_table_field_int('message_edit_user', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_char('message_checksum', 11);
 $_CLASS['core_db']->add_table_field_int('message_attachment', array('max' => 1));
-$_CLASS['core_db']->add_table_field_int('bbcode_bitfield', 1000000000);
+$_CLASS['core_db']->add_table_field_int('bbcode_bitfield', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_char('bbcode_uid', 5);
 field_unix_time('message_edit_time', true);
 $_CLASS['core_db']->add_table_field_int('message_edit_count', array('max' => 200, 'null' => true));
@@ -968,7 +968,7 @@ field_unix_time('search_time', true);
 $_CLASS['core_db']->add_table_field_text('search_array', 16000000);
 
 $_CLASS['core_db']->add_table_index('search_id', 'primary');
-$_CLASS['core_db']->add_table_index('session_id', 'primary');
+$_CLASS['core_db']->add_table_index('session_id');
 
 $_CLASS['core_db']->table_create('commit');
 

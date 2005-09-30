@@ -49,12 +49,14 @@ class core_display
 
 		if ($module['module_status'] != STATUS_ACTIVE)
 		{
-			if (!$_CLASS['core_auth']->admin_auth('modules'))
+			if ($module['module_status'] == STATUS_DISABLED && $_CLASS['core_auth']->admin_auth('modules'))
+			{
+				$_CLASS['core_display']->message = '<b>Module '.$module['module_name'].' Isn\'t Active</b><br />';
+			}
+			else
 			{
 				return '_MODULE_NOT_ACTIVE';
 			}
-
-			$_CLASS['core_display']->message = '<b>Module '.$module['module_name'].' Isn\'t Active</b><br />';
 		}
 
 		//authization check here
