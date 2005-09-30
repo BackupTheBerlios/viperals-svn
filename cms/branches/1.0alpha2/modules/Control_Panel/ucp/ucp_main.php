@@ -29,7 +29,6 @@ class ucp_main extends module
 		switch ($mode)
 		{
 			case 'front':
-
 				$_CLASS['core_user']->add_lang(false,'Members_List');
 
 				if ($config['load_db_lastread'] || $config['load_db_track'])
@@ -194,36 +193,34 @@ class ucp_main extends module
 				break;
 
 			case 'subscribed':
-
 				require($site_file_root.'includes/forums/functions_display.php');
-				//$_CLASS['core_user']->add_lang('viewforum');
 
-				$unwatch = (isset($_POST['unwatch'])) ? true : false;
+				$unwatch = isset($_POST['unwatch']);
 				
 				if ($unwatch)
 				{
-					$forums = (isset($_POST['f'])) ? implode(', ', array_map('intval', array_keys($_POST['f']))) : false;
-					$topics = (isset($_POST['t'])) ? implode(', ', array_map('intval', array_keys($_POST['t']))) : false;
+					$forums = array_unique(get_variable('f', 'POST', array(), 'array:int'));
+					$topics = array_unique(get_variable('t', 'POST', array(), 'array:int'));
 
-					if ($forums || $topics)
+					if (!empty($forums) || !empty($topics))
 					{
 						$l_unwatch = '';
 
-						if ($forums)
+						if (!empty($forums))
 						{
-							$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
-								WHERE forum_id IN ($forums) AND topic_id = 0
-									AND user_id = " .$_CLASS['core_user']->data['user_id'];
+							$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . '
+								WHERE forum_id IN ('.implode(', ', $forums).') AND topic_id = 0
+									AND user_id = ' .$_CLASS['core_user']->data['user_id'];
 							$_CLASS['core_db']->query($sql);
 
 							$l_unwatch .= '_FORUMS';
 						}
 
-						if ($topics)
+						if (!empty($topics))
 						{
-							$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
-								WHERE topic_id IN ($topics)
-									AND user_id = " .$_CLASS['core_user']->data['user_id'];
+							$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . '
+								WHERE topic_id IN ('.implode(', ', $topics) .')
+									AND user_id = ' .$_CLASS['core_user']->data['user_id'];
 							$_CLASS['core_db']->query($sql);
 
 							$l_unwatch .= '_TOPICS';
@@ -238,7 +235,8 @@ class ucp_main extends module
 
 				if ($config['load_db_lastread'])
 				{
-					$sql_from = FORUMS_FORUMS_TABLE . ' f  LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND ft.forum_id = f.forum_id)';
+					$sql_from = FORUMS_FORUMS_TABLE . ' f  LEFT JOIN ' . FORUMS_TRACK_TABLE . ' ft ON (ft.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
+									AND ft.forum_id = f.forum_id AND ft.topic_id = 0)';
 					$lastread_select = ', ft.mark_time ';
 				}
 				else
@@ -246,38 +244,44 @@ class ucp_main extends module
 					$sql_from = FORUMS_FORUMS_TABLE . ' f ';
 					$lastread_select = '';
 
-					$tracking_topics = (isset($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) ? unserialize(stripslashes($_COOKIE[$_CORE_CONFIG['server']['cookie_name'] . '_track'])) : array();
+					$tracking = @unserialize(get_variable($_CORE_CONFIG['server']['cookie_name'] . '_track', 'COOKIE'));
+
+					if (!is_array($tracking))
+					{
+						$tracking = array();
+					}
 				}
 
 				$sql = "SELECT f.*$lastread_select 
 					FROM $sql_from, " . FORUMS_WATCH_TABLE . ' fw
 					WHERE fw.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
-						AND f.forum_id = fw.forum_id 
+						 AND fw.topic_id = 0 AND f.forum_id = fw.forum_id
 					ORDER BY left_id';
 
 				$result = $_CLASS['core_db']->query($sql);
-				$topics_count = $_CLASS['core_db']->num_rows($result);
+				//$topics_count = $_CLASS['core_db']->num_rows($result);
 
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					$forum_id = $row['forum_id'];
+					$forum_id = (int) $row['forum_id'];
 
 					$unread_forum = false;
 					
 					if ($config['load_db_lastread'])
 					{
-						$forum_check = $row['mark_time'];
+						$mark_time_forum = $row['mark_time'];
 					}
 					else
 					{
-						$forum_check = isset($tracking_topics[$forum_id][0]) ? $tracking_topics[$forum_id][0] : 0;
+						$forum_id36 = base_convert($forum_id, 10, 36);
+						$mark_time_forum = isset($tracking[$forum_id36][0]) ? (int) base_convert($tracking[$forum_id36][0], 36, 10) : 0;
 					}
 
-					if ($forum_check < $row['forum_last_post_time'])
+					if ($mark_time_forum < $row['forum_last_post_time'])
 					{
 						$unread_forum = true;
 					}
-	
+
 					// Which folder should we display?
 					if ($row['forum_status'] == ITEM_LOCKED)
 					{
@@ -321,45 +325,62 @@ class ucp_main extends module
 				$_CLASS['core_db']->free_result($result);
 
 				// Subscribed Topics
-				$start = request_var('start', 0);
+				$start = get_variable('start', 'REQUEST', 0, 'int');
 
-				if ($topics_count)
+				if ($config['load_db_lastread'])
 				{
-					$_CLASS['core_template']->assign_array(array(
-						'PAGINATION'	=> generate_pagination("Control_Panel&amp;i=$id&amp;mode=$mode", $topics_count, $config['topics_per_page'], $start),
-						'PAGE_NUMBER'	=> on_page($topics_count, $config['topics_per_page'], $start),
-						'TOTAL_TOPICS'	=> ($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count))
-					);
+					$sql_from = FORUMS_TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')';
+					$sql_t_select = ', tt.mark_time';
 				}
-// Fix this up
-				$sql_from = ($config['load_db_lastread']) ? FORUMS_TOPICS_TABLE . ' t LEFT JOIN ' . FORUMS_TRACK_TABLE . ' tt ON (tt.topic_id = t.topic_id AND tt.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')' : TOPICS_TABLE . ' t';
-				$sql_t_select = ($config['load_db_lastread']) ? ', tt.mark_time' : '';
-//
+				else
+				{
+					$sql_from = FORUMS_TOPICS_TABLE . ' t';
+					$sql_t_select = '';
+				}
+
 				$sql = "SELECT t.* $sql_t_select 
 					FROM ". FORUMS_WATCH_TABLE . " tw, $sql_from 
 					WHERE tw.user_id = " . $_CLASS['core_user']->data['user_id'] . '
 						AND t.topic_id = tw.topic_id 
 					ORDER BY t.topic_last_post_time DESC';
+
 				$result = $_CLASS['core_db']->query_limit($sql, $config['topics_per_page'], $start);
+				$topics_count = $_CLASS['core_db']->num_rows($result);
+	
+				if ($topics_count)
+				{
+					$pagination = generate_pagination("Control_Panel&amp;i=$id&amp;mode=$mode", $topics_count, $config['topics_per_page'], $start);
+
+					$_CLASS['core_template']->assign_array(array(
+						'PAGINATION'		=> $pagination['formated'],
+						'PAGINATION_ARRAY'	=> $pagination['array'],
+						'PAGE_NUMBER'		=> on_page($topics_count, $config['topics_per_page'], $start),
+						'TOTAL_TOPICS'		=> ($topics_count === 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count))
+					);
+				}
+				else
+				{
+					$_CLASS['core_template']->assign('TOTAL_TOPICS', false);
+				}
 
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$topic_id = $row['topic_id'];
 					$forum_id = $row['forum_id'];
 					
-					if ($config['load_db_lastread'])
+					if (!$config['load_db_lastread'])
 					{
 						$topic_id36 = base_convert($topic_id, 10, 36);
-						$forum_id36 = ($row['topic_type'] == POST_GLOBAL) ? 0 : $forum_id;
-						$mark_time_topic = (isset($tracking_topics[$forum_id36][$topic_id36])) ? base_convert($tracking_topics[$forum_id36][$topic_id36], 36, 10) + $config['board_startdate'] : 0;
+						$forum_id36 = ($row['topic_type'] == POST_GLOBAL) ? 0 : base_convert($forum_id, 10, 36);
 
-						$mark_time_forum = (isset($tracking_topics[$forum_id][0])) ? base_convert($tracking_topics[$forum_id][0], 36, 10) + $config['board_startdate'] : 0;
+						$mark_time_topic = isset($tracking[$forum_id36][$topic_id36]) ? (int) base_convert($tracking[$forum_id36][$topic_id36], 36, 10) : 0;
+						$mark_time_forum = isset($tracking[$forum_id36][0]) ? (int) base_convert($tracking[$forum_id36][0], 36, 10) : 0;
 
 						$row['mark_time'] = max($mark_time_topic, $mark_time_forum);
 					}
 
 					// Replies
-					$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
+					$replies = $_CLASS['auth']->acl_get('m_approve', $forum_id) ? $row['topic_replies_real'] : $row['topic_replies'];
 
 					if ($row['topic_status'] == ITEM_MOVED)
 					{
@@ -372,8 +393,8 @@ class ucp_main extends module
 					topic_status($row, $replies, $row['mark_time'], $unread_topic, $folder_img, $folder_alt, $topic_type);
 					$newest_post_img = ($unread_topic) ? '<a href="'. generate_link("Forums&amp;file=viewtopic&amp;f=$forum_id&amp;t=$topic_id&amp;view=unread#unread").'">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
-					$view_topic_url = "Forums&amp;file=viewtopic&amp;t=$topic_id";
-					$pagination = generate_pagination('Forums&amp;file=viewtopic&amp;t='.$topic_id, $replies, $config['topics_per_page'], 0);
+					$view_topic_url = 'Forums&amp;file=viewtopic&amp;t='.$topic_id;
+					$pagination = generate_pagination($view_topic_url, $replies, $config['topics_per_page'], 0);
 
 					$_CLASS['core_template']->assign_vars_array('topicrow', array(
 						'FORUM_ID' 			=> $forum_id,
@@ -398,7 +419,7 @@ class ucp_main extends module
 						'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
 						'NEWEST_POST_IMG' 	=> $newest_post_img,
 						'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
-						'TOPIC_ICON_IMG'	=> (!empty($icons[$row['icon_id']])) ? '<img src="' . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] . '" width="' . $icons[$row['icon_id']]['width'] . '" height="' . $icons[$row['icon_id']]['height'] . '" alt="" title="" />' : '',
+						'TOPIC_ICON_IMG'	=> empty($icons[$row['icon_id']]) ? '' : '<img src="' . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] . '" width="' . $icons[$row['icon_id']]['width'] . '" height="' . $icons[$row['icon_id']]['height'] . '" alt="" title="" />',
 						'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_gets('f_download', 'u_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', sprintf($_CLASS['core_user']->lang['TOTAL_ATTACHMENTS'], $row['topic_attachment'])) : '',
 
 						'S_TOPIC_TYPE'		=> $row['topic_type'],
@@ -414,13 +435,6 @@ class ucp_main extends module
 			break;
 
 			case 'bookmarks':
-				
-				if (!$config['allow_bookmarks'])
-				{
-					$_CLASS['core_template']->assign('S_BOOKMARKS_DISABLED', true);
-					break;
-				}
-				
 				require($site_file_root.'includes/forums/functions_display.php');
 
 				$move_up = request_var('move_up', 0);
@@ -449,28 +463,25 @@ class ucp_main extends module
 				
 				if (isset($_POST['unbookmark']))
 				{
-					$s_hidden_fields = '<input type="hidden" name="unbookmark" value="1" />';
-					$topics = (isset($_POST['t'])) ? array_map('intval', array_keys($_POST['t'])) : array();
-					$url = generate_link('Control_Panel&amp;i=main&amp;mode=bookmarks');
+					$topics = array_unique(get_variable('t', 'POST', array(), 'array:int'));
 					
 					if (empty($topics))
 					{
 						trigger_error('NO_BOOKMARKS_SELECTED');
 					}
-					
-					foreach ($topics as $topic_id)
-					{
-						$s_hidden_fields .= '<input type="hidden" name="t[' . $topic_id . ']" value="1" />';
-					}
 
-					if (confirm_box(true))
+					$hidden_fields = array(
+						'unbookmark' => 1,
+						't' => $topics
+					);
+
+					if (display_confirmation($_CLASS['core_user']->get_lang('REMOVE_SELECTED_BOOKMARKS'), generate_hidden_fields($hidden_fields)))
 					{
 						$sql = 'DELETE FROM ' . FORUMS_BOOKMARKS_TABLE . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 								AND topic_id IN (' . implode(', ', $topics) . ')';
 						$_CLASS['core_db']->query($sql);
 
-						// Re-Order bookmarks (possible with one query? This query massaker is not really acceptable...)
 						$sql = 'SELECT topic_id FROM ' . FORUMS_BOOKMARKS_TABLE . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 							ORDER BY order_id ASC';
@@ -487,13 +498,11 @@ class ucp_main extends module
 						}
 						$_CLASS['core_db']->free_result($result);
 
+						$url = generate_link('Control_Panel&amp;i=main&amp;mode=bookmarks');
+
 						$_CLASS['core_display']->meta_refresh(3, $url);
 						$message = $_CLASS['core_user']->lang['BOOKMARKS_REMOVED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="' . $url . '">', '</a>');
 						trigger_error($message);
-					}
-					else
-					{
-						confirm_box(false, 'REMOVE_SELECTED_BOOKMARKS', $s_hidden_fields);
 					}
 				}
 

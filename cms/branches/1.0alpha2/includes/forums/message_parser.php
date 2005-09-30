@@ -1430,11 +1430,15 @@ class fulltext_search
 
 			if (!empty($word_ary))
 			{
+				$_CLASS['core_db']->report_error(false);
+
 				$sql = 'INSERT INTO ' . FORUMS_SEARCH_MATCH_TABLE . " (post_id, word_id, title_match) 
 					SELECT $post_id, word_id, $title_match 
 					FROM " . FORUMS_SEARCH_WORD_TABLE . ' 
 					WHERE word_text IN (' . implode(', ', preg_replace('#^(.*)$#', '\'$1\'', $word_ary)) . ')';
 				$_CLASS['core_db']->query($sql);
+
+				$_CLASS['core_db']->report_error(true);
 			}
 		}
 

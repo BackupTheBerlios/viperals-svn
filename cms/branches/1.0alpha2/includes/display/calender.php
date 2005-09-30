@@ -192,7 +192,7 @@ class calender
 		}
 		
 		$date = explode(':', date('n:d:y', $time));
-		
+
 		$day['start'] = mktime(0, 0, 0, $date[0], $date[1], $date[2]) + 60;
 		$day['end'] = mktime(24, 0, 0, $date[0], $date[1], $date[2]) - 1;
 
@@ -249,7 +249,7 @@ class calender
 			$time = mktime(12, 0, 0, $this->month, $this->day, $this->year);
 		}
 		
-		$date = explode(',', date('n,t,Y', $time));
+		$date = explode(':', date('n:t:Y', $time));
 		$month['start'] = mktime(0, 0, 0, $date[0], 1, $date[2]);
 		$month['end'] = mktime(24, 0, 0, $date[0], $date[1], $date[2]) - 1;
 

@@ -288,7 +288,7 @@ $_CLASS['core_template']->assign_array(array(
 	'TOTAL_TOPICS'		=> ($forum_data['forum_flags'] & 16) ? false : (($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count)),
 	'MODERATORS'		=> empty($moderators[$forum_id]) ? '' : implode(', ', $moderators[$forum_id]),
 
-	'POST_IMG' 				=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', $post_alt) : $_CLASS['core_user']->img('btn_post', $post_alt),
+	'POST_IMG' 			=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', $post_alt) : $_CLASS['core_user']->img('btn_post', $post_alt),
 
 	'MOD_TOPIC_LOCK'	=>	$_CLASS['auth']->acl_get('m_lock', $forum_id),
 	'MOD_TOPIC_TITLE'	=>	$_CLASS['auth']->acl_get('m_', $forum_id),

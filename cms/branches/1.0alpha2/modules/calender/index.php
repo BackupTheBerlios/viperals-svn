@@ -75,7 +75,7 @@ switch ($mode)
 			'NEXT_DAY_LINK'			=> $next_day,
 		));
 
-		$_CLASS['core_display']->display(false, 'modules/calender/calender_day.html');
+		$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_calender_day.html');
 	break;
 		
 	case 'details':
@@ -91,7 +91,7 @@ switch ($mode)
 			'CAL_END_TIME'		=> $_CLASS['core_user']->format_date($data['end_time']),
 		));
 	
-		$_CLASS['core_display']->display(false, 'modules/calender/calender_details.html');
+		$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_calender_details.html');
 
 	break;
 	
@@ -122,7 +122,7 @@ switch ($mode)
 			'NEXT_MONTH'			=> generate_link($link.'&amp;mode=month_view&amp;year='.$month_flanks['next_month']['year'].'&amp;month='.$month_flanks['next_month']['month']),
 		));
 
-		$_CLASS['core_display']->display(false, 'modules/calender/calender_main.html');
+		$_CLASS['core_display']->display(false, 'modules/Control_Panel/ucp_calender_main.html');
 
 	break;	
 }
