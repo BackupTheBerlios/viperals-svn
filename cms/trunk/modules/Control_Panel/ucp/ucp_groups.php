@@ -35,7 +35,7 @@ class ucp_groups extends module
 		{
 			if (is_array($_POST['group_id']))
 			{
-				$group_id = array_map('intval', get_variable('group_id', 'REQUEST', false, 'array'));
+				$group_id = array_unique(get_variable('group_id', 'REQUEST', array(), 'array:int'));
 			}
 			else
 			{
@@ -59,11 +59,6 @@ class ucp_groups extends module
 			switch ($_POST['mode'])
 			{
 				case 'resign':
-// need to get member status and add other group types ( pending members can resign from all )
-					$sql = 'SELECT group_id	FROM  ' . GROUPS_TABLE . '
-								WHERE group_type IN (' . GROUP_SYSTEM .', '.GROUP_SPECIAL.')
-								AND group_id IN ('. implode(', ', $group_id) .')';
-								
 					$sql = 'SELECT m.member_status, g.group_id, g.group_type
 								FROM ' . USER_GROUP_TABLE . ' m, ' . GROUPS_TABLE . ' g 
 								WHERE m.user_id = ' . $_CLASS['core_user']->data['user_id'] . '
@@ -72,7 +67,6 @@ class ucp_groups extends module
 					$result = $_CLASS['core_db']->query($sql);
 
 					$unset = array();
-
 					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						if ($row['group_type'] == GROUP_SYSTEM && $row['group_type'] == GROUP_SPECIAL && $row['member_status'] != STATUS_PENDING)
@@ -85,18 +79,20 @@ class ucp_groups extends module
 					$group_id = array_diff($group_id, $unset);
 					unset($unset);
 
-					groups_user_remove($group_id, $_CLASS['core_user']->data['user_id']);
+					if (!empty($group_id))
+					{
+						groups_user_remove($group_id, $_CLASS['core_user']->data['user_id']);
+					}
 				break;
 
 				case 'apply':
 					$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . '
 						WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . '
 						AND group_id IN ('. implode(', ', $group_id) .')';
-	
+
 					$result = $_CLASS['core_db']->query($sql);
 
 					$unset = array();
-
 					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 					{
 						$unset[] = $row['group_id'];
@@ -188,7 +184,6 @@ class ucp_groups extends module
 		$_CLASS['core_template']->assign('S_UCP_ACTION', generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
 
 		$this->display($_CLASS['core_user']->get_lang('UCP_GROUPS'), 'ucp_groups_membership.html');
-		
 	}
 }
 

@@ -1,11 +1,33 @@
 <?php
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
+
 // -------------------------------------------------------------
 //
 // $Id: ucp_prefs.php,v 1.15 2004/06/06 21:44:48 acydburn Exp $
 //
 // FILENAME  : ucp_prefs.php
 // STARTED   : Mon May 19, 2003
-// COPYRIGHT : © 2001, 2003 phpBB Group
+// COPYRIGHT : 2001, 2003 phpBB Group
 // WWW       : http://www.phpbb.com/
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
@@ -29,32 +51,32 @@ class ucp_prefs extends module
 				{
 					$time_format	= get_variable('time_format', 'REQUEST', null);
 					$lang			= get_variable('lang', 'REQUEST', null);
-					$tz				= get_variable('tz', 'REQUEST', null);
+					$tz				= get_variable('tz', 'REQUEST', 0);
 					$dst			= get_variable('dst', 'REQUEST', null);
 
 					$theme 		= get_variable('theme', 'REQUEST', null);
-	
+
 					$viewemail		= (bool) get_variable('viewemail', 'REQUEST', true, 'interger');
 					$massemail		= (bool) get_variable('massemail', 'REQUEST', false, 'interger');
-					$hideonline	= (bool) get_variable('hideonline', 'REQUEST', true, 'interger');
-					$notifypm		= (bool) get_variable('notifypm', 'REQUEST', true, 'interger');
+					$hideonline		= (bool) get_variable('hideonline', 'REQUEST', true, 'interger');
+					$notify_pm		= (bool) get_variable('notifypm', 'REQUEST', true, 'interger');
 
 					$popuppm	= (bool) get_variable('popuppm', 'REQUEST', true, 'interger');
 					$allowpm	= (bool) get_variable('allowpm', 'REQUEST', true, 'interger');
-				//$report_pm_notify	= (bool) get_variable('report_pm_notify', 'REQUEST', true, 'interger');
+					//$report_pm_notify	= (bool) get_variable('report_pm_notify', 'REQUEST', true, 'interger');
 
 					if (empty($error))
 					{
 						$_CLASS['core_user']->optionset('popuppm', $popuppm);
 						//$_CLASS['core_user']->optionset('report_pm_notify', $report_pm_notify);
 						
-						$sql_ary = array(
+						$sql_array = array(
 							'user_allow_pm'			=> $allowpm, 
 							'user_allow_viewemail'	=> $viewemail, 
 							'user_allow_massemail'	=> $massemail, 
 							'user_allow_viewonline'	=> ($_CLASS['forums_auth']->acl_get('u_hideonline')) ? !$hideonline : $_CLASS['core_user']->data['user_allow_viewonline'], 
 							//'user_notify_type'		=> $notifymethod, 
-							//'user_notify_pm'		=> $notifypm,
+							'user_notify_pm'		=> $notify_pm,
 							'user_data'				=> serialize($_CLASS['core_user']->data['user_data']), 
 
 							'user_dst'				=> $dst,
@@ -64,54 +86,57 @@ class ucp_prefs extends module
 							'user_theme'			=> $theme,
 						);
 
+						array_merge($_CLASS['core_user']->data, $sql_array);
+
 						$sql = 'UPDATE ' . USERS_TABLE . ' 
-							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
+							SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . '
 							WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
 						$_CLASS['core_db']->sql_query($sql);
 						
-						if ($theme != $_CLASS['core_display']->theme)
+						if ($theme !== $_CLASS['core_display']->theme_name)
 						{
 							$_CLASS['core_user']->session_data_remove('user_theme');
 						}
 						
 						$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
 						$message = $_CLASS['core_user']->lang['PREFERENCES_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
+
 						trigger_error($message);
 					}
-					// Replace "error" strings with their real, localised form
-					$error = preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error);
 				}
 
-				$viewemail = (isset($viewemail)) ? $viewemail : $_CLASS['core_user']->data['user_allow_viewemail'];
+				$allowpm = isset($allowpm) ? $allowpm : $_CLASS['core_user']->data['user_allow_pm'];
+				$dst = isset($dst) ? $dst : $_CLASS['core_user']->data['user_dst'];
+				$hideonline = isset($hideonline) ? $hideonline : !$_CLASS['core_user']->data['user_allow_viewonline'];
+				$massemail = isset($massemail) ? $massemail : $_CLASS['core_user']->data['user_allow_massemail'];
+				$notifypm = isset($notifypm) ? $notifypm : $_CLASS['core_user']->data['user_notify_pm'];
+				$popuppm = isset($popuppm) ? $popuppm : $_CLASS['core_user']->optionget('popuppm');
+				$viewemail = isset($viewemail) ? $viewemail : $_CLASS['core_user']->data['user_allow_viewemail'];
+				$report_pm_notify = isset($report_pm_notify) ? $report_pm_notify : $_CLASS['core_user']->optionget('report_pm_notify');
+				$notifymethod = isset($notifymethod) ? $notifymethod : $_CLASS['core_user']->data['user_notify_type'];
+				$dateformat = isset($dateformat) ? $dateformat : $_CLASS['core_user']->data['user_time_format'];
+				$lang = isset($lang) ? $lang : $_CLASS['core_user']->data['user_lang'];
+				$theme = isset($theme) ? $theme : $_CLASS['core_user']->data['user_theme'];
+				$tz = isset($tz) ? $tz * 3600 : $_CLASS['core_user']->data['user_timezone'] / 3600;
+
 				$view_email_yes = ($viewemail) ? ' checked="checked"' : '';
 				$view_email_no = (!$viewemail) ? ' checked="checked"' : '';
-				$massemail = (isset($massemail)) ? $massemail : $_CLASS['core_user']->data['user_allow_massemail'];
 				$mass_email_yes = ($massemail) ? ' checked="checked"' : '';
 				$mass_email_no = (!$massemail) ? ' checked="checked"' : '';
-				$allowpm = (isset($allowpm)) ? $allowpm : $_CLASS['core_user']->data['user_allow_pm'];
 				$allow_pm_yes = ($allowpm) ? ' checked="checked"' : '';
 				$allow_pm_no = (!$allowpm) ? ' checked="checked"' : '';
-				$hideonline = (isset($hideonline)) ? $hideonline : !$_CLASS['core_user']->data['user_allow_viewonline'];
 				$hide_online_yes = ($hideonline) ? ' checked="checked"' : '';
 				$hide_online_no = (!$hideonline) ? ' checked="checked"' : '';
-				$notifypm = (isset($notifypm)) ? $notifypm : '';
 				$notify_pm_yes = ($notifypm) ? ' checked="checked"' : '';
 				$notify_pm_no = (!$notifypm) ? ' checked="checked"' : '';
-				$popuppm = (isset($popuppm)) ? $popuppm : $_CLASS['core_user']->optionget('popuppm');
 				$popup_pm_yes = ($popuppm) ? ' checked="checked"' : '';
 				$popup_pm_no = (!$popuppm) ? ' checked="checked"' : '';
-				$report_pm_notify = (isset($report_pm_notify)) ? $report_pm_notify : $_CLASS['core_user']->optionget('report_pm_notify');
 				$report_pm_notify_yes = ($report_pm_notify) ? ' checked="checked"' : '';
 				$report_pm_notify_no = (!$report_pm_notify) ? ' checked="checked"' : '';
-				$dst = (isset($dst)) ? $dst : $_CLASS['core_user']->data['user_dst'];
 				$dst_yes = ($dst) ? ' checked="checked"' : '';
 				$dst_no = (!$dst) ? ' checked="checked"' : '';
 
-				$notifymethod = (isset($notifymethod)) ? $notifymethod : $_CLASS['core_user']->data['user_notify_type'];
-				$dateformat = (isset($dateformat)) ? $dateformat : $_CLASS['core_user']->data['user_time_format'];
-				$lang = (isset($lang)) ? $lang : $_CLASS['core_user']->data['user_lang'];
-				$theme = (isset($theme)) ? $theme : $_CLASS['core_user']->data['user_theme'];
-				$tz = (isset($tz)) ? $tz * 3600 : $_CLASS['core_user']->data['user_timezone'] / 3600;
+
 
 				$_CLASS['core_template']->assign_array(array( 
 					'ERROR'				=> (sizeof($error)) ? implode('<br />', $error) : '',

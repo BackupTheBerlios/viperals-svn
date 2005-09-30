@@ -107,17 +107,9 @@ function addquote(post_id, username) {
 
 	var message_name = 'message_' + post_id;
 	var theSelection = '';
-	var divarea = false;
 
-	if (document.all)
-	{
-		eval("divarea = document.all." + message_name + ";");
-	}
-	else
-	{
-		eval("divarea = document.getElementById('" + message_name + "');");
-	}
-
+	var divarea = document.getElementById(message_name);
+	
 	// Get text selection - not only the post content :(
 	if (window.getSelection)
 	{
@@ -132,7 +124,7 @@ function addquote(post_id, username) {
 		theSelection = document.selection.createRange().text;
 	}
 
-	if (theSelection == '')
+	if (!theSelection)
 	{
 		if (document.all)
 		{
