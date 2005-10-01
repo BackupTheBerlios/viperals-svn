@@ -24,6 +24,7 @@ define('VIPERAL', 'INSTALLER');
 
 error_reporting(0);
 //error_reporting(E_ALL);
+@set_time_limit(0);
 
 define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 

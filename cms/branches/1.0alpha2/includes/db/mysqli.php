@@ -539,7 +539,10 @@ class db_mysqli
 					$_fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+				//$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+// Need to make surte utf8 is enabled with the database.
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
+
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')
