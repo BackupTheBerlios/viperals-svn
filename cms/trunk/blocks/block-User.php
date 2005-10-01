@@ -146,7 +146,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	
 	if ($row['user_id'] != ANONYMOUS)
 	{
-		$link = (($row['user_type'] == USER_BOT) ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>' : $row['username']).' &gt;';
+		$link = ($row['user_type'] == USER_BOT) ? $row['username'].' &gt;' : '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>  &gt;';
 		$who_where['user'] .= $online['user'] .': '.$link.' <a href="'.$row['session_url'].'">'.$row['session_page'].'</a><br />';
 	}
 	else
