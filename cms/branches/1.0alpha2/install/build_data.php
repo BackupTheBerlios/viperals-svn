@@ -510,4 +510,17 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (5, 'rm')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (6, 'wma')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extensions (group_id, extension) VALUES (6, 'wmv')");
+
+
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('misc/arrow_bold_rgt.gif', 19, 19, 1, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('smilies/redface_anim.gif', 19, 19, 9, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('smilies/mr_green.gif', 19, 19, 10, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('misc/musical.gif', 19, 19, 4, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('misc/asterix.gif', 19, 19, 2, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('misc/square.gif', 19, 19, 3, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('smilies/alien_grn.gif', 19, 19, 5, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('smilies/idea.gif', 19, 19, 8, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('smilies/question.gif', 19, 19, 6, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_icons (icons_url, icons_width, icons_height, icons_order, display_on_posting) VALUES ('smilies/exclaim.gif', 19, 19, 7, 1)");
+
 ?>

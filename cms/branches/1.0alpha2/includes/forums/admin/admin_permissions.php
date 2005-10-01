@@ -86,7 +86,7 @@ if (!$_CLASS['auth']->acl_get($which_acl))
 $submode	= (isset($_REQUEST['submode'])) ? htmlspecialchars($_REQUEST['submode']) : '';
 $which_mode = (!empty($submode) && $submode != $mode) ? $submode : $mode;
 $submit		= array_values(preg_grep('#^submit_(.*)$#i', array_keys($_REQUEST)));
-$submit		= (sizeof($submit)) ? substr($submit[0], strpos($submit[0], '_') + 1) : '';
+$submit		= (count($submit)) ? substr($submit[0], strpos($submit[0], '_') + 1) : '';
 
 // Submitted setting data
 //
@@ -171,8 +171,7 @@ if (!empty($submode))
 switch ($submit)
 {
 	case 'update':
-
-		if (sizeof($auth_settings))
+		if (!empty($auth_settings))
 		{
 			// Admin wants subforums to inherit permissions ... so add these
 			// forums to the list ... since inheritance is only available for
@@ -266,10 +265,9 @@ switch ($submit)
 		unset($auth_setting);
 
 		trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED']);
-		break;
+	break;
 
 	case 'delete':
-
 		$sql = "SELECT auth_option_id
 			FROM " . FORUMS_ACL_OPTIONS_TABLE . "
 			WHERE auth_option LIKE '{$sql_option_mode}_%'";
@@ -295,7 +293,7 @@ switch ($submit)
 
 		// Do we need to recache the moderator lists? We do if the mode
 		// was mod or auth_settings['mod'] is a non-zero size array
-		if ($mode == 'mod' || (isset($auth_settings['mod']) && sizeof($auth_settings['mod'])))
+		if ($mode == 'mod' || (isset($auth_settings['mod']) && !empty($auth_settings['mod'])))
 		{
 			cache_moderators();
 		}
@@ -336,10 +334,9 @@ switch ($submit)
 		}
 
 		trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED']);
-		break;
+	break;
 
 	case 'presetsave':
-
 		$holding_ary = array();
 	
 		$auth_setting = $auth_settings[(!empty($submode) ? $submode : $mode)];
@@ -350,20 +347,20 @@ switch ($submit)
 			{
 				case ACL_YES:
 					$holding_ary['yes'][] = $option;
-					break;
+				break;
 
 				case ACL_NO:
 					$holding_ary['no'][] = $option;
-					break;
+				break;
 
 				case ACL_UNSET:
 					$holding_ary['unset'][] = $option;
-					break;
+				break;
 			}
 		}
 
 		$sql = array(
-			'preset_user_id'=> intval($_CLASS['core_user']->data['user_id']),
+			'preset_user_id'=> (int) $_CLASS['core_user']->data['user_id'],
 			'preset_type'	=> $sql_option_mode,
 			'preset_data'	=> serialize($holding_ary)
 		);
@@ -375,17 +372,15 @@ switch ($submit)
 		
 		if (!empty($sql['preset_name']) || $_POST['presetoption'] != -1)
 		{
-			$sql = ($_POST['presetoption'] == -1) ? 'INSERT INTO ' . FORUMS_ACL_PRESETS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql) : 'UPDATE ' . FORUMS_ACL_PRESETS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . ' WHERE preset_id =' . intval($_POST['presetoption']);
+			$sql = ($_POST['presetoption'] == -1) ? 'INSERT INTO ' . FORUMS_ACL_PRESETS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql) : 'UPDATE ' . FORUMS_ACL_PRESETS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . ' WHERE preset_id =' . (int) $_POST['presetoption'];
 			$_CLASS['core_db']->query($sql);
 
 			add_log('admin', 'LOG_ACL_PRESET_ADD', $sql['preset_name']);
 		}
 		unset($sql, $option, $setting, $auth_setting);
-
-		break;
+	break;
 
 	case 'presetdel':
-
 		if (!empty($_POST['presetoption']))
 		{
 			$sql = "SELECT preset_name 
@@ -396,14 +391,17 @@ switch ($submit)
 			$row = $_CLASS['core_db']->fetch_row_assoc($result);
 			$_CLASS['core_db']->free_result($result);
 
-			$sql = "DELETE FROM " . FORUMS_ACL_PRESETS_TABLE . " 
-				WHERE preset_id = " . (int) $_POST['presetoption'];
-			$_CLASS['core_db']->query($sql);
-
-			add_log('admin', 'LOG_ACL_PRESET_DEL', $row['preset_name']);
+			if ($row)
+			{
+				$sql = "DELETE FROM " . FORUMS_ACL_PRESETS_TABLE . " 
+					WHERE preset_id = " . (int) $_POST['presetoption'];
+				$_CLASS['core_db']->query($sql);
+	
+				add_log('admin', 'LOG_ACL_PRESET_DEL', $row['preset_name']);
+			}
 			unset($row);
 		}
-		break;
+	break;
 }
 // End update
 
@@ -983,7 +981,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 	// is unnecessary
 	if ($forum_list != '' && $which_mode == $mode)
 	{
-		$l_selected_forums = (sizeof($forum_id[$which_mode]) == 1) ? 'SELECTED_FORUM' : 'SELECTED_FORUMS';
+		$l_selected_forums = (count($forum_id[$which_mode]) === 1) ? 'SELECTED_FORUM' : 'SELECTED_FORUMS';
 
 		echo '<p>' . $_CLASS['core_user']->lang[$l_selected_forums] . ': ' . $forum_list . '</p>';
 
@@ -992,7 +990,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 	}
 
 	// Now output the list of users or groups ... these will always exist
-	$l_selected_users = ($ug_type == 'user') ? ((sizeof($ug_data) == 1) ? 'SELECTED_USER' : 'SELECTED_USERS') : ((sizeof($ug_data) == 1) ? 'SELECTED_GROUP' : 'SELECTED_GROUPS'); 
+	$l_selected_users = ($ug_type == 'user') ? ((count($ug_data) === 1) ? 'SELECTED_USER' : 'SELECTED_USERS') : ((count($ug_data) === 1) ? 'SELECTED_GROUP' : 'SELECTED_GROUPS'); 
 
 	echo '<p>' . $_CLASS['core_user']->lang[$l_selected_users] . ': ' . $l_ug_list . '</p>';
 
@@ -1102,14 +1100,15 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 <?php
 
 	$row_class = 'row2';
-	for ($i = 0; $i < sizeof($auth_options); $i++)
+
+	$count = count($auth_options);
+	for ($i = 0; $i < $count; $i++)
 	{
 		$row_class = ($row_class == 'row1') ? 'row2' : 'row1';
 
 		// Try and output correct language strings, else output prettyfied auth_option
 		$l_auth_option = (!empty($_CLASS['core_user']->lang['acl_' . $auth_options[$i]['auth_option']])) ? $_CLASS['core_user']->lang['acl_' . $auth_options[$i]['auth_option']] : ucfirst(preg_replace('#.*?_#', '', $auth_options[$i]['auth_option']));
 		$s_auth_option = '[' . $which_mode . '][' . $auth_options[$i]['auth_option'] . ']';
-
 		
 		// Which option should we select?
 		$selected_yes = (isset($auth_settings[$which_mode][$auth_options[$i]['auth_option']]) && $auth_settings[$which_mode][$auth_options[$i]['auth_option']] == ACL_YES) ? ' checked="checked"' : '';
@@ -1144,7 +1143,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 	// If we're setting forum or moderator options and a single forum has
 	// been selected then look to see if any subforums exist. If they do
 	// give user the option of cascading permissions to them
-	if (($mode == 'forum' || $mode == 'mod') && empty($submode) && sizeof($forum_id[$which_mode]) == 1)
+	if (($mode == 'forum' || $mode == 'mod') && empty($submode) && count($forum_id[$which_mode]) === 1)
 	{
 		$children = get_forum_branch($forum_id[$which_mode][0], 'children', 'descending', false);
 
@@ -1289,7 +1288,7 @@ function update_foes()
 		}
 	}
 
-	if (sizeof($perms))
+	if (!empty($perms))
 	{
 		$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
 			WHERE zebra_id IN (' . implode(', ', $perms) . ')';

@@ -1363,7 +1363,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 
 	// Delete forum ids from extension groups table
 	$sql = 'SELECT group_id, allowed_forums 
-		FROM ' . EXTENSION_GROUPS_TABLE . "
+		FROM ' . FORUMS_EXTENSION_GROUPS_TABLE . "
 		WHERE allowed_forums <> ''";
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -1371,7 +1371,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 	{
 		$allowed_forums = unserialize(trim($row['allowed_forums']));
 		$allowed_forums = array_diff($allowed_forums, $forum_ids);
-		$sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . " 
+		$sql = 'UPDATE ' . FORUMS_EXTENSION_GROUPS_TABLE . " 
 			SET allowed_forums = '" . ((sizeof($allowed_forums)) ? serialize($allowed_forums) : '') . "'
 			WHERE group_id = {$row['group_id']}";
 		$_CLASS['core_db']->query($sql);
@@ -1384,28 +1384,34 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 	{
 		case 'MOVE_POSTS_MOVE_FORUMS':
 			add_log('admin', 'LOG_FORUM_DEL_MOVE_POSTS_MOVE_FORUMS', $posts_to_name, $subforums_to_name, $forum_name);
-			break;
+		break;
+
 		case 'MOVE_POSTS_FORUMS':
 			add_log('admin', 'LOG_FORUM_DEL_MOVE_POSTS_FORUMS', $posts_to_name, $forum_name);
-			break;
+		break;
+
 		case 'POSTS_MOVE_FORUMS':
 			add_log('admin', 'LOG_FORUM_DEL_POSTS_MOVE_FORUMS', $subforums_to_name, $forum_name);
-			break;
+		break;
+
 		case '_MOVE_FORUMS':
 			add_log('admin', 'LOG_FORUM_DEL_MOVE_FORUMS', $subforums_to_name, $forum_name);
-			break;
+		break;
+
 		case 'MOVE_POSTS_':
 			add_log('admin', 'LOG_FORUM_DEL_MOVE_POSTS', $posts_to_name, $forum_name);
 			break;
 		case 'POSTS_FORUMS':
 			add_log('admin', 'LOG_FORUM_DEL_POSTS_FORUMS', $forum_name);
-			break;
+		break;
+
 		case '_FORUMS':
 			add_log('admin', 'LOG_FORUM_DEL_FORUMS', $forum_name);
-			break;
+		break;
+
 		case 'POSTS_':
 			add_log('admin', 'LOG_FORUM_DEL_POSTS', $forum_name);
-			break; 
+		break; 
 	}
 
 	return $errors;

@@ -2053,7 +2053,7 @@ if (class_exists('forums_auth'))
 
 			foreach ($forum_id as $forum)
 			{
-				$sql = 'DELETE FROM '.ACL_TABLE."
+				$sql = 'DELETE FROM '. FORUMS_ACL_TABLE . "
 					WHERE $id_field = $ug_id
 						AND forum_id = $forum
 						$auth_sql";
@@ -2081,7 +2081,7 @@ if (class_exists('forums_auth'))
 			$cur_options = array();
 
 			$sql = "SELECT auth_option, is_global, is_local
-				FROM " . ACL_OPTIONS_TABLE . "
+				FROM " . FORUMS_ACL_OPTIONS_TABLE . "
 				ORDER BY auth_option_id";
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -2148,7 +2148,7 @@ if (class_exists('forums_auth'))
 							break;
 							
 						default:
-							$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
+							$sql = 'INSERT INTO ' . FORUMS_ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
 								VALUES ($option, " . $type_sql[$type] . ")";
 							$_CLASS['core_db']->query($sql);
 							$sql = '';
@@ -2158,7 +2158,7 @@ if (class_exists('forums_auth'))
 
 			if ($sql != '')
 			{
-				$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
+				$sql = 'INSERT INTO ' . FORUMS_ACL_OPTIONS_TABLE . " (auth_option, is_global, is_local)
 					VALUES $sql";
 				$_CLASS['core_db']->query($sql);
 			}
@@ -2182,7 +2182,7 @@ function update_post_information($type, $ids)
 	$update_sql = $empty_forums = array();
 
 	$sql = 'SELECT ' . $type . '_id, MAX(post_id) as last_post_id
-		FROM ' . POSTS_TABLE . "
+		FROM ' . FORUMS_POSTS_TABLE . "
 		WHERE post_approved = 1
 			AND {$type}_id IN (" . implode(', ', $ids) . ")
 		GROUP BY {$type}_id";
@@ -2216,7 +2216,7 @@ function update_post_information($type, $ids)
 	if (!empty($last_post_ids))
 	{
 		$sql = 'SELECT p.' . $type . '_id, p.post_id, p.post_time, p.poster_id, p.post_username, u.user_id, u.username
-			FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 			WHERE p.poster_id = u.user_id
 				AND p.post_id IN (' . implode(', ', $last_post_ids) . ')';
 		$result = $_CLASS['core_db']->query($sql);
@@ -2237,7 +2237,7 @@ function update_post_information($type, $ids)
 		return;
 	}
 
-	$table = ($type == 'forum') ? FORUMS_TABLE : TOPICS_TABLE;
+	$table = ($type == 'forum') ? FORUMS_FORUMS_TABLE : FORUMS_TOPICS_TABLE;
 
 	foreach ($update_sql as $update_id => $update_sql_ary)
 	{
@@ -2255,14 +2255,10 @@ function update_post_information($type, $ids)
 function tidy_database()
 {
 	global $_CLASS;
-
+return;
 	$remove_date = time() - (3 * 62 * 24 * 3600);
 
 	$sql = 'DELETE FROM ' . FORUMS_TRACK_TABLE . '
-		WHERE mark_time < ' . $remove_date;
-	$_CLASS['core_db']->query($sql);
-
-	$sql = 'DELETE FROM ' . TOPICS_TRACK_TABLE . '
 		WHERE mark_time < ' . $remove_date;
 	$_CLASS['core_db']->query($sql);
 
