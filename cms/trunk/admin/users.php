@@ -63,14 +63,14 @@ if (isset($_REQUEST['mode']))
 
 				$data['activation']		= in_array($activation, $activation_array) ? $activation : USER_ACTIVATION_NONE;
 		 		$data['coppa_enable']	= get_variable('coppa_enable', 'POST') ? 1 : 0;
-		 		$data['coppa_fax']		= get_variable('coppa_fax', 'POST');
-		 		$data['coppa_mail']		= get_variable('coppa_mail', 'POST');
+		 		$data['coppa_fax']		= get_variable('coppa_fax', 'POST', '');
+		 		$data['coppa_mail']		= get_variable('coppa_mail', 'POST', '');
 		 		$data['enable_confirm']	= get_variable('enable_confirm', 'POST') ? 1 : 0;
-		 		$data['min_name_chars']	= get_variable('min_name_chars', 'POST', 0, 'INT');
-		 		$data['max_name_chars']	= get_variable('max_name_chars', 'POST', 0, 'INT');
-		 		$data['min_pass_chars']	= get_variable('min_pass_chars', 'POST', 0, 'INT');
-		 		$data['max_pass_chars']	= get_variable('max_pass_chars', 'POST', 0, 'INT');
-		 		$data['max_reg_attempts'] = get_variable('coppa_fax', 'POST', 0, 'INT');
+		 		$data['min_name_chars']	= get_variable('min_name_chars', 'POST', 0, 'int');
+		 		$data['max_name_chars']	= get_variable('max_name_chars', 'POST', 0, 'int');
+		 		$data['min_pass_chars']	= get_variable('min_pass_chars', 'POST', 0, 'int');
+		 		$data['max_pass_chars']	= get_variable('max_pass_chars', 'POST', 0, 'int');
+		 		$data['max_reg_attempts'] = get_variable('coppa_fax', 'POST', 0, 'int');
 
 				foreach ($data as $name => $setting)
 				{

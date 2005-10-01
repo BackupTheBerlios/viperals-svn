@@ -99,7 +99,7 @@ function build_menu($menu)
 			{
 				$content[$name] .= '
 				<tr>
-					<td class="row2" nowrap="nowrap"></td>
+					<td class="row2" height="6" nowrap="nowrap"></td>
 				</tr>
 				';
 			}

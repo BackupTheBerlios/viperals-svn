@@ -166,11 +166,10 @@ function display_forums($root_data = '', $display_moderators = true)
 		{
 			$forum_id36 = base_convert($forum_id, 10, 36);
 			$row['mark_time'] = isset($tracking_topics[$forum_id36][0]) ? (int) base_convert($tracking_topics[$forum_id36][0], 36, 10) : 0;
-		//echo $forum_id36.' - '.$row['mark_time'].'<br/>';
 		}
 
 		if ($row['mark_time'] < $row['forum_last_post_time'])
-		{//echo $parent_id.' - '.$row['mark_time'] .' - '. $row['forum_last_post_time'].'<br/>';
+		{
 			$forum_unread[$parent_id] = true;
 		}
 	}
@@ -273,12 +272,13 @@ function display_forums($root_data = '', $display_moderators = true)
 		// Which folder should we display?
 		if ($row['forum_status'] == ITEM_LOCKED)
 		{
-			$folder_image = 'forum_locked';
+// forum_locked_new , need an image for this one
+			$folder_image = empty($forum_unread[$forum_id]) ? 'forum_locked' : 'folder_locked_new';
 			$folder_alt = 'FORUM_LOCKED';
 		}
 		else
 		{
-			$folder_alt = (!empty($forum_unread[$forum_id])) ? 'NEW_POSTS' : 'NO_NEW_POSTS';
+			$folder_alt = empty($forum_unread[$forum_id]) ? 'NO_NEW_POSTS' : 'NEW_POSTS';
 		}
 
 		// Create last post link information, if appropriate

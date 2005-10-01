@@ -32,17 +32,10 @@ header('Content-Type: text/xml');
 
 if (!defined('ARTICLES_TABLE'))
 {
-	define('ARTICLES_TABLE', $prefix.'articles');
+	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
 
-if (isset($_GET['mode']) && $_GET['mode'] == 'cms')
-{
-	$result = $_CLASS['core_db']->query_limit('SELECT articles_id, articles_title, articles_intro, articles_text, articles_posted, articles_starts, poster_name FROM ' . ARTICLES_TABLE . ' ORDER BY articles_order ASC', 3);
-}
-else
-{
-	$result = $_CLASS['core_db']->query_limit('SELECT articles_id, articles_title, articles_intro, articles_text, articles_posted, articles_starts, poster_name FROM ' . ARTICLES_TABLE . ' ORDER BY articles_order ASC', 10);
-}
+$result = $_CLASS['core_db']->query_limit('SELECT articles_id, articles_title, articles_intro, articles_text, articles_posted, articles_starts, poster_name FROM ' . ARTICLES_TABLE . ' ORDER BY articles_order ASC', 10);
 
 $last_post_time = 0;
 
@@ -72,7 +65,7 @@ $last_modified = date('M d Y H:i:s', $last_post_time) .' GMT';
 
 $_CLASS['core_template']->assign_array(array(
 	'SITE_NAME' 	=> $_CORE_CONFIG['global']['site_name'],
-	'SITE_URL' 		=> $_CORE_CONFIG['global']['site_url'],
+	'SITE_URL' 		=> generate_link(false, array('full' => true, 'sid' => false)),
 	'LANG'			=> 'en-us',
 	'LAST_MODIFIED'	=> $last_modified ,
 	'TIME'			=> gmdate('M d Y H:i:s') .' GMT'

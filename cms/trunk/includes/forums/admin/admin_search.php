@@ -37,10 +37,21 @@ if (isset($_POST['start']) || isset($_GET['position']))
 
 	if (!$start)
 	{
-		// Empty existing tables
-		$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_TABLE);
-		$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_WORD_TABLE);
-		$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_MATCH_TABLE);
+		switch ($_CLASS['core_db']->db_layer)
+		{
+			case 'sqlite':
+			case 'sqlite_pdo':
+				$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_SEARCH_TABLE);
+				$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_SEARCH_WORD_TABLE);
+				$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_SEARCH_MATCH_TABLE);
+			break;
+			
+			default:
+				$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_TABLE);
+				$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_WORD_TABLE);
+				$_CLASS['core_db']->query('TRUNCATE ' . FORUMS_SEARCH_MATCH_TABLE);
+			break;
+		}
 	}
 
 	// Fetch a batch of posts_text entries
@@ -64,31 +75,30 @@ if (isset($_POST['start']) || isset($_GET['position']))
 			$count++;
 		}
 		$_CLASS['core_db']->free_result($result);
+
+		if (($start + $count) < $total_posts)
+		{
+			redirect(generate_link('Forums&amp;file=admin_search&position=' . ($start + $count), array('admin' => true)), 3);
+		}
+		else
+		{
+			// search tidy
+			$fulltext->search_tidy();
+			$_CLASS['core_db']->optimize_tables();
+		}
 	}
 
-	if (($start + $count) < $total_posts)
-	{
-		redirect(generate_link('forums&amp;file=admin_search&position=' . ($start + $count), array('admin' => true)), 3);
-	}
-	else
-	{
-		// search tidy
-		$fulltext->search_tidy();
-		$_CLASS['core_db']->optimize_tables();
-
-		adm_page_header($_CLASS['core_user']->lang['SEARCH_INDEX']);
+	adm_page_header($_CLASS['core_user']->get_lang('SEARCH_INDEX'));
 
 ?>
 
-<h1><?php echo $_CLASS['core_user']->lang['SEARCH_INDEX']; ?></h1>
+<h1><?php echo $_CLASS['core_user']->get_lang('SEARCH_INDEX'); ?></h1>
 
-<p><?php echo $_CLASS['core_user']->lang['SEARCH_INDEX_COMPLETE']; ?></p>
+<p><?php echo $_CLASS['core_user']->get_lang('SEARCH_INDEX_COMPLETE'); ?></p>
 
 <?php
 
-		adm_page_footer();
-
-	}
+	adm_page_footer();
 
 	die;
 }
@@ -117,7 +127,7 @@ adm_page_header($_CLASS['core_user']->lang['SEARCH_INDEX']);
 
 <p><?php echo $_CLASS['core_user']->lang['SEARCH_INDEX_EXPLAIN']; ?></p>
 
-<form method="post" action="<?php echo generate_link('forums&amp;file=admin_search', array('admin' => true)); ?>"><table cellspacing="1" cellpadding="4" border="0" align="center" bgcolor="#98AAB1">
+<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_search', array('admin' => true)); ?>"><table cellspacing="1" cellpadding="4" border="0" align="center" bgcolor="#98AAB1">
 	<tr>
 		<td class="cat" height="28" align="center">&nbsp;<input type="submit" name="start" value="<?php echo $_CLASS['core_user']->lang['START']; ?>" class="btnmain" /> &nbsp; <input type="submit" name="cancel" value="<?php echo $_CLASS['core_user']->lang['CANCEL']; ?>" class="btnmain" />&nbsp;</td>
 	</tr>

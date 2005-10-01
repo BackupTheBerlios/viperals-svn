@@ -94,7 +94,6 @@ class core_mailer
 	{
 		if (isset($address['address']))
 		{
-			echo ($address['name'] && $this->named_addresses) ?  '"' . mail_encode($address['name'], $this->encoding) . '" <' . $address['address'] . '>' : $address['address'];
 			return ($address['name'] && $this->named_addresses) ?  '"' . mail_encode($address['name'], $this->encoding) . '" <' . $address['address'] . '>' : $address['address'];
 		}
 

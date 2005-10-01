@@ -594,6 +594,7 @@ function load_class($file, $name, $class = false)
 		{
 			include_once($file);
 		}
+
 		$_CLASS[$name] =& new $class;
 	}
 }
