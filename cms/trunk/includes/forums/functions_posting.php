@@ -877,6 +877,8 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 		return;
 	}
 
+	unset($holding[$_CLASS['core_user']->data['user_id']], $ignore_array[$_CLASS['core_user']->data['user_id']]);
+
 	// Now we remove the users that aren't allowed to read the forum
 	$acl_list = $_CLASS['auth']->acl_get_list(array_keys($ignore_array), 'f_read', $forum_id);
 
@@ -888,6 +890,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 		}
 	}
 	$processed = $delete_array = $update_array = array();
+
 
 	foreach ($holding as $user)
 	{

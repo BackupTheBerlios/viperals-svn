@@ -144,17 +144,17 @@ class core_auth
 			'full_login'	=> true,
 			'full_screen'	=> false,
 		);
-	
+
 		if (is_array($login_options))
 		{
 			$login_array = array_merge($login_array, $login_options);
 		}
 
+		$user_name		= get_variable('username', 'POST', '');
+		$user_password	= get_variable('password', 'POST', '');
+
 		if (isset($_POST['login']))
 		{
-			$user_name		= get_variable('username', 'POST');
-			$user_password	= get_variable('password', 'POST');
-
 			if (!$user_name || !$user_password)
 			{
 				$error = 'INCOMPLETE_LOGIN_INFO';
@@ -187,7 +187,8 @@ class core_auth
 					trigger_error($message);
 				}
 
-				$error = (is_string($result)) ? $result : 'LOGIN_ERROR';
+				$error = is_string($result) ? $result : 'LOGIN_ERROR';
+				$user_name = $user_password = '';
 			}
 		}
 
@@ -209,8 +210,11 @@ class core_auth
 		}
 
 		$_CLASS['core_template']->assign_array(array(
-			'LOGIN_ERROR'			=> $_CLASS['core_user']->get_lang($error),
-			'LOGIN_EXPLAIN'			=> $_CLASS['core_user']->get_lang($login_array['explain']), 
+			'LOGIN_ERROR'			=> ($error) ? $_CLASS['core_user']->get_lang($error) : false,
+			'LOGIN_EXPLAIN'			=> ($login_array['explain']) ? $_CLASS['core_user']->get_lang($login_array['explain']) : '', 
+
+			'USERNAME'				=>	$user_name,
+			'PASSWORD'				=>	$user_password,
 
 			'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
 			'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
@@ -218,8 +222,6 @@ class core_auth
 			'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
 			'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
 			'U_CONFIRM_IMAGE'		=> $confirm_image,
-
-			'USERNAME'				=> isset($data['user_name']) ? $data['user_name'] : '',
 
 			'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']),
 			'S_LOGIN_ACTION'		=> (!$login_array['admin_login']) ? generate_link($_CLASS['core_user']->url) : generate_link(false, array('admin' => true)),
