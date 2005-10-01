@@ -328,6 +328,8 @@ class ucp_profile extends module
 
 				if ($submit)
 				{
+					require_once($site_file_root.'includes/functions_user.php');
+
 					$gallery_avatar = isset($_POST['avatarselect']) ? str_replace(array('../', '..\\', './', '.\\'), '', $_POST['avatarselect']) : false;
 
 					if ($config['allow_avatar_local'] && $gallery_avatar)
