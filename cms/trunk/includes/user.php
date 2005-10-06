@@ -430,6 +430,7 @@ class core_user extends sessions
 	function img($img, $alt = '', $width = false, $suffix = '')
 	{
 		$img = $this->get_img($img);
+		$alt = $this->get_lang($alt);
 
 		if (!$img['src'])
 		{

@@ -26,8 +26,15 @@ if (!defined('VIPERAL'))
     die;
 }
 
+if (extension_loaded('zlib') && !ob_get_length())
+{
+	@ob_start('ob_gzhandler');
+}
+
 //ini_set('display_errors', 1);
 set_magic_quotes_runtime(0);
+//error_reporting(E_STRICT);
+error_reporting(E_ALL);
 
 //Error reporting tyoe
 define('ERROR_NONE', 0);
@@ -85,11 +92,11 @@ require_once(SITE_FILE_ROOT.'config.php');
 
 // Load basic classes
 load_class(false, 'core_template');
-load_class(false, 'core_error_handler');
+load_class(false, 'core_handler');
 
 // Set error handler
-$_CLASS['core_error_handler']->start();
-//$_CLASS['core_error_handler']->stop();
+$_CLASS['core_handler']->start();
+//$_CLASS['core_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (empty($site_db))
@@ -219,19 +226,19 @@ if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['only_registered']
 
 if ($_CLASS['core_user']->is_admin)
 {
-	$_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options'];	
+	$_CLASS['core_handler']->report = $_CORE_CONFIG['server']['error_options'];	
 }
 else
 {
 	$_CORE_CONFIG['server']['error_options'] = ERROR_NONE;
-	$_CLASS['core_error_handler']->report = ERROR_NONE;
+	$_CLASS['core_handler']->report = ERROR_NONE;
 }
 
-/*
+
 $_CORE_CONFIG['server']['error_options'] = ERROR_DEBUGGER;	
 //$_CORE_CONFIG['server']['error_options'] = ERROR_ONPAGE;	
-$_CLASS['core_error_handler']->report = $_CORE_CONFIG['server']['error_options'];
-*/
+$_CLASS['core_handler']->report = $_CORE_CONFIG['server']['error_options'];
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {

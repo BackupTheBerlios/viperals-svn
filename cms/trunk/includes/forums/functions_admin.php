@@ -233,7 +233,7 @@ function move_topics($topic_ids, $forum_id, $auto_sync = true)
 	global $_CLASS;
 
 	$forum_ids = array($forum_id);
-	$sql_where = (is_array($topic_ids)) ? 'IN (' . implode(', ', $topic_ids) . ')' : '= ' . $topic_ids;
+	$sql_where = is_array($topic_ids) ? 'IN (' . implode(', ', $topic_ids) . ')' : '= ' . $topic_ids;
 
 	$sql = 'DELETE FROM ' . FORUMS_TOPICS_TABLE . "
 		WHERE topic_moved_id $sql_where
@@ -253,8 +253,12 @@ function move_topics($topic_ids, $forum_id, $auto_sync = true)
 		}
 		$_CLASS['core_db']->free_result($result);
 	}
-	
-	$table_ary = array(FORUMS_TOPICS_TABLE, FORUMS_POSTS_TABLE, FORUMS_LOG_TABLE);
+
+	$_CLASS['core_db']->transaction();
+
+	//$table_ary = array(FORUMS_FORUMS_TABLE, FORUMS_POLL_OPTIONS_TABLE, , FORUMS_TOPICS_TABLE);
+	$table_ary = array(FORUMS_TOPICS_TABLE, FORUMS_POSTS_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, FORUMS_LOG_TABLE);
+
 	foreach ($table_ary as $table)
 	{
 		$sql = "UPDATE $table
@@ -264,10 +268,11 @@ function move_topics($topic_ids, $forum_id, $auto_sync = true)
 	}
 	unset($table_ary);
 
+	$_CLASS['core_db']->transaction('commit');
+
 	if ($auto_sync)
 	{
 		sync('forum', 'forum_id', $forum_ids, true);
-		unset($forum_ids);
 	}
 }
 
@@ -315,9 +320,8 @@ function move_posts($post_ids, $topic_id, $auto_sync = true)
 	$_CLASS['core_db']->query($sql);
 
 	$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . "
-		SET topic_id = $topic_id
-			AND in_message = 0
-		WHERE post_msg_id IN (" . implode(', ', $post_ids) . ')';
+		SET topic_id = $topic_id WHERE 
+		post_msg_id IN (" . implode(', ', $post_ids) . ') AND in_message = 0';
 	$_CLASS['core_db']->query($sql);
 
 	if ($auto_sync)
@@ -655,8 +659,12 @@ function delete_attachments($mode, $ids, $resync = TRUE)
 	return $num_deleted;
 }
 
+
+// FIX
 function delete_topic_shadows($max_age, $forum_id = '', $auto_sync = TRUE)
 {
+	global $_CLASS;
+
 	$where = (is_array($forum_id)) ? 'AND t.forum_id IN (' . implode(', ', $forum_id) . ')' : (($forum_id) ? "AND t.forum_id = $forum_id" : '');
 
 	switch ($_CLASS['core_db']->db_layer)

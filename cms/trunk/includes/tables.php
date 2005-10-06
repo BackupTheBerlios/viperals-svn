@@ -107,10 +107,6 @@ define('POST_STICKY', 1);
 define('POST_ANNOUNCE', 2);
 define('POST_GLOBAL', 3);
 
-// Lastread types
-define('TRACK_NORMAL', 0);
-define('TRACK_POSTED', 1);
-
 // Notify methods
 define('NOTIFY_EMAIL', 0);
 define('NOTIFY_IM', 1);
@@ -165,12 +161,10 @@ define('FIELD_BOOL', 4);
 define('FIELD_DROPDOWN', 5);
 define('FIELD_DATE', 6);
 
-
 // Table names
 
 define('FORUMS_ACL_TABLE', $table_prefix.'forums_auth');
 define('FORUMS_ACL_OPTIONS_TABLE', $table_prefix.'forums_auth_options');
-//define('ACL_DEPS_TABLE', $table_prefix.'forums_auth_deps');
 define('FORUMS_ACL_PRESETS_TABLE', $table_prefix.'forums_auth_presets');
 
 define('FORUMS_ATTACHMENTS_TABLE', $table_prefix.'forums_attachments');

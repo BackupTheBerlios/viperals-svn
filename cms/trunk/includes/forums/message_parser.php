@@ -316,10 +316,9 @@ class bbcode_firstpass extends bbcode
 					if (!preg_match('/^\<\?(.*?)\?\>/is', $code))
 					{
 						$remove_tags = true;
-						$code = "<?php $code";
+						$code = '<?php '. $code;
 					}
 
-					
 					$conf = array('highlight.bg', 'highlight.comment', 'highlight.default', 'highlight.html', 'highlight.keyword', 'highlight.string');
 
 					foreach ($conf as $ini_var)
@@ -327,7 +326,6 @@ class bbcode_firstpass extends bbcode
 						ini_set($ini_var, str_replace('highlight.', 'syntax', $ini_var));
 					}
 					
-
 					$code = highlight_string($code, true);
 
 					if (version_compare(PHP_VERSION, '5.0', '<'))
@@ -345,19 +343,20 @@ class bbcode_firstpass extends bbcode
 					$str_to = array('', '', '&#91;', '&#93;', '&#46;', '&#58', '&#058;');
 
 					$code = str_replace($str_from, $str_to, $code);
-
 					if ($remove_tags)
 					{
 						// if theres any problems with this, find the first "php" without span remove it
 						// then find the first </span> and remove it
-						$pos = ($pos = mb_strpos($code, 'php&nbsp;</span>')) ? $pos + 16 : mb_strpos($code, 'php </span>') + 11;
+						$pos = ($pos = mb_strpos($code, 'php&nbsp;')) ? $pos + 9 : mb_strpos($code, 'php ') + 40;
+						$section = mb_substr($code, 0, $pos);
 						$code = mb_substr($code, $pos);
+						$code = str_replace(array('&lt;?', '<?', 'php&nbsp;', 'php '), '', $section).$code;
 					}
-									
+	
 					$code = preg_replace('#^(<span class="[a-z_]+">)\n?(.*?)\n?(</span>)$#is', '$1$2$3', $code);
 					$code = preg_replace('#^<span class="[a-z]+"><span class="([a-z]+)">(.*)</span></span>#s', '<span class="$1">$2</span>', $code);
 					$code = preg_replace('#(?:[\n\r\s\t]|&nbsp;)*</span>$#', '</span>', $code);
-				
+			//echo $code; die;	
 					$out .= "[code=$stx:" . $this->bbcode_uid . ']' . trim($code) . '[/code:' . $this->bbcode_uid . ']';
 				break;
 

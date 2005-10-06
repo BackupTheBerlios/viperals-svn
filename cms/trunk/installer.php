@@ -33,6 +33,7 @@ if (!extension_loaded('mbstring'))
 
 set_magic_quotes_runtime(0);
 mb_internal_encoding('UTF-8');
+set_time_limit(0);
 
 define('STRIP_SLASHES', get_magic_quotes_gpc());
 
@@ -104,7 +105,7 @@ if ($stage && !$_POST['agreement_signed'])
 	$stage = 0;
 }
 
-if ($stage === 4)
+if ($stage === 5)
 {
 	if (file_exists(SITE_FILE_ROOT.'config.php'))
 	{
@@ -222,12 +223,12 @@ if ($stage === 4)
 		'config_content'	=> $config_content
 	));
 
-	$_CLASS['core_template']->display('installer/stage3.html');
+	$_CLASS['core_template']->display('installer/stage4.html');
 
 	script_close();
 }
 
-if ($stage === 3)
+if ($stage === 4)
 {
 	if ($db_layer && in_array($db_layer, array_keys($database_array)))
 	{
@@ -335,7 +336,7 @@ if ($stage === 3)
 
 	if (isset($_POST['test']) || !empty($error))
 	{
-		$stage = 2;
+		$stage = 3;
 	}
 	else
 	{
@@ -359,7 +360,7 @@ if ($stage === 3)
 
 		if (!$result)
 		{
-			$stage = 2;
+			$stage = 3;
 			$error[] = 'Installation failed<br/> Please confirm that your using the currect database layer';
 		}
 		else
@@ -422,14 +423,14 @@ if ($stage === 3)
 				'config_content'	=> $config_data
 			));
 
-			$_CLASS['core_template']->display('installer/stage3.html');
+			$_CLASS['core_template']->display('installer/stage4.html');
 	
 			script_close();
 		}
 	}
 }
 
-if ($stage === 2)
+if ($stage === 3)
 {
 	if (isset($_POST['test']) && empty($error))
 	{
@@ -450,8 +451,24 @@ if ($stage === 2)
 		'user_prefix'	=> get_variable('user_prefix', 'POST', 'cms_'),
 	));
 
-	$_CLASS['core_template']->display('installer/stage2.html');
+	$_CLASS['core_template']->display('installer/stage3.html');
 
+	script_close();
+}
+
+if ($stage === 2)
+{
+	$_CLASS['core_template']->assign_array(array(
+		'error'				=> false,
+		'continue'			=> true,
+
+		'cache'				=> @is_writable(SITE_FILE_ROOT.'cache'),
+		'cache_template'	=> @is_writable(SITE_FILE_ROOT.'cache/template'),
+		'cache_hooks'		=> @is_writable(SITE_FILE_ROOT.'cache/hooks'),
+		'upload_folder'		=> @is_writable('images/avatars/upload'),
+	));
+	
+	$_CLASS['core_template']->display('installer/stage2.html');
 	script_close();
 }
 

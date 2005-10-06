@@ -175,6 +175,7 @@ $_CLASS['core_db']->add_table_field_char('session_url', 255);
 $_CLASS['core_db']->add_table_field_int('session_user_type', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('session_admin', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('session_hidden', array('max' => 10));
+$_CLASS['core_db']->add_table_field_char('session_autologin', 40);
 
 $_CLASS['core_db']->add_table_field_text('session_data', 60000);
 $_CLASS['core_db']->add_table_field_text('session_auth', 60000);
@@ -940,7 +941,7 @@ $_CLASS['core_db']->add_table_field_int('unread', array('max' => 1));
 $_CLASS['core_db']->add_table_field_int('replied', array('max' => 1, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('marked', array('max' => 1, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('forwarded', array('max' => 1, 'null' => true));
-$_CLASS['core_db']->add_table_field_int('folder_id', array('max' => 16000000));
+$_CLASS['core_db']->add_table_field_int('folder_id', array('min' => -10, 'max' => 16000000));
 
 $_CLASS['core_db']->add_table_index('msg_id');
 $_CLASS['core_db']->add_table_index(array('user_id', 'folder_id'));

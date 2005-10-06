@@ -102,7 +102,7 @@ function lock_unlock($mode, $ids)
 // Change Topic Type
 function change_topic_type($mode, $topic_ids)
 {
-	global $db, $_CLASS;
+	global $_CLASS;
 
 	if (!check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_'))
 	{
@@ -169,27 +169,33 @@ function change_topic_type($mode, $topic_ids)
 		}
 		else
 		{
-			$sql = 'UPDATE ' . TOPICS_TABLE . "
-				SET topic_type = $new_topic_type, forum_id = 0
+			$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . "
+				SET topic_type = $new_topic_type
 				WHERE topic_id IN (" . implode(', ', $topic_ids) . ")";
 			$_CLASS['core_db']->query($sql);
+
+			move_topics($topic_ids, 0, true);
 		}
 
 		$success_msg = (count($topic_ids) === 1) ? 'TOPIC_TYPE_CHANGED' : 'TOPICS_TYPE_CHANGED';
 
 		$data = get_topic_data($topic_ids);
 
+		$_CLASS['core_db']->transaction();
+
 		foreach ($data as $topic_id => $row)
 		{
 			add_log('mod', $forum_id, $topic_id, 'LOG_TOPIC_TYPE_CHANGED', $row['topic_title']);
 		}
+		
+		$_CLASS['core_db']->transaction('commit');
 	}
 
-	$redirect = generate_link($redirect);
+	$redirect = generate_link($redirect, array('full' => true));
 
 	if (!$success_msg)
 	{
-		url_redirect($redirect);
+		redirect($redirect);
 	}
 	else
 	{
@@ -210,7 +216,7 @@ function mcp_move_topic($topic_ids)
 		return;
 	}
 
-	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);//generate_link('Forums')
+	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 	$to_forum_id = get_variable('to_forum_id', 'POST', 0, 'int');
 
 	$additional_msg = $success_msg = '';
@@ -399,7 +405,7 @@ function mcp_delete_topic($topic_ids)
 // Delete Posts
 function mcp_delete_post($post_ids)
 {
-	global $_CLASS, $db;
+	global $_CLASS;
 
 	if (!check_ids($post_ids, FORUMS_POSTS_TABLE, 'post_id', 'm_delete'))
 	{
@@ -508,7 +514,7 @@ function mcp_delete_post($post_ids)
 // Fork Topic
 function mcp_fork_topic($topic_ids)
 {
-	global $db, $_CLASS, $config;
+	global $_CLASS, $config;
 
 	if (!check_ids($topic_ids, FORUMS_TOPICS_TABLE, 'topic_id', 'm_'))
 	{
@@ -621,7 +627,7 @@ function mcp_fork_topic($topic_ids)
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
 					$sql = 'INSERT INTO ' . FORUMS_POLL_OPTIONS_TABLE . ' (poll_option_id, topic_id, poll_option_text, poll_option_total)
-						VALUES (' . $row['poll_option_id'] . ', ' . $new_topic_id . ", '" . $db->sql_escape($row['poll_option_text']) . "', 0)";
+						VALUES (' . $row['poll_option_id'] . ', ' . $new_topic_id . ", '" . $_CLASS['core_db']->escape($row['poll_option_text']) . "', 0)";
 					$_CLASS['core_db']->query($sql);
 				}
 				$_CLASS['core_db']->free_result($result);

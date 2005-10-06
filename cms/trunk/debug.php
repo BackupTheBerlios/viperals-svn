@@ -15,6 +15,8 @@
 
 define('VIPERAL', 'Admin');
 
+error_reporting(E_ALL);
+
 //echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
 $site_file_root = '';
 
@@ -22,22 +24,20 @@ require($site_file_root.'core.php');
 
 if (!$_CLASS['core_user']->is_admin)
 {
-	die('this is admin only :-) need better language :-(');
+	//die('this is admin only :-) need better language :-(');
 }
 
-$_CLASS['core_error_handler']->stop();
+$_CLASS['core_handler']->stop();
 $_CLASS['core_user']->user_setup();
 error_reporting(E_ALL);
 
 $mode = get_variable('mode', 'GET', false);
 
-$_CLASS['core_template']->assign(array(
+$_CLASS['core_template']->assign_array(array(
 	'MODE'				=>	$mode,
 	'L_NOTICES'			=>	'NOTICE ERRORS',
 	'L_WARNINGS'		=>	'WARNING ERRORS',
 	'L_QUERIES'			=>	'DB QUERY DETAILS',
-	'bottomblock'		=>	false,
-	'MAIN_CONTENT'		=>	false,
 ));
 
 switch ($mode)

@@ -219,11 +219,8 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 		$attachment['mimetype'] = ($browser_agent == 'ie' || $browser_agent == 'opera') ? 'application/octetstream' : 'application/octet-stream';
 	}
 
-	if (@ob_get_length())
-	{
-		@ob_end_clean();
-	}
-	
+	while (@ob_end_clean());
+
 	// Now the tricky part... let's dance
 	header('Pragma: public');
 

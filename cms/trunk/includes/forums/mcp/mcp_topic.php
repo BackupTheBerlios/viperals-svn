@@ -256,16 +256,14 @@ $_CLASS['core_display']->display($_CLASS['core_user']->get_lang('MCP'), 'modules
 
 function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 {
-	global $_CLASS ;
+	global $_CLASS;
 
-	$start	= request_var('start', 0);
+	$start = get_variable('start', 'REQUEST', false, 'int');
 		
 	if (empty($post_id_list) || !check_ids($post_id_list, FORUMS_POSTS_TABLE, 'post_id', 'm_split'))
 	{
 		return false;
 	}
-
-	//$post_id = $post_id_list[0];
 
 	$post_info = get_post_data($post_id_list);
 
@@ -300,11 +298,10 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 		return 'DESTINATION_FORUM_NOT_POSTABLE';
 	}
 
-	$redirect = request_var('redirect', $_CLASS['core_user']->data['session_page']);
+	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 
-	$s_hidden_fields = build_hidden_fields(array(
+	$hidden_fields = build_hidden_fields(array(
 		'post_id_list'	=> $post_id_list,
-		'f'				=> $forum_id,
 		'mode'			=> 'topic_view',
 		'start'			=> $start,
 		'action'		=> $mode,
@@ -312,23 +309,25 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 		'redirect'		=> $redirect,
 		'subject'		=> $subject,
 		'to_forum_id'	=> $to_forum_id,
-		'icon'			=> request_var('icon', 0))
-	);
-	$success_msg = $return_link = '';
+		'icon'			=> request_var('icon', 0)
+	));
 
-	if (confirm_box(true))
+	$message = ($mode == 'split_all') ? 'SPLIT_TOPIC_ALL' : 'SPLIT_TOPIC_BEYOND';
+
+	if (display_confirmation($_CLASS['core_user']->get_lang($message), $hidden_fields))
 	{
+		$post_id = $post_id_list[0];
 		//$post_info = $post_info[$post_id];
 
-		if ($mode == 'split_beyond')
+		if ($mode === 'split_beyond')
 		{
 			mcp_sorting('viewtopic', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $forum_id, $topic_id);
-			$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . (time() - ($sort_days * 86400)) : '';
+			$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . ($_CLASS['core_user']->time - ($sort_days * 86400)) : '';
 
 			if ($sort_order_sql{0} == 'u')
 			{
-				$sql = 'SELECT p.post_id, p.forum_id, p.post_approved
-					FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . " u
+				$sql = 'SELECT p.post_id, p.poster_id, p.post_username, p.post_time
+					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . " u
 					WHERE p.topic_id = $topic_id
 						AND p.poster_id = u.user_id
 						$limit_time_sql
@@ -336,27 +335,26 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 			}
 			else
 			{
-				$sql = 'SELECT p.post_id, p.forum_id, p.post_approved
-					FROM ' . POSTS_TABLE . " p
+				$sql = 'SELECT p.post_id, p.poster_id, p.post_username, p.post_time
+					FROM ' . FORUMS_POSTS_TABLE . " p
 					WHERE p.topic_id = $topic_id
 						$limit_time_sql
 					ORDER BY $sort_order_sql";
 			}
+
 			$result = $_CLASS['core_db']->query_limit($sql, 0, $start);
 
 			$store = false;
 			$post_id_list = array();
+
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				// If splitted from selected post (split_beyond), we split the unapproved items too.
-				if (!$row['post_approved'] && !$_CLASS['auth']->acl_get('m_approve', $row['forum_id']))
-				{
-//					continue;
-				}
-
 				// Start to store post_ids as soon as we see the first post that was selected
 				if ($row['post_id'] == $post_id)
 				{
+					$topic_time = $row['post_time'];
+					$topic_poster = $row['poster_id'];
+					$topic_poster_name = $row['post_username'];
 					$store = true;
 				}
 
@@ -367,48 +365,52 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 			}
 		}
 
-		if (!sizeof($post_id_list))
+		if (empty($post_id_list))
 		{
-			trigger_error($_CLASS['core_user']->lang['NO_POST_SELECTED']);
+			trigger_error('NO_POST_SELECTED');
 		}
 
-		$icon_id = request_var('icon', 0);
+		$icon_id =  get_variable('icon', 'REQUEST', false, 'int');
+
+		$_CLASS['core_db']->transaction();
 
 		$sql_ary = array(
-			'forum_id'		=> $to_forum_id,
-			'topic_title'	=> $subject,
-			'icon_id'		=> $icon_id,
-			'topic_approved'=> 1
+			'forum_id'				=> $to_forum_id,
+			'topic_title'			=> $subject,
+			'icon_id'				=> $icon_id,
+			'topic_approved'		=> 1,
+			'topic_poster' 			=> $topic_poster,
+			'topic_first_poster_name'	=> $topic_poster_name,
+			'topic_time'			=> $_CLASS['core_user']->time,
+			'topic_status'			=> ITEM_UNLOCKED,
+			'topic_type'			=> POST_NORMAL,
+			'topic_attachment'		=> 0,
+			'topic_replies_real'	=> 0,
+			'topic_replies'			=> 0,
+			'topic_views'			=> 0,
+			'topic_moved_id'		=> 0
 		);
-	
-		$sql = 'INSERT INTO ' . TOPICS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary);
-		$_CLASS['core_db']->sql_query($sql);
 
-		$to_topic_id = $_CLASS['core_db']->sql_nextid();
+		$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_TOPICS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
+		$to_topic_id = $_CLASS['core_db']->insert_id(FORUMS_TOPICS_TABLE, 'topic_id');
+
 		move_posts($post_id_list, $to_topic_id);
 
 		// Change topic title of first post
-		$sql = 'UPDATE ' . POSTS_TABLE . " 
-			SET post_subject = '" . $_CLASS['core_db']->sql_escape($subject) . "'
+		$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . " 
+			SET post_subject = '" . $_CLASS['core_db']->escape($subject) . "'
 			WHERE post_id = {$post_id_list[0]}";
-		$_CLASS['core_db']->sql_query($sql);
-		
+		$_CLASS['core_db']->query($sql);
+
+		$_CLASS['core_db']->transaction('commit');
+
 		$success_msg = 'TOPIC_SPLIT_SUCCESS';
 
 		// Link back to both topics
 		$return_link = sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $post_info['forum_id'] . '&amp;t=' . $post_info['topic_id']) . '">', '</a>') . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_NEW_TOPIC'], '<a href="'.generate_link('Forums&amp;file=viewtopic&amp;f=' . $to_forum_id . '&amp;t=' . $to_topic_id) . '">', '</a>');
 	}
-	else
-	{
-		confirm_box(false, ($mode == 'split_all') ? 'SPLIT_TOPIC_ALL' : 'SPLIT_TOPIC_BEYOND', $s_hidden_fields);
-	}
 
-	$redirect = request_var('redirect', generate_link('Forums'));
-
-	/*if (strpos($redirect, '?') === false)
-	{
-		$redirect = substr_replace($redirect, ".$phpEx$SID&", strpos($redirect, '&'), 1);
-	}*/
+	$redirect = generate_link($redirect);
 
 	if (!$success_msg)
 	{

@@ -99,7 +99,7 @@ class ucp_pm extends module
 			// New private messages popup
 			case 'popup':
 			
-				$indox_link = generate_link('Control_Panel&amp;i=pm&amp;folder=inbox');
+				$indox_link = generate_link('Control_Panel&i=pm&folder=inbox');
 
 				if ($_CLASS['core_user']->data['user_new_privmsg'])
 				{
@@ -327,6 +327,7 @@ class ucp_pm extends module
 					}
 				}
 
+				$folder = array();
 				get_folder($_CLASS['core_user']->data['user_id'], $folder, $folder_id);
 	
 				$s_folder_options = $s_to_folder_options = '';

@@ -539,7 +539,7 @@ class ucp_main extends module
 					$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['topic_replies_real'] : $row['topic_replies'];
 					
 					// Get folder img, topic status/type related informations
-					$folder_img = $folder_alt = $topic_type = '';
+					$folder_img = $folder_alt = $topic_type = $unread_topic = '';
 					topic_status($row, $replies, $_CLASS['core_user']->time, $unread_topic, $folder_img, $folder_alt, $topic_type);
 
 					$view_topic_url = "Forums&amp;file=viewtopic&amp;t=$topic_id";
@@ -552,7 +552,6 @@ class ucp_main extends module
 						'TOPIC_ID' 			=> $topic_id,
 						'S_DELETED_TOPIC'	=> (!$row['topic_id']) ? true : false,
 						'TOPIC_TITLE' 		=> censor_text($row['topic_title']),
-						'TOPIC_TYPE' 		=> $topic_type,
 						'FORUM_NAME'		=> $row['forum_name'],
 
 						'TOPIC_AUTHOR' 		=> ($row['topic_poster'] == ANONYMOUS) ? (($row['topic_first_poster_name']) ? $row['topic_first_poster_name'] : $_CLASS['core_user']->get_lang('GUEST')) : $row['topic_first_poster_name'],
@@ -561,7 +560,7 @@ class ucp_main extends module
 						'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
 						'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
 						'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
-						'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
+						'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name']) ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
 						'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
 
 						'PAGINATION'		=> $pagination['formated'],

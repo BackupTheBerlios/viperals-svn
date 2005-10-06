@@ -31,7 +31,7 @@ class sessions
 	var $sid_link = false;
 	var $need_sid = true;
 
-	var $autologin_code = false;
+	var $autologin_code = '';
 
 	function start()
 	{
@@ -103,6 +103,7 @@ class sessions
 						$this->need_sid = false;
 					}
 
+					$this->autologin_code = $this->data['session_autologin'];
 					$this->load = check_load_status();
 					$this->sid_link = 'sid='.$this->data['session_id'];
 
@@ -209,6 +210,7 @@ class sessions
 			'session_admin'		=> (int) $this->data['session_admin'],
 			'session_auth'		=> (int) serialize($_CLASS['core_auth']->auth_dump()),
 			'session_hidden'	=> (int) $this->data['session_hidden'],
+			'session_autologin'	=> (string) $this->autologin_code,
 		);
 
 		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
@@ -218,10 +220,12 @@ class sessions
 		$this->data = array_merge($this->data, $session_data);
 		unset($session_data);
 
-		if ($this->time > $config['session_last_gc'] + $config['session_gc'])
+		$this->gc($this->time);
+
+		/*if ($this->time > $config['session_last_gc'] + $config['session_gc'])
 		{
 			$this->gc($this->time);
-		}
+		}*/
 
 		if (!$this->is_bot)
 		{
@@ -277,10 +281,10 @@ class sessions
 		$return = false;
 
 		// This is about all we can validate other than the code, and user_id
-		if ($row && $row['auto_login_browser'] == $this->browser)
+		if ($row && $row['auto_login_browser'] === $this->browser)
 		{
 			$return = $user_id;
-			
+
 			$this->autologin_code = function_exists('sha1') ? sha1(uniqid(mt_rand(), true)) : md5(uniqid(mt_rand(), true));
 
 			$data_array = array(
@@ -306,8 +310,8 @@ class sessions
 	{
 		global $_CLASS;
 		
-		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . " 
-			WHERE user_id = $user_id
+		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . ' 
+			WHERE user_id = '.(INT) $user_id."
 			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
 				
 		$_CLASS['core_db']->query($sql);
@@ -320,7 +324,7 @@ class sessions
 		if (!$session_id)
 		{
 			$session_id = $this->data['session_id'];
-			
+
 			if ($logout)
 			{
 				$this->set_cookie('sid', '', $this->time - 31536000);
@@ -368,7 +372,7 @@ class sessions
 			case 'mysqli':
 				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
 							SET u.user_last_visit = s.session_time
-								WHERE s.session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']) . '
+								WHERE s.session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
 								AND u.user_id = s.session_user_id';
 				$_CLASS['core_db']->query($sql);
 			break;
@@ -392,7 +396,7 @@ class sessions
 		}
 
 		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
-				WHERE session_time < ' . ($time - (int) $_CORE_CONFIG['server']['session_length']);
+				WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 			$_CLASS['core_db']->query($sql);
 
 		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . '
@@ -406,7 +410,7 @@ class sessions
 
 	function session_data_get($name, $default = false)
 	{
-		return (empty($this->data['session_data'][$name])) ? $default : $this->data['session_data'][$name];
+		return empty($this->data['session_data'][$name]) ? $default : $this->data['session_data'][$name];
 	}
 
 	function session_data_remove($name)

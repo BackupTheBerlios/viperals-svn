@@ -86,7 +86,7 @@
 			<!-- IF { $S_SEARCH_USER } --><td align="center"><input type="checkbox" name="user" value="{$leader_row:USERNAME}" /></td><!-- ENDIF -->
 
 		</tr>
-	<!-- ENDLOOP -->
+	<!-- ENDLOOP $leader_row -->
 
 	<!-- IF isset({ $member_row }) && { $S_SHOW_GROUP } && !{ $S_SEARCH_USER } -->
 		<tr>
@@ -115,7 +115,7 @@
 		<tr>
 			<td class="row1" colspan="<!-- IF { $S_SEARCH_USER } -->9<!-- ELSE -->8<!-- ENDIF -->" height="28" align="center"><span class="gen">{ $L_NO_MEMBERS }</span></td>
 		</tr>
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $member_row -->
 
 		<tr>
 			<td class="cat" colspan="<!-- IF { $S_SEARCH_USER } -->9<!-- ELSE -->8<!-- ENDIF -->" align="center">

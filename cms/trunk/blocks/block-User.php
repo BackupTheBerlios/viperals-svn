@@ -35,14 +35,16 @@ if ($_CLASS['core_user']->is_user)
 	if ($_CLASS['core_user']->data['user_avatar'])
 	{
 		$avatar_img = '';
+
 		switch ($_CLASS['core_user']->data['user_avatar_type'])
 		{
 			case AVATAR_UPLOAD:
-				$avatar_img = $config['avatar_path'] . '/';
-				break;
+				$avatar_img = $_CORE_CONFIG['global']['path_avatar_upload'] . '/';
+			break;
+
 			case AVATAR_GALLERY:
-				$avatar_img = $config['avatar_gallery_path'] . '/';
-				break;
+				$avatar_img = $_CORE_CONFIG['global']['path_avatar_gallery'] . '/';
+			break;
 		}
 		
 		$avatar_img .= $_CLASS['core_user']->data['user_avatar'];
@@ -72,7 +74,7 @@ else
 	</tr>
 	<tr>
 		<td colspan="2">
-			<input name="autologin" type="checkbox"><span class="gensmall">Remmeber me</span>
+			<input name="autologin" type="checkbox" /><span class="gensmall">Remmeber me</span>
 		</td>
 	</tr>
 	</table>
@@ -103,11 +105,20 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	if ($row['user_id'] != ANONYMOUS && !in_array($row['user_id'], $prev_ip))
   	{
-		if (!$_CLASS['core_user']->is_admin && (!$row['user_allow_viewonline'] || $row['session_hidden']))
+		$prev_id[] = $row['user_id'];
+
+		if (!$row['user_allow_viewonline'] || $row['session_hidden'])
 		{
 			$online['hidden']++;
 
-			continue;
+			if ($_CLASS['core_user']->is_admin)
+			{
+				$row['username'] = '<i>' . $row['username'] . '</i>';
+			}
+			else
+			{
+				continue;
+			}
 		}
 		else
 		{
@@ -118,11 +129,11 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$row['username'] = '<b style="color:#' . $row['user_colour'] . '">' . $row['username'] . '</b>';
 		}
-		
-		$prev_id[] = $row['user_id'];
 	}
 	elseif ($row['user_id'] == ANONYMOUS && !in_array($row['session_ip'], $prev_ip))
 	{
+		$prev_ip[] = $row['session_ip'];
+
 		$online['guest']++;		
 	}
 	else
@@ -130,7 +141,6 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		continue;	
 	}
 	
-	$prev_ip[] = $row['session_ip'];
 	$online['total']++;
 
 	if (!$row['session_page'])
@@ -205,5 +215,31 @@ $this->content .= '
 	</td>
   </tr>
 </table>';
+/*
+if ($_CORE_CONFIG['user']['enable_confirm'])
+{
+	$this->content .=  '
+	<div id="block_user_menu" >
+		<table class="tablebg" border="0" cellpadding="4" cellspacing="1">
+			<tbody>
+				<tr>
+					<td align="center" class="row1"><span class="gensmall">Enter the code exactly as you see it in the image<br/><b>This is case sensitive</b></span></td>
+				</tr>
+				<tr>
+					<td align="center" class="row2"><img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" /></a></td>
+				</tr>
+				<tr>
+					<td align="center" class="row1"><input class="post" name="confirm_code" size="10" maxlength="6" type="text" /></td>
+				</tr>
+				<tr>
+					<td align="center" class="row1"><input type="submit" name="login" class="button" value="Login"/></td>
+				</tr>
+				<!-- ENDIF -->
+			</tbody>
+		</table>
+	</div>';
 
+	$_CLASS['core_user']->session_data_set('confirmation_code', generate_string(6));
+}
+*/
 ?>

@@ -1181,65 +1181,62 @@ function page_header()
 	
 	if ($config['load_online'] && $config['load_online_time'])
 	{
-		$userlist_ary = $userlist_visible = array();
-		$logged_visible_online = $logged_hidden_online = $guests_online = $prev_user_id = 0;
-		$prev_session_ip = $reading_sql = '';
-		//////////////////
-		/// Need to fix this\
-		/// Think about removing session_users();
-		/////////////////
-		if (!empty($_REQUEST['f']))
+		$logged_visible_online = $logged_hidden_online = $guests_online = 0;
+		$reading_sql = '';
+
+		$prev_ip = $prev_id = array();
+
+		if (isset($_REQUEST['f']))
 		{
-			$f = request_var('f', 0);
-			$reading_sql = "AND s.session_url LIKE '%f=$f%'";
+			$f = get_variable('f', 'REQUEST', 0, 'int');
+			$reading_sql = " AND s.session_url LIKE '%f=$f%'";
 		}
 
-		$session_users = session_users();
-		foreach ($session_users as $row)
+		$sql = 'SELECT session_hidden, session_ip, session_page, session_url, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
+					FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
+						WHERE s.session_time > ' . ($_CLASS['core_user']->time - (int) $_CORE_CONFIG['server']['session_length']) .'
+						AND u.user_id = s.session_user_id'.$reading_sql;
+		$result = $_CLASS['core_db']->query($sql);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			// User is logged in and therefor not a guest
-			if ($row['user_id'] != ANONYMOUS)
+			if ($row['user_id'] != ANONYMOUS && !in_array($row['user_id'], $prev_ip))
 			{
-				// Skip multiple sessions for one user
-				if ($row['user_id'] != $prev_user_id)
-				{
-					if ($row['user_colour'])
-					{
-						$row['username'] = '<b style="color:#' . $row['user_colour'] . '">' . $row['username'] . '</b>';
-					}
+				$prev_id[] = $row['user_id'];
 
-					if ($row['user_allow_viewonline'] && !$row['session_hidden'])
+				if ((!$row['user_allow_viewonline'] || $row['session_hidden']))
+				{
+					if ($_CLASS['core_user']->is_admin)
 					{
-						$user_online_link = $row['username'];
-						$logged_visible_online++;
+						$row['username'] = '<i>' . $row['username'] . '</i>';
 					}
-					else
-					{
-						$user_online_link = '<i>' . $row['username'] . '</i>';
-						$logged_hidden_online++;
-					}
-// Fix this
-					if ($row['user_allow_viewonline'] || $_CLASS['auth']->acl_get('u_viewonline'))
-					{
-						$user_online_link = ($row['user_type'] & USER_BOT) ? "<a href=\"" . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $user_online_link . '</a>' : $user_online_link;
-						$online_userlist .= ($online_userlist != '') ? ', ' . $user_online_link : $user_online_link;
-					}
+					$logged_hidden_online++;
+				}
+				else
+				{
+					$logged_visible_online++;
 				}
 
-				$prev_user_id = $row['user_id'];
+				if ($row['user_colour'])
+				{
+					$row['username'] = '<b style="color:#' . $row['user_colour'] . '">' . $row['username'] . '</b>';
+				}
+	
+				$row['username'] = ($row['user_type'] == USER_BOT) ? $row['username'] : '<a href="' . generate_link('Members_List&amp;&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
+				$online_userlist .= ($online_userlist !== '') ? ', ' . $row['username'] : $row['username'];
+			}
+			elseif ($row['user_id'] == ANONYMOUS && !in_array($row['session_ip'], $prev_ip))
+			{
+				$prev_ip[] = $row['session_ip'];
+
+				$guests_online++;
 			}
 			else
 			{
-				// Skip multiple sessions for one user
-				if ($row['session_ip'] != $prev_session_ip)
-				{
-					$guests_online++;
-				}
+				continue;	
 			}
-
-			$prev_session_ip = $row['session_ip'];
 		}
-		unset($session_users);
 		
 		if (!$online_userlist)
 		{
@@ -1260,8 +1257,8 @@ function page_header()
 
 		if ($total_online_users > $config['record_online_users'])
 		{
-			set_config('record_online_users', $total_online_users, TRUE);
-			set_config('record_online_date', time(), TRUE);
+			set_config('record_online_users', $total_online_users, true);
+			set_config('record_online_date', $_CLASS['core_user']->time, true);
 		}
 
 		// Build online listing
@@ -1278,15 +1275,15 @@ function page_header()
 			{
 				case 0:
 					${$var_ary[1]} = $_CLASS['core_user']->lang[$l_prefix . '_USERS_ZERO_TOTAL'];
-					break;
+				break;
 
 				case 1:
 					${$var_ary[1]} = $_CLASS['core_user']->lang[$l_prefix . '_USER_TOTAL'];
-					break;
+				break;
 
 				default:
 					${$var_ary[1]} = $_CLASS['core_user']->lang[$l_prefix . '_USERS_TOTAL'];
-					break;
+				break;
 			}
 		}
 		unset($vars_online);

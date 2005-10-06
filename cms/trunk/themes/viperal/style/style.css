@@ -1,13 +1,13 @@
 body
 {
-    font-family: Verdana, Helvetica, sans-serif;
-    font-size: 10px;
+	font-family: Verdana, Helvetica, sans-serif;
+	font-size: 65%;
 
-    /* Needed for opera */
-    margin: 0px; 
+	/* Needed for opera */
+	margin: 0px; 
 
-    padding: 0px;
-    background: url(images/bg.gif);
+	padding: 0px;
+	background: url(images/bg.gif);
 }
 
 .logo
@@ -141,7 +141,6 @@ body
 	position: relative;
 	min-height: 13px;
 	color: black;
-	font-size: 110%;
 }
 
 /* 
@@ -150,7 +149,6 @@ body
 .centerblock
 {
 	width : 100%;
-	font-size: 100%;
     border-top:1px solid #ccc;
     border-bottom:1px solid #ccc;
 }
@@ -172,7 +170,8 @@ body
 /* 
 	SIDE BLOCKS
 */
-.blocks {
+.blocks
+{
 	position: relative;
 	margin: 0px 0px 10px 0px;
 	min-height: 12px;
@@ -201,7 +200,6 @@ body
     background: url(images/bg.gif);
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
-    font-size: 110%;
 }
 	
 .articles_block .title

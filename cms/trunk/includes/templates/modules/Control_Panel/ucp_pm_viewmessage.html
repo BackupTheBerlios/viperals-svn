@@ -26,7 +26,7 @@
 		<td class="gen">
 		<!-- LOOP $to_recipient -->
 			<a href="{ $to_recipient:U_VIEW }"><!-- IF { $to_recipient:COLOUR } --><span style="color:#{ $to_recipient:COLOUR }"><!-- ELSE --><span<!-- IF { $to_recipient:IS_GROUP} --> class="blue"<!-- ENDIF -->><!-- ENDIF -->{ $to_recipient:NAME }</span></a>&nbsp;
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $to_recipient -->
 		</td>
 	</tr>
 	<!-- ENDIF -->
@@ -37,7 +37,7 @@
 		<td class="gen">
 		<!-- LOOP $bcc_recipient -->
 			<a href="{ $bcc_recipient:U_VIEW }"><!-- IF { $bcc_recipient:COLOUR } --><span style="color:#{ $bcc_recipient:COLOUR }"><!-- ELSE --><span<!-- IF { $bcc_recipient:IS_GROUP } --> class="blue"<!-- ENDIF -->><!-- ENDIF -->{ $bcc_recipient:NAME }</span></a>&nbsp;
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $bcc_recipient -->
 		</td>
 	</tr>
 	<!-- ENDIF -->

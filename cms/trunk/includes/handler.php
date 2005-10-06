@@ -17,11 +17,13 @@
 ||  of the GNU General Public License version 2					||
 ||																||
 ||**************************************************************||
-*/
-// Add saving reports to a log file and its define ..
-// this will be core_handlers
 
-class core_error_handler
+$Id$
+*/
+
+// Add saving reports to a log file and its define ..
+
+class core_handler
 {
 	var $active;
 	var $previous_level;
@@ -80,18 +82,15 @@ class core_error_handler
 		switch ($option)
 		{
 			case 'start':
-
 				$start_time = explode(' ', microtime());
 				$start_time = $start_time[0] + $start_time[1];
 
 				$this->debug[$name]['start_time'] = $start_time;
 				$this->debug[$name]['queries_before_time'] = $_CLASS['core_db']->sql_time;
 				$this->debug[$name]['queries_before'] = $_CLASS['core_db']->num_queries;
-
 			break;
 
 			case 'stop':
-
 				if (!isset($this->debug[$name]))
 				{
 					return;
@@ -102,20 +101,16 @@ class core_error_handler
 
 				$this->debug[$name]['end_time'] = $end_time;
 				$this->debug[$name]['queries_after_time'] = $_CLASS['core_db']->sql_time;
-
 			break;
 
 			case 'remove':
-
 				if (isset($this->debug[$name]))
 				{
 					unset($this->debug[$name]);
 				}
-
 			break;
 
 			case 'get':
-
 				switch ($sub_option)
 				{
 					case 'time':
@@ -136,7 +131,6 @@ class core_error_handler
 						.'<br />Queries Time '.round($this->debug[$name]['queries_after_time'] - $this->debug[$name]['queries_before_time'], 4).' s<br />';
 					break;
 				}
-
 			break;
 		}
 	}
@@ -147,7 +141,7 @@ class core_error_handler
 
 		if ($this->report != ERROR_NONE)
 		{
-			echo $error;
+			//echo $error;
 
 			//damn windows
 			$errfile = str_replace('\\','/', $errfile);
@@ -165,7 +159,7 @@ class core_error_handler
 					return;
 				}
 
-				$errtype = ($errtype == E_NOTICE) ? 'E_NOTICE' : 'E_WARNING';
+				$errtype = ($errtype === E_NOTICE) ? 'E_NOTICE' : 'E_WARNING';
 				$this->error = array('type' => $errtype, 'error' => $error, 'file'=> $errfile, 'line' => $errline);
 				$this->format_error($errtype);
 
@@ -173,7 +167,6 @@ class core_error_handler
 			break;
 
 			case E_USER_ERROR:
-
 				$code = false;
 
 				if (mb_strpos($error, ':')) // there shouldn't be a 0 position
@@ -246,7 +239,7 @@ class core_error_handler
 
    function format_error($type)
    {
-		if ($this->report == ERROR_ONPAGE)
+		if ($this->report === ERROR_ONPAGE)
 		{
 			echo "PHP $type: in file <b>".$this->error['file'].'</b> on line <b>'.$this->error['line'].'</b>: <b>'.$this->error['error'].'</b><br/>';		
 		}

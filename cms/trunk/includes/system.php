@@ -32,7 +32,7 @@ function confirmation_image($code = false, $size = false)
 
 	if (extension_loaded('zlib') && !ob_get_length())
 	{
-		ob_start('ob_gzhandler');
+		@ob_start('ob_gzhandler');
 	}
 
 	$size = 24;

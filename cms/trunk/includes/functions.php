@@ -36,7 +36,8 @@ function check_bot_status($browser, $ip)
 
 	foreach ($bots_array as $bot)
 	{
-		if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $browser))
+		//if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $browser))
+		if ($bot['user_agent'] && mb_strpos($browser, $bot['user_agent']) === 0)
 		{
 			$is_bot = $bot['user_id'];
 		}

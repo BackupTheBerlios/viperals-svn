@@ -361,7 +361,7 @@ function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img,
 		$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_MOVED'];
 		$folder_img = 'folder_moved';
 		$folder_alt = 'VIEW_TOPIC_MOVED';
-		$status = 9;
+		//$status = 9;
 	}
 	else
 	{
@@ -369,7 +369,7 @@ function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img,
 		{
 			$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_LOCKED'];
 			$folder_img = ($unread) ? 'folder_locked_new' :'folder_locked';
-			$status = ($unread) ? 11 : 10;
+			//$status = ($unread) ? 11 : 10;
 		}
 		else
 		{
@@ -379,25 +379,25 @@ function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img,
 				case POST_ANNOUNCE:
 					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
 					$folder_img = ($unread) ? 'folder_announce_new' : 'folder_announce';
-					$status = ($unread) ? 8 : 7;
+					//$status = ($unread) ? 8 : 7;
 				break;
 	
 				case POST_STICKY:
 					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_STICKY'];
 					$folder_img = ($unread) ? 'folder_sticky_new' : 'folder_sticky';
-					$status = ($unread) ? 6 : 5;
+					//$status = ($unread) ? 6 : 5;
 				break;
 	
 				default:
 					if ($replies >= $config['hot_threshold'])
 					{
 						$folder_img = ($unread) ? 'folder_hot_new': 'folder_hot';
-						$status = ($unread) ? 4 : 3;
+						//$status = ($unread) ? 4 : 3;
 					}
 					else
 					{
 						$folder_img = ($unread) ? 'folder_new' : 'folder';
-						$status = ($unread) ? 2 : 1;
+						//$status = ($unread) ? 2 : 1;
 					}
 				break;
 			}
@@ -411,7 +411,7 @@ function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img,
 		$topic_type .= $_CLASS['core_user']->lang['VIEW_TOPIC_POLL'];
 	}
 
-	return $status;
+	//return $status;
 }
 
 // Display Attachments

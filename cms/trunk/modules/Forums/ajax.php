@@ -41,7 +41,7 @@ Switch (get_variable('mode', 'POST', false))
 		
 		if (!$forum_id || !$title || !$_CLASS['forums_auth']->acl_get('a_forum'))
 		{
-			die;
+			script_close();
 		}
 
 		$title = htmlentities($title, ENT_QUOTES, 'UTF-8');
@@ -59,7 +59,7 @@ Switch (get_variable('mode', 'POST', false))
 
 		if (!$topic_id || !$title )
 		{
-			die;
+			script_close();
 		}
 
 		$result = $_CLASS['core_db']->query('SELECT forum_id FROM ' . FORUMS_TOPICS_TABLE . ' WHERE topic_id = '.$topic_id);
@@ -68,7 +68,7 @@ Switch (get_variable('mode', 'POST', false))
 
 		if (!$row || !$_CLASS['forums_auth']->acl_get('m_edit', $row['forum_id']))
 		{
-			die;
+			script_close();
 		}
 
 		$title = mb_strtolower(htmlentities($title, ENT_QUOTES, 'UTF-8'));
@@ -86,7 +86,7 @@ Switch (get_variable('mode', 'POST', false))
 
 		if (!$topic_id)
 		{
-			die;
+			script_close();
 		}
 
 		$result = $_CLASS['core_db']->query('SELECT forum_id FROM ' . FORUMS_TOPICS_TABLE . ' WHERE topic_id = '.$topic_id);
@@ -95,7 +95,7 @@ Switch (get_variable('mode', 'POST', false))
 
 		if (!$row || !$_CLASS['forums_auth']->acl_get('m_lock', $row['forum_id']))
 		{
-			die;
+			script_close();
 		}
 
 		$status = ($lock) ? ITEM_LOCKED : ITEM_UNLOCKED;
@@ -115,7 +115,7 @@ Switch (get_variable('mode', 'POST', false))
 
 		if (!$forum_id || !$_CLASS['forums_auth']->acl_get('a_forum', $forum_id))
 		{
-			die;
+			script_close();
 		}
 
 		$status = ($lock) ? ITEM_LOCKED : ITEM_UNLOCKED;
@@ -130,4 +130,5 @@ Switch (get_variable('mode', 'POST', false))
 	break;
 }
 
+script_close();
 ?>

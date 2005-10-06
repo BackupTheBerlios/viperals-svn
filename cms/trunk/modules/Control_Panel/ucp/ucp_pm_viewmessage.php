@@ -11,9 +11,9 @@
 // 
 // -------------------------------------------------------------
 	
-function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
+function view_message($id, $mode, $folder_id, $msg_id, $folder, &$message_row)
 {
-	global $_CLASS, $_CORE_CONFIG, $site_file_root, $config;
+	global $_CLASS, $_CORE_CONFIG, $config;
 
 	$_CLASS['core_user']->add_lang('viewtopic');
 	$msg_id		= (int) $msg_id;
@@ -33,7 +33,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 	// Instantiate BBCode if need be
 	if ($message_row['bbcode_bitfield'])
 	{
-		require($site_file_root.'includes/forums/bbcode.php');
+		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 		$bbcode = new bbcode($message_row['bbcode_bitfield']);
 	}
 
@@ -46,7 +46,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 	$message = $message_row['message_text'];
 
 	// If the board has HTML off but the message has HTML on then we process it, else leave it alone
-	if ($message_row['enable_html'] && (!$config['auth_html_pm'] || !$_CLASS['auth']->acl_get('u_pm_html')))
+	if ($message_row['enable_html'] && !$config['auth_html_pm'])
 	{
 		$message = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $message);
 	}
@@ -81,7 +81,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 
 	if ($message_row['message_attachment'] && $config['allow_pm_attach'])
 	{
-		if ($config['auth_download_pm'] && $_CLASS['auth']->acl_get('u_pm_download'))
+		if ($config['auth_download_pm'])
 		{
 			$sql = 'SELECT * 
 				FROM ' . FORUMS_ATTACHMENTS_TABLE . "
@@ -145,7 +145,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		$_CLASS['core_db']->query($sql);
 	}
 
-	$signature = ($message_row['enable_sig'] && $config['allow_sig'] && $_CLASS['auth']->acl_get('u_sig') && $_CLASS['core_user']->optionget('viewsigs')) ? $user_info['user_sig'] : '';
+	$signature = ($message_row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->optionget('viewsigs')) ? $user_info['user_sig'] : '';
 	
 	// End signature parsing, only if needed
 	if ($signature)
@@ -154,7 +154,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		{
 			if (!isset($bbcode) || !$bbcode)
 			{
-				require($site_file_root.'includes/forums/bbcode.php');
+				require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 				$bbcode = new bbcode($user_info['user_sig_bbcode_bitfield']);
 			}
 
@@ -195,14 +195,14 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 		'EDITED_MESSAGE'	=> $l_edited_by,
 
 		'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']),
-		'U_REPORT'			=> ($config['auth_report_pm'] && $_CLASS['auth']->acl_get('u_pm_report')) ? generate_link('Forums&amp;file=report&amp;pm=' . $message_row['msg_id']) : '',
+		'U_REPORT'			=> (false) ? generate_link('Forums&amp;file=report&amp;pm=' . $message_row['msg_id']) : '',
 		'U_INFO'			=> ($_CLASS['auth']->acl_get('m_') && ($message_row['message_reported'] || $message_row['forwarded'])) ? generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']) : '',
-		'U_DELETE' 			=> ($_CLASS['auth']->acl_get('u_pm_delete')) ? generate_link("$url&amp;mode=compose&amp;action=delete&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
-		'U_AUTHOR_PROFILE' 		=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $author_id),
+		'U_DELETE' 			=> generate_link("$url&amp;mode=compose&amp;action=delete&amp;f=$folder_id&amp;p=" . $message_row['msg_id']),
+		'U_AUTHOR_PROFILE' 	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $author_id),
 		'U_EMAIL' 			=> $user_info['email'],
-		'U_QUOTE'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
-		'U_EDIT' 			=> (($message_row['message_time'] > time() - $config['pm_edit_time'] || !$config['pm_edit_time']) && $folder_id == PRIVMSGS_OUTBOX && $_CLASS['auth']->acl_get('u_pm_edit')) ? generate_link("$url&amp;mode=compose&amp;action=edit&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '', 
-		'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('u_sendpm')) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
+		'U_QUOTE'			=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
+		'U_EDIT' 			=> (($message_row['message_time'] > time() - $config['pm_edit_time'] || !$config['pm_edit_time']) && $folder_id == PRIVMSGS_OUTBOX) ? generate_link("$url&amp;mode=compose&amp;action=edit&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '', 
+		'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
 		'U_PREVIOUS_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=previous"),
 		'U_NEXT_PM'			=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=next"),
 
@@ -225,9 +225,9 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, $message_row)
 }	
 
 // Display Message History
-function message_history($msg_id, $user_id, $message_row, $folder)
+function message_history($msg_id, $user_id, &$message_row, $folder)
 {
-	global $config, $site_file_root, $_CLASS, $bbcode;
+	global $config, $_CLASS, $bbcode;
 
 	// Get History Messages (could be newer)
 	$sql = 'SELECT t.*, p.*, u.*
@@ -283,7 +283,7 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 
 	$title = ($sort_dir == 'a') ? $row['message_subject'] : $title;
 
-	if (sizeof($rowset) == 1)
+	if (count($rowset) === 1)
 	{
 		return false;
 	}
@@ -293,7 +293,7 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 	{
 		if (!class_exists('bbcode'))
 		{
-			require($site_file_root.'includes/forums/bbcode.php');
+			require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 		}
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
@@ -325,7 +325,7 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 		if ($id == $msg_id)
 		{
 			$next_history_pm = next($rowset);
-			$next_history_pm = (sizeof($next_history_pm)) ? (int) $next_history_pm['msg_id'] : 0;
+			$next_history_pm = empty($next_history_pm) ? 0 : (int) $next_history_pm['msg_id'];
 			$previous_history_pm = $prev_id;
 		}
 
@@ -341,8 +341,8 @@ function message_history($msg_id, $user_id, $message_row, $folder)
 			'U_MSG_ID'			=> $row['msg_id'],
 			'U_VIEW_MESSAGE'	=> generate_link("$url&amp;f=$folder_id&amp;p=" . $row['msg_id']),
 			'U_AUTHOR_PROFILE' 	=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$author_id),
-			'U_QUOTE'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=" . $folder_id . "&amp;p=" . $row['msg_id']) : '',
-			'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id'] && $_CLASS['auth']->acl_get('u_sendpm')) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $row['msg_id']) : '')
+			'U_QUOTE'			=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=" . $folder_id . "&amp;p=" . $row['msg_id']) : '',
+			'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $row['msg_id']) : '')
 		);
 		unset($rowset[$id]);
 		$prev_id = $id;
@@ -442,9 +442,9 @@ function get_user_informations($user_id, $user_row)
 		$user_row['rank_title'] = $user_row['rank_image'] = '';
 	}
 
-	if (!empty($user_row['user_allow_viewemail']) || $_CLASS['auth']->acl_get('a_email'))
+	if (!empty($user_row['user_allow_viewemail']))
 	{
-		$user_row['email'] = ($config['board_email_form'] && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id) : (($config['board_hide_emails'] && !$_CLASS['auth']->acl_get('a_email')) ? '' : 'mailto:' . $user_row['user_email']);
+		$user_row['email'] = ($config['board_email_form'] && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id) : (($config['board_hide_emails']) ? '' : 'mailto:' . $user_row['user_email']);
 	}
 	else
 	{

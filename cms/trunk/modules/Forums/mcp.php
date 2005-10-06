@@ -230,7 +230,6 @@ if (!$quick_mod)
 		case 'front':
 			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_front.php');
 			script_close(false);
-			//$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_front.html');
 		break;
 
 		case 'forum_view':
@@ -245,10 +244,6 @@ if (!$quick_mod)
 			
 		case 'post_details':
 			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_post.php');
-			
-			mcp_post_details($id, $mode, $action, $url);
-			
-			$this->display($_CLASS['core_user']->lang['MCP'], 'mcp_post.html');
 			script_close(false);
 		break;
 	}
@@ -502,7 +497,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 			{
 				$sql .= 'AND topic_approved = 1';
 			}
-			break;
+		break;
 
 		case 'viewtopic':
 			$type = 'posts';
@@ -512,11 +507,12 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 				FROM ' . FORUMS_POSTS_TABLE . "
 				$where_sql topic_id = $topic_id
 					AND post_time >= $min_time";
+
 			if (!$_CLASS['auth']->acl_get('m_approve', $forum_id))
 			{
 				$sql .= 'AND post_approved = 1';
 			}
-			break;
+		break;
 
 		case 'unapproved_posts':
 			$type = 'posts';
@@ -527,7 +523,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 				$where_sql forum_id IN (" . (($forum_id) ? $forum_id : implode(', ', get_forum_list('m_approve'))) . ')
 					AND post_approved = 0
 					AND post_time >= ' . $min_time;
-			break;
+		break;
 
 		case 'unapproved_topics':
 			$type = 'topics';
@@ -538,7 +534,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 				$where_sql forum_id IN (" . (($forum_id) ? $forum_id : implode(', ', get_forum_list('m_approve'))) . ')
 					AND topic_approved = 0
 					AND topic_time >= ' . $min_time;
-			break;
+		break;
 
 		case 'reports':
 			$type = 'reports';
@@ -563,7 +559,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 				$where_sql
 					AND p.post_id = r.post_id
 					$limit_time_sql";
-			break;
+		break;
 
 		case 'viewlogs':
 			$type = 'logs';
@@ -574,7 +570,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 				$where_sql forum_id IN (" . (($forum_id) ? $forum_id : implode(', ', get_forum_list('m_'))) . ')
 					AND log_time >= ' . $min_time . ' 
 					AND log_type = ' . LOG_MOD;
-			break;
+		break;
 	}
 
 	$sort_key = request_var('sk', $default_key);
@@ -589,7 +585,7 @@ function mcp_sorting($mode, &$sort_days, &$sort_key, &$sort_dir, &$sort_by_sql, 
 
 			$sort_by_sql = array('a' => 't.topic_first_poster_name', 't' => 't.topic_last_post_time', 'tt' => 't.topic_time', 'r' => (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? 't.topic_replies_real' : 't.topic_replies'), 's' => 't.topic_title', 'v' => 't.topic_views');
 			$limit_time_sql = ($min_time) ? "AND t.topic_last_post_time >= $min_time" : '';
-			break;
+		break;
 
 		case 'posts':
 			$limit_days = array(0 => $_CLASS['core_user']->lang['ALL_POSTS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);

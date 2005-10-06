@@ -12,52 +12,54 @@
 					<th width="22%">{ $L_AUTHOR }</th>
 					<th>{ $L_MESSAGE }</th>
 				</tr>
-				{section name=history_rowloop loop=$history_row}
+				<!-- LOOP $history_row -->
 
-				{ if $smarty.section.history_rowloop.index is even }<tr class="row1">{ else }<tr class="row2">{ /if }
-					<td rowspan="2" align="left" valign="top"><a name="{$history_row[history_rowloop].U_POST_ID}"></a>
+				<!-- IF { $history_row:#LOOP_INDEX }  % 2 --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+					<td rowspan="2" align="left" valign="top"><a name="{ $history_row:U_POST_ID }"></a>
 						<table width="150" cellspacing="0">
 							<tr>
-								<td align="center" colspan="2"><b class="postauthor">{$history_row[history_rowloop].AUTHOR_NAME}</b></td>
+								<td align="center" colspan="2"><b class="postauthor">{ $history_row:AUTHOR_NAME }</b></td>
 							</tr>
 						</table>
 					</td>
 
-					<td width="100%"{ if $history_row[history_rowloop].S_CURRENT_MSG } style="background-color:lightblue"{ /if }>
-					<div class="gensmall" style="float:left"><b>{$L_PM_SUBJECT}:</b>&nbsp;{$history_row[history_rowloop].SUBJECT}</div><div class="gensmall" style="float:right"><b>{$L_FOLDER}:</b>&nbsp;{$history_row[history_rowloop].FOLDER}</div>
+					<td width="100%"{ if $history_row:S_CURRENT_MSG } style="background-color:lightblue"{ /if }>
+					<div class="gensmall" style="float:left"><b>{ $L_PM_SUBJECT }:</b>&nbsp;{ $history_row:SUBJECT }</div><div class="gensmall" style="float:right"><b>{$L_FOLDER}:</b>&nbsp;{$history_row:FOLDER}</div>
 					</td>
 				</tr>
 
-				{ if $smarty.section.history_rowloop.index is even }<tr class="row1">{ else }<tr class="row2">{ /if }
+				<!-- IF { $history_row:#LOOP_INDEX }  % 2 --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
 					<td valign="top"><table width="100%" cellspacing="0">
 						<tr>
-							<td valign="top"><table width="100%" cellspacing="0" cellpadding="2">
-								<tr>
-									<td><div id="message_{$history_row[history_rowloop].U_POST_ID}"><div class="postbody">{$history_row[history_rowloop].MESSAGE}</div></div></td>
-								</tr>
-							</table></td>
+							<td valign="top">
+								<table width="100%" cellspacing="0" cellpadding="2">
+									<tr>
+										<td><div id="message_{ $history_row:U_POST_ID }"><div class="postbody">{ $history_row:MESSAGE }</div></div></td>
+									</tr>
+								</table>
+							</td>
 						</tr>
 						<tr>
 							<td><table width="100%" cellspacing="0">
 								<tr valign="middle">
 									<td width="100%">&nbsp;</td>
-									<td width="10" nowrap="nowrap">{$history_row[history_rowloop].MINI_POST_IMG}</td>
-									<td class="gensmall" nowrap="nowrap"><b>{$L_SENT_AT}:</b> {$history_row[history_rowloop].SENT_DATE}</td>
+									<td width="10" nowrap="nowrap">{ $history_row:MINI_POST_IMG }</td>
+									<td class="gensmall" nowrap="nowrap"><b>{ $L_SENT_AT }:</b> { $history_row:SENT_DATE }</td>
 								</tr>
 							</table></td>
 						</tr>
 					</table></td>
 				</tr>
 
-				{ if $smarty.section.history_rowloop.index is even }<tr class="row1">{ else }<tr class="row2">{ /if }
-					<td class="gensmall" align="center" height="28px"><a href="{$history_row[history_rowloop].U_VIEW_MESSAGE}">{$L_VIEW_PM}</a></td>
-					<td><div class="gensmall" style="float:left">&nbsp;{ if $history_row[history_rowloop].U_PROFILE }<a href="{$history_row[history_rowloop].U_PROFILE}">{$PROFILE_IMG}</a> { /if } { if $history_row[history_rowloop].U_EMAIL }<a href="{$history_row[history_rowloop].U_EMAIL}">{$EMAIL_IMG}</a> { /if }&nbsp;</div> <div class="gensmall" style="float:right">{ if $history_row[history_rowloop].U_QUOTE }<a href="{$history_row[history_rowloop].U_QUOTE}">{$QUOTE_IMG}</a> { /if } { if $history_row[history_rowloop].U_POST_REPLY_PM }<a href="{$history_row[history_rowloop].U_POST_REPLY_PM}">{$REPLY_IMG}</a>{ /if }&nbsp;</div></td>
+				<!-- IF { $history_row:#LOOP_INDEX }  % 2 --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+					<td class="gensmall" align="center" height="28px"><a href="{ $history_row:U_VIEW_MESSAGE }">{ $L_VIEW_PM }</a></td>
+					<td><div class="gensmall" style="float:left">&nbsp;<!-- IF { $history_row:U_AUTHOR_PROFILE } --><a href="{ $history_row:U_AUTHOR_PROFILE }">{ $PROFILE_IMG }</a> <!-- ENDIF --><!-- IF { $history_row:U_EMAIL } --> <a href="{ $history_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF -->&nbsp;</div> <div class="gensmall" style="float:right"><!-- IF { $history_row:U_QUOTE } --><a href="{ $history_row:U_QUOTE }">{ $QUOTE_IMG }</a> <!-- ENDIF --><!-- IF { $history_row:U_POST_REPLY_PM } --> <a href="{ $history_row:U_POST_REPLY_PM }">{ $REPLY_IMG }</a><!-- ENDIF -->&nbsp;</div></td>
 				</tr>
 
 				<tr>
 					<td class="spacer" colspan="2"><img src="images/spacer.gif" alt="" width="1" height="1" /></td>
 				</tr>
-				{ /section }
+				<!-- ENDLOOP -->
 			</table>
 		</div></td>
 	</tr>
