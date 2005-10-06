@@ -1,0 +1,52 @@
+<!-- DISPLAY_HEADER -->
+
+<script type="text/javascript" src="javascript/google_search/google_search.js"></script>
+
+{ $THEME_TABLE_OPEN }
+
+<form method="post" onsubmit="return google_search();" action="{ $GS_ACTION }">
+	<table  id="google_form" class="tablebg" width="100%" cellpadding="1" cellspacing="1">
+		<tbody>
+			<tr> 
+				<th>{ $L_SEARCH_QUERY }</th>
+			</tr>
+			<tr>
+				<td align="center" class="row1">
+				
+				<input id="query" name="query" size="15" maxlength="200" value="" type="text" /> 
+				<select id="search_type" name="search_type">
+					<option value="1" select="selected">This Site</option>
+					<option value="2">Web</option>
+				</select>
+				
+				<input class="button" name="submit" value="Search" type="submit" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+
+<div id="google_results">
+
+<!-- if { $google_results } -->
+	<!-- INCLUDE modules/google_search/results.html -->
+<!-- ENDIF -->
+
+</div>
+
+<div id="google_progress_bar" style="display: none">
+	<table class="tablebg" width="100%" cellpadding="1" cellspacing="1">
+		<tbody>
+			<tr>
+				<td align="center" class="row1">
+					<b>Search In Progress please Wait</b> <br/>
+					<img src="images/progress_bar.gif" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+{ $THEME_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

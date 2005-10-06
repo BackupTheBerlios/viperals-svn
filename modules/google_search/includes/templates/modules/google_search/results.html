@@ -1,0 +1,58 @@
+<br />
+
+<table class="tablebg" width="100%" cellpadding="1" cellspacing="1">
+	<tbody>
+		<tr> 
+			<th colspan="2">{ $L_SEARCH_RESULTS }</th>
+		</tr>
+		<!-- IF { $google_pagination } || { $spelling_suggestion } -->
+		<tr class="row2">
+			<td style="padding: 5px;" valign="middle" colspan="2">
+				<table width="100%" cellpadding="0" cellspacing="0">
+					<tbody>
+						<tr>
+				<!-- IF { $spelling_suggestion } --><td><font color="#cc0000">Did you mean: </font><a href="{ $link_spelling_suggestion } ">{ $spelling_suggestion }</a></td><!-- ENDIF -->
+				<!-- IF { $google_pagination } --><td align="right"><div style="padding-right: 5px; text-align: right;">{ $google_pagination }</div></td><!-- ENDIF -->
+						</tr>
+					</tbody>
+				</table>
+			</td>
+		</tr>
+		<!-- ENDIF -->
+		<tr>
+			<td class="spacer" colspan="2" height="7"></td>
+		</tr>
+		<!-- LOOP $google_result -->
+		<tr>
+			<td align="center" class="row1">
+				<b>{ $google_result:num }</b>
+			</td>
+			<td class="row1">
+				<a href="{ $google_result:url } "><b>{ $google_result:title }</b></a>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" class="row1">
+				<p>{ $google_result:snippet }</p>
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="2" height="7"></td>
+		</tr>
+		<!-- LOOPELSE -->
+		<tr class="row2">
+			<td align="center" colspan="2">
+				{ $L_RESULTS_FOUND }
+			</td>
+		</tr>
+		<!-- ENDLOOP -->
+
+		<!-- IF { $google_pagination } -->
+		<tr class="row2">
+			<td style="padding: 5px;" valign="middle" colspan="2">
+				<div style="padding-right: 5px; text-align: right;">{ $google_pagination }</div>
+			</td>
+		</tr>
+		<!-- ENDIF -->
+	</tbody>
+</table>
