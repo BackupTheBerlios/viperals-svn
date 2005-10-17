@@ -22,24 +22,17 @@ if (empty($_GET['sid']))
 //require(SITE_FILE_ROOT.'core.php');
 require('core.php');
 
-$mod = get_variable('mod', 'REQUEST', false);
-
-if (!$mod)
+if ($mod = get_variable('mod', 'REQUEST', false))
 {
-	die;
-}
-else
-{
-	$sql = 'SELECT * FROM '.CORE_MODULES_TABLE.'
-				WHERE module_type = ' . MODULE_NORMAL . "
-				AND module_name = '" . $_CLASS['core_db']->escape($mod) . "'";
+	$sql = 'SELECT * FROM ' . CORE_PAGES_TABLE . "
+				WHERE page_name = '" . $_CLASS['core_db']->escape($mod) . "'";
 
 	//Grab module data if it exsits
 	$result = $_CLASS['core_db']->query($sql);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
-	$status = $_CLASS['core_display']->add_module($row);
+	$status = $_CLASS['core_display']->process_page($row, 'ajax');
 
 	if ($status !== true)
 	{
@@ -47,13 +40,8 @@ else
 		script_close(false);
 	}
 
-	$_CORE_MODULE = $_CLASS['core_display']->get_module();
+	$_CLASS['core_display']->generate_page('ajax');
 }
-
-$path = SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/ajax.php';
-$_CLASS['core_user']->page = $_CORE_MODULE['module_name'];
-
-require_once($path);
 
 script_close(false);
 

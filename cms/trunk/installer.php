@@ -28,7 +28,7 @@ define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME')
 
 if (!extension_loaded('mbstring'))
 {
-	require_once(SITE_FILE_ROOT.'includes/compatiblity/mbstring.php');
+	require_once SITE_FILE_ROOT.'includes/compatiblity/mbstring.php';
 }
 
 set_magic_quotes_runtime(0);
@@ -46,8 +46,8 @@ if ((bool) ini_get('register_globals'))
 	}
 }
 
-require_once(SITE_FILE_ROOT.'includes/functions.php');
-require_once(SITE_FILE_ROOT.'includes/display/template.php');
+require_once SITE_FILE_ROOT.'includes/functions.php';
+require_once SITE_FILE_ROOT.'includes/display/template.php';
 
 load_class(false, 'core_template');
 
@@ -109,7 +109,7 @@ if ($stage === 5)
 {
 	if (file_exists(SITE_FILE_ROOT.'config.php'))
 	{
-		require_once(SITE_FILE_ROOT.'config.php');
+		require_once SITE_FILE_ROOT.'config.php';
 	}
 
 	$site_name		= get_variable('site_name', 'POST');
@@ -167,9 +167,9 @@ if ($stage === 5)
 
 	if (empty($error))
 	{
-		require_once(SITE_FILE_ROOT.'includes/tables.php');
-		require_once(SITE_FILE_ROOT.'includes/cache/cache.php');
-		require_once(SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php');
+		require_once SITE_FILE_ROOT.'includes/tables.php';
+		require_once SITE_FILE_ROOT.'includes/cache/cache.php';
+		require_once SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php';
 
 		load_class(false, 'core_cache', 'cache_'.$acm_type);
 
@@ -321,8 +321,8 @@ if ($stage === 4)
 	{
 		$user_prefix	= get_variable('user_prefix', 'POST');
 		$table_prefix	= get_variable('table_prefix', 'POST');
-		
-		require_once(SITE_FILE_ROOT.'includes/tables.php');
+
+		require_once SITE_FILE_ROOT.'includes/tables.php';
 	
 		$sql = 'SELECT * FROM ' . CORE_CONFIG_TABLE;
 		$result = $_CLASS['core_db']->query_limit($sql, 1);

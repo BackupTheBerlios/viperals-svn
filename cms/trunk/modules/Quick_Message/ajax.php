@@ -26,10 +26,12 @@ if (!defined('VIPERAL'))
     die;
 }
 
-global $table_prefix;
+global $_CORE_CONFIG, $_CLASS;
 
 if (!defined('QUICK_MESSAGE_TABLE'))
 {
+	global $table_prefix;
+		
 	define('QUICK_MESSAGE_TABLE', $table_prefix.'quick_message');
 }
 
@@ -52,7 +54,7 @@ switch ($mode)
 			die;
 		}
 
-		$message = trim(get_variable('message', 'POST', false));
+		$message = trim(get_variable('message', 'POST', ''));
 
 		if (!$message)
 		{
@@ -139,8 +141,6 @@ switch ($mode)
 	break;
 
 	case 'delete':
-		global $_CORE_CONFIG, $_CLASS;
-
 		$id = get_variable('id', 'GET', false, 'integer');
 
 		if (!$id)

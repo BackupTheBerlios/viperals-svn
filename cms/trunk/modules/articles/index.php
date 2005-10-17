@@ -28,8 +28,12 @@ if (!defined('VIPERAL'))
 
 if (!defined('ARTICLES_TABLE'))
 {
+	global $table_prefix;
+
 	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
+
+global $_CLASS;
 
 $_CLASS['core_user']->user_setup();
 

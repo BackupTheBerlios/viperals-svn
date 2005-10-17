@@ -44,7 +44,7 @@ define('SERVER_LOCAL', (strpos($_SERVER['HTTP_HOST'], 'localhost') === 0 || strp
 define('STRIP_SLASHES', get_magic_quotes_gpc());
 
 // Remove registered globals
-if ((bool) ini_get('register_globals'))
+if (ini_get('register_globals'))
 {
 	foreach ($_REQUEST as $var_name => $value)
 	{
@@ -57,12 +57,9 @@ if (!defined('SITE_FILE_ROOT'))
 	define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
 }
 
-// TEMP
-$site_file_root = SITE_FILE_ROOT;
-
 if (!extension_loaded('mbstring'))
 {
-	require_once(SITE_FILE_ROOT.'includes/compatiblity/mbstring.php');
+	require_once SITE_FILE_ROOT.'includes/compatiblity/mbstring.php';
 }
 
 mb_internal_encoding('UTF-8');
@@ -83,10 +80,10 @@ if (empty($_SERVER['REQUEST_URI']))
 	}
 }
 
-require_once(SITE_FILE_ROOT.'includes/display/template.php');
-require_once(SITE_FILE_ROOT.'includes/functions.php');
-require_once(SITE_FILE_ROOT.'includes/handler.php');
-require_once(SITE_FILE_ROOT.'config.php');
+require_once SITE_FILE_ROOT.'includes/display/template.php';
+require_once SITE_FILE_ROOT.'includes/functions.php';
+require_once SITE_FILE_ROOT.'includes/handler.php';
+require_once SITE_FILE_ROOT.'config.php';
 
 @register_shutdown_function('script_close');
 
@@ -96,7 +93,7 @@ load_class(false, 'core_handler');
 
 // Set error handler
 $_CLASS['core_handler']->start();
-//$_CLASS['core_handler']->stop();
+$_CLASS['core_handler']->stop();
 //error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 if (empty($site_db))
@@ -110,10 +107,10 @@ if (empty($site_db))
 	trigger_error('503:<p style="text-align:center">Site isn\'t Installed<br/><a href="installer.php">Click here to install</a></p>', E_USER_ERROR);
 }
 
-require_once(SITE_FILE_ROOT.'includes/tables.php');
-require_once(SITE_FILE_ROOT.'includes/db/'.$site_db['type'].'.php');
-require_once(SITE_FILE_ROOT.'includes/cache/cache.php');
-require_once(SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php');
+require_once SITE_FILE_ROOT.'includes/tables.php';
+require_once SITE_FILE_ROOT.'includes/db/'.$site_db['type'].'.php';
+require_once SITE_FILE_ROOT.'includes/cache/cache.php';
+require_once SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php';
 
 load_class(false, 'core_cache', 'cache_'.$acm_type);
 load_class(false, 'core_db', 'db_'.$site_db['type']);
@@ -205,12 +202,12 @@ if (VIPERAL === 'FEED')
 }
 
 // Load user based classes, and display options
-require(SITE_FILE_ROOT.'includes/session.php');
-require(SITE_FILE_ROOT.'includes/user.php');
-require(SITE_FILE_ROOT.'includes/auth/auth.php');
-require(SITE_FILE_ROOT.'includes/auth/auth_db.php');
-require(SITE_FILE_ROOT.'includes/display/blocks.php');
-require(SITE_FILE_ROOT.'includes/display/display.php');
+require SITE_FILE_ROOT.'includes/session.php';
+require SITE_FILE_ROOT.'includes/user.php';
+require SITE_FILE_ROOT.'includes/auth/auth.php';
+require SITE_FILE_ROOT.'includes/auth/auth_db.php';
+require SITE_FILE_ROOT.'includes/display/blocks.php';
+require SITE_FILE_ROOT.'includes/display/display.php';
 
 load_class(false, 'core_display');
 load_class(false, 'core_blocks');
@@ -242,7 +239,7 @@ $_CLASS['core_handler']->report = $_CORE_CONFIG['server']['error_options'];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
-	// error here
+	die;// error here
 }
 
 function get_memory_usage()

@@ -21,97 +21,100 @@
 $Id$
 */
 
-// Add departments
+/*$this->test = 'test';
+echo $this-> 'test';*/
 
-if (!defined('VIPERAL'))
+class page_contact
 {
-    die;
-}
-
-$_CLASS['core_user']->user_setup();
-$_CLASS['core_user']->add_lang();
-
-$error = '';
-
-if (!empty($_POST['preview']) || !empty($_POST['contact']))
-{
-	$data['MESSAGE']= trim(get_variable('message', 'POST', ''));
-	$data['NAME']	= get_variable('sender_name', 'POST', '');
-	$data['EMAIL']	= get_variable('sender_email', 'POST', '');
-
-	foreach ($data as $field => $value)
+	function page_contact()
 	{
-		if (!$value)
+		// Add departments
+		global $_CLASS;
+		
+		if (!defined('VIPERAL'))
 		{
-			$error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
-			unset($field, $value, $lang);
-        }
-        elseif ($field == 'EMAIL' && !check_email($value))
-        {
-			$error .= $_CLASS['core_user']->lang['BAD_EMAIL'].'<br />';
+			die;
 		}
-	} 
 
-	if (!empty($_POST['preview']) && $data['MESSAGE'])
-	{
-		send_feedback($data['NAME'],  $data['EMAIL'], $data['MESSAGE'], $preview = true);
-	}
-	elseif (!empty($_POST['contact']) && !$error)
-	{
-		send_feedback($data['NAME'], $data['EMAIL'], $data['MESSAGE']);
-	}
-
-	$sender_name = $data['NAME'];
-	$sender_email = $data['EMAIL'];
-	$message = $data['MESSAGE'];
-}
-else
-{
-	$sender_name = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['username'] : '';
-	$sender_email = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_email'] : '';
-	$message = '';
-}
-
-$_CLASS['core_template']->assign_array(array( 
-	'ERROR' 				=> $error,
-	'MESSAGE' 				=> $message,
-	'ACTION' 				=> generate_link($_CORE_MODULE['module_name']),
-	'SENDER_EMAIL' 			=> $sender_email,
-	'SENDER_NAME' 			=> $sender_name,
-));
-
-$_CLASS['core_template']->display('modules/Contact/index.html');
-
-// remove this function
-function send_feedback($sender_name, $sender_email, $message, $preview = false)
-{
-	global $_CLASS, $_CORE_CONFIG;
-
-	$_CLASS['core_template']->assign_array(array(
-		'SENT_FROM'		=> $sender_name,
-		'SENDER_NAME'	=> $sender_name,
-		'SENDER_EMAIL'	=> $sender_email,
-		'SENDER_IP'		=> $_CLASS['core_user']->ip,
-		'MESSAGE' 		=> $message,
-	));
-
-	$body = trim($_CLASS['core_template']->display('email/contact/index.txt', true));
-
-	if ($preview)
-	{
-		$_CLASS['core_template']->assign('PREVIEW', modify_lines($body, '<br/>'));
-
-		return;
+		$_CLASS['core_user']->user_setup();
+		$_CLASS['core_user']->add_lang();
+		
+		$this->error = '';
+		$this->preview = !empty($_POST['preview']);
+		
+		if ($this->preview || !empty($_POST['contact']))
+		{
+			$this->data['MESSAGE'] = trim(get_variable('message', 'POST', ''));
+			$this->data['NAME']	= get_variable('sender_name', 'POST', '');
+			$this->data['EMAIL']	= get_variable('sender_email', 'POST', '');
+		
+			foreach ($this->data as $field => $value)
+			{
+				if (!$value)
+				{
+					$this->error .= $_CLASS['core_user']->lang['ERROR_'.$field].'<br />';
+					unset($field, $value, $lang);
+				}
+				elseif ($field == 'EMAIL' && !check_email($value))
+				{
+					$this->error .= $_CLASS['core_user']->lang['BAD_EMAIL'].'<br />';
+				}
+			} 
+		
+			if (!$this->error)
+			{
+				$this->send_feedback();
+			}
+		}
+		else
+		{
+			$this->data['NAME'] = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['username'] : '';
+			$this->data['EMAIL'] = ($_CLASS['core_user']->is_user) ? $_CLASS['core_user']->data['user_email'] : '';
+			$this->data['MESSAGE'] = '';
+		}
+		
+		$_CLASS['core_template']->assign_array(array( 
+			'ERROR' 				=> $this->error,
+			'MESSAGE' 				=> $this->data['MESSAGE'],
+			'ACTION' 				=> generate_link($_CLASS['core_display']->page['page_name']),
+			'SENDER_EMAIL' 			=> $this->data['EMAIL'],
+			'SENDER_NAME' 			=> $this->data['NAME'],
+		));
+		
+		$_CLASS['core_template']->display('modules/Contact/index.html');
 	}
 
-	require_once(SITE_FILE_ROOT.'includes/mailer.php');
-
-	$mailer = new core_mailer;
-	$mailer->to($_CORE_CONFIG['email']['site_mail'], false);
-	$mailer->subject($_CLASS['core_user']->get_lang('SITE_FEEDBACK'));
-
-	$mailer->message = $body;
-
-	trigger_error($mailer->send() ? 'SEND_SUCCESSFULL' : $mailer->error);
+	// remove this function
+	function send_feedback()
+	{
+		global $_CLASS, $_CORE_CONFIG;
+	
+		$_CLASS['core_template']->assign_array(array(
+			'SENT_FROM'		=> $this->data['NAME'],
+			'SENDER_NAME'	=> $this->data['NAME'],
+			'SENDER_EMAIL'	=> $this->data['EMAIL'],
+			'SENDER_IP'		=> $_CLASS['core_user']->ip,
+			'MESSAGE' 		=> $this->data['MESSAGE'],
+		));
+	
+		$body = trim($_CLASS['core_template']->display('email/contact/index.txt', true));
+	
+		if ($this->preview)
+		{
+			$_CLASS['core_template']->assign('PREVIEW', modify_lines($body, '<br/>'));
+	
+			return;
+		}
+	
+		require_once SITE_FILE_ROOT.'includes/mailer.php';
+	
+		$mailer = new core_mailer;
+		$mailer->to($_CORE_CONFIG['email']['site_mail'], $_CORE_CONFIG['global']['site_name']);
+		$mailer->subject($_CLASS['core_user']->get_lang('SITE_FEEDBACK'));
+	
+		$mailer->message = $body;
+	
+		trigger_error($mailer->send() ? 'SEND_SUCCESSFULL' : $mailer->error);
+	}
 }
 ?>

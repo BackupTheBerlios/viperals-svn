@@ -32,40 +32,42 @@ class core_blocks
 	var $content;
 	var $template;
 
+	var $expire_updated;
+
 	/*
 		Check to see there's any blocks for the specified side
 		should be used to stop themes from displaying blank sides
 	*/
 	function check_side($side)
 	{
-// expand this for center blocks
 		static $side_check = array();
-		
-		if (isset($side_check[$side]))
+
+		settype($side, 'int');
+		$true_side = $side >> 1;
+
+		if (isset($side_check[$true_side]))
 		{
-			return $side_check[$side];
+			return $side_check[$true_side];
 		}
 
-		global $_CORE_MODULE, $_CLASS;
+		global $_CLASS;
 
-		$trueside = $side;
-
-		if ($_CLASS['core_user']->lang['DIRECTION'] == 'rtl')
+		if ($_CLASS['core_user']->lang['DIRECTION'] === 'rtl')
 		{
-			$side = ($side == BLOCK_LEFT) ? BLOCK_RIGHT : BLOCK_LEFT;
+			$side = ($side === BLOCK_LEFT) ? BLOCK_RIGHT : BLOCK_LEFT;
 		}
-			
-		if ($_CORE_MODULE['module_sides'] == BLOCK_ALL || ($side == BLOCK_LEFT && $_CORE_MODULE['module_sides'] == BLOCK_LEFT) || ($side == BLOCK_RIGHT && $_CORE_MODULE['module_sides'] == BLOCK_RIGHT))
+
+		if ($_CLASS['core_display']->page['page_blocks'] & $side)
 		{
 			$this->load_blocks();
 
-			if (!empty($this->blocks_array[$side]))
+			if (!empty($this->blocks_array[$side >> 1]))
 			{
-				return $side_check[$trueside] = $side;
+				return $side_check[$true_side] = $side;
 			}
 		}
 		
-		return $side_check[$trueside] = false;
+		return $side_check[$true_side] = false;
 	}
 
 	/*
@@ -121,17 +123,21 @@ class core_blocks
 	*/
 	function display($position)
 	{
+		settype($position, 'int');
+
 		$this->display_position = $position;
 
-		if ($position == BLOCK_LEFT || $position == BLOCK_RIGHT)
+		if ($position === BLOCK_LEFT || $position === BLOCK_RIGHT)
 		{
 			$position = $this->check_side($position);
-			
-			if ($position == false)
+
+			if ($position === false)
 			{
 				return false;
 			}
 		}
+
+		$position = ($position >> 1);
 
 		$this->load_blocks();
 
@@ -140,7 +146,6 @@ class core_blocks
 			return false;
 		}
 
-		static $expire_updated = false;
 		global $_CLASS;
 
 		$this->content = '';
@@ -155,12 +160,12 @@ class core_blocks
 				continue;
 			}
 
-			if ($this->block['block_expires'] && !$expire_updated && ($_CLASS['core_user']->time > $this->block['block_expires']))
+			if ($this->block['block_expires'] && !$this->expire_updated && ($_CLASS['core_user']->time > $this->block['block_expires']))
 			{
 				$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET block_status = ' . STATUS_DISABLED . ' WHERE block_expires > 0 AND block_expires <= ' . $_CLASS['core_user']->time);
 										
 				$_CLASS['core_cache']->destroy('blocks');
-				$expire_updated = true;
+				$this->expire_updated = true;
 
 				continue;
 			}
@@ -258,8 +263,7 @@ class core_blocks
 
 		//$this->content .= '<div style="text-align: center;"><br />'.$_CLASS['core_error_handler']->debug_get($this->block['block_title'], 'formated').'</div>';
 		//$_CLASS['core_error_handler']->debug_remove($this->block['block_title']);
-
-		if ($this->display_position == BLOCK_LEFT || $this->display_position == BLOCK_RIGHT)
+		if ($this->display_position === BLOCK_LEFT || $this->display_position === BLOCK_RIGHT)
 		{
 			$this->block_side();
 		}
@@ -289,7 +293,7 @@ class core_blocks
 			$edit_link = $expires = false;
 		}
 
-		$postion = ($this->display_position == BLOCK_MESSAGE_TOP) ? 'top' : 'bottom';
+		$postion = ($this->display_position === BLOCK_MESSAGE_TOP) ? 'top' : 'bottom';
 
 		$_CLASS['core_template']->assign_vars_array('message_block_'.$postion, array(
 				//'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),
@@ -306,7 +310,7 @@ class core_blocks
 	{
 		global $_CLASS;
 		
-		$position = ($this->display_position == BLOCK_RIGHT) ? 'right' : 'left';
+		$position = ($this->display_position === BLOCK_RIGHT) ? 'right' : 'left';
 		
 		$_CLASS['core_template']->assign_vars_array('block_'.$position, array(
 			//'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),
@@ -321,7 +325,7 @@ class core_blocks
 	{
 		$this->content = $this->block['block_content'];
 
-		if ($this->display_position == BLOCK_LEFT || $this->display_position == BLOCK_RIGHT)
+		if ($this->display_position === BLOCK_LEFT || $this->display_position === BLOCK_RIGHT)
 		{
 			$this->block_side();
 		}
@@ -340,7 +344,7 @@ class core_blocks
 		{
 			$this->content = $this->block['block_content'];
 
-			if ($this->display_position == BLOCK_LEFT || $this->display_position == BLOCK_RIGHT)
+			if ($this->display_position === BLOCK_LEFT || $this->display_position === BLOCK_RIGHT)
 			{
 				$this->block_side();
 			}
@@ -402,7 +406,7 @@ class core_blocks
 			$_CLASS['core_cache']->destroy('blocks');
 		}
 
-		if ($this->display_position == BLOCK_LEFT || $this->display_position == BLOCK_RIGHT)
+		if ($this->display_position === BLOCK_LEFT || $this->display_position === BLOCK_RIGHT)
 		{
 			$this->block_side();
 		}
@@ -416,7 +420,7 @@ class core_blocks
 	{
 		global $_CLASS;
 		
-		$position = ($this->display_position == BLOCK_TOP) ? 'center' : 'bottom';
+		$position = ($this->display_position === BLOCK_TOP) ? 'center' : 'bottom';
 		
 		$_CLASS['core_template']->assign_vars_array('block_'.$position , array(
 			'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),

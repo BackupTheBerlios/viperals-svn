@@ -593,7 +593,7 @@ function load_class($file, $name, $class = false)
 	{
 		if ($file)
 		{
-			include_once($file);
+			require_once $file;
 		}
 
 		$_CLASS[$name] =& new $class;
@@ -810,12 +810,9 @@ function select_theme($default = false, $system = false)
 	
 	while ($file = readdir($handle))
 	{
-		if (mb_strpos($file, '.') === false)
+		if (mb_strpos($file, '.') === false && file_exists(SITE_FILE_ROOT."themes/$file/index.php"))
 		{
-			if (file_exists(SITE_FILE_ROOT."themes/$file/index.php"))
-			{
-				$theme_array[] = array('file' => $file, 'template'=> true);
-			}
+			$theme_array[] = array('file' => $file, 'template'=> true);
 		}
 	}
 	

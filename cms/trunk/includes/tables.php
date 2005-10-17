@@ -60,15 +60,13 @@ define('ADMIN_NOT_LOGGED', 0);
 define('ADMIN_NOT_ADMIN', 1);
 define('ADMIN_IS_ADMIN', 2);
 
-// Block side defines
-define('BLOCK_NONE', 0);
-define('BLOCK_ALL', 1);
-define('BLOCK_LEFT', 2);
-define('BLOCK_RIGHT', 3);
-define('BLOCK_TOP', 4);
-define('BLOCK_BOTTOM', 5);
-define('BLOCK_MESSAGE_TOP', 6);
-define('BLOCK_MESSAGE_BOTTOM', 7);
+// Block side
+define('BLOCK_LEFT', (1 << 1));
+define('BLOCK_RIGHT', (1 << 2));
+define('BLOCK_TOP', (1 << 3));
+define('BLOCK_BOTTOM', (1 << 4));
+define('BLOCK_MESSAGE_TOP', (1 << 5));
+define('BLOCK_MESSAGE_BOTTOM', (1 << 6));
 
 define('BLOCKTYPE_FILE',0);
 define('BLOCKTYPE_FEED',1);
@@ -202,10 +200,8 @@ define('FORUMS_EXTENSION_GROUPS_TABLE', $table_prefix.'forums_extension_groups')
 define('ADMIN_AUTH_TABLE', $table_prefix.'admins');
 
 define('BLOCKS_TABLE', $table_prefix.'blocks');
-
 define('CORE_CONFIG_TABLE', $table_prefix.'config');
-define('CORE_MODULES_TABLE', $table_prefix.'modules');
-
+define('CORE_PAGES_TABLE', $table_prefix.'pages');
 define('SMILIES_TABLE', $table_prefix.'smilies');
 
 define('USER_GROUP_TABLE', $table_prefix.'groups_members');

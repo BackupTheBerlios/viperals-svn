@@ -26,10 +26,12 @@ if (!defined('VIPERAL'))
     die;
 }
 
-global $table_prefix;
+global $_CLASS, $_CORE_CONFIG;
 
 if (!defined('QUICK_MESSAGE_TABLE'))
 {
+	global $table_prefix;
+
 	define('QUICK_MESSAGE_TABLE', $table_prefix.'quick_message');
 }
 

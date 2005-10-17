@@ -31,62 +31,125 @@ class core_display
 
 	var $theme = false;
 	var $homepage = false;
-	var $modules = array();
+
+	var $pages_holding = array();
+	var $page = array();
 
 	var $copyright = 'Powered by <a href="http://www.viperal.com">CMS alpha-dev</a> (c) 2004 - 2005 Ryan Marshall ( Viperal )';
 
 	/*
 		Handles sorting and auth'ing of modules
 	*/
-	function add_module($module, $homepage = true)
+	function process_page($page, $type = 'page')
 	{
-		global $_CLASS;
-
-		if (!$module || !file_exists(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/index.php'))
+		if (!$page)
 		{
 			return '404:_PAGE_NOT_FOUND';
 		}
 
-		if ($module['module_status'] != STATUS_ACTIVE)
+		global $_CLASS;
+
+		settype($page['page_status'], 'int');
+		settype($page['page_type'], 'int');
+		settype($page['page_status'], 'int');
+		settype($page['page_blocks'], 'int');
+
+		if ($page['page_status'] !== STATUS_ACTIVE)
 		{
-			if ($module['module_status'] == STATUS_DISABLED && $_CLASS['core_auth']->admin_auth('modules'))
+			if ($page['page_status'] === STATUS_DISABLED && $_CLASS['core_auth']->admin_auth('pages'))
 			{
-				$_CLASS['core_display']->message = '<b>Module '.$module['module_name'].' Isn\'t Active</b><br />';
+				$_CLASS['core_display']->message = '<b>Module '.$page['page_name'].' Isn\'t Active</b><br />';
 			}
 			else
 			{
-				return '_MODULE_NOT_ACTIVE';
+				return '_PAGE_NOT_ACTIVE';
 			}
 		}
 
-		//authization check here
-		$module['module_auth'] = ($module['module_auth']) ? unserialize($module['module_auth']) : '';
-
-		if (($module['module_auth'] && !$_CLASS['core_auth']->auth($module['module_auth'])) && !$_CLASS['core_auth']->admin_power('modules'))
+		switch ($type)
 		{
-			return '_MODULE_NOT_AUTH';
+			case 'admin':
+				if (!$_CLASS['core_auth']->admin_power($_CORE_MODULE['module_name']))
+				{
+					trigger_error('NOT_AUTH', E_USER_ERROR);
+				}
+				
+				if (file_exists(SITE_FILE_ROOT.'admin/'.$page['page_name'].'.php'))
+				{
+					$page['page_location'] = SITE_FILE_ROOT.'admin/'.$page['page_name'].'.php';
+				}
+				elseif (file_exists(SITE_FILE_ROOT.'modules/'.$page['page_name'].'/admin/index.php'))
+				{
+					$page['page_location'] = SITE_FILE_ROOT.'modules/'.$page['page_name'].'/admin/index.php';
+				}
+				else
+				{
+					return '404:_PAGE_NOT_FOUND';
+				}
+			break;
+			
+			case 'ajax':
+				$page['page_location'] = SITE_FILE_ROOT.'modules/'.$page['page_name'].'/ajax.php';
+
+			default:
+				//authization check here
+				$page['page_auth'] = ($page['page_auth']) ? @unserialize($page['page_auth']) : '';
+		
+				if (($page['page_auth'] && !$_CLASS['core_auth']->auth($page['page_auth'])) && !$_CLASS['core_auth']->admin_power('pages'))
+				{
+					return '_PAGE_NOT_AUTH';
+				}
+	
+				if (!$page['page_location'])
+				{
+					$page['page_location'] = SITE_FILE_ROOT.'modules/'.$page['page_name'].'/index.php';
+				}
+
+				if (!file_exists($page['page_location']))
+				{
+					return '404:_PAGE_NOT_FOUND';
+				}
+			break;
 		}
 
-		//first module control the sides.
-		if (!empty($this->modules))
+		//first page control the sides.
+		if (!empty($this->pages_holding))
 		{
-			$module['module_sides'] = $this->modules[0]['module_sides'];
+			$page['page_sides'] = $this->pages_holding[0]['page_sides'];
+		}
+		else
+		{
+			$_CLASS['core_user']->page = $page['page_name'];
 		}
 
-		$this->modules[] = $module;
+		$this->pages_holding[] = $page;
 
 		return true;
 	}
 
 	/*
-		Returns parsed module data
+		Returns parsed page data
 	*/
-	function get_module()
+	function generate_page($type = 'page')
 	{
-		if (isset($this->modules))
+		if (!empty($this->pages_holding))
 		{
 			// this also unsets $this->modules
-			return array_shift($this->modules);
+			$this->page = array_shift($this->pages_holding);
+
+			if ($this->page['page_location'])
+			{
+				require_once $this->page['page_location'];
+				
+				$class_name = $type.'_'.$this->page['page_name'];
+
+				if (class_exists($class_name))
+				{
+					$module = new $class_name;
+				}
+			}
+
+			return true;
 		}
 
 		return false;
@@ -177,6 +240,9 @@ class core_display
 		$this->header['js'][] = "<script type=\"text/javascript\">\nvar cms_session_id = '{$_CLASS['core_user']->data['session_id']}';\nvar cms_cookie_path = '{$_CORE_CONFIG['server']['cookie_path']}';\nvar cms_cookie_domain = '{$_CORE_CONFIG['server']['cookie_domain']}';\n</script>";
 		$this->header['meta'][] = '<base href="'.generate_base_url().'" />';
 
+		$this->header['meta'][] = '<meta name="description" content="Development Site for Viperal CMS" />';
+		$this->header['meta'][] = '<meta name="keywords" content="viperal, cms, php, mysql, postgresql, postgres, sqlite, nuke, community, forums, bulletin, boards, javascript, open source, GPL, online, html" />';
+		
 		$_CLASS['core_template']->assign_array(array(
 			'SITE_LANG'			=>	$_CLASS['core_user']->lang['LANG'],
 			'SITE_TITLE'		=>	$_CORE_CONFIG['global']['site_name'].': '.(is_array($_CORE_MODULE['module_title']) ? implode(' &gt; ', $_CORE_MODULE['module_title']) : $_CORE_MODULE['module_title']),
@@ -217,9 +283,14 @@ class core_display
 			script_close($save);
 		}
 
-		if ($_CORE_MODULE = $this->get_module())
+		if ($this->generate_page())
 		{
-			require(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/index.php');
+// TEMP
+//$_CORE_MODULE =& $_CLASS['core_display']->page;
+
+		//	require(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/index.php');
+			return;
+
 		}
 
 		$this->displayed['footer'] = true;

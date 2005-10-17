@@ -27,11 +27,12 @@ if (!defined('VIPERAL'))
     die();
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
-load_class($site_file_root.'includes/forums/auth.php', 'forums_auth');
-$_CLASS['auth'] =& $_CLASS['forums_auth'];
+global $_CLASS, $_CORE_CONFIG;
 
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
+require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
+
+$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
@@ -62,30 +63,25 @@ $ranks = obtain_ranks();
 // What do you want to do today? ... oops, I think that line is taken ...
 switch ($mode)
 {
-
-	case 'forum_leaders':
+	case 'leaders':
 		// Display a listing of board admins, moderators
-
-		$_CLASS['core_user']->add_lang('groups', 'Forums');
+		//$_CLASS['core_user']->add_lang('groups', 'Forums');
 		
 		$page_title = $_CLASS['core_user']->lang['LEADER'];
 		$template_html = 'memberlist_leaders.html';
 
-		$user_ary = $_CLASS['auth']->acl_get_list(false, array('a_', 'm_'), false);
-
+		$user_ary = $_CLASS['forums_auth']->acl_get_list(false, 'm_', false);
 		$admin_id_ary = $mod_id_ary = $forum_id_ary = array();
+
 		foreach ($user_ary as $forum_id => $forum_ary)
 		{
-			foreach ($forum_ary as $auth_option => $id_ary)
-			{
-				(!$forum_id && $auth_option == 'a_') ? $admin_id_ary += $id_ary : $mod_id_ary += $id_ary;
+			$mod_id_ary += $forum_ary['m_'];
 
-				if ($forum_id)
+			if ($forum_id)
+			{
+				foreach ($forum_ary['m_'] as $id)
 				{
-					foreach ($id_ary as $id)
-					{
-						$forum_id_ary[$id][] = $forum_id;
-					}
+					$forum_id_ary[$id][] = $forum_id;
 				}
 			}
 		}
@@ -112,21 +108,21 @@ switch ($mode)
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$which_row = (in_array($row['user_id'], $admin_id_ary)) ? 'admin' : 'mod';
+			$which_row = in_array($row['user_id'], $admin_id_ary) ? 'admin' : 'mod';
 
 			$s_forum_select = '';
 			if ($which_row == 'mod' && sizeof(array_diff(array_keys($forums), $forum_id_ary[$row['user_id']])))
 			{
 				foreach ($forum_id_ary[$row['user_id']] as $forum_id)
 				{
-					if (isset($forums[$forum_id]) && $_CLASS['auth']->acl_get('f_list', $forum_id))
+					if (isset($forums[$forum_id]) && $_CLASS['forums_auth']->acl_get('f_list', $forum_id))
 					{
 						$s_forum_select .= '<option value="">' . $forums[$forum_id] . '</option>';
 					}
 				}
 			}
 			
-			if ($row['group_type'] == GROUP_HIDDEN && !$_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel') && $row['ug_user_id'] != $_CLASS['core_user']->data['user_id'])
+			if ($row['group_type'] == GROUP_HIDDEN && $row['ug_user_id'] != $_CLASS['core_user']->data['user_id'])
 			{
 				$group_name = $_CLASS['core_user']->get_lang('UNDISCLOSED');
 				$u_group = '';
@@ -153,7 +149,7 @@ switch ($mode)
 
 				'U_GROUP'		=> $u_group,
 				'U_VIEWPROFILE'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['user_id']),
-				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$row['user_id']) : '')
+				'U_PM'			=> ($_CLASS['forums_auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$row['user_id']) : '')
 			);
 		}
 		$_CLASS['core_db']->free_result($result);
@@ -237,7 +233,7 @@ switch ($mode)
 				if ($submit && @extension_loaded('xml'))
 				{
 					// Add class loader
-					require_once($site_file_root.'includes/forums/functions_messenger.php');
+					require_once(SITE_FILE_ROOT.'includes/forums/functions_messenger.php');
 
 					$subject = sprintf($_CLASS['core_user']->lang['IM_JABBER_SUBJECT'], $_CLASS['core_user']->data['username'], $config['server_name']);
 					$message = $_POST['message'];
@@ -367,7 +363,7 @@ switch ($mode)
 		*/
 
 		// Change post_count_sql to an forum_id array the user is able to see
-		if ($permission_array = $_CLASS['auth']->acl_getf('f_read'))
+		if ($permission_array = $_CLASS['forums_auth']->acl_getf('f_read'))
 		{
 			$post_count_sql = 'AND f.forum_id IN (' . implode(', ', array_keys($permission_array)) . ')';
 	
@@ -427,7 +423,7 @@ switch ($mode)
 		if ($member['user_sig_bbcode_bitfield'] && $member['user_sig'])
 		{
 			// Add class loader
-			require_once($site_file_root.'includes/forums/bbcode.php');
+			require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
 			$bbcode = new bbcode();
 			$bbcode->bbcode_second_pass($member['user_sig'], $member['user_sig_bbcode_uid'], $member['user_sig_bbcode_bitfield']);
 		}
@@ -516,7 +512,7 @@ switch ($mode)
 			trigger_error('NO_EMAIL');
 		}
 
-		if (!$_CLASS['auth']->acl_get('u_sendemail'))
+		if (!$_CLASS['forums_auth']->acl_get('u_sendemail'))
 		{
 			trigger_error('NO_EMAIL');
 		}
@@ -556,7 +552,7 @@ switch ($mode)
 			}
 			
 			// Can we send email to this user?
-			if (!$row['user_allow_viewemail'] && !$_CLASS['auth']->acl_get('a_user'))
+			if (!$row['user_allow_viewemail'] && !$_CLASS['forums_auth']->acl_get('a_user'))
 			{
 				trigger_error('NO_EMAIL');
 			}
@@ -575,7 +571,7 @@ switch ($mode)
 				trigger_error('NO_TOPIC');
 			}
 
-			if (!$_CLASS['auth']->acl_get('f_read', $row['forum_id']))
+			if (!$_CLASS['forums_auth']->acl_get('f_read', $row['forum_id']))
 			{
 				trigger_error('NO_FORUM_READ');
 			}
@@ -730,7 +726,7 @@ switch ($mode)
 		$form	= $window = request_var('form', '');
 		$field	= request_var('field', 'username');
 
-		if ($mode == 'searchuser' && ($config['load_search'] || $_CLASS['auth']->acl_get('a_')))
+		if ($mode == 'searchuser' && ($config['load_search'] || $_CLASS['forums_auth']->acl_get('a_')))
 		{
 			$username	= request_var('username', '');
 			$email		= request_var('email', '');
@@ -784,7 +780,7 @@ switch ($mode)
 			$sql_where .= (sizeof($joined) > 1) ? " AND u.user_reg_date " . $find_key_match[$joined_select] . ' ' . gmmktime(0, 0, 0, intval($joined[1]), intval($joined[2]), intval($joined[0])) : '';
 			$sql_where .= (sizeof($active) > 1) ? " AND u.user_last_visit " . $find_key_match[$active_select] . ' ' . gmmktime(0, 0, 0, $active[1], intval($active[2]), intval($active[0])) : '';
 
-			if ($ipdomain && $_CLASS['auth']->acl_get('m_ip'))
+			if ($ipdomain && $_CLASS['forums_auth']->acl_get('m_ip'))
 			{
 				$ips = (preg_match('#[a-z]#', $ipdomain)) ? implode(', ', preg_replace('#([0-9]{1,3}\.[0-9]{1,3}[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})#', "'\\1'", gethostbynamel($ipdomain))) : "'" . str_replace('*', '%', $ipdomain) . "'";
 
@@ -863,7 +859,7 @@ switch ($mode)
 					$group_row['group_type'] = 'HIDDEN';
 					
 					// Check for membership or special permissions
-					if (!$_CLASS['auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel') && $group_row['user_id'] != $_CLASS['core_user']->data['user_id'])
+					if (!$_CLASS['forums_auth']->acl_gets('a_group', 'a_groupadd', 'a_groupdel') && $group_row['user_id'] != $_CLASS['core_user']->data['user_id'])
 					{
 						trigger_error('NO_GROUP');
 					}
@@ -914,7 +910,7 @@ switch ($mode)
 				'AVATAR_IMG'	=> $avatar_img,
 				'RANK_IMG'		=> $rank_img,
 
-				'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm') && $group_row['group_receive_pm'] && $config['allow_mass_pm']) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;g='.$group_id) : '',)
+				'U_PM'			=> ($_CLASS['forums_auth']->acl_get('u_sendpm') && $group_row['group_receive_pm'] && $config['allow_mass_pm']) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;g='.$group_id) : '',)
 			);
 
 			$sql_fields = ', ug.member_status';
@@ -956,6 +952,8 @@ switch ($mode)
 		// Build a relevant pagination_url
 		$global_var = ($submit) ? '_POST' : '_GET';
 
+		global $$global_var;
+
 		foreach ($$global_var as $key => $var)
 		{
 			// what don't we need ?
@@ -965,14 +963,14 @@ switch ($mode)
 			}
 			
 			$pagination_url .= '&amp;' . $key . '=' . urlencode(htmlspecialchars($var));
-			$pagination_url2 .= ($key != 'start') ? '&amp;' . $key . '=' . urlencode(htmlspecialchars($var)) : '';
+			$pagination_url2 .= ($key !== 'start') ? '&amp;' . $key . '=' . urlencode(htmlspecialchars($var)) : '';
 		}
 
 		$u_hide_find_member = $pagination_url;
 		$pagination_url .= (($mode) ? '&amp;mode='.$mode : '') . (($first_char) ? '&amp;first_char='.$first_char : '');
 
 		// Some search user specific data
-		if ($mode == 'searchuser' && ($config['load_search'] || $_CLASS['auth']->acl_get('a_')))
+		if ($mode == 'searchuser' && ($config['load_search'] || $_CLASS['forums_auth']->acl_get('a_')))
 		{
 			$_CLASS['core_template']->assign_array(array(
 				'USERNAME'	=> $username,
@@ -1066,7 +1064,7 @@ switch ($mode)
 		'JABBER_IMG'	=> $_CLASS['core_user']->img('btn_jabber', $_CLASS['core_user']->lang['JABBER']),
 		'SEARCH_IMG'	=> $_CLASS['core_user']->img('btn_search', $_CLASS['core_user']->lang['SEARCH']),
 
-		'U_FIND_MEMBER'		=> (!empty($config['load_search']) || $_CLASS['auth']->acl_get('a_')) ? generate_link('Members_List&amp;mode=searchuser') : '',
+		'U_FIND_MEMBER'		=> (!empty($config['load_search']) || $_CLASS['forums_auth']->acl_get('a_')) ? generate_link('Members_List&amp;mode=searchuser') : '',
 		'U_HIDE_FIND_MEMBER'=> ($mode == 'searchuser') ? generate_link($u_hide_find_member) : '',
 		'U_SORT_USERNAME'	=> generate_link($pagination_url . '&amp;sk=a&amp;sd=' . (($sort_key == 'a' && $sort_dir == 'a') ? 'd' : 'a')),
 		'U_SORT_FROM'		=> generate_link($pagination_url . '&amp;sk=b&amp;sd=' . (($sort_key == 'b' && $sort_dir == 'a') ? 'd' : 'a')),
@@ -1082,7 +1080,7 @@ switch ($mode)
 		'U_SORT_RANK'		=> generate_link($pagination_url . '&amp;sk=l&amp;sd=' . (($sort_key == 'l' && $sort_dir == 'a') ? 'd' : 'a')),
 		'U_LIST_CHAR'		=> generate_link($pagination_url . '&amp;sk=a&amp;sd=' . (($sort_key == 'l' && $sort_dir == 'a') ? 'd' : 'a')),
 
-		'S_SEND_MESSAGE'	=> ($_CLASS['auth']->acl_get('u_sendpm')) ? true : false,
+		'S_SEND_MESSAGE'	=> ($_CLASS['forums_auth']->acl_get('u_sendpm')) ? true : false,
 		'S_SHOW_GROUP'		=> ($mode == 'group') ? true : false,
 		'S_MODE_SELECT'		=> $s_sort_key,
 		'S_ORDER_SELECT'	=> $s_sort_dir,
@@ -1135,9 +1133,9 @@ function show_profile($data)
 
 	get_user_rank($data['user_rank'], $data['user_posts'], $rank_title, $rank_img);
 	
-	if (!empty($data['user_allow_viewemail']) || $_CLASS['auth']->acl_get('a_email'))
+	if (!empty($data['user_allow_viewemail']) || $_CLASS['forums_auth']->acl_get('a_email'))
 	{
-		$email = ($config['board_email_form'] && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id) : (($config['board_hide_emails'] && !$_CLASS['auth']->acl_get('a_email')) ? '' : 'mailto:' . $data['user_email']);
+		$email = ($config['board_email_form'] && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id) : (($config['board_hide_emails'] && !$_CLASS['forums_auth']->acl_get('a_email')) ? '' : 'mailto:' . $data['user_email']);
 	}
 	else
 	{
@@ -1161,8 +1159,8 @@ function show_profile($data)
 		'ICQ_STATUS_IMG'=> ($data['user_icq']) ? '<img src="http://web.icq.com/whitepages/online?icq=' . $data['user_icq'] . '&amp;img=5" width="18" height="18" border="0" />' : '',
 
 		'U_PROFILE'		=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$user_id),
-		'U_SEARCH_USER'	=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($data['username']) . '&amp;show_results=posts') : '',
-		'U_PM'			=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$user_id) : '',
+		'U_SEARCH_USER'	=> ($_CLASS['forums_auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($data['username']) . '&amp;show_results=posts') : '',
+		'U_PM'			=> ($_CLASS['forums_auth']->acl_get('u_sendpm')) ? generate_link('Control_Panel&amp;i=pm&amp;mode=compose&amp;u='.$user_id) : '',
 		'U_EMAIL'		=> $email,
 		'U_WWW'			=> ($data['user_website']) ? $data['user_website'] : '',
 		'U_ICQ'			=> ($data['user_icq']) ? generate_link('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$user_id) : '',

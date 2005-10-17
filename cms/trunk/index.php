@@ -22,11 +22,11 @@ $Id$
 */
 
 define('VIPERAL', 'CMS');
-
+//print_r($_GET);die;
 error_reporting(E_ALL);
 
-//require(SITE_FILE_ROOT.'core.php');
-require('core.php');
+//require_once SITE_FILE_ROOT.'core.php';
+require_once 'core.php';
 
 $mod = get_variable('mod', 'REQUEST', false);
 
@@ -36,19 +36,32 @@ if (!$mod)
 	$_CLASS['core_display']->homepage = true;
 	$_CORE_CONFIG['global']['index_page'] = 'articles';
 
-	$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_MODULES_TABLE." WHERE module_name = '{$_CORE_CONFIG['global']['index_page']}'");
+	$sql = 'SELECT * FROM ' . CORE_PAGES_TABLE . "
+				WHERE page_name = '".$_CLASS['core_db']->escape($_CORE_CONFIG['global']['index_page'])."'";
+	$result = $_CLASS['core_db']->query($sql);
 
 	While ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$_CLASS['core_display']->add_module($row);
+		$_CLASS['core_display']->process_page($row);
 	}
-
 	$_CLASS['core_db']->free_result($result);
 
-	if (!($_CORE_MODULE = $_CLASS['core_display']->get_module()))
+	if (!$_CLASS['core_display']->generate_page())
 	{
-		$_CORE_MODULE['module_sides'] = BLOCK_ALL;
-		$_CORE_MODULE += array('module_name' => '', 'module_title' => ''); // temp
+		/*
+		$blocks = 0;
+		$blocks |= BLOCK_LEFT;
+		$blocks |= BLOCK_RIGHT;
+		$blocks |= BLOCK_TOP;
+		$blocks |= BLOCK_BOTTOM;
+		$blocks |= BLOCK_MESSAGE_TOP;
+		$blocks |= BLOCK_MESSAGE_BOTTOM;
+		echo $blocks;
+		*/
+
+		$blocks = 126;
+
+		$_CLASS['core_display']->page = array('page_blocks' => $blocks, 'page_name' => '', 'page_title' => '');
 
 		$_CLASS['core_user']->user_setup();
 		$_CLASS['core_display']->display_header();
@@ -60,13 +73,13 @@ if (!$mod)
 		}
 	
 		$_CLASS['core_display']->display_footer();
-	}
+	}	
 }
 else
 {
 	if ($mod === 'system')
 	{
-		require_once(SITE_FILE_ROOT.'includes/system.php');
+		require_once SITE_FILE_ROOT.'includes/system.php';
 
 		$mode = get_variable('mode', 'REQUEST', false);
 
@@ -81,29 +94,23 @@ else
 		script_close(false);
 	}
 
-	$sql = 'SELECT * FROM '.CORE_MODULES_TABLE.'
-				WHERE module_type = ' . MODULE_NORMAL . "
-				AND module_name = '" . $_CLASS['core_db']->escape($mod) . "'";
+	$sql = 'SELECT * FROM '.CORE_PAGES_TABLE.'
+				WHERE page_type = ' . MODULE_NORMAL . "
+				AND page_name = '" . $_CLASS['core_db']->escape($mod) . "'";
 
-	//Grab module data if it exsits
 	$result = $_CLASS['core_db']->query($sql);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
-	$status = $_CLASS['core_display']->add_module($row);
+	$status = $_CLASS['core_display']->process_page($row);
 	
 	if ($status !== true)
 	{
 		trigger_error($status, E_USER_ERROR);
 	}
 
-	$_CORE_MODULE = $_CLASS['core_display']->get_module();
+	$_CLASS['core_display']->generate_page();
 }
-
-$path = SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/index.php';
-$_CLASS['core_user']->page = $_CORE_MODULE['module_name'];
-
-require_once($path);
 
 script_close();
 

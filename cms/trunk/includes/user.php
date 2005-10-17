@@ -205,7 +205,6 @@ class core_user extends sessions
 		}
 
 		$this->user_setup = true;
-		$this->data['user_unread_privmsg'] = 0; // TEMP
 		
 		if (!is_null($theme))
 		{
@@ -281,23 +280,23 @@ class core_user extends sessions
 
 		if (!$img_file || !ereg('/', $img_file))
 		{
-			global $_CORE_MODULE, $_CLASS;
+			global $_CLASS;
 			
-			$module = ($module) ? $module : $_CORE_MODULE['module_name'];
+			$module = ($module) ? $module : $_CLASS['core_display']->page['page_name'];
 			$lang = ($lang) ? $lang : $this->lang_name;
 
 			if (file_exists($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file"))
 			{
-				include($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file");
+				include $_CLASS['core_display']->theme_path."/images/modules/$module/$img_file";
 			}
 			else
 			{
-				include(SITE_FILE_ROOT.'modules/'.$module."/images/$img_file");
+				include SITE_FILE_ROOT.'modules/'.$module."/images/$img_file";
 			}
 		}
 		else
 		{
-			include($img_file.'.php');
+			include $img_file.'.php';
 		}
 	}
 	
@@ -351,7 +350,7 @@ class core_user extends sessions
 		{
 			if (mb_strpos($lang_file, '/') !== false)
 			{
-				include(SITE_FILE_ROOT."language/$this->lang_name/$lang_file");
+				include SITE_FILE_ROOT."language/$this->lang_name/$lang_file";
 
 				return;
 			}
@@ -365,14 +364,14 @@ class core_user extends sessions
 
 		if (!$module)
 		{
-			global $_CORE_MODULE;
-			
-			include(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name']."/language/$this->lang_name/$lang_file");
+			global $_CLASS;
+
+			include SITE_FILE_ROOT.'modules/'.$_CLASS['core_display']->page['page_name']."/language/$this->lang_name/$lang_file";
 
 			return;
 		}
 		
-		include(SITE_FILE_ROOT."modules/$module/language/$this->lang_name/$lang_file");		
+		include SITE_FILE_ROOT."modules/$module/language/$this->lang_name/$lang_file";		
 	}
 
 	function user_data_get($name, $default = false)

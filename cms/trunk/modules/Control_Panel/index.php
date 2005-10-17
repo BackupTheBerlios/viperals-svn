@@ -16,8 +16,10 @@ if (!defined('VIPERAL'))
     die;
 }
 
-require_once($site_file_root.'includes/forums/functions.php');
-load_class($site_file_root.'includes/forums/auth.php', 'forums_auth');
+global $_CLASS, $_CORE_CONFIG;
+
+require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
 $_CLASS['auth'] =& $_CLASS['forums_auth'];
 
 $_CLASS['core_user']->user_setup();
@@ -29,8 +31,6 @@ $mode	= request_var('mode', '');
 $module = request_var('i', '');
 
 $ucp = new module();
-
-//require($site_file_root.'includes/forums/functions_user.php');
 
 //define the undefineds
 $_CLASS['core_template']->assign_array(array(
@@ -170,8 +170,6 @@ class module
 
 	function load($type = false, $name = false, $mode = false, $run = true)
 	{
-		global $site_file_root;
-
 		if ($type)
 		{
 			$this->type = $type;
@@ -184,7 +182,7 @@ class module
 
 		if (!class_exists($this->type . '_' . $this->name))
 		{
-			require_once($site_file_root."modules/Control_Panel/{$this->type}/{$this->type}_{$this->name}.php");
+			require_once(SITE_FILE_ROOT."modules/Control_Panel/{$this->type}/{$this->type}_{$this->name}.php");
 
 			if ($run)
 			{
@@ -212,32 +210,6 @@ class module
         $_CLASS['core_template']->display('modules/Control_Panel/'.$tpl_name);
 
 		script_close();
-	}
-
-	// Public methods to be overwritten by modules
-	function module()
-	{
-		// Module name
-		// Module filename
-		// Module description
-		// Module version
-		// Module compatibility
-		return false;
-	}
-
-	function init()
-	{
-		return false;
-	}
-
-	function install()
-	{
-		return false;
-	}
-
-	function uninstall()
-	{
-		return false;
 	}
 }
 //
@@ -300,23 +272,21 @@ switch ($mode)
 	break;
 		
 	case 'delete_cookies':
-		// Delete Cookies with dynamic names (do NOT delete poll cookies)
-		if (confirm_box(true))
+		if (display_confirmation($_CLASS['core_user']->get_lang('DELETE_COOKIES')))
 		{
 			global $_CORE_CONFIG;
 			
-			$set_time = time() - 31536000;
+			$set_time = gmtime() - 31536000;
+
 			foreach ($_COOKIE as $cookie_name => $cookie_data)
 			{
 				$cookie_name = str_replace($_CORE_CONFIG['server']['cookie_name'] . '_', '', $cookie_name);
+
 				if (strpos($cookie_name, '_poll') === false)
 				{
 					$_CLASS['core_user']->set_cookie($cookie_name, '', $set_time);
 				}
 			}
-			$_CLASS['core_user']->set_cookie('track', '', $set_time);
-			$_CLASS['core_user']->set_cookie('data', '', $set_time);
-			$_CLASS['core_user']->set_cookie('sid', '', $set_time);
 
 			$_CLASS['core_user']->logout();
 
@@ -325,10 +295,6 @@ switch ($mode)
 			$message = $_CLASS['core_user']->lang['COOKIES_DELETED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'], '<a href="'.generate_link().'">', '</a>');
 			trigger_error($message);
 
-		}
-		else
-		{
-			confirm_box(false, 'DELETE_COOKIES', '');
 		}
 		
 		redirect();

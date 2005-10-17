@@ -21,6 +21,8 @@
 $Id$
 */
 
+global $_CLASS, $_CORE_CONFIG;
+
 $file = get_variable('file', 'REQUEST', false);
 
 $approved_files = array('viewforum', 'viewtopic', 'report', 'faq', 'posting', 'download', 'mcp', 'search');

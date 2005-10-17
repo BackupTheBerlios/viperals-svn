@@ -120,23 +120,22 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, blo
 $content = $_CLASS['core_db']->escape('<div style="text-align:center">Hello and welcome</div>');
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_content) VALUES ('Welcome', 4, 2, 6, 4, '$content')");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('blocks', 0, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('groups', 0, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('system', 0, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('messages', 0, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('modules', 0, 2)");
-//$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_admin_options) VALUES ('services', 0, 2, '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('smiles', 0, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('users', 0, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status) VALUES ('groups', 0, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('blocks', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('groups', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('system', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('messages', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('pages', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('smiles', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('users', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('groups', 2)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('articles', 1, 1, 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Contact', 1, 2, 1)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('calender', 1, 1, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Control_Panel', 1, 2, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Forums', 1, 2, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Members_List', 1, 2, 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."modules (module_name, module_type, module_status, module_sides) VALUES ('Quick_Message', 1, 1, 1)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('articles', 1, 1, 102)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Contact', 1, 2, 102)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('calender', 1, 1, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Control_Panel', 1, 2, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Forums', 1, 2, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Members_List', 1, 2, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Quick_Message', 1, 1, 102)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':D', 'grin.png', 'Very Happy', 19, 19, 1, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':)', 'smile.png', 'Smile', 19, 19, 2, 0)");
