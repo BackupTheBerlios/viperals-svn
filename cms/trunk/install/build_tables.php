@@ -146,8 +146,25 @@ $_CLASS['core_db']->table_create('start', $table_prefix.'admin_modules');
 $_CLASS['core_db']->add_table_field_int('module_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('module_name', 100);
 $_CLASS['core_db']->add_table_field_char('module_title', 100, true);
-$_CLASS['core_db']->add_table_field_char('module_location', 100, true);
+$_CLASS['core_db']->add_table_field_char('module_location', 200, true);
 $_CLASS['core_db']->add_table_field_int('module_type', array('max' => 10));
+$_CLASS['core_db']->add_table_field_int('module_status', array('max' => 10));
+$_CLASS['core_db']->add_table_field_text('module_auth', 60000, true);
+$_CLASS['core_db']->add_table_field_text('module_admin_options', 6000, true);
+
+$_CLASS['core_db']->add_table_index('module_id', 'primary');
+$_CLASS['core_db']->add_table_index('module_name', 'unique');
+
+$_CLASS['core_db']->table_create('commit');
+
+$_CLASS['core_db']->table_create('start', $table_prefix.'control_panel_modules');
+
+$_CLASS['core_db']->add_table_field_int('module_id', array('max' => 16000000, 'auto_increment' => true));
+$_CLASS['core_db']->add_table_field_char('module_name', 100);
+$_CLASS['core_db']->add_table_field_char('module_title', 100, true);
+$_CLASS['core_db']->add_table_field_char('module_subs', 100, true);
+$_CLASS['core_db']->add_table_field_char('module_location', 200, true);
+//$_CLASS['core_db']->add_table_field_int('module_type', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('module_status', array('max' => 10));
 $_CLASS['core_db']->add_table_field_text('module_auth', 60000, true);
 $_CLASS['core_db']->add_table_field_text('module_admin_options', 6000, true);
@@ -162,7 +179,7 @@ $_CLASS['core_db']->table_create('start', $table_prefix.'pages');
 $_CLASS['core_db']->add_table_field_int('page_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('page_name', 100);
 $_CLASS['core_db']->add_table_field_char('page_title', 100, true);
-$_CLASS['core_db']->add_table_field_char('page_location', 100, true);
+$_CLASS['core_db']->add_table_field_char('page_location', 200, true);
 $_CLASS['core_db']->add_table_field_int('page_type', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('page_status', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('page_blocks', array('max' => 10000, 'null' => true)); // Convert to bitfield

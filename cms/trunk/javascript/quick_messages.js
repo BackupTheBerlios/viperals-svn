@@ -2,7 +2,7 @@
 
 function quick_message_submit()
 {
-	var message = document.getElementById('message');
+	var message = document.getElementById('quick_message');
 	var poster_name = document.getElementById('poster_name');
 
 	ajax = new core_ajax();

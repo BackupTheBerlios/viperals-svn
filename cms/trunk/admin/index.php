@@ -86,7 +86,7 @@ if ($_CLASS['core_auth']->admin_power('users'))
 	{
 		$limit = ($last_count) ? 10 : 20 - $last_count;
 
-		$sql = 'SELECT COUNT(*)	FROM ' . USERS_TABLE . '
+		$sql = 'SELECT COUNT(*)	FROM ' . CORE_USERS_TABLE . '
 					WHERE user_type = '.USER_NORMAL.'
 					AND user_status = '.$status;
 		$result = $_CLASS['core_db']->query($sql);
@@ -111,7 +111,7 @@ if ($_CLASS['core_auth']->admin_power('users'))
 		));
 		
 		$sql = 'SELECT user_id, username, user_reg_date
-			FROM ' . USERS_TABLE . '
+			FROM ' . CORE_USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.'
 				AND user_status = '.$status;
 		

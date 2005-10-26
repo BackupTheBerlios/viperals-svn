@@ -48,12 +48,12 @@ class core_handler
 		$this->report = $report;
 		$this->previous_level = ini_set('error_reporting', 0);
 		$this->logging = ($logfile && is_writable($logfile)) ? true : false;
-		
+
 		if ($this->logging && $log_file)
 		{
-			$this->previous_logger = ini_set('error_log', $log_file);
+			$this->previous_logger = ini_set('', $log_file);
 		}
-		
+
 		set_error_handler(array(&$this, 'error_handler'));
 	}
 	
@@ -139,7 +139,7 @@ class core_handler
 	{
 		global $_CLASS, $_CORE_CONFIG;
 
-		if ($this->report != ERROR_NONE)
+		if ($this->report !== ERROR_NONE)
 		{
 			//echo $error;
 

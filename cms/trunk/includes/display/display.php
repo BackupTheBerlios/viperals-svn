@@ -47,29 +47,30 @@ class core_display
 			return '404:_PAGE_NOT_FOUND';
 		}
 
-		global $_CLASS;
+		global $_CLASS, $_CORE_MODULE;
 
 		settype($page['page_status'], 'int');
 		settype($page['page_type'], 'int');
 		settype($page['page_status'], 'int');
-		settype($page['page_blocks'], 'int');
-
-		if ($page['page_status'] !== STATUS_ACTIVE)
-		{
-			if ($page['page_status'] === STATUS_DISABLED && $_CLASS['core_auth']->admin_auth('pages'))
-			{
-				$_CLASS['core_display']->message = '<b>Module '.$page['page_name'].' Isn\'t Active</b><br />';
-			}
-			else
-			{
-				return '_PAGE_NOT_ACTIVE';
-			}
-		}
 
 		switch ($type)
 		{
 			case 'admin':
-				if (!$_CLASS['core_auth']->admin_power($_CORE_MODULE['module_name']))
+				settype($page['module_status'], 'int');
+
+				if ($page['module_status'] !== STATUS_ACTIVE)
+				{
+					return '_PAGE_NOT_ACTIVE';
+				}
+
+				foreach ($page as $key => $value)
+				{
+					$temp[str_replace('module_', 'page_', $key)] = $value;
+				}
+				$page = $temp;
+				unset($temp);
+
+				if (!$_CLASS['core_auth']->admin_power($_CORE_MODULE['page_name']))
 				{
 					trigger_error('NOT_AUTH', E_USER_ERROR);
 				}
@@ -86,12 +87,32 @@ class core_display
 				{
 					return '404:_PAGE_NOT_FOUND';
 				}
+
+				$page['page_blocks'] = 0;
+				$page['page_blocks'] |= BLOCK_LEFT;
+				$page['page_blocks'] |= BLOCK_RIGHT;
 			break;
 			
 			case 'ajax':
 				$page['page_location'] = SITE_FILE_ROOT.'modules/'.$page['page_name'].'/ajax.php';
 
+			//case 'feed':
 			default:
+				settype($page['page_blocks'], 'int');
+				settype($page['page_blocks'], 'int');
+
+				if ($page['page_status'] !== STATUS_ACTIVE)
+				{
+					if ($page['page_status'] === STATUS_DISABLED && $_CLASS['core_auth']->admin_auth('pages'))
+					{
+						$_CLASS['core_display']->message = '<b>Module '.$page['page_name'].' Isn\'t Active</b><br />';
+					}
+					else
+					{
+						return '_PAGE_NOT_ACTIVE';
+					}
+				}
+
 				//authization check here
 				$page['page_auth'] = ($page['page_auth']) ? @unserialize($page['page_auth']) : '';
 		
@@ -139,13 +160,24 @@ class core_display
 
 			if ($this->page['page_location'])
 			{
-				require_once $this->page['page_location'];
-				
-				$class_name = $type.'_'.$this->page['page_name'];
+				$this->supported = array();
 
-				if (class_exists($class_name))
+				require_once $this->page['page_location'];
+
+				if (in_array($type, $this->supported))
 				{
-					$module = new $class_name;
+					$class_name = 'module_'.$this->page['page_name'];
+	
+					if (class_exists($class_name))
+					{
+						$module = new $class_name;
+						$method = $type.'_'.$this->page['page_name'];
+	
+						if (method_exists($module, $method))
+						{
+							$module->$method();
+						}					
+					}
 				}
 			}
 
@@ -163,7 +195,7 @@ class core_display
 	{
 		global $_CLASS;
 
-		header('Content-Type: text/html; charset=UTF-8');
+		header('Content-Type: text/html; charset=utf-8');
 		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
 
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
@@ -256,12 +288,8 @@ class core_display
 			'FOOTER_CONTENT'	=> $this->footer,
 		));
 
-		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_TOP);
-
-		if ($this->homepage)
-		{  
-			$_CLASS['core_blocks']->display(BLOCK_TOP);
-		}
+		$_CLASS['core_blocks']->generate(BLOCK_MESSAGE_TOP);
+		$_CLASS['core_blocks']->generate(BLOCK_TOP);
 
 		$this->theme->theme_header();
 	}
@@ -285,22 +313,13 @@ class core_display
 
 		if ($this->generate_page())
 		{
-// TEMP
-//$_CORE_MODULE =& $_CLASS['core_display']->page;
-
-		//	require(SITE_FILE_ROOT.'modules/'.$_CORE_MODULE['module_name'].'/index.php');
 			return;
-
 		}
 
 		$this->displayed['footer'] = true;
 
-		if ($this->homepage)
-		{
-			$_CLASS['core_blocks']->display(BLOCK_BOTTOM);
-		}
-
-		$_CLASS['core_blocks']->display(BLOCK_MESSAGE_BOTTOM);
+		$_CLASS['core_blocks']->generate(BLOCK_BOTTOM);
+		$_CLASS['core_blocks']->generate(BLOCK_MESSAGE_BOTTOM);
 
 		if ($this->displayed['header'])
 		{
@@ -309,7 +328,7 @@ class core_display
 		
 		script_close($save);
 	}
-	
+
 	/*
 		General display of basic debug info
 	*/

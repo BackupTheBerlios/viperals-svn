@@ -25,54 +25,50 @@ define('VIPERAL', 'FEED');
 
 error_reporting(0);
 
-//require(SITE_FILE_ROOT.'core.php');
-require('core.php');
+/* require(SITE_FILE_ROOT.'core.php'); */
+require_once 'core.php';
 
-header('Content-Type: text/xml');
-
-if (!defined('ARTICLES_TABLE'))
+if ($mod = get_variable('mod', 'REQUEST', false))
 {
-	define('ARTICLES_TABLE', $table_prefix.'articles');
-}
+	/* Grab module data if it exsits */
+	$sql = 'SELECT * FROM ' . CORE_PAGES_TABLE . "
+				WHERE page_name = '" . $_CLASS['core_db']->escape($mod) . "'";//WHERE module_type = ' . MODULE_NORMAL . "
+	
+	$result = $_CLASS['core_db']->query($sql);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
 
-$result = $_CLASS['core_db']->query_limit('SELECT articles_id, articles_title, articles_intro, articles_text, articles_posted, articles_starts, poster_name FROM ' . ARTICLES_TABLE . ' ORDER BY articles_order ASC', 10);
+	$status = $_CLASS['core_display']->process_page($row, 'feed');
 
-$last_post_time = 0;
-
-// Need to fix this, add auth and expires/start check ( will have to remove limit )
-while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-{
-	$time = ($row['articles_starts']) ? $row['articles_starts'] : $row['articles_posted'];
-	$text = ($row['articles_intro']) ? $row['articles_intro'] : $row['articles_text'];
-
-	if ($time > $last_post_time)
+	if ($status !== true)
 	{
-		$last_post_time = $time;
+		header("HTTP/1.0 503 Service Unavailable");
+		script_close(false);
 	}
 
-	$_CLASS['core_template']->assign_vars_array('items', array(
-		'TITLE' 			=> htmlspecialchars($row['articles_title'], ENT_QUOTES, 'UTF-8'),
-		'LINK' 				=> generate_link('articles&amp;mode=view&amp;id='.$row['articles_id'], array('full' => true, 'sid' => false)),
-		'DESCRIPTION' 		=> htmlspecialchars(strip_tags($text), ENT_QUOTES, 'UTF-8'),
-		'DESCRIPTION_HTML' 	=> htmlspecialchars($text, ENT_QUOTES, 'UTF-8'),
-		'TIME'				=> date('M d Y H:i:s', $time) .' GMT',
-		'AUTHOR'			=> htmlspecialchars($row['poster_name'], ENT_QUOTES, 'UTF-8')
-	));
+	$_CLASS['core_display']->generate_page('feed');
 }
-$_CLASS['core_db']->free_result($result);
 
-$last_modified = date('M d Y H:i:s', $last_post_time) .' GMT';
+$_CLASS['core_user']->user_setup(null);
+
+if (!defined('DISPLAY_FEED') || DISPLAY_FEED === 'custom')
+{
+	script_close(false);
+}
+
+global $_CORE_CONFIG;
+
+header('Content-Type: text/xml');
 
 $_CLASS['core_template']->assign_array(array(
 	'SITE_NAME' 	=> $_CORE_CONFIG['global']['site_name'],
 	'SITE_URL' 		=> generate_link(false, array('full' => true, 'sid' => false)),
 	'LANG'			=> 'en-us',
-	'LAST_MODIFIED'	=> $last_modified ,
+	//'LAST_MODIFIED'	=> $last_modified ,
 	'TIME'			=> gmdate('M d Y H:i:s') .' GMT'
 ));
 
-header('Last-Modified: '.$last_post_time);
-
+/* Display the feed according to the selected feed type */	
 Switch ($_GET['feed'])
 {
 	case 'rdf':
@@ -97,6 +93,6 @@ Switch ($_GET['feed'])
 	break;
 }
 
-script_close();
+script_close(false);
 
 ?>

@@ -52,7 +52,7 @@ class sessions
 		if ($session_id)
 		{
 			$sql = 'SELECT u.*, s.*
-				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
+				FROM ' . CORE_SESSIONS_TABLE . ' s, ' . CORE_USERS_TABLE . " u
 				WHERE s.session_id = '" . $_CLASS['core_db']->escape($session_id) . "'
 					AND u.user_id = s.session_user_id";
 			$result = $_CLASS['core_db']->query($sql);
@@ -140,7 +140,7 @@ class sessions
 		if ($_CORE_CONFIG['server']['limit_sessions'])
 		{
 			$sql = 'SELECT COUNT(*) AS sessions
-				FROM ' . SESSIONS_TABLE . '
+				FROM ' . CORE_SESSIONS_TABLE . '
 				WHERE session_time >= ' . ($this->time - 60);
 			$result = $_CLASS['core_db']->query($sql);
 		
@@ -171,7 +171,7 @@ class sessions
 		if ($this->is_bot)
 		{
 			$sql = 'SELECT u.*, s.*
-				FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . ' u
+				FROM ' . CORE_SESSIONS_TABLE . ' s, ' . CORE_USERS_TABLE . ' u
 				WHERE s.session_user_id = '. (int) $this->data['user_id'] .'
 					AND u.user_id = s.session_user_id';
 
@@ -213,7 +213,7 @@ class sessions
 			'session_autologin'	=> (string) $this->autologin_code,
 		);
 
-		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
+		$_CLASS['core_db']->query('INSERT INTO ' . CORE_SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
 
 		$this->new_session =  true;
 
@@ -258,7 +258,7 @@ class sessions
 			'auto_login_time'		=> (int) $this->time,
 		);
 
-		$_CLASS['core_db']->query('INSERT INTO ' . SESSIONS_AUTOLOGIN_TABLE . ' '.	$_CLASS['core_db']->sql_build_array('INSERT', $data_array));
+		$_CLASS['core_db']->query('INSERT INTO ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' '.	$_CLASS['core_db']->sql_build_array('INSERT', $data_array));
 
 		$this->set_cookie('ali', $this->data['user_id'], $this->time + 2592000);
 		$this->set_cookie('alc', $this->autologin_code, $this->time + 2592000);
@@ -270,7 +270,7 @@ class sessions
 
 		settype($user_id, 'int');
 
-		$sql = 'SELECT * FROM ' . SESSIONS_AUTOLOGIN_TABLE . " 
+		$sql = 'SELECT * FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . " 
 					WHERE user_id = $user_id
 					AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
 
@@ -292,7 +292,7 @@ class sessions
 				'auto_login_time'		=> (int) $this->time,
 			);
 		
-			$sql = 'UPDATE ' . SESSIONS_AUTOLOGIN_TABLE . '	SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data_array) . "
+			$sql = 'UPDATE ' . CORE_SESSIONS_AUTOLOGIN_TABLE . '	SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data_array) . "
 						WHERE user_id = $user_id
 						AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
 			$_CLASS['core_db']->query($sql);
@@ -310,7 +310,7 @@ class sessions
 	{
 		global $_CLASS;
 		
-		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . ' 
+		$sql = 'DELETE FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' 
 			WHERE user_id = '.(INT) $user_id."
 			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
 				
@@ -338,12 +338,12 @@ class sessions
 			$this->save_session = false;
 		}
 
-		$sql = 'DELETE FROM ' . SESSIONS_TABLE . "
+		$sql = 'DELETE FROM ' . CORE_SESSIONS_TABLE . "
 			WHERE session_id = '" . $_CLASS['core_db']->escape($session_id)."'";
 
 		$_CLASS['core_db']->query($sql);
 
-		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
+		$_CLASS['core_db']->optimize_tables(CORE_SESSIONS_TABLE);
 	}
 
 	function gc($time)
@@ -359,7 +359,7 @@ class sessions
 		$_CLASS['core_db']->transaction();
 
 		// Remove all expired guess sessions
-		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
+		$sql = 'DELETE FROM ' . CORE_SESSIONS_TABLE . '
 			WHERE session_user_id = ' . ANONYMOUS . '
 			AND session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 		$_CLASS['core_db']->query($sql);
@@ -370,7 +370,7 @@ class sessions
 			//Oracle8 suporrts this also, I believe
 			case 'mysql':
 			case 'mysqli':
-				$sql = 'UPDATE ' . USERS_TABLE. ' u, ' . SESSIONS_TABLE . ' s
+				$sql = 'UPDATE ' . CORE_USERS_TABLE. ' u, ' . CORE_SESSIONS_TABLE . ' s
 							SET u.user_last_visit = s.session_time
 								WHERE s.session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
 								AND u.user_id = s.session_user_id';
@@ -379,7 +379,7 @@ class sessions
 
 			default:
 				$sql = 'SELECT session_user_id, MAX(session_time) AS session_time
-							FROM ' . SESSIONS_TABLE . '
+							FROM ' . CORE_SESSIONS_TABLE . '
 								WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']) . '
 								GROUP BY session_user_id';
 				$result = $_CLASS['core_db']->query($sql);
@@ -387,7 +387,7 @@ class sessions
 				// Should be fast with the transaction
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					$sql = 'UPDATE ' . USERS_TABLE . '
+					$sql = 'UPDATE ' . CORE_USERS_TABLE . '
 							SET user_last_visit = ' . $row['session_time'] . '
 								WHERE user_id = ' . $row['session_user_id'];
 					$_CLASS['core_db']->query($sql);
@@ -395,17 +395,17 @@ class sessions
 			break;
 		}
 
-		$sql = 'DELETE FROM ' . SESSIONS_TABLE . '
+		$sql = 'DELETE FROM ' . CORE_SESSIONS_TABLE . '
 				WHERE session_time < ' . ($time - $_CORE_CONFIG['server']['session_length']);
 			$_CLASS['core_db']->query($sql);
 
-		$sql = 'DELETE FROM ' . SESSIONS_AUTOLOGIN_TABLE . '
+		$sql = 'DELETE FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . '
 					WHERE auto_login_time < ' . ($time - 2592000);
 		$_CLASS['core_db']->query($sql);
 		
 		$_CLASS['core_db']->transaction('commit');
 
-		$_CLASS['core_db']->optimize_tables(SESSIONS_TABLE);
+		$_CLASS['core_db']->optimize_tables(CORE_SESSIONS_TABLE);
 	}
 
 	function session_data_get($name, $default = false)
@@ -456,7 +456,7 @@ class sessions
 			'session_url'			=> (string) $this->url,
 		);
 
-		$sql = 'UPDATE ' . SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
+		$sql = 'UPDATE ' . CORE_SESSIONS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_array) . "
 				WHERE session_id = '" . $_CLASS['core_db']->escape($this->data['session_id']) . "'";
 
 		$_CLASS['core_db']->query($sql);

@@ -120,14 +120,23 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, blo
 $content = $_CLASS['core_db']->escape('<div style="text-align:center">Hello and welcome</div>');
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_content) VALUES ('Welcome', 4, 2, 6, 4, '$content')");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('blocks', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('groups', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('system', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('messages', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('pages', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('smiles', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('users', 2)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_module (module_name, module_status) VALUES ('groups', 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('blocks', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('groups', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('system', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('messages', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('pages', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('smiles', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('users', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('groups', 2, 0)");
+
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('main', 2, 'front\r\nsubscribed\r\nbookmarks,cfg_allow_bookmarks\r\ndrafts')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('pm', 2, 'view_messages\r\ncompose\r\nunread\r\ndrafts\r\noptions')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('profile', 2,'profile_info\r\nreg_details\r\nsignature\r\navatar')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('prefs', 2, 'personal\r\nview\r\npost')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('zebra', 2, 'friends\r\nfoes')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('attachments', 1, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('groups', 2, '')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('calender', 2,'month_view\r\nday_view\r\nadd_event')");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('articles', 1, 1, 102)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Contact', 1, 2, 102)");
@@ -439,15 +448,6 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_sig_img', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('allow_sig_smilies', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_config (config_name, config_value, is_dynamic) VALUES ('max_post_urls', '0', 0)");
-
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'MAIN', 'main', 1, 1, 'front\r\nsubscribed\r\nbookmarks,cfg_allow_bookmarks\r\ndrafts', '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'PM', 'pm', 2, 1, 'view_messages\r\ncompose\r\nunread\r\ndrafts\r\noptions', 'cfg_allow_privmsg')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'PROFILE', 'profile', 3, 1, 'profile_info\r\nreg_details\r\nsignature\r\navatar', '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'PREFS', 'prefs', 4, 1, 'personal\r\nview\r\npost', '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'ZEBRA', 'zebra', 5, 1, 'friends\r\nfoes', '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'ATTACHMENTS', 'attachments', 6, 1, '', 'acl_u_attach && cfg_allow_attachments')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'GROUPS', 'groups', 7, 1, '', '')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_modules (module_type, module_title, module_filename, module_order, module_enabled, module_subs, module_acl) VALUES ('ucp', 'CALENDER', 'calender', 3, 1, 'month_view\r\nday_view\r\nadd_event', '')");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Images', 1, 1, 1, '', 0, '')");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."forums_extension_groups (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Archives', 0, 1, 1, '', 0, '')");

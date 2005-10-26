@@ -46,7 +46,7 @@ if ($_CLASS['core_user']->is_user)
 				$avatar_img = $_CORE_CONFIG['global']['path_avatar_gallery'] . '/';
 			break;
 		}
-		
+
 		$avatar_img .= $_CLASS['core_user']->data['user_avatar'];
 
 		$this->content .= '<img src="' . $avatar_img . '" width="' . $_CLASS['core_user']->data['user_avatar_width'] . '" height="' . $_CLASS['core_user']->data['user_avatar_height'] . '" border="0" alt="avatar" />';
@@ -94,7 +94,7 @@ foreach ($session_users as $row)
 */
 
 $sql = 'SELECT session_hidden, session_ip, session_page, session_url, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
-			FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
+			FROM ' . CORE_SESSIONS_TABLE . ' s, '. CORE_USERS_TABLE.' u
 				WHERE s.session_time > ' . ($_CLASS['core_user']->time - (int) $_CORE_CONFIG['server']['session_length']) .'
 				AND u.user_id = s.session_user_id';
 $result = $_CLASS['core_db']->query($sql);

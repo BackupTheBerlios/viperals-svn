@@ -20,12 +20,12 @@ if (empty($_GET['sid']))
 }
 
 //require(SITE_FILE_ROOT.'core.php');
-require('core.php');
+require_once 'core.php';
 
 if ($mod = get_variable('mod', 'REQUEST', false))
 {
 	$sql = 'SELECT * FROM ' . CORE_PAGES_TABLE . "
-				WHERE page_name = '" . $_CLASS['core_db']->escape($mod) . "'";
+				WHERE page_name = '" . $_CLASS['core_db']->escape($mod) . "'";//WHERE module_type = ' . MODULE_NORMAL . "
 
 	//Grab module data if it exsits
 	$result = $_CLASS['core_db']->query($sql);

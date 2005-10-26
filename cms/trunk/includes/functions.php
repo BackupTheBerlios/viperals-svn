@@ -21,6 +21,25 @@
 $Id$
 */
 
+function censor_text($text, $force = false)
+{
+	global $_CLASS;
+
+	if (!$force && !$_CLASS['core_user']->user_data_get('viewcensors'))
+	{
+		return;
+	}
+
+	$censors = get_word_censors();
+
+	if (!empty($censors))
+	{
+		return preg_replace($censors['match'], $censors['replace'], $text);
+	}
+
+	return $text;
+}
+
 // Redo
 function check_email($email)
 {
@@ -36,7 +55,6 @@ function check_bot_status($browser, $ip)
 
 	foreach ($bots_array as $bot)
 	{
-		//if ($bot['user_agent'] && preg_match('#' . preg_quote($bot['user_agent'], '#') . '#i', $browser))
 		if ($bot['user_agent'] && mb_strpos($browser, $bot['user_agent']) === 0)
 		{
 			$is_bot = $bot['user_id'];
@@ -300,6 +318,32 @@ function get_bots()
 	}
 
 	return $bots;
+}
+
+function get_word_censors()
+{
+	global $_CLASS;
+
+	if (is_null($censors = $_CLASS['core_cache']->get('word_censors')))
+	{
+		$sql = 'SELECT word, replacement
+			FROM  ' . CORE_CENSOR_TABLE .'ORDER BY LENGTH(word) DESC';
+		$result = $_CLASS['core_db']->query($sql);
+
+		$censors = array();
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
+			$censors['replace'][] = $row['replacement'];
+		}
+
+		$_CLASS['core_db']->free_result($result);
+
+		$_CLASS['core_cache']->put('word_censors', $censors);
+	}
+
+	return $censors;
 }
 
 function get_variable($var_name, $type, $default = false, $var_type = 'string')
@@ -645,14 +689,6 @@ function script_close($save = true)
 
 	if (!empty($_CLASS['core_user']))
 	{
-		// phpbb 2.1.2 only remove.
-		if (file_exists(SITE_FILE_ROOT.'cache/queue.php'))
-		{
-			require_once(SITE_FILE_ROOT.'includes/forums/functions_messenger.php');
-			$queue = new queue();
-			$queue->process();
-		}
-
 		if ($save)
 		{
 			//if ($_CLASS['core_user']->is_admin && $_CORE_CONFIG['server']['error_options'])
@@ -669,7 +705,7 @@ function script_close($save = true)
 					$_CLASS['core_user']->session_data_set('debug', $_CLASS['core_error_handler']->error_array);
 				}
 			}
-						
+
 			$_CLASS['core_user']->save();
 		}	
 	}

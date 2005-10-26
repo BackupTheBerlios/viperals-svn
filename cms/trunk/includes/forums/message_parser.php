@@ -942,42 +942,29 @@ class parse_message extends bbcode_firstpass
 	function smilies($max_smilies = 0)
 	{
 		global $_CLASS;
-		static $match, $replace;
-		
-		// NOTE: There is a memory leak in this block somewhere :\
-		// See if the static arrays have already been filled on an earlier invocation
-  	    if(!is_array($match))
+
+  	    if (is_null($smiley = $_CLASS['core_cache']->get('smiley_parse')))
   	    {
-			// NOTE: obtain_* function? chaching the table contents?
+			$result = $_CLASS['core_db']->query('SELECT * FROM ' . SMILIES_TABLE .' ORDER BY LENGTH(smiley_code) DESC');
+
+			$smiley = array();
 			
-
-			$sql = 'SELECT * FROM ' . SMILIES_TABLE .' ORDER BY LENGTH(smiley_code) DESC';;
-			$result = $_CLASS['core_db']->query($sql);
-
-			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 			{
-				$match = $replace = array();
-
-				do
-				{
-					// (assertion)
-					$match[] = '#(?<=^|[\n ]|\.)' . preg_quote($row['smiley_code'], '#') . '#';
-					$replace[] = '<!-- s' . $row['smiley_code'] . ' --><img src="{SMILIES_PATH}/' . $row['smiley_src'] . '" border="0" alt="' . $row['smiley_description'] . '" title="' . $row['smiley_description'] . '" /><!-- s' . $row['smiley_code'] . ' -->';
-				}
-				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-			}
-			else
-			{
-				$match = $replace = array();
+				// (assertion)
+				$smiley['match'][] = '#(?<=^|[\n ]|\.)' . preg_quote($row['smiley_code'], '#') . '#';
+				$smiley['replace'][] = '<!-- s' . $row['smiley_code'] . ' --><img src="{SMILIES_PATH}/' . $row['smiley_src'] . '" border="0" alt="' . $row['smiley_description'] . '" title="' . $row['smiley_description'] . '" /><!-- s' . $row['smiley_code'] . ' -->';
 			}
 			$_CLASS['core_db']->free_result($result);
+
+			$_CLASS['core_cache']->put('smiley_parse', $smiley);
 		}
-			
-		if (sizeof($match))
+
+		if (!empty($smiley))
 		{
 			if ($max_smilies)
 			{
-				$num_matches = preg_match_all('#' . str_replace('#', '', implode('|', $match)) . '#', $this->message, $matches);
+				$num_matches = preg_match_all('#' . str_replace('#', '', implode('|', $smiley['match'])) . '#', $this->message, $matches);
 				unset($matches);
 
 				if ($num_matches !== false && $num_matches > $max_smilies)
@@ -987,7 +974,7 @@ class parse_message extends bbcode_firstpass
 				}
 			}
 
-			$this->message = trim(preg_replace($match, $replace, $this->message));
+			$this->message = trim(preg_replace($smiley['match'], $smiley['replace'], $this->message));
 		}
 	}
 

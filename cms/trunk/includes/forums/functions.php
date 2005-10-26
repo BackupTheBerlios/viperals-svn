@@ -27,6 +27,8 @@
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
+global $config;
+
 if (is_null($config = $_CLASS['core_cache']->get('config')))
 {
 	$config = $cached_config = array();
@@ -194,9 +196,8 @@ function generate_forum_rules(&$forum_data)
 
 	if ($forum_data['forum_rules'])
 	{
-		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
+		require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
 		$bbcode = new bbcode($forum_data['forum_rules_bbcode_bitfield']);
-		
 		$bbcode->bbcode_second_pass($forum_data['forum_rules'], $forum_data['forum_rules_bbcode_uid']);
 
 		$forum_data['forum_rules'] = smiley_text($forum_data['forum_rules'], !($forum_data['forum_rules_flags'] & 2));
@@ -335,11 +336,11 @@ function gen_forum_auth_level($mode, $forum_id)
 	global $_CLASS;
 
 	$rules = array(
-		($_CLASS['auth']->acl_get('f_post', $forum_id)) ? $_CLASS['core_user']->lang['RULES_POST_CAN'] : $_CLASS['core_user']->lang['RULES_POST_CANNOT'],
-		($_CLASS['auth']->acl_get('f_reply', $forum_id)) ? $_CLASS['core_user']->lang['RULES_REPLY_CAN'] : $_CLASS['core_user']->lang['RULES_REPLY_CANNOT'],
-		($_CLASS['auth']->acl_gets(array('f_edit', 'm_edit'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
-		($_CLASS['auth']->acl_gets(array('f_delete', 'm_delete'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
-		($_CLASS['auth']->acl_get('f_attach', $forum_id) && $_CLASS['auth']->acl_get('u_attach', $forum_id)) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT']
+		($_CLASS['forums_auth']->acl_get('f_post', $forum_id)) ? $_CLASS['core_user']->lang['RULES_POST_CAN'] : $_CLASS['core_user']->lang['RULES_POST_CANNOT'],
+		($_CLASS['forums_auth']->acl_get('f_reply', $forum_id)) ? $_CLASS['core_user']->lang['RULES_REPLY_CAN'] : $_CLASS['core_user']->lang['RULES_REPLY_CANNOT'],
+		($_CLASS['forums_auth']->acl_gets(array('f_edit', 'm_edit'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
+		($_CLASS['forums_auth']->acl_gets(array('f_delete', 'm_delete'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
+		($_CLASS['forums_auth']->acl_get('f_attach', $forum_id) && $_CLASS['forums_auth']->acl_get('u_attach', $forum_id)) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT']
 	);
 
 	foreach ($rules as $rule)
@@ -433,13 +434,13 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 			continue;
 		}
 
-		if (!$_CLASS['auth']->acl_get('f_list', $row['forum_id']))
+		if (!$_CLASS['forums_auth']->acl_get('f_list', $row['forum_id']))
 		{
 			// if the user does not have permissions to list this forum skip
 			continue;
 		}
 		
-		if ($acl_list && !$_CLASS['auth']->acl_gets($acl_list, $row['forum_id']))
+		if ($acl_list && !$_CLASS['forums_auth']->acl_gets($acl_list, $row['forum_id']))
 		{
 			continue;
 		}
@@ -763,40 +764,6 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 	}
 }
 
-// Obtain list of naughty words and build preg style replacement arrays for use by the
-// calling script, note that the vars are passed as references this just makes it easier
-// to return both sets of arrays
-function obtain_word_list()
-{
-	global $_CLASS, $config;
-
-	if (!$_CLASS['core_user']->optionget('viewcensors') && $config['allow_nocensors'])
-	{
-		return;
-	}
-
-	if (is_null($censors = $_CLASS['core_cache']->get('word_censors')))
-	{
-		$sql = 'SELECT word, replacement
-			FROM  ' . FORUMS_WORDS_TABLE;
-		$result = $_CLASS['core_db']->query($sql);
-
-		$censors = array();
-
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
-			$censors['replace'][] = $row['replacement'];
-		}
-
-		$_CLASS['core_db']->free_result($result);
-
-		$_CLASS['core_cache']->put('word_censors', $censors);
-	}
-
-	return $censors;
-}
-
 // Obtain icons
 function obtain_icons()
 {
@@ -1020,7 +987,7 @@ function bump_topic_allowed($forum_id, $topic_bumped, $last_post_time, $topic_po
 	global $config, $_CLASS;
 
 	// Check permission and make sure the last post was not already bumped
-	if (!$_CLASS['auth']->acl_get('f_bump', $forum_id) || $topic_bumped)
+	if (!$_CLASS['forums_auth']->acl_get('f_bump', $forum_id) || $topic_bumped)
 	{
 		return false;
 	}
@@ -1035,7 +1002,7 @@ function bump_topic_allowed($forum_id, $topic_bumped, $last_post_time, $topic_po
 	}
 
 	// Check bumper, only topic poster and last poster are allowed to bump
-	if ($topic_poster != $_CLASS['core_user']->data['user_id'] && $last_topic_poster != $_CLASS['core_user']->data['user_id'] && !$_CLASS['auth']->acl_get('m_', $forum_id))
+	if ($topic_poster != $_CLASS['core_user']->data['user_id'] && $last_topic_poster != $_CLASS['core_user']->data['user_id'] && !$_CLASS['forums_auth']->acl_get('m_', $forum_id))
 	{
 		return false;
 	}
@@ -1044,32 +1011,12 @@ function bump_topic_allowed($forum_id, $topic_bumped, $last_post_time, $topic_po
 	return $bump_time;
 }
 
-// Censoring
-function censor_text($text)
-{
-	global $_CLASS;
-
-	if ($_CLASS['core_user']->is_user && !$_CLASS['core_user']->optionget('viewcensors'))
-	{
-		return $text;
-	}
-
-	$censors = obtain_word_list();
-
-	if (!empty($censors))
-	{
-		return preg_replace($censors['match'], $censors['replace'], $text);
-	}
-
-	return $text;
-}
-
 // Smiley processing
 function smiley_text($text, $force_option = false)
 {
 	global $config, $_CLASS;
 
-	return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->optionget('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
+	return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->user_data_get('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
 }
 
 // Inline Attachment processing
@@ -1178,7 +1125,8 @@ function page_header()
 
 	// Get users online list ... if required
 	$l_online_users = $online_userlist = $l_online_record = $l_online_time = '';
-	
+
+// this isn't required in most places
 	if ($config['load_online'] && $config['load_online_time'])
 	{
 		$logged_visible_online = $logged_hidden_online = $guests_online = 0;
@@ -1193,7 +1141,7 @@ function page_header()
 		}
 
 		$sql = 'SELECT session_hidden, session_ip, session_page, session_url, u.username, u.user_id, u.user_type, u.user_allow_viewonline, u.user_colour
-					FROM ' . SESSIONS_TABLE . ' s, '.USERS_TABLE.' u
+					FROM ' . CORE_SESSIONS_TABLE . ' s, '.CORE_USERS_TABLE.' u
 						WHERE s.session_time > ' . ($_CLASS['core_user']->time - (int) $_CORE_CONFIG['server']['session_length']) .'
 						AND u.user_id = s.session_user_id'.$reading_sql;
 		$result = $_CLASS['core_db']->query($sql);
@@ -1362,7 +1310,7 @@ function page_header()
 
 		'S_USER_LOGGED_IN' 		=> ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false,
 		'S_REGISTERED_USER'		=> $_CLASS['core_user']->is_user,
-		'S_USER_PM_POPUP' 		=> $_CLASS['core_user']->optionget('popuppm'),
+		'S_USER_PM_POPUP' 		=> $_CLASS['core_user']->user_data_get('popuppm'),
 		'S_USER_LANG'			=> $_CLASS['core_user']->data['user_lang'], 
 		'S_USER_BROWSER' 		=> ($_CLASS['core_user']->data['session_browser']) ? $_CLASS['core_user']->data['session_browser'] : $_CLASS['core_user']->lang['UNKNOWN_BROWSER'],
 		'S_CONTENT_DIRECTION' 	=> $_CLASS['core_user']->lang['DIRECTION'],
@@ -1373,7 +1321,7 @@ function page_header()
 		'S_DISPLAY_ONLINE_LIST'	=> ($config['load_online']) ? 1 : 0, 
 		'S_DISPLAY_SEARCH'		=> ($config['load_search']) ? 1 : 0, 
 		'S_DISPLAY_PM'			=> ($config['allow_privmsg']) ? 1 : 0, 
-		'S_DISPLAY_MEMBERLIST'	=> $_CLASS['auth']->acl_get('u_viewprofile'), 
+		'S_DISPLAY_MEMBERLIST'	=> $_CLASS['forums_auth']->acl_get('u_viewprofile'), 
 
 		'T_SMILIES_PATH'		=> "{$config['smilies_path']}/",
 		'T_AVATAR_PATH'			=> "{$config['avatar_path']}/",
@@ -1385,7 +1333,7 @@ function page_header()
 // Temp
 		'T_IMAGE_PATH'			=> "themes/viperal/template/modules/Forums/images/",
 
-		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
+		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['forums_auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
 	));
 }

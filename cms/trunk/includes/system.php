@@ -166,7 +166,7 @@ function activate()
 	}
 
 	$sql = 'SELECT username, user_status, user_group, user_new_password, user_new_password_encoding, user_act_key
-		FROM ' . USERS_TABLE . " WHERE user_id = $user_id AND user_type = ".USER_NORMAL;
+		FROM ' . CORE_USERS_TABLE . " WHERE user_id = $user_id AND user_type = ".USER_NORMAL;
 
 	$result = $_CLASS['core_db']->query($sql);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -197,7 +197,7 @@ function activate()
 
 	if ($row['user_status'] === STATUS_PENDING)
 	{
-		include_once(SITE_FILE_ROOT.'includes/functions_user.php');
+		require_once SITE_FILE_ROOT.'includes/functions_user.php';
 		user_activate($user_id);
 
 		set_core_config('user', 'newest_user_id', $row['user_id'], false);
@@ -212,7 +212,7 @@ function activate()
 		);
 	}
 
-	$sql = 'UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
+	$sql = 'UPDATE ' . CORE_USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . '
 		WHERE user_id = ' . $user_id;
 	$result = $_CLASS['core_db']->query($sql);
 

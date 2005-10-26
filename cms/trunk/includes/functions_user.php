@@ -176,14 +176,14 @@ function user_add(&$data, $group_add = true)
 // add a required array here, then find feilds that are not in the data array
 	$_CLASS['core_db']->transaction();
 
-	$sql = 'INSERT INTO ' . USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
+	$sql = 'INSERT INTO ' . CORE_USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
 	$_CLASS['core_db']->query($sql);
 
-	$data['user_id'] = $_CLASS['core_db']->insert_id(USERS_TABLE, 'user_id');
+	$data['user_id'] = $_CLASS['core_db']->insert_id(CORE_USERS_TABLE, 'user_id');
 
 	if ($group_add)
 	{
-		$sql = 'INSERT INTO ' . USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+		$sql = 'INSERT INTO ' . CORE_USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
 			'group_id'		=> (int) $data['user_group'],
 			'user_id'		=> (int) $data['user_id'],
 			'member_status'	=> $data['user_status']
@@ -209,14 +209,14 @@ function user_activate($user_id, $update_stats = true)
 	$_CLASS['core_db']->transaction();
 
 // hook here
-	$sql = 'UPDATE ' . USERS_TABLE . '
+	$sql = 'UPDATE ' . CORE_USERS_TABLE . '
 		SET user_status = ' . STATUS_ACTIVE . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ')
 			AND user_type <>' . USER_GUEST;
 
 	$_CLASS['core_db']->query($sql);
 
-	$sql = 'UPDATE ' . USER_GROUP_TABLE . '
+	$sql = 'UPDATE ' . CORE_USER_GROUP_TABLE . '
 		SET member_status = ' . STATUS_ACTIVE . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ') 
 			AND member_status = ' . STATUS_DISABLED;
@@ -253,7 +253,7 @@ function user_disable($user_id, $update_stats = true)
 	$_CLASS['core_db']->transaction();
 
 	// disabled the user first
-	$sql = 'UPDATE ' . USERS_TABLE . '
+	$sql = 'UPDATE ' . CORE_USERS_TABLE . '
 		SET user_status = ' . STATUS_DISABLED . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ')
 			AND user_type <>' . USER_GUEST;
@@ -262,7 +262,7 @@ function user_disable($user_id, $update_stats = true)
 	// Now we disable the user in his active groups
 	//	( note disable is not uses for group removal, the entry is just deleted )
 // should also remove all pending groups
-	$sql = 'UPDATE ' . USER_GROUP_TABLE . '
+	$sql = 'UPDATE ' . CORE_USER_GROUP_TABLE . '
 		SET member_status = ' . STATUS_DISABLED . '
 			WHERE user_id IN (' . implode(', ', $user_id) . ')
 			AND member_status = ' . STATUS_ACTIVE;
@@ -272,7 +272,7 @@ function user_disable($user_id, $update_stats = true)
 	{
 		if (in_array($_CORE_CONFIG['user']['newest_user_id'], $user_id))
 		{
-			$sql = 'SELECT user_id, username FROM ' . USERS_TABLE . '
+			$sql = 'SELECT user_id, username FROM ' . CORE_USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.' AND user_status = '.STATUS_ACTIVE.'
 				ORDER BY user_reg_date';
 	
@@ -306,8 +306,8 @@ function user_delete($user_id, $quick = false)
 
 	if ($quick)
 	{
-		$sql = "DELETE FROM USERS_TABLE
-			WHERE user_id IN (" . implode(', ', $user_id) . ')';
+		$sql = 'DELETE FROM ' . CORE_USERS_TABLE . '
+			WHERE user_id IN (' . implode(', ', $user_id) . ')';
 		$_CLASS['core_db']->query($sql);
 		
 		return;
@@ -324,28 +324,28 @@ function user_delete($user_id, $quick = false)
 	$_CLASS['core_db']->transaction();
 
 	$optimize_array = array();
-	$tables = array(USERS_TABLE => 'user_id', USER_GROUP_TABLE => 'user_id');
+	$tables = array(CORE_USERS_TABLE => 'user_id', CORE_USER_GROUP_TABLE => 'user_id');
 // hook here
 
 // Move this to hooks on seperation
 	$tables += array(FORUMS_ACL_TABLE => 'user_id', FORUMS_WATCH_TABLE => 'user_id', FORUMS_TRACK_TABLE => 'user_id');
 
-	$sql = 'UPDATE ' . FORUMS_TABLE . '
+	$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 		SET forum_last_poster_id = ' . ANONYMOUS . " 
 		WHERE forum_last_poster_id IN (" . implode(', ', $user_id) . ')';
 	$_CLASS['core_db']->query($sql);
 
-	$sql = 'UPDATE ' . POSTS_TABLE . '
+	$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 		SET poster_id = ' . ANONYMOUS . " 
 		WHERE poster_id IN (" . implode(', ', $user_id) . ')';
 	$_CLASS['core_db']->query($sql);
 
-	$sql = 'UPDATE ' . TOPICS_TABLE . '
+	$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 		SET topic_poster = ' . ANONYMOUS . "
 		WHERE topic_poster IN (" . implode(', ', $user_id) . ')';
 	$_CLASS['core_db']->query($sql);
 
-	$sql = 'UPDATE ' . TOPICS_TABLE . '
+	$sql = 'UPDATE ' . FORUMS_TOPICS_TABLE . '
 		SET topic_last_poster_id = ' . ANONYMOUS . "
 		WHERE topic_last_poster_id IN (" . implode(', ', $user_id) . ')';
 	$_CLASS['core_db']->query($sql);
@@ -386,7 +386,7 @@ function user_get_id($username, &$difference)
 	$data = array('user_id' => array(), 'username' => array());
 
 	$sql = 'SELECT user_id, username
-				FROM ' . USERS_TABLE . " 
+				FROM ' . CORE_USERS_TABLE . " 
 				WHERE username IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array($username)) . "')";
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -418,7 +418,7 @@ function user_get_name($user_id, &$difference)
 	$data = array('user_id' => array(), 'username' => array());
 
 	$sql = 'SELECT user_id, username
-				FROM ' . USERS_TABLE . ' 
+				FROM ' . CORE_USERS_TABLE . ' 
 				WHERE user_id IN (' . implode(', ', $user_id) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -453,7 +453,7 @@ function groups_user_remove($group_id, $user_id)
 		return;
 	}
 
-	$sql = 'SELECT user_id FROM ' . USERS_TABLE . ' 
+	$sql = 'SELECT user_id FROM ' . CORE_USERS_TABLE . ' 
 				WHERE user_group IN (' . implode(', ', $group_id) . ')
 				AND user_id IN (' . implode(', ', $user_id) . ')';
 	$result = $_CLASS['core_db']->query($sql);
@@ -476,13 +476,13 @@ function groups_user_remove($group_id, $user_id)
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
-		$sql = 'UPDATE FROM '. USERS_TABLE .' 
+		$sql = 'UPDATE FROM '. CORE_USERS_TABLE .' 
 					SET user_group = 4, user_rank = -1
 					WHERE user_id IN (' . implode(', ', $group_id) . ')';
 		$result = $_CLASS['core_db']->query($sql);
 	}
 
-	$sql = 'DELETE FROM ' . USER_GROUP_TABLE . '
+	$sql = 'DELETE FROM ' . CORE_USER_GROUP_TABLE . '
 		WHERE group_id IN ('. implode(', ', $group_id) . ')
 		AND user_id IN ('. implode(', ', $user_id) .')';
 
@@ -547,7 +547,7 @@ function validate_username($username)
 	}
 
 	$sql = 'SELECT username
-		FROM ' . USERS_TABLE . "
+		FROM ' . CORE_USERS_TABLE . "
 		WHERE LOWER(username) = '" . $_CLASS['core_db']->escape($username) . "'";
 
 	$result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -629,7 +629,7 @@ function validate_email($email)
 {
 	global $_CORE_CONFIG, $_CLASS;
 
-	if (strtolower($_CLASS['core_user']->data['user_email']) == strtolower($email))
+	if (strtolower($_CLASS['core_user']->data['user_email']) === strtolower($email))
 	{
 		return false;
 	}
@@ -639,23 +639,11 @@ function validate_email($email)
 		return 'EMAIL_INVALID';
 	}
 
-	$sql = 'SELECT ban_email
-		FROM ' . BANLIST_TABLE;
-	$result = $_CLASS['core_db']->query($sql);
-
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		if (preg_match('#^' . str_replace('*', '.*?', $row['ban_email']) . '$#i', $email))
-		{
-			return 'EMAIL_BANNED';
-		}
-	}
-	$_CLASS['core_db']->free_result($result);
-
+	/*
 	if (!$_CORE_CONFIG['user']['allow_emailreuse'])
 	{
 		$sql = 'SELECT user_email_hash
-			FROM ' . USERS_TABLE . "
+			FROM ' . CORE_USERS_TABLE . "
 			WHERE user_email_hash = " . crc32(strtolower($email)) . strlen($email);
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -665,6 +653,7 @@ function validate_email($email)
 		}
 		$_CLASS['core_db']->free_result($result);
 	}
+	*/
 
 	return false;
 }
@@ -729,7 +718,7 @@ function avatar_upload($data, &$error)
 	global $config, $_CLASS;
 
 	// Init upload class
-	include_once(SITE_FILE_ROOT.'includes/forums/functions_upload.php');
+	require_once SITE_FILE_ROOT.'includes/forums/functions_upload.php';
 	
 	$upload = new fileupload('AVATAR_', array('jpg', 'jpeg', 'gif', 'png'), $config['avatar_filesize'], $config['avatar_min_width'], $config['avatar_min_height'], $config['avatar_max_width'], $config['avatar_max_height']);
 							

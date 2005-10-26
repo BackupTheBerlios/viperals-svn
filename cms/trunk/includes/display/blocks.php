@@ -52,7 +52,7 @@ class core_blocks
 
 		global $_CLASS;
 
-		if ($_CLASS['core_user']->lang['DIRECTION'] === 'rtl')
+		if ($_CLASS['core_user']->lang['DIRECTION'] === 'rtl' && ($side === BLOCK_LEFT || $side === BLOCK_RIGHT))
 		{
 			$side = ($side === BLOCK_LEFT) ? BLOCK_RIGHT : BLOCK_LEFT;
 		}
@@ -85,7 +85,7 @@ class core_blocks
 
 		if (is_null($this->blocks_array = $_CLASS['core_cache']->get('blocks')))
 		{
-			$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_status = '.STATUS_ACTIVE.' ORDER BY block_order ASC');
+			$result = $_CLASS['core_db']->query('SELECT * FROM '. CORE_BLOCKS_TABLE . ' WHERE block_status = '.STATUS_ACTIVE.' ORDER BY block_order ASC');
 
 			$this->blocks_array = array();
 
@@ -96,7 +96,7 @@ class core_blocks
 			}
 
 			$_CLASS['core_db']->free_result($result);
-			$_CLASS['core_cache']->put('blocks', $this->blocks_array);
+			$_CLASS['core_cache']->put('blocks', $this->blocks_array, 'formated');
 
 			$_CLASS['core_cache']->save();
 		}
@@ -121,20 +121,17 @@ class core_blocks
 
 	/*
 	*/
-	function display($position)
+	function generate($position)
 	{
 		settype($position, 'int');
 
 		$this->display_position = $position;
 
-		if ($position === BLOCK_LEFT || $position === BLOCK_RIGHT)
-		{
-			$position = $this->check_side($position);
+		$position = $this->check_side($position);
 
-			if ($position === false)
-			{
-				return false;
-			}
+		if ($position === false)
+		{
+			return false;
 		}
 
 		$position = ($position >> 1);
@@ -397,7 +394,7 @@ class core_blocks
 		{
 			$this->block['block_rss_expires'] = ($this->block['block_rss_rate']) ? (int) $_CLASS['core_user']->time + $this->block['block_rss_rate'] : 0;
 			
-			$sql = 'UPDATE '.BLOCKS_TABLE."
+			$sql = 'UPDATE '. CORE_BLOCKS_TABLE."
 				SET block_content = '".$_CLASS['core_db']->escape($this->content)."', block_rss_expires = ".$this->block['block_rss_expires']." 
 					WHERE block_id = ".$this->block['block_id'];
 				

@@ -140,6 +140,7 @@ class bbcode
 			}
 		}
 
+//cache this
 		if ($sql)
 		{
 			$rowset = array();

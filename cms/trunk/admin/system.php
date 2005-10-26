@@ -26,7 +26,7 @@ if (VIPERAL !== 'Admin')
 	die;
 }
 
-global $_CLASS;
+global $_CLASS, $_CORE_MODULE;
 
 $_CLASS['core_user']->add_lang('admin/system.php');
 

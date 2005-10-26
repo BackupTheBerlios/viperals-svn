@@ -127,13 +127,13 @@ class core_user extends sessions
 			script_close(false);
 		}
 
-		$result = $_CLASS['core_db']->query('SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = '. $id);
+		$result = $_CLASS['core_db']->query('SELECT * FROM ' . CORE_USERS_TABLE . ' WHERE user_id = '. $id);
 		$this->data = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
 		if (!$this->data)
 		{
-			die('Installlation problem');
+			die ('Installlation problem');
 // Error here, however this happen
 		}
 
@@ -166,7 +166,7 @@ class core_user extends sessions
 
 		if ($this->is_user)
 		{
-			$sql = 'UPDATE ' . USERS_TABLE . '
+			$sql = 'UPDATE ' . CORE_USERS_TABLE . '
 				SET user_last_visit = ' . (int) $this->data['session_time'] . '
 				WHERE user_id = ' . (int) $this->data['user_id'];
 			$_CLASS['core_db']->query($sql);
@@ -175,7 +175,7 @@ class core_user extends sessions
 		$this->session_destroy(false, true);
 
 		$sql = 'SELECT *
-			FROM ' . USERS_TABLE . '
+			FROM ' . CORE_USERS_TABLE . '
 			WHERE user_id = ' . ANONYMOUS;
 		$result = $_CLASS['core_db']->query($sql);
 	
@@ -441,7 +441,7 @@ class core_user extends sessions
 
 		return '<img src=' . $img['src'] .$width . $height .' alt="' . $alt . '" title="' . $alt . '" />';
 	}
-
+/*
 	function optionget($key, $data = false)
 	{
 		return $this->user_data_get($key);
@@ -451,6 +451,7 @@ class core_user extends sessions
 	{
 		return $this->user_data_set($key, $value);
 	}
+*/
 }
 
 ?>

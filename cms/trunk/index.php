@@ -22,20 +22,22 @@ $Id$
 */
 
 define('VIPERAL', 'CMS');
-//print_r($_GET);die;
 error_reporting(E_ALL);
 
-//require_once SITE_FILE_ROOT.'core.php';
+/* require_once SITE_FILE_ROOT.'core.php'; */
 require_once 'core.php';
 
 $mod = get_variable('mod', 'REQUEST', false);
 
 if (!$mod)
 {
-	// Set as homepage 
+	/* Make it know we're at the homepage */
 	$_CLASS['core_display']->homepage = true;
+	
+
 	$_CORE_CONFIG['global']['index_page'] = 'articles';
 
+	/* Retrieve and process the homepage */
 	$sql = 'SELECT * FROM ' . CORE_PAGES_TABLE . "
 				WHERE page_name = '".$_CLASS['core_db']->escape($_CORE_CONFIG['global']['index_page'])."'";
 	$result = $_CLASS['core_db']->query($sql);
@@ -46,6 +48,7 @@ if (!$mod)
 	}
 	$_CLASS['core_db']->free_result($result);
 
+	/* If home page isn't a module or template page let atleast display something */
 	if (!$_CLASS['core_display']->generate_page())
 	{
 		/*
@@ -59,6 +62,7 @@ if (!$mod)
 		echo $blocks;
 		*/
 
+		/* Let all blocks be displayed */
 		$blocks = 126;
 
 		$_CLASS['core_display']->page = array('page_blocks' => $blocks, 'page_name' => '', 'page_title' => '');
@@ -66,7 +70,7 @@ if (!$mod)
 		$_CLASS['core_user']->user_setup();
 		$_CLASS['core_display']->display_header();
 
-		// Hey admin we don't have a modules set
+		/* Hey admin we don't have a modules set */
 		if ($_CLASS['core_auth']->admin_auth('modules'))
 		{
 			$_CLASS['core_display']->message = '_NO_HOMEPAGE_ADMIN';

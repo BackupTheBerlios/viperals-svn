@@ -327,7 +327,7 @@ $_CLASS['core_user']->data['user_full_folder'] = FULL_FOLDER_NONE;
 				AND user_id = $user_id";
 		$_CLASS['core_db']->query($sql);
 	}
-	*/
+*/
 
 	// Get those messages not yet placed into any box
 	// NOTE: Expand Group Information to all groups the user/author is in? 
@@ -1147,7 +1147,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	// Recipient Informations
 	$recipients = $to = $bcc = array();
 
-	if ($mode != 'edit')
+	if ($mode !== 'edit')
 	{
 		// Build Recipient List
 		// u|g => array($user_id => 'to'|'bcc')
@@ -1301,16 +1301,16 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 				'msg_id'	=> (int) $data['msg_id'],
 				'user_id'	=> (int) $_CLASS['core_user']->data['user_id'],
 				'author_id'	=> (int) $_CLASS['core_user']->data['user_id'],
-				'folder_id'	=> PRIVMSGS_OUTBOX,
+				'folder_id'	=> (int) PRIVMSGS_OUTBOX,
 				'msg_new'	=> 0,
 				'unread'	=> 0,
-				'forwarded'	=> ($mode == 'forward') ? 1 : 0))
+				'forwarded'	=> ($mode === 'forward') ? 1 : 0))
 			);
 		}
 	}
 
 	// Set user last post time
-	if ($mode == 'reply' || $mode == 'quote' || $mode == 'forward' || $mode == 'post')
+	if ($mode === 'reply' || $mode === 'quote' || $mode === 'forward' || $mode === 'post')
 	{
 		$sql = 'UPDATE ' . USERS_TABLE . "
 			SET user_last_post_time = {$_CLASS['core_user']->time}

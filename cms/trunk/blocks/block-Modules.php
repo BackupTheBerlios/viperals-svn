@@ -21,31 +21,30 @@
 $Id$
 */
 
-// This is temp
 if (!defined('VIPERAL'))
 {
     die;
 }
 
-global $_CLASS, $_CORE_MODULE;
+global $_CLASS;
 
 $this->content .= '<div id="nav"><ul style="margin: 0px; padding: 0px; list-style-type: none; line-height: 150%;">';
 $this->content .= '<li><a href="'.generate_link().'">Home</a></li>';
 
-$result = $_CLASS['core_db']->query('SELECT module_name, module_title, module_auth FROM '.CORE_MODULES_TABLE.' WHERE module_type = '.MODULE_NORMAL.' AND module_status = ' . STATUS_ACTIVE . ' ORDER BY module_name ASC');
+$result = $_CLASS['core_db']->query('SELECT page_name, page_title, page_auth FROM '.CORE_PAGES_TABLE.' WHERE page_type = '.MODULE_NORMAL.' AND page_status = ' . STATUS_ACTIVE . ' ORDER BY page_name ASC');
 
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 // Add Auth here
-	$row['module_title'] = ($row['module_title']) ? $_CLASS['core_user']->get_lang($row['module_title']) : $_CLASS['core_user']->get_lang($row['module_name']);
+	$row['page_title'] = ($row['page_title']) ? $_CLASS['core_user']->get_lang($row['page_title']) : $_CLASS['core_user']->get_lang($row['page_name']);
 	
-	if ($row['module_name'] == $_CORE_MODULE['module_name'] && !$_CLASS['core_display']->homepage)
+	if ($row['page_name'] == $_CLASS['core_display']->page['page_name'] && !$_CLASS['core_display']->homepage)
 	{
-		$this->content .= '<li><b class="active">'.$row['module_title'].'</b></li>';
+		$this->content .= '<li><b class="active">'.$row['page_title'].'</b></li>';
 	}
 	else
 	{
-		$this->content .= '<li><a href="'.generate_link($row['module_name']).'"> '.$row['module_title'].'</a></li>';
+		$this->content .= '<li><a href="'.generate_link($row['page_name']).'"> '.$row['page_title'].'</a></li>';
 	}
 }
 

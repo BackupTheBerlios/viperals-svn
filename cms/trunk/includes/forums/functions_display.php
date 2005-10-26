@@ -353,7 +353,7 @@ function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img,
 {
 	global $_CLASS, $config;
 
-	$folder = $folder_new = '';
+	$folder = '';
 	$unread = ($mark_time < $topic_row['topic_last_post_time']);
 
 	if ($topic_row['topic_status'] == ITEM_MOVED)

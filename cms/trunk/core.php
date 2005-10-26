@@ -31,19 +31,22 @@ if (extension_loaded('zlib') && !ob_get_length())
 	@ob_start('ob_gzhandler');
 }
 
-//ini_set('display_errors', 1);
+/* 
+ini_set('display_errors', 1);
+error_reporting(E_STRICT);
+*/
+
 set_magic_quotes_runtime(0);
-//error_reporting(E_STRICT);
 error_reporting(E_ALL);
 
-//Error reporting tyoe
+/* Error reporting tyoes */
 define('ERROR_NONE', 0);
 define('ERROR_ONPAGE', 1);
 define('ERROR_DEBUGGER', 2);
 define('SERVER_LOCAL', (strpos($_SERVER['HTTP_HOST'], 'localhost') === 0 || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') === 0));
 define('STRIP_SLASHES', get_magic_quotes_gpc());
 
-// Remove registered globals
+/* Remove registered globals */
 if (ini_get('register_globals'))
 {
 	foreach ($_REQUEST as $var_name => $value)
@@ -63,13 +66,13 @@ if (!extension_loaded('mbstring'))
 }
 
 mb_internal_encoding('UTF-8');
-//mb_http_output('UTF-8');
+/* mb_http_output('UTF-8'); */
 
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
 $base_memory_usage = get_memory_usage();
 
-//REQUEST_URI not set in IIS
+/* REQUEST_URI not set in IIS */
 if (empty($_SERVER['REQUEST_URI']))
 {
 	$_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_NAME'];
@@ -87,14 +90,18 @@ require_once SITE_FILE_ROOT.'config.php';
 
 @register_shutdown_function('script_close');
 
-// Load basic classes
+/* 
+	Load First Set of Classes
+*/
 load_class(false, 'core_template');
 load_class(false, 'core_handler');
 
-// Set error handler
+/* We're going ot use our own error handler */
 $_CLASS['core_handler']->start();
-$_CLASS['core_handler']->stop();
-//error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
+/*
+	$_CLASS['core_handler']->stop();
+*/
 
 if (empty($site_db))
 {
@@ -107,6 +114,9 @@ if (empty($site_db))
 	trigger_error('503:<p style="text-align:center">Site isn\'t Installed<br/><a href="installer.php">Click here to install</a></p>', E_USER_ERROR);
 }
 
+/* 
+	Load Second Set of Classes
+*/
 require_once SITE_FILE_ROOT.'includes/tables.php';
 require_once SITE_FILE_ROOT.'includes/db/'.$site_db['type'].'.php';
 require_once SITE_FILE_ROOT.'includes/cache/cache.php';
@@ -120,7 +130,7 @@ unset($sitedb);
 
 $_CLASS['core_db']->report_error(false);
 
-// Error messages just incase we can't get our configs
+/* Error messages just incase we can't get our configs */
 $config_error = '503:<center>There is currently a problem with the site<br/>Please try again later<br /><br />Error Code: DB3</center>';
 
 if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
@@ -192,36 +202,42 @@ if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
 	if (check_maintance_status(true) === true || check_load_status(true) === true)
 	{
 		header('HTTP/1.0 503 Service Unavailable');
-		die;
+
+		script_close(false);
 	}
 }
 
-if (VIPERAL === 'FEED')
-{
-	return;
-}
+/* 
+	Load third Set of Classes :
+		User based classes
+		Display handler
+*/
 
-// Load user based classes, and display options
 require SITE_FILE_ROOT.'includes/session.php';
 require SITE_FILE_ROOT.'includes/user.php';
 require SITE_FILE_ROOT.'includes/auth/auth.php';
 require SITE_FILE_ROOT.'includes/auth/auth_db.php';
-require SITE_FILE_ROOT.'includes/display/blocks.php';
 require SITE_FILE_ROOT.'includes/display/display.php';
 
 load_class(false, 'core_display');
-load_class(false, 'core_blocks');
 load_class(false, 'core_user');
 
 $_CLASS['core_user']->start();
 
 if (!$_CLASS['core_user']->is_user && $_CORE_CONFIG['global']['only_registered'])
 {
-	// conformation image 
+	if (VIPERAL === 'FEED' || VIPERAL === 'AJAX')
+	{
+		header('HTTP/1.0 503 Service Unavailable');
+
+		script_close(false);
+	}
+
+	/* conformation image  ? */
 	login_box(array('full_screen'	=> true));
 }
 
-if ($_CLASS['core_user']->is_admin)
+if (VIPERAL !== 'FEED' && VIPERAL !== 'AJAX' && $_CLASS['core_user']->is_admin)
 {
 	$_CLASS['core_handler']->report = $_CORE_CONFIG['server']['error_options'];	
 }
@@ -232,14 +248,25 @@ else
 }
 
 
+if (VIPERAL === 'FEED')
+{
+	return;
+}
+
+require SITE_FILE_ROOT.'includes/display/blocks.php';
+load_class(false, 'core_blocks');
+
+/*
 $_CORE_CONFIG['server']['error_options'] = ERROR_DEBUGGER;	
-//$_CORE_CONFIG['server']['error_options'] = ERROR_ONPAGE;	
+$_CORE_CONFIG['server']['error_options'] = ERROR_ONPAGE;	
+ 
 $_CLASS['core_handler']->report = $_CORE_CONFIG['server']['error_options'];
+*/
 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_CLASS['core_user']->new_session)
 {
-	die;// error here
+	die;	/* error here */
 }
 
 function get_memory_usage()
@@ -252,7 +279,9 @@ function get_memory_usage()
 /*
 	This pisses me off, seeing that screen pop up all the time :-(
 	Enable it if you want, Will be disabled by default
+*/
 
+/*
 	if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
 	{
 		exec('tasklist /fi "PID eq ' . getmypid() . '" /fo LIST', $output); 

@@ -242,7 +242,7 @@ class forums_auth
 
 			$userdata['user_permissions'] = rtrim($hold_str);
 
-			$sql = 'UPDATE ' . USERS_TABLE . "
+			$sql = 'UPDATE ' . CORE_USERS_TABLE . "
 				SET user_permissions = '" . $_CLASS['core_db']->escape($userdata['user_permissions']) . "'
 				WHERE user_id = " . $userdata['user_id'];
 			$_CLASS['core_db']->query($sql);
@@ -261,7 +261,7 @@ class forums_auth
 
 		if ($sql_user)
 		{
-			$sql = 'SELECT group_id, user_id FROM ' . USER_GROUP_TABLE ." WHERE $sql_user AND member_status <> ".STATUS_PENDING;
+			$sql = 'SELECT group_id, user_id FROM ' . CORE_USER_GROUP_TABLE ." WHERE $sql_user AND member_status <> ".STATUS_PENDING;
 
 			$result = $_CLASS['core_db']->query($sql);
 	
@@ -307,7 +307,7 @@ class forums_auth
 		{
 			if (empty($group_members))
 			{
-				$sql = 'SELECT user_group, user_id FROM ' . USERS_TABLE .' WHERE user_group IN ('.implode(', ', array_keys($group_id_array)).') AND user_status = '.STATUS_ACTIVE;
+				$sql = 'SELECT user_group, user_id FROM ' . CORE_USERS_TABLE .' WHERE user_group IN ('.implode(', ', array_keys($group_id_array)).') AND user_status = '.STATUS_ACTIVE;
 				$result = $_CLASS['core_db']->query($sql);
 	
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -344,7 +344,7 @@ class forums_auth
 
 		$where_sql = ($user_id) ? ' WHERE user_id ' . ((is_array($user_id)) ? ' IN (' . implode(', ', array_map('intval', $user_id)) . ')' : " = $user_id") : '';
 
-		$sql = 'UPDATE ' . USERS_TABLE . "
+		$sql = 'UPDATE ' . CORE_USERS_TABLE . "
 			SET user_permissions = ''
 			$where_sql";
 		$_CLASS['core_db']->query($sql);

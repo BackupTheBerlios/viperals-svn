@@ -29,12 +29,12 @@ function generate_smilies($mode, $forum_id)
 	global $_CLASS;
 // add option for all smiles in window
 	$display_link = false;
-	$mode = ($mode == 'window') ? 'window' : 'inline';
+	$mode = ($mode === 'window') ? 'window' : 'inline';
 
-	if ($mode == 'inline')
+	if ($mode === 'inline')
 	{
 		$sql = 'SELECT smiley_id
-			FROM ' . SMILIES_TABLE . '
+			FROM ' . CORE_SMILIES_TABLE . '
 			WHERE smiley_type = 1';
 		$result = $_CLASS['core_db']->query_limit($sql, 1, 0);
 
@@ -50,7 +50,7 @@ function generate_smilies($mode, $forum_id)
 		$smiley = array();
 
 		$sql = 'SELECT *
-			FROM ' . SMILIES_TABLE .' 
+			FROM ' . CORE_SMILIES_TABLE .' 
 				WHERE smiley_type ='.(($mode == 'inline') ? '0' : '1') . '
 					ORDER BY smiley_order';
 		$result = $_CLASS['core_db']->query($sql);
@@ -65,14 +65,14 @@ function generate_smilies($mode, $forum_id)
 				'SMILEY_DESC'   => $row['smiley_description']
 			);
 		}
+		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_cache']->put('smiley_'.$mode, $smiley);
-		$_CLASS['core_db']->free_result($result);
 	}
 
 	$_CLASS['core_template']->assign('smiley', $smiley);
 
-	if ($mode == 'inline')
+	if ($mode === 'inline')
 	{
 		$_CLASS['core_template']->assign_array(array(
 			'S_SHOW_SMILEY_LINK' 	=> ($display_link) ? true : false,
@@ -80,7 +80,7 @@ function generate_smilies($mode, $forum_id)
 		);
 	}
 
-	if ($mode == 'window')
+	if ($mode === 'window')
 	{
 		global $config;
 

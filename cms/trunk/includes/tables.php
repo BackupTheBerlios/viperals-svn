@@ -197,32 +197,34 @@ define('FORUMS_RANKS_TABLE', $table_prefix.'forums_ranks');
 define('FORUMS_EXTENSIONS_TABLE', $table_prefix.'forums_extensions');
 define('FORUMS_EXTENSION_GROUPS_TABLE', $table_prefix.'forums_extension_groups');
 
-define('ADMIN_AUTH_TABLE', $table_prefix.'admins');
+define('CORE_ADMIN_AUTH_TABLE', $table_prefix.'admins');
+define('CORE_ADMIN_MODULES_TABLE', $table_prefix.'admin_modules');
 
-define('BLOCKS_TABLE', $table_prefix.'blocks');
+define('CORE_BLOCKS_TABLE', $table_prefix.'blocks');
+
 define('CORE_CONFIG_TABLE', $table_prefix.'config');
+define('CORE_CONTROL_PANEL_MODULES_TABLE', $table_prefix . 'control_panel_modules');
+
 define('CORE_PAGES_TABLE', $table_prefix.'pages');
-define('SMILIES_TABLE', $table_prefix.'smilies');
+define('CORE_SMILIES_TABLE', $table_prefix.'smilies');
 
-define('USER_GROUP_TABLE', $table_prefix.'groups_members');
-define('GROUPS_TABLE', $table_prefix.'groups');
+define('CORE_USER_GROUP_TABLE', $table_prefix.'groups_members');
 
-define('SESSIONS_AUTOLOGIN_TABLE', $table_prefix.'sessions_auto_login');
-define('SESSIONS_TABLE', $table_prefix.'sessions');
+define('CORE_GROUPS_TABLE', $table_prefix.'groups');
+define('CORE_GROUPS_MEMBERS_TABLE', $table_prefix.'groups_members');
+
+define('CORE_SESSIONS_AUTOLOGIN_TABLE', $table_prefix.'sessions_auto_login');
+define('CORE_SESSIONS_TABLE', $table_prefix.'sessions');
 
 
 
-define('USERS_TABLE', $user_prefix.'users');
+define('CORE_USERS_TABLE', $user_prefix.'users');
 define('USERS_NOTES_TABLE', $table_prefix.'forums_users_notes');
 define('ZEBRA_TABLE', $table_prefix.'forums_zebra');
 //define('LOG_TABLE', $table_prefix.'log');
 
 
 // can be removed
-define('PROFILE_FIELDS_TABLE', $table_prefix.'forums_profile_fields');
-define('PROFILE_LANG_TABLE', $table_prefix.'forums_profile_lang');
-define('PROFILE_DATA_TABLE', $table_prefix.'forums_profile_fields_data');
-define('PROFILE_FIELDS_LANG_TABLE', $table_prefix.'forums_profile_fields_lang');
 define('DISALLOW_TABLE', $table_prefix.'forums_disallow');
 
 ?>

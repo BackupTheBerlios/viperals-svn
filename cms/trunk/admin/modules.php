@@ -46,13 +46,37 @@ function check_type($type, $redirect = true)
 
 	return true;
 }
-
+		
 if (isset($_REQUEST['mode']))
 {
 	if ($id = get_variable('id', 'GET', false, 'integer'))
 	{
 		switch ($_REQUEST['mode'])
 		{
+			case 'search':
+				$result = $_CLASS['core_db']->query('SELECT module_name, module_type FROM '. CORE_MODULES_TABLE);
+
+				$modules = array();
+
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+				{
+					$modules[$row['module_name']] = $row;
+				}
+				$_CLASS['core_db']->free_result($result);
+
+				$handle = opendir(SITE_FILE_ROOT.'modules');
+
+				while ($file = readdir($handle))
+				{
+					if (mb_strpos($file, '.') === false && empty($modules[$file]) && file_exists(SITE_FILE_ROOT."modules/$file/index.php"))
+					{
+						//$_CLASS['core_db']->query('INSERT INTO '. CORE_MODULES_TABLE . " (module_name, module_type, module_status, module_sides) VALUES ($file, 1, 1, 1)");
+						echo $file;
+					}
+				}
+				closedir($handle);
+			break;
+
 			case 'change':
 				$result = $_CLASS['core_db']->query('SELECT module_name, module_status, module_type FROM '.CORE_MODULES_TABLE.' WHERE module_id = '.$id);
 				$module = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -67,9 +91,9 @@ if (isset($_REQUEST['mode']))
 			
 				$status = ($module['module_status'] == STATUS_ACTIVE) ? STATUS_DISABLED : STATUS_ACTIVE;
 				
-				if (file_exists($site_file_root.'modules/'.$module['module_name'].'/configurator.php'))
+				if (file_exists(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/configurator.php'))
 				{
-					require_once($site_file_root.'modules/'.$module['module_name'].'/configurator.php');
+					require_once(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/configurator.php');
 					
 					$name = $module['module_name'].'_configurator';
 
@@ -108,9 +132,9 @@ if (isset($_REQUEST['mode']))
 				{
 					$status = true;
 
-					if (file_exists($site_file_root.'modules/'.$module['module_name'].'/configurator.php'))
+					if (file_exists(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/configurator.php'))
 					{
-						require_once($site_file_root.'modules/'.$module['module_name'].'/configurator.php');
+						require_once(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/configurator.php');
 						
 						$name = $module['module_name'].'_configurator';
 
@@ -148,9 +172,9 @@ if (isset($_REQUEST['mode']))
 				
 				if (display_confirmation())
 				{
-					if (file_exists($site_file_root.'modules/'.$module['module_name'].'/configurator.php'))
+					if (file_exists(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/configurator.php'))
 					{
-						require_once($site_file_root.'modules/'.$module['module_name'].'/configurator.php');
+						require_once(SITE_FILE_ROOT.'modules/'.$module['module_name'].'/configurator.php');
 						
 						$name = $module['module_name'].'_configurator';
 
