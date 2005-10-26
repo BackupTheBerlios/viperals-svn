@@ -47,7 +47,7 @@ display_forums('', $config['load_moderators']);
 
 // Grab group details for legend display
 $sql = 'SELECT group_id, group_name, group_colour, group_type
-	FROM ' . GROUPS_TABLE . ' 
+	FROM ' . CORE_GROUPS_TABLE . ' 
 	WHERE group_legend = 1
 		AND group_type <> ' . GROUP_HIDDEN;
 $result = $_CLASS['core_db']->query($sql);
@@ -69,7 +69,7 @@ if ($config['load_birthdays'])
 	$now = explode(':', gmdate('j:m'));
 
 	$sql = 'SELECT user_id, username, user_colour, user_birthday 
-		FROM ' . USERS_TABLE . " 
+		FROM ' . CORE_USERS_TABLE . " 
 		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now[0], $now[1]) . "%'
 			AND user_type = ".USER_NORMAL;
 	$result = $_CLASS['core_db']->query($sql);
@@ -79,12 +79,14 @@ if ($config['load_birthdays'])
 		$user_colour = ($row['user_colour']) ? ' style="color:#' . $row['user_colour'] .'"' : '';
 		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
 		
-		if ($age = (int)substr($row['user_birthday'], -4))
+		if ($age = (int) substr($row['user_birthday'], -4))
 		{
 			$birthday_list .= ' (' . ($now['year'] - $age) . ')';
 		}
 	}
 	$_CLASS['core_db']->free_result($result);
+	
+	unset($now);
 }
 
 $l_total_user_s = ($config['num_users'] == 0) ? 'TOTAL_USERS_ZERO' : 'TOTAL_USERS_OTHER';

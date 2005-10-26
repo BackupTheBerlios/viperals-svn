@@ -21,21 +21,15 @@
 $Id$
 */
 
-/*$this->test = 'test';
-echo $this-> 'test';*/
+$this->supported = array('page');
 
-class page_contact
+class module_contact
 {
 	function page_contact()
 	{
 		// Add departments
 		global $_CLASS;
 		
-		if (!defined('VIPERAL'))
-		{
-			die;
-		}
-
 		$_CLASS['core_user']->user_setup();
 		$_CLASS['core_user']->add_lang();
 		
@@ -81,7 +75,7 @@ class page_contact
 			'SENDER_NAME' 			=> $this->data['NAME'],
 		));
 		
-		$_CLASS['core_template']->display('modules/Contact/index.html');
+		$_CLASS['core_template']->display('modules/contact/index.html');
 	}
 
 	// remove this function

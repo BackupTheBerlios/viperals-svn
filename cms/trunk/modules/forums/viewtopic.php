@@ -598,7 +598,7 @@ if (empty($post_list))
 
 $sql = 'SELECT u.username, u.user_id, u.user_colour, u.user_posts, u.user_from, u.user_website, u.user_email, u.user_icq, u.user_aim, u.user_yim, u.user_jabber, u.user_reg_date, u.user_msnm, u.user_allow_viewemail, u.user_allow_viewonline, u.user_rank, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height, z.friend, z.foe, p.*
 	FROM ' . FORUMS_POSTS_TABLE . ' p
-	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id), ' . USERS_TABLE . ' u
+	LEFT JOIN ' . ZEBRA_TABLE . ' z ON (z.user_id = ' . $_CLASS['core_user']->data['user_id'] . ' AND z.zebra_id = p.poster_id), ' . CORE_USERS_TABLE . ' u
 	WHERE p.post_id IN (' . implode(', ', $post_list) . ')
 		AND u.user_id = p.poster_id';
 
@@ -665,7 +665,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	$bbcode_bitfield |= $row['bbcode_bitfield'];
 
 	// Is a signature attached? Are we going to display it?
-	if ($row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->optionget('viewsigs'))
+	if ($row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->user_data_get('viewsigs'))
 	{
 		$bbcode_bitfield |= $row['user_sig_bbcode_bitfield'];
 	}
@@ -708,7 +708,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
 			$user_sig = '';
 
-			if ($row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->optionget('viewsigs'))
+			if ($row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->user_data_get('viewsigs'))
 			{
 				$user_sig = $row['user_sig'];
 			}
@@ -736,7 +736,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				'username'		=> ($row['user_colour']) ? '<span style="color:#' . $row['user_colour'] . '">' . $poster . '</span>' : $poster
 			);
 
-			if ($row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
+			if ($row['user_avatar'] && $_CLASS['core_user']->user_data_get('viewavatars'))
 			{
 				$avatar_img = '';
 				switch ($row['user_avatar_type'])
@@ -810,17 +810,17 @@ $_CLASS['core_db']->free_result($result);
 if ($config['load_onlinetrack'] && !empty($id_cache))
 {
 	$sql = 'SELECT session_user_id, session_hidden, MAX(session_time) as online_time
-		FROM ' . SESSIONS_TABLE . ' 
+		FROM ' . CORE_SESSIONS_TABLE . ' 
 		WHERE session_user_id IN (' . implode(', ', $id_cache) . ')
 		GROUP BY session_user_id, session_hidden';
 
 	$result = $_CLASS['core_db']->query($sql);
 
-	$min_online_time = $_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length'] * 60;
+	$online_time = $_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length'];
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$user_cache[$row['session_user_id']]['online'] = (!$row['session_hidden'] && $row['online_time'] > $min_online_time);
+		$user_cache[$row['session_user_id']]['online'] = (!$row['session_hidden'] && $row['online_time'] > $online_time);
 	}
 }
 unset($id_cache);
