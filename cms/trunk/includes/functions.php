@@ -544,7 +544,7 @@ function generate_hidden_fields($fields)
 	return $hidden_fields;
 }
 
-function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $admin_link = false)
+function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $admin_link = false, $wrapper = false)
 {
 	global $_CLASS;
 
@@ -553,10 +553,13 @@ function generate_pagination($base_url, $total, $per_page = 10, $start = 0, $adm
 		return false;
 	}
 
-	$wrapper['normal'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
-	$wrapper['current'] = '<span class="page_link_normal">%2$d</span>';
-	$wrapper['first'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
-	$wrapper['last'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
+	if (!$wrapper)
+	{
+		$wrapper['normal'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
+		$wrapper['current'] = '<span class="page_link_normal">%2$d</span>';
+		$wrapper['first'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
+		$wrapper['last'] = '<span class="page_link_normal"><a href="%1$s">%2$d</a></span>';
+	}
 
 	$total_pages = ceil($total / $per_page);
 	$current_page = ($start) ? floor($start / $per_page) + 1 : 1;
@@ -640,7 +643,8 @@ function load_class($file, $name, $class = false)
 			require_once $file;
 		}
 
-		$_CLASS[$name] =& new $class;
+		//$_CLASS[$name] =& new $class;
+		$_CLASS[$name] = new $class;
 	}
 }
 
@@ -1026,4 +1030,27 @@ if (!function_exists('var_export'))
 	}
 }
 
+
+// FROM PHPBB
+
+// Smiley processing
+function smiley_text($text, $force_option = false)
+{
+	global $config, $_CLASS;
+
+	return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->user_data_get('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
+}
+
+if (!function_exists('stripos'))
+{
+	function stripos($haystack, $needle)
+	{
+		if (preg_match('#' . preg_quote($needle, '#') . '#i', $haystack, $m))
+		{
+			return strpos($haystack, $m[0]);
+		}
+
+		return false;
+	}
+}
 ?>

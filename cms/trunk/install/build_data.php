@@ -139,12 +139,12 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (m
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."control_panel_modules (module_name, module_status, module_subs) VALUES ('calender', 2,'month_view\r\nday_view\r\nadd_event')");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('articles', 1, 1, 102)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Contact', 1, 2, 102)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('contact', 1, 2, 102)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('calender', 1, 1, 98)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Control_Panel', 1, 2, 98)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Forums', 1, 2, 98)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Members_List', 1, 2, 98)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('Quick_Message', 1, 1, 102)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('control_panel', 1, 2, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('forums', 1, 2, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('members_List', 1, 2, 98)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."pages (page_name, page_type, page_status, page_blocks) VALUES ('quick_message', 1, 1, 102)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':D', 'grin.png', 'Very Happy', 19, 19, 1, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."smilies (smiley_code, smiley_src, smiley_description, smiley_width, smiley_height, smiley_order, smiley_type) VALUES (':)', 'smile.png', 'Smile', 19, 19, 2, 0)");

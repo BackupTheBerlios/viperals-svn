@@ -27,7 +27,8 @@ error_reporting(E_ALL);
 /* require_once SITE_FILE_ROOT.'core.php'; */
 require_once 'core.php';
 
-$mod = get_variable('mod', 'REQUEST', false);
+/* mb_strtolower is a temp... */
+$mod = mb_strtolower(get_variable('mod', 'REQUEST', false));
 
 if (!$mod)
 {

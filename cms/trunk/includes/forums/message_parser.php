@@ -27,21 +27,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-// case-insensitive strpos() - needed for some functions
-if (!function_exists('stripos'))
-{
-	function stripos($haystack, $needle)
-	{
-		if (preg_match('#' . preg_quote($needle, '#') . '#i', $haystack, $m))
-		{
-			return strpos($haystack, $m[0]);
-		}
-
-		return false;
-	}
-}
-
-require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
+require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
 
 // BBCODE_FIRSTPASS
 //

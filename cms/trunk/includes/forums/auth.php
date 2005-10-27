@@ -37,7 +37,7 @@ class forums_auth
 	var $option = array();
 	var $acl_options = array();
 
-	function acl(&$userdata)
+	function acl($userdata)
 	{
 		global $_CLASS;
 

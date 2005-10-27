@@ -18,10 +18,11 @@ $_CLASS['core_template']->assign_array(array(
 	'S_PM_ICONS'		=> false
 ));
 
-function view_folder($id, $mode, $folder_id, $folder, $type)
+function view_folder($parent_class, $folder_id, $folder, $type)
 {
-	global $_CLASS, $config;
+	global $_CLASS;
 	
+	$limit = 10;
 	$icons = obtain_icons();
 
 	$color_rows = array('marked', 'replied', 'message_reported', 'friend', 'foe');
@@ -63,7 +64,7 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 		'S_MARK_OPTIONS'=> $s_mark_options)
 	);
 
-	$folder_info = get_pm_from($folder_id, $folder, $_CLASS['core_user']->data['user_id'], "Control_Panel&amp;i=$id", $type);
+	$folder_info = get_pm_from($folder_id, $folder, $_CLASS['core_user']->data['user_id'], $parent_class->link_parent, $type);
 
 	// Okay, lets dump out the page ...
 	if (!empty($folder_info['pm_list']))
@@ -92,7 +93,7 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 			{
 				if (isset($recipient_list[$ug_type]) && sizeof($recipient_list[$ug_type]))
 				{
-					$sql = ($ug_type == 'u') ? 'SELECT user_id as id, username as name, user_colour as colour FROM ' . USERS_TABLE . ' WHERE user_id' : 'SELECT group_id as id, group_name as name, group_colour as colour FROM ' . GROUPS_TABLE . ' WHERE group_id';
+					$sql = ($ug_type === 'u') ? 'SELECT user_id as id, username as name, user_colour as colour FROM ' . CORE_USERS_TABLE . ' WHERE user_id' : 'SELECT group_id as id, group_name as name, group_colour as colour FROM ' . CORE_GROUPS_TABLE . ' WHERE group_id';
 					$sql .= ' IN (' . implode(', ', array_keys($recipient_list[$ug_type])) . ')';
 	
 					$result = $_CLASS['core_db']->query($sql);
@@ -119,8 +120,6 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 			unset($recipient_list, $address);
 		}
 
-		$url = 'Control_Panel&amp;i='.$id;
-
 		foreach ($folder_info['pm_list'] as $message_id)
 		{
 			$row =& $folder_info['rowset'][$message_id];
@@ -130,8 +129,8 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 
 			// Generate all URIs ...
 			$message_author = '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['author_id']) . '">' . $row['username'] . '</a>';
-			$view_message_url = generate_link("$url&amp;f=$folder_id&amp;p=$message_id");
-			$remove_message_url = generate_link($url.'&amp;mode=compose&amp;action=delete&amp;p='.$message_id);
+			$view_message_url = generate_link($parent_class->link_parent."&amp;f=$folder_id&amp;p=$message_id");
+			$remove_message_url = generate_link($parent_class->link_parent.'&amp;mode=compose&amp;action=delete&amp;p='.$message_id);
 			
 			$row_indicator = '';
 			foreach ($color_rows as $var)
@@ -147,26 +146,27 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 			// Send vars to template
 			$_CLASS['core_template']->assign_vars_array('messagerow', array(
 				'PM_CLASS'			=> ($row_indicator) ? 'pm_' . $row_indicator . '_colour' : '',
-	
+
 				'FOLDER_ID' 		=> $folder_id,
 				'MESSAGE_ID'		=> $message_id,
 				'MESSAGE_AUTHOR'	=> $message_author,
 				'SENT_TIME'		 	=> $_CLASS['core_user']->format_date($row['message_time']),
 				'SUBJECT'			=> censor_text($row['message_subject']),
 				'FOLDER'			=> (isset($folder[$row['folder_id']])) ? $folder[$row['folder_id']]['folder_name'] : '',
-				'U_FOLDER'			=> (isset($folder[$row['folder_id']])) ? generate_link("$url&amp;folder=" . $row['folder_id']) : '',
+				'U_FOLDER'			=> (isset($folder[$row['folder_id']])) ? generate_link($parent_class->link_parent.'&amp;folder=' . $row['folder_id']) : '',
 				'PM_ICON_IMG'		=> (!empty($icons[$row['icon_id']])) ? '<img src="' . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] . '" width="' . $icons[$row['icon_id']]['width'] . '" height="' . $icons[$row['icon_id']]['height'] . '" alt="" title="" />' : '',
 				'FOLDER_IMG'		=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 				'PM_IMG'			=> ($row_indicator) ? $_CLASS['core_user']->img('pm_' . $row_indicator, '') : '',
-				'ATTACH_ICON_IMG'	=> ($_CLASS['auth']->acl_get('u_download') && $row['message_attachment'] && $config['allow_pm_attach'] && $config['auth_download_pm']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
-				'S_PM_REPORTED'		=> (!empty($row['message_reported']) && $_CLASS['auth']->acl_get('m_')) ? true : false,
+				'ATTACH_ICON_IMG'	=> ($row['message_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+				//'S_PM_REPORTED'		=> (!empty($row['message_reported'])) ? true : false,
+				'S_PM_REPORTED'		=> '',
 				'S_PM_DELETED'		=> ($row['deleted']) ? true : false,
 				
 				'U_VIEW_PM'			=> ($row['deleted']) ? '' : $view_message_url,
 				'U_REMOVE_PM'		=> ($row['deleted']) ? $remove_message_url : '',
 				
 				'RECIPIENTS'		=> ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX) ? implode(', ', $address_list[$message_id]) : '',
-				'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;pm='.$message_id))
+				'U_MCP_REPORT'		=> generate_link('forums&amp;file=mcp&amp;mode=reports&amp;pm='.$message_id))
 //				'U_MCP_QUEUE'		=> "mcp.$phpEx?sid={$_CLASS['core_user']->session_id}&amp;mode=mod_queue&amp;t=$topic_id")
 			);
 		}
@@ -184,17 +184,18 @@ function view_folder($id, $mode, $folder_id, $folder, $type)
 // Get PM's in all folders from user x with type of x (unread, new)
 function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 {
-	global $config, $_CLASS, $_POST;
+	global $_CLASS, $_POST;
 
-	$start		= request_var('start', 0);
+	$limit = 10;
+	$start = get_variable('start', 'REQUEST', 0, 'int');
 
 	//$sort_days = request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
 	//$sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
 	//$sort_dir	= request_var('sd', ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'd'));
 
-	$sort_days	= request_var('st', 0);
-	$sort_key	= request_var('sk', 't');
-	$sort_dir	= request_var('sd', 'd');
+	$sort_days	= get_variable('st', 'REQUEST', 0, 'int');
+	$sort_key	= get_variable('sk', 'REQUEST', 't');
+	$sort_dir	= get_variable('sd', 'REQUEST', 'd');
 	
 	// PM ordering options
 	$limit_days = array(0 => $_CLASS['core_user']->lang['ALL_MESSAGES'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
@@ -206,9 +207,9 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	$s_limit_days = $s_sort_key = $s_sort_dir = $u_sort_param = '';
 	gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $u_sort_param);
 
-	if ($type != 'folder')
+	if ($type !== 'folder')
 	{
-		$folder_sql = ($type == 'unread') ? 't.unread = 1' : 't.new = 1';
+		$folder_sql = ($type === 'unread') ? 't.msg_unread = 1' : 't.msg_new = 1';
 		$folder_id = PRIVMSGS_INBOX;
 	}
 	else
@@ -219,7 +220,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	// Limit pms to certain time frame, obtain correct pm count
 	if ($sort_days)
 	{
-		$min_post_time = time() - ($sort_days * 86400);
+		$min_post_time = $_CLASS['core_user']->time - ($sort_days * 86400);
 
 		$sql = 'SELECT COUNT(t.msg_id) AS pm_count
 			FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . " p
@@ -241,7 +242,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	}
 	else
 	{
-		if ($type == 'folder')
+		if ($type === 'folder')
 		{
 			$pm_count = $folder[$folder_id]['num_messages'];
 		}
@@ -271,22 +272,26 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	}
 
 	$_CLASS['core_template']->assign_array(array(
-		'PAGINATION'		=> generate_pagination("$url&amp;mode=view_messages&amp;action=view_folder&amp;f=$folder_id&amp;$u_sort_param", $pm_count, $config['topics_per_page'], $start),
-		'PAGE_NUMBER'		=> on_page($pm_count, $config['topics_per_page'], $start),
+		'PAGINATION'		=> generate_pagination("$url&amp;mode=view_messages&amp;action=view_folder&amp;f=$folder_id&amp;$u_sort_param", $pm_count, $limit, $start),
+		'PAGE_NUMBER'		=> on_page($pm_count, $limit, $start),
 		'TOTAL_MESSAGES'	=> (($pm_count == 1) ? $_CLASS['core_user']->lang['VIEW_PM_MESSAGE'] : sprintf($_CLASS['core_user']->lang['VIEW_PM_MESSAGES'], $pm_count)),
 
-		'POST_IMG'			=> (!$_CLASS['auth']->acl_get('u_sendpm')) ? $_CLASS['core_user']->img('btn_locked', 'PM_LOCKED') : $_CLASS['core_user']->img('btn_post_pm', 'POST_PM'),
+		//'POST_IMG'			=> (!$_CLASS['auth']->acl_get('u_sendpm')) ? $_CLASS['core_user']->img('btn_locked', 'PM_LOCKED') : $_CLASS['core_user']->img('btn_post_pm', 'POST_PM'),
+		'POST_IMG'			=> $_CLASS['core_user']->img('btn_post_pm', 'POST_PM'),
 
 		'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'MESSAGE_REPORTED'),
 
-		'L_NO_MESSAGES'		=> (!$_CLASS['auth']->acl_get('u_sendpm')) ? $_CLASS['core_user']->lang['POST_PM_LOCKED'] : $_CLASS['core_user']->lang['NO_MESSAGES'],
+		//'L_NO_MESSAGES'		=> (!$_CLASS['auth']->acl_get('u_sendpm')) ? $_CLASS['core_user']->lang['POST_PM_LOCKED'] : $_CLASS['core_user']->lang['NO_MESSAGES'],
+		'L_NO_MESSAGES'		=> $_CLASS['core_user']->lang['NO_MESSAGES'],
 
 		'S_SELECT_SORT_DIR'		=> $s_sort_dir,
 		'S_SELECT_SORT_KEY'		=> $s_sort_key,
 		'S_SELECT_SORT_DAYS'	=> $s_limit_days,
-		'S_TOPIC_ICONS'			=> ($config['enable_pm_icons']) ? true : false, 
+		'S_TOPIC_ICONS'			=> true, 
 
-		'U_POST_NEW_TOPIC'	=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link($url.'&amp;mode=compose&amp;action=post') : '', 
+		//'U_POST_NEW_TOPIC'	=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link($url.'&amp;mode=compose&amp;action=post') : '', 
+		'U_POST_NEW_TOPIC'	=> generate_link($url.'&amp;mode=compose&amp;action=post'), 
+
 		'S_PM_ACTION'		=> generate_link("$url&amp;mode=view_messages&amp;action=view_folder&amp;f=$folder_id"))
 	);
 
@@ -295,14 +300,15 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 
 	// If the user is trying to reach late pages, start searching from the end
 	$store_reverse = false;
-	$sql_limit = $config['topics_per_page'];
+	$sql_limit = $limit;
+
 	if ($start > $pm_count / 2)
 	{
 		$store_reverse = true;
 
-		if ($start + $config['topics_per_page'] > $pm_count)
+		if ($start + $limit > $pm_count)
 		{
-			$sql_limit = min($config['topics_per_page'], max(1, $pm_count - $start));
+			$sql_limit = min($limit, max(1, $pm_count - $start));
 		}
 
 		// Select the sort order
@@ -317,7 +323,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	}
 
 	$sql = 'SELECT t.*, p.author_id, p.root_level, p.message_time, p.message_subject, p.icon_id, p.message_reported, p.to_address, p.message_attachment, p.bcc_address, u.username 
-		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
 		WHERE t.user_id = $user_id
 			AND p.author_id = u.user_id
 			AND $folder_sql

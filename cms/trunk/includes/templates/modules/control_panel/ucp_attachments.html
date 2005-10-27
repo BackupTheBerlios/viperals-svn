@@ -50,7 +50,7 @@
 			<td class="gensmall" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">&nbsp;{ $attachrow:POST_TIME }&nbsp;</td>
 			<td class="genmed" style="padding: 4px;" align="center" valign="middle" nowrap="nowrap">{ $attachrow:SIZE }</td>
 			<td class="genmed" style="padding: 4px;" align="center">{ $attachrow:DOWNLOAD_COUNT }</td>
-			<td style="padding: 4px;" align="center" valign="middle"><input type="checkbox" name="attachment[{ $attachrow:ATTACH_ID }]" value="1" /></td>
+			<td style="padding: 4px;" align="center" valign="middle"><input type="checkbox" name="attachment[]" value="{ $attachrow:ATTACH_ID }" /></td>
 		</tr>
 		<!-- ENDLOOP -->
 		
@@ -62,7 +62,6 @@
 	<div style="float:right"><b class="gensmall"><a href="javascript:marklist('ucp', true);">{ $L_MARK_ALL }</a> :: <a  href="javascript:marklist('ucp', false);">{ $L_UNMARK_ALL }</a></b></div>
 </form>
 <!-- ELSE -->
-
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
 		<th height="28">{ $L_TITLE }</th>

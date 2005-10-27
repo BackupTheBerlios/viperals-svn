@@ -11,162 +11,168 @@
 // 
 // -------------------------------------------------------------
 
-class ucp_zebra extends module
+global $_CLASS;
+
+$_CLASS['core_template']->assign_array(array(
+	'ERROR'				=> false,
+	'USERNAMES'			=> false,
+	'S_USERNAME_OPTIONS'=> false
+));
+
+$hidden_fields = array();
+$this->mode = ($this->mode === 'foes') ? 'foes' : 'friends';
+
+if (!empty($_POST['submit']) || !empty($_GET['add']))
 {
-	function ucp_zebra($id, $mode)
+	if ($add_users = get_variable('add', 'REQUEST', false))
 	{
-		global $_CLASS;
+		require_once SITE_FILE_ROOT.'includes/forums/functions.php';
+		load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
 		
-		$_CLASS['core_template']->assign_array(array(
-			'ERROR'				=> false,
-			'USERNAMES'			=> false,
-			'S_USERNAME_OPTIONS'=> false
-		));
-		
-		$s_hidden_fields = '';
+		$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
 
-		if (!empty($_POST['submit']) || !empty($_GET['add']))
-		{
-			$data['usernames'] = get_variable('usernames', 'POST', false, 'array');
-			$data['add'] = get_variable('add', 'POST', false);
+		$add_users = explode("\n", $add_users);
 
-			if ($data['add'] && empty($error))
-			{
-				$data['add'] = explode("\n", $data['add']);
-
-				$sql = 'SELECT z.*, u.username 
-					FROM ' . ZEBRA_TABLE . ' z, ' . USERS_TABLE . ' u 
-					WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
-						AND u.user_id = z.zebra_id";
-				$result = $_CLASS['core_db']->query($sql);
-
-				$friends = $foes = array();
-				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-				{
-					if ($row['friend'])
-					{
-						$friends[] = $row['username'];
-					}
-					else
-					{
-						$foes[] = $row['username'];
-					}
-				}
-				$_CLASS['core_db']->free_result($result);
-
-				$data['add'] = array_diff($data['add'], $friends, $foes, array($_CLASS['core_user']->data['username']));
-				unset($friends, $foes);
-
-				$data['add'] = "'".implode("', '", $_CLASS['core_db']->escape_array($data['add']))."'";
-
-				if ($data['add'])
-				{
-					$sql = 'SELECT user_id, user_type, user_status
-						FROM ' . USERS_TABLE . ' 
-						WHERE username IN (' . $data['add'] . ')';
-					$result = $_CLASS['core_db']->query($sql);
-
-					if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-					{
-						$user_id_ary = array();
-						do
-						{
-							if ($row['user_type'] == USER_NORMAL && $row['user_status'] == STATUS_ACTIVE)
-							{
-								$user_id_ary[] = $row['user_id'];
-							}
-						}
-						while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-
-						// Remove users from foe list if they are admins or moderators
-						if ($mode == 'foes')
-						{
-							$perms = array();
-							foreach ($_CLASS['auth']->acl_get_list($user_id_ary, array('a_', 'm_')) as $forum_id => $forum_ary)
-							{
-								foreach ($forum_ary as $auth_option => $user_ary)
-								{
-									$perms += $user_ary;
-								}
-							}
-
-							// This may not be right ... it may yield true when perms equate to deny
-							$user_id_ary = array_diff($user_id_ary, $perms);
-							unset($perms);
-						}
-
-						if (!empty($user_id_ary))
-						{
-							$sql_mode = ($mode == 'friends') ? 'friend' : 'foe';
-
-							$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
-								VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-							$_CLASS['core_db']->query($sql);
-						}
-						else
-						{
-							$error[] = 'NOT_ADDED_' . strtoupper($mode);
-						}
-						unset($user_id_ary);
-					}
-					else
-					{
-						$error[] = 'USER_NOT_FOUND';
-					}
-					
-					$_CLASS['core_db']->free_result($result);
-				}
-			}
-			elseif ($data['usernames'] && empty($error))
-			{
-				// Force integer values
-				$data['usernames'] = array_map('intval', $data['usernames']);
-
-				$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
-					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
-						AND zebra_id IN (' . implode(', ', $data['usernames']) . ')';
-				$_CLASS['core_db']->query($sql);
-			}
-			
-			if (empty($error))
-			{
-				$_CLASS['core_display']->meta_refresh(3, generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"));
-				$message = $_CLASS['core_user']->lang[strtoupper($mode) . '_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link("Control_Panel&amp;i=$id&amp;mode=$mode").'">', '</a>');
-				trigger_error($message);
-			}
-			else
-			{
-				$_CLASS['core_template']->assign('ERROR', implode('<br />', preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error)));
-			}
-		}
-
-		$sql_and = ($mode == 'friends') ? 'z.friend = 1' : 'z.foe = 1';
 		$sql = 'SELECT z.*, u.username 
-			FROM ' . ZEBRA_TABLE . ' z, ' . USERS_TABLE . ' u 
+			FROM ' . ZEBRA_TABLE . ' z, ' . CORE_USERS_TABLE . ' u 
 			WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
-				AND $sql_and 
 				AND u.user_id = z.zebra_id";
 		$result = $_CLASS['core_db']->query($sql);
 
-		$s_username_options = '';
+		$friends = $foes = array();
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$s_username_options .= '<option value="' . $row['zebra_id'] . '">' . $row['username'] . '</option>';
+			if ($row['friend'])
+			{
+				$friends[] = $row['username'];
+			}
+			else
+			{
+				$foes[] = $row['username'];
+			}
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$_CLASS['core_template']->assign_array(array( 
-			'L_TITLE'				=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($mode)],
+		$add_users = array_diff($add_users, $friends, $foes, array($_CLASS['core_user']->data['username']));
+		unset($friends, $foes);
 
-			'U_SEARCH_USER'			=> generate_link('Members_List&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 
+		if (!empty($add_users))
+		{
+			$sql = 'SELECT user_id, user_type, user_status
+				FROM ' . CORE_USERS_TABLE . " 
+				WHERE username IN ('" .implode("', '", $_CLASS['core_db']->escape_array($add_users))."')";
+			$result = $_CLASS['core_db']->query($sql);
 
-			'S_USERNAME_OPTIONS'	=> $s_username_options,
-			'S_HIDDEN_FIELDS'		=> $s_hidden_fields,
-			'S_UCP_ACTION'			=> generate_link("Control_Panel&amp;i=$id&amp;mode=$mode"))
-		);
+			$add_users = array();
 
-		$this->display($_CLASS['core_user']->lang['UCP_ZEBRA'], 'ucp_zebra_' . $mode . '.html');
+			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			{
+				do
+				{
+					if ($row['user_type'] == USER_NORMAL && $row['user_status'] == STATUS_ACTIVE)
+					{
+						$add_users[] = $row['user_id'];
+					}
+				}
+				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
+
+				// Remove users from foe list if they are admins or moderators
+				if ($this->mode === 'foes')
+				{
+					$perms = array();
+					foreach ($_CLASS['forums_auth']->acl_get_list($add_users, array('a_', 'm_')) as $forum_id => $forum_ary)
+					{
+						foreach ($forum_ary as $auth_option => $user_ary)
+						{
+							$perms += $user_ary;
+						}
+					}
+
+					// This may not be right ... it may yield true when perms equate to deny
+					$add_users = array_diff($add_users, $perms);
+					unset($perms);
+				}
+
+				if (!empty($add_users))
+				{
+					$sql_mode = ($this->mode === 'friends') ? 'friend' : 'foe';
+
+					$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
+						VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
+					$_CLASS['core_db']->query($sql);
+				}
+				else
+				{
+					$error[] = 'NOT_ADDED_' . strtoupper($this->mode);
+				}
+				unset($add_users);
+			}
+			else
+			{
+				$error[] = 'USER_NOT_FOUND';
+			}
+			
+			$_CLASS['core_db']->free_result($result);
+		}
+	}
+	elseif ($remove_users = get_variable('usernames', 'POST', false, 'array:int'))
+	{
+		$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
+			WHERE user_id = ' . $_CLASS['core_user']->data['user_id'] . ' 
+				AND zebra_id IN (' . implode(', ', array_unique($remove_users)) . ')';
+		$_CLASS['core_db']->query($sql);
+	}
+
+	if (empty($error))
+	{
+		$_CLASS['core_display']->meta_refresh(3, generate_link($this->link));
+		$message = $_CLASS['core_user']->lang[strtoupper($this->mode) . '_UPDATED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_UCP'], '<a href="'.generate_link($this->link).'">', '</a>');
+		trigger_error($message);
+	}
+	else
+	{
+		$_CLASS['core_template']->assign('ERROR', implode('<br />', preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error)));
 	}
 }
+
+$sql_and = ($this->mode === 'friends') ? 'z.friend = 1' : 'z.foe = 1';
+
+$sql = 'SELECT z.*, u.username 
+	FROM ' . ZEBRA_TABLE . ' z, ' . CORE_USERS_TABLE . ' u 
+	WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
+		AND $sql_and 
+		AND u.user_id = z.zebra_id";
+$result = $_CLASS['core_db']->query($sql);
+
+$username_options = '';
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+{
+	$username_options .= '<option value="' . $row['zebra_id'] . '">' . $row['username'] . '</option>';
+}
+$_CLASS['core_db']->free_result($result);
+
+$_CLASS['core_template']->assign_array(array( 
+	'L_TITLE'				=> $_CLASS['core_user']->lang['UCP_ZEBRA_' . strtoupper($this->mode)],
+
+	'U_SEARCH_USER'			=> generate_link('members_list&amp;mode=searchuser&amp;form=ucp&amp;field=add'), 
+
+	'S_USERNAME_OPTIONS'	=> $username_options,
+	'S_HIDDEN_FIELDS'		=> generate_hidden_fields($hidden_fields),
+	'S_UCP_ACTION'			=> generate_link($this->link)
+));
+
+unset($username_options);
+
+/*
+$result = $_CLASS['core_db']->query('SHOW COLLATION');
+$result = $_CLASS['core_db']->query('SHOW CHARACTER SET');
+
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+{
+	print_r($row );echo '<br/>'; die;
+}
+*/
+
+$_CLASS['core_display']->display($_CLASS['core_user']->get_lang('UCP_ZEBRA'), 'modules/control_panel/ucp_zebra_' . $this->mode . '.html');
 
 ?>

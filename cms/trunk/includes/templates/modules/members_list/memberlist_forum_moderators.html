@@ -1,0 +1,45 @@
+<!-- DISPLAY_HEADER -->
+
+<!-- INCLUDE modules/Members_List/memberlist_header.html -->
+
+<form method="post" action="{ $S_MODE_ACTION }">
+	<table class="tablebg" width="100%" cellspacing="1">
+		<tr>
+			<th nowrap="nowrap" width="20%">{ $L_USERNAME }</th>
+			<th nowrap="nowrap" width="25%">{ $L_FORUMS }</th>
+			<th nowrap="nowrap" width="20%">{ $L_PRIMARY_GROUP }</th>
+			<th nowrap="nowrap" width="15%">{ $L_RANK }</th>
+			<th nowrap="nowrap" width="11%">{ $L_SEND_MESSAGE }</th>
+		</tr>
+		<tr class="row3">
+			<td colspan="9"><b class="gensmall">{ $L_MODERATORS }</b></td>
+		</tr>
+	
+		<!-- LOOP $moderators -->
+			<!-- IF { $moderators:#LOOP_INDEX } % 2 --><tr class="row2"><!-- ELSE --><tr class="row1"><!-- ENDIF -->
+		
+			<td class="gen" align="center"><strong><a<!-- IF { $moderators:USER_COLOR } --> style="color:#{ $moderators:USER_COLOR }"<!-- ENDIF --> href="{ $moderators:U_VIEWPROFILE }">{ $moderators:USERNAME }</a></strong></td>
+			<td align="center"><!-- IF !{ $moderators:FORUMS } -->{ $L_ALL_FORUMS }<!-- ELSE --><select style="width: 200px;">{ $moderators:FORUMS }</select><!-- ENDIF -->&nbsp;</td>
+			<td class="gensmall" align="center" nowrap="nowrap">&nbsp;
+				<!-- IF { $moderators:U_GROUP } -->
+					<a<!-- IF { $moderators:GROUP_COLOR } --> style="color:#{ $moderators:GROUP_COLOR }"<!-- ENDIF --> href="{ $moderators:U_GROUP }">{ $moderators:GROUP_NAME }</a>
+				<!-- ELSE -->
+					{ $moderators:GROUP_NAME }
+				<!-- ENDIF -->
+			&nbsp;</td>
+			<td class="gen" align="center">{ $moderators:RANK_IMG }</td>
+			<td class="gen" align="center">&nbsp;<!-- IF { $moderators:U_PM } --><a href="{ $moderators:U_PM }">{ $PM_IMG }</a><!-- ENDIF -->&nbsp;</td>
+		</tr>
+		<!-- LOOPELSE -->
+		<tr>
+			<td class="row1" colspan="9" height="28" align="center"><span class="gen">{ $L_NO_MEMBERS }</span></td>
+		</tr>
+		<!-- ENDLOOP $moderators -->
+	</table>
+</form>
+
+<br clear="all" />
+
+<!-- INCLUDE modules/Members_List/memberlist_footer.html -->
+
+<!-- DISPLAY_FOOTER -->

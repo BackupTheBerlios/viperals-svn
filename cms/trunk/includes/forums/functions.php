@@ -1011,14 +1011,6 @@ function bump_topic_allowed($forum_id, $topic_bumped, $last_post_time, $topic_po
 	return $bump_time;
 }
 
-// Smiley processing
-function smiley_text($text, $force_option = false)
-{
-	global $config, $_CLASS;
-
-	return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->user_data_get('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
-}
-
 // Inline Attachment processing
 function parse_inline_attachments(&$text, $attachments, &$update_count, $forum_id = 0, $preview = false)
 {

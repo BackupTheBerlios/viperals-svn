@@ -51,18 +51,22 @@ class module_control_panel
 	function process_module($type = 'page')
 	{
 		global $_CLASS;
-
-		$sql = 'SELECT * FROM ' . CORE_CONTROL_PANEL_MODULES_TABLE. "
-					WHERE module_name = '".$_CLASS['core_db']->escape($this->module)."'";
-		$result = $_CLASS['core_db']->query($sql);
 		
-		if (!$module_info = $_CLASS['core_db']->fetch_row_assoc($result) || !file_exists(SITE_FILE_ROOT.'modules/Control_Panel/modules/ucp_' . $this->module . '.php'))
+		if ($this->module)
+		{
+			$sql = 'SELECT * FROM ' . CORE_CONTROL_PANEL_MODULES_TABLE. "
+					WHERE module_name = '".$_CLASS['core_db']->escape($this->module)."'";
+			$result = $_CLASS['core_db']->query($sql);
+			$module_info = $_CLASS['core_db']->fetch_row_assoc($result);
+		}
+
+		if (!$this->module || !$module_info || !file_exists(SITE_FILE_ROOT.'modules/Control_Panel/modules/ucp_' . $this->module . '.php'))
 		{
 			$this->module = 'main';
-			$this->mode = false;
+			$this->mode = ($this->module) ? false : $this->mode;
 		}
-		
-		$this->link_standard = $this->link = 'control_panel&amp;i='.$this->module;
+
+		$this->link_parent = $this->link = 'control_panel&amp;i='.$this->module;
 
 		if ($this->mode)
 		{
@@ -161,14 +165,11 @@ class module_control_panel
 			'friends_offline' 		=> false,
 		));
 		
-		$mode = get_variable('mode', 'REQUEST');
-		$module = get_variable('i', 'REQUEST');
-
 		$_CLASS['core_user']->add_lang();
 
-		if (!$module && $mode)
+		if (!$this->module && $this->mode)
 		{
-			switch ($mode)
+			switch ($this->mode)
 			{
 				case 'register':
 					if ($_CLASS['core_user']->is_user || $_CLASS['core_user']->is_bot)
@@ -245,7 +246,7 @@ class module_control_panel
 		$this->process_module('page');
 		$this->generate_panel_block('page');
 
-		require SITE_FILE_ROOT.'modules/control_panel/modules/ucp_' . $module . '.php';
+		require SITE_FILE_ROOT.'modules/control_panel/modules/ucp_' . $this->module . '.php';
 	}
 }
 

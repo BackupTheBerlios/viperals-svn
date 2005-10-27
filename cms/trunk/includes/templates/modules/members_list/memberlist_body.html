@@ -49,9 +49,8 @@
 		<tr>
 			<th nowrap="nowrap">#</th>
 			<th nowrap="nowrap" width="<!-- IF { $S_SEND_MESSAGE } -->20<!-- ELSE -->34<!-- ENDIF -->%"><a class="th" href="{ $U_SORT_USERNAME }">{ $L_USERNAME }</a></th>
+			<th nowrap="nowrap" width="15%"><a class="th" href="{ $U_SORT_POSTS }">{ $L_ONLINE }</a></th>
 			<th nowrap="nowrap" width="15%"><a class="th" href="{ $U_SORT_JOINED }">{ $L_JOINED }</a></th>
-			<th nowrap="nowrap" width="10%"><a class="th" href="{ $U_SORT_POSTS }">{ $L_POSTS }</a></th>
-			<th nowrap="nowrap" width="15%"><a class="th" href="{ $U_SORT_RANK }">{ $L_RANK }</a></th>
 		<!-- IF { $S_SEND_MESSAGE } -->
 			<th nowrap="nowrap" width="11%">{ $L_SEND_MESSAGE }</th>
 		<!-- ENDIF -->
@@ -77,9 +76,8 @@
 
 			<td class="gen" align="center">{ $leader_row:#LOOP_NUMBER }</td>
 			<td class="gen" align="center"><strong><a<!-- IF { $leader_row:USER_COLOR } --> style="color:#{ $leader_row:USER_COLOR }"<!-- ENDIF --> href="{ $leader_row:U_VIEWPROFILE }">{ $leader_row:USERNAME }</a></strong></td>
-			<td class="gensmall" align="center" nowrap="nowrap">{$leader_row:JOINED}</td>
-			<td class="gen" align="center">{ $leader_row:POSTS }</td>
-			<td class="gen" align="center">{ $leader_row:RANK_IMG }</td>
+			<td class="gen" align="center">{ $leader_row:ONLINE_IMG }</td>
+			<td class="gensmall" align="center" nowrap="nowrap"> { $leader_row:JOINED } </td>
 			<!-- IF { $leader_row:U_PM } --><td class="gen" align="center"><a href="{ $leader_row:U_PM }">{ $PM_IMG }</a></td><!-- ENDIF -->
 			<td class="gen" align="center"><!-- IF { $leader_row:U_EMAIL } --><a href="{ $leader_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF --></td>
 			<td class="gen" align="center"><!-- IF { $leader_row:U_WWW } --><a href="{ $leader_row:U_WWW }" target="_blank">{ $WWW_IMG }</a><!-- ENDIF --></td>
@@ -102,9 +100,8 @@
 		<!-- ENDIF -->
 			<td class="gen" align="center">{ $member_row:#LOOP_NUMBER }</td>
 			<td class="gen" align="center"><strong><a<!-- IF { $member_row:USER_COLOR } --> style="color:#{ $member_row:USER_COLOR }"<!-- ENDIF --> href="{ $member_row:U_VIEWPROFILE }">{ $member_row:USERNAME }</a></strong></td>
+			<td class="gen" align="center">{ $member_row:ONLINE_IMG }</td>
 			<td class="gensmall" align="center" nowrap="nowrap">{ $member_row:JOINED }</td>
-			<td class="gen" align="center">{ $member_row:POSTS }</td>
-			<td class="gen" align="center">{ $member_row:RANK_IMG }</td>
 			<!-- IF { $member_row:U_PM } -->
 			<td class="gen" align="center"><a href="{ $member_row:U_PM }">{ $PM_IMG }</a></td><!-- ENDIF -->
 			<td class="gen" align="center"><!-- IF { $member_row:U_EMAIL } --><a href="{ $member_row:U_EMAIL }">{ $EMAIL_IMG }</a><!-- ENDIF --></td>

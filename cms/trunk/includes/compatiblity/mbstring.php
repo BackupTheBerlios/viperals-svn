@@ -26,7 +26,9 @@ $Id$
 	next your going to say you can't use a database *
 */
 
-define('MB_CASE_TITLE', 0);
+@define('MB_CASE_UPPER', 0);
+@define('MB_CASE_LOWER', 1);
+@define('MB_CASE_TITLE', 2);
 
 if (!function_exists('mb_internal_encoding'))
 {
@@ -80,8 +82,21 @@ if (!function_exists('mb_convert_case'))
 {
 	function mb_convert_case($string, $mode = null, $encoding = null)
 	{
-		// maybe add modes
-		return ucfirst(strtolower($string));
+		switch ($mode)
+		{
+			case MB_CASE_TITLE:
+/* Make do some make this complete */
+				return ucfirst(strtolower($string));
+			break;
+
+			case MB_CASE_UPPER:
+				return strtoupper($string);
+			break;
+
+			case MB_CASE_LOWER:
+				return strtolower($string);
+			break;
+		}
 	}
 }
 
@@ -92,4 +107,13 @@ if (!function_exists('mb_strtolower'))
 		return strtolower($string);
 	}
 }
+
+if (!function_exists('mb_strtoupper'))
+{
+	function mb_strtoupper($string, $encoding = null)
+	{
+		return strtoupper($string);
+	}
+}
+
 ?>

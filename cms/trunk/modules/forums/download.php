@@ -212,42 +212,41 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 		$browser_agent = 'other';
     }
 
-	// Correct the mime type - we force application/octetstream for all files, except images
-	// Please do not change this, it is a security precaution
+	/*
+		Correct the mime type - we force application/octetstream for all files, except images
+		Please do not change this, it is a security precaution
+	*/
+
 	if ($category == ATTACHMENT_CATEGORY_NONE && strpos($attachment['mimetype'], 'image') === false)
 	{
-		$attachment['mimetype'] = ($browser_agent == 'ie' || $browser_agent == 'opera') ? 'application/octetstream' : 'application/octet-stream';
+		$attachment['mimetype'] = ($browser_agent === 'ie' || $browser_agent === 'opera') ? 'application/octetstream' : 'application/octet-stream';
 	}
 
+	/* Clean all output buffers */
 	while (@ob_end_clean());
+	header('Content-Encoding: ');
 
-	// Now the tricky part... let's dance
+	/* Send out required headers */
 	header('Pragma: public');
-
-	// Send out the Headers
 	header('Content-Type: ' . $attachment['mimetype'] . '; name="' . $attachment['real_filename'] . '"');
 	header('Content-Disposition: inline; filename="' . $attachment['real_filename'] . '"');
 
-	// Now send the File Contents to the Browser
+	/* Now send the File Contents to the Browser */
 	$size = @filesize($filename);
+
 	if ($size)
 	{
-		header("Content-length: $size");
+		header('Content-Length: '.$size);
 	}
+
 	$result = @readfile($filename);
 
 	if (!$result)
 	{
 		trigger_error('Unable to deliver file.<br />Error was: ' . $php_errormsg, E_USER_WARNING);
 	}
-	if (!empty($_CLASS['core_cache']))
-	{
-		$_CLASS['core_cache']->unload();
-	}
-	
-	$_CLASS['core_db']->sql_close();
-	flush();
-	exit;
+
+	script_close(false);
 }
 
 function download_allowed()
