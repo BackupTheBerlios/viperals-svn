@@ -28,9 +28,9 @@ class viperal_admin_theme
 		$this->table_close	= '</div></div></div>';
 		
 		$_CLASS['core_template']->assign_array(array(
-			'A_TABLE_OPEN'	=> $this->table_open,
-			'A_TABLE_CLOSE'	=> $this->table_close,
-			'A_STYLESHEET'	=> 'themes_admin/viperal_admin/style/style.css',
+			'THEME_TABLE_OPEN'	=> $this->table_open,
+			'THEME_TABLE_CLOSE'	=> $this->table_close,
+			'THEME_STYLESHEET'	=> 'themes_admin/viperal_admin/style/style.css',
 		));
 	}
 
@@ -54,7 +54,7 @@ class viperal_admin_theme
 			$_CLASS['core_template']->assign('PAGE_TITLE', $_CLASS['core_user']->lang['HOME'].' &gt; '.(is_array($_CORE_MODULE['module_title']) ? implode(' &gt; ', $_CORE_MODULE['module_title']) : $_CORE_MODULE['module_title']));
 		}
 		
-		$_CLASS['core_blocks']->display(BLOCK_LEFT);
+		$_CLASS['core_blocks']->generate(BLOCK_LEFT);
 	
 		$_CLASS['core_template']->display('header.html');
 	}
@@ -63,7 +63,7 @@ class viperal_admin_theme
 	{
 		global $_CLASS;
 
-		$_CLASS['core_blocks']->display(BLOCK_RIGHT);
+		$_CLASS['core_blocks']->generate(BLOCK_RIGHT);
 
 		$_CLASS['core_template']->assign('THEME_FOOTER', $_CLASS['core_display']->footmsg());
 		

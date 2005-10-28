@@ -836,11 +836,11 @@ $_CLASS['core_db']->table_create('commit');
 /*
 	Forums Words Table
 */
-$_CLASS['core_db']->table_create('start', $table_prefix.'forums_words');
+$_CLASS['core_db']->table_create('start', $table_prefix.'censor');
 
 $_CLASS['core_db']->add_table_field_int('word_id', array('max' => 16000000, 'auto_increment' => true));
-$_CLASS['core_db']->add_table_field_char('word', 100);
-$_CLASS['core_db']->add_table_field_char('replacement', 100);
+$_CLASS['core_db']->add_table_field_char('word_match', 100);
+$_CLASS['core_db']->add_table_field_char('word_replacement', 100);
 
 $_CLASS['core_db']->add_table_index('word_id', 'primary');
 

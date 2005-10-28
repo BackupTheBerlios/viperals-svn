@@ -61,12 +61,12 @@ define('ADMIN_NOT_ADMIN', 1);
 define('ADMIN_IS_ADMIN', 2);
 
 // Block side
-define('BLOCK_LEFT', (1 << 1));
-define('BLOCK_RIGHT', (1 << 2));
-define('BLOCK_TOP', (1 << 3));
-define('BLOCK_BOTTOM', (1 << 4));
-define('BLOCK_MESSAGE_TOP', (1 << 5));
-define('BLOCK_MESSAGE_BOTTOM', (1 << 6));
+define('BLOCK_LEFT', 1);
+define('BLOCK_RIGHT', 2);
+define('BLOCK_TOP', 3);
+define('BLOCK_BOTTOM', 4);
+define('BLOCK_MESSAGE_TOP', 5);
+define('BLOCK_MESSAGE_BOTTOM', 6);
 
 define('BLOCKTYPE_FILE',0);
 define('BLOCKTYPE_FEED',1);
@@ -190,18 +190,18 @@ define('FORUMS_SEARCH_MATCH_TABLE', $table_prefix.'forums_search_wordmatch');
 define('FORUMS_TOPICS_TABLE', $table_prefix.'forums_topics');
 define('FORUMS_POLL_OPTIONS_TABLE', $table_prefix.'forums_poll_results');
 define('FORUMS_POLL_VOTES_TABLE', $table_prefix.'forums_poll_voters');
-define('FORUMS_WORDS_TABLE', $table_prefix.'forums_words');
 define('FORUMS_WATCH_TABLE', $table_prefix.'forums_watch');
 define('FORUMS_TRACK_TABLE', $table_prefix.'forums_tracking');
 define('FORUMS_RANKS_TABLE', $table_prefix.'forums_ranks');
 define('FORUMS_EXTENSIONS_TABLE', $table_prefix.'forums_extensions');
 define('FORUMS_EXTENSION_GROUPS_TABLE', $table_prefix.'forums_extension_groups');
 
-define('CORE_ADMIN_AUTH_TABLE', $table_prefix.'admins');
+define('CORE_ADMIN_AUTH_TABLE', $table_prefix.'admin_access');
 define('CORE_ADMIN_MODULES_TABLE', $table_prefix.'admin_modules');
 
 define('CORE_BLOCKS_TABLE', $table_prefix.'blocks');
 
+define('CORE_CENSOR_TABLE', $table_prefix.'censor');
 define('CORE_CONFIG_TABLE', $table_prefix.'config');
 define('CORE_CONTROL_PANEL_MODULES_TABLE', $table_prefix . 'control_panel_modules');
 

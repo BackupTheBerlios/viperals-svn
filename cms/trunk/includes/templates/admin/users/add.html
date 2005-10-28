@@ -1,10 +1,13 @@
 <!-- DISPLAY_HEADER -->
 
-{ $A_TABLE_OPEN }
+{ $THEME_TABLE_OPEN }
 
 <!-- INCLUDE admin/users/header.html -->
 <form method="post" action="{ $S_ACTION }">
 	<table class="tablebg" cellspacing="1" cellpadding="4" width="100%">
+		<tr>
+			<th colspan="6" align="center"></th>
+		</tr>
 		<!-- IF { $ERROR } -->
 		<tr>
 			<td class="row3" colspan="2" align="center"><span class="gensmall" style="color:red">{ $ERROR }</td>
@@ -40,6 +43,6 @@
 	</table>
 </form>
 
-{ $A_TABLE_CLOSE }
+{ $THEME_TABLE_CLOSE }
 
 <!-- DISPLAY_FOOTER -->

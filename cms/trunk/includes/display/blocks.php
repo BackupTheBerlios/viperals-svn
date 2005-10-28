@@ -43,7 +43,7 @@ class core_blocks
 		static $side_check = array();
 
 		settype($side, 'int');
-		$true_side = $side >> 1;
+		$true_side = $side;
 
 		if (isset($side_check[$true_side]))
 		{
@@ -57,11 +57,11 @@ class core_blocks
 			$side = ($side === BLOCK_LEFT) ? BLOCK_RIGHT : BLOCK_LEFT;
 		}
 
-		if ($_CLASS['core_display']->page['page_blocks'] & $side)
+		if ($_CLASS['core_display']->page['page_blocks'] & (1 << $side))
 		{
 			$this->load_blocks();
 
-			if (!empty($this->blocks_array[$side >> 1]))
+			if (!empty($this->blocks_array[$side]))
 			{
 				return $side_check[$true_side] = $side;
 			}
@@ -133,8 +133,6 @@ class core_blocks
 		{
 			return false;
 		}
-
-		$position = ($position >> 1);
 
 		$this->load_blocks();
 

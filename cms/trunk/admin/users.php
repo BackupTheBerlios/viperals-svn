@@ -26,12 +26,14 @@ if (VIPERAL !== 'Admin')
 	die;
 }
 
-// Just testing the layout, i know they not acurrate
-$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM ' . USERS_TABLE . ' WHERE user_type = ' . USER_BOT);
+global $_CLASS;
+
+/*  Just testing the layout, i know they not acurrate */
+$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM ' . CORE_USERS_TABLE . ' WHERE user_type = ' . USER_BOT);
 list($count_bots) = $_CLASS['core_db']->fetch_row_num($result);
 $_CLASS['core_db']->free_result($result);
 
-$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM ' . USERS_TABLE . ' WHERE user_type = ' . USER_NORMAL);
+$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM ' . CORE_USERS_TABLE . ' WHERE user_type = ' . USER_NORMAL);
 list($count_users) = $_CLASS['core_db']->fetch_row_num($result);
 $_CLASS['core_db']->free_result($result);
 
@@ -56,6 +58,8 @@ if (isset($_REQUEST['mode']))
 	switch ($_REQUEST['mode'])
 	{
 		case 'setting':
+			global $_CORE_CONFIG;
+
 			if (isset($_POST['submit']))
 			{
 				$activation_array = array(USER_ACTIVATION_NONE, USER_ACTIVATION_SELF, USER_ACTIVATION_ADMIN, USER_ACTIVATION_DISABLE);
@@ -72,13 +76,23 @@ if (isset($_REQUEST['mode']))
 		 		$data['max_pass_chars']	= get_variable('max_pass_chars', 'POST', 0, 'int');
 		 		$data['max_reg_attempts'] = get_variable('coppa_fax', 'POST', 0, 'int');
 
+				$remove_config = false;
+
 				foreach ($data as $name => $setting)
 				{
-					if ($setting != $_CORE_CONFIG['user'][$name])
+					if ($setting !== $_CORE_CONFIG['user'][$name])
 					{
+						$remove_config = true;
+
 						set_core_config('user', $name, $setting, false);
 					}
 				}
+
+				if ($remove_config)
+				{
+					$_CLASS['core_cache']->destroy('core_config');
+				}
+				unset($remove_config, $data);
 			}
 
 			$_CLASS['core_template']->assign_array(array(
@@ -126,10 +140,13 @@ if (isset($_REQUEST['mode']))
 		break;
 
 		case 'add_user':
+			global $_CORE_CONFIG;
+
 			if (isset($_POST['submit']))
 			{
-				require_once($site_file_root.'includes/functions_user.php');
-	
+				require_once SITE_FILE_ROOT.'includes/functions_user.php';
+
+
 				$error = array();
 	
 				$username	= get_variable('username', 'POST');
@@ -163,7 +180,7 @@ if (isset($_REQUEST['mode']))
 				{
 					$error[] = $_CLASS['core_user']->get_lang('EMAIL_ERROR');
 				}
-				elseif (!check_email($email)) // we can maybe remove this check
+				elseif (!check_email($email)) /* we can maybe remove this check */
 				{
 					$error[] = $_CLASS['core_user']->get_lang('EMAIL_INVALID');
 				}
@@ -179,7 +196,7 @@ if (isset($_REQUEST['mode']))
 		
 					if (!$password)
 					{
-						//do some admin contact thing here
+						/* do some admin contact thing here */
 						die('Try again later');
 					}
 
@@ -228,10 +245,10 @@ if (isset($_REQUEST['mode']))
 		case 'bots':
 			if ($id && isset($_REQUEST['option']))
 			{
-				require_once($site_file_root.'includes/functions_user.php');
+				require_once SITE_FILE_ROOT.'includes/functions_user.php';
 			
 				$sql = 'SELECT user_id, user_type, user_status
-					FROM ' . USERS_TABLE . ' 
+					FROM ' . CORE_USERS_TABLE . ' 
 					WHERE user_id = '.$id;
 				
 				$result = $_CLASS['core_db']->query($sql);
@@ -271,7 +288,7 @@ if (isset($_REQUEST['mode']))
 			}
 
 			$sql = 'SELECT user_id, username, user_status, user_last_visit 
-				FROM ' . USERS_TABLE . '
+				FROM ' . CORE_USERS_TABLE . '
 				WHERE user_type = ' . USER_BOT . ' ORDER BY user_last_visit DESC';
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -296,10 +313,10 @@ if (isset($_REQUEST['mode']))
 		case 'unactivated':
 			if ($id && isset($_REQUEST['option']))
 			{
-				require_once($site_file_root.'includes/functions_user.php');
+				require_once SITE_FILE_ROOT.'includes/functions_user.php';
 
 				$sql = 'SELECT user_id, user_type, user_status
-					FROM ' . USERS_TABLE . ' 
+					FROM ' . CORE_USERS_TABLE . ' 
 					WHERE user_id = '.$id;
 
 				$result = $_CLASS['core_db']->query($sql);
@@ -324,7 +341,7 @@ if (isset($_REQUEST['mode']))
 						if (display_confirmation())
 						{
 							$sql = 'SELECT user_id, user_type
-								FROM ' . USERS_TABLE . ' 
+								FROM ' . CORE_USERS_TABLE . ' 
 								WHERE user_id = '.$id;
 				
 							$result = $_CLASS['core_db']->query($sql);
@@ -360,7 +377,7 @@ if (isset($_REQUEST['mode']))
 			$start = get_variable('start', 'GET', false, 'integer');
 
 			$sql = 'SELECT user_id, username, user_reg_date
-				FROM ' . USERS_TABLE . '
+				FROM ' . CORE_USERS_TABLE . '
 					WHERE user_type = '.USER_NORMAL.'
 					AND user_status = '.$status;
 
@@ -381,7 +398,7 @@ if (isset($_REQUEST['mode']))
 			}
 			$_CLASS['core_db']->free_result($result);
 
-			$sql = 'SELECT count(*) as count FROM ' . USERS_TABLE . '
+			$sql = 'SELECT count(*) as count FROM ' . CORE_USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.'
 				AND user_status = '.$status;
 
@@ -404,7 +421,7 @@ foreach ($user_status as $status)
 {
 	$limit = ($last_count) ? 10 : 20 - $last_count;
 
-	$sql = 'SELECT COUNT(*)	FROM ' . USERS_TABLE . '
+	$sql = 'SELECT COUNT(*)	FROM ' . CORE_USERS_TABLE . '
 				WHERE user_type = '.USER_NORMAL.'
 				AND user_status = '.$status;
 	$result = $_CLASS['core_db']->query($sql);
@@ -429,7 +446,7 @@ foreach ($user_status as $status)
 	));
 
 	$sql = 'SELECT user_id, username, user_reg_date
-		FROM ' . USERS_TABLE . '
+		FROM ' . CORE_USERS_TABLE . '
 			WHERE user_type = '.USER_NORMAL.'
 			AND user_status = '.$status;
 

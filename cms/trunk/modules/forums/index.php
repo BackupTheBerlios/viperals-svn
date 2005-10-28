@@ -34,14 +34,14 @@ if (!$file || !in_array($file, $approved_files))
 
 unset($approved_files);
 
-require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
+require_once SITE_FILE_ROOT.'includes/forums/functions.php';
 load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
 
 $_CLASS['auth'] =& $_CLASS['forums_auth'];
 
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
+$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
 
 $_CLASS['core_user']->user_setup();
-include(dirname(__FILE__)."/$file.php");
+include dirname(__FILE__)."/$file.php";
 
 ?>

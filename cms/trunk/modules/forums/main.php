@@ -37,12 +37,10 @@ if (!defined('VIPERAL'))
     die;
 }
 
-load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'auth');
-
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_img();
 
-require(SITE_FILE_ROOT.'includes/forums/functions_display.php');
+require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
 display_forums('', $config['load_moderators']);
 
 // Grab group details for legend display
@@ -89,7 +87,7 @@ if ($config['load_birthdays'])
 	unset($now);
 }
 
-$l_total_user_s = ($config['num_users'] == 0) ? 'TOTAL_USERS_ZERO' : 'TOTAL_USERS_OTHER';
+$l_total_user_s = ($_CORE_CONFIG['user']['total_users'] === 0) ? 'TOTAL_USERS_ZERO' : 'TOTAL_USERS_OTHER';
 $l_total_post_s = ($config['num_posts'] == 0) ? 'TOTAL_POSTS_ZERO' : 'TOTAL_POSTS_OTHER';
 $l_total_topic_s = ($config['num_topics'] == 0) ? 'TOTAL_TOPICS_ZERO' : 'TOTAL_TOPICS_OTHER';
 
@@ -97,7 +95,7 @@ $l_total_topic_s = ($config['num_topics'] == 0) ? 'TOTAL_TOPICS_ZERO' : 'TOTAL_T
 $_CLASS['core_template']->assign_array(array(
 	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_post_s), $config['num_posts']),
 	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_topic_s), $config['num_topics']),
-	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_user_s), $config['num_users']),
+	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_user_s), $_CORE_CONFIG['user']['total_users']),
 	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->get_lang('NEWEST_USER'), '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$_CORE_CONFIG['user']['newest_user_id']) . '">', $_CORE_CONFIG['user']['newest_username'], '</a>'), 
 	'LEGEND'		=> $legend, 
 	'BIRTHDAY_LIST'	=> $birthday_list, 
@@ -111,6 +109,7 @@ $_CLASS['core_template']->assign_array(array(
 
 	'U_MARK_FORUMS'	=> generate_link('Forums&amp;mark=forums')
 ));
+unset($birthday_list, $legend);
 
 page_header();
 

@@ -34,7 +34,7 @@ function censor_text($text, $force = false)
 
 	if (!empty($censors))
 	{
-		return preg_replace($censors['match'], $censors['replace'], $text);
+		return preg_replace($censors['word_match'], $censors['word_replace'], $text);
 	}
 
 	return $text;
@@ -305,7 +305,7 @@ function get_bots()
 		$bots = array();
 
 		$sql = 'SELECT user_id, username, user_agent, user_ip
-			FROM ' . USERS_TABLE . ' WHERE user_type = ' . USER_BOT;
+			FROM ' . CORE_USERS_TABLE . ' WHERE user_type = ' . USER_BOT;
 		$result = $_CLASS['core_db']->query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -327,15 +327,15 @@ function get_word_censors()
 	if (is_null($censors = $_CLASS['core_cache']->get('word_censors')))
 	{
 		$sql = 'SELECT word, replacement
-			FROM  ' . CORE_CENSOR_TABLE .'ORDER BY LENGTH(word) DESC';
+			FROM  ' . CORE_CENSOR_TABLE .' ORDER BY LENGTH(word) DESC';
 		$result = $_CLASS['core_db']->query($sql);
 
 		$censors = array();
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$censors['match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word'], '#')) . ')\b#i';
-			$censors['replace'][] = $row['replacement'];
+			$censors['word_match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word_match'], '#')) . ')\b#i';
+			$censors['word_replace'][] = $row['word_replacement'];
 		}
 
 		$_CLASS['core_db']->free_result($result);
@@ -643,8 +643,9 @@ function load_class($file, $name, $class = false)
 			require_once $file;
 		}
 
-		//$_CLASS[$name] =& new $class;
-		$_CLASS[$name] = new $class;
+/* I think reference is required below PHP 4.4 */
+		$_CLASS[$name] =& new $class;
+		//$_CLASS[$name] = new $class;
 	}
 }
 

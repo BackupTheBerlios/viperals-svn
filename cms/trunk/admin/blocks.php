@@ -26,7 +26,9 @@ if (VIPERAL !== 'Admin')
 	die;
 }
 
-require($site_file_root.'admin/functions/block_functions.php');
+global $_CLASS;
+
+require_once SITE_FILE_ROOT.'admin/functions/block_functions.php';
 $_CLASS['core_user']->add_lang('admin/blocks.php');
 
 function check_position($position, $redirect = true)
@@ -39,7 +41,6 @@ function check_position($position, $redirect = true)
 		if ($redirect)
 		{
 			redirect(generate_link('blocks', array('admin' => true)));
-			die;
 		}
 		return false;
 	}
@@ -97,7 +98,7 @@ if (isset($_REQUEST['mode']))
 }
 
 $result = $_CLASS['core_db']->query('SELECT block_id, block_title, block_type,  block_position, block_order, block_status, block_starts, block_expires, block_file, block_auth
-	FROM ' . BLOCKS_TABLE . ' WHERE block_position IN (' . BLOCK_RIGHT . ', ' . BLOCK_TOP . ', ' . BLOCK_BOTTOM . ', ' . BLOCK_LEFT . ')
+	FROM ' . CORE_BLOCKS_TABLE . ' WHERE block_position IN (' . BLOCK_RIGHT . ', ' . BLOCK_TOP . ', ' . BLOCK_BOTTOM . ', ' . BLOCK_LEFT . ')
 	ORDER BY block_position, block_order ASC');
 
 $block_position = array(BLOCK_RIGHT => 'right', BLOCK_TOP => 'centertop', BLOCK_BOTTOM => 'centerbottom', BLOCK_LEFT => 'left');
@@ -121,7 +122,7 @@ foreach ($blocks as $block)
 	switch ($block['block_type'])
 	{
 		case BLOCKTYPE_FILE:
-			if (!$block['block_file'] || !file_exists($site_file_root.'blocks/'.$block['block_file']))
+			if (!$block['block_file'] || !file_exists(SITE_FILE_ROOT.'blocks/'.$block['block_file']))
 			{
 				$error = 'File_MISSING';
 			}
@@ -175,7 +176,7 @@ function blocks_change_position($position, $id)
 
 	check_position($position);
 
-	$result = $_CLASS['core_db']->query('SELECT block_position, block_order FROM '.BLOCKS_TABLE.' WHERE block_id = '.$id);
+	$result = $_CLASS['core_db']->query('SELECT block_position, block_order FROM '.CORE_BLOCKS_TABLE.' WHERE block_id = '.$id);
 	$block = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
@@ -186,14 +187,14 @@ function blocks_change_position($position, $id)
 
 	check_position($block['block_position']);
 
-	$result = $_CLASS['core_db']->query('SELECT max(block_order) as max_order FROM '.BLOCKS_TABLE.' WHERE block_position = '.$position);
+	$result = $_CLASS['core_db']->query('SELECT max(block_order) as max_order FROM '.CORE_BLOCKS_TABLE.' WHERE block_position = '.$position);
 	list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 	$_CLASS['core_db']->free_result($result);
 
 	$new_order = (int) $max_order + 1;
 
-	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE." SET block_position = $position , block_order = $new_order where block_id = $id");
-	$_CLASS['core_db']->query('UPDATE '.BLOCKS_TABLE.' SET block_order = block_order - 1 WHERE block_position = '.$block['block_position'].' AND block_order > '.$block['block_order']);
+	$_CLASS['core_db']->query('UPDATE '.CORE_BLOCKS_TABLE." SET block_position = $position , block_order = $new_order where block_id = $id");
+	$_CLASS['core_db']->query('UPDATE '.CORE_BLOCKS_TABLE.' SET block_order = block_order - 1 WHERE block_position = '.$block['block_position'].' AND block_order > '.$block['block_order']);
 
 	$_CLASS['core_cache']->destroy('blocks');
 }
@@ -204,7 +205,7 @@ function block_add($id = false, $block = false, $error = false)
 
 	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_id = '.$id);
+		$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_BLOCKS_TABLE.' WHERE block_id = '.$id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
@@ -368,7 +369,7 @@ function block_get_data(&$data, &$error, $type = false)
 
 function block_position_select($default = false)
 {
-	global $site_file_root, $_CLASS;
+	global $_CLASS;
 	
 	$block_position_array = array(
 		BLOCK_RIGHT 	=> $_CLASS['core_user']->lang['B_RIGHT'],
@@ -403,7 +404,7 @@ function block_save($id = false)
 	
 	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT block_order, block_position, block_type FROM '.BLOCKS_TABLE.' WHERE block_id = '.$id);
+		$result = $_CLASS['core_db']->query('SELECT block_order, block_position, block_type FROM '.CORE_BLOCKS_TABLE.' WHERE block_id = '.$id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
@@ -428,7 +429,7 @@ function block_save($id = false)
 			blocks_change_position($data['block_position'], $id);
 		}
 		
-		$sql = 'UPDATE '.BLOCKS_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE block_id = '.$id;
+		$sql = 'UPDATE '.CORE_BLOCKS_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE block_id = '.$id;
 	}
 	else
 	{
@@ -439,13 +440,13 @@ function block_save($id = false)
 			return block_add(false, $data, $error);
 		}
 
-		$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM '.BLOCKS_TABLE.' WHERE block_position = '.$data['block_position']);
+		$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM '.CORE_BLOCKS_TABLE.' WHERE block_position = '.$data['block_position']);
 		list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 		$_CLASS['core_db']->free_result($result);
 				
 		$data['block_order'] = (int) $max_order + 1;
 		
-		$sql = 'INSERT INTO '.BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
+		$sql = 'INSERT INTO '.CORE_BLOCKS_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
 	}
 
 	$_CLASS['core_db']->query($sql);
@@ -458,11 +459,11 @@ function block_save($id = false)
 
 function block_select($default = false)
 {
-	global $site_file_root, $_CLASS;
+	global $_CLASS;
 
 	$block_list_array = array();
 
-	$handle = opendir($site_file_root.'blocks');
+	$handle = opendir(SITE_FILE_ROOT.'blocks');
 
 	while ($file = readdir($handle))
 	{

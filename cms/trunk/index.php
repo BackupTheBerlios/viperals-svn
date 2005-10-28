@@ -54,12 +54,12 @@ if (!$mod)
 	{
 		/*
 		$blocks = 0;
-		$blocks |= BLOCK_LEFT;
-		$blocks |= BLOCK_RIGHT;
-		$blocks |= BLOCK_TOP;
-		$blocks |= BLOCK_BOTTOM;
-		$blocks |= BLOCK_MESSAGE_TOP;
-		$blocks |= BLOCK_MESSAGE_BOTTOM;
+		$blocks |= (1 << BLOCK_LEFT);
+		$blocks |= (1 << BLOCK_RIGHT);
+		$blocks |= (1 << BLOCK_TOP);
+		$blocks |= (1 << BLOCK_BOTTOM);
+		$blocks |= (1 << BLOCK_MESSAGE_TOP);
+		$blocks |= (1 << BLOCK_MESSAGE_BOTTOM);
 		echo $blocks;
 		*/
 

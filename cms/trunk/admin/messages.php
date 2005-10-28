@@ -26,7 +26,9 @@ if (VIPERAL !== 'Admin')
 	die;
 }
 
-require($site_file_root.'admin/functions/block_functions.php');
+global $_CLASS;
+
+require_once SITE_FILE_ROOT.'admin/functions/block_functions.php';
 $_CLASS['core_user']->add_lang('admin/blocks.php');
 
 function check_position($position, $redirect = true)
@@ -84,8 +86,9 @@ if (isset($_REQUEST['mode']))
 	}
 }
 
-$result = $_CLASS['core_db']->query('SELECT block_id, block_position, block_title, block_starts, block_expires, block_order, block_status FROM ' . BLOCKS_TABLE . '
-				WHERE block_position IN ('.BLOCK_MESSAGE_TOP.', '.BLOCK_MESSAGE_BOTTOM.') 
+
+$result = $_CLASS['core_db']->query('SELECT block_id, block_position, block_title, block_starts, block_expires, block_order, block_status FROM ' . CORE_BLOCKS_TABLE . '
+				WHERE block_position IN ('. BLOCK_MESSAGE_TOP .', '. BLOCK_MESSAGE_BOTTOM .') 
 					 ORDER BY block_position, block_order ASC');
 
 $block_position = array(BLOCK_MESSAGE_TOP => 'top', BLOCK_MESSAGE_BOTTOM => 'bottom');
@@ -149,7 +152,7 @@ function message_edit($id = false, $block = false, $error = false)
 
 	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT * FROM '.BLOCKS_TABLE.' WHERE block_id = ' . $id);
+		$result = $_CLASS['core_db']->query('SELECT * FROM '.CORE_BLOCKS_TABLE.' WHERE block_id = ' . $id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 		
@@ -263,7 +266,7 @@ function message_save($id = false)
     
 	if ($id)
 	{
-		$result = $_CLASS['core_db']->query('SELECT block_position FROM ' . BLOCKS_TABLE . ' WHERE block_id = '. $id);
+		$result = $_CLASS['core_db']->query('SELECT block_position FROM ' . CORE_BLOCKS_TABLE . ' WHERE block_id = '. $id);
 		$block = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
@@ -281,7 +284,7 @@ function message_save($id = false)
 			return message_edit($id, $data, $error);
 		}
 	
-		$sql = 'UPDATE ' . BLOCKS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE block_id = '.$id;
+		$sql = 'UPDATE ' . CORE_BLOCKS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE block_id = '.$id;
 
 		$_CLASS['core_db']->query($sql);
 	}
@@ -294,13 +297,13 @@ function message_save($id = false)
 			return message_edit(false, $data, $error);
 		}
 
-		$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM ' . BLOCKS_TABLE . ' WHERE block_position = '.$data['block_position']);
+		$result = $_CLASS['core_db']->query('SELECT MAX(block_order) as block_order FROM ' . CORE_BLOCKS_TABLE . ' WHERE block_position = '.$data['block_position']);
 		list($max_order) = $_CLASS['core_db']->fetch_row_num($result);
 		$_CLASS['core_db']->free_result($result);
 
 		$data['block_order'] = (int) $max_order + 1;
 
-		$_CLASS['core_db']->query('INSERT INTO ' . BLOCKS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data));
+		$_CLASS['core_db']->query('INSERT INTO ' . CORE_BLOCKS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data));
 	}
 
 	$_CLASS['core_cache']->destroy('blocks');
@@ -311,7 +314,7 @@ function message_save($id = false)
 
 function message_position_select($default = false)
 {
-	global $site_file_root, $_CLASS;
+	global $_CLASS;
 
 	$block_position_array = array(
 		BLOCK_MESSAGE_TOP		=> 'Top',
@@ -340,7 +343,7 @@ function message_position_select($default = false)
 
 function message_type_select($default = false)
 {
-	global $site_file_root, $_CLASS;
+	global $_CLASS;
 
 	$block_position_array = array(
 		BLOCKTYPE_MESSAGE			=> 'Normal Message',

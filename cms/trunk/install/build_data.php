@@ -23,7 +23,7 @@ $Id$
 
 $time = gmtime();
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admins (admin_section, user_id, admin_status) VALUES ('_all_', 2, 2)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_access (admin_section, user_id, admin_status) VALUES ('_all_', 2, 2)");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'path_avatar_upload', 'images/avatars/upload', 'string', 1)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."config (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'path_avatar_gallery', 'images/avatars/gallery', 'string', 1)");
@@ -111,11 +111,11 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups_members (group_id
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups_members (group_id, user_id, member_status) VALUES (5, 7, 2)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."groups_members (group_id, user_id, member_status) VALUES (5, 8, 2)");
 
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Contol Panel', 3, 2, 2, 1, 'block-Control_Panel.php')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Modules', 0, 2, 2, 2, 'block-Modules.php')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('User', 0, 2, 2, 3, 'block-User.php')");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_rss_url, block_rss_rate) VALUES ('php.net RSS Feed', 1, 2, 3, 1, 'http://www.php.net/news.rss', 7200)");
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Theme Select', 0, 2, 3, 2, 'block-theme_select.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Contol Panel', 3, 2, 1, 1, 'block-Control_Panel.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Modules', 0, 2, 1, 2, 'block-Modules.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('User', 0, 2, 1, 3, 'block-User.php')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_rss_url, block_rss_rate) VALUES ('php.net RSS Feed', 1, 2, 2, 1, 'http://www.php.net/news.rss', 7200)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Theme Select', 0, 2, 2, 2, 'block-theme_select.php')");
 
 $content = $_CLASS['core_db']->escape('<div style="text-align:center">Hello and welcome</div>');
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_content) VALUES ('Welcome', 4, 2, 6, 4, '$content')");
@@ -124,6 +124,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_na
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('groups', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('system', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('messages', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('modules', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('pages', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('smiles', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('users', 2, 0)");

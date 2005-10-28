@@ -194,7 +194,7 @@ if ($stage === 5)
 			'user_email'			=> $email
 		);
 
-		$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $user_update). ' WHERE user_id = 2');
+		$_CLASS['core_db']->query('UPDATE ' . CORE_USERS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $user_update). ' WHERE user_id = 2');
 
 		$_CLASS['core_template']->assign_array(array(
 			'admin_link'		=> generate_link(false, array('full' => true, 'sid' => false, 'admin' => true)),
