@@ -48,7 +48,6 @@ class core_user extends sessions
 	function core_user()
 	{
 		$this->browser = mb_substr((empty($_SERVER['HTTP_USER_AGENT']) ? getenv('HTTP_USER_AGENT') : $_SERVER['HTTP_USER_AGENT']), 0, 255);
-
 		$this->url	= $_SERVER['REQUEST_URI'];
 		$this->ip	= empty($_SERVER['REMOTE_ADDR']) ? getenv('REMOTE_ADDR') : $_SERVER['REMOTE_ADDR'];
 		$this->time	= (int) gmtime();
@@ -57,20 +56,30 @@ class core_user extends sessions
 		{
 			$pos = $pos + mb_strlen(INDEX_PAGE.'?mod=');
 			$this->url = mb_substr($this->url, $pos);
-			
-			if (($pos = mb_strpos($this->url, 'sid')) !== false)
+		}
+		elseif (mb_substr($this->url, -5) === '.html') /* Add for .html#blabla */
+		{
+			$this->url = str_replace(array('/', '.html'), array('&', ''), $this->url);
+
+			if ($this->url{0} === '&')
 			{
-				$this->url = mb_substr($this->url, 0, $pos - 1);
+				$this->url = mb_substr($this->url, 1);
 			}
-
-			//$this->url = htmlspecialchars(html_entity_decode($this->url, ENT_QUOTES));
-			$this->url = htmlspecialchars($this->url, ENT_QUOTES);
-
-			$this->url = mb_substr($this->url, 0, 255);
 		}
 		else
 		{
 			$this->url = '';
+		}
+
+		if ($this->url)
+		{
+			if (($pos = mb_strpos($this->url, 'sid=')) !== false)
+			{
+				$this->url = mb_substr($this->url, 0, $pos - 1);
+			}
+			
+			$this->url = htmlspecialchars($this->url, ENT_QUOTES);
+			$this->url = mb_substr($this->url, 0, 255);
 		}
 	}
 

@@ -28,12 +28,12 @@ class core_auth
 	var $_got_data = false;
 	var $_admin_permission = array();
 
-	function core_auth($user_id = false, $user_group = false)
+	function core_auth($user_data = false)
 	{
 		global $_CLASS;
 
-		$this->_user_id = ($user_id) ? $user_id : $_CLASS['core_user']->data['user_id'];
-		$this->_user_group = ($user_group) ? $user_group : $_CLASS['core_user']->data['user_group'];
+		$this->_user_id = ($user_data) ? $user_data['user_id'] : $_CLASS['core_user']->data['user_id'];
+		$this->_user_group = ($user_data) ? $user_data['user_group'] : $_CLASS['core_user']->data['user_group'];
 	}
 
 	function user_auth($user_name, $user_password)
@@ -41,7 +41,7 @@ class core_auth
 		global $_CLASS;
 
 		$sql = 'SELECT user_id, username, user_password, user_password_encoding, user_status 
-					FROM ' . USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->escape($user_name) . "'";
+					FROM ' . CORE_USERS_TABLE . " WHERE username = '" . $_CLASS['core_db']->escape($user_name) . "'";
 
 		$result = $_CLASS['core_db']->query($sql);
 	
@@ -80,7 +80,7 @@ class core_auth
 		global $_CLASS;
 
 // should this be extended for defualt groups only, and all in group ?
-		$sql = 'SELECT * FROM ' . ADMIN_AUTH_TABLE ." 
+		$sql = 'SELECT * FROM ' . CORE_ADMIN_AUTH_TABLE ." 
 					WHERE user_id = {$this->_user_id}
 					OR group_id = {$this->_user_group} ORDER BY user_id";
 
@@ -333,7 +333,7 @@ class core_auth
 					if (count($setup['groups']))
 					{
 						$sql = 'SELECT group_id
-							FROM ' . GROUPS_TABLE . '
+							FROM ' . CORE_GROUPS_TABLE . '
 							WHERE group_id IN ('.implode(', ', array_map('intval', $setup['groups'])).')';
 						$result = $_CLASS['core_db']->query($sql);
 
@@ -409,7 +409,7 @@ class core_auth
 		if (!empty($auth_options['users']))
 		{
 			$sql = 'SELECT user_id, username, user_colour
-				FROM ' . USERS_TABLE . '
+				FROM ' . CORE_USERS_TABLE . '
 				WHERE user_id IN ('.implode(', ', array_keys($auth_options['users'])).')
 					ORDER BY username';
 			$result = $_CLASS['core_db']->query($sql);
@@ -428,7 +428,7 @@ class core_auth
 		if (!empty($groups_ids))
 		{
 			$sql = 'SELECT group_id, group_name, group_type 
-				FROM ' . GROUPS_TABLE . '
+				FROM ' . CORE_GROUPS_TABLE . '
 				WHERE group_id IN ('.implode(', ', $groups_ids).')
 					ORDER BY group_type DESC, group_name';
 			$result = $_CLASS['core_db']->query($sql);
@@ -445,7 +445,7 @@ class core_auth
 		}
 
 		$sql = 'SELECT group_id, group_name, group_type 
-			FROM ' . GROUPS_TABLE . 
+			FROM ' . CORE_GROUPS_TABLE . 
 				(empty($groups_ids) ? '' : ' WHERE group_id NOT IN ('.implode(', ', $groups_ids).')').'
 					ORDER BY group_type DESC, group_name';
 		$result = $_CLASS['core_db']->query($sql);
@@ -456,7 +456,7 @@ class core_auth
 		}
 		$_CLASS['core_db']->free_result($result);
 	
-		$_CLASS['core_template']->assign(array(
+		$_CLASS['core_template']->assign_array(array(
 			'P_ADD_GROUPS'		=> $group_list,
 			'P_CURRENT_USERS'	=> $allowed_user_list,
 			'P_DCURRENT_USERS'	=> $disallowed_user_list,

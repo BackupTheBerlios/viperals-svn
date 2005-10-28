@@ -28,7 +28,6 @@ if (VIPERAL !== 'Admin')
 
 global $_CLASS;
 
-require_once SITE_FILE_ROOT.'admin/functions/block_functions.php';
 $_CLASS['core_user']->add_lang('admin/blocks.php');
 
 function check_position($position, $redirect = true)
@@ -50,6 +49,8 @@ function check_position($position, $redirect = true)
 
 if (isset($_REQUEST['mode']))
 {
+	require_once SITE_FILE_ROOT.'admin/functions/block_functions.php';
+
 	if ($id = get_variable('id', 'REQUEST', false, 'integer'))
 	{
 		switch ($_REQUEST['mode'])

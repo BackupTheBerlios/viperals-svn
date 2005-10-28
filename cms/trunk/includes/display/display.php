@@ -51,7 +51,6 @@ class core_display
 
 		settype($page['page_status'], 'int');
 		settype($page['page_type'], 'int');
-		settype($page['page_status'], 'int');
 
 		switch ($type)
 		{
@@ -99,7 +98,7 @@ class core_display
 			//case 'feed':
 			default:
 				settype($page['page_blocks'], 'int');
-				settype($page['page_blocks'], 'int');
+				settype($page['page_type'], 'int');
 
 				if ($page['page_status'] !== STATUS_ACTIVE)
 				{
@@ -124,11 +123,11 @@ class core_display
 				if (!$page['page_location'])
 				{
 					$page['page_location'] = SITE_FILE_ROOT.'modules/'.$page['page_name'].'/index.php';
-				}
-
-				if (!file_exists($page['page_location']))
-				{
-					return '404:_PAGE_NOT_FOUND';
+					
+					if (!file_exists($page['page_location']))
+					{
+						return '404:_PAGE_NOT_FOUND';
+					}
 				}
 			break;
 		}
@@ -160,6 +159,17 @@ class core_display
 
 			if ($this->page['page_location'])
 			{
+				if ($this->page['page_type'] === PAGE_TEMPLATE)
+				{
+					global $_CLASS;
+
+					$_CLASS['core_user']->user_setup();
+
+					$this->display(false, $this->page['page_location']);
+
+					return true;
+				}
+
 				$this->supported = array();
 
 				require_once $this->page['page_location'];
@@ -196,7 +206,7 @@ class core_display
 		global $_CLASS;
 
 		header('Content-Type: text/html; charset=utf-8');
-		header('Content-language: ' . $_CLASS['core_user']->lang['LANG']);
+		header('Content-Language: ' . $_CLASS['core_user']->lang['LANG']);
 
 		header('P3P: CP="CAO DSP COR CURa ADMa DEVa OUR IND PHY ONL UNI COM NAV INT DEM PRE"');
 		header('Cache-Control: private, pre-check=0, post-check=0, max-age=0');

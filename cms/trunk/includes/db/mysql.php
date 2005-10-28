@@ -544,10 +544,12 @@ class db_mysql
 					$fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB;";
+				//$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$fields. $indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
-				if ($option == 'return')
+				if ($option === 'return')
 				{
 					return $table;
 				}

@@ -37,8 +37,8 @@ function confirmation_image($code = false, $size = false)
 
 	$size = 24;
 
-	header('Content-type: image/png');
-	header('Cache-control: no-cache, no-store');
+	header('Content-Type: image/png');
+	header('Cache-Control: no-cache, no-store');
 
 	if (function_exists('imagettfbbox'))
 	{

@@ -54,19 +54,19 @@ if ($_CLASS['core_user']->is_user)
 	}
 	
 	$this->content .= '<br />'.$_CLASS['core_user']->lang['WELCOME'].'<br />' . $_CLASS['core_user']->data['username'].'<br /><hr /></div><b>Your Info</b><br /><br />'
-	.'<div style="margin-left: 12px;"><a href="'.generate_link('Control_Panel&amp;i=2').'">'.$_CLASS['core_user']->lang['PRIVATE_MESSAGE'].'</a><hr />'.sprintf($_CLASS['core_user']->lang['NEW_PMS'], $_CLASS['core_user']->data['user_new_privmsg']) . '<br />'
+	.'<div style="margin-left: 12px;"><a href="'.generate_link('control_panel&amp;i=2').'">'.$_CLASS['core_user']->lang['PRIVATE_MESSAGE'].'</a><hr />'.sprintf($_CLASS['core_user']->lang['NEW_PMS'], $_CLASS['core_user']->data['user_new_privmsg']) . '<br />'
 	.sprintf($_CLASS['core_user']->lang['UNREAD_PM'], $_CLASS['core_user']->data['user_unread_privmsg']) . '<br /><br />'
 	//.$_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_lastvisit'])
-	.'<a href="'.generate_link('Control_Panel').'">Control Panel</a><br />'
-	.'<a href="'.generate_link('Control_Panel&amp;mode=logout').'">'.$_CLASS['core_user']->lang['LOGOUT'].'</a><br /></div>';
+	.'<a href="'.generate_link('control_panel').'">Control Panel</a><br />'
+	.'<a href="'.generate_link('control_panel&amp;mode=logout').'">'.$_CLASS['core_user']->lang['LOGOUT'].'</a><br /></div>';
 }
 else
 {
-    $this->content .= '<br /><form action="'.generate_link('Control_Panel&amp;mode=login').'" method="post"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td>
+    $this->content .= '<br /><form action="'.generate_link('control_panel&amp;mode=login').'" method="post"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td>
     '.$_CLASS['core_user']->lang['USERNAME'].'</td><td align="right"><input class="post" type="text" name="username" size="10" maxlength="25" /></td></tr><tr><td>
     '.$_CLASS['core_user']->lang['PASSWORD'].'</td><td align="right"><input class="post" type="password" name="password" size="10" maxlength="20" /></td></tr><tr><td>';
 
-    $this->content .= (($_CORE_CONFIG['user']['activation'] != USER_ACTIVATION_DISABLE) ? '(<a href="'.generate_link('Control_Panel&amp;mode=register').'">'.$_CLASS['core_user']->lang['REGISTER'].'</a>)' : '') . '</td>
+    $this->content .= (($_CORE_CONFIG['user']['activation'] != USER_ACTIVATION_DISABLE) ? '(<a href="'.generate_link('control_panel&amp;mode=register').'">'.$_CLASS['core_user']->lang['REGISTER'].'</a>)' : '') . '</td>
 		<td align="right">
 			<input type="hidden" name="redirect" value="'.htmlspecialchars($_CLASS['core_user']->url).'" />
 			<input class="button" type="submit" name="login" value="'.$_CLASS['core_user']->lang['LOGIN'].'" /><br/>
@@ -156,14 +156,13 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	
 	if ($row['user_id'] != ANONYMOUS)
 	{
-		$link = ($row['user_type'] == USER_BOT) ? $row['username'].' &gt;' : '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>  &gt;';
+		$link = ($row['user_type'] == USER_BOT) ? $row['username'].' &gt;' : '<a href="'.generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['user_id']).'">'.$row['username'].'</a>  &gt;';
 		$who_where['user'] .= $online['user'] .': '.$link.' <a href="'.$row['session_url'].'">'.$row['session_page'].'</a><br />';
 	}
 	else
 	{
 		$who_where['guest'] .= $online['guest'] .': <a href="'.$row['session_url'].'">'.$row['session_page'].'</a><br />';
 	}
-
 }
 
 unset($session_users);
@@ -179,7 +178,7 @@ $this->content .= '
   </tr>
   <tr> 
 	<td align="center" valign="middle" rowspan="1"><img src="images/blocks/user/stats.gif" alt="statistics" border="0" /></td>
-	<td class="gensmall" align="left" width="100%">Members&nbsp;<b>'.$_CORE_CONFIG['user']['total_users'].'</b><br />Latest:&nbsp;<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u='.$_CORE_CONFIG['user']['newest_user_id']) . '">'. $_CORE_CONFIG['user']['newest_username']. '</a>
+	<td class="gensmall" align="left" width="100%">Members&nbsp;<b>'.$_CORE_CONFIG['user']['total_users'].'</b><br />Latest:&nbsp;<a href="' . generate_link('members_list&amp;mode=viewprofile&amp;u='.$_CORE_CONFIG['user']['newest_user_id']) . '">'. $_CORE_CONFIG['user']['newest_username']. '</a>
 	<br /><hr />
 	</td>
   </tr>

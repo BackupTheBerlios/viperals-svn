@@ -1,26 +1,33 @@
 <?php
-//**************************************************************//
-//  Vipeal CMS:													//
-//**************************************************************//
-//																//
-//  Copyright 2004 - 2005										//
-//  By Ryan Marshall ( Viperal©	)								//
-//																//
-//  http://www.viperal.com										//
-//																//
-//  Viperal CMS is released under the terms and conditions		//
-//  of the GNU General Public License version 2					//
-//																//
-//**************************************************************//
+/*
+||**************************************************************||
+||  Viperal CMS Â© :												||
+||**************************************************************||
+||																||
+||	Copyright (C) 2004, 2005									||
+||  By Ryan Marshall ( Viperal )								||
+||																||
+||  Email: viperal1@gmail.com									||
+||  Site: http://www.viperal.com								||
+||																||
+||**************************************************************||
+||	LICENSE: ( http://www.gnu.org/licenses/gpl.txt )			||
+||**************************************************************||
+||  Viperal CMS is released under the terms and conditions		||
+||  of the GNU General Public License version 2					||
+||																||
+||**************************************************************||
+
+$Id$
+*/
 
 define('VIPERAL', 'Admin');
 
 error_reporting(E_ALL);
 
-//echo str_replace('\\','/', getenv('DOCUMENT_ROOT')); die;
-$site_file_root = '';
+/* require_once SITE_FILE_ROOT.'core.php'; */
+require_once 'core.php';
 
-require($site_file_root.'core.php');
 
 if (!$_CLASS['core_user']->is_admin)
 {
@@ -29,6 +36,7 @@ if (!$_CLASS['core_user']->is_admin)
 
 $_CLASS['core_handler']->stop();
 $_CLASS['core_user']->user_setup();
+
 error_reporting(E_ALL);
 
 $mode = get_variable('mode', 'GET', false);
@@ -54,7 +62,7 @@ switch ($mode)
 
 		$size = count($debug_data['E_WARNING']);
 	
-		for ($i=0; $i<$size; $i++)
+		for ($i=0; $i < $size; $i++)
 		{
 			$_CLASS['core_template']->assign_vars_array('error_warnings', array(
 				'errfile'	=> $debug_data['E_WARNING'][$i]['file'],
@@ -62,7 +70,6 @@ switch ($mode)
 				'msg_text' => $debug_data['E_WARNING'][$i]['error']
 			));
 		}
-		
 	break;
 
 	case 'queries':
@@ -117,7 +124,7 @@ switch ($mode)
 	break;
 	
 	default:
-	case 'notice':
+	/* case 'notice': */
 		$debug_data = $_CLASS['core_user']->session_data_get('debug');
 		
 		if (empty($debug_data['E_NOTICE']))
@@ -139,4 +146,5 @@ switch ($mode)
 
 $_CLASS['core_template']->display('debug.html');
 script_close(false);
+
 ?>

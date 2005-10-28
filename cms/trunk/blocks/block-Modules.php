@@ -31,7 +31,7 @@ global $_CLASS;
 $this->content .= '<div id="nav"><ul style="margin: 0px; padding: 0px; list-style-type: none; line-height: 150%;">';
 $this->content .= '<li><a href="'.generate_link().'">Home</a></li>';
 
-$result = $_CLASS['core_db']->query('SELECT page_name, page_title, page_auth FROM '.CORE_PAGES_TABLE.' WHERE page_type = '.MODULE_NORMAL.' AND page_status = ' . STATUS_ACTIVE . ' ORDER BY page_name ASC');
+$result = $_CLASS['core_db']->query('SELECT page_name, page_title, page_auth FROM '.CORE_PAGES_TABLE.' WHERE page_status = ' . STATUS_ACTIVE . ' ORDER BY page_name ASC');
 
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {

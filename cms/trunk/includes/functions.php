@@ -441,9 +441,12 @@ function generate_base_url()
 	return $base;
 }
 
+/*
+	Search Engine URL based on implementation from dragonfly cms ( drgaonflycms.com )
+*/
 function generate_link($link = false, $link_options = false)
 {
-	global $_CLASS, $_CORE_MODULE;
+	global $_CLASS, $_CORE_CONFIG;
 	//static $SEO = array('?', '&', '&amp;');
 
 	$options = array(
@@ -457,8 +460,10 @@ function generate_link($link = false, $link_options = false)
 	if (is_array($link_options))
 	{
 		$options = array_merge($options, $link_options);
-	} 
-$options['seo'] = false;
+	}
+
+	$options['seo'] = ($options['force_sid']) ? true : ($_CORE_CONFIG['global']['link_optimization'] && $options['seo']);
+
 	if ($options['admin'])
 	{
 		$options['seo'] = false;
@@ -470,6 +475,7 @@ $options['seo'] = false;
 	}
 	else
 	{
+		/* No really, I want to know what you call that */
 		$what_you_call_this = false;
 	}
 
@@ -477,9 +483,9 @@ $options['seo'] = false;
 
 	if (!$link)
 	{
-		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
+		if ($options['sid'] && $_CLASS['core_user']->need_sid)
 		{
-			$options['seo'] = false;
+			$options['seo'] = $options['force_sid'] = false;
 
 			$link = $file.'?'.$_CLASS['core_user']->sid_link;
 		}
@@ -490,14 +496,14 @@ $options['seo'] = false;
 	}
 	else
 	{
-		if ($options['force_sid'] || ($options['sid'] && $_CLASS['core_user']->need_sid))
+		if ($options['sid'] && $_CLASS['core_user']->need_sid)
 		{
 			$link .= '&amp;'.$_CLASS['core_user']->sid_link;
 		}
 
-		if ($link{0} == '&')
+		if ($link{0} === '&')
 		{
-			$link = $_CORE_MODULE['module_name'].$link;
+			$link = $_CLASS['core_display']->page['page_name'].$link;
 		}
 
 		if (!$options['seo'])

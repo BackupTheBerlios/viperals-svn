@@ -20,17 +20,15 @@
 
 $Id$
 */
-// Well this needs some works
+
 if (!defined('VIPERAL'))
 {
-    Header('Location: /');
-    die();
+    die;
 }
 
-// User related
 define('ANONYMOUS', 1);
 
-// status settings
+/* Global Status types */
 define('STATUS_DISABLED', 0);
 define('STATUS_PENDING', 1);
 define('STATUS_ACTIVE', 2);
@@ -60,7 +58,7 @@ define('ADMIN_NOT_LOGGED', 0);
 define('ADMIN_NOT_ADMIN', 1);
 define('ADMIN_IS_ADMIN', 2);
 
-// Block side
+/* BLOCKS */
 define('BLOCK_LEFT', 1);
 define('BLOCK_RIGHT', 2);
 define('BLOCK_TOP', 3);
@@ -75,8 +73,8 @@ define('BLOCKTYPE_SYSTEM',3);
 define('BLOCKTYPE_MESSAGE', 4);
 define('BLOCKTYPE_MESSAGE_GLOBAL', 5);
 
-define('MODULE_SYSTEM', 0);
-define('MODULE_NORMAL', 1);
+define('PAGE_MODULE', 0);
+define('PAGE_TEMPLATE', 1);
 
 define('ACL_NO', 0);
 define('ACL_YES', 1);
@@ -159,7 +157,6 @@ define('FIELD_BOOL', 4);
 define('FIELD_DROPDOWN', 5);
 define('FIELD_DATE', 6);
 
-// Table names
 
 define('FORUMS_ACL_TABLE', $table_prefix.'forums_auth');
 define('FORUMS_ACL_OPTIONS_TABLE', $table_prefix.'forums_auth_options');

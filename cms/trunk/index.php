@@ -90,7 +90,7 @@ else
 
 		if (!$mode || !function_exists($mode))
 		{
-			header("HTTP/1.0 503 Service Unavailable");
+			header('HTTP/1.0 503 Service Unavailable');
 			script_close(false);
 		}
 
@@ -99,9 +99,8 @@ else
 		script_close(false);
 	}
 
-	$sql = 'SELECT * FROM '.CORE_PAGES_TABLE.'
-				WHERE page_type = ' . MODULE_NORMAL . "
-				AND page_name = '" . $_CLASS['core_db']->escape($mod) . "'";
+	$sql = 'SELECT * FROM '. CORE_PAGES_TABLE ."
+				WHERE page_name = '" . $_CLASS['core_db']->escape($mod) . "'";
 
 	$result = $_CLASS['core_db']->query($sql);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);

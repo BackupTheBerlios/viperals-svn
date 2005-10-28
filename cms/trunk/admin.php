@@ -72,8 +72,8 @@ $_CLASS['core_template']->assign_array(array(
 if (!$mod || !$_CLASS['core_display']->generate_page('admin'))
 {
 	$blocks = 0;
-	$blocks |= BLOCK_LEFT;
-	$blocks |= BLOCK_RIGHT;
+	$blocks |= (1 << BLOCK_LEFT);
+	//$blocks |= (1 << BLOCK_RIGHT);
 				
 	$_CLASS['core_display']->page = array('page_title' => '', 'page_name' => '', 'page_blocks' => $blocks);
 	$file_path = SITE_FILE_ROOT.'admin/index.php';

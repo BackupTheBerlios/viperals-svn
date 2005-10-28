@@ -5,14 +5,10 @@
 <table class="tablebg" cellpadding="4" cellspacing="1" width="100%">
     <tbody>
 		<tr>
-			<th width="<!-- IF { $S_LINK_ADMIN_AUTH } -->30<!-- ELSE -->50<!-- ENDIF -->%" align="center"><b>{ $L_TITLE }</b></th>
+			<th width="50%" align="center"><b>{ $L_TITLE }</b></th>
 			<th align="center"><b>{ $L_STATUS }</b></td>
 			<th align="center"><b>{ $L_FUNCTIONS }</b></th>
-			<!-- IF { $S_LINK_ADMIN_AUTH } -->
-			<th align="center"></th>
-			<!-- ENDIF -->
 		</tr>
-
 	<!-- IF isset({ $normal_modules }) -->
     	<tr>
 			<td class="cat" colspan="4"><b class="gensmall">Normal</b></td>
@@ -47,11 +43,6 @@
 					 | <a href="{ $normal_modules:LINK_INSTALLER }">{ $L_UNINSTALL }</a>
 				<!-- ENDIF -->
 			</td>
-			<!-- IF { $S_LINK_ADMIN_AUTH } -->
-			<td nowrap="nowrap" class="row1" align="center">
-				<a href="{ $normal_modules:LINK_ADMIN_AUTH }">{ $L_ADMIN_PERMISSIONS }</a>
-			</td>
-			<!-- ENDIF -->
 		<!-- ELSE -->
 			<td align="center" class="row1">
 				{ $L_NOT_INSTALLED }
