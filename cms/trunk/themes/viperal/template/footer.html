@@ -13,19 +13,18 @@
 	<!-- ENDIF $block_bottom -->
 	
 	<!-- IF isset({ $message_block_bottom }) -->
-	<br/>
-		<div class="messageblock">
-		<!-- LOOP $message_block_bottom -->
-			<div class="title" onclick="blockswitch2('{ $message_block_bottom:ID }');" style="cursor:pointer">{ $message_block_bottom:TITLE }
-			<!-- IF { $message_block_bottom:EDIT_LINK } -->[ <!-- IF { $message_block_bottom:EXPIRES } -->{ $message_block_bottom:EXPIRES } | <!-- ENDIF -->
-			<a href="{ $message_block_bottom:EDIT_LINK }" >{ $message_block_bottom:L_EDIT }</a> ]<!-- ENDIF --></div>
-			<div class="content" { $message_block_bottom:HIDE } id="pe{ $message_block_bottom:ID }">{ $message_block_bottom:CONTENT }</div>
-		<br />
-		<!-- ENDLOOP $message_block_bottom -->
-	
-		</div>
+	<div class="messageblock">
+	<!-- LOOP $message_block_bottom -->
+		<div class="title" onclick="switch_collapse('block_{ $message_block_bottom:id }');" style="cursor:pointer">{ $message_block_bottom:title }
+		<!-- IF { $message_block_bottom:edit_link } -->[ <!-- IF { $message_block_bottom:expires } -->{ $message_block_bottom:expires } | <!-- ENDIF -->
+		<a href="{ $message_block_bottom:edit_link }" >{ $L_EDIT }</a> ]<!-- ENDIF --></div>
+		<div <!-- IF { $message_block_bottom:collapsed } -->style="display: none;"<!-- ENDIF --> class="content" id="block_{ $message_block_bottom:id }">{ $message_block_bottom:content }</div>
+	<br />
+	<!-- ENDLOOP $message_block_bottom -->
+	</div>
 	<br />
 	<!-- ENDIF -->
+
 	</div>
 	</div>
 	

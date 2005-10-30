@@ -118,7 +118,7 @@ $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, blo
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_file) VALUES ('Theme Select', 0, 2, 2, 2, 'block-theme_select.php')");
 
 $content = $_CLASS['core_db']->escape('<div style="text-align:center">Hello and welcome</div>');
-$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_content) VALUES ('Welcome', 4, 2, 6, 4, '$content')");
+$_CLASS['core_db']->query('INSERT INTO '.$table_prefix."blocks (block_title, block_type, block_status, block_position, block_order, block_content) VALUES ('Welcome', 4, 2, 5, 4, '$content')");
 
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('blocks', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '.$table_prefix."admin_modules (module_name, module_status, module_type) VALUES ('groups', 2, 0)");

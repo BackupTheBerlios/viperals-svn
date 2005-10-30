@@ -64,7 +64,7 @@ class viperal_theme
 			$_CLASS['core_template']->assign('PAGE_TITLE', $_CLASS['core_user']->lang['HOME'].' &gt; '.(is_array($_CORE_MODULE['module_title']) ? implode(' &gt; ', $_CORE_MODULE['module_title']) : $_CORE_MODULE['module_title']));
 		}
 		
-		$_CLASS['core_blocks']->display(BLOCK_LEFT);
+		$_CLASS['core_blocks']->generate(BLOCK_LEFT);
 	
 		$_CLASS['core_template']->display('header.html');
 	}
@@ -73,7 +73,7 @@ class viperal_theme
 	{
 		global $_CLASS;
 
-		$_CLASS['core_blocks']->display(BLOCK_RIGHT);
+		$_CLASS['core_blocks']->generate(BLOCK_RIGHT);
 
 		$_CLASS['core_template']->assign('THEME_FOOTER', $_CLASS['core_display']->footmsg());
 		
