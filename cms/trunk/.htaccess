@@ -31,6 +31,6 @@ ErrorDocument 403 /error.php
 ErrorDocument 404 /error.php
 ErrorDocument 500 /error.php
 
-Options -Indexes
+# Options -Indexes
 
 AddDefaultCharset utf-8
