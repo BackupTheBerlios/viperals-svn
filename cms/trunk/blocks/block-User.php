@@ -53,12 +53,11 @@ if ($_CLASS['core_user']->is_user)
 	
 	}
 	
-	$this->content .= '<br />'.$_CLASS['core_user']->lang['WELCOME'].'<br />' . $_CLASS['core_user']->data['username'].'<br /><hr /></div><b>Your Info</b><br /><br />'
-	.'<div style="margin-left: 12px;"><a href="'.generate_link('control_panel&amp;i=2').'">'.$_CLASS['core_user']->lang['PRIVATE_MESSAGE'].'</a><hr />'.sprintf($_CLASS['core_user']->lang['NEW_PMS'], $_CLASS['core_user']->data['user_new_privmsg']) . '<br />'
-	.sprintf($_CLASS['core_user']->lang['UNREAD_PM'], $_CLASS['core_user']->data['user_unread_privmsg']) . '<br /><br />'
-	//.$_CLASS['core_user']->format_date($_CLASS['core_user']->data['user_lastvisit'])
-	.'<a href="'.generate_link('control_panel').'">Control Panel</a><br />'
-	.'<a href="'.generate_link('control_panel&amp;mode=logout').'">'.$_CLASS['core_user']->lang['LOGOUT'].'</a><br /></div>';
+	$this->content .= '<br />'.$_CLASS['core_user']->lang['WELCOME'].'<br />' . $_CLASS['core_user']->data['username'].'<br /><hr /></div><b>Your Info</b><br /><br />
+	<div style="margin-left: 12px;"><a href="'.generate_link('control_panel&amp;i=2').'">'.$_CLASS['core_user']->lang['PRIVATE_MESSAGE'].'</a><hr />'.sprintf($_CLASS['core_user']->lang['NEW_PMS'], $_CLASS['core_user']->data['user_new_privmsg']) . '<br />
+	'.sprintf($_CLASS['core_user']->lang['UNREAD_PM'], $_CLASS['core_user']->data['user_unread_privmsg']) . '<br /><br />
+	<a href="'.generate_link('control_panel').'">Control Panel</a><br />
+	<a href="'.generate_link('control_panel&amp;mode=logout').'">'.$_CLASS['core_user']->lang['LOGOUT'].'</a><br /></div>';
 }
 else
 {
@@ -74,7 +73,7 @@ else
 	</tr>
 	<tr>
 		<td colspan="2">
-			<input name="autologin" type="checkbox" /><span class="gensmall">Remmeber me</span>
+			<input name="autologin" type="checkbox" /><span class="gensmall">Remember me</span>
 		</td>
 	</tr>
 	</table>
@@ -165,9 +164,11 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	}
 }
 
-unset($session_users);
-unset($prev_id);
-unset($prev_ip);
+if (isset($session_users))
+{
+    unset($session_users);
+}
+unset($prev_id,$prev_ip);
 
 $this->content .= '
 <hr /><table >
@@ -210,7 +211,6 @@ $this->content .= '
 	<hr /><b>Members</b><br />
 '.(($who_where['user']) ? $who_where['user'] : '<em><b>&nbsp;None Online</b></em>').'<br /><b>Guests</b><br />
 '.(($who_where['guest']) ? $who_where['guest'] : '<em><b>&nbsp;None Online</b></em>').'
-		
 	</td>
   </tr>
 </table>';
