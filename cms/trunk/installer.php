@@ -287,7 +287,19 @@ if ($stage === 4)
 				{
 					case 'mysql':
 					case 'mysqli':
-						$_CLASS['core_db']->query('CREATE DATABASE '.$site_db['database'].' DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+						if (is_null($_CLASS['core_db']->utf8_supported))
+						{
+							$_CLASS['core_db']->check_utf8_support();
+						}
+						
+						if ($_CLASS['core_db']->utf8_supported)
+						{
+							$_CLASS['core_db']->query('CREATE DATABASE '.$site_db['database'].' DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+						}
+						else
+						{
+							$_CLASS['core_db']->query('CREATE DATABASE '.$site_db['database']);
+						}
 					break;
 
 					case 'mysql3':

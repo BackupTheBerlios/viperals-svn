@@ -40,6 +40,7 @@ class db_mysqli
 	var $_indexs = array();
 	var $_fields = array();
 	var $_table_name = false;
+	var $utf8_supported = null;
 
 	function connect($db)
 	{		
@@ -415,6 +416,25 @@ class db_mysqli
 		}
 	}
 
+	function check_utf8_support()
+	{
+		$this->utf8_supported = false;
+
+		$result = $this->query('SHOW CHARACTER SET');
+		
+		while ($row = $this->fetch_row_assoc($result))
+		{
+			if ($row['Charset'] === 'utf8')
+			{
+				$this->utf8_supported = true;
+				break;
+			}
+		}
+		$this->free_result($result);
+		
+		return $this->utf8_supported;
+	}
+
 	function version()
 	{
 		if (!$this->link_identifier)
@@ -539,10 +559,20 @@ class db_mysqli
 					$_fields .= ", \n";
 				}
 
-				$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB;";
-				//$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+				if (is_null($this->utf8_supported))
+				{
+					$this->check_utf8_support();
+				}
 
-				
+				if ($this->utf8_supported)
+				{
+					$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci;";
+				}
+				else
+				{
+					$table = 'CREATE TABLE '.$this->_table_name." ( \n" .$_fields. $_indexs ." \n ) ENGINE=InnoDB;";
+				}
+
 				// Let users choose transaction safe InnoDB or MyISAM
 				// ENGINE=MyISAM
 				if ($option == 'return')
