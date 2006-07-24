@@ -163,16 +163,6 @@ $_CLASS['core_template']->assign_array(array(
 
 unset($username_options);
 
-/*
-$result = $_CLASS['core_db']->query('SHOW COLLATION');
-$result = $_CLASS['core_db']->query('SHOW CHARACTER SET');
-
-while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-{
-	print_r($row );echo '<br/>'; die;
-}
-*/
-
 $_CLASS['core_display']->display($_CLASS['core_user']->get_lang('UCP_ZEBRA'), 'modules/control_panel/ucp_zebra_' . $this->mode . '.html');
 
 ?>

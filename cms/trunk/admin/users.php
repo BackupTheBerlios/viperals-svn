@@ -21,7 +21,7 @@
 $Id$
 */
 
-if (VIPERAL !== 'Admin') 
+if (VIPERAL !== 'Admin')
 {
 	die;
 }
@@ -49,6 +49,7 @@ $_CLASS['core_template']->assign_array(array(
 	'LINK_VIEW_BOTS'		=> generate_link('users&amp;mode=bots', array('admin' => true)),
 	'LINK_VIEW_DISABLED'	=> generate_link('users&amp;mode=disabled', array('admin' => true)),
 	'LINK_VIEW_UNACTIVATED'	=> generate_link('users&amp;mode=unactivated', array('admin' => true)),
+	'LINK_VIEW_USER'		=> generate_link('users&amp;mode=user', array('admin' => true)),
 ));
 
 $id = (int) get_variable('id', 'GET', false);
@@ -286,11 +287,13 @@ if (isset($_REQUEST['mode']))
 					break;
 				}
 			}
+			$start = get_variable('start', 'GET', 0, 'integer');
+			$limit = 20;
 
 			$sql = 'SELECT user_id, username, user_status, user_last_visit 
 				FROM ' . CORE_USERS_TABLE . '
-				WHERE user_type = ' . USER_BOT . ' ORDER BY user_last_visit DESC';
-			$result = $_CLASS['core_db']->query($sql);
+				WHERE user_type = ' . USER_BOT . ' ORDER BY user_last_visit, user_id DESC';
+			$result = $_CLASS['core_db']->query_limit($sql, $limit, $start);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
@@ -306,8 +309,25 @@ if (isset($_REQUEST['mode']))
 			}
 			$_CLASS['core_db']->free_result($result);
 
+			$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '.CORE_USERS_TABLE.' WHERE user_type = ' . USER_BOT);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);	
+			
+			$pagination = generate_pagination('users&amp;mode=bots', $row['total'], $limit, $start, true);
+			
+			$_CLASS['core_template']->assign_array(array(
+				'ADMIN_USER_PAGINATION'			=> $pagination['formated'],
+				'ADMIN_USER_PAGINATION_ARRAY'	=> $pagination['array'],
+				'ADMIN_USER_PAGE_NUMBER'		=> on_page($row['total'], $limit, $start),
+				'ADMIN_USER_TOTAL_MESSAGES'		=> $row['total']
+			));
+
 			$_CLASS['core_display']->display(false, 'admin/users/bots.html');
 		break;
+	
+		case 'activate':
+		case 'delete':
+			$_REQUEST['option'] = $_REQUEST['mode'];
 
 		case 'disabled':
 		case 'unactivated':
@@ -320,7 +340,7 @@ if (isset($_REQUEST['mode']))
 					WHERE user_id = '.$id;
 
 				$result = $_CLASS['core_db']->query($sql);
-				$row = $_CLASS['core_db']>fetch_row_assoc($result);
+				$row = $_CLASS['core_db']->fetch_row_assoc($result);
 				$_CLASS['core_db']->free_result($result);
 
 				if ($row['user_type'] != USER_NORMAL)
@@ -359,6 +379,10 @@ if (isset($_REQUEST['mode']))
 						}
 					break;
 				}
+			}
+
+			if (isset($_REQUEST['option']) && $_REQUEST['option'] === $_REQUEST['mode']) {
+				break;
 			}
 
 			if ($_REQUEST['mode'] == 'unactivated')
@@ -411,6 +435,89 @@ if (isset($_REQUEST['mode']))
 
 			$_CLASS['core_display']->display(false, $template);
 		break;
+
+		case 'user':
+			if ($id && isset($_REQUEST['option']))
+			{
+				require_once SITE_FILE_ROOT.'includes/functions_user.php';
+
+				$sql = 'SELECT user_id, user_type, user_status
+					FROM ' . CORE_USERS_TABLE . ' 
+					WHERE user_id = '.$id;
+
+				$result = $_CLASS['core_db']->query($sql);
+				$row = $_CLASS['core_db']->fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
+
+				if ($row['user_type'] != USER_NORMAL)
+				{
+					break;
+				}
+
+				switch ($_REQUEST['option'])
+				{
+					case 'activate':
+						if ($row['user_status'] != STATUS_ACTIVE)
+						{echo 'test';
+							user_activate($id);
+						}
+					break;
+
+					case 'deactivate':
+						if ($row['user_id'] != $_CLASS['core_user']->data['user_id'] && $row['user_status'] == STATUS_ACTIVE)
+						{
+							user_disable($id);
+						}
+					break;
+
+					case 'delete':
+						if ($row['user_id'] != $_CLASS['core_user']->data['user_id'] && display_confirmation())
+						{
+							user_delete($id);
+
+							trigger_error('BOT_DELETED');
+						}
+					break;
+				}
+			}
+
+			$start = get_variable('start', 'GET', 0, 'integer');
+			$limit = 20;
+
+			$sql = 'SELECT user_id, username, user_status, user_last_visit 
+				FROM ' . CORE_USERS_TABLE . '
+				WHERE user_type = ' . USER_NORMAL . ' ORDER BY username DESC';
+			$result = $_CLASS['core_db']->query_limit($sql, $limit, $start);
+
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			{
+				$_CLASS['core_template']->assign_vars_array('admin_bots', array(
+					'ACTIVE'		=> ($row['user_status'] == STATUS_ACTIVE),
+					'NAME'			=> $row['username'],
+					'LINK_DELETE'	=> ($row['user_id'] != $_CLASS['core_user']->data['user_id']) ? generate_link('users&amp;mode=user&amp;option=delete&amp;id='.$row['user_id'], array('admin' => true)) : false,
+					'LINK_STATUS'	=> ($row['user_id'] != $_CLASS['core_user']->data['user_id']) ? generate_link('users&amp;mode=user&amp;option='.(($row['user_status'] == STATUS_ACTIVE) ? 'deactivate' :  'activate').'&amp;id='.$row['user_id'], array('admin' => true)) : false,
+					'LINK_EDIT'		=> generate_link('users&amp;mode=user&amp;options=edit&amp;id='.$row['user_id'], array('admin' => true)),
+					'LAST_VISIT'	=> ($row['user_last_visit']) ?  $_CLASS['core_user']->format_date($row['user_last_visit']) : $_CLASS['core_user']->lang['BOT_NEVER'],
+					'L_STATUS'		=> ($row['user_status'] == STATUS_ACTIVE) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+				));
+			}
+			$_CLASS['core_db']->free_result($result);
+
+			$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '.CORE_USERS_TABLE.' WHERE user_type = ' . USER_NORMAL);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);	
+			
+			$pagination = generate_pagination('users&amp;mode=user', $row['total'], $limit, $start, true);
+			
+			$_CLASS['core_template']->assign_array(array(
+				'ADMIN_USER_PAGINATION'			=> $pagination['formated'],
+				'ADMIN_USER_PAGINATION_ARRAY'	=> $pagination['array'],
+				'ADMIN_USER_PAGE_NUMBER'		=> on_page($row['total'], $limit, $start),
+				'ADMIN_USER_TOTAL_MESSAGES'		=> $row['total']
+			));
+
+			$_CLASS['core_display']->display(false, 'admin/users/bots.html');
+		break;
 	}
 }
 
@@ -461,9 +568,9 @@ foreach ($user_status as $status)
 				'user_name'		=> $row['username'],
 				'registered'	=> $_CLASS['core_user']->format_time($row['user_reg_date']),
 				'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
-				'link_activate'	=> generate_link('&amp;user_mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
-				'link_remove'	=> generate_link('&amp;user_mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),
-				'link_remind'	=> generate_link('&amp;user_mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
+				'link_activate'	=> generate_link('&amp;mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
+				'link_remove'	=> generate_link('&amp;mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),
+				'link_remind'	=> generate_link('&amp;mode=remind&amp;id=' . $row['user_id'], array('admin' => true)),
 				'link_details'	=> '',
 		));
 	}

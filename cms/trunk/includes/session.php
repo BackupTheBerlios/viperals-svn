@@ -64,7 +64,7 @@ class sessions
 			{
 				$valid  = true;
 
-				if ($this->data['session_browser'] != $this->browser)
+				if ($this->data['session_browser'] !== $this->browser)
 				{
 					$valid  = false;
 				}
@@ -73,7 +73,7 @@ class sessions
 				{
 					$check_ip = implode('.', explode('.', $this->data['session_ip'], $_CORE_CONFIG['server']['ip_check']));
 					
-					if ($check_ip != substr($this->ip, 0, strlen($check_ip)))
+					if ($check_ip !== substr($this->ip, 0, strlen($check_ip)))
 					{
 						$valid  = false;
 					}

@@ -36,7 +36,8 @@ if (!defined('ARTICLES_TABLE'))
 class articles_configurator
 {
 	var $error = array();
-	
+	var $admin = true;
+
 	function install()
 	{
 		global $_CLASS;

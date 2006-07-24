@@ -393,12 +393,12 @@ class core_template
 					$compile = false;
 				break;
 
-				case 'DEFINE':
-					$tag_blocks[0][$loop] = $this->_compile_tag_define($tag_blocks[2][$loop]);
+				case 'LINK':
+					$tag_blocks[0][$loop] = $this->_compile_tag_link($tag_blocks[2][$loop]);
 				break;
 
-				case 'AREA':
-					//$tag_blocks[0][$loop] = $this->_compile_tag_area($tag_blocks[2][$loop]);
+				case 'DEFINE':
+					$tag_blocks[0][$loop] = $this->_compile_tag_define($tag_blocks[2][$loop]);
 				break;
 
 				default:

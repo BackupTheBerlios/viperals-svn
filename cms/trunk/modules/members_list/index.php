@@ -339,9 +339,8 @@ switch ($mode)
 		$num_real_posts = $_CLASS['core_user']->data['user_posts'];
 
 		// Do the relevant calculations
-		$memberdays = max(1, round(($_CLASS['core_user']->time - $member['user_reg_date']) / 86400));
-		$posts_per_day = $member['user_posts'] / $memberdays;
-		$percentage = ($config['num_posts']) ? min(100, ($num_real_posts / $config['num_posts']) * 100) : 0;
+		$member_days = max(1, round(($_CLASS['core_user']->time - $member['user_reg_date']) / 86400));
+		$posts_per_day = $member['user_posts'] / $member_days;
 
 		$active_f_name = $active_f_id = $active_f_count = $active_f_pct = '';
 
@@ -441,7 +440,7 @@ switch ($mode)
 		
 		$_CLASS['core_template']->assign_array(array(
 			'POSTS_DAY'			=> sprintf($_CLASS['core_user']->lang['POST_DAY'], $posts_per_day),
-			'POSTS_PCT'			=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $percentage),
+			'POSTS_PCT'			=> 0,
 			'ACTIVE_FORUM'		=> $active_f_name,
 			'ACTIVE_FORUM_POSTS'=> ($active_f_count == 1) ? sprintf($_CLASS['core_user']->lang['USER_POST'], 1) : sprintf($_CLASS['core_user']->lang['USER_POSTS'], $active_f_count),
 			'ACTIVE_FORUM_PCT'	=> sprintf($_CLASS['core_user']->lang['POST_PCT'], $active_f_pct),

@@ -27,8 +27,11 @@ if (VIPERAL !== 'Admin')
 
 if (!defined('ARTICLES_TABLE'))
 {
+	global $table_prefix;
 	define('ARTICLES_TABLE', $table_prefix.'articles');
 }
+
+global $_CLASS;
 
 if (isset($_REQUEST['mode']))
 {

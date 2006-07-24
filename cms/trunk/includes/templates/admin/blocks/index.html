@@ -1,6 +1,62 @@
 <!-- DISPLAY_HEADER -->
 
+<!-- just for testing will be it's own global thing later on -->
+<!-- IF { $SYSTEM_MESSAGE } -->
+
+<script language="javascript">
+	var message_array = new Array();
+
+	function message_hide(identifier) {
+	
+		var message = document.getElementById(identifier);
+		message.style.display = 'none';	
+		
+		window.clearInterval(message_array[identifier]);
+	}
+
+	function message_show(identifier) {
+	
+		var message = document.getElementById(identifier);
+		var message_table = document.getElementById(identifier + '_table');
+
+		message.style.display = '';	
+		message.style.left = (document.body.clientWidth - message_table.offsetWidth - 5) + 'px';
+
+		//alert(message_table.offsetWidth + ' | ' + document.body.clientWidth);
+
+		window.clearInterval(message_array[identifier]);
+		message_array['mesg1'] = window.setInterval("message_hide('mesg1')", 3000);
+	}
+
+	var message = document.createElement('div');
+	
+	message.id = 'mesg1';
+	message.style.position	= (is_gecko) ? 'fixed' : 'absolute';
+	message.style.top = '5px';
+	message.style.left = '5px';
+	message.style.zIndex = 1;
+	message.style.width = '100%';
+	message.style.display = 'none';	
+
+	message.onclick = function() {
+		message_hide('mesg1');
+	}
+
+	message.innerHTML = '<table id="mesg1_table" class="tablebg" border="0" cellpadding="4" cellspacing="1" >' +
+	'<tbody><tr><td class="row2" align="center"><font class="error"><b>System Message</b></font></td></tr>' +
+	'<tr><td class="row1" align="center">{ $SYSTEM_MESSAGE }</td></tr></tbody></table>';
+
+	message.style.cursor = 'pointer';
+	document.body.insertBefore(message, document.nextSibling);
+
+	message_array['mesg1'] = window.setInterval("message_show('mesg1')", 500);
+
+
+</script>
+<!-- ENDIF -->
+
 { $THEME_TABLE_OPEN }
+
 
 <table border="0" class="tablebg" cellpadding="4" cellspacing="1" width="100%">
 	<tbody>
@@ -59,6 +115,9 @@
 			<!-- IF { $left_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $left_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->
+			<!-- IF { $left_admin_blocks:CACHE_LINK } -->
+				| <a href="{ $left_admin_blocks:CACHE_LINK }">{ $L_CLEAR_CACHE }</a>
+			<!-- ENDIF -->
 			</td>
 		</tr>
 		<tr>
@@ -105,6 +164,9 @@
 			<!-- IF { $centertop_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $centertop_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->
+			<!-- IF { $centertop_admin_blocks:CACHE_LINK } -->
+				| <a href="{ $centertop_admin_blocks:CACHE_LINK }">{ $L_CLEAR_CACHE }</a>
+			<!-- ENDIF -->
 			</td>
 		</tr>
 		<tr>
@@ -150,6 +212,9 @@
 			<!-- IF { $centerbottom_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $centerbottom_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
 			<!-- ENDIF -->
+			<!-- IF { $centerbottom_admin_blocks:CACHE_LINK } -->
+				| <a href="{ $centerbottom_admin_blocks:CACHE_LINK }">{ $L_CLEAR_CACHE }</a>
+			<!-- ENDIF -->
 			</td>
 		</tr>
 		<tr>
@@ -193,6 +258,9 @@
 				<a href="{ $right_admin_blocks:AUTH_LINK }">{ $L_PERMISSIONS }</a>
 			<!-- IF { $right_admin_blocks:DELETE_LINK } -->
 				| <a href="{ $right_admin_blocks:DELETE_LINK }">{ $L_DELETE }</a>
+			<!-- ENDIF -->
+			<!-- IF { $right_admin_blocks:CACHE_LINK } -->
+				| <a href="{ $right_admin_blocks:CACHE_LINK }">{ $L_CLEAR_CACHE }</a>
 			<!-- ENDIF -->
 			</td>
 		</tr>

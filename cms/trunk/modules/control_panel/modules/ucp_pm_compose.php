@@ -13,6 +13,10 @@
 
 // * Called from ucp_pm with mode == 'compose'
 
+
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
+$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
+
 function compose_pm($id, $mode, $action)
 {
 	global $_CLASS, $config;
@@ -39,12 +43,12 @@ function compose_pm($id, $mode, $action)
 	));
 
 	// Grab only parameters needed here
-	$to_user_id     = request_var('u', 0);
-  	$to_group_id    = request_var('g', 0);
-	$msg_id			= request_var('p', 0);
-	$quote_post		= request_var('q', 0);
-	$draft_id		= request_var('d', 0);
-	$lastclick		= request_var('lastclick', 0);
+	$to_user_id     = get_variable('u', 'REQUEST', 0);
+  	$to_group_id    = get_variable('g', 'REQUEST', 0);
+	$msg_id			= get_variable('p', 'REQUEST', 0);
+	$quote_post		= get_variable('q', 'REQUEST', 0);
+	$draft_id		= get_variable('d', 'REQUEST', 0);
+	$lastclick		= get_variable('lastclick', 'REQUEST', 0);
 	$message_text = $subject = '';
 
 	// Do NOT use request_var or specialchars here
@@ -78,7 +82,7 @@ function compose_pm($id, $mode, $action)
 		redirect($redirect);
 	}
 
-	if ($action == 'edit' && !$_CLASS['auth']->acl_get('u_pm_edit'))
+	if ($action == 'edit' && !$_CLASS['forums_auth']->acl_get('u_pm_edit'))
 	{
 		trigger_error('NO_AUTH_EDIT_MESSAGE');
 	}
@@ -91,7 +95,7 @@ function compose_pm($id, $mode, $action)
 	{
 		case 'post':
 		
-			if (!$_CLASS['auth']->acl_get('u_sendpm'))
+			if (!$_CLASS['forums_auth']->acl_get('u_sendpm'))
 			{
 				trigger_error('NO_AUTH_SEND_MESSAGE');
 			}
@@ -105,7 +109,7 @@ function compose_pm($id, $mode, $action)
 				trigger_error('NO_MESSAGE');
 			}
 
-			if (!$_CLASS['auth']->acl_get('u_sendpm'))
+			if (!$_CLASS['forums_auth']->acl_get('u_sendpm'))
 			{
 				trigger_error('NO_AUTH_SEND_MESSAGE');
 			}
@@ -113,7 +117,7 @@ function compose_pm($id, $mode, $action)
 			if ($quote_post)
 			{
 				$sql = 'SELECT p.post_text as message_text, p.poster_id as author_id, p.post_time as message_time, p.bbcode_bitfield, p.bbcode_uid, p.enable_sig, p.enable_html, p.enable_smilies, p.enable_magic_url, t.topic_title as message_subject, u.username as quote_username
-					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . USERS_TABLE . " u
+					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . CORE_USERS_TABLE . " u
 					WHERE p.post_id = $msg_id
 						AND t.topic_id = p.topic_id
 						AND u.user_id = p.poster_id";
@@ -121,7 +125,7 @@ function compose_pm($id, $mode, $action)
 			else
 			{
 				$sql = 'SELECT t.*, p.*, u.username as quote_username
-					FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . ' u
+					FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u
 					WHERE t.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 						AND p.author_id = u.user_id
 						AND t.msg_id = p.msg_id
@@ -145,7 +149,7 @@ function compose_pm($id, $mode, $action)
 		break;
 
 		case 'delete':
-			if (!$_CLASS['auth']->acl_get('u_pm_delete'))
+			if (!$_CLASS['forums_auth']->acl_get('u_pm_delete'))
 			{
 				trigger_error('NO_AUTH_DELETE_MESSAGE');
 			}
@@ -307,16 +311,16 @@ function compose_pm($id, $mode, $action)
 	
 	if (!in_array($action, array('quote', 'edit', 'delete', 'forward')))
 	{
-		$enable_sig		= ($config['allow_sig'] && $_CLASS['auth']->acl_get('u_sig') && $_CLASS['core_user']->optionget('attachsig'));
-		$enable_smilies = ($config['allow_smilies'] && $_CLASS['auth']->acl_get('u_pm_smilies') && $_CLASS['core_user']->optionget('smilies'));
-		$enable_bbcode	= ($config['allow_bbcode'] && $_CLASS['auth']->acl_get('u_pm_bbcode') && $_CLASS['core_user']->optionget('bbcode'));
+		$enable_sig		= ($config['allow_sig'] && $_CLASS['forums_auth']->acl_get('u_sig') && $_CLASS['core_user']->user_data_get('attachsig'));
+		$enable_smilies = ($config['allow_smilies'] && $_CLASS['forums_auth']->acl_get('u_pm_smilies') && $_CLASS['core_user']->user_data_get('smilies'));
+		$enable_bbcode	= ($config['allow_bbcode'] && $_CLASS['forums_auth']->acl_get('u_pm_bbcode') && $_CLASS['core_user']->user_data_get('bbcode'));
 		$enable_urls	= true;
 	}
 
 	$enable_magic_url = $drafts = false;
 
 	// User own some drafts?
-	if ($_CLASS['auth']->acl_get('u_savedrafts') && $action != 'delete')
+	if ($_CLASS['forums_auth']->acl_get('u_savedrafts') && $action != 'delete')
 	{
 		$sql = 'SELECT draft_id
 			FROM ' . FORUMS_DRAFTS_TABLE . '
@@ -339,11 +343,11 @@ function compose_pm($id, $mode, $action)
 
 $config['auth_bbcode_pm'] = true;
 /*
-	$html_status	= ($config['allow_html'] && $config['auth_html_pm'] && $_CLASS['auth']->acl_get('u_pm_html'));
-	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm'] && $_CLASS['auth']->acl_get('u_pm_bbcode'));
-	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm'] && $_CLASS['auth']->acl_get('u_pm_smilies'));
-	$img_status		= ($config['auth_img_pm'] && $_CLASS['auth']->acl_get('u_pm_img'));
-	$flash_status	= ($config['auth_flash_pm'] && $_CLASS['auth']->acl_get('u_pm_flash'));
+	$html_status	= ($config['allow_html'] && $config['auth_html_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_html'));
+	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_bbcode'));
+	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_smilies'));
+	$img_status		= ($config['auth_img_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_img'));
+	$flash_status	= ($config['auth_flash_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_flash'));
 */
 	$html_status	= ($config['allow_html'] && $config['auth_html_pm']);
 	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm']);
@@ -352,7 +356,7 @@ $config['auth_bbcode_pm'] = true;
 	$flash_status	= ($config['auth_flash_pm']);
 
 	// Save Draft
-	if ($save && $_CLASS['auth']->acl_get('u_savedrafts'))
+	if ($save && $_CLASS['forums_auth']->acl_get('u_savedrafts'))
 	{
 		$subject = request_var('subject', '', true);
 		$subject = (!$subject && $action != 'post') ? $_CLASS['core_user']->lang['NEW_MESSAGE'] : $subject;
@@ -381,7 +385,7 @@ $config['auth_bbcode_pm'] = true;
 	}
 
 	// Load Draft
-	if ($draft_id && $_CLASS['auth']->acl_get('u_savedrafts'))
+	if ($draft_id && $_CLASS['forums_auth']->acl_get('u_savedrafts'))
 	{
 		$sql = 'SELECT draft_subject, draft_message 
 			FROM ' . FORUMS_DRAFTS_TABLE . " 
@@ -452,7 +456,7 @@ $config['auth_bbcode_pm'] = true;
 			$message_parser->bbcode_bitfield = $bbcode_bitfield;
 		}
 
-		if ($action != 'edit' && !$preview && !$refresh && $config['flood_interval'] && !$_CLASS['auth']->acl_get('u_ignoreflood'))
+		if ($action != 'edit' && !$preview && !$refresh && $config['flood_interval'] && !$_CLASS['forums_auth']->acl_get('u_ignoreflood'))
 		{
 			// Flood check
 			$last_post_time = $_CLASS['core_user']->data['user_last_post_time'];
@@ -645,7 +649,7 @@ $config['auth_bbcode_pm'] = true;
 		if (isset($address_list['u']) && !empty($address_list['u']))
 		{
 			$result['u'] = $_CLASS['core_db']->query('SELECT user_id as id, username as name, user_colour as colour 
-				FROM ' . USERS_TABLE . ' 
+				FROM ' . CORE_USERS_TABLE . ' 
 				WHERE user_id IN (' . implode(', ', array_map('intval', array_keys($address_list['u']))) . ')');
 		}
 		
@@ -709,9 +713,9 @@ $config['auth_bbcode_pm'] = true;
 		}
 	}
 
-	$html_checked		= isset($enable_html) ? !$enable_html : (($config['allow_html']) ? !$_CLASS['core_user']->optionget('html') : 1);
-	$bbcode_checked		= isset($enable_bbcode) ? !$enable_bbcode : (($config['allow_bbcode']) ? !$_CLASS['core_user']->optionget('bbcode') : 1);
-	$smilies_checked	= isset($enable_smilies) ? !$enable_smilies : (($config['allow_smilies']) ? !$_CLASS['core_user']->optionget('smilies') : 1);
+	$html_checked		= isset($enable_html) ? !$enable_html : (($config['allow_html']) ? !$_CLASS['core_user']->user_data_get('html') : 1);
+	$bbcode_checked		= isset($enable_bbcode) ? !$enable_bbcode : (($config['allow_bbcode']) ? !$_CLASS['core_user']->user_data_get('bbcode') : 1);
+	$smilies_checked	= isset($enable_smilies) ? !$enable_smilies : (($config['allow_smilies']) ? !$_CLASS['core_user']->user_data_get('smilies') : 1);
 	$urls_checked		= isset($enable_urls) ? !$enable_urls : 0;
 	$sig_checked		= $enable_sig;
 
@@ -746,7 +750,7 @@ $config['auth_bbcode_pm'] = true;
 	$s_hidden_fields .= (isset($check_value)) ? '<input type="hidden" name="status_switch" value="' . $check_value . '" />' : '';
 	$s_hidden_fields .= ($draft_id || isset($_REQUEST['draft_loaded'])) ? '<input type="hidden" name="draft_loaded" value="' . ((isset($_REQUEST['draft_loaded'])) ? intval($_REQUEST['draft_loaded']) : $draft_id) . '" />' : '';
 
-	$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_pm_attach'] || !$_CLASS['auth']->acl_get('u_pm_attach')) ? '' : ' enctype="multipart/form-data"';
+	$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_pm_attach'] || !$_CLASS['forums_auth']->acl_get('u_pm_attach')) ? '' : ' enctype="multipart/form-data"';
 
 	// Start assigning vars for main posting page ...
 	$_CLASS['core_template']->assign_array(array(
@@ -774,11 +778,11 @@ $config['auth_bbcode_pm'] = true;
 		'S_BBCODE_CHECKED' 		=> ($bbcode_checked) ? ' checked="checked"' : '',
 		'S_SMILIES_ALLOWED'		=> $smilies_status,
 		'S_SMILIES_CHECKED' 	=> ($smilies_checked) ? ' checked="checked"' : '',
-		'S_SIG_ALLOWED'			=> ($config['allow_sig'] && $_CLASS['auth']->acl_get('u_sig')),
+		'S_SIG_ALLOWED'			=> ($config['allow_sig'] && $_CLASS['forums_auth']->acl_get('u_sig')),
 		'S_SIGNATURE_CHECKED' 	=> ($sig_checked) ? ' checked="checked"' : '',
 		'S_MAGIC_URL_CHECKED' 	=> ($urls_checked) ? ' checked="checked"' : '',
-		'S_SAVE_ALLOWED'		=> $_CLASS['auth']->acl_get('u_savedrafts'),
-		'S_HAS_DRAFTS'			=> ($_CLASS['auth']->acl_get('u_savedrafts') && $drafts),
+		'S_SAVE_ALLOWED'		=> $_CLASS['forums_auth']->acl_get('u_savedrafts'),
+		'S_HAS_DRAFTS'			=> ($_CLASS['forums_auth']->acl_get('u_savedrafts') && $drafts),
 		'S_FORM_ENCTYPE'		=> $form_enctype,
 		
 		'S_POST_ACTION' 		=> generate_link($s_action),
@@ -787,7 +791,7 @@ $config['auth_bbcode_pm'] = true;
 	);
 
 	// Attachment entry
-	if ($_CLASS['auth']->acl_get('u_pm_attach') && $config['allow_pm_attach'] && $form_enctype)
+	if ($_CLASS['forums_auth']->acl_get('u_pm_attach') && $config['allow_pm_attach'] && $form_enctype)
 	{
 		posting_gen_attachment_entry($attachment_data, $filename_data);
 	}

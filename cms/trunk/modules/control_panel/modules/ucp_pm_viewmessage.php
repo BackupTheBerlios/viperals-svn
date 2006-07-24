@@ -10,9 +10,13 @@
 // LICENCE   : GPL vs2.0 [ see /docs/COPYING ] 
 // 
 // -------------------------------------------------------------
+
+load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
+$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
 	
-function view_message($id, $mode, $folder_id, $msg_id, $folder, &$message_row)
+function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row)
 {
+	///$id, $mode
 	global $_CLASS, $_CORE_CONFIG, $config;
 
 	$_CLASS['core_user']->add_lang('viewtopic');
@@ -145,7 +149,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, &$message_row)
 		$_CLASS['core_db']->query($sql);
 	}
 
-	$signature = ($message_row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->optionget('viewsigs')) ? $user_info['user_sig'] : '';
+	$signature = ($message_row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->user_data_get('viewsigs')) ? $user_info['user_sig'] : '';
 	
 	// End signature parsing, only if needed
 	if ($signature)
@@ -165,7 +169,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, &$message_row)
 		$signature = str_replace("\n", '<br />', censor_text($signature));
 	}
 
-	$url = 'Control_Panel&amp;i='.$id;
+	$url = 'Control_Panel&amp;i=pm';
 
 	$_CLASS['core_template']->assign_array(array(
 		'AUTHOR_NAME'		=> ($user_info['user_colour']) ? '<span style="color:#' . $user_info['user_colour'] . '">' . $user_info['username'] . '</span>' : $user_info['username'],
@@ -196,7 +200,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, &$message_row)
 
 		'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']),
 		'U_REPORT'			=> (false) ? generate_link('Forums&amp;file=report&amp;pm=' . $message_row['msg_id']) : '',
-		'U_INFO'			=> ($_CLASS['auth']->acl_get('m_') && ($message_row['message_reported'] || $message_row['forwarded'])) ? generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']) : '',
+		'U_INFO'			=> ($_CLASS['forums_auth']->acl_get('m_') && ($message_row['message_reported'] || $message_row['forwarded'])) ? generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']) : '',
 		'U_DELETE' 			=> generate_link("$url&amp;mode=compose&amp;action=delete&amp;f=$folder_id&amp;p=" . $message_row['msg_id']),
 		'U_AUTHOR_PROFILE' 	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $author_id),
 		'U_EMAIL' 			=> $user_info['email'],
@@ -206,7 +210,7 @@ function view_message($id, $mode, $folder_id, $msg_id, $folder, &$message_row)
 		'U_PREVIOUS_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=previous"),
 		'U_NEXT_PM'			=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=next"),
 
-		'S_MESSAGE_REPORTED'=> ($message_row['message_reported'] && $_CLASS['auth']->acl_get('m_')) ? true : false,
+		'S_MESSAGE_REPORTED'=> ($message_row['message_reported'] && $_CLASS['forums_auth']->acl_get('m_')) ? true : false,
 		'S_DISPLAY_NOTICE'	=> $display_notice && $message_row['message_attachment'],
 
 		'U_PRINT_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=print"),
@@ -231,7 +235,7 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 
 	// Get History Messages (could be newer)
 	$sql = 'SELECT t.*, p.*, u.*
-		FROM ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . USERS_TABLE . ' u
+		FROM ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . CORE_USERS_TABLE . ' u
 		WHERE t.msg_id = p.msg_id 
 			AND p.author_id = u.user_id
 			AND t.folder_id <> ' . PRIVMSGS_NO_BOX . "
@@ -384,7 +388,7 @@ function get_user_informations($user_id, $user_row)
 	if ($config['load_onlinetrack'])
 	{
 		$sql = 'SELECT MAX(session_hidden) AS session_hidden
-			FROM ' . SESSIONS_TABLE . " 
+			FROM ' . CORE_SESSIONS_TABLE . " 
 			WHERE session_user_id = $user_id
 			AND session_time < " . ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']);
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -399,7 +403,7 @@ function get_user_informations($user_id, $user_row)
 		$_CLASS['core_db']->free_result($result);
 	}
 
-	if ($user_row['user_avatar'] && $_CLASS['core_user']->optionget('viewavatars'))
+	if ($user_row['user_avatar'] && $_CLASS['core_user']->user_data_get('viewavatars'))
 	{
 		$avatar_img = '';
 

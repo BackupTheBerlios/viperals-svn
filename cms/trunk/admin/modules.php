@@ -51,35 +51,62 @@ function check_type(&$type, $redirect = true)
 		
 if (isset($_REQUEST['mode']))
 {
-	if ($id = get_variable('id', 'GET', false, 'int'))
+	if ($_REQUEST['mode'] === 'search') {
+		if (isset($_REQUEST['option']) && isset($_REQUEST['name']) && display_confirmation())
+		{
+			$name = urldecode($_REQUEST['name']);
+			switch ($_REQUEST['option'])
+			{
+				case 'add':
+					if (!file_exists(SITE_FILE_ROOT."modules/$name/index.php"))
+					{
+						break;
+					}
+					$sql = 'INSERT INTO '.CORE_PAGES_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+						'page_name'		=> (string) $name,
+						'page_type'		=> PAGE_MODULE,
+						'page_status'	=> STATUS_PENDING,
+					));
+					$_CLASS['core_db']->query($sql);
+				break;
+			}
+		}
+		
+		//$result = $_CLASS['core_db']->query('SELECT page_name, page_type FROM '. CORE_PAGES_TABLE .' WHERE page_type = '. PAGE_MODULE);
+		$result = $_CLASS['core_db']->query('SELECT page_name, page_type FROM '. CORE_PAGES_TABLE);
+
+		$modules = array();
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$modules[$row['page_name']] = $row;
+		}
+		$_CLASS['core_db']->free_result($result);
+
+		$handle = opendir(SITE_FILE_ROOT.'modules');
+
+		while ($name = readdir($handle))
+		{
+			if (mb_strpos($name, '.') === false && empty($modules[$name]) && file_exists(SITE_FILE_ROOT."modules/$name/index.php"))
+			{
+				$_CLASS['core_template']->assign_vars_array('modules_search', array(
+					'TITLE'				=> mb_convert_case(preg_replace('/_/', ' ', $name), MB_CASE_TITLE),
+					'LINK_ADD'			=> generate_link('modules&amp;mode=search&amp;option=add&amp;name='.urlencode($name), array('admin' => true)),
+					'LINK_INSTALL'		=> generate_link('modules&amp;mode=search&amp;option=install&amp;name='.urlencode($name), array('admin' => true)),
+					'LINK_REMOVE'		=> generate_link('modules&amp;mode=search&amp;option=remove&amp;name='.urlencode($name), array('admin' => true)),
+				));
+				//$_CLASS['core_db']->query('INSERT INTO '. CORE_PAGES_TABLE . " (page_name, page_type, page_status, page_sides) VALUES ($file, 1, 1, 1)");
+				//echo $file;
+			}
+		}
+		closedir($handle);
+		
+		$_CLASS['core_display']->display(false, 'admin/modules/search.html');
+	}
+	elseif ($id = get_variable('id', 'GET', false, 'int'))
 	{
 		switch ($_REQUEST['mode'])
 		{
-			case 'search':
-				//$result = $_CLASS['core_db']->query('SELECT page_name, page_type FROM '. CORE_PAGES_TABLE .' WHERE page_type = '. PAGE_MODULE);
-				$result = $_CLASS['core_db']->query('SELECT page_name, page_type FROM '. CORE_PAGES_TABLE);
-
-				$modules = array();
-
-				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-				{
-					$modules[$row['page_name']] = $row;
-				}
-				$_CLASS['core_db']->free_result($result);
-
-				$handle = opendir(SITE_FILE_ROOT.'modules');
-
-				while ($file = readdir($handle))
-				{
-					if (mb_strpos($file, '.') === false && empty($modules[$file]) && file_exists(SITE_FILE_ROOT."modules/$file/index.php"))
-					{
-						//$_CLASS['core_db']->query('INSERT INTO '. CORE_PAGES_TABLE . " (page_name, page_type, page_status, page_sides) VALUES ($file, 1, 1, 1)");
-						echo $file;
-					}
-				}
-				closedir($handle);
-			break;
-
 			case 'change':
 				require_once SITE_FILE_ROOT.'admin/functions/page_functions.php';
 
@@ -123,6 +150,17 @@ if (isset($_REQUEST['mode']))
 					}
 
 					$_CLASS['core_db']->query('UPDATE '.CORE_PAGES_TABLE.' set page_status = '.STATUS_DISABLED.' WHERE page_id = '.$id);
+
+					if ($page_configurer->admin)
+					{
+						$array = array(
+							'module_name'	=> (string) $module['page_name'],
+							'module_status'	=> STATUS_ACTIVE,
+							'module_type'	=> 0,
+						);
+
+						$_CLASS['core_db']->query('INSERT INTO ' . CORE_ADMIN_MODULES_TABLE . ' '. $_CLASS['core_db']->sql_build_array('INSERT', $array));
+					}
 				}
 			break;
 
@@ -163,6 +201,17 @@ if (isset($_REQUEST['mode']))
 					}
 
 					$_CLASS['core_db']->query('UPDATE ' . CORE_PAGES_TABLE . ' set page_status = ' . STATUS_PENDING . ' WHERE page_id = '.$id);
+
+					if ($page_configurer->admin)
+					{
+						$array = array(
+							'module_name'	=> (string) $module['page_name'],
+							'module_status'	=> STATUS_ACTIVE,
+							'module_type'	=> 0,
+						);
+
+						$_CLASS['core_db']->query('DELETE FROM ' . CORE_ADMIN_MODULES_TABLE . "  WHERE module_name = '{$module['page_name']}'");
+					}
 				}
 			break;
 
@@ -213,7 +262,7 @@ while ($module = $_CLASS['core_db']->fetch_row_assoc($result))
 			'CHANGE'		=> ($active) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
 			'ERROR'			=> '',
 			'INSTALLED'		=> $installed,
-			'TITLE'			=> ($module['page_title']) ? $module['page_title'] : $module['page_name'],
+			'TITLE'			=> ($module['page_title']) ? $module['page_title'] : mb_convert_case(preg_replace('/_/', ' ', $module['page_name']), MB_CASE_TITLE),
 
 			'LINK_ACTIVE'		=> generate_link('modules&amp;mode=change&amp;id='.$module['page_id'], array('admin' => true)),
 			'LINK_EDIT'			=> generate_link('modules&amp;mode=edit&amp;id='.$module['page_id'], array('admin' => true)),

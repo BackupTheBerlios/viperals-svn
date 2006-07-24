@@ -162,7 +162,7 @@ $_CLASS['core_db']->table_create('start', $table_prefix.'control_panel_modules')
 $_CLASS['core_db']->add_table_field_int('module_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('module_name', 100);
 $_CLASS['core_db']->add_table_field_char('module_title', 100, true);
-$_CLASS['core_db']->add_table_field_char('module_subs', 100, true);
+$_CLASS['core_db']->add_table_field_text('module_subs', 200, true);
 $_CLASS['core_db']->add_table_field_char('module_location', 200, true);
 //$_CLASS['core_db']->add_table_field_int('module_type', array('max' => 10));
 $_CLASS['core_db']->add_table_field_int('module_status', array('max' => 10));

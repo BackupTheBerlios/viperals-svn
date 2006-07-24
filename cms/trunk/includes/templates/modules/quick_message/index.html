@@ -42,9 +42,18 @@
 			</tr>
 		<!-- ENDLOOP $quick_message -->
 
-
 	</tbody>
 </table>
+
+<!-- IF { $Q_MESSAGE_TOTAL_MESSAGES } -->
+<br/>
+<table class="tablebg" cellspacing="1" cellpadding="4" width="100%">
+		<tr class="row2">
+			<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{ $Q_MESSAGE_PAGE_NUMBER } &nbsp;[ { $Q_MESSAGE_TOTAL_MESSAGES } ]&nbsp;</td>
+			<td class="gensmall" width="100%" align="right" nowrap="nowrap"><!-- IF { $Q_MESSAGE_PAGINATION } --><b><a href="javascript:jumpto();">{ $L_GOTO_PAGE }</a> <!-- IF { $PREVIOUS_PAGE } --><a href="{ $PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;&nbsp;<!-- ENDIF -->{ $Q_MESSAGE_PAGINATION }<!-- IF { $NEXT_PAGE } -->&nbsp;&nbsp;<a href="{ $NEXT_PAGE }">{ $L_NEXT }</a><!-- ENDIF --></b><!-- ENDIF --></td>
+		</tr>
+</table>
+<!-- ENDIF -->
 
 { $THEME_TABLE_CLOSE }
 

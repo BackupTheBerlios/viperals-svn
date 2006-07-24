@@ -188,9 +188,9 @@ $row = $_CLASS['core_db']->fetch_row_assoc($result);
 if (!$row)
 {
 	$_CLASS['core_template']->assign_array(array(
-		'Q_MESSAGE_PAGINATION'	=> generate_pagination('Quick_Message', $row['total'], $limit, $start, false, 'Q_MESSAGE_'),
-		'Q_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
-		'Q_TOTAL_MESSAGES'		=> $row['total']
+		'Q_MESSAGE_PAGINATION'	=> false,
+		'Q_PAGE_NUMBER'			=> false,
+		'Q_TOTAL_MESSAGES'		=> false
 	));
 
 	$_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
@@ -267,8 +267,8 @@ $pagination = generate_pagination('Quick_Message', $row['total'], $limit, $start
 $_CLASS['core_template']->assign_array(array(
 	'Q_MESSAGE_PAGINATION'			=> $pagination['formated'],
 	'Q_MESSAGE_PAGINATION_ARRAY'	=> $pagination['array'],
-	'Q_PAGE_NUMBER'					=> on_page($row['total'], $limit, $start),
-	'Q_TOTAL_MESSAGES'				=> $row['total']
+	'Q_MESSAGE_PAGE_NUMBER'			=> on_page($row['total'], $limit, $start),
+	'Q_MESSAGE_TOTAL_MESSAGES'		=> $row['total']
 ));
 
 $_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');

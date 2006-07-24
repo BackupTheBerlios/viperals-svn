@@ -332,7 +332,7 @@ $_CLASS['core_user']->data['user_full_folder'] = FULL_FOLDER_NONE;
 	// Get those messages not yet placed into any box
 	// NOTE: Expand Group Information to all groups the user/author is in? 
 	$sql = 'SELECT t.*, p.*, u.username, u.user_group as author_in_group
-		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
 		WHERE t.user_id = $user_id
 			AND p.author_id = u.user_id
 			AND t.folder_id = " . PRIVMSGS_NO_BOX . '
@@ -594,7 +594,7 @@ $_CLASS['core_user']->data['user_full_folder'] = FULL_FOLDER_NONE;
 			$set_sql .= 'user_new_privmsg = user_new_privmsg - ' . $num_new;
 		}
 
-		$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
+		$_CLASS['core_db']->query('UPDATE ' . CORE_USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
 
 		$_CLASS['core_user']->data['user_new_privmsg'] -= $num_new;
 		$_CLASS['core_user']->data['user_unread_privmsg'] -= $num_unread;
@@ -724,7 +724,7 @@ function set_read_status($read, $msg_id, $user_id, $folder_id)
 
 	if ($count)
 	{
-		$sql = 'UPDATE ' . USERS_TABLE . ' 
+		$sql = 'UPDATE ' . CORE_USERS_TABLE . ' 
 			SET user_unread_privmsg = user_unread_privmsg '.(($read) ? '+ ' : '- '). " $count
 			WHERE user_id = $user_id";
 		$_CLASS['core_db']->query($sql);
@@ -924,7 +924,7 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 			$set_sql .= 'user_new_privmsg = user_new_privmsg - ' . $num_new;
 		}
 		
-		$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
+		$_CLASS['core_db']->query('UPDATE ' . CORE_USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
 	}
 	
 	// Now we have to check which messages we can delete completely	
@@ -1002,7 +1002,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 		if (!empty($u))
 		{
 			$sql = 'SELECT user_id, username, user_colour 
-				FROM ' . USERS_TABLE . '
+				FROM ' . CORE_USERS_TABLE . '
 				WHERE user_id IN (' . implode(', ', $u) . ')
 					AND user_type = ' . USER_NORMAL;
 			$result = $_CLASS['core_db']->query($sql);
@@ -1289,7 +1289,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 			));
 		}
 
-		$sql = 'UPDATE ' . USERS_TABLE . ' 
+		$sql = 'UPDATE ' . CORE_USERS_TABLE . ' 
 			SET user_new_privmsg = user_new_privmsg + 1, user_unread_privmsg = user_unread_privmsg + 1
 			WHERE user_id IN (' . implode(', ', array_keys($recipients)) . ')';
 		$_CLASS['core_db']->query($sql);
@@ -1312,7 +1312,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 	// Set user last post time
 	if ($mode === 'reply' || $mode === 'quote' || $mode === 'forward' || $mode === 'post')
 	{
-		$sql = 'UPDATE ' . USERS_TABLE . "
+		$sql = 'UPDATE ' . CORE_USERS_TABLE . "
 			SET user_last_post_time = {$_CLASS['core_user']->time}
 			WHERE user_id = " . $_CLASS['core_user']->data['user_id'];
 		$_CLASS['core_db']->query($sql);
@@ -1414,7 +1414,7 @@ function pm_notification($mode, $author, $recipients, $subject, $message)
 	$recipient_list = implode(', ', array_unique(array_keys($recipients)));
 
 	$sql = 'SELECT user_id, username, user_email, user_lang, user_notify_pm, user_notify_type
-		FROM ' . USERS_TABLE . "
+		FROM ' . CORE_USERS_TABLE . "
 		WHERE user_id IN ($recipient_list)";
 	$result = $_CLASS['core_db']->query($sql);
 

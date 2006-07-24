@@ -55,7 +55,7 @@ function check_bot_status($browser, $ip)
 
 	foreach ($bots_array as $bot)
 	{
-		if ($bot['user_agent'] && mb_strpos($browser, $bot['user_agent']) === 0)
+		if ($bot['user_agent'] && mb_strpos(mb_strtolower($browser), mb_strtolower($bot['user_agent'])) === 0)
 		{
 			$is_bot = $bot['user_id'];
 		}
@@ -326,8 +326,8 @@ function get_word_censors()
 
 	if (is_null($censors = $_CLASS['core_cache']->get('word_censors')))
 	{
-		$sql = 'SELECT word, replacement
-			FROM  ' . CORE_CENSOR_TABLE .' ORDER BY LENGTH(word) DESC';
+		$sql = 'SELECT word_match, word_replacement
+			FROM  ' . CORE_CENSOR_TABLE .' ORDER BY LENGTH(word_match) DESC';
 		$result = $_CLASS['core_db']->query($sql);
 
 		$censors = array();
@@ -432,7 +432,7 @@ function generate_base_url()
 	if (!$base)
 	{
 		global $_CORE_CONFIG;
-
+//$_SERVER['HTTPS'];
 		$base = ($_CORE_CONFIG['server']['site_secure']) ? 'https://' : 'http://' ;
 		$base .= trim(isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_CORE_CONFIG['server']['site_domain']);
 		$base .= (($_CORE_CONFIG['server']['site_port'] && $_CORE_CONFIG['server']['site_port'] != 80) ? ':' . $_CORE_CONFIG['server']['site_port'] : '') . ($_CORE_CONFIG['server']['site_path']) ? $_CORE_CONFIG['server']['site_path'] : '/';

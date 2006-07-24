@@ -1,10 +1,10 @@
 	<!-- IF isset({ $block_bottom }) -->
 		{section name=block_bottom_loop loop=$block_bottom}
 		<div class="centerblock">
-			<div class="title">{$block_bottom[block_bottom_loop].TITLE}</div>
+			<div class="title">{$block_bottom[block_bottom_loop].title}</div>
 				<div class="OpenTable"><div class="outer">
 					<div class="inner">
-						<div class="blockcontent">{$block_bottom[block_bottom_loop].CONTENT}</div>
+						<div class="blockcontent">{$block_bottom[block_bottom_loop].content}</div>
 					</div>
 				</div>
 			</div>
@@ -13,23 +13,24 @@
 	<!-- ENDIF $block_bottom -->
 	
 	<!-- IF isset({ $message_block_bottom }) -->
-	<div class="messageblock">
-	<!-- LOOP $message_block_bottom -->
-		<div class="title" onclick="switch_collapse('block_{ $message_block_bottom:id }');" style="cursor:pointer">{ $message_block_bottom:title }
-		<!-- IF { $message_block_bottom:edit_link } -->[ <!-- IF { $message_block_bottom:expires } -->{ $message_block_bottom:expires } | <!-- ENDIF -->
-		<a href="{ $message_block_bottom:edit_link }" >{ $L_EDIT }</a> ]<!-- ENDIF --></div>
-		<div <!-- IF { $message_block_bottom:collapsed } -->style="display: none;"<!-- ENDIF --> class="content" id="block_{ $message_block_bottom:id }">{ $message_block_bottom:content }</div>
-	<br />
-	<!-- ENDLOOP $message_block_bottom -->
-	</div>
+	<br/>
+		<div class="messageblock">
+		<!-- LOOP $message_block_bottom -->
+			<div class="title" onclick="switch_collapse('block_{ $message_block_bottom:id }');" style="cursor:pointer">{ $message_block_bottom:title }
+			<!-- IF { $message_block_bottom:edit_link } -->[ <!-- IF { $message_block_bottom:expires } -->{ $message_block_bottom:expires } | <!-- ENDIF -->
+			<a href="{ $message_block_bottom:edit_link }" >{ $L_EDIT }</a> ]<!-- ENDIF --></div>
+			<div class="content" <!-- IF { $message_block_bottom:collapsed } --> style="display: none;"<!-- ENDIF -->  id="block_{ $message_block_bottom:id }">{ $message_block_bottom:content }</div>
+		<br />
+		<!-- ENDLOOP $message_block_bottom -->
+	
+		</div>
 	<br />
 	<!-- ENDIF -->
-
 	</div>
 	</div>
 	
 	<!-- INCLUDE blockright.html -->
-	{ $FOOTER_CONTENT }
+
 	<div class="footer">
 		<br />
 		<div align="center" class="footmsg">{ $THEME_FOOTER }</div>

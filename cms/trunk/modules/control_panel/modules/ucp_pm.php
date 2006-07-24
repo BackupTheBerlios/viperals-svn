@@ -85,7 +85,10 @@ else
 	$mode = (!$mode) ? get_variable('mode', 'REQUEST', 'view_messages') : $mode;
 }
 
-require(SITE_FILE_ROOT.'includes/forums/functions_privmsgs.php');
+$id = 'pm';
+
+require_once SITE_FILE_ROOT.'includes/forums/functions.php';
+require_once SITE_FILE_ROOT.'includes/forums/functions_privmsgs.php';
 
 $_CLASS['core_template']->assign_array(array( 
 	'L_TITLE'			=> $_CLASS['core_user']->lang['UCP_PM_' . strtoupper($mode)],
@@ -132,14 +135,15 @@ switch ($mode)
 	break;
 	
 	case 'options':
-		$sql = 'SELECT group_message_limit
-			FROM ' . GROUPS_TABLE . '
+		/*$sql = 'SELECT group_message_limit
+			FROM ' . CORE_GROUPS_TABLE . '
 			WHERE group_id = ' . $_CLASS['core_user']->data['user_group'];
 		$result = $_CLASS['core_db']->query($sql);
 
 		list($message_limit) = $_CLASS['core_db']->fetch_row_num($result);
-
 		$_CLASS['core_db']->free_result($result);
+*/
+		$message_limit = 10;
 		
 		(int) $_CLASS['core_user']->data['user_message_limit'] = (!$message_limit) ? $config['pm_max_msgs'] : $message_limit;
 		
@@ -291,7 +295,7 @@ switch ($mode)
 			}
 
 			$sql = 'SELECT t.*, p.*, u.*
-				FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . ' u
+				FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u
 				WHERE t.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 					AND p.author_id = u.user_id
 					AND t.folder_id = $folder_id
@@ -392,6 +396,7 @@ switch ($mode)
 	break;
 }
 
+/*
 function obtain_icons()
 {
 	global $_CLASS;
@@ -419,8 +424,9 @@ function obtain_icons()
 	}
 
 	return $icons;
-}
+}*/
 
+/*
 function gen_sort_selects(&$limit_days, &$sort_by_text, &$sort_days, &$sort_key, &$sort_dir, &$s_limit_days, &$s_sort_key, &$s_sort_dir, &$u_sort_param)
 {
 	global $_CLASS;
@@ -454,6 +460,6 @@ function gen_sort_selects(&$limit_days, &$sort_by_text, &$sort_days, &$sort_key,
 	$u_sort_param = "st=$sort_days&amp;sk=$sort_key&amp;sd=$sort_dir";
 
 	return;
-}
+}*/
 
 ?>

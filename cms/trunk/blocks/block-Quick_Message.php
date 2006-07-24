@@ -39,6 +39,7 @@ require_once($site_file_root.'modules/Quick_Message/functions.php');
 
 $this->content = '<div id="qm_block">'.qm_block_content().'</div>';
 
+$this->content .= '<script type="text/javascript" src="javascript/message.js"></script>';
 $this->content .= '<script type="text/javascript" src="javascript/quick_messages.js"></script><div align="center"><a href="'.generate_link('Quick_Message').'">Message History</a><br />';
 
 if (!$_CLASS['core_user']->is_user && !$_CORE_CONFIG['quick_message']['anonymous_posting'])

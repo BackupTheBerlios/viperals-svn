@@ -56,7 +56,10 @@ if (is_null($cms_news = $_CLASS['core_cache']->get('cms_news')))
 	{
 		while ($data = $_CLASS['core_rss']->get_rss_data())
 		{
-			$cms_news[] = $data;
+			if (!empty($data['title']))
+			{			
+				$cms_news[] = $data;
+			}
 		}
 	}
 
@@ -124,7 +127,7 @@ if ($_CLASS['core_auth']->admin_power('users'))
 			$_CLASS['core_template']->assign_vars_array($type, array(
 					'user_id'		=> $row['user_id'],
 					'user_name'		=> $row['username'],
-					'registered'	=> $_CLASS['core_user']->format_time($row['user_regdate']),
+					'registered'	=> $_CLASS['core_user']->format_time($row['user_reg_date']),
 					'link_profile'	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 					'link_activate'	=> generate_link('&amp;user_mode=activate&amp;id=' . $row['user_id'], array('admin' => true)),
 					'link_remove'	=> generate_link('&amp;user_mode=remove&amp;id=' . $row['user_id'], array('admin' => true)),

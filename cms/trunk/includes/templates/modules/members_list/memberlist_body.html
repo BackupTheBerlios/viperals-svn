@@ -116,7 +116,7 @@
 
 		<tr>
 			<td class="cat" colspan="<!-- IF { $S_SEARCH_USER } -->9<!-- ELSE -->8<!-- ENDIF -->" align="center">
-			<!-- IF { $S_SEARCH_USER } --><input class="button" type="submit" value="{$L_SELECT_MARKED}" />
+			<!-- IF { $S_SEARCH_USER } --><input class="button" type="submit" value="{ $L_SELECT_MARKED }" />
 			<!-- ELSE --><span class="gensmall">{ $L_SELECT_SORT_METHOD }:</span>&nbsp;<select name="sk">{ $S_MODE_SELECT }</select>&nbsp; <span class="gensmall">{ $L_ORDER }</span>&nbsp;<select name="sd">{ $S_ORDER_SELECT }</select>&nbsp;
 			<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" /><!-- ENDIF --></td>
 		</tr>

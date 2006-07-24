@@ -87,6 +87,7 @@ class module_control_panel
 			$selected = ($row['module_name'] === $this->module);
 		
 			$module_lang = 'UCP_' . $row['module_title'];
+
 			$_CLASS['core_template']->assign_vars_array('ucp_section', array(
 				'L_TITLE'		=> isset($_CLASS['core_user']->lang[$module_lang]) ? $_CLASS['core_user']->lang[$module_lang] : mb_convert_case(str_replace('_', ' ',  ($row['module_name'])), MB_CASE_TITLE),
 				'S_SELECTED'	=> $selected, 
@@ -106,7 +107,9 @@ class module_control_panel
 		
 				foreach ($sub_modules as $sub_module)
 				{
-					if (!trim($sub_module))
+					$sub_module = trim($sub_module);
+				
+					if (!$sub_module)
 					{
 						continue;
 					}
@@ -114,9 +117,9 @@ class module_control_panel
 					$selected = ($this->mode && $sub_module === $this->mode) ? true : false;
 		
 					$module_lang = strtoupper('UCP_' . $row['module_name'] . '_' . $sub_module);
-		
+
 					$_CLASS['core_template']->assign_vars_array("ucp_subsection", array(
-						'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : $module_lang,
+						'L_TITLE'		=> isset($_CLASS['core_user']->lang[$module_lang]) ? $_CLASS['core_user']->lang[$module_lang] : $module_lang,
 						'S_SELECTED'	=> $selected, 
 						'U_TITLE'		=> generate_link('control_panel&amp;i=' . $row['module_name'] . '&amp;mode=' . $sub_module)
 					));
@@ -153,7 +156,6 @@ class module_control_panel
 	{
 		global $_CLASS, $_CORE_CONFIG;
 
-		$_CLASS['core_user']->user_setup();
 		
 		/* Assign some basic template varibles */
 		$_CLASS['core_template']->assign_array(array(
@@ -164,7 +166,8 @@ class module_control_panel
 			'friends_online'		=> false,
 			'friends_offline' 		=> false,
 		));
-		
+
+		$_CLASS['core_user']->user_setup();
 		$_CLASS['core_user']->add_lang();
 
 		if (!$this->module && $this->mode)

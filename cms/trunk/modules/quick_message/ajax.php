@@ -26,7 +26,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-global $_CORE_CONFIG, $_CLASS;
+global $_CLASS, $_CORE_CONFIG;
 
 if (!defined('QUICK_MESSAGE_TABLE'))
 {

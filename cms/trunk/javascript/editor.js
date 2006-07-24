@@ -103,13 +103,13 @@ function attach_inline() {
 	document.forms[form_name].elements[text_name].focus();
 }
 
-function addquote(post_id, username) {
-
+function addquote(post_id, username)
+{
 	var message_name = 'message_' + post_id;
 	var theSelection = '';
 
 	var divarea = document.getElementById(message_name);
-	
+
 	// Get text selection - not only the post content :(
 	if (window.getSelection)
 	{

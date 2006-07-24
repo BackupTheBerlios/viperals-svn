@@ -931,7 +931,7 @@ class parse_message extends bbcode_firstpass
 
   	    if (is_null($smiley = $_CLASS['core_cache']->get('smiley_parse')))
   	    {
-			$result = $_CLASS['core_db']->query('SELECT * FROM ' . SMILIES_TABLE .' ORDER BY LENGTH(smiley_code) DESC');
+			$result = $_CLASS['core_db']->query('SELECT * FROM ' . CORE_SMILIES_TABLE .' ORDER BY LENGTH(smiley_code) DESC');
 
 			$smiley = array();
 			

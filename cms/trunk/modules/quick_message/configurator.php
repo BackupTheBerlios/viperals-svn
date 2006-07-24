@@ -35,6 +35,9 @@ if (!defined('QUICK_MESSAGE_TABLE'))
 
 class Quick_Message_configurator
 {
+	var $error = array();
+	var $admin = false;
+
 	function install()
 	{
 		global $_CLASS;

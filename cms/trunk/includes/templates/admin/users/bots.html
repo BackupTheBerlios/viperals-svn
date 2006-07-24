@@ -14,19 +14,43 @@
 	<tr>
 		<td class="row1" width="">{ $admin_bots:NAME }</td>
 		<td class="row1" width="200" align="center" nowrap="nowrap">{ $admin_bots:LAST_VISIT }</td>
+		<!-- IF { $admin_bots:LINK_STATUS } -->
 		<td width="80" align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $admin_bots:LINK_STATUS }'; return false;">
 			<a href="{ $admin_bots:LINK_STATUS }">{ $admin_bots:L_STATUS }</a>
 		</td>
+		<!-- ELSE -->
+			<td width="80" align="center" class="row2">
+			</td>
+		<!-- ENDIF -->
+		<!-- IF { $admin_bots:LINK_EDIT } -->
 		<td width="80" align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $admin_bots:LINK_EDIT }'; return false;">
 			<a href="{ $admin_bots:LINK_EDIT }">{ $L_EDIT }</a>
 		</td>
+		<!-- ELSE -->
+			<td width="80" align="center" class="row2">
+			</td>
+		<!-- ENDIF -->
+		<!-- IF { $admin_bots:LINK_DELETE } -->
 		<td width="80" align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $admin_bots:LINK_DELETE }'; return false;">
 			<a href="{ $admin_bots:LINK_DELETE }">{ $L_DELETE }</a> 
 		</td>
+		<!-- ELSE -->
+			<td width="80" align="center" class="row2">
+			</td>
+		<!-- ENDIF -->
 	</tr>
 	<!-- ENDLOOP $admin_bots -->
 </table>
 
+<!-- IF { $ADMIN_USER_TOTAL_MESSAGES } -->
+<br/>
+<table class="tablebg" cellspacing="1" cellpadding="4" width="100%">
+		<tr class="row2">
+			<td class="nav" valign="middle" nowrap="nowrap">&nbsp;{ $ADMIN_USER_PAGE_NUMBER } &nbsp;[ { $ADMIN_USER_TOTAL_MESSAGES } ]&nbsp;</td>
+			<td class="gensmall" width="100%" align="right" nowrap="nowrap"><!-- IF { $ADMIN_USER_PAGINATION } --><b><a href="javascript:jumpto();">{ $L_GOTO_PAGE }</a> <!-- IF { $PREVIOUS_PAGE } --><a href="{ $PREVIOUS_PAGE }">{ $L_PREVIOUS }</a>&nbsp;&nbsp;<!-- ENDIF -->{ $ADMIN_USER_PAGINATION }<!-- IF { $NEXT_PAGE } -->&nbsp;&nbsp;<a href="{ $NEXT_PAGE }">{ $L_NEXT }</a><!-- ENDIF --></b><!-- ENDIF --></td>
+		</tr>
+</table>
+<!-- ENDIF -->
 { $THEME_TABLE_CLOSE }
 
 <!-- DISPLAY_FOOTER -->

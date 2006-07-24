@@ -291,7 +291,7 @@ class core_blocks
 		$postion = ($this->display_position === BLOCK_MESSAGE_TOP) ? 'top' : 'bottom';
 
 		$_CLASS['core_template']->assign_vars_array('message_block_'.$postion, array(
-				//'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),
+				//'title'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),
 				'title'		=> $this->block['block_title'],
 				'collapsed'	=> check_collapsed_status('block_'.$this->block['block_id']),
 				'content'	=> $this->block['block_content'],
@@ -308,7 +308,7 @@ class core_blocks
 		$position = ($this->display_position === BLOCK_RIGHT) ? 'right' : 'left';
 		
 		$_CLASS['core_template']->assign_vars_array('block_'.$position, array(
-			//'TITLE'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),
+			//'title'		=> $_CLASS['core_user']->get_lang($this->block['block_title']),
 			'title'		=> $this->block['block_title'],
 			'content'	=> $this->content,
 			'collapsed'	=> check_collapsed_status('block_'.$this->block['block_id']),
@@ -375,7 +375,17 @@ class core_blocks
 
 			while ($data = $_CLASS['core_rss']->get_rss_data())
 			{
-				$this->content .= '<a href="'.$data['link'].'" target="new">'.$data['title'].'</a><hr width="30%"/>';
+				if (!empty($data['title']))
+				{
+					if (empty($data['link']))
+					{
+						$this->content .= $data['title'].'<hr width="30%"/>';
+					}
+					else
+					{
+						$this->content .= '<a href="'.$data['link'].'" target="new">'.$data['title'].'</a><hr width="30%"/>';
+					}
+				}
 			}
 			
 			if (!empty($_CLASS['core_rss']->rss_info['link']))

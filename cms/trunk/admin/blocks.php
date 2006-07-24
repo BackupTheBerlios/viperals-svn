@@ -28,7 +28,9 @@ if (VIPERAL !== 'Admin')
 
 global $_CLASS;
 
+
 $_CLASS['core_user']->add_lang('admin/blocks.php');
+$message = false;
 
 function check_position($position, $redirect = true)
 {
@@ -55,23 +57,20 @@ if (isset($_REQUEST['mode']))
 	{
 		switch ($_REQUEST['mode'])
 		{
+			case 'auth':
+				block_auth($id);
+			break;
+
+			case 'content_cache':
+				block_content_cache($id, $message);
+			break;
+
 			case 'change':
 				block_change($id);
 			break;
-	
-			case 'order':
-				block_order($id, get_variable('option', 'GET', false));
-			break;
-	
+
 			case 'delete':
 				block_delete($id);
-			break;
-	
-			case 'position':
-				if ($position = get_variable('option', 'GET', false, 'integer'))
-				{
-					blocks_change_position($position, $id);
-				}
 			break;
 
 			case 'edit':
@@ -79,8 +78,15 @@ if (isset($_REQUEST['mode']))
 				script_close(false);
 			break;
 
-			case 'auth':
-				block_auth($id);
+			case 'order':
+				block_order($id, get_variable('option', 'GET', false));
+			break;
+	
+			case 'position':
+				if ($position = get_variable('option', 'GET', false, 'integer'))
+				{
+					blocks_change_position($position, $id);
+				}
 			break;
 		}
 	}
@@ -135,13 +141,14 @@ foreach ($blocks as $block)
 	$_CLASS['core_template']->assign_vars_array($block_position[$block['block_position']].'_admin_blocks', array(
 			'ACTIVE'		=> $active,
 			'ACTIVE_LINK'	=> generate_link('blocks&amp;mode=change&amp;id='.$block['block_id'], array('admin' => true)),
-			'CHANGE'		=> ($active) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+			'CHANGE'		=> ($active) ? $_CLASS['core_user']->get_lang('DEACTIVATE') : $_CLASS['core_user']->get_lang('ACTIVATE'),
 			'ERROR'			=> ($error) ? $_CLASS['core_user']->get_lang($error) : false,
 
 			'EDIT_LINK'		=> generate_link('blocks&amp;mode=edit&amp;id='.$block['block_id'], array('admin' => true)),
 			'AUTH_LINK'		=> generate_link('blocks&amp;mode=auth&amp;id='.$block['block_id'], array('admin' => true)),
+			'CACHE_LINK'	=> ($block['block_type'] == BLOCKTYPE_FEED) ? generate_link('blocks&amp;mode=content_cache&amp;id='.$block['block_id'], array('admin' => true)) : false,
 
-			'DELETE_LINK' 	=> ($block['block_type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['block_id'], array('admin' => true)) : '',
+			'DELETE_LINK' 	=> ($block['block_type'] != BLOCKTYPE_SYSTEM) ? generate_link('blocks&amp;mode=delete&amp;id='.$block['block_id'], array('admin' => true)) : false,
 			'TITLE'			=> $block['block_title'],
 			'TYPE'			=> $_CLASS['core_user']->get_lang('TYPE_'.$block['block_type']),
 
@@ -159,6 +166,7 @@ foreach ($blocks as $block)
 }
 
 $_CLASS['core_template']->assign_array(array(
+	'SYSTEM_MESSAGE'	=> $message,
 	'L_BLOCK_REGULAR'	=> 'Add New Regular Block',
 	'L_BLOCK_HTML'		=> 'Add New HTML Block',
 	'L_BLOCK_FEED'		=> 'Add New Feed Block',
@@ -493,4 +501,33 @@ function block_select($default = false)
 	return $block_list;
 }
 
+function block_content_cache($id, &$message)
+{
+	global $_CLASS;
+	
+	$result = $_CLASS['core_db']->query('SELECT block_content, block_position, block_title, block_type FROM ' . CORE_BLOCKS_TABLE . ' WHERE block_id = '.$id);
+	$block = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
+
+	if (!$block)
+	{
+		trigger_error('BLOCK_NOT_FOUND');
+	}
+
+	if ($block['block_type'] != BLOCKTYPE_FEED)
+	{
+		trigger_error('BLOCK_NO_CACHE');
+	}
+
+	$message = $_CLASS['core_user']->get_lang('CACHE_REMOVED_FOR').' RSS Block<br/><i>'.$block['block_title'].'<i>';
+
+	if ($block['block_content'] !== '') // use !== ''
+	{
+		check_position($block['block_position']);
+	
+		$result = $_CLASS['core_db']->query('UPDATE ' . CORE_BLOCKS_TABLE . " SET block_content = '' WHERE block_id = $id");
+	
+		$_CLASS['core_cache']->destroy('blocks');
+	}
+}
 ?>
