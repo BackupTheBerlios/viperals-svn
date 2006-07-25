@@ -35,7 +35,7 @@ if (!defined('QUICK_MESSAGE_TABLE'))
 }
 */
 
-require_once($site_file_root.'modules/Quick_Message/functions.php');
+require_once($site_file_root.'modules/quick_message/functions.php');
 
 $this->content = '<div id="qm_block">'.qm_block_content().'</div>';
 

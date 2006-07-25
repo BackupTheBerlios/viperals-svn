@@ -31,7 +31,7 @@ global $_CLASS, $_CORE_CONFIG;
 
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang();
-$_CLASS['core_user']->add_img(false, 'Forums');
+$_CLASS['core_user']->add_img(false, 'forums');
 
 $_CLASS['core_template']->assign_array(array(
 	'S_SEARCH_USER'	=> false,
@@ -715,21 +715,21 @@ switch ($mode)
 		{
 			$field	= get_variable('field', 'REQUEST', 'username');
 
-			$username	= request_var('username', '');
-			$email		= request_var('email', '');
-			$icq		= request_var('icq', '');
-			$aim		= request_var('aim', '');
-			$yahoo		= request_var('yahoo', '');
-			$msn		= request_var('msn', '');
-			$jabber		= request_var('jabber', '');
+			$username	= get_variable('username', 'REQUEST', '');
+			$email		= get_variable('email', 'REQUEST', '');
+			$icq		= get_variable('icq', 'REQUEST', '');
+			$aim		= get_variable('aim', 'REQUEST', '');
+			$yahoo		= get_variable('yahoo', 'REQUEST', '');
+			$msn		= get_variable('msn', 'REQUEST', '');
+			$jabber		= get_variable('jabber', 'REQUEST', '');
 
-			$joined_select	= request_var('joined_select', 'lt');
-			$active_select	= request_var('active_select', 'lt');
-			$count_select	= request_var('count_select', 'eq');
-			$joined			= explode('-', request_var('joined', ''));
-			$active			= explode('-', request_var('active', ''));
-			$count			= (request_var('count', '')) ? request_var('count', 0) : '';
-			$ipdomain		= request_var('ip', '');
+			$joined_select	= get_variable('joined_select', 'REQUEST', 'lt');
+			$active_select	= get_variable('active_select', 'REQUEST', 'lt');
+			$count_select	= get_variable('count_select', 'REQUEST', 'eq');
+			$joined			= explode('-', get_variable('joined', 'REQUEST', ''));
+			$active			= explode('-', get_variable('active', 'REQUEST', ''));
+			$count			= (get_variable('count', 'REQUEST', '')) ? get_variable('count', 'REQUEST', 0) : '';
+			$ipdomain		= get_variable('ip', 'REQUEST', '');
 
 			$find_key_match = array('lt' => '<', 'gt' => '>', 'eq' => '=');
 

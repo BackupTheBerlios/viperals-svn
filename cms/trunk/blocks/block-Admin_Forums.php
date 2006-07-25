@@ -28,10 +28,10 @@ $this->content .= '
 				<th class="forummenu" height="25">&#0187; '.$_CLASS['core_user']->lang['RETURN_TO'].'</th>
 			</tr>
 			<tr>
-				<td class="row1"><a class="genmed" href="'.generate_link('Forums', array('admin' => true)).'">'.$_CLASS['core_user']->lang['FORUM_INDEX'].'</a></td>
+				<td class="row1"><a class="genmed" href="'.generate_link('forums', array('admin' => true)).'">'.$_CLASS['core_user']->lang['FORUM_INDEX'].'</a></td>
 			</tr>
 			<tr>
-				<td class="row1"><a class="genmed" href="'.generate_link('Forums').'">'.$_CLASS['core_user']->lang['FORUM_INDEX'].'</a></td>
+				<td class="row1"><a class="genmed" href="'.generate_link('forums', array('admin' => true)).'">'.$_CLASS['core_user']->lang['FORUM_INDEX'].'</a></td>
 			</tr>';
 
 

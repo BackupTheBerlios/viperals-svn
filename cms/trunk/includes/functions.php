@@ -142,7 +142,7 @@ function get_server_load($return = true)
 
 	$load = 0;
 
-	if (file_exists('/proc/loadavg'))
+	if (@file_exists('/proc/loadavg'))
 	{
 		if ($file = file_get_contents('/proc/loadavg'))
 		{

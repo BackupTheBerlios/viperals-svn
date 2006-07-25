@@ -61,7 +61,7 @@ $current_time = $_CLASS['core_user']->time;
 // Was cancel pressed? If so then redirect to the appropriate page
 if ($_CLASS['core_user']->is_bot || isset($_POST['cancel']))
 {
-	$redirect = ($post_id) ? "Forums&amp;file=viewtopic&p=$post_id#$post_id" : (($topic_id) ? 'Forums&amp;file=viewtopic&t='.$topic_id : (($forum_id) ? 'Forums&amp;file=viewforum&f='.$forum_id : 'Forums'));
+	$redirect = ($post_id) ? "forums&amp;file=viewtopic&p=$post_id#$post_id" : (($topic_id) ? 'Forums&amp;file=viewtopic&t='.$topic_id : (($forum_id) ? 'Forums&amp;file=viewforum&f='.$forum_id : 'Forums'));
 	redirect(generate_link($redirect,  array('full' => true)));
 }
 
@@ -99,7 +99,7 @@ switch ($mode)
 		}
 
 		$sql = 'SELECT f.*, t.*, p.*, u.username, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield
-			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u , ' . FORUMS_TOPICS_TABLE . ' t
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u , ' . FORUMS_TOPICS_TABLE . ' t
 			LEFT JOIN ' . FORUMS_FORUMS_TABLE . " f ON (f.forum_id = t.forum_id)
 			WHERE p.post_id = $post_id
 				AND t.topic_id = p.topic_id
@@ -426,7 +426,7 @@ if ($mode == 'bump' && ($bump_time = bump_topic_allowed($forum_id, $topic_bumped
 		SET ' . implode(', ', update_last_post_information('forum', $forum_id)) . "
 		WHERE forum_id = $forum_id");
 
-	$_CLASS['core_db']->query('UPDATE ' . USERS_TABLE . "
+	$_CLASS['core_db']->query('UPDATE ' . CORE_USERS_TABLE . "
 		SET user_last_post_time = $current_time
 		WHERE user_id = " . $_CLASS['core_user']->data['user_id']);
 
@@ -1054,7 +1054,7 @@ $lock_topic_checked	= (isset($topic_lock)) ? $topic_lock : (($posting_data['topi
 $lock_post_checked	= isset($post_lock) ? $post_lock : $posting_data['post_edit_locked'];
 
 // Page title & action URL, include session_id for security purpose
-$s_action = "Forums&amp;file=posting&amp;mode=$mode&amp;f=$forum_id";
+$s_action = "forums&amp;file=posting&amp;mode=$mode&amp;f=$forum_id";
 $s_action .= ($topic_id) ? "&amp;t=$topic_id" : '';
 $s_action .= ($post_id) ? "&amp;p=$post_id" : '';
 $s_action = generate_link($s_action);
@@ -1207,9 +1207,9 @@ if ($mode == 'reply' || $mode == 'quote')
 	}
 }
 
-make_jumpbox(generate_link('Forums&amp;file=viewforum'));
+make_jumpbox(generate_link('forums&amp;file=viewforum'));
 
-$_CLASS['core_template']->display('modules/Forums/posting_body.html');
+$_CLASS['core_template']->display('modules/forums/posting_body.html');
 
 // ---------
 // FUNCTIONS
@@ -1264,7 +1264,7 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 
 		case 'delete_first_post':
 			$sql = 'SELECT p.post_id, p.poster_id, p.post_username, u.username 
-				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . " u
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
 				WHERE p.topic_id = $topic_id 
 					AND p.poster_id = u.user_id 
 				ORDER BY p.post_time ASC";
@@ -1336,12 +1336,12 @@ function delete_post($mode, $post_id, $topic_id, $forum_id, &$data)
 		break;
 	}
 				
-	$sql_data[USERS_TABLE] = ($_CLASS['auth']->acl_get('f_postcount', $forum_id)) ? 'user_posts = user_posts - 1' : '';
+	$sql_data[CORE_USERS_TABLE] = ($_CLASS['auth']->acl_get('f_postcount', $forum_id)) ? 'user_posts = user_posts - 1' : '';
 	set_config('num_posts', $config['num_posts'] - 1, true);
 
 	$_CLASS['core_db']->transaction();
 
-	$where_sql = array(FORUMS_FORUMS_TABLE => "forum_id = $forum_id", FORUMS_TOPICS_TABLE => "topic_id = $topic_id", USERS_TABLE => 'user_id = ' . $data['poster_id']);
+	$where_sql = array(FORUMS_FORUMS_TABLE => "forum_id = $forum_id", FORUMS_TOPICS_TABLE => "topic_id = $topic_id", CORE_USERS_TABLE => 'user_id = ' . $data['poster_id']);
 
 	foreach ($sql_data as $table => $update_sql)
 	{
@@ -1507,7 +1507,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				);
 			}
 
-			$sql_data[USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
+			$sql_data[CORE_USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
 
 			if ($topic_type != POST_GLOBAL)
 			{
@@ -1521,7 +1521,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 
 		case 'reply':
 			$sql_data[FORUMS_TOPICS_TABLE]['stat'][] = 'topic_replies_real = topic_replies_real + 1, topic_bumped = 0, topic_bumper = 0' . ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) ? ', topic_replies = topic_replies + 1' : '');
-			$sql_data[USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
+			$sql_data[CORE_USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
 			
 			if ((!$_CLASS['auth']->acl_get('f_moderate', $data['forum_id']) || $_CLASS['auth']->acl_get('m_approve')) && $topic_type != POST_GLOBAL)
 			{
@@ -1820,7 +1820,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Update forum stats
 	$_CLASS['core_db']->transaction();
 
-	$where_sql = array(FORUMS_POSTS_TABLE => 'post_id = ' . $data['post_id'], FORUMS_TOPICS_TABLE => 'topic_id = ' . $data['topic_id'], FORUMS_FORUMS_TABLE => 'forum_id = ' . $data['forum_id'], USERS_TABLE => 'user_id = ' . $_CLASS['core_user']->data['user_id']);
+	$where_sql = array(FORUMS_POSTS_TABLE => 'post_id = ' . $data['post_id'], FORUMS_TOPICS_TABLE => 'topic_id = ' . $data['topic_id'], FORUMS_FORUMS_TABLE => 'forum_id = ' . $data['forum_id'], CORE_USERS_TABLE => 'user_id = ' . $_CLASS['core_user']->data['user_id']);
 
 	foreach ($sql_data as $table => $update_ary)
 	{

@@ -28,7 +28,7 @@ if (!defined('VIPERAL'))
 
 header('Content-Type: text/html');
 
-require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
+require_once SITE_FILE_ROOT.'includes/forums/functions.php';
 load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
 
 $_CLASS['forums_auth']->acl($_CLASS['core_user']->data);

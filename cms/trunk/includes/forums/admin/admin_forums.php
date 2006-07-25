@@ -146,7 +146,7 @@ if ($update)
 
 			// Redirect to permissions
 			$message = ($mode === 'add') ? $_CLASS['core_user']->lang['FORUM_CREATED'] : $_CLASS['core_user']->lang['FORUM_UPDATED'];
-			$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['REDIRECT_ACL'], '<a href="'.generate_link('Forums&amp;file=admin_permissions&amp;mode=forum&amp;submit_usergroups=true&amp;ug_type=forum&amp;action=usergroups&amp;f[forum][]=' . $forum_data['forum_id'], array('admin' => true)) . '">', '</a>');
+			$message .= '<br /><br />' . sprintf($_CLASS['core_user']->lang['REDIRECT_ACL'], '<a href="'.generate_link('forums&amp;file=admin_permissions&amp;mode=forum&amp;submit_usergroups=true&amp;ug_type=forum&amp;action=usergroups&amp;f[forum][]=' . $forum_data['forum_id'], array('admin' => true)) . '">', '</a>');
 			$show_prev_info = ($mode == 'edit') ? true : false;
 
 			trigger_error($message);
@@ -296,12 +296,12 @@ switch ($mode)
 		$forum_link_track_yes = ($forum_flags & 1) ? ' checked="checked"' : '';
 		$forum_link_track_no = (!($forum_flags & 1)) ? ' checked="checked"' : '';
 
-		$navigation = '<a href="'.generate_link('Forums&amp;file=admin_forums', array('admin' => true)) . '">' . $_CLASS['core_user']->lang['FORUM_INDEX'] . '</a>';
+		$navigation = '<a href="'.generate_link('forums&amp;file=admin_forums', array('admin' => true)) . '">' . $_CLASS['core_user']->lang['FORUM_INDEX'] . '</a>';
 
 		$forums_nav = get_forum_branch($forum_id, 'parents', 'descending');
 		foreach ($forums_nav as $row)
 		{
-			$navigation .= ($row['forum_id'] == $forum_id) ? ' -&gt; ' . $row['forum_name'] : ' -&gt; <a href="'.generate_link('Forums&amp;file=admin_forums&amp;parent_id=' . $row['forum_id'], array('admin' => true)) . '">' . $row['forum_name'] . '</a>';
+			$navigation .= ($row['forum_id'] == $forum_id) ? ' -&gt; ' . $row['forum_name'] : ' -&gt; <a href="'.generate_link('forums&amp;file=admin_forums&amp;parent_id=' . $row['forum_id'], array('admin' => true)) . '">' . $row['forum_name'] . '</a>';
 		}
 
 		adm_page_header($l_title);
@@ -314,7 +314,7 @@ switch ($mode)
 
 <p><?php echo $_CLASS['core_user']->lang['FORUM_EDIT_EXPLAIN'] ?></p>
 
-<form method="post" name="edit" action="<?php echo generate_link('Forums&amp;file=admin_forums&amp;mode='.$mode . (($forum_id) ? "&amp;f=$forum_id" : ''), array('admin' => true)); ?>"><table width="100%" cellspacing="2" cellpadding="2" border="0" align="center">
+<form method="post" name="edit" action="<?php echo generate_link('forums&amp;file=admin_forums&amp;mode='.$mode . (($forum_id) ? "&amp;f=$forum_id" : ''), array('admin' => true)); ?>"><table width="100%" cellspacing="2" cellpadding="2" border="0" align="center">
 	<tr>
 		<td class="nav"><?php echo $navigation ?></td>
 	</tr>
@@ -560,7 +560,7 @@ switch ($mode)
 
 <p><?php echo $_CLASS['core_user']->lang['FORUM_DELETE_EXPLAIN'] ?></p>
 
-<form action="<?php echo generate_link('Forums&amp;file=admin_forums', array('admin' => true)) ?>&mode=delete&amp;f=<?php echo $forum_id ?>" method="post"><table class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
+<form action="<?php echo generate_link('forums&amp;file=admin_forums', array('admin' => true)) ?>&mode=delete&amp;f=<?php echo $forum_id ?>" method="post"><table class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 	<tr>
 		<th colspan="2"><?php echo $_CLASS['core_user']->lang['FORUM_DELETE'] ?></th>
 	</tr>
@@ -762,7 +762,7 @@ if (!$parent_id)
 }
 else
 {
-	$navigation = '<a href="'.generate_link('Forums&amp;file=admin_forums', array('admin' => true)) . '">' . $_CLASS['core_user']->lang['FORUM_INDEX'] . '</a>';
+	$navigation = '<a href="'.generate_link('forums&amp;file=admin_forums', array('admin' => true)) . '">' . $_CLASS['core_user']->lang['FORUM_INDEX'] . '</a>';
 
 	$forums_nav = get_forum_branch($parent_id, 'parents', 'descending');
 	foreach ($forums_nav as $row)
@@ -773,7 +773,7 @@ else
 		}
 		else
 		{
-			$navigation .= ' -&gt; <a href="'.generate_link('Forums&amp;file=admin_forums&amp;parent_id=' . $row['forum_id'], array('admin' => true)) . '">' . $row['forum_name'] . '</a>';
+			$navigation .= ' -&gt; <a href="'.generate_link('forums&amp;file=admin_forums&amp;parent_id=' . $row['forum_id'], array('admin' => true)) . '">' . $row['forum_name'] . '</a>';
 		}
 	}
 }
@@ -795,7 +795,7 @@ if ($mode == 'sync')
 	echo '<br /><div class="gen" align="center"><b>' . $_CLASS['core_user']->lang['FORUM_RESYNCED'] . '</b></div>';
 }
 
-?><form method="post" action="<?php echo generate_link('Forums&amp;file=admin_forums&amp;parent_id='.$parent_id, array('admin' => true)) ?>"><table width="100%" cellspacing="2" cellpadding="2" border="0" align="center">
+?><form method="post" action="<?php echo generate_link('forums&amp;file=admin_forums&amp;parent_id='.$parent_id, array('admin' => true)) ?>"><table width="100%" cellspacing="2" cellpadding="2" border="0" align="center">
 	<tr>
 		<td class="nav"><?php echo $navigation ?></td>
 	</tr>
@@ -834,10 +834,10 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		}
 	}
 
-	$forum_title = ($forum_type != FORUM_LINK) ? '<a href="'.generate_link('Forums&amp;file=admin_forums&amp;parent_id=' . $row['forum_id'], array('admin' => true)) . '">' : '';
+	$forum_title = ($forum_type != FORUM_LINK) ? '<a href="'.generate_link('forums&amp;file=admin_forums&amp;parent_id=' . $row['forum_id'], array('admin' => true)) . '">' : '';
 	$forum_title .= $row['forum_name'];
 	$forum_title .= ($forum_type != FORUM_LINK) ? '</a>' : '';
-	$url = "Forums&amp;file=admin_forums&amp;parent_id=$parent_id&amp;f=" . $row['forum_id'];
+	$url = "forums&amp;file=admin_forums&amp;parent_id=$parent_id&amp;f=" . $row['forum_id'];
 
 ?>
 	<tr>
@@ -892,7 +892,7 @@ $_CLASS['core_db']->free_result($result);
 	</tr>
 </table></form>
 
-<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_forums', array('admin' => true)) ?>"><table width="100%" cellpadding="1" cellspacing="1" border="0">
+<form method="post" action="<?php echo generate_link('forums&amp;file=admin_forums', array('admin' => true)) ?>"><table width="100%" cellpadding="1" cellspacing="1" border="0">
 	<tr>
 		<td align="right"><?php echo $_CLASS['core_user']->lang['SELECT_FORUM']; ?>: <select name="parent_id" onchange="if(this.options[this.selectedIndex].value != -1){ this.form.submit(); }"><?php echo $forum_box; ?></select> <input class="btnlite" type="submit" value="<?php echo $_CLASS['core_user']->lang['GO']; ?>" /><input type="hidden" name="sid" value="<?php echo $_CLASS['core_user']->session_id; ?>" /></td>
 	</tr>
@@ -1252,7 +1252,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 
 	if ($action_subforums == 'delete')
 	{
-		$log_action_forums = 'FORUMS';
+		$log_action_forums = 'forums';
 
 		$forum_ids = array($forum_id);
 		$rows = get_forum_branch($forum_id, 'children', 'descending', FALSE);

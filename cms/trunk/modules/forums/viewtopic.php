@@ -325,7 +325,7 @@ if ($hilit_words)
 	{
 		if (trim($word))
 		{
-			$highlight_match .= (($highlight_match != '') ? '|' : '') . str_replace('\*', '\w*?', preg_quote(urlencode($word), '#'));
+			$highlight_match .= (($highlight_match != '') ? '|' : '') . str_replace('*', '\w*?', preg_quote($word, '#'));
 		}
 	}
 
@@ -333,7 +333,7 @@ if ($hilit_words)
 }
 
 // General Viewtopic URL for return links
-$viewtopic_url = "Forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : '');
+$viewtopic_url = "forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : '');
 
 // Grab ranks
 $ranks = obtain_ranks();
@@ -408,7 +408,7 @@ if (!empty($poll_start))
 	{
 		if (empty($voted_id) || !empty($voted_id) > $poll_max_options)
 		{
-			$_CLASS['core_display']->meta_refresh(5, generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id"));
+			$_CLASS['core_display']->meta_refresh(5, generate_link("forums&amp;file=viewtopic&amp;t=$topic_id"));
 
 			$message = empty($voted_id) ? 'NO_VOTE_OPTION' : 'TOO_MANY_VOTE_OPTIONS';
 			$message = $_CLASS['core_user']->lang[$message] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id").'">', '</a>');
@@ -468,7 +468,7 @@ if (!empty($poll_start))
 			//, topic_last_post_time = ' . time() . " -- for bumping topics with new votes, ignore for now
 		$_CLASS['core_db']->query($sql);
 
-		$_CLASS['core_display']->meta_refresh(5, generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id"));
+		$_CLASS['core_display']->meta_refresh(5, generate_link("forums&amp;file=viewtopic&amp;t=$topic_id"));
 
 		$message = $_CLASS['core_user']->lang['VOTE_SUBMITTED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_TOPIC'], '<a href="'.generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id").'">', '</a>');
 		trigger_error($message);
@@ -726,13 +726,13 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				'avatar'				=> '',
 				'online'				=> false,
 
-				'profile'		=> generate_link("Members_List&amp;mode=viewprofile&amp;u=$poster_id"),
+				'profile'		=> generate_link("members_list&amp;mode=viewprofile&amp;u=$poster_id"),
 				'www'			=> $row['user_website'],
-				'aim'			=> ($row['user_aim']) ? generate_link('Members_List&amp;mode=contact&amp;action=aim&amp;u='.$poster_id) : '',
-				'msn'			=> ($row['user_msnm']) ? generate_link('Members_List&amp;mode=contact&amp;action=msnm&amp;u='.$poster_id) : '',
+				'aim'			=> ($row['user_aim']) ? generate_link('members_list&amp;mode=contact&amp;action=aim&amp;u='.$poster_id) : '',
+				'msn'			=> ($row['user_msnm']) ? generate_link('members_list&amp;mode=contact&amp;action=msnm&amp;u='.$poster_id) : '',
 				'yim'			=> ($row['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . $row['user_yim'] . '&.src=pg' : '',
-				'jabber'		=> ($row['user_jabber']) ? generate_link('Members_List&amp;mode=contact&amp;action=jabber&amp;u='.$poster_id) : '',
-				'search'		=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('Forums&amp;file=search&amp;search_author=' . urlencode($row['username']) .'&amp;showresults=posts') : '',
+				'jabber'		=> ($row['user_jabber']) ? generate_link('members_list&amp;mode=contact&amp;action=jabber&amp;u='.$poster_id) : '',
+				'search'		=> ($_CLASS['auth']->acl_get('u_search')) ? generate_link('forums&amp;file=search&amp;search_author=' . urlencode($row['username']) .'&amp;showresults=posts') : '',
 				'username'		=> ($row['user_colour']) ? '<span style="color:#' . $row['user_colour'] . '">' . $poster . '</span>' : $poster
 			);
 
@@ -764,8 +764,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				$user_cache[$poster_id]['rank_image'] = '';
 				
 				/*
-				We do this on posting no need to un-needed stuff
-
+				Well we kind of do need this
 				if (isset($ranks['normal']) && !empty($ranks['normal']))
 				{
 					foreach ($ranks['normal'] as $rank)
@@ -793,7 +792,7 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 
 			if (!empty($row['user_icq']))
 			{
-				$user_cache[$poster_id]['icq'] =  generate_link('Members_List&amp;mode=contact&amp;action=icq&amp;u='.$poster_id);
+				$user_cache[$poster_id]['icq'] =  generate_link('members_list&amp;mode=contact&amp;action=icq&amp;u='.$poster_id);
 				$user_cache[$poster_id]['icq_status_img'] = '<img src="http://web.icq.com/whitepages/online?icq=' . $row['user_icq'] . '&amp;img=5" width="18" height="18" border="0" />';
 			}
 			else
@@ -1135,7 +1134,7 @@ $topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data[
 $topic_mod .= ($_CLASS['auth']->acl_get('f_announce', $forum_id) && $topic_data['topic_type'] != POST_GLOBAL) ? '<option value="make_global">' . $_CLASS['core_user']->lang['MAKE_GLOBAL'] . '</option>' : '';
 $topic_mod .= ($_CLASS['auth']->acl_get('m_', $forum_id)) ? '<option value="viewlogs">' . $_CLASS['core_user']->lang['VIEW_TOPIC_LOGS'] . '</option>' : '';
 
-$pagination = generate_pagination("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : ''), $total_posts, $config['posts_per_page'], $start);
+$pagination = generate_pagination("forums&amp;file=viewtopic&amp;t=$topic_id&amp;$u_sort_param" . (($highlight_match) ? "&amp;hilit=$highlight" : ''), $total_posts, $config['posts_per_page'], $start);
 $topic_data['topic_title'] = censor_text($topic_data['topic_title']);
 
 // Send vars to template
@@ -1149,7 +1148,7 @@ $_CLASS['core_template']->assign_array(array(
 	'PAGINATION_ARRAY'	=> $pagination['array'],
 	'PAGE_NUMBER' 		=> on_page($total_posts, $config['posts_per_page'], $start),
 	'TOTAL_POSTS'		=> ($total_posts == 1) ? $_CLASS['core_user']->lang['VIEW_TOPIC_POST'] : sprintf($_CLASS['core_user']->lang['VIEW_TOPIC_POSTS'], $total_posts), 
-	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;mode=topic_view&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
+	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("forums&amp;file=mcp&amp;mode=topic_view&amp;t=$topic_id&amp;start=$start&amp;$u_sort_param", false, false) : '',
 
 	'MODERATORS'	=> (isset($forum_moderators[$forum_id]) && !empty($forum_moderators[$forum_id])) ? implode(', ', $forum_moderators[$forum_id]) : '',
 
@@ -1176,19 +1175,19 @@ $_CLASS['core_template']->assign_array(array(
 	'S_SELECT_SORT_DIR' 	=> $s_sort_dir,
 	'S_SELECT_SORT_KEY' 	=> $s_sort_key,
 	'S_SELECT_SORT_DAYS' 	=> $s_limit_days,
-	'S_TOPIC_ACTION' 		=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start"),
+	'S_TOPIC_ACTION' 		=> generate_link("forums&amp;file=viewtopic&amp;t=$topic_id&amp;start=$start"),
 	'S_TOPIC_MOD' 			=> ($topic_mod) ? '<select name="mode">' . $topic_mod . '</select>' : '',
-	'S_MOD_ACTION' 			=> generate_link("Forums&amp;file=mcp&amp;t=$topic_id&amp;quickmod=1", false, false), 
+	'S_MOD_ACTION' 			=> generate_link("forums&amp;file=mcp&amp;t=$topic_id&amp;quickmod=1", false, false), 
 
 	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
-	'S_SEARCHBOX_ACTION'	=> generate_link('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
+	'S_SEARCHBOX_ACTION'	=> generate_link('forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
-	'U_TOPIC'				=> ($view == 'print') ? generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id, array('full' => true)) : generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id),
-	'U_VIEW_UNREAD_POST'	=> ($first_unread_makred) ? generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id#unread") : false,
+	'U_TOPIC'				=> ($view == 'print') ? generate_link('forums&amp;file=viewtopic&amp;t='.$topic_id, array('full' => true)) : generate_link('Forums&amp;file=viewtopic&amp;t='.$topic_id),
+	'U_VIEW_UNREAD_POST'	=> ($first_unread_makred) ? generate_link("forums&amp;file=viewtopic&amp;t=$topic_id#unread") : false,
 	'U_VIEW_TOPIC' 			=> generate_link($viewtopic_url),
-	'U_VIEW_FORUM' 			=> generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id),
-	'U_VIEW_OLDER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=previous"),
-	'U_VIEW_NEWER_TOPIC'	=> generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=next"),
+	'U_VIEW_FORUM' 			=> generate_link('forums&amp;file=viewforum&amp;f='.$forum_id),
+	'U_VIEW_OLDER_TOPIC'	=> generate_link("forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=previous"),
+	'U_VIEW_NEWER_TOPIC'	=> generate_link("forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=next"),
 	'U_PRINT_TOPIC'			=> ($_CLASS['auth']->acl_get('f_print', $forum_id)) ? generate_link($viewtopic_url . '&amp;view=print') : '',
 	'U_EMAIL_TOPIC'			=> ($_CLASS['auth']->acl_get('f_email', $forum_id) && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;t='.$topic_id) : '', 
 
@@ -1199,8 +1198,8 @@ $_CLASS['core_template']->assign_array(array(
 	'U_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks']) ? generate_link($viewtopic_url . '&amp;bookmark=1') : '',
 	'L_BOOKMARK_TOPIC'		=> ($_CLASS['core_user']->is_user && $config['allow_bookmarks'] && $topic_data['bookmarked']) ? $_CLASS['core_user']->lang['BOOKMARK_TOPIC_REMOVE'] : $_CLASS['core_user']->lang['BOOKMARK_TOPIC'],
 	
-	'U_POST_NEW_TOPIC' 		=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
-	'U_POST_REPLY_TOPIC' 	=> generate_link("Forums&amp;file=posting&amp;mode=reply&amp;t=$topic_id"),
+	'U_POST_NEW_TOPIC' 		=> generate_link('forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id),
+	'U_POST_REPLY_TOPIC' 	=> generate_link("forums&amp;file=posting&amp;mode=reply&amp;t=$topic_id"),
 	'U_BUMP_TOPIC'			=> bump_topic_allowed($forum_id, $topic_data['topic_bumped'], $topic_data['topic_last_post_time'], $topic_data['topic_poster'], $topic_data['topic_last_poster_id']) ? generate_link("Forums&amp;file=posting&amp;mode=bump&amp;t=$topic_id") : '')
 );
 
@@ -1308,14 +1307,14 @@ if ($update_mark)
 
 if ($view == 'print')
 {
-	$_CLASS['core_display']->display(false, 'modules/Forums/viewtopic_print.html');
+	$_CLASS['core_display']->display(false, 'modules/forums/viewtopic_print.html');
 }
 
 page_header();
 
-make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
+make_jumpbox(generate_link('forums&amp;file=viewforum'), $forum_id);
 
-$_CLASS['core_display']->display(array($_CLASS['core_user']->get_lang('VIEWING_TOPIC'), $topic_data['topic_title']), 'modules/Forums/viewtopic_body.html');
+$_CLASS['core_display']->display(array($_CLASS['core_user']->get_lang('VIEWING_TOPIC'), $topic_data['topic_title']), 'modules/forums/viewtopic_body.html');
 
 //Move if we can
 function topic_last_read($topic_id, $forum_id)

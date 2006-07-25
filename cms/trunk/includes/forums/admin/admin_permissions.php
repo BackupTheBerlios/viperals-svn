@@ -223,7 +223,7 @@ switch ($submit)
 			}
 
 			// Logging ... first grab user or groupnames ...
-			$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . USERS_TABLE . ' WHERE user_id';
+			$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . CORE_GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . CORE_USERS_TABLE . ' WHERE user_id';
 			$sql .=  ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')';
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -299,7 +299,7 @@ switch ($submit)
 		}
 
 		// Logging ... first grab user or groupnames ...
-		$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . USERS_TABLE . ' WHERE user_id';
+		$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . CORE_GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . CORE_USERS_TABLE . ' WHERE user_id';
 		$sql .=  ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')';
 		$result = $_CLASS['core_db']->query($sql);
 
@@ -421,7 +421,7 @@ if (in_array($mode, array('user', 'group', 'forum', 'mod')) && empty($submit))
 
 <p><?php echo $l_title_explain ?></p>
 
-<form method="post" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
+<form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 <?php
 
 	// Mode specific markup
@@ -475,7 +475,7 @@ if (in_array($mode, array('user', 'group', 'forum', 'mod')) && empty($submit))
 		<td class="row1" align="center" valign="middle">&nbsp;<select style="width:280px" name="ug_data[]" multiple="true" size="7"><?php 
 
 			$sql = "SELECT group_id, group_name, group_type   
-				FROM " . GROUPS_TABLE . " 
+				FROM " . CORE_GROUPS_TABLE . " 
 				ORDER BY group_type DESC";
 			$result = $_CLASS['core_db']->query($sql);
 
@@ -523,7 +523,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 
 <table width="100%" cellspacing="0" cellpadding="0" border="0">
 	<tr>
-		<td><form method="post" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th><?php echo $_CLASS['core_user']->lang['MANAGE_USERS']; ?></th>
 			</tr>
@@ -531,7 +531,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 				<td class="row1" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple" size="5"><?php
 			
 	$sql = "SELECT u.user_id, u.username
-		FROM " . USERS_TABLE . " u, " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o
+		FROM " . CORE_USERS_TABLE . " u, " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o
 		WHERE o.auth_option LIKE '" . $sql_option_mode . "_%'
 			AND a.auth_option_id = o.auth_option_id
 			AND a.forum_id IN ($sql_forum_id)
@@ -553,7 +553,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			</tr>
 		</table></form></td>
 
-		<td align="center"><form method="post" name="admingroups" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td align="center"><form method="post" name="admingroups" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 		<tr>
 			<th><?php echo $_CLASS['core_user']->lang['MANAGE_GROUPS']; ?></th>
 		</tr>
@@ -561,7 +561,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			<td class="row1" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple" size="5"><?php 
 	
 	$sql = "SELECT DISTINCT g.group_id, g.group_name, g.group_type 
-		FROM " . GROUPS_TABLE . " g, " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o
+		FROM " . CORE_GROUPS_TABLE . " g, " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o
 		WHERE o.auth_option LIKE '" . $sql_option_mode . "_%'
 			AND a.forum_id IN ($sql_forum_id)
 			AND a.auth_option_id = o.auth_option_id
@@ -586,7 +586,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 	</tr>
 	<tr>
 
-		<td><form method="post" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th><?php echo $_CLASS['core_user']->lang['ADD_USERS']; ?></th>
 			</tr>
@@ -598,7 +598,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 			</tr>
 		</table></form></td>
 
-		<td><form method="post" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
+		<td><form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
 			<tr>
 				<th><?php echo $_CLASS['core_user']->lang['ADD_GROUPS']; ?></th>
 			</tr>
@@ -606,7 +606,7 @@ if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($su
 				<td class="row1" style="height: 100%" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple"  size="5"><?php 
 			
 	$sql = "SELECT group_id, group_name, group_type 
-		FROM " . GROUPS_TABLE . "
+		FROM " . CORE_GROUPS_TABLE . "
 		ORDER BY group_type DESC, group_name";
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -686,7 +686,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		case 'user':
 			$l_no_error = $_CLASS['core_user']->lang['NO_USER'];
 			$sql = 'SELECT user_id AS id, username AS name 
-				FROM ' . USERS_TABLE . ' 
+				FROM ' . CORE_USERS_TABLE . ' 
 				WHERE ';
 			$sql .= ($submit == 'add_options') ? " username IN ('" . implode("', '", $_CLASS['core_db']->escape_array(array_unique(explode("\n", modify_lines($ug_data[0], "\n"))))) . "')" : ' user_id ' . ((is_array($ug_data)) ? 'IN (' . implode(', ', array_map('intval', $ug_data)) . ')' : '= ' . (int) $ug_data);
 		break;
@@ -694,7 +694,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 		case 'group':
 			$l_no_error = $_CLASS['core_user']->lang['NO_GROUP'];
 			$sql = 'SELECT group_id AS id, group_name AS name, group_type  
-				FROM ' . GROUPS_TABLE . '
+				FROM ' . CORE_GROUPS_TABLE . '
 				WHERE group_id';
 			$sql .= (is_array($ug_data)) ? ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')' : ' = ' . (int) $ug_data;
 		break;
@@ -1018,7 +1018,7 @@ if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'preset
 
 ?>
 
-<form method="post" name="acl" action="<?php echo generate_link('Forums&amp;file=admin_permissions&amp;mode='.$mode.'&amp;submode='.$submode, array('admin' => true)); ?>"><table cellspacing="2" cellpadding="0" border="0" align="center">
+<form method="post" name="acl" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode.'&amp;submode='.$submode, array('admin' => true)); ?>"><table cellspacing="2" cellpadding="0" border="0" align="center">
 <?php
 
 	// This is the main listing of options

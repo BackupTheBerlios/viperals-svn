@@ -309,7 +309,7 @@ switch($mode)
 			'DISABLE_CENSORS_YES'	=> $wordcensor_yes, 
 			'DISABLE_CENSORS_NO'	=> $wordcensor_no,
 
-			'S_CHANGE_CENSORS'		=> $_CLASS['forums_auth']->acl_get('u_chgcensors'), 
+			'S_CHANGE_CENSORS'		=> true, 
 
 			'S_TOPIC_SORT_DAYS'		=> $s_limit_topic_days,
 			'S_TOPIC_SORT_KEY'		=> $s_sort_topic_key,

@@ -53,7 +53,7 @@ $result = $_CLASS['core_db']->query($sql);
 $legend = array();
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
-	$legend[] .= '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
+	$legend[] .= '<a style="color:#' . $row['group_colour'] . '" href="'.generate_link('members_list&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>';
 }
 $_CLASS['core_db']->free_result($result);
 
@@ -63,19 +63,18 @@ $legend = implode(', ', $legend);
 $birthday_list = '';
 if ($config['load_birthdays'])
 {
-	$now = getdate();
-	$now = explode(':', gmdate('j:m'));
+	$now = explode(':', gmdate('d:m'));
 
 	$sql = 'SELECT user_id, username, user_colour, user_birthday 
 		FROM ' . CORE_USERS_TABLE . " 
-		WHERE user_birthday LIKE '" . sprintf('%2d-%2d-', $now[0], $now[1]) . "%'
+		WHERE user_birthday LIKE '" . $_CLASS['core_db']->escape("{$now[0]}-{$now[1]}-") . "%'
 			AND user_type = ".USER_NORMAL;
 	$result = $_CLASS['core_db']->query($sql);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$user_colour = ($row['user_colour']) ? ' style="color:#' . $row['user_colour'] .'"' : '';
-		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
+		$birthday_list .= (($birthday_list != '') ? ', ' : '') . '<a' . $user_colour . ' href="' . generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
 		
 		if ($age = (int) substr($row['user_birthday'], -4))
 		{
@@ -104,17 +103,17 @@ $_CLASS['core_template']->assign_array(array(
 	'FORUM_NEW_IMG'		=>	$_CLASS['core_user']->img('forum_new', 'NEW_POSTS'),
 	'FORUM_LOCKED_IMG'	=>	$_CLASS['core_user']->img('forum_locked', 'NO_NEW_POSTS_LOCKED'),
 
-	'S_LOGIN_ACTION'			=> generate_link('Control_Panel&amp;mode=login'), 
+	'S_LOGIN_ACTION'			=> generate_link('control_panel&amp;mode=login'), 
 	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']), 
 
-	'U_MARK_FORUMS'	=> generate_link('Forums&amp;mark=forums')
+	'U_MARK_FORUMS'	=> generate_link('forums&amp;mark=forums')
 ));
 unset($birthday_list, $legend);
 
 page_header();
 
-$_CLASS['core_display']->footer .= $_CLASS['core_template']->display('modules/Forums/menus.html', true);
+$_CLASS['core_display']->footer .= $_CLASS['core_template']->display('modules/forums/menus.html', true);
 
-$_CLASS['core_display']->display(false, 'modules/Forums/index_body.html');
+$_CLASS['core_display']->display(false, 'modules/forums/index_body.html');
 
 ?>

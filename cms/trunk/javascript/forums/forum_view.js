@@ -29,15 +29,21 @@ function lock_unlock(id, mode, status)
 	{
 		if (ajax.state_ready() && ajax.responseText())
 		{
+			var title = document.getElementById(mode + '_name_' + id);
+
 			if (ajax.responseText() == 'unlock')
 			{ 
 				var new_status = 0;
 				var status = document.getElementById(mode +'_unlocked_status');
+
+				system_message_init('forums', '<b>' + title.innerHTML + ' unlocked</b>');
 			}
 			else
 			{
 				var new_status = 1;
 				var status = document.getElementById(mode +'_locked_status');
+
+				system_message_init('forums', '<b>' + title.innerHTML + ' locked</b>');
 			}
 
 			area.innerHTML = status.innerHTML;
@@ -50,7 +56,7 @@ function lock_unlock(id, mode, status)
 
 	ajax.onreadystatechange(onreadystatechange);
 
-	ajax.send('ajax.php?mod=Forums', '&mode=' + mode + '_lock_unlock&lock=' + lock + '&id=' + id);
+	ajax.send('ajax.php?mod=forums', '&mode=' + mode + '_lock_unlock&lock=' + lock + '&id=' + id);
 }
 
 function tite_edit_init(id, mode)
@@ -99,20 +105,31 @@ function tite_edit_add(id, mode)
 			case 13:
 			{
 				ajax = new core_ajax();
+	
+
 
 				var onreadystatechange = function()
 				{
+					if (input.value == title.innerHTML)
+					{
+						tite_edit_remove(id, mode);
+				
+						return;
+					}
+
 					if (ajax.state_ready() && ajax.responseText())
 					{
 						title.innerHTML = ajax.responseText();
+						
+						system_message_init('forums', '<b>Name Changed</b> <br /><br /><b>From:</b> ' + input.value + '<br /><b>To:</b> ' + title.innerHTML);
 					}
 				}
-				
+
 				ajax.onreadystatechange(onreadystatechange);
 
 				var input = document.getElementById(mode + '_input_' + id);
 
-				ajax.send('ajax.php?mod=Forums', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
+				ajax.send('ajax.php?mod=forums', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
 
 				tite_edit_remove(id, mode);
 			}
@@ -172,6 +189,8 @@ function tite_edit_onblur(id, mode)
 		if (ajax.state_ready() && ajax.responseText())
 		{
 			title.innerHTML = ajax.responseText();
+
+			system_message_init('forums', '<b>Name Changed</b> <br /><br /><b>From:</b> ' + input.value + '<br /><b>To:</b> ' + title.innerHTML);
 		}
 	}
 	
@@ -179,7 +198,7 @@ function tite_edit_onblur(id, mode)
 
 	var input = document.getElementById(mode + '_input_' + id);
 
-	ajax.send('ajax.php?mod=Forums', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
+	ajax.send('ajax.php?mod=forums', '&mode=' + mode + '_edit_title&title=' + input.value + '&id=' + id);
 
 	tite_edit_remove(id, mode);
 }

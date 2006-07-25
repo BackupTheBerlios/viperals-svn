@@ -28,21 +28,21 @@ if (!defined('VIPERAL'))
 
 if (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'bbcode')
 {
-	$_CLASS['core_user']->add_lang('help_bbcode','Forums');
+	$_CLASS['core_user']->add_lang('help_bbcode','forums');
 	$l_title = $_CLASS['core_user']->get_lang('BBCODE_GUIDE');
 	$link = '&amp;mode=bbcode';
 	$mode = 'bbcode';
 }
 else
 {
-	$_CLASS['core_user']->add_lang('help_faq','Forums');
+	$_CLASS['core_user']->add_lang('help_faq','forums');
 	$l_title = $_CLASS['core_user']->get_lang('FAQ');
 	$link = $mode = '';
 }
 
 $_CLASS['core_template']->assign_array(array(
 	'L_FAQ_TITLE'	=> $l_title,
-	'S_BACK_TO_TOP'	=> generate_link('Forums&amp;file=faq'.$link.'#Top')
+	'S_BACK_TO_TOP'	=> generate_link('forums&amp;file=faq'.$link.'#Top')
 ));
 
 $id = 0;
@@ -83,7 +83,7 @@ for ($i = 0; $i < $size; $i++)
 
 		$faq_row_link[] = array(
 			'FAQ_LINK' 			=> $_CLASS['core_user']->lang['help'][$i][0],
-			'U_FAQ_LINK'		=> generate_link('Forums&amp;file=faq'.$link.'#' . $id)
+			'U_FAQ_LINK'		=> generate_link('forums&amp;file=faq'.$link.'#' . $id)
 		);
 	}
 }
@@ -105,6 +105,6 @@ $_CLASS['core_template']->assign('DISPLAY_STYLESHEET_LINK', ($mode == 'bbcode'))
 
 page_header();
 
-$_CLASS['core_template']->display('modules/Forums/faq_body.html');
+$_CLASS['core_template']->display('modules/forums/faq_body.html');
 
 ?>

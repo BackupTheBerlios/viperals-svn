@@ -22,7 +22,7 @@ if (!$_CLASS['auth']->acl_get('a_attach'))
 
 require($site_file_root.'includes/forums/functions_posting.php');
 
-$_CLASS['core_user']->add_lang(array('posting', 'viewtopic'), 'Forums');
+$_CLASS['core_user']->add_lang(array('posting', 'viewtopic'), 'forums');
 
 $mode = request_var('mode', '');
 $submit = (isset($_POST['submit'])) ? true : false;

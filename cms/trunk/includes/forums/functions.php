@@ -27,7 +27,7 @@
 $config_error = '<center>There is currently a problem with the site<br/>';
 $config_error .= 'Please try again later<br /><br />Error Code: DB3</center>';
 
-global $config;
+global $_CLASS, $config;
 
 if (is_null($config = $_CLASS['core_cache']->get('config')))
 {
@@ -333,14 +333,14 @@ function get_moderators($forum_id = false)
 // User authorisation levels output
 function gen_forum_auth_level($mode, $forum_id)
 {
-	global $_CLASS;
+	global $_CLASS, $config;
 
 	$rules = array(
 		($_CLASS['forums_auth']->acl_get('f_post', $forum_id)) ? $_CLASS['core_user']->lang['RULES_POST_CAN'] : $_CLASS['core_user']->lang['RULES_POST_CANNOT'],
 		($_CLASS['forums_auth']->acl_get('f_reply', $forum_id)) ? $_CLASS['core_user']->lang['RULES_REPLY_CAN'] : $_CLASS['core_user']->lang['RULES_REPLY_CANNOT'],
 		($_CLASS['forums_auth']->acl_gets(array('f_edit', 'm_edit'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
 		($_CLASS['forums_auth']->acl_gets(array('f_delete', 'm_delete'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
-		($_CLASS['forums_auth']->acl_get('f_attach', $forum_id) && $_CLASS['forums_auth']->acl_get('u_attach', $forum_id)) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT']
+		($config['allow_attachments'] && $_CLASS['forums_auth']->acl_get('f_attach', $forum_id) && $_CLASS['forums_auth']->acl_get('u_attach', $forum_id)) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT']
 	);
 
 	foreach ($rules as $rule)
@@ -976,7 +976,7 @@ function login_forum_box($forum_data)
 
 	page_header();
 
-	$_CLASS['core_template']->display('modules/Forums/login_forum.html');
+	$_CLASS['core_template']->display('modules/forums/login_forum.html');
 
 	script_close();
 }
@@ -1103,12 +1103,12 @@ function page_header()
 	// Generate logged in/logged out status
 	if ($_CLASS['core_user']->is_user)
 	{
-		$u_login_logout = generate_link('Control_Panel&amp;mode=logout');
+		$u_login_logout = generate_link('control_panel&amp;mode=logout');
 		$l_login_logout = sprintf($_CLASS['core_user']->lang['LOGOUT_USER'], $_CLASS['core_user']->data['username']);
 	}
 	elseif (!$_CLASS['core_user']->is_bot)
 	{
-		$u_login_logout = generate_link('Control_Panel&amp;mode=login');
+		$u_login_logout = generate_link('control_panel&amp;mode=login');
 		$l_login_logout = $_CLASS['core_user']->lang['LOGIN'];
 	}
 
@@ -1282,23 +1282,23 @@ function page_header()
 		'L_REGISTER' 			=> $_CLASS['core_user']->lang['REGISTER'],
 		'L_INDEX' 				=> $_CLASS['core_user']->lang['FORUM_INDEX'], 
 		'L_ONLINE_EXPLAIN'		=> $l_online_time, 
-		'U_PRIVATEMSGS'			=> generate_link('Control_Panel&amp;i=pm&amp;mode=' . (($_CLASS['core_user']->data['user_new_privmsg'] || $l_privmsgs_text_unread) ? 'unread' : 'view_messages')),
-		'U_RETURN_INBOX'		=> generate_link("Control_Panel&amp;i=pm&amp;folder=inbox"),
-		'U_MEMBERLIST' 			=> generate_link('Members_List'),
-		'U_VIEWONLINE' 			=> generate_link('View_Online'),
-		'U_MEMBERSLIST'			=> generate_link('Members_List'),
+		'U_PRIVATEMSGS'			=> generate_link('control_panel&amp;i=pm&amp;mode=' . (($_CLASS['core_user']->data['user_new_privmsg'] || $l_privmsgs_text_unread) ? 'unread' : 'view_messages')),
+		'U_RETURN_INBOX'		=> generate_link("control_panel&amp;i=pm&amp;folder=inbox"),
+		'U_MEMBERLIST' 			=> generate_link('members_list'),
+		'U_VIEWONLINE' 			=> generate_link('view_online'),
+		'U_MEMBERSLIST'			=> generate_link('members_list'),
 		'U_LOGIN_LOGOUT'		=> $u_login_logout,
-		'U_INDEX' 				=> generate_link('Forums'),
-		'U_SEARCH' 				=> generate_link('Forums&amp;file=search'),
-		'U_REGISTER' 			=> generate_link('Control_Panel&amp;mode=register'),
-		'U_PROFILE' 			=> generate_link('Control_Panel'),
-		'U_MODCP' 				=> generate_link('Forums&amp;file=mcp'),
-		'U_FAQ' 				=> generate_link('Forums&amp;file=faq'),
-		'U_SEARCH_SELF'			=> generate_link('Forums&amp;file=search&amp;search_id=egosearch'),
-		'U_SEARCH_NEW' 			=> generate_link('Forums&amp;file=search&amp;search_id=newposts'),
-		'U_SEARCH_UNANSWERED'	=> generate_link('Forums&amp;file=search&amp;search_id=unanswered'),
-		'U_SEARCH_ACTIVE_TOPICS'=> generate_link('Forums&amp;file=search&amp;search_id=active_topics'),
-		'U_DELETE_COOKIES'		=> generate_link('Control_Panel&amp;mode=delete_cookies'),
+		'U_INDEX' 				=> generate_link('forums'),
+		'U_SEARCH' 				=> generate_link('forums&amp;file=search'),
+		'U_REGISTER' 			=> generate_link('control_panel&amp;mode=register'),
+		'U_PROFILE' 			=> generate_link('control_panel'),
+		'U_MODCP' 				=> generate_link('forums&amp;file=mcp'),
+		'U_FAQ' 				=> generate_link('forums&amp;file=faq'),
+		'U_SEARCH_SELF'			=> generate_link('forums&amp;file=search&amp;search_id=egosearch'),
+		'U_SEARCH_NEW' 			=> generate_link('forums&amp;file=search&amp;search_id=newposts'),
+		'U_SEARCH_UNANSWERED'	=> generate_link('forums&amp;file=search&amp;search_id=unanswered'),
+		'U_SEARCH_ACTIVE_TOPICS'=> generate_link('forums&amp;file=search&amp;search_id=active_topics'),
+		'U_DELETE_COOKIES'		=> generate_link('p&amp;mode=delete_cookies'),
 
 		'S_USER_LOGGED_IN' 		=> ($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? true : false,
 		'S_REGISTERED_USER'		=> $_CLASS['core_user']->is_user,

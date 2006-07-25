@@ -41,7 +41,7 @@ $mode = get_variable('mode', 'REQUEST', false);
 switch ($mode)
 {
 	case 'ajax_refresh':
-		require_once(SITE_FILE_ROOT.'modules/Quick_Message/functions.php');
+		require_once SITE_FILE_ROOT.'modules/quick_message/functions.php';
 
 		echo qm_block_content();
 
@@ -69,7 +69,7 @@ switch ($mode)
 		}
 
 	// use limit
-		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '.QUICK_MESSAGE_TABLE." WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
+		$result = $_CLASS['core_db']->query('SELECT COUNT(*) as count FROM '. QUICK_MESSAGE_TABLE . " WHERE message_text='".$_CLASS['core_db']->escape($message)."' AND message_time >= ".($_CLASS['core_user']->time - $_CORE_CONFIG['quick_message']['last_post_check']));
 		$count = $_CLASS['core_db']->fetch_row_assoc($result);
 		$_CLASS['core_db']->free_result($result);
 
@@ -112,7 +112,7 @@ switch ($mode)
 					die;
 				}
 
-				require(SITE_FILE_ROOT.'includes/functions_user.php');
+				require_once SITE_FILE_ROOT.'includes/functions_user.php';
 				$status = validate_username($user_name);
 
 				if ($status !== true)
@@ -132,7 +132,7 @@ switch ($mode)
 
 		$_CLASS['core_db']->query($sql);
 
-		require_once(SITE_FILE_ROOT.'modules/Quick_Message/functions.php');
+		require_once SITE_FILE_ROOT.'modules/quick_message/functions.php';
 
 		echo qm_block_content();
 

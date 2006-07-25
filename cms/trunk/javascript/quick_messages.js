@@ -20,6 +20,8 @@ function quick_message_submit()
 			area.innerHTML = ajax.responseText();
 
 			message.value = '';
+
+			system_message_init('quickmessage', 'Quick Message Posted');
 		}
 	}
 
@@ -28,7 +30,6 @@ function quick_message_submit()
 	poster_name = (poster_name) ? 'poster_name=' + poster_name.value : '';
 
 	ajax.send('ajax.php?mod=quick_message&mode=ajax_add', poster_name + '&message=' + message.value);
-	system_message_init('quickmessage', 'Quick Message Posted');
 
 	return false;
 }
@@ -43,12 +44,12 @@ function quick_message_refresh()
 		{
 			var area = document.getElementById('qm_block');
 			area.innerHTML = ajax.responseText();
+			
+			system_message_init('quickmessage', 'Quick Message Refresh Complete');
 		}
 	}
 
 	ajax.onreadystatechange(onreadystatechange);
 
 	ajax.send('ajax.php?mod=quick_message&mode=ajax_refresh', null);
-
-	system_message_init('quickmessage', 'Quick Message Refresh Complete');
 }

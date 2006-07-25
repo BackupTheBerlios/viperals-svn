@@ -60,7 +60,7 @@ $_CLASS['core_template']->assign_array(array(
 
 // This is loaded 2x with drafts
 $_CLASS['core_user']->add_lang();
-$_CLASS['core_user']->add_lang('posting', 'Forums');
+$_CLASS['core_user']->add_lang('posting', 'forums');
 
 $_CLASS['core_template']->assign('S_PRIVMSGS', true);
 

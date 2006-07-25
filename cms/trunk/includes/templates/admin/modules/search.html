@@ -1,0 +1,39 @@
+<!-- DISPLAY_HEADER -->
+
+{ $THEME_TABLE_OPEN }
+
+<table class="tablebg" cellpadding="4" cellspacing="1" width="100%">
+    <tbody>
+		<tr>
+			<th></th>
+			<th width="70%" align="center"><b>{ $L_TITLE }</b></th>
+			<th colspan="2" align="center"><b>{ $L_FUNCTIONS }</b></th>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="4" height="7"></td>
+		</tr>
+		<!-- LOOP $modules_search -->
+		<tr>
+			<td height="24" class="row1">
+				<input name="mark_id[]" value="9" type="checkbox">
+			</td>
+			<td height="24" class="row1">
+				{ $modules_search:TITLE }
+			</td>
+			<td align="center" class="row2" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $modules_search:LINK_ADD }'; return false;">
+				<a href="{ $modules_search:LINK_ADD }">{ $L_ADD_AND_DEACTIVE }</a>
+			</td>
+			<td align="center" class="row2" onmouseover="this.className='row1'" onmouseout="this.className='row2'" onclick="location.href='{ $modules_search:LINK_INSTALL }'; return false;">
+				<a href="{ $modules_search:LINK_INSTALL }">{ $L_ADD_AND_INSTALL }</a>
+			</td>
+		</tr>
+		<tr>
+			<td class="spacer" colspan="4" height="7"></td>
+		</tr>
+		<!-- ENDLOOP -->
+	</tbody>
+</table>
+
+{ $THEME_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

@@ -23,7 +23,7 @@ $Id$
 
 define('VIPERAL', 'FEED');
 
-error_reporting(0);
+//error_reporting(0);
 
 /* require(SITE_FILE_ROOT.'core.php'); */
 require_once 'core.php';

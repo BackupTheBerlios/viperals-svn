@@ -113,12 +113,12 @@ switch ($action)
 // Get forum statistics
 $total_posts = $config['num_posts'];
 $total_topics = $config['num_topics'];
-$total_users = $config['num_users'];
+$total_users = $_CORE_CONFIG['user']['total_users'];
 $total_files = $config['num_files'];
 
-$start_date = $_CLASS['core_user']->format_date($config['board_startdate']);
+$start_date = $_CLASS['core_user']->format_date($config['board_start_date']);
 
-$boarddays = (gmtime() - $config['board_startdate']) / 86400;
+$boarddays = (gmtime() - $config['board_start_date']) / 86400;
 
 $posts_per_day = sprintf('%.2f', $total_posts / $boarddays);
 $topics_per_day = sprintf('%.2f', $total_topics / $boarddays);

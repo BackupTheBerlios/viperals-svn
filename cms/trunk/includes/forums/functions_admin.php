@@ -1106,7 +1106,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			if (!empty($post_ids))
 			{
 				$sql = 'SELECT p.post_id, p.poster_id, p.post_time, p.post_username, u.username
-					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u
 					WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 						AND p.poster_id = u.user_id';
 				$result = $_CLASS['core_db']->query($sql);
@@ -1272,7 +1272,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = FALSE,
 			}
 
 			$sql = 'SELECT p.post_id, p.topic_id, p.post_approved, p.poster_id, p.post_username, p.post_time, u.username
-				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u
 				WHERE p.post_id IN (' . implode(',', $post_ids) . ')
 					AND u.user_id = p.poster_id';
 			$result = $_CLASS['core_db']->query($sql);
@@ -1617,7 +1617,7 @@ function cache_moderators()
 	$user_id_sql = '';
 
 	$sql = 'SELECT a.forum_id, u.user_id, u.username
-		FROM  ' . FORUMS_ACL_OPTIONS_TABLE . '  o, ' . FORUMS_ACL_TABLE . ' a,  ' . USERS_TABLE . "  u
+		FROM  ' . FORUMS_ACL_OPTIONS_TABLE . '  o, ' . FORUMS_ACL_TABLE . ' a,  ' . CORE_USERS_TABLE . "  u
 		WHERE o.auth_option = 'm_'
 			AND a.auth_option_id = o.auth_option_id
 			AND a.auth_setting = " . ACL_YES . '
@@ -1632,7 +1632,7 @@ function cache_moderators()
 	$_CLASS['core_db']->free_result($result);
 
 	$sql = 'SELECT a.forum_id, g.group_name, g.group_id
-		FROM  ' . FORUMS_ACL_OPTIONS_TABLE . '  o, ' . FORUMS_ACL_TABLE . ' a,  ' . GROUPS_TABLE . "  g
+		FROM  ' . FORUMS_ACL_OPTIONS_TABLE . '  o, ' . FORUMS_ACL_TABLE . ' a,  ' . CORE_GROUPS_TABLE . "  g
 		WHERE o.auth_option = 'm_'
 			AND a.auth_option_id = o.auth_option_id
 			AND a.auth_setting = " . ACL_YES . '
@@ -1768,7 +1768,7 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 	}
 
 	$sql = "SELECT l.*, u.username
-		FROM " . FORUMS_LOG_TABLE . " l, " . USERS_TABLE . " u
+		FROM " . FORUMS_LOG_TABLE . " l, " . CORE_USERS_TABLE . " u
 		WHERE l.log_type = $log_type
 			AND u.user_id = l.user_id
 			" . (($limit_days) ? "AND l.log_time >= $limit_days" : '') . "
@@ -2224,7 +2224,7 @@ function update_post_information($type, $ids)
 	if (!empty($last_post_ids))
 	{
 		$sql = 'SELECT p.' . $type . '_id, p.post_id, p.post_time, p.poster_id, p.post_username, u.user_id, u.username
-			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u
 			WHERE p.poster_id = u.user_id
 				AND p.post_id IN (' . implode(', ', $last_post_ids) . ')';
 		$result = $_CLASS['core_db']->query($sql);

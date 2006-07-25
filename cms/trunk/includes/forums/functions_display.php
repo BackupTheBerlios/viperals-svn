@@ -32,7 +32,7 @@ $Id$
 // 
 // -------------------------------------------------------------
 
-function display_forums($root_data = '', $display_moderators = true)
+function display_forums($root_data = '', $display_moderators = true, $return_moderators = false)
 {
 	global $config, $_CLASS, $_CORE_CONFIG;
 
@@ -104,9 +104,7 @@ function display_forums($root_data = '', $display_moderators = true)
 			continue;
 		}
 
-		$forum_id = $row['forum_id'];
-
-		if (!$_CLASS['auth']->acl_get('f_list', $forum_id))
+		if (!$_CLASS['auth']->acl_get('f_list', $row['forum_id']))
 		{
 			// if the user does not have permissions to list this forum, skip everything until next branch
 			$right_id = $row['right_id'];
@@ -114,33 +112,37 @@ function display_forums($root_data = '', $display_moderators = true)
 		}
 
 		// Display active topics from this forum?
-		if ($show_active && $row['forum_type'] == FORUM_POST && $_CLASS['auth']->acl_get('f_read', $forum_id) && ($row['forum_flags'] & 16))
+		if ($show_active && $row['forum_type'] == FORUM_POST && $_CLASS['auth']->acl_get('f_read', $row['forum_id']) && ($row['forum_flags'] & 16))
 		{
-			$active_forum_ary['forum_id'][]		= $forum_id;
+			$active_forum_ary['forum_id'][]		= $row['forum_id'];
 			$active_forum_ary['enable_icons'][] = $row['enable_icons'];
-			$active_forum_ary['forum_topics']	+= ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['forum_topics_real'] : $row['forum_topics'];
+			$active_forum_ary['forum_topics']	+= ($_CLASS['auth']->acl_get('m_approve', $row['forum_id'])) ? $row['forum_topics_real'] : $row['forum_topics'];
 			$active_forum_ary['forum_posts']	+= $row['forum_posts'];
 		}
 
 		if ($row['parent_id'] == $root_data['forum_id'] || $row['parent_id'] == $branch_root_id)
 		{
+			if ($row['forum_type'] != FORUM_CAT)
+			{
+				$forum_ids_moderator[] = $row['forum_id'];
+			}
+
 			// Direct child
-			$parent_id = $forum_id;
-			$forum_rows[$forum_id] = $row;
-			$forum_ids[] = $forum_id;
+			$parent_id = $row['forum_id'];
+			$forum_rows[$row['forum_id']] = $row;
 
 			if (!$row['parent_id'] && $row['forum_type'] == FORUM_CAT && $row['parent_id'] == $root_data['forum_id'])
 			{
-				$branch_root_id = $forum_id;
+				$branch_root_id = $row['forum_id'];
 			}
 			$forum_rows[$parent_id]['forum_id_last_post'] = $row['forum_id'];
 		}
 		elseif ($row['forum_type'] != FORUM_CAT)
 		{
-			$subforums[$parent_id]['display'] = ($row['display_on_index']) ? true : false;;
-			$subforums[$parent_id]['name'][$forum_id] = $row['forum_name'];
+			$subforums[$parent_id][$row['forum_id']]['display'] = ($row['display_on_index']) ? true : false;
+			$subforums[$parent_id][$row['forum_id']]['name'] = $row['forum_name'];
 
-			$forum_rows[$parent_id]['forum_topics'] += ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? $row['forum_topics_real'] : $row['forum_topics'];
+			$forum_rows[$parent_id]['forum_topics'] += ($_CLASS['auth']->acl_get('m_approve', $row['forum_id'])) ? $row['forum_topics_real'] : $row['forum_topics'];
 			
 			// Do not list redirects in LINK Forums as Posts.
 			if ($row['forum_type'] != FORUM_LINK)
@@ -154,17 +156,17 @@ function display_forums($root_data = '', $display_moderators = true)
 				$forum_rows[$parent_id]['forum_last_post_time'] = $row['forum_last_post_time'];
 				$forum_rows[$parent_id]['forum_last_poster_id'] = $row['forum_last_poster_id'];
 				$forum_rows[$parent_id]['forum_last_poster_name'] = $row['forum_last_poster_name'];
-				$forum_rows[$parent_id]['forum_id_last_post'] = $forum_id;
+				$forum_rows[$parent_id]['forum_id_last_post'] = $row['forum_id'];
 			}
 			else
 			{
-				$forum_rows[$parent_id]['forum_id_last_post'] = $forum_id;
+				$forum_rows[$parent_id]['forum_id_last_post'] = $row['forum_id'];
 			}
 		}
 
 		if (!$_CLASS['core_user']->is_user || !$config['load_db_lastread'])
 		{
-			$forum_id36 = base_convert($forum_id, 10, 36);
+			$forum_id36 = base_convert($row['forum_id'], 10, 36);
 			$row['mark_time'] = isset($tracking_topics[$forum_id36][0]) ? (int) base_convert($tracking_topics[$forum_id36][0], 36, 10) : 0;
 		}
 
@@ -191,37 +193,30 @@ function display_forums($root_data = '', $display_moderators = true)
 	// Grab moderators ... if necessary
 	if ($display_moderators)
 	{
-		$forum_moderators = get_moderators($forum_ids);
+		if ($return_moderators)
+		{
+			$forum_ids_moderator[] = $root_data['forum_id'];
+		}
+		$forum_moderators = get_moderators($forum_ids_moderator);
 	}
 
 	// Loop through the forums
-	$root_id = $root_data['forum_id'];
-
 	foreach ($forum_rows as $row)
 	{
-		if ($row['parent_id'] == $root_id && !$row['parent_id'])
-		{
-			if ($row['forum_type'] == FORUM_CAT)
-			{
-				$hold = $row;
-				continue;
-			}
-			else
-			{
-				unset($hold);
-			}
-		}
-		else if (!empty($hold))
+		// Empty category
+		if ($row['parent_id'] == $root_data['forum_id'] && $row['forum_type'] == FORUM_CAT)
 		{
 			$_CLASS['core_template']->assign_vars_array('forumrow', array(
-				'S_IS_CAT'			=>	TRUE,
-				'FORUM_ID'			=>	$hold['forum_id'],
-				'FORUM_NAME'		=>	$hold['forum_name'],
-				'FORUM_DESC'		=>	$hold['forum_desc'],
-				'U_VIEWFORUM'		=>	generate_link('Forums&amp;file=viewforum&amp;f=' . $hold['forum_id']))
+				'S_IS_CAT'			=>	true,
+				'FORUM_ID'			=>	$row['forum_id'],
+				'FORUM_NAME'		=>	$row['forum_name'],
+				'FORUM_DESC'		=>	$row['forum_desc'],
+				'U_VIEWFORUM'		=>	generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']))
 			);
-			unset($hold);
+			
+			continue;
 		}
+
 
 		$visible_forums++;
 		$forum_id = $row['forum_id'];
@@ -231,22 +226,23 @@ function display_forums($root_data = '', $display_moderators = true)
 		// Generate list of subforums if we need to
 		if (isset($subforums[$forum_id]))
 		{
-			if ($subforums[$forum_id]['display'])
+			foreach ($subforums[$forum_id] as $subforum_id => $subforum_row)
 			{
 				$links = array();
 
-				foreach ($subforums[$forum_id]['name'] as $subforum_id => $subforum_name)
+				if ($subforum_row['display'] && $subforum_row['name'])
 				{
-					if (!empty($subforum_name))
-					{
-						$links[] = '<a href="' .generate_link('Forums&amp;file=viewforum&amp;f='.$subforum_id).'">' . $subforum_name . '</a>';
-					}
+					$links[] = '<a href="' .generate_link('forums&amp;file=viewforum&amp;f='.$subforum_id).'">' .  $subforum_row['name'] . '</a>';
+				}
+				else
+				{
+					unset($subforums[$forum_id][$subforum_id]);
 				}
 
 				if (!empty($links))
 				{
 					$subforums_list = implode(', ', $links);
-					$l_subforums = (count($subforums[$forum_id]) == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
+					$l_subforums = (count($subforums[$forum_id]) === 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
 				}
 
 				unset($links);
@@ -260,11 +256,11 @@ function display_forums($root_data = '', $display_moderators = true)
 			{
 				case FORUM_POST:
 					$folder_image = (!empty($forum_unread[$forum_id])) ? 'forum_new' : 'forum';
-					break;
+				break;
 
 				case FORUM_LINK:
 					$folder_image = 'forum_link';
-					break;
+				break;
 			}
 		}
 
@@ -289,7 +285,7 @@ function display_forums($root_data = '', $display_moderators = true)
 			$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'];
 			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
 			
-			$last_post_url = generate_link('Forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
+			$last_post_url = generate_link('forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
 		}
 		else
 		{
@@ -335,13 +331,13 @@ function display_forums($root_data = '', $display_moderators = true)
 			
 			'U_LAST_POSTER'		=> $last_poster_url, 
 			'U_LAST_POST'		=> $last_post_url, 
-			'U_VIEWFORUM'		=> ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : $row['forum_link'])
+			'U_VIEWFORUM'		=> ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : $row['forum_link'])
 		);
 	}
 
 	$_CLASS['core_template']->assign_array(array(
 		'MODIFY_FORUM'		=> $_CLASS['auth']->acl_get('a_forum'),
-		'U_MARK_FORUMS'		=> generate_link('Forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
+		'U_MARK_FORUMS'		=> generate_link('forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
 		'S_HAS_SUBFORUM'	=> ($visible_forums) ? true : false,
 		'L_SUBFORUM'		=> ($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
 	));
@@ -484,7 +480,7 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 					$data['category'] = 'THUMBNAIL';
 	
 					$data['image_src'] = $thumbnail_filename;
-					$data['link'] = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
+					$data['link'] = (!$force_physical) ? generate_link('forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
 				break;
 	
 				// Windows Media Streams
@@ -509,7 +505,7 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 	
 				default:
 					$data['category'] = 'FILE';
-					$data['link'] = (!$force_physical) ? generate_link('Forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
+					$data['link'] = (!$force_physical) ? generate_link('forums&amp;file=download&amp;id=' . $attachment['attach_id']) : $filename;
 				break;
 			}
 			
@@ -524,7 +520,7 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 		if ($parse)
 		{
 			$_CLASS['core_template']->assign_vars_array('attachments', $data);
-			$datas[] = $_CLASS['core_template']->display('modules/Forums/attachments.html', true);
+			$datas[] = $_CLASS['core_template']->display('modules/forums/attachments.html', true);
 		}
 		else
 		{

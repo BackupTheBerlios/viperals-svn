@@ -60,7 +60,7 @@ class module_control_panel
 			$module_info = $_CLASS['core_db']->fetch_row_assoc($result);
 		}
 
-		if (!$this->module || !$module_info || !file_exists(SITE_FILE_ROOT.'modules/Control_Panel/modules/ucp_' . $this->module . '.php'))
+		if (!$this->module || !$module_info || !file_exists(SITE_FILE_ROOT.'modules/control_panel/modules/ucp_' . $this->module . '.php'))
 		{
 			$this->module = 'main';
 			$this->mode = ($this->module) ? false : $this->mode;

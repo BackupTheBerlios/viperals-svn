@@ -34,6 +34,6 @@ if (!isset($_CLASS['core_template']->_vars['ucp_section']))
 	return;
 }
 
-$this->content = $_CLASS['core_template']->display('modules/Control_Panel/ucp_sideblock.html', true);
+$this->content = $_CLASS['core_template']->display('modules/control_panel/ucp_sideblock.html', true);
 
 ?>

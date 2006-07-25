@@ -1,6 +1,6 @@
 <!-- DISPLAY_HEADER -->
 
-<!-- INCLUDE modules/Forums/overall_header.html -->
+<!-- INCLUDE modules/forums/overall_header.html -->
 
 <script language="javascript" type="text/javascript">
 <!--
@@ -117,8 +117,8 @@ function checkForm()
 <!-- ENDIF -->
 
 
-<!-- IF { $S_POST_REVIEW } --><!-- INCLUDE modules/Forums/posting_review.html --><!-- ENDIF -->
-<!-- IF { $S_DISPLAY_PREVIEW } --><!-- INCLUDE modules/Forums/posting_preview.html --><!-- ENDIF -->
+<!-- IF { $S_POST_REVIEW } --><!-- INCLUDE modules/forums/posting_review.html --><!-- ENDIF -->
+<!-- IF { $S_DISPLAY_PREVIEW } --><!-- INCLUDE modules/forums/posting_preview.html --><!-- ENDIF -->
 
 
 <!-- IF { $S_UNGLOBALISE } -->
@@ -338,8 +338,8 @@ function checkForm()
 	</tr>
 	<!-- ENDIF -->
 	
-	<!-- IF { $S_SHOW_ATTACH_BOX } --><!-- INCLUDE modules/Forums/posting_attach_body.html --><!-- ENDIF -->
-	<!-- IF { $S_SHOW_POLL_BOX } --><!-- INCLUDE modules/Forums/posting_poll_body.html --><!-- ELSEIF { $S_POLL_DELETE } -->
+	<!-- IF { $S_SHOW_ATTACH_BOX } --><!-- INCLUDE modules/forums/posting_attach_body.html --><!-- ENDIF -->
+	<!-- IF { $S_SHOW_POLL_BOX } --><!-- INCLUDE modules/forums/posting_poll_body.html --><!-- ELSEIF { $S_POLL_DELETE } -->
 		<tr>
 			<td class="row1"><span class="genmed"><b>{ $L_POLL_DELETE }:</b></span></td>
 			<td class="row2"><input type="checkbox" name="poll_delete" /></td>
@@ -352,7 +352,7 @@ function checkForm()
 
 <br clear="all" />
 
-<!-- IF { $S_DISPLAY_REVIEW } --><!-- INCLUDE modules/Forums/posting_topic_review.html --><!-- ENDIF -->
+<!-- IF { $S_DISPLAY_REVIEW } --><!-- INCLUDE modules/forums/posting_topic_review.html --><!-- ENDIF -->
 <table class="tablebg" width="100%" cellspacing="1">
 	<tr>
 		<td class="row1"><div class="nav" style="float:left"><a href="{ $U_INDEX }">{ $L_INDEX }</a><!-- LOOP $navlinks --> &#187; <a href="{ $navlinks:U_VIEW_FORUM }">{ $navlinks:FORUM_NAME }</a><!-- ENDLOOP --></div><div class="gensmall" style="float:right">{ $S_TIMEZONE }</div></td>
@@ -377,11 +377,11 @@ function checkForm()
 
 <table width="100%" cellspacing="1">
 	<tr>
-		<td align="right"><!-- INCLUDE modules/Forums/jumpbox.html --></td>
+		<td align="right"><!-- INCLUDE modules/forums/jumpbox.html --></td>
 	</tr>
 </table>
 <!-- ENDIF -->
 	
-<!-- INCLUDE modules/Forums/overall_footer.html -->
+<!-- INCLUDE modules/forums/overall_footer.html -->
 
 <!-- DISPLAY_FOOTER -->

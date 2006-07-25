@@ -105,7 +105,7 @@ if ($mode = get_variable('mode', 'REQUEST', false))
 						trigger_error('LONG_NAME');
 					}
 	
-					require(SITE_FILE_ROOT.'includes/functions_user.php');
+					require_once SITE_FILE_ROOT.'includes/functions_user.php';
 					$status = validate_username($user_name);
 
 					if ($status !== true)
@@ -182,7 +182,7 @@ $start = get_variable('start', 'GET', 0, 'integer');
 $limit = 20;
 
 //$sql = 'SELECT s.*, u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height FROM '.$prefix.'quick_message s LEFT JOIN ' . USERS_TABLE . ' u  ON (u.user_id = s.user_id) ORDER BY time DESC';
-$result = $_CLASS['core_db']->query_limit('SELECT * FROM '.QUICK_MESSAGE_TABLE.' ORDER BY message_time DESC', $limit, $start);
+$result = $_CLASS['core_db']->query_limit('SELECT * FROM ' . QUICK_MESSAGE_TABLE . ' ORDER BY message_time DESC', $limit, $start);
 $row = $_CLASS['core_db']->fetch_row_assoc($result);
 
 if (!$row)
@@ -193,7 +193,7 @@ if (!$row)
 		'Q_TOTAL_MESSAGES'		=> false
 	));
 
-	$_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
+	$_CLASS['core_display']->display(false, 'modules/quick_message/index.html');
 }
 
 $delete_link = '';
@@ -202,7 +202,7 @@ if ($row['message_time'] > ($_CLASS['core_user']->time - $_CORE_CONFIG['quick_me
 {
 	if (($row['poster_id'] && $row['poster_id'] == $_CLASS['core_user']->data['user_id']) || (!$row['poster_id'] && $row['poster_ip'] == $_CLASS['core_user']->ip))
 	{
-		$delete_link = generate_link('Quick_Message&amp;mode=delete&amp;id='.$row['message_id']);
+		$delete_link = generate_link('quick_message&amp;mode=delete&amp;id='.$row['message_id']);
 	}
 }
 
@@ -211,7 +211,7 @@ do
 	if ($row['poster_name'])
 	{
 		$user_name = htmlentities($row['poster_name'], ENT_QUOTES, 'UTF-8');
-		$userlink = ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']) : false;
+		$userlink = ($row['poster_id']) ? generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['poster_id']) : false;
 	}
 	else
 	{
@@ -251,18 +251,18 @@ do
 		'MESSAGE'		=> modify_lines(htmlentities($row['message_text'], ENT_QUOTES, 'UTF-8'), '<br />'),
 		'TIME'			=> $_CLASS['core_user']->format_date($row['message_time']),
 		'POSTER_AVATAR' => $avatar,
-		'U_PROFILE' 	=> ($row['poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['poster_id']) : false,
+		'U_PROFILE' 	=> ($row['poster_id']) ? generate_link('members_list&amp;mode=viewprofile&amp;u='.$row['poster_id']) : false,
 	));
 	
 	$delete_link = '';
 }
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
 
-$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '.QUICK_MESSAGE_TABLE);
+$result = $_CLASS['core_db']->query('SELECT COUNT(*) AS total from '. QUICK_MESSAGE_TABLE);
 $row = $_CLASS['core_db']->fetch_row_assoc($result);
 $_CLASS['core_db']->free_result($result);	
 
-$pagination = generate_pagination('Quick_Message', $row['total'], $limit, $start);
+$pagination = generate_pagination('quick_message', $row['total'], $limit, $start);
 
 $_CLASS['core_template']->assign_array(array(
 	'Q_MESSAGE_PAGINATION'			=> $pagination['formated'],
@@ -271,6 +271,6 @@ $_CLASS['core_template']->assign_array(array(
 	'Q_MESSAGE_TOTAL_MESSAGES'		=> $row['total']
 ));
 
-$_CLASS['core_display']->display(false, 'modules/Quick_Message/index.html');
+$_CLASS['core_display']->display(false, 'modules/quick_message/index.html');
 
 ?>

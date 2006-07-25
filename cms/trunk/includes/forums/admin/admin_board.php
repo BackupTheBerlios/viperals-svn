@@ -166,7 +166,7 @@ if (!$_CLASS['auth']->acl_get($display_vars['auth']))
 
 if (isset($display_vars['lang']))
 {
-	$_CLASS['core_user']->add_lang($display_vars['lang'], 'Forums');
+	$_CLASS['core_user']->add_lang($display_vars['lang'], 'forums');
 }
 
 $new = $config;

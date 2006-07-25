@@ -111,7 +111,7 @@ function update_last_post_information($type, $id)
 	if ((int) $row['last_post_id'])
 	{
 		$sql = 'SELECT p.post_id, p.poster_id, p.post_time, u.username, p.post_username
-			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . ' u
 			WHERE p.poster_id = u.user_id
 				AND p.post_id = ' . $row['last_post_id'];
 		$result = $_CLASS['core_db']->query($sql);
@@ -733,7 +733,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 
 	// Go ahead and pull all data for this topic
 	$sql = 'SELECT u.username, u.user_id, p.post_id, p.post_username, p.post_subject, p.post_text, p.enable_smilies, p.bbcode_uid, p.bbcode_bitfield, p.post_time
-		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . USERS_TABLE . " u
+		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
 		WHERE p.topic_id = $topic_id
 			AND p.poster_id = u.user_id
 			" . ((!$_CLASS['auth']->acl_get('m_approve', $forum_id)) ? 'AND p.post_approved = 1' : '') . '
@@ -845,7 +845,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 
 	// Lets get all the users that are set to be notified
 	$sql = 'SELECT w.notify_type, w.forum_id, u.user_id, u.username, u.user_email, u.user_lang
-		FROM '.FORUMS_WATCH_TABLE.' w, ' . USERS_TABLE . " u
+		FROM '.FORUMS_WATCH_TABLE.' w, ' . CORE_USERS_TABLE . " u
 		WHERE $where
 			AND w.notify_status = 0
 			AND u.user_status = ". STATUS_ACTIVE . '

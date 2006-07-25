@@ -121,6 +121,13 @@ if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
 	login_box(array('explain' => $_CLASS['core_user']->lang['LOGIN_NOTIFY_FORUM']));
 }
 
+// Forum is passworded ... check whether access has been granted to this
+// user this session, if not show login box
+if ($forum_data['forum_password'])
+{
+	login_forum_box($forum_data);
+}
+
 // Are we a forum link, then redirect
 if ($forum_data['forum_link'])
 {
@@ -139,12 +146,7 @@ if ($forum_data['forum_link'])
 // Add Images
 $_CLASS['core_user']->add_img();
 
-// Forum is passworded ... check whether access has been granted to this
-// user this session, if not show login box
-if ($forum_data['forum_password'])
-{
-	login_forum_box($forum_data);
-}
+
 
 // Build navigation links
 generate_forum_nav($forum_data);
@@ -164,7 +166,8 @@ else
 	$_CLASS['core_template']->assign('S_HAS_SUBFORUM', false);
 }
 
-if ($forum_data['forum_type'] != FORUM_POST && !($forum_data['forum_flags'] & 16))
+// Not postable forum or showing active topics?
+if (!($forum_data['forum_type'] == FORUM_POST || (($forum_data['forum_flags'] & 16) && $forum_data['forum_type'] == FORUM_CAT)))
 {
 	$_CLASS['core_template']->assign_array(array(
 		'S_IS_POSTABLE'			=> false,
@@ -175,9 +178,9 @@ if ($forum_data['forum_type'] != FORUM_POST && !($forum_data['forum_flags'] & 16
 
 	page_header();
 	
-	make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
+	make_jumpbox(generate_link('forums&amp;file=viewforum'), $forum_id);
 	
-	$_CLASS['core_template']->display('modules/Forums/viewforum_body.html');
+	$_CLASS['core_template']->display('modules/forums/viewforum_body.html');
 }
 
 $moderators = get_moderators($forum_id);
@@ -187,7 +190,7 @@ if ($mark_read == 'topics')
 {
 	markread('forum', $forum_id);
 	
-	$_CLASS['core_display']->meta_refresh(3, generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id));
+	$_CLASS['core_display']->meta_refresh(3, generate_link('forums&amp;file=viewforum&amp;f='.$forum_id));
 
 	$message = $_CLASS['core_user']->lang['TOPICS_MARKED'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_FORUM'], '<a href="' . generate_link('Forums&amp;file=viewforum&amp;f='.$forum_id) . '">', '</a> ');
 	trigger_error($message);
@@ -250,17 +253,18 @@ if ($sort_days)
 	$sql = 'SELECT COUNT(topic_id) AS num_topics
 		FROM ' . FORUMS_TOPICS_TABLE . "
 		WHERE forum_id = $forum_id
-			AND topic_type <> " . POST_ANNOUNCE . " 
+			AND topic_type NOT IN (" . POST_ANNOUNCE . ', ' . POST_GLOBAL . ")
 			AND topic_last_post_time >= $min_post_time
 		" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND topic_approved = 1');
 	$result = $_CLASS['core_db']->query($sql);
+	$topics_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? (int) $row['num_topics'] : 0;
+	$_CLASS['core_db']->free_result($result);
 
 	if (isset($_POST['sort']))
 	{
 		$start = 0;
 	}
 
-	$topics_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['num_topics'] : 0;
 	$sql_limit_time = "AND t.topic_last_post_time >= $min_post_time";
 }
 else
@@ -279,13 +283,15 @@ else
 
 // Basic pagewide vars
 $post_alt = ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->lang['FORUM_LOCKED'] : $_CLASS['core_user']->lang['POST_NEW_TOPIC'];
-$pagination = generate_pagination("Forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param", $topics_count, $config['topics_per_page'], $start);
+$pagination = generate_pagination("forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param", $topics_count, $config['topics_per_page'], $start);
+
+$s_display_active = ($forum_data['forum_type'] == FORUM_CAT && ($forum_data['forum_flags'] & 16)) ? true : false;
 
 $_CLASS['core_template']->assign_array(array(
 	'PAGINATION'		=> $pagination['formated'],
 	'PAGINATION_ARRAY'	=> $pagination['array'],
 	'PAGE_NUMBER'		=> on_page($topics_count, $config['topics_per_page'], $start),
-	'TOTAL_TOPICS'		=> ($forum_data['forum_flags'] & 16) ? false : (($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count)),
+	'TOTAL_TOPICS'		=> ($s_display_active) ? false : (($topics_count == 1) ? $_CLASS['core_user']->lang['VIEW_FORUM_TOPIC'] : sprintf($_CLASS['core_user']->lang['VIEW_FORUM_TOPICS'], $topics_count)),
 	'MODERATORS'		=> empty($moderators[$forum_id]) ? '' : implode(', ', $moderators[$forum_id]),
 
 	'POST_IMG' 			=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', $post_alt) : $_CLASS['core_user']->img('btn_post', $post_alt),
@@ -312,24 +318,25 @@ $_CLASS['core_template']->assign_array(array(
 	'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', 'TOPIC_REPORTED'),
 	'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', 'TOPIC_UNAPPROVED'),
 	'GOTO_PAGE_IMG'			=> $_CLASS['core_user']->img('icon_post', 'GOTO_PAGE'),
+
 	'L_NO_TOPICS' 			=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->lang['POST_FORUM_LOCKED'] : $_CLASS['core_user']->lang['NO_TOPICS'],
 
 	'S_IS_POSTABLE'			=> ($forum_data['forum_type'] == FORUM_POST) ? true : false,
-	'S_DISPLAY_ACTIVE'		=> ($forum_data['forum_type'] == FORUM_CAT && $forum_data['forum_flags'] & 16) ? true : false, 
+	'S_DISPLAY_ACTIVE'		=> $s_display_active, 
 	'S_SELECT_SORT_DIR'		=> $s_sort_dir,
 	'S_SELECT_SORT_KEY'		=> $s_sort_key,
 	'S_SELECT_SORT_DAYS'	=> $s_limit_days,
-	'S_TOPIC_ICONS'			=> ($forum_data['forum_type'] == FORUM_CAT && $forum_data['forum_flags'] & 16) ? max($active_forum_ary['enable_icons']) : (($forum_data['enable_icons']) ? true : false), 
+	'S_TOPIC_ICONS'			=> ($s_display_active) ? max($active_forum_ary['enable_icons']) : (($forum_data['enable_icons']) ? true : false), 
 	'S_WATCH_FORUM_LINK'	=> $s_watching_forum['link'],
 	'S_WATCH_FORUM_TITLE'	=> $s_watching_forum['title'],
-	'S_FORUM_ACTION' 		=> generate_link("Forums&amp;file=viewforum&amp;f=$forum_id&amp;start=$start"),
+	'S_FORUM_ACTION' 		=> generate_link("forums&amp;file=viewforum&amp;f=$forum_id&amp;start=$start"),
 	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
-	'S_SEARCHBOX_ACTION'	=> generate_link('Forums&amp;file=search&amp;search_forum[]='.$forum_id), 
+	'S_SEARCHBOX_ACTION'	=> generate_link('forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
-	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("Forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
-	'U_POST_NEW_TOPIC'	=> generate_link('Forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id), 
-	'U_VIEW_FORUM'		=> generate_link("Forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param&amp;start=$start"), 
-	'U_MARK_TOPICS' 	=> generate_link("Forums&amp;file=viewforum&amp;f=$forum_id&amp;mark=topics"))
+	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
+	'U_POST_NEW_TOPIC'	=> generate_link('forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id), 
+	'U_VIEW_FORUM'		=> generate_link("forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param&amp;start=$start"), 
+	'U_MARK_TOPICS' 	=> generate_link("forums&amp;file=viewforum&amp;f=$forum_id&amp;mark=topics"))
 );
 
 // Grab icons
@@ -484,12 +491,12 @@ if (!empty($topic_list))
 	//	$status = topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
 		topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
 
-		$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("Forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
+		$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
 		// Generate all the URIs ...
-		$view_topic_url = 'Forums&amp;file=viewtopic&amp;t='.$topic_id;
+		$view_topic_url = 'forums&amp;file=viewtopic&amp;t='.$topic_id;
 
-		$pagination = generate_pagination('Forums&amp;file=viewtopic&amp;&amp;t='.$topic_id, $replies, $config['posts_per_page']);
+		$pagination = generate_pagination('forums&amp;file=viewtopic&amp;&amp;t='.$topic_id, $replies, $config['posts_per_page']);
 
 		// Send vars to template
 		$_CLASS['core_template']->assign_vars_array('topicrow', array(
@@ -497,7 +504,7 @@ if (!empty($topic_list))
 			'TOPIC_ID' 			=> $topic_id,
 
 			'AUTHOR' 			=> ($row['topic_poster'] == ANONYMOUS) ? (($row['topic_first_poster_name']) ? $row['topic_first_poster_name'] : $_CLASS['core_user']->get_lang('GUEST')) : $row['topic_first_poster_name'],
-			'LINK_AUTHOR' 		=> ($row['topic_poster'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['topic_poster']),
+			'LINK_AUTHOR' 		=> ($row['topic_poster'] == ANONYMOUS) ? '' : generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['topic_poster']),
 
 			'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
 			'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
@@ -532,11 +539,11 @@ if (!empty($topic_list))
 			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_get('m_approve', $forum_id)),
 
 			'U_LAST_POST'       => generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),	
-			'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id']) ? generate_link('Members_List&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+			'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id']) ? generate_link('members_list&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 			'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
 
-			'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
-			'U_MCP_QUEUE'       => generate_link('Forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
+			'U_MCP_REPORT'		=> generate_link('forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
+			'U_MCP_QUEUE'       => generate_link('forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
 
 			'S_TOPIC_TYPE_SWITCH'=> ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test)
 		);
@@ -558,10 +565,10 @@ if ($forum_data['forum_type'] == FORUM_POST && is_int($mark_forum_read))
 
 page_header();
 
-make_jumpbox(generate_link('Forums&amp;file=viewforum'), $forum_id);
+make_jumpbox(generate_link('forums&amp;file=viewforum'), $forum_id);
 
-$_CLASS['core_display']->footer .= $_CLASS['core_template']->display('modules/Forums/menus.html', true);
+$_CLASS['core_display']->footer .= $_CLASS['core_template']->display('modules/forums/menus.html', true);
 
-$_CLASS['core_display']->display(false, 'modules/Forums/viewforum_body.html');
+$_CLASS['core_display']->display(false, 'modules/forums/viewforum_body.html');
 
 ?>
