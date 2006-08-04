@@ -36,10 +36,9 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 {
 	global $config, $_CLASS, $_CORE_CONFIG;
 
-	// Get posted/get info
 	$mark_read = request_var('mark', '');
 
-	$forum_id_ary = $active_forum_ary = $forum_rows = $subforums = $forum_moderators = $mark_forums = array();
+	$forum_id_ary = $active_forum_ary = $forum_rows = $subforums = $forum_moderators = $forum_ids_moderator = $mark_forums = array();
 	$visible_forums = 0;
 
 	if (!$root_data)
@@ -69,13 +68,12 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 
 	$sql = "SELECT f.* $lastread_select 
 		FROM ". FORUMS_FORUMS_TABLE . " f $sql_from
-		WHERE forum_status <> ".ITEM_DELETING."
+		WHERE forum_status <> " . ITEM_DELETING . "
 		$sql_where
 		ORDER BY f.left_id";
 	$result = $_CLASS['core_db']->query($sql);
 
 	$branch_root_id = $root_data['forum_id'];
-	$forum_ids		= array($root_data['forum_id']);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
@@ -89,6 +87,14 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 			continue;
 		}
 
+
+
+		if ($row['forum_type'] == FORUM_CAT && ($row['left_id'] + 1 == $row['right_id']))
+		{
+			// Non-postable forum with no subforums: don't display
+			continue;
+		}
+
 		if (isset($right_id))
 		{
 			if ($row['left_id'] < $right_id)
@@ -96,12 +102,6 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 				continue;
 			}
 			unset($right_id);
-		}
-
-		if ($row['forum_type'] == FORUM_CAT && ($row['left_id'] + 1 == $row['right_id']))
-		{
-			// Non-postable forum with no subforums: don't display
-			continue;
 		}
 
 		if (!$_CLASS['auth']->acl_get('f_list', $row['forum_id']))
@@ -114,6 +114,16 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		// Display active topics from this forum?
 		if ($show_active && $row['forum_type'] == FORUM_POST && $_CLASS['auth']->acl_get('f_read', $row['forum_id']) && ($row['forum_flags'] & 16))
 		{
+			if (!isset($active_forum_ary['forum_topics']))
+			{
+				$active_forum_ary['forum_topics'] = 0;
+			}
+
+			if (!isset($active_forum_ary['forum_posts']))
+			{
+				$active_forum_ary['forum_posts'] = 0;
+			}
+
 			$active_forum_ary['forum_id'][]		= $row['forum_id'];
 			$active_forum_ary['enable_icons'][] = $row['enable_icons'];
 			$active_forum_ary['forum_topics']	+= ($_CLASS['auth']->acl_get('m_approve', $row['forum_id'])) ? $row['forum_topics_real'] : $row['forum_topics'];
@@ -131,7 +141,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 			$parent_id = $row['forum_id'];
 			$forum_rows[$row['forum_id']] = $row;
 
-			if (!$row['parent_id'] && $row['forum_type'] == FORUM_CAT && $row['parent_id'] == $root_data['forum_id'])
+			if ($row['forum_type'] == FORUM_CAT && $row['parent_id'] == $root_data['forum_id'])
 			{
 				$branch_root_id = $row['forum_id'];
 			}
@@ -150,7 +160,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 				$forum_rows[$parent_id]['forum_posts'] += $row['forum_posts'];
 			}
 
-			if (isset($forum_rows[$parent_id]) && $row['forum_last_post_time'] > $forum_rows[$parent_id]['forum_last_post_time'])
+			if ($row['forum_last_post_time'] > $forum_rows[$parent_id]['forum_last_post_time'])
 			{
 				$forum_rows[$parent_id]['forum_last_post_id'] = $row['forum_last_post_id'];
 				$forum_rows[$parent_id]['forum_last_post_time'] = $row['forum_last_post_time'];
@@ -211,6 +221,8 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 				'FORUM_ID'			=>	$row['forum_id'],
 				'FORUM_NAME'		=>	$row['forum_name'],
 				'FORUM_DESC'		=>	$row['forum_desc'],
+				//'FORUM_FOLDER_IMG'		=> ($row['forum_image']) ? '<img src="' . $phpbb_root_path . $row['forum_image'] . '" alt="' . $user->lang['FORUM_CAT'] . '" />' : '',
+				//'FORUM_FOLDER_IMG_SRC'	=> ($row['forum_image']) ? $phpbb_root_path . $row['forum_image'] : '',
 				'U_VIEWFORUM'		=>	generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']))
 			);
 			
@@ -226,28 +238,22 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		// Generate list of subforums if we need to
 		if (isset($subforums[$forum_id]))
 		{
+			$links = array();
+
 			foreach ($subforums[$forum_id] as $subforum_id => $subforum_row)
 			{
-				$links = array();
-
 				if ($subforum_row['display'] && $subforum_row['name'])
 				{
 					$links[] = '<a href="' .generate_link('forums&amp;file=viewforum&amp;f='.$subforum_id).'">' .  $subforum_row['name'] . '</a>';
 				}
-				else
-				{
-					unset($subforums[$forum_id][$subforum_id]);
-				}
-
-				if (!empty($links))
-				{
-					$subforums_list = implode(', ', $links);
-					$l_subforums = (count($subforums[$forum_id]) === 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
-				}
-
-				unset($links);
+				unset($subforums[$forum_id][$subforum_id]);
 			}
+		
+			$subforums_list = implode(', ', $links);
+			$l_subforums = (count($links) === 1) ? $_CLASS['core_user']->lang['SUBFORUM'] . ': ' : $_CLASS['core_user']->lang['SUBFORUMS'] . ': ';
 
+			unset($links);
+	
 			$folder_image = (!empty($forum_unread[$forum_id])) ? 'sub_forum_new' : 'sub_forum';
 		}
 		else
@@ -307,6 +313,8 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		$_CLASS['core_template']->assign_vars_array('forumrow', array(
 			'S_IS_CAT'			=> false, 
 			'S_IS_LINK'			=> ($row['forum_type'] == FORUM_LINK), 
+			'S_UNREAD_FORUM'	=> !empty($forum_unread[$forum_id]),
+			'S_LOCKED_FORUM'	=> ($row['forum_status'] == ITEM_LOCKED) ? true : false,
 
 			'LAST_POST_IMG'		=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'), 
 
@@ -342,7 +350,12 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		'L_SUBFORUM'		=> ($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
 	));
 
-	return $active_forum_ary;
+	if ($return_moderators)
+	{
+		return array($active_forum_ary, $forum_moderators);
+	}
+
+	return array($active_forum_ary, array());
 }
 
 function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img, &$folder_alt, &$topic_type)

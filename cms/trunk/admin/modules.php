@@ -273,6 +273,9 @@ while ($module = $_CLASS['core_db']->fetch_row_assoc($result))
 	));
 }
 
+$_CLASS['core_template']->assign_array(array(
+	'B_SEARCH'	=> generate_link('modules&amp;mode=search', array('admin' => true)),
+));
 
 $_CLASS['core_display']->display(false, 'admin/modules/index.html');
 

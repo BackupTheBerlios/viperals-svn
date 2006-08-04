@@ -225,10 +225,37 @@ class db_mysql
 		return mysql_query($query, $this->link_identifier);
 	}
 
+	function sql_query_build($query_type, $array, $table)
+	{
+		if (!is_array($array) || !$table )
+		{
+			return false;
+		}
+
+		$values = $this->sql_build_array($query_type, $array);
+
+		if (!$value)
+		{
+			return false;
+		}
+
+		SWitch  ($query_type)
+		{
+			case 'MULTI_INSERT':
+			case 'INSERT':
+				return $this->query('INSERT INTO ' . $table . ' '. $values');
+			break;
+
+			case 'UPDATE':
+				return $this->query('UPDATE ' . $table . ' SET ' . $values);
+			break;
+		}
+	}
+
 	/*
-		Boy do I like this but it phpBB's, may have to do something similar
+		Boy do I like this but it phpBB's
 	*/
-	function sql_build_array($query, $array = false)
+	function sql_build_array($query_type, $array)
 	{
 		if (!is_array($array))
 		{
@@ -237,58 +264,92 @@ class db_mysql
 
 		$_fields = $values = array();
 
-		if ($query == 'INSERT')
+		SWitch  ($query_type)
 		{
-			foreach ($array as $key => $value)
-			{
-				$_fields[] = $key;
+			case 'INSERT':
+				foreach ($array as $key => $value)
+				{
+					$_fields[] = $key;
+	
+					if (is_numeric($value))
+					{
+						$values[] = $value;
+					}
+					elseif (is_string($value))
+					{
+						$values[] = "'" . $this->escape($value) . "'";
+					}
+					elseif (is_null($value))
+					{
+						$values[] = 'NULL';
+					}
+					elseif (is_bool($value))
+					{
+						$values[] = ($value) ? 1 : 0;
+					}
+				}
+	
+				return ' (' . implode(', ', $_fields) . ') VALUES (' . implode(', ', $values) . ')';
+			break;
 
-				if (is_numeric($value))
+			case 'MULTI_INSERT':
+				$ary = array();
+				foreach ($array as $array2)
 				{
-					$values[] = $value;
+					$values = array();
+					foreach ($array2 as $key => $value)
+					{
+						if (is_numeric($value))
+						{
+							$values[] = $value;
+						}
+						elseif (is_string($value))
+						{
+							$values[] = "'" . $this->escape($value) . "'";
+						}
+						elseif (is_null($value))
+						{
+							$values[] = 'NULL';
+						}
+						elseif (is_bool($value))
+						{
+							$values[] = ($value) ? 1 : 0;
+						}
+					}
+					$ary[] = '(' . implode(', ', $values) . ')';
 				}
-				elseif (is_string($value))
-				{
-					$values[] = "'" . $this->escape($value) . "'";
-				}
-				elseif (is_null($value))
-				{
-					$values[] = 'NULL';
-				}
-				elseif (is_bool($value))
-				{
-					$values[] = ($value) ? 1 : 0;
-				}
-			}
+	
+				return ' (' . implode(', ', array_keys($array[0])) . ') VALUES ' . implode(', ', $ary);
+			break;
 
-			return ' (' . implode(', ', $_fields) . ') VALUES (' . implode(', ', $values) . ')';
+			case 'UPDATE':
+			case 'SELECT':
+				$values = array();
+				foreach ($array as $key => $value)
+				{
+					if (is_numeric($value))
+					{
+						$values[] = $key.' = '.$value;
+					}
+					elseif (is_string($value))
+					{
+						$values[] = "$key = '" . $this->escape($value) . "'";
+					}
+					elseif (is_null($value))
+					{
+						$values[] = "$key = NULL";
+					}
+					elseif (is_bool($value))
+					{
+						$values[] = $key.' = '.(($value) ? 1 : 0);
+					}
+	
+				}
+	
+				return implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
+			break;
 		}
-		elseif ($query == 'UPDATE' || $query == 'SELECT')
-		{
-			$values = array();
-			foreach ($array as $key => $value)
-			{
-				if (is_numeric($value))
-				{
-					$values[] = $key.' = '.$value;
-				}
-				elseif (is_string($value))
-				{
-					$values[] = "$key = '" . $this->escape($value) . "'";
-				}
-				elseif (is_null($value))
-				{
-					$values[] = "$key = NULL";
-				}
-				elseif (is_bool($value))
-				{
-					$values[] = $key.' = '.(($value) ? 1 : 0);
-				}
-
-			}
-
-			return implode(($query == 'UPDATE') ? ', ' : ' AND ', $values);
-		}
+		return false;
 	}
 
 	function num_rows($result = false)

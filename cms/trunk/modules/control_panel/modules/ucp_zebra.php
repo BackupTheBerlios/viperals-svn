@@ -26,12 +26,12 @@ if (!empty($_POST['submit']) || !empty($_GET['add']))
 {
 	if ($add_users = get_variable('add', 'REQUEST', false))
 	{
+		$add_users = array_map('trim', array_map('strtolower', explode("\n", $add_users)));
+
 		require_once SITE_FILE_ROOT.'includes/forums/functions.php';
 		load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
 		
 		$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
-
-		$add_users = explode("\n", $add_users);
 
 		$sql = 'SELECT z.*, u.username 
 			FROM ' . ZEBRA_TABLE . ' z, ' . CORE_USERS_TABLE . ' u 
@@ -44,23 +44,50 @@ if (!empty($_POST['submit']) || !empty($_GET['add']))
 		{
 			if ($row['friend'])
 			{
-				$friends[] = $row['username'];
+				$friends[] = strtolower($row['username']);
 			}
 			else
 			{
-				$foes[] = $row['username'];
+				$foes[] = strtolower($row['username']);
 			}
 		}
 		$_CLASS['core_db']->free_result($result);
 
-		$add_users = array_diff($add_users, $friends, $foes, array($_CLASS['core_user']->data['username']));
-		unset($friends, $foes);
+		// remove friends from the username array
+		$n = count($add_users);
+		$add_users = array_diff($add_users, $friends);
+
+		if (count($add_users) < $n && $mode === 'foes')
+		{
+			$error[] = $_CLASS['core_user']->get_lang('NOT_ADDED_FOES_FRIENDS');
+		}
+
+		// remove foes from the username array
+		$n = count($add_users);
+		$add_users = array_diff($add_users, $foes);
+
+		if (count($add_users) < $n && $mode === 'friends')
+		{
+			$error[] = $_CLASS['core_user']->get_lang('NOT_ADDED_FRIENDS_FOES');
+		}
+
+		// remove the user himself from the username array
+		$n = sizeof($add_users);
+		$add_users = array_diff($add_users, array(strtolower($_CLASS['core_user']->data['username'])));
+
+		if (sizeof($add_users) < $n)
+		{
+			$error[] = $_CLASS['core_user']->get_lang('NOT_ADDED_' . $l_mode . '_SELF');
+		}
+	
+		//$add_users = array_diff($add_users, $friends, $foes, array($_CLASS['core_user']->data['username']));
+		unset($friends, $foes, $n);
 
 		if (!empty($add_users))
 		{
 			$sql = 'SELECT user_id, user_type, user_status
 				FROM ' . CORE_USERS_TABLE . " 
-				WHERE username IN ('" .implode("', '", $_CLASS['core_db']->escape_array($add_users))."')";
+				WHERE LOWER(username) IN ('" .implode("', '", $_CLASS['core_db']->escape_array($add_users))."')";
 			$result = $_CLASS['core_db']->query($sql);
 
 			$add_users = array();
@@ -88,7 +115,13 @@ if (!empty($_POST['submit']) || !empty($_GET['add']))
 						}
 					}
 
-					// This may not be right ... it may yield true when perms equate to deny
+					$perms = array_unique($perms);
+
+					if (!empty($perms))
+					{
+						$error[] = $_CLASS['core_user']->get_lang('NOT_ADDED_FOES_MOD_ADMIN');
+					}
+
 					$add_users = array_diff($add_users, $perms);
 					unset($perms);
 				}
@@ -96,10 +129,18 @@ if (!empty($_POST['submit']) || !empty($_GET['add']))
 				if (!empty($add_users))
 				{
 					$sql_mode = ($this->mode === 'friends') ? 'friend' : 'foe';
+					
+					$sql_array = array();
+					foreach ($add_users as $zebra_id)
+					{
+						$sql_array[] = array(
+							'user_id'		=> (int) $_CLASS['core_user']->data['user_id'],
+							'zebra_id'		=> (int) $zebra_id,
+							$sql_mode		=> 1
+						);
+					}
 
-					$sql = 'INSERT INTO ' . ZEBRA_TABLE . " (user_id, zebra_id, $sql_mode) 
-						VALUES " . implode(', ', preg_replace('#^([0-9]+)$#', '(' . $_CLASS['core_user']->data['user_id'] . ", \\1, 1)",  $user_id_ary));
-					$_CLASS['core_db']->query($sql);
+					$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $sql_array, ZEBRA_TABLE);
 				}
 				else
 				{
@@ -109,7 +150,7 @@ if (!empty($_POST['submit']) || !empty($_GET['add']))
 			}
 			else
 			{
-				$error[] = 'USER_NOT_FOUND';
+				$error[] = 'USER_NOT_FOUND_OR_INACTIVE';
 			}
 			
 			$_CLASS['core_db']->free_result($result);
@@ -131,13 +172,13 @@ if (!empty($_POST['submit']) || !empty($_GET['add']))
 	}
 	else
 	{
-		$_CLASS['core_template']->assign('ERROR', implode('<br />', preg_replace('#^([A-Z_]+)$#e', "(!empty(\$_CLASS['core_user']->lang['\\1'])) ? \$_CLASS['core_user']->lang['\\1'] : '\\1'", $error)));
+		$_CLASS['core_template']->assign('ERROR', implode('<br />', $error));
 	}
 }
 
 $sql_and = ($this->mode === 'friends') ? 'z.friend = 1' : 'z.foe = 1';
 
-$sql = 'SELECT z.*, u.username 
+$sql = 'SELECT u.user_id, u.username 
 	FROM ' . ZEBRA_TABLE . ' z, ' . CORE_USERS_TABLE . ' u 
 	WHERE z.user_id = ' . $_CLASS['core_user']->data['user_id'] . "
 		AND $sql_and 
@@ -147,7 +188,7 @@ $result = $_CLASS['core_db']->query($sql);
 $username_options = '';
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
-	$username_options .= '<option value="' . $row['zebra_id'] . '">' . $row['username'] . '</option>';
+	$username_options .= '<option value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
 }
 $_CLASS['core_db']->free_result($result);
 

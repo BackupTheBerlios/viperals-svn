@@ -44,13 +44,13 @@ $menu['modules'][] = array('lang' => $_CLASS['core_user']->get_lang('MANAGE'), '
 $menu['modules'][] = '';
 $menu['modules'][] = array('lang' => $_CLASS['core_user']->get_lang('ARTICLES'), 'link' => generate_link('articles', array('admin' => true)));
 
-$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('FORUMS'), 'link' => generate_link('Forums', array('admin' => true)));
-$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('ADMIN_INDEX'), 'link' => generate_link('Forums', array('admin' => true)));
+$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('FORUMS'), 'link' => generate_link('forums', array('admin' => true)));
+$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('ADMIN_INDEX'), 'link' => generate_link('forums', array('admin' => true)));
 $menu['forums'][] = '';
-$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('MANAGE_FORUMS'), 'link' => generate_link('Forums&amp;file=admin_forums', array('admin' => true)));
-$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('PERMISSIONS'), 'link' => generate_link('Forums&amp;file=admin_permissions&amp;mode=forum', array('admin' => true)));
-$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('ADMINISTRATORS'), 'link' => generate_link('Forums&amp;file=admin_permissions&amp;mode=admin', array('admin' => true)));
-$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('MODERATORS'), 'link' => generate_link('Forums&amp;file=admin_permissions&amp;mode=mod', array('admin' => true)));
+$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('MANAGE_FORUMS'), 'link' => generate_link('forums&amp;file=admin_forums', array('admin' => true)));
+$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('PERMISSIONS'), 'link' => generate_link('forums&amp;file=admin_permissions&amp;mode=forum', array('admin' => true)));
+$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('ADMINISTRATORS'), 'link' => generate_link('forums&amp;file=admin_permissions&amp;mode=admin', array('admin' => true)));
+$menu['forums'][] = array('lang' => $_CLASS['core_user']->get_lang('MODERATORS'), 'link' => generate_link('forums&amp;file=admin_permissions&amp;mode=mod', array('admin' => true)));
 
 $menu['system'][] = array('lang' => $_CLASS['core_user']->get_lang('SYSTEM'), 'link' => generate_link('system', array('admin' => true)));
 $menu['system'][] = array('lang' => $_CLASS['core_user']->get_lang('SITE_SETTINGS'), 'link' => generate_link('system&amp;mode=site', array('admin' => true)));

@@ -285,7 +285,7 @@ class core_user extends sessions
 
 	function add_img($img_file = false, $module = false, $lang = false)
 	{
-		$img_file = ($img_file) ? "$img_file.php" : 'index.php';
+		//$img_file = ($img_file) ? "$img_file.php" : 'index.php';
 
 		if (!$img_file || !ereg('/', $img_file))
 		{
@@ -294,19 +294,39 @@ class core_user extends sessions
 			$module = ($module) ? $module : $_CLASS['core_display']->page['page_name'];
 			$lang = ($lang) ? $lang : $this->lang_name;
 
+			$img_file = ($img_file) ? $img_file.'_'.$lang.'.php' : 'index_'.$lang.'.php';
+			$img_file2 = ($img_file) ? "$img_file.php" : 'index.php';
+
 			if (file_exists($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file"))
 			{
-				include $_CLASS['core_display']->theme_path."/images/modules/$module/$img_file";
+				require_once $_CLASS['core_display']->theme_path."/images/modules/$module/$img_file";
+			}
+			elseif (file_exists(SITE_FILE_ROOT.'modules/'.$module."/images/$img_file"))
+			{
+				require_once SITE_FILE_ROOT.'modules/'.$module."/images/$img_file";
+			}
+			elseif (file_exists($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file2"))
+			{
+				require_once $_CLASS['core_display']->theme_path."/images/modules/$module/$img_file2";
+			}
+			elseif (file_exists(SITE_FILE_ROOT.'modules/'.$module."/images/$img_file2"))
+			{
+				require_once SITE_FILE_ROOT.'modules/'.$module."/images/$img_file2";
 			}
 			else
 			{
-				include SITE_FILE_ROOT.'modules/'.$module."/images/$img_file";
+				return false;
 			}
+		}
+		elseif (file_exists($img_file.'.php'))
+		{
+			require_once $img_file.'.php';
 		}
 		else
 		{
-			include $img_file.'.php';
+			return false;
 		}
+		return true;
 	}
 	
 	function get_lang($lang)
@@ -331,8 +351,7 @@ class core_user extends sessions
 		if (!is_array($this->img[$img]))
 		{
 			list($src, $height, $width) = explode('*', $this->img[$img]);
-			$src = '"' . str_replace('{LANG}', $this->lang_name, $src) . '"'; // remove once everything is updated
-
+			//$src = '"' . str_replace('{LANG}', $this->lang_name, $src) . '"'; // remove once everything is updated
 			$this->img[$img] = array('src' => $src, 'width' => $width, 'height' => $height);
 		}
 
@@ -359,7 +378,7 @@ class core_user extends sessions
 		{
 			if (mb_strpos($lang_file, '/') !== false)
 			{
-				include SITE_FILE_ROOT."language/$this->lang_name/$lang_file";
+				include SITE_FILE_ROOT."language/{$this->lang_name}/$lang_file";
 
 				return;
 			}
@@ -450,17 +469,6 @@ class core_user extends sessions
 
 		return '<img src=' . $img['src'] .$width . $height .' alt="' . $alt . '" title="' . $alt . '" />';
 	}
-/*
-	function optionget($key, $data = false)
-	{
-		return $this->user_data_get($key);
-	}
-
-	function optionset($key, $value, $data = false)
-	{
-		return $this->user_data_set($key, $value);
-	}
-*/
 }
 
 ?>

@@ -176,20 +176,19 @@ function user_add(&$data, $group_add = true)
 // add a required array here, then find feilds that are not in the data array
 	$_CLASS['core_db']->transaction();
 
-	$sql = 'INSERT INTO ' . CORE_USERS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $data);
-	$_CLASS['core_db']->query($sql);
+	$_CLASS['core_db']->sql_query_build('INSERT', $data, CORE_USERS_TABLE);
 
 	$data['user_id'] = $_CLASS['core_db']->insert_id(CORE_USERS_TABLE, 'user_id');
 
 	if ($group_add)
 	{
-		$sql = 'INSERT INTO ' . CORE_USER_GROUP_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+		$data2 = array(
 			'group_id'		=> (int) $data['user_group'],
 			'user_id'		=> (int) $data['user_id'],
 			'member_status'	=> $data['user_status']
-		));
-		
-		$_CLASS['core_db']->query($sql);
+		);
+
+		$_CLASS['core_db']->sql_query_build('INSERT', $data2, CORE_USER_GROUP_TABLE);
 	}
 
 	$_CLASS['core_db']->transaction('commit');
@@ -506,18 +505,24 @@ function groups_user_add($group_id, $user_id, $status)
 
 	$_CLASS['core_db']->transaction();
 
+	$data = array();
 	foreach ($user_id as $u_id)
 	{
 		foreach ($group_id as $g_id)
 		{
-			$data = array(
+			$data[] = array(
 				'group_id'		=> (int) $g_id,
 				'user_id'		=> (int) $u_id,
 				'member_status'	=> (int) $status,
 			);
 		
-			$_CLASS['core_db']->query('INSERT INTO '.USER_GROUP_TABLE.' '.$_CLASS['core_db']->sql_build_array('INSERT', $data));
+			//$_CLASS['core_db']->query('INSERT INTO '.USER_GROUP_TABLE.' '.$_CLASS['core_db']->sql_build_array('INSERT', $data));
 		}
+	}
+
+	if (!empty($data)) 
+	{
+		$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $data, USER_GROUP_TABLE);
 	}
 
 	$_CLASS['core_db']->transaction('commit');

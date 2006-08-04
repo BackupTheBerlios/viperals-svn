@@ -1322,9 +1322,6 @@ function page_header()
 		'T_RANKS_PATH'			=> "{$config['ranks_path']}/",
 		'T_UPLOAD_PATH'			=> "{$config['upload_path']}/",
 
-// Temp
-		'T_IMAGE_PATH'			=> "themes/viperal/template/modules/Forums/images/",
-
 		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['forums_auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
 	));

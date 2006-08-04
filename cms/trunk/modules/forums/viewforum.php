@@ -111,7 +111,7 @@ if (!$forum_data || $forum_data['forum_status'] == ITEM_DELETING)
 }
 
 // Check if links are checked for permission
-if (!$_CLASS['auth']->acl_get('f_read', $forum_id))
+if (!$_CLASS['forums_auth']->acl_get('f_read', $forum_id))
 {
 	if ($_CLASS['core_user']->data['user_id'] != ANONYMOUS)
 	{
@@ -146,8 +146,6 @@ if ($forum_data['forum_link'])
 // Add Images
 $_CLASS['core_user']->add_img();
 
-
-
 // Build navigation links
 generate_forum_nav($forum_data);
 
@@ -155,15 +153,16 @@ generate_forum_nav($forum_data);
 generate_forum_rules($forum_data);
 
 // Do we have subforums?
-$active_forum_ary = array();
+$active_forum_ary = $moderators = array();
 
 if ($forum_data['left_id'] != $forum_data['right_id'] - 1)
 {
-	$active_forum_ary = display_forums($forum_data);
+	list($active_forum_ary, $moderators) = display_forums($forum_data, $config['load_moderators'], $config['load_moderators']);
 }
 else
 {
 	$_CLASS['core_template']->assign('S_HAS_SUBFORUM', false);
+	$moderators = get_moderators($forum_id);
 }
 
 // Not postable forum or showing active topics?
@@ -182,8 +181,6 @@ if (!($forum_data['forum_type'] == FORUM_POST || (($forum_data['forum_flags'] & 
 	
 	$_CLASS['core_template']->display('modules/forums/viewforum_body.html');
 }
-
-$moderators = get_moderators($forum_id);
 
 // Handle marking posts
 if ($mark_read == 'topics')
@@ -222,7 +219,7 @@ if ($forum_data['enable_prune'] && $forum_data['prune_next'] < $_CLASS['core_use
 
 */
 
-if ($_CLASS['auth']->acl_get('f_subscribe', $forum_id))
+if ($_CLASS['forums_auth']->acl_get('f_subscribe', $forum_id))
 {
 	$notify_status = isset($forum_data['notify_status']) ? $forum_data['notify_status'] : null;
 	$s_watching_forum = watch_topic_forum('forum', $_CLASS['core_user']->data['user_id'], $forum_id, 0, $notify_status);
@@ -255,7 +252,7 @@ if ($sort_days)
 		WHERE forum_id = $forum_id
 			AND topic_type NOT IN (" . POST_ANNOUNCE . ', ' . POST_GLOBAL . ")
 			AND topic_last_post_time >= $min_post_time
-		" . (($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND topic_approved = 1');
+		" . (($_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? '' : 'AND topic_approved = 1');
 	$result = $_CLASS['core_db']->query($sql);
 	$topics_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? (int) $row['num_topics'] : 0;
 	$_CLASS['core_db']->free_result($result);
@@ -269,7 +266,7 @@ if ($sort_days)
 }
 else
 {
-	if ($_CLASS['auth']->acl_get('m_approve', $forum_id))
+	if ($_CLASS['forums_auth']->acl_get('m_approve', $forum_id))
 	{
 		$topics_count = ($forum_data['forum_topics_real']) ? $forum_data['forum_topics_real'] : 1;
 	}
@@ -296,8 +293,8 @@ $_CLASS['core_template']->assign_array(array(
 
 	'POST_IMG' 			=> ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->img('btn_locked', $post_alt) : $_CLASS['core_user']->img('btn_post', $post_alt),
 
-	'MOD_TOPIC_LOCK'	=>	$_CLASS['auth']->acl_get('m_lock', $forum_id),
-	'MOD_TOPIC_TITLE'	=>	$_CLASS['auth']->acl_get('m_', $forum_id),
+	'MOD_TOPIC_LOCK'	=>	$_CLASS['forums_auth']->acl_get('m_lock', $forum_id),
+	'MOD_TOPIC_TITLE'	=>	$_CLASS['forums_auth']->acl_get('m_', $forum_id),
 
 	'FORUM_IMG'			=>	$_CLASS['core_user']->img('forum', 'NO_NEW_POSTS'),
 	'FORUM_NEW_IMG'		=>	$_CLASS['core_user']->img('forum_new', 'NEW_POSTS'),
@@ -330,10 +327,10 @@ $_CLASS['core_template']->assign_array(array(
 	'S_WATCH_FORUM_LINK'	=> $s_watching_forum['link'],
 	'S_WATCH_FORUM_TITLE'	=> $s_watching_forum['title'],
 	'S_FORUM_ACTION' 		=> generate_link("forums&amp;file=viewforum&amp;f=$forum_id&amp;start=$start"),
-	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['auth']->acl_get('f_search', $forum_id)) ? true : false, 
+	'S_DISPLAY_SEARCHBOX'	=> ($_CLASS['forums_auth']->acl_get('f_search', $forum_id)) ? true : false, 
 	'S_SEARCHBOX_ACTION'	=> generate_link('forums&amp;file=search&amp;search_forum[]='.$forum_id), 
 
-	'U_MCP' 			=> ($_CLASS['auth']->acl_get('m_', $forum_id)) ? generate_link("forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
+	'U_MCP' 			=> ($_CLASS['forums_auth']->acl_get('m_', $forum_id)) ? generate_link("forums&amp;file=mcp&amp;f=$forum_id&amp;mode=forum_view") : '', 
 	'U_POST_NEW_TOPIC'	=> generate_link('forums&amp;file=posting&amp;mode=post&amp;f='.$forum_id), 
 	'U_VIEW_FORUM'		=> generate_link("forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param&amp;start=$start"), 
 	'U_MARK_TOPICS' 	=> generate_link("forums&amp;file=viewforum&amp;f=$forum_id&amp;mark=topics"))
@@ -343,7 +340,7 @@ $_CLASS['core_template']->assign_array(array(
 $icons = obtain_icons();
 
 // Grab all topic data
-$rowset = $announcement_list = $topic_list = array();
+$rowset = $announcement_list = $topic_list = $global_announce_list = array();
 
 $sql_from = FORUMS_TOPICS_TABLE.' t ';
 $sql_select = '';
@@ -354,7 +351,7 @@ if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])
 	$sql_select .= ', tt.mark_time';
 }
 
-$sql_approved = $_CLASS['auth']->acl_get('m_approve', $forum_id) ? '' : 'AND t.topic_approved = 1';
+$sql_approved = $_CLASS['forums_auth']->acl_get('m_approve', $forum_id) ? '' : 'AND t.topic_approved = 1';
 
 if ($forum_data['forum_type'] == FORUM_POST)
 {
@@ -370,6 +367,11 @@ if ($forum_data['forum_type'] == FORUM_POST)
 	{
 		$rowset[$row['topic_id']] = $row;
 		$announcement_list[] = $row['topic_id'];
+
+		if ($row['topic_type'] == POST_GLOBAL)
+		{
+			$global_announce_list[$row['topic_id']] = true;
+		}
 	}
 	$_CLASS['core_db']->free_result($result);
 }
@@ -410,12 +412,42 @@ $sql = "SELECT t.* $sql_select
 	ORDER BY t.topic_type " . ((!$store_reverse) ? 'DESC' : 'ASC') . ', ' . $sql_sort_order;
 $result = $_CLASS['core_db']->query_limit($sql, $sql_limit, $sql_start);
 
+$shadow_topic_list = array();
 while($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	$rowset[$row['topic_id']] = $row;
 	$topic_list[] = $row['topic_id'];
+	
+	if ($row['topic_status'] == ITEM_MOVED)
+	{
+		$shadow_topic_list[$row['topic_moved_id']] = $row['topic_id'];
+	}
 }
 $_CLASS['core_db']->free_result($result);
+
+// If we have some shadow topics, update the rowset to reflect their topic informations
+if (!empty($shadow_topic_list))
+{
+	$sql = 'SELECT *
+		FROM ' . FORUMS_TOPICS_TABLE . '
+		WHERE topic_id IN (' . implode(', ', array_keys($shadow_topic_list)) . ')';
+	$result = $_CLASS['core_db']->query($sql);
+
+	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$orig_topic_id = $shadow_topic_list[$row['topic_id']];
+
+		// We want to retain some values
+		$row = array_merge($row, array(
+			'topic_moved_id'	=> $rowset[$orig_topic_id]['topic_moved_id'],
+			'topic_status'		=> $rowset[$orig_topic_id]['topic_status'])
+		);
+
+		$rowset[$orig_topic_id] = $row;
+	}
+	$_CLASS['core_db']->free_result($result);
+}
+unset($shadow_topic_list);
 
 $topic_list = ($store_reverse) ? array_merge($announcement_list, array_reverse($topic_list)) : array_merge($announcement_list, $topic_list);
 unset($announcement_list);
@@ -478,24 +510,25 @@ if (!empty($topic_list))
 		$s_type_switch_test = ($row['topic_type'] == POST_ANNOUNCE || $row['topic_type'] == POST_GLOBAL) ? 1 : 0;
 
 		// Replies
-		$replies = ($_CLASS['auth']->acl_get('m_approve', $forum_id)) ? (int) $row['topic_replies_real'] : (int) $row['topic_replies'];
+		$replies = ($_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? (int) $row['topic_replies_real'] : (int) $row['topic_replies'];
 
 		if ($row['topic_status'] == ITEM_MOVED)
 		{
 // currently no marking supported
 			$topic_id = $row['topic_moved_id'];
+			$mark_time = $_CLASS['core_user']->time;
 		}
 
 		// Get folder img, topic status/type related informations
 		$folder_img = $folder_alt = $topic_type = '';
-	//	$status = topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
 		topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
+
+		$topic_unapproved = (!$row['topic_approved'] && $_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? true : false;
+		$posts_unapproved = ($row['topic_approved'] && $row['topic_replies'] < $row['topic_replies_real'] && $_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? true : false;
 
 		$newest_post_img = ($unread_topic) ? '<a href="' . generate_link("forums&amp;file=viewtopic&amp;t=$topic_id&amp;view=unread#unread") . '">' . $_CLASS['core_user']->img('icon_post_newest', 'VIEW_NEWEST_POST') . '</a> ' : '';
 
-		// Generate all the URIs ...
 		$view_topic_url = 'forums&amp;file=viewtopic&amp;t='.$topic_id;
-
 		$pagination = generate_pagination('forums&amp;file=viewtopic&amp;&amp;t='.$topic_id, $replies, $config['posts_per_page']);
 
 		// Send vars to template
@@ -509,7 +542,7 @@ if (!empty($topic_list))
 			'FIRST_POST_TIME' 	=> $_CLASS['core_user']->format_date($row['topic_time']),
 			'LAST_POST_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_post_time']),
 			'LAST_VIEW_TIME'	=> $_CLASS['core_user']->format_date($row['topic_last_view_time']),
-			'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name'] != '') ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
+			'LAST_POST_AUTHOR' 	=> ($row['topic_last_poster_name']) ? $row['topic_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'],
 
 			'PAGINATION'		=> $pagination['formated'],
 			'PAGINATION_ARRAY'	=> $pagination['array'],
@@ -523,27 +556,36 @@ if (!empty($topic_list))
 
 			'LAST_POST_IMG' 	=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'),
 			'NEWEST_POST_IMG' 	=> $newest_post_img,
+
 			'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 			//'TOPIC_FOLDER_IMG_SRC'	=> $_CLASS['core_user']->img($folder_img, $folder_alt, false, '', 'src'),
-
 			'TOPIC_ICON_IMG'        => empty($icons[$row['icon_id']]) ? '' : $icons[$row['icon_id']]['img'],
 			'TOPIC_ICON_IMG_WIDTH'  => empty($icons[$row['icon_id']]) ? '' :  $icons[$row['icon_id']]['width'],
 			'TOPIC_ICON_IMG_HEIGHT' => empty($icons[$row['icon_id']]) ? '' :  $icons[$row['icon_id']]['height'],
-	
-			'ATTACH_ICON_IMG'       => ($row['topic_attachment'] && $_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $forum_id)) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+			'ATTACH_ICON_IMG'       => ($row['topic_attachment'] && $_CLASS['forums_auth']->acl_gets(array('f_download', 'u_download'), $forum_id)) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+			'UNAPPROVED_IMG'		=> ($topic_unapproved || $posts_unapproved) ? $_CLASS['core_user']->img('icon_unapproved', ($topic_unapproved) ? 'TOPIC_UNAPPROVED' : 'POSTS_UNAPPROVED') : '',
 
+			'S_TOPIC_UNAPPROVED'	=> $topic_unapproved,
+			'S_POSTS_UNAPPROVED'	=> $posts_unapproved,
+			'S_HAS_POLL'			=> ($row['poll_start']),
+			'S_POST_ANNOUNCE'		=> ($row['topic_type'] == POST_ANNOUNCE),
+			'S_POST_GLOBAL'			=> ($row['topic_type'] == POST_GLOBAL),
+			'S_POST_STICKY'			=> ($row['topic_type'] == POST_STICKY),
+			'S_TOPIC_LOCKED'		=> ($row['topic_status'] == ITEM_LOCKED),
+			'S_TOPIC_MOVED'			=> ($row['topic_status'] == ITEM_MOVED),
+			
 			'S_TOPIC_TYPE'			=> $row['topic_type'], 
 			'S_UNREAD_TOPIC'		=> $unread_topic,
+			'S_TOPIC_REPORTED'		=> ($row['topic_reported'] && $_CLASS['forums_auth']->acl_get('m_report', $forum_id)),
+			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['forums_auth']->acl_get('m_approve', $forum_id)),
 
-			'S_TOPIC_REPORTED'		=> ($row['topic_reported'] && $_CLASS['auth']->acl_get('m_report', $forum_id)),
-			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['auth']->acl_get('m_approve', $forum_id)),
+			'U_NEWEST_POST'			=> generate_link($view_topic_url . '&amp;view=unread#unread'),
+			'U_LAST_POST'			=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),	
+			'U_LAST_POST_AUTHOR'	=> ($row['topic_last_poster_id']&& $row['topic_last_poster_id'] != ANONYMOUS) ? generate_link('members_list&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
+			'U_VIEW_TOPIC'			=> generate_link($view_topic_url),
 
-			'U_LAST_POST'       => generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),	
-			'U_LAST_POST_AUTHOR'=> ($row['topic_last_poster_id']) ? generate_link('members_list&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
-			'U_VIEW_TOPIC'		=> generate_link($view_topic_url),
-
-			'U_MCP_REPORT'		=> generate_link('forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
-			'U_MCP_QUEUE'       => generate_link('forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
+			'U_MCP_REPORT'			=> generate_link('forums&amp;file=mcp&amp;mode=reports&amp;t='.$topic_id),
+			'U_MCP_QUEUE'       	=> generate_link('forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;t='.$topic_id),
 
 			'S_TOPIC_TYPE_SWITCH'=> ($s_type_switch == $s_type_switch_test) ? -1 : $s_type_switch_test)
 		);

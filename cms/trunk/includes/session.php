@@ -213,7 +213,7 @@ class sessions
 			'session_autologin'	=> (string) $this->autologin_code,
 		);
 
-		$_CLASS['core_db']->query('INSERT INTO ' . CORE_SESSIONS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $session_data));
+		$_CLASS['core_db']->sql_query_build('INSERT', $session_data, CORE_SESSIONS_TABLE);
 
 		$this->new_session =  true;
 
@@ -258,7 +258,7 @@ class sessions
 			'auto_login_time'		=> (int) $this->time,
 		);
 
-		$_CLASS['core_db']->query('INSERT INTO ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' '.	$_CLASS['core_db']->sql_build_array('INSERT', $data_array));
+		$_CLASS['core_db']->sql_query_build('INSERT', $data_array, CORE_SESSIONS_AUTOLOGIN_TABLE);
 
 		$this->set_cookie('ali', $this->data['user_id'], $this->time + 2592000);
 		$this->set_cookie('alc', $this->autologin_code, $this->time + 2592000);
