@@ -245,11 +245,7 @@ class db_mysqli
 		{
 			case 'MULTI_INSERT':
 			case 'INSERT':
-				return $this->query('INSERT INTO ' . $table . ' '. $values');
-				/*foreach ($array as $array2)
-				{
-					return $this->query('INSERT INTO ' . $table . ' '. $values');
-				}*/
+				return $this->query('INSERT INTO ' . $table . ' '. $values);
 			break;
 
 			case 'UPDATE':
