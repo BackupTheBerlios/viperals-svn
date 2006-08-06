@@ -1119,7 +1119,7 @@ function page_header()
 	$l_online_users = $online_userlist = $l_online_record = $l_online_time = '';
 
 // this isn't required in most places
-	if ($config['load_online'] && $config['load_online_time'])
+	if ($config['load_online'])// && $config['load_online_time']
 	{
 		$logged_visible_online = $logged_hidden_online = $guests_online = 0;
 		$reading_sql = '';
@@ -1214,15 +1214,15 @@ function page_header()
 			switch (${$var_ary[0]})
 			{
 				case 0:
-					${$var_ary[1]} = $_CLASS['core_user']->lang[$l_prefix . '_USERS_ZERO_TOTAL'];
+					${$var_ary[1]} = $_CLASS['core_user']->get_lang($l_prefix . '_USERS_ZERO_TOTAL');
 				break;
 
 				case 1:
-					${$var_ary[1]} = $_CLASS['core_user']->lang[$l_prefix . '_USER_TOTAL'];
+					${$var_ary[1]} = $_CLASS['core_user']->get_lang($l_prefix . '_USER_TOTAL');
 				break;
 
 				default:
-					${$var_ary[1]} = $_CLASS['core_user']->lang[$l_prefix . '_USERS_TOTAL'];
+					${$var_ary[1]} = $_CLASS['core_user']->get_lang($l_prefix . '_USERS_TOTAL');
 				break;
 			}
 		}
@@ -1270,8 +1270,8 @@ function page_header()
 	// The following assigns all _common_ variables that may be used at any point
 	// in a template.
 	$_CLASS['core_template']->assign_array(array(
-		'LAST_VISIT_DATE' 			=> sprintf($_CLASS['core_user']->lang['YOU_LAST_VISIT'], $s_last_visit),
-		'CURRENT_TIME'				=> sprintf($_CLASS['core_user']->lang['CURRENT_TIME'], $_CLASS['core_user']->format_date(time(), false, true)),
+		'LAST_VISIT_DATE' 			=> sprintf($_CLASS['core_user']->get_lang('YOU_LAST_VISIT'), $s_last_visit),
+		'CURRENT_TIME'				=> sprintf($_CLASS['core_user']->get_lang('CURRENT_TIME'), $_CLASS['core_user']->format_date($_CLASS['core_user']->time, false, true)),
 		'TOTAL_USERS_ONLINE' 		=> $l_online_users,
 		'LOGGED_IN_USER_LIST' 		=> $online_userlist,
 		'RECORD_USERS' 				=> $l_online_record,

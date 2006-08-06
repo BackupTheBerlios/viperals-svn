@@ -27,100 +27,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-require_once($site_file_root.'includes/forums/functions_admin.php');
-
-/*
-$sections = array(0 => array (
-    'module_id' => '9',
-    'module_title' => 'MAIN',
-    'module_filename' => 'main',
-    'module_subs' => 'front
-forum_view
-topic_view
-post_details',
-    'module_acl' => 'acl_m_',
-  ),
-  1 => array (
-    'module_id' => '10',
-    'module_title' => 'QUEUE',
-    'module_filename' => 'queue',
-    'module_subs' => 'unapproved_topics
-unapproved_posts
-reports',
-    'module_acl' => 'acl_m_approve',
-));
-
-foreach  ($sections as $row)
-{
-	$selected = ($row['module_filename'] == 'kk') ?  true : false;
-
-	// Get the localised lang string if available, or make up our own otherwise
-	$module_lang = 'MCP_' . $row['module_title'];
-
-	$_CLASS['core_template']->assign_vars_array('mcp_section', array(
-		'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($row['module_title']))),
-		'S_SELECTED'	=> $selected, 
-		'U_TITLE'		=> generate_link()
-	));
-
-	if ($selected)
-	{
-		$module_id = $row['module_id'];
-		$module_name = $row['module_filename'];
-
-		if ($row['module_subs'])
-		{
-			$submodules_ary = explode("\n", $row['module_subs']);
-
-			foreach ($submodules_ary as $submodule_title)
-			{
-				$submodule_title = trim($submodule_title);
-
-				if (!$submodule_title)
-				{
-					continue;
-				}
-				
-			
-				// Only show those rows we are able to access
-				if (($submodule_title == 'post_details' && !$post_id) || ($submodule_title == 'topic_view' && !$topic_id) || ($submodule_title == 'forum_view' && !$forum_id))
-				{
-					continue;
-				}
-				
-
-				$suffix = ($post_id) ? "&amp;p=$post_id" : '';
-				$suffix .= ($topic_id) ? "&amp;t=$topic_id" : '';
-				$suffix .= ($forum_id) ? "&amp;f=$forum_id" : '';
-
-				$selected = ($submodule_title == 'kll') ? true : false;
-
-				// Get the localised lang string if available, or make up our own otherwise
-				$module_lang = strtoupper($module_type . '_' . $module_name . '_' . $submodule_title);
-
-				$_CLASS['core_template']->assign_vars_array("{$module_type}_subsection", array(
-					'L_TITLE'		=> (isset($_CLASS['core_user']->lang[$module_lang])) ? $_CLASS['core_user']->lang[$module_lang] : ucfirst(str_replace('_', ' ', strtolower($module_lang))),
-					'S_SELECTED'	=> $selected,
-					'ADD_ITEM'		=> $this->add_menu_item($row['module_filename'], $submodule_title),
-					'U_TITLE'		=> generate_link($module_url . '&amp;i=' . $module_id . '&amp;mode=' . $submodule_title . $suffix))
-				);
-
-			}
-		}
-	}
-}
-
-//$_CLASS['core_blocks']->load_blocks();
-$_CLASS['core_blocks']->blocks_loaded = true;
-
-$data = array(
-	'block_title'		=> 'Forum Administration',
-	'block_position'	=> BLOCK_LEFT,
-	'block_file'		=> 'block-forums_mcp.php',
-);
-
-$_CLASS['core_blocks']->add_block($data);
-*/
+require_once SITE_FILE_ROOT.'includes/forums/functions_admin.php';
 
 // Add Item to Submodule Title
 function add_menu_item($module_name, $mode)
@@ -188,14 +95,22 @@ if (!$_CLASS['core_user']->is_user)
 	login_box(array('admin_login' => true, 'full_login' => false, 'explain' => $_CLASS['core_user']->lang['LOGIN_EXPLAIN_MCP']));
 }
 
-if (!$_CLASS['auth']->acl_get('m_'))
-{
-	trigger_error('YOUR_NO_MODERATOR');
-}
-
-$mode	= get_variable('mode', 'REQUEST', 'front');
+$i	= get_variable('i', 'REQUEST');
+$mode	= $i ? $i : get_variable('mode', 'REQUEST', 'front');
 $action = get_variable('action', 'REQUEST');
 $quick_mod = isset($_REQUEST['quickmod']);
+
+$post_id = get_variable('p', 'REQUEST', 0);
+$topic_id = get_variable('t', 'REQUEST', 0);
+$forum_id = get_variable('f', 'REQUEST', 0);
+$user_id = get_variable('u', 'REQUEST', 0);
+$username = get_variable('username', 'REQUEST', '');
+
+if ($mode == 'topic_logs')
+{
+	$id = 'logs';
+	$quickmod = false;
+}
 
 if ($mode === 'approve' || $mode === 'disapprove')
 {
@@ -207,7 +122,13 @@ if ($action == 'merge_select')
 	$mode = 'forum_view';
 }
 
-// Topic view modes
+/*
+if (!$_CLASS['forums_auth']->acl_get('m_'))
+{
+	trigger_error('YOUR_NO_MODERATOR');
+}
+*/
+
 if (in_array($mode, array('split', 'split_all', 'split_beyond', 'merge', 'merge_posts')))
 {
 	$_REQUEST['action'] = $action = $mode;
@@ -223,27 +144,109 @@ if (in_array($mode, array('resync')))
 	$quick_mod = false;
 }
 
+if ($post_id)
+{
+	// We determine the topic and forum id here, to make sure the moderator really has moderative rights on this post
+	$sql = 'SELECT topic_id, forum_id
+		FROM ' . FORUMS_POSTS_TABLE . "
+		WHERE post_id = $post_id";
+
+	$result = $_CLASS['core_db']->query($sql);
+	$_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
+
+	$topic_id = (int) $row['topic_id'];
+	$forum_id = (int) ($row['forum_id']) ? $row['forum_id'] : $forum_id;
+}
+
+if ($topic_id && !$forum_id)
+{
+	$sql = 'SELECT forum_id
+		FROM ' . FORUMS_TOPICS_TABLE . "
+		WHERE topic_id = $topic_id";
+	$result = $_CLASS['core_db']->query($sql);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
+
+	$forum_id = (int) $row['forum_id'];
+}
+
+// If the user doesn't have any moderator powers (globally or locally) he can't access the mcp
+if (!$_CLASS['forums_auth']->acl_get('m_'))//acl_getf_global
+{
+	// Except he is using one of the quickmod tools for users
+	$user_quickmod_actions = array(
+		'lock'			=> 'f_user_lock',
+		'unlock'		=> 'f_user_lock',
+		'make_sticky'	=> 'f_sticky',
+		'make_announce'	=> 'f_announce',
+		'make_global'	=> 'f_announce',
+		'make_normal'	=> array('f_announce', 'f_sticky')
+	);
+
+	$allow_user = false;
+	if ($quickmod && isset($user_quickmod_actions[$action]) && !$_CLASS['forums_auth']->acl_gets($user_quickmod_actions[$action], $forum_id))
+	{
+		$topic_info = get_topic_data(array($topic_id));
+		if ($topic_info[$topic_id]['topic_poster'] == $user->data['user_id'])
+		{
+			$allow_user = true;
+		}
+	}
+
+	if (!$allow_user)
+	{
+		trigger_error('NOT_AUTHORIZED');
+	}
+}
+
+$_CLASS['core_template']->assign_array(array(
+	'S_USER_LOGGED_IN'		=> true,
+	'S_DISPLAY_PM'			=> false,
+	'S_DISPLAY_SEARCH'		=> false,
+	'S_DISPLAY_MEMBERLIST'	=> false,
+	'S_DISPLAY_JUMPBOX'		=> false,
+	'S_TIMEZONE'			=> '',
+
+	'LAST_VISIT_DATE'		=> '',
+	'PAGINATION'			=> '',
+	'PAGINATION_ARRAY'		=> '',
+	'CURRENT_TIME'			=> ''
+));
+		
+// if the user cannot read the forum he tries to access then we won't allow mcp access either
+if ($forum_id && !$_CLASS['forums_auth']->acl_get('f_read', $forum_id))
+{
+	trigger_error('NOT_AUTHORIZED');
+}
+
 if (!$quick_mod)
 {
 	switch ($mode)
 	{
+		case 'main':
 		case 'front':
-			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_front.php');
+			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_front.php';
 			script_close(false);
 		break;
 
 		case 'forum_view':
-			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_forum.php');
+			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_forum.php';
 			script_close(false);
 		break;
 		
 		case 'topic_view':
-			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_topic.php');
+			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_topic.php';
 			script_close(false);
 		break;
 			
 		case 'post_details':
-			require(SITE_FILE_ROOT.'includes/forums/mcp/mcp_post.php');
+			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_post.php';
+			script_close(false);
+		break;
+		
+		case 'notes':
+			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_notes.php';
 			script_close(false);
 		break;
 	}
@@ -251,8 +254,8 @@ if (!$quick_mod)
 	//script_close(false);
 }
 
-require_once(SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php');
-	
+require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php';
+
 switch ($mode)
 {
 	case 'lock':
@@ -284,13 +287,14 @@ switch ($mode)
 	case 'make_global':
 	case 'make_normal':
 		$topic_ids = get_topic_ids($quick_mod);
+		$forum_id = get_variable('f', 'REQUEST');
 
 		if (empty($topic_ids))
 		{
 			trigger_error('NO_TOPIC_SELECTED');
 		}
 
-		change_topic_type($mode, $topic_ids);
+		change_topic_type($mode, $topic_ids, $forum_id);
 	break;
 
 	case 'move':
@@ -409,6 +413,7 @@ function get_topic_data($topic_ids, $acl_list = false)
 
 		$rowset[$row['topic_id']] = $row;
 	}
+	$_CLASS['core_db']->free_result($result);
 
 	return $rowset;
 }
@@ -422,7 +427,7 @@ function get_post_data($post_ids, $acl_list = false)
 
 	$sql = 'SELECT p.*, u.*, t.*, f.*
 		FROM ' . FORUMS_POSTS_TABLE . ' p LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON (f.forum_id = p.forum_id),
-		' . USERS_TABLE . ' u, ' . FORUMS_TOPICS_TABLE . ' t
+		' . CORE_USERS_TABLE . ' u, ' . FORUMS_TOPICS_TABLE . ' t
 		WHERE p.post_id IN (' . implode(', ', $post_ids) . ')
 			AND u.user_id = p.poster_id
 			AND t.topic_id = p.topic_id';
@@ -443,6 +448,7 @@ function get_post_data($post_ids, $acl_list = false)
 
 		$rowset[$row['post_id']] = $row;
 	}
+	$_CLASS['core_db']->free_result($result);
 
 	return $rowset;
 }
@@ -470,6 +476,7 @@ function get_forum_data($forum_id, $acl_list = 'f_list')
 
 		$rowset[$row['forum_id']] = $row;
 	}
+	$_CLASS['core_db']->free_result($result);
 
 	return $rowset;
 }
@@ -649,7 +656,7 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 // Should make this better
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		if (!$acl_list || $_CLASS['auth']->acl_get($acl_list, $row['forum_id']))
+		if (!$acl_list || $_CLASS['auth']->acl_gets($acl_list, $row['forum_id']))
 		{
 			$forum_ids[] = $row['forum_id'];
 			$ids[] = $row[$sql_id];
@@ -666,4 +673,5 @@ function build_hidden_fields($array)
 {
 	return generate_hidden_fields($array);
 }
+
 ?>

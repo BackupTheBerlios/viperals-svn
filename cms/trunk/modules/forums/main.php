@@ -95,8 +95,8 @@ $_CLASS['core_template']->assign_array(array(
 	'TOTAL_POSTS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_post_s), $config['num_posts']),
 	'TOTAL_TOPICS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_topic_s), $config['num_topics']),
 	'TOTAL_USERS'	=> sprintf($_CLASS['core_user']->get_lang($l_total_user_s), $_CORE_CONFIG['user']['total_users']),
-	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->get_lang('NEWEST_USER'), '<a href="'. generate_link('Members_List&amp;mode=viewprofile&amp;u='.$_CORE_CONFIG['user']['newest_user_id']) . '">', $_CORE_CONFIG['user']['newest_username'], '</a>'), 
-	'LEGEND'		=> $legend, 
+	'NEWEST_USER'	=> sprintf($_CLASS['core_user']->get_lang('NEWEST_USER'), '<a href="'. generate_link('members_list&amp;mode=viewprofile&amp;u='.$_CORE_CONFIG['user']['newest_user_id']) . '">', $_CORE_CONFIG['user']['newest_username'], '</a>'), 
+	'LEGEND'		=> $legend,
 	'BIRTHDAY_LIST'	=> $birthday_list, 
 
 	'FORUM_IMG'			=>	$_CLASS['core_user']->img('forum', 'NO_NEW_POSTS'),
@@ -106,7 +106,8 @@ $_CLASS['core_template']->assign_array(array(
 	'S_LOGIN_ACTION'			=> generate_link('control_panel&amp;mode=login'), 
 	'S_DISPLAY_BIRTHDAY_LIST'	=> ($config['load_birthdays']), 
 
-	'U_MARK_FORUMS'	=> generate_link('forums&amp;mark=forums')
+	'U_MARK_FORUMS'	=> generate_link('forums&amp;mark=forums'),
+	'U_MCP'			=> $_CLASS['forums_auth']->acl_get('m_') ? generate_link('forums&amp;file=mcp&amp;i=main&amp;mode=front') : ''
 ));
 unset($birthday_list, $legend);
 

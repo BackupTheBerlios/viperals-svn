@@ -39,7 +39,7 @@ if (!defined('VIPERAL'))
     die;
 }
 
-require(SITE_FILE_ROOT.'includes/forums/functions_display.php');
+require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
 
 // Start initial var setup
 $forum_id	= request_var('f', 0);

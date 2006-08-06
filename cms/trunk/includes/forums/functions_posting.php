@@ -1398,81 +1398,11 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 		if ($post_mode == 'reply')
 		{
 			$sql_data[FORUMS_POSTS_TABLE]['sql'] = array_merge($sql_data[FORUMS_POSTS_TABLE]['sql'], array(
-				'topic_id' => $data['topic_id'])
-			);
+				'topic_id' => $data['topic_id']
+			));
 		}
 
-		$query = '';
-
-		switch ($_CLASS['core_db']->db_layer)
-		{
-			case 'mssql':
-			case 'mssql_odbc':
-				$fields = array();
-				foreach ($sql_data[FORUMS_POSTS_TABLE]['sql'] as $key => $var)
-				{
-					$fields[] = $key;
-
-					if (is_null($var))
-					{
-						$values[] = 'NULL';
-					}
-					else if (is_string($var))
-					{
-						if ($key !== 'bbcode_bitfield')
-						{
-							$values[] = "'" . $_CLASS['core_db']->escape($var) . "'";
-						}
-						else
-						{
-							$values[] = "CAST('" . $var . "' AS varbinary)";
-						}
-					}
-					else
-					{
-						$values[] = (is_bool($var)) ? intval($var) : $var;
-					}
-				}
-				$query = ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
-			break;
-
-			case 'sqlite':
-				$fields = array();
-				foreach ($sql_data[FORUMS_POSTS_TABLE]['sql'] as $key => $var)
-				{
-					$fields[] = $key;
-
-					if (is_null($var))
-					{
-						$values[] = 'NULL';
-					}
-					else if (is_string($var))
-					{
-						if ($key !== 'bbcode_bitfield')
-						{
-							$values[] = "'" . $_CLASS['core_db']->escape($var) . "'";
-						}
-						else
-						{
-							$values[] = "'" . sqlite_udf_encode_binary($var) . "'";
-						}
-					}
-					else
-					{
-						$values[] = (is_bool($var)) ? intval($var) : $var;
-					}
-				}
-				$query = ' (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $values) . ')';
-			break;
-
-			default:
-				$query = $_CLASS['core_db']->sql_build_array('INSERT', $sql_data[FORUMS_POSTS_TABLE]['sql']);
-			break;
-		}
-
-
-		$sql = 'INSERT INTO ' . FORUMS_POSTS_TABLE . ' ' .	$query;
-		$_CLASS['core_db']->query($sql);
+		$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_POSTS_TABLE . ' ' .	$_CLASS['core_db']->sql_build_array('INSERT', $sql_data[FORUMS_POSTS_TABLE]['sql']));
 		$data['post_id'] = $_CLASS['core_db']->insert_id(FORUMS_POSTS_TABLE, 'post_id');
 
 		if ($post_mode == 'post')
@@ -1482,8 +1412,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				'topic_last_post_id'	=> $data['post_id'],
 				'topic_last_post_time'	=> $current_time,
 				'topic_last_poster_id'	=> (int) $_CLASS['core_user']->data['user_id'],
-				'topic_last_poster_name'=> (!$_CLASS['core_user']->is_user && $username) ? $username : (($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $_CLASS['core_user']->data['username'] : '')
-			);
+				'topic_last_poster_name'=> (!$_CLASS['core_user']->is_user && $username) ? $username : (($_CLASS['core_user']->data['user_id'] != ANONYMOUS) ? $_CLASS['core_user']->data['username'] : ''
+			));
 		}
 
 		unset($sql_data[FORUMS_POSTS_TABLE]['sql']);
@@ -1547,70 +1477,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	// Update the posts table
 	if (isset($sql_data[FORUMS_POSTS_TABLE]['sql']))
 	{
-		switch ($_CLASS['core_db']->db_layer)
-		{
-			case 'mssql':
-			case 'mssql_odbc':
-				$values = array();
-				foreach ($sql_data[FORUMS_POSTS_TABLE]['sql'] as $key => $var)
-				{
-					if (is_null($var))
-					{
-						$values[] = "$key = NULL";
-					}
-					else if (is_string($var))
-					{
-						if ($key !== 'bbcode_bitfield')
-						{
-							$values[] = "$key = '" . $_CLASS['core_db']->escape($var) . "'";
-						}
-						else
-						{
-							$values[] = "$key = CAST('" . $var . "' AS varbinary)";
-						}
-					}
-					else
-					{
-						$values[] = (is_bool($var)) ? "$key = " . intval($var) : "$key = $var";
-					}
-				}
-				$query = implode(', ', $values);
-			break;
-
-			case 'sqlite':
-				$values = array();
-				foreach ($sql_data[FORUMS_POSTS_TABLE]['sql'] as $key => $var)
-				{
-					if (is_null($var))
-					{
-						$values[] = "$key = NULL";
-					}
-					else if (is_string($var))
-					{
-						if ($key !== 'bbcode_bitfield')
-						{
-							$values[] = "$key = '" . $_CLASS['core_db']->escape($var) . "'";
-						}
-						else
-						{
-							$values[] = "$key ='" . sqlite_udf_encode_binary($var) . "'";
-						}
-					}
-					else
-					{
-						$values[] = (is_bool($var)) ? "$key = " . intval($var) : "$key = $var";
-					}
-				}
-				$query = implode(', ', $values);
-			break;
-
-			default:
-				$query = $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[FORUMS_POSTS_TABLE]['sql']);
-			break;
-		}
-
 		$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
-			SET ' . $query . '
+			SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_data[FORUMS_POSTS_TABLE]['sql']) . '
 			WHERE post_id = ' . $data['post_id'];
 		$_CLASS['core_db']->query($sql);
 	}
@@ -1688,9 +1556,10 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 	}
 
 	// Submit Attachments
-	if (sizeof($data['attachment_data']) && $data['post_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit')))
+	if (count($data['attachment_data']) && $data['post_id'] && in_array($mode, array('post', 'reply', 'quote', 'edit')))
 	{
-		$space_taken = $files_added = 0;
+		$space_taken = $files_added = $files_updated = 0;
+		$attach_sql_array = array();
 
 		foreach ($data['attachment_data'] as $pos => $attach_row)
 		{
@@ -1701,6 +1570,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					SET attach_comment = '" . $_CLASS['core_db']->escape($attach_row['attach_comment']) . "'
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
 				$_CLASS['core_db']->query($sql);
+				
+				$files_updated++;
 			}
 			else
 			{
@@ -1710,7 +1581,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					continue;
 				}
 
-				$attach_sql = array(
+				$attach_sql_array[] = array(
 					'post_msg_id'		=> $data['post_id'],
 					'topic_id'			=> $data['topic_id'],
 					'in_message'		=> 0,
@@ -1726,16 +1597,17 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					'thumbnail'			=> $attach_row['thumbnail']
 				);
 
-				$sql = 'INSERT INTO ' . FORUMS_ATTACHMENTS_TABLE . ' ' .
-					$_CLASS['core_db']->sql_build_array('INSERT', $attach_sql);
-				$_CLASS['core_db']->query($sql);
-
 				$space_taken += $attach_row['filesize'];
 				$files_added++;
 			}
 		}
 
-		if (sizeof($data['attachment_data']))
+		if (count($attach_sql_array))
+		{
+			$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $attach_sql_array, FORUMS_TOPICS_TABLE);
+		}
+	
+		if ($files_updated || $files_added)
 		{
 			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '
 				SET post_attachment = 1
@@ -1747,6 +1619,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				WHERE topic_id = ' . $data['topic_id'];
 			$_CLASS['core_db']->query($sql);
 		}
+		unset($attach_sql_array);
 
 		set_config('upload_dir_size', $config['upload_dir_size'] + $space_taken, true);
 		set_config('num_files', $config['num_files'] + $files_added, true);

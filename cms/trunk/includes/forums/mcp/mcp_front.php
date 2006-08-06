@@ -42,15 +42,13 @@ $Id$
 
 $forum_id = get_variable('f', 'REQUEST', false, 'int');
 
-$url = 'Forums&amp;file=mcp';
+$url = 'forums&amp;file=mcp';
 
 $forum_list_approve = get_forum_list('m_approve');
-$_CLASS['core_template']->assign('S_SHOW_UNAPPROVED', false);
+$_CLASS['core_template']->assign('S_SHOW_UNAPPROVED', !empty($forum_list_approve));
 
 if (!empty($forum_list_approve))
 {
-	$_CLASS['core_template']->assign('S_SHOW_UNAPPROVED', true);
-
 	$sql = 'SELECT post_id, forum_id
 		FROM ' . FORUMS_POSTS_TABLE . '
 		WHERE forum_id IN (0, ' . implode(', ', $forum_list_approve) . ')
@@ -99,8 +97,8 @@ if (!empty($forum_list_approve))
 				'U_POST_DETAILS'=> generate_link($url . '&amp;p=' . $row['post_id'] . '&amp;mode=post_details'),
 				'U_MCP_FORUM'	=> ($row['forum_id']) ? generate_link($url . '&amp;f=' . $row['forum_id'] . '&amp;mode=forum_view') : '',
 				'U_MCP_TOPIC'	=> generate_link($url . '&amp;t=' . $row['topic_id'] . '&amp;mode=topic_view'),
-				'U_FORUM'		=> ($row['forum_id']) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : '',
-				'U_TOPIC'		=> generate_link('Forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . '&amp;t=' . $row['topic_id']),
+				'U_FORUM'		=> ($row['forum_id']) ? generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : '',
+				'U_TOPIC'		=> generate_link('forums&amp;file=viewtopic&amp;f=' . (($row['forum_id']) ? $row['forum_id'] : $forum_id) . '&amp;t=' . $row['topic_id']),
 				'U_AUTHOR'		=> ($row['poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['poster_id']),
 
 				'FORUM_NAME'	=> ($row['forum_id']) ? $forum_names[$row['forum_id']] : $_CLASS['core_user']->lang['GLOBAL_ANNOUNCEMENT'],
@@ -125,7 +123,7 @@ if (!empty($forum_list_approve))
 	}
 }
 
-/*
+
 // Latest 5 reported
 $forum_list = get_forum_list('m_reports');
 $_CLASS['core_template']->assign('S_SHOW_REPORTS', !empty($forum_list));
@@ -135,6 +133,7 @@ if (!empty($forum_list))
 	$sql = 'SELECT COUNT(r.report_id) AS total
 		FROM ' . FORUMS_REPORTS_TABLE . ' r, ' . POSTS_TABLE . ' p
 		WHERE r.post_id = p.post_id
+			AND r.report_closed = 0
 			AND p.forum_id IN (0, ' . implode(', ', $forum_list) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -146,11 +145,12 @@ if (!empty($forum_list))
 			FROM ' . FORUMS_REPORTS_TABLE . ' r, ' . FORUMS_REASONS_TABLE . ' rr,' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t, ' . USERS_TABLE . ' u
 			LEFT JOIN ' . FORUMS_FORUMS_TABLE . ' f ON f.forum_id = p.forum_id
 			WHERE r.post_id = p.post_id
+				AND r.report_closed = 0
 				AND r.reason_id = rr.reason_id
 				AND p.topic_id = t.topic_id
 				AND r.user_id = u.user_id
 				AND p.forum_id IN (0, ' . implode(', ', $forum_list) . ')
-			ORDER BY p.post_id DESC';
+			ORDER BY p.post_time DESC';
 		$result = $_CLASS['core_db']->query_limit($sql, 5);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -159,8 +159,8 @@ if (!empty($forum_list))
 				'U_POST_DETAILS'=> generate_link($url . '&amp;p=' . $row['post_id'] . '&amp;mode=post_details'),
 				'U_MCP_FORUM'	=> ($row['forum_id']) ? generate_link($url . '&amp;f=' . $row['forum_id'] . '&amp;mode=forum_view') : '',
 				'U_MCP_TOPIC'	=> generate_link($url . '&amp;t=' . $row['topic_id'] . '&amp;mode=topic_view'),
-				'U_FORUM'		=> ($row['forum_id']) ? generate_link('Forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : '',
-				'U_TOPIC'		=> generate_link('Forums&amp;file=viewtopic&amp;f=' . $row['forum_id'] . '&amp;t=' . $row['topic_id']),
+				'U_FORUM'		=> ($row['forum_id']) ? generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : '',
+				'U_TOPIC'		=> generate_link('forums&amp;file=viewtopic&amp;f=' . $row['forum_id'] . '&amp;t=' . $row['topic_id']),
 				'U_REPORTER'	=> ($row['user_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']),
 
 				'FORUM_NAME'	=> ($row['forum_id']) ? $row['forum_name'] : $_CLASS['core_user']->lang['POST_GLOBAL'],
@@ -187,16 +187,16 @@ if (!empty($forum_list))
 		);
 	}
 }
-*/
 
-$forum_list_log = get_forum_list(array('m_', 'a_general'));
+
+$forum_list = get_forum_list(array('m_', 'a_general'));
 // Add forum_id 0 for global announcements
-$forum_list_log[] = 0;
+$forum_list[] = 0;
 
 $log_count = 0;
 $log = array();
 
-view_log('mod', $log, $log_count, 5, 0, $forum_list_log);
+view_log('mod', $log, $log_count, 5, 0, $forum_list);
 
 foreach ($log as $row)
 {
@@ -205,8 +205,8 @@ foreach ($log as $row)
 		'IP'			=> $row['ip'],
 		'TIME'			=> $_CLASS['core_user']->format_date($row['time']),
 		'ACTION'		=> $row['action'],
-		'U_VIEWTOPIC'	=> $row['viewtopic'],
-		'U_VIEWLOGS'	=> $row['viewlogs']
+		'U_VIEWTOPIC'	=> (!empty($row['viewtopic'])) ? $row['viewtopic'] : '',
+		'U_VIEWLOGS'	=> (!empty($row['viewlogs'])) ? $row['viewlogs'] : ''
 	));
 }
 
@@ -215,10 +215,12 @@ $_CLASS['core_template']->assign_array(array(
 	'S_HAS_LOGS'	=> !empty($log)
 ));
 
+unset($forum_list, $log);
+
 $_CLASS['core_template']->assign('S_MCP_ACTION', generate_link($url));
 make_jumpbox(generate_link($url . '&amp;mode=forum_view'), 0, false, 'm_');
 
 page_header();
-$_CLASS['core_display']->display($_CLASS['core_user']->get_lang('MCP'), 'modules/Forums/mcp_front.html');
+$_CLASS['core_display']->display($_CLASS['core_user']->get_lang('MCP'), 'modules/forums/mcp_front.html');
 
 ?>

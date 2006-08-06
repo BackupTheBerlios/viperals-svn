@@ -315,9 +315,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 			'S_IS_LINK'			=> ($row['forum_type'] == FORUM_LINK), 
 			'S_UNREAD_FORUM'	=> !empty($forum_unread[$forum_id]),
 			'S_LOCKED_FORUM'	=> ($row['forum_status'] == ITEM_LOCKED) ? true : false,
-
-			'LAST_POST_IMG'		=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'), 
-
+			
 			'FORUM_ID'			=> $row['forum_id'], 
 			'FORUM_FOLDER_IMG'	=> ($row['forum_image']) ? '<img src="' . $row['forum_image'] . '" alt="' . $folder_alt . '" />' : $_CLASS['core_user']->img($folder_image, $folder_alt),
 			//'FORUM_FOLDER_IMG_SRC'	=> ($row['forum_image']) ? $row['forum_image'] : $_CLASS['core_user']->img($folder_image, $folder_alt, false, '', 'src'),
@@ -347,6 +345,8 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		'MODIFY_FORUM'		=> $_CLASS['auth']->acl_get('a_forum'),
 		'U_MARK_FORUMS'		=> generate_link('forums&amp;file=viewforum&amp;f=' . $root_data['forum_id'] . '&amp;mark=Forums'), 
 		'S_HAS_SUBFORUM'	=> ($visible_forums) ? true : false,
+		'LAST_POST_IMG'			=> $_CLASS['core_user']->img('icon_post_latest', 'VIEW_LATEST_POST'), 
+
 		'L_SUBFORUM'		=> ($visible_forums == 1) ? $_CLASS['core_user']->lang['SUBFORUM'] : $_CLASS['core_user']->lang['SUBFORUMS']
 	));
 
@@ -398,7 +398,7 @@ function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img,
 				break;
 	
 				default:
-					if ($replies >= $config['hot_threshold'])
+					if ($config['hot_threshold'] && $replies >= $config['hot_threshold'])
 					{
 						$folder_img = ($unread) ? 'folder_hot_new': 'folder_hot';
 						//$status = ($unread) ? 4 : 3;

@@ -747,4 +747,51 @@ function avatar_upload($data, &$error)
 	
 	return array(AVATAR_UPLOAD, $file->get('realname'), $file->get('width'), $file->get('height'));
 }
+
+/**
+* Whois facility
+* From phpBB 3
+*/
+function user_ipwhois($ip)
+{
+	$ipwhois = '';
+
+	$match = array(
+		'#RIPE\.NET#is'				=> 'whois.ripe.net',
+		'#whois\.apnic\.net#is'		=> 'whois.apnic.net',
+		'#nic\.ad\.jp#is'			=> 'whois.nic.ad.jp',
+		'#whois\.registro\.br#is'	=> 'whois.registro.br'
+	);
+
+	if (($fsk = @fsockopen('whois.arin.net', 43)))
+	{
+		fputs($fsk, "$ip\n");
+		while (!feof($fsk))
+		{
+			$ipwhois .= fgets($fsk, 1024);
+		}
+		@fclose($fsk);
+	}
+
+	foreach (array_keys($match) as $server)
+	{
+		if (preg_match($server, $ipwhois))
+		{
+			$ipwhois = '';
+			if (($fsk = @fsockopen($match[$server], 43)))
+			{
+				fputs($fsk, "$ip\n");
+				while (!feof($fsk))
+				{
+					$ipwhois .= fgets($fsk, 1024);
+				}
+				@fclose($fsk);
+			}
+			break;
+		}
+	}
+
+	return $ipwhois;
+}
+
 ?>

@@ -24,21 +24,22 @@
 // -------------------------------------------------------------
 // Fix links "defined('IN_ADMIN')"
 // Simple version of jumpbox, just lists authed forums
-function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true)
+function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true, $return_array = false)
 {
 	global $_CLASS;
 
 	$acl = ($ignore_acl) ? '' : array('f_list', 'a_forum', 'a_forumadd', 'a_forumdel');
 
 	// This query is identical to the jumpbox one
-	$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, left_id, right_id
+	$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, forum_status, left_id, right_id
 		FROM ' . FORUMS_FORUMS_TABLE . '
 		ORDER BY left_id ASC';
 	$result = $_CLASS['core_db']->query($sql);
 
-	$right = $iteration = 0;
+	$right = 0;
 	$padding_store = array('0' => '');
-	$forum_list = $padding = '';
+	$padding = '';
+	$forum_list = ($return_array) ? array() : '';
 
 	// Sometimes it could happen that forums will be displayed here not be displayed within the index page
 	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
@@ -78,12 +79,17 @@ function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl =
 		{
 			continue;
 		}
-
-		$selected = (is_array($select_id)) ? ((in_array($row['forum_id'], $select_id)) ? ' selected="selected"' : '') : (($row['forum_id'] == $select_id) ? ' selected="selected"' : '');
-
-		$forum_list .= '<option value="' . $row['forum_id'] . '"' . $selected . '>' . $padding . $row['forum_name'] . '</option>';
-
-		$iteration++;
+		if ($return_array)
+		{
+			// Include some more informations...
+			$selected = (is_array($select_id)) ? ((in_array($row['forum_id'], $select_id)) ? true : false) : (($row['forum_id'] == $select_id) ? true : false);
+			$forum_list[$row['forum_id']] = array_merge(array('padding' => $padding, 'selected' => $selected), $row);
+		}
+		else
+		{
+			$selected = (is_array($select_id)) ? ((in_array($row['forum_id'], $select_id)) ? ' selected="selected"' : '') : (($row['forum_id'] == $select_id) ? ' selected="selected"' : '');
+			$forum_list .= '<option value="' . $row['forum_id'] . '"' . $selected . '>' . $padding . $row['forum_name'] . '</option>';
+		}
 	}
 	unset($padding_store);
 
