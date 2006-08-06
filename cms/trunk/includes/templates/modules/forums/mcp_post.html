@@ -2,7 +2,47 @@
 
 <!-- INCLUDE modules/forums/mcp_header.html -->
 
-<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg"><form method="post" name="mcp" action="{ $U_APPROVE_ACTION }">
+<!-- IF { $S_MCP_REPORT } -->
+	<form method="post" name="mcp_report" action="{ $U_CLOSE_ACTION }">
+	
+	<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
+	<tr>
+		<th colspan="2" align="center">{ $L_REPORT_DETAILS }</th>
+	</tr>
+	<tr>
+		<td class="row1"><b class="gen">{ $L_REPORT_REASON }: </b></td>
+		<td class="row2"><span class="gen">{ $REPORT_REASON_TITLE } &raquo; { $REPORT_REASON_DESCRIPTION }</span></td>
+	</tr>
+	<tr>
+		<td class="row1" width="20%"><b class="gen">{ $L_REPORTER }: </b></td>
+		<td class="row2" width="80%"><span class="gen">{ $REPORTER_NAME } &nbsp; [ <!-- IF { $U_VIEW_REPORTER_PROFILE } --><a href="{ $U_VIEW_REPORTER_PROFILE }">{ $L_READ_PROFILE }</a><!-- ENDIF --><!-- IF { $S_USER_NOTES } --><!-- IF { $U_VIEW_REPORTER_PROFILE } --> | <!-- ENDIF --><a href="{ $U_MCP_REPORTER_NOTES }">{ $L_VIEW_NOTES }</a> | <a href="{ $U_MCP_WARN_REPORTER }">{ $L_WARN_USER }</a><!-- ENDIF --> ]</span></td>
+	</tr>
+	<tr>
+		<td class="row1"><b class="gen">{ $L_REPORTED }: </b></td>
+		<td class="row2"><span class="postdetails">{ $REPORT_DATE }</span></td>
+	</tr>
+	<!-- IF { $REPORT_TEXT } -->
+		<tr>
+			<th colspan="2" align="center">{ $L_MORE_INFO }</th>
+		</tr>
+		<tr>
+			<td class="row1" colspan="2"><div class="gen" style="overflow: auto; width: 100%; height: 80pt; border: 1px;">{ $REPORT_TEXT }</div></td>
+		</tr>
+	<!-- ENDIF -->
+	<tr>
+		<td class="cat" align="center" colspan="2"><!-- IF { $S_POST_REPORTED } --><input class="button" type="submit" value="{ $L_CLOSE_REPORT }" name="action[close]" /><!-- ELSE -->{ $L_REPORT_CLOSED }<!-- ENDIF --> &nbsp; <input class="button" type="submit" value="{ $L_DELETE_REPORT }" name="action[delete]" /></td>
+	</tr>
+	</table>
+
+	<input type="hidden" name="post_id_list[]" value="{POST_ID}" />
+	</form>
+
+	<br clear="all"/>
+<!-- ENDIF -->
+
+<!-- IF { $S_MCP_QUEUE } --><form method="post" name="mcp_approve" action="{ $U_APPROVE_ACTION }"><!-- ELSE --><form method="post" name="mcp_report" action="{ $U_CLOSE_ACTION }"><!-- ENDIF -->
+
+<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
 <tr>
 	<th colspan="2" height="28" align="center">{ $L_POST_DETAILS }</th>
 </tr>
@@ -11,11 +51,11 @@
 </tr>
 <tr>
 	<td class="row1"><b class="gen">{ $L_POST_SUBJECT }: </b></td>
-	<td class="row2"><span class="gen">{ $POST_SUBJECT }</span></td>
+	<td class="row2"><span class="gen">{ $POST_SUBJECT }</span><!-- IF { $S_POST_UNAPPROVED } --><span class="postapprove">{ $UNAPPROVED_IMG } <a href="{ $U_MCP_APPROVE }">{ $L_POST_UNAPPROVED }</a></span> <!-- ENDIF --> <!-- IF { $S_POST_REPORTED } && !{ $S_MCP_REPORT  } --><span class="postreported">{ $REPORTED_IMG } <a href="{ $U_MCP_REPORT}">{ $L_POST_REPORTED }</a></span><!-- ENDIF --></td>
 </tr>
 <tr>
 	<td class="row1" width="20%"><b class="gen">{ $L_POSTER }: </b></td>
-	<td class="row2" width="80%"><span class="gen">{ $POSTER_NAME } &nbsp; [ <a href="{ $U_VIEW_PROFILE }">{ $L_READ_PROFILE }</a> ]</span></td>
+	<td class="row2" width="80%"><span class="gen">{ $POSTER_NAME } &nbsp; [ <!-- IF { $U_VIEW_PROFILE } --><a href="{ $U_VIEW_PROFILE }">{ $L_READ_PROFILE }</a> <!-- ENDIF --><!-- IF { $S_USER_NOTES } --><!-- IF { $U_VIEW_PROFILE } --> | <!-- ENDIF --><a href="{ $U_MCP_USER_NOTES }">{ $L_VIEW_NOTES }</a> <!-- IF { $U_MCP_WARN_USER } -->| <a href="{ $U_MCP_WARN_USER }">{ $L_WARN_USER }</a><!-- ENDIF --><!-- ENDIF --> ]</span></td>
 </tr>
 <!-- IF { $S_CAN_VIEWIP } -->
 	<tr>
@@ -33,9 +73,9 @@
 <tr>
 	<td class="row1" colspan="2"><div class="gen" style="overflow: auto; width: 100%; height: 80pt; border: 1px;">{ $POST_PREVIEW }</div><!-- IF { $U_EDIT } --><div class="gen" style="float: right;"><a href="{ $U_EDIT }">{ $EDIT_IMG }</a></div><!-- ENDIF --></td>
 </tr>
-<!-- IF { $S_POST_UNAPPROVED } -->
+<!-- IF { $S_POST_UNAPPROVED } && { $S_MCP_QUEUE } -->
 	<tr>
-		<td class="cat" align="center" colspan="2"><input class="btnmain" type="submit" value="{ $L_APPROVE }" name="mode[approve]" /> &nbsp; <input class="btnlite" type="submit" value="{ $L_DISAPPROVE }" name="mode[disapprove]" /></td>
+		<td class="cat" align="center" colspan="2"><input class="button" type="submit" value="{ $L_APPROVE }" name="mode[approve]" /> &nbsp; <input class="button" type="submit" value="{ $L_DISAPPROVE }" name="mode[disapprove]" /></td>
 	</tr>
 	<input type="hidden" name="post_id_list[]" value="{ $POST_ID }" />
 <!-- ENDIF -->
@@ -44,98 +84,44 @@
 
 <!-- IF { $S_MCP_QUEUE } -->
 	<br clear="all" />
-	<!-- IF { $S_TOPIC_REVIEW } --><!-- INCLUDE modules/Forums/posting_topic_review.html --><!-- ENDIF -->
+
+	<!-- IF { $S_TOPIC_REVIEW } --><!-- INCLUDE modules/forums/posting_topic_review.html --><!-- ENDIF -->
+<!-- ELSEIF { $S_MCP_REPORT } -->
+	<br clear="all" />
+
+	<!-- IF { $S_TOPIC_REVIEW } --><!-- INCLUDE modules/forums/posting_topic_review.html --><!-- ENDIF -->
 <!-- ELSE -->
-	<!-- IF { $S_SHOW_USER_NOTES } -->
-		<br /><a name="usernotes"></a>
-		<form method="post" name="mcp" action="{ $U_POST_ACTION }">
-		
-		<!-- IF { $S_USER_NOTES } -->
-			<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
-			<tr>
-				<th colspan="2" height="28" align="center">{ $L_FEEDBACK }</th>
-			</tr>
-			<!-- LOOP $usernotes -->
-			<!-- IF { $usernotes:#LOOP_INDEX } % 2 --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
-				<td<!-- IF !{ $S_CLEAR_ALLOWED } --> colspan="2"<!-- ENDIF -->><span class="gensmall">Report by: <b>{ $usernotes:REPORT_BY }</b> on { $usernotes:REPORT_AT }</span><hr /><span class="gen">{ $usernotes:ACTION }</span></td>
-				<!-- IF { $S_CLEAR_ALLOWED } --><td width="5%" align="center"><input type="checkbox" name="marknote[]" value="{ $usernotes:ID }" /></td><!-- ENDIF -->
-			</tr>
-			<!-- ENDLOOP -->
-			<!-- IF { $S_CLEAR_ALLOWED } -->
-			<tr>
-				<td class="cat" colspan="2" align="center"><input class="btnlite" type="submit" name="action[del_marked]" value="{ $L_DELETE_MARKED }" />&nbsp; <input class="btnlite" type="submit" name="action[del_all]" value="{ $L_DELETE_ALL }" /></td>
-			</tr>
-			<!-- ENDIF -->
-			</table>
-			<br />
-		<!-- ENDIF -->
-		
-		<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
-		<tr>
-			<th colspan="2" height="28" align="center">{ $L_ADD_FEEDBACK }</th>
-		</tr>
-		<tr>
-			<td class="row3" align="center" colspan="2"><span class="genmed">{ $L_ADD_FEEDBACK_EXPLAIN }</span></td>
-		<tr>
-			<td colspan="2" class="row1" align="center"><textarea name="usernote" rows="10" cols="76"></textarea></td>
-		</tr>
-		<tr>
-			<td class="cat" colspan="2" align="center"><input class="btnmain" type="submit" name="action[add_feedback]" value="{ $L_SUBMIT }" />&nbsp;&nbsp;<input class="btnlite" type="reset" value="{ $L_RESET }" /></td>
-		</tr>
-		</table>
-
-		</form>
-	<!-- ENDIF -->
-	
-	<!-- IF { $S_SHOW_REPORTS } -->
-		<br /><a name="reports"></a>
-
-		<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
-		<tr>
-			<th colspan="2" height="28" align="center">{ $L_REPORTS }</th>
-		</tr>
-		<!-- LOOP $reports -->
-			<tr>
-				<td class="row1"><b class="genmed">{ $reports:REPORT_TIME }</b></td>
-				<td class="row2"><span class="gen">{ $reports:REASON_TITLE } &#187; { $reports:REASON_DESC }</span></td>
-			</tr>
-			<tr>
-				<td class="row1"><b class="genmed">{ $L_REPORTER }: </b></td>
-				<td class="row2"><span class="gen"><!-- IF { $reports:U_REPORTER } --><a href="{ $reports:U_REPORTER }">{ $reports:REPORTER }</a><!-- ELSE -->{ $reports:REPORTER }<!-- ENDIF --></span></td>
-			</tr>
-			<!-- IF { $reports:REPORT_TEXT } -->
-				<tr>
-					<td class="row1" valign="top"><b class="genmed">{ $L_MORE_INFO }: </b></td>
-					<td class="row2"><span class="gen">{ $reports:REPORT_TEXT }</span></td>
-				</tr>
-			<!-- ENDIF -->
-			<tr>
-				<td colspan="2" class="spacer"></td>
-			</tr>
-		<!-- ENDLOOP -->
-		</table>
-	<!-- ENDIF -->
-
 	<!-- IF { $S_CAN_LOCK_POST } || { $S_CAN_DELETE_POST } || { $S_CAN_CHGPOSTER } -->
 		<br /><a name="mod"></a>
 
 		<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
 		<tr>
-			<th colspan="2" height="28" align="center">{ $L_MOD_OPTIONS }</th>
+			<th colspan="2" align="center">{ $L_MOD_OPTIONS }</th>
 		</tr>
 		<!-- IF { $S_CAN_CHGPOSTER } -->
 			<tr>
-				<form method="post" name="mcp" action="{ $U_POST_ACTION }" { $S_FORM_ENCTYPE }>
+				<form method="post" name="mcp_chgposter" action="{ $U_POST_ACTION }">
 					<td class="row1" valign="top"><b class="gen">{ $L_CHANGE_POSTER }</b></td>
-					<td class="row2"><!-- IF { $S_USER_SELECT } --><select name="u">{ $S_USER_SELECT }</select> <input type="submit" class="btnmain" name="action[chgposter]" value="{ $L_CONFIRM }" /><br /><!-- ENDIF --> <input class="post" type="text" name="username" value="{ $SEARCH_USERNAME }" /> <input class="btnlite" type="submit" value="{ $L_SEARCH }" name="action[chgposter_search]" /></td>
+					<td class="row2"><input class="post" type="text" name="username" value="" /> <input class="button" type="submit" value="{ $L_CONFIRM }" name="action[chgposter]" /><br /><span class="gensmall">[ <a href="{ $U_FIND_MEMBER }" onclick="window.open('{ $U_FIND_MEMBER }', '_phpbbsearch', 'HEIGHT=500,resizable=yes,scrollbars=yes,WIDTH=740');return false;">{ $L_FIND_USERNAME }</a> ]</span><!-- IF { $S_USER_SELECT } --><br /><select name="u">{ $S_USER_SELECT }</select> <input type="submit" class="button" name="action[chgposter_ip]" value="{ $L_CONFIRM }" /><!-- ENDIF --></td>
 				</form>
 			</tr>
 		<!-- ENDIF -->
 		<!-- IF { $S_CAN_LOCK_POST } || { $S_CAN_DELETE_POST } -->
 			<tr>
-				<form method="post" name="mcp" action="{ $U_MCP_ACTION }"{ $S_FORM_ENCTYPE }>
+				<form method="post" name="mcp" action="{ $U_MCP_ACTION }">
 					<td class="row1" valign="top"><b class="gen">{ $L_MOD_OPTIONS }</b></td>
-					<td class="row2"><select name="mode"><!-- IF { $S_CAN_LOCK_POST } --><!-- IF { $S_POST_LOCKED } --><option value="unlock_post">{ $L_UNLOCK_POST } [{ $L_UNLOCK_POST_EXPLAIN }]</option><!-- ELSE --><option value="lock_post">{ $L_LOCK_POST } [{ $L_LOCK_POST_EXPLAIN }]</option><!-- ENDIF --><!-- ENDIF --><!-- IF { $S_CAN_DELETE_POST } --><option value="delete_post">{ $L_DELETE_POST }</option><!-- ENDIF --></select> <input class="btnmain" type="submit" value="{ $L_SUBMIT }" /></td>
+					<td class="row2"><select name="action">
+					<!-- IF { $S_CAN_LOCK_POST } -->
+						<!-- IF { $S_POST_LOCKED } -->
+						<option value="unlock_post">{ $L_UNLOCK_POST } [{ $L_UNLOCK_POST_EXPLAIN }]</option>
+						<!-- ELSE -->
+						<option value="lock_post">{ $L_LOCK_POST } [{ $L_LOCK_POST_EXPLAIN }]</option>
+						<!-- ENDIF -->
+					<!-- ENDIF -->
+					<!-- IF S_CAN_DELETE_POST -->
+						<option value="delete_post">{ $L_DELETE_POST }</option>
+					<!-- ENDIF -->
+					</select> <input class="button" type="submit" value="{ $L_SUBMIT }" /></td>
 				</form>
 			</tr>
 		<!-- ENDIF -->
@@ -147,10 +133,10 @@
 
 		<table width="100%" cellpadding="3" cellspacing="1" border="0" class="tablebg">
 		<tr>
-			<th colspan="2" height="28" align="center">{ $L_IP_INFO }</th>
+			<th colspan="2" align="center">{ $L_IP_INFO }</th>
 		</tr>
 		<tr>
-			<td colspan="2" height="28" class="cat"><b class="gen">{ $L_OTHER_USERS }</b></td>
+			<td colspan="2" class="cat"><b class="gen">{ $L_OTHER_USERS }</b></td>
 		</tr>
 		<!-- LOOP $userrow -->
 			<!-- IF { $userrow:#LOOP_INDEX } % 2 -->
@@ -158,20 +144,20 @@
 			<!-- ELSE -->
 				<tr class="row2">
 			<!-- ENDIF -->
-				<td><span class="gen"><a href="{ $userrow:U_PROFILE }">{ $userrow:USERNAME }</a> [ { $userrow:NUM_POSTS } { $userrow:L_POST_S } ]</span></td>
+				<td><span class="gen"><a href="{ $userrow:U_PROFILE }">{ $userrow:USERNAME}</a> [ { $userrow:NUM_POSTS } { $userrow:L_POST_S } ]</span></td>
 				<td align="center"><a href="{ $userrow:U_SEARCHPOSTS }">{ $SEARCH_IMG }</a></td>
 			</tr>
 		<!-- LOOPELSE -->
 			<tr class="row1">
-				<td colspan="2" align="center"><span class="gen">{ $L_NO_MATCHES_FOUND }</span></td>
+				<td colspan="2" align="center"><span class="gen">{ $L_NO_MATCHES_FOUND}</span></td>
 			</tr>
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $userrow -->
 		<tr>
-			<td height="28" class="cat"><b class="gen">{ $L_OTHER_IPS }</b></td>
+			<td class="cat"><b class="gen">{ $L_OTHER_IPS }</b></td>
 			<td class="cat" width="10%" nowrap="nowrap"><!-- IF { $U_LOOKUP_ALL } --><span class="gen">[ <a href="{ $U_LOOKUP_ALL }">{ $L_LOOKUP_ALL }</a> ]</span><!-- ENDIF --></td>
 		</tr>
 		<!-- LOOP $iprow -->
-			<!-- IF { $userrow:#iprow } % 2 -->
+			<!-- IF { $iprow:#LOOP_INDEX } % 2 -->
 				<tr class="row1">
 			<!-- ELSE -->
 				<tr class="row2">
@@ -183,7 +169,7 @@
 			<tr class="row1">
 				<td colspan="2" align="center"><span class="gen">{ $L_NO_MATCHES_FOUND }</span></td>
 			</tr>
-		<!-- ENDLOOP -->
+		<!-- ENDLOOP $iprow -->
 		</table>
 	<!-- ENDIF -->
 <!-- ENDIF -->

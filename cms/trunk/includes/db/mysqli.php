@@ -236,7 +236,7 @@ class db_mysqli
 
 		$values = $this->sql_build_array($query_type, $array);
 
-		if (!$value)
+		if (!$values)
 		{
 			return false;
 		}

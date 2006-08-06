@@ -5,7 +5,7 @@
 <form name="confirm" action="{ $CONFIRM_ACTION }" method="post">
 	<table class="tablebg" width="100%" cellspacing="1">
 		<tr>
-			<th>{ $MESSAGE }</th>
+			<th>{ $MESSAGE_TITLE }</th>
 		</tr>
 		<tr>
 			<td class="row1" align="center">
@@ -15,10 +15,10 @@
 				<span class="gen"><br />{ $L_SELECT_DESTINATION_FORUM }&nbsp;&nbsp;<br /></span>
 					<select name="to_forum_id">{ $S_FORUM_SELECT }</select><br />
 				<!-- IF { $S_CAN_LEAVE_SHADOW } -->
-					<input type="checkbox" name="move_leave_shadow" checked="checked" /><span class="gen">{ $L_LEAVE_SHADOW }</span><br />
+					<input type="checkbox" class="radio" name="move_leave_shadow" checked="checked" /><span class="gen">{ $L_LEAVE_SHADOW }</span><br />
 				<!-- ENDIF -->
-				<br />{ $HIDDEN_FIELDS }<span class="gen">{ $MESSAGE }</span><br /><br />
-				<input class="button" name="confirm" value="Submit" type="submit" />&nbsp;&nbsp;<input class="button" value="{ $L_CANCEL }" name="cancel" type="submit" />
+				<br />{ $HIDDEN_FIELDS }<span class="gen">{ $MESSAGE_TEXT }</span><br /><br />
+				<input class="button" name="confirm" value="{ $L_YES }" type="submit" />&nbsp;&nbsp;<input class="button" value="{ $L_NO }" name="cancel" type="submit" />
 			</td>
 		</tr>
 	</table>

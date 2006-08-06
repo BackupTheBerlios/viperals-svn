@@ -5,6 +5,14 @@
 
 <!-- INCLUDE modules/forums/overall_header.html -->
 
+<!-- IF { $U_MCP } -->
+	<div id="pageheader">
+		<p class="linkmcp">[ <a href="{ $U_MCP }">{ $L_MCP }</a> ]</p>
+	</div>
+
+	<br clear="all" /><br />
+<!-- ENDIF -->
+
 <table class="tablebg" cellspacing="1" width="100%">
 	<tr>
 		<td class="cat" colspan="5" align="right"><a class="nav" href="{ $U_MARK_FORUMS }">{ $L_MARK_FORUMS_READ }</a>&nbsp;</td>
@@ -52,17 +60,17 @@
 		<td class="row2" align="center"><p class="gensmall">{ $forumrow:POSTS }</p></td>
 		<td class="row2" align="center" nowrap="nowrap">
 			<!-- IF { $forumrow:LAST_POST_TIME } -->
-				<p class="gensmall">{ $forumrow:LAST_POST_TIME }</p>
-				<p class="gensmall">
+				<p class="topicdetails">{ $forumrow:LAST_POST_TIME }</p>
+				<p class="topicdetails">
 				<!-- IF { $forumrow:U_LAST_POSTER } -->
 					<a href="{ $forumrow:U_LAST_POSTER }">{ $forumrow:LAST_POSTER }</a>
 				<!-- ELSE -->
 					{ $forumrow:LAST_POSTER }
 				<!-- ENDIF -->
-				<a href="{ $forumrow:U_LAST_POST }">{ $forumrow:LAST_POST_IMG }</a>
+				<a href="{ $forumrow:U_LAST_POST }">{ $LAST_POST_IMG }</a>
 				</p>
 			<!-- ELSE -->
-				<p class="gensmall">{ $L_NO_POSTS }</p>
+				<p class="topicdetails">{ $L_NO_POSTS }</p>
 			<!-- ENDIF -->
 		</td>
 	</tr>

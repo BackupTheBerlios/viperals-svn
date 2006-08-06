@@ -14,12 +14,12 @@
 <!-- LOOP $forumrow -->
 	<!-- IF { $forumrow:S_IS_CAT } -->
 	<tr>
-		<td class="cat" colspan="2"><a class="cattitle" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a></td>
+		<td class="cat" colspan="2"><h4><a href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a></h4></td>
 		<td class="catdiv" colspan="3" align="right">&nbsp;</td>
 	</tr>
 	<!-- ELSEIF { $forumrow:S_IS_LINK } -->
 	<tr>
-		<td class="row1" width="50" height="40" align="center">{ $forumrow:FORUM_FOLDER_IMG }</td>
+		<td class="row1" width="50" height="40" align="center" valign="middle">{ $forumrow:FORUM_FOLDER_IMG }</td>
 		<td class="row1" height="40" id="forum_{ $forumrow:FORUM_ID }"<!-- IF { $MODIFY_FORUM } --> onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF --> width="100%">
 			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a><br />
 			<!-- IF { $forumrow:FORUM_DESC } -->
@@ -34,27 +34,34 @@
 	</tr>
 	<!-- ELSE -->
 	<tr>
-		<td class="row1" width="50" height="40" align="center" id="forum_folder_status_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } --> onmouseover="lock_unlock_init('{ $forumrow:FORUM_ID }', 'forum', { $forumrow:FORUM_LOCKED });" <!-- ENDIF -->>{ $forumrow:FORUM_FOLDER_IMG }</td>
+		<td class="row1" width="50" height="40" align="center" valign="middle" id="forum_folder_status_{ $forumrow:FORUM_ID }" <!-- IF { $MODIFY_FORUM } --> onmouseover="lock_unlock_init('{ $forumrow:FORUM_ID }', 'forum', { $forumrow:FORUM_LOCKED });" <!-- ENDIF -->>{ $forumrow:FORUM_FOLDER_IMG }</td>
 		<td class="row1" width="100%" height="40"  id="forum_{ $forumrow:FORUM_ID }"<!-- IF { $MODIFY_FORUM } --> onmouseover="tite_edit_init('{ $forumrow:FORUM_ID }', 'forum');"<!-- ENDIF -->>
 			<a class="forumlink" id="forum_name_{ $forumrow:FORUM_ID }" href="{ $forumrow:U_VIEWFORUM }">{ $forumrow:FORUM_NAME }</a><br />
-			<!-- IF { $forumrow:FORUM_DESC } -->
-			<table cellspacing="5" cellpadding="0" border="0">
-				<tr>
-					<td><span class="gensmall">{ $forumrow:FORUM_DESC }</span></td>
-				</tr>
-			</table>
-			<!-- ENDIF --><!-- IF { $forumrow:MODERATORS } || { $forumrow:SUBFORUMS }-->
-			<span class="gensmall"><!-- IF { $forumrow:MODERATORS } --><b>{ $forumrow:L_MODERATOR_STR }:</b> { $forumrow:MODERATORS }<br /><!-- ENDIF --><!-- IF { $forumrow:SUBFORUMS } --><br /><b>{ $forumrow:L_SUBFORUM_STR }</b> { $forumrow:SUBFORUMS }<!-- ENDIF --></span>
-			<!-- ENDIF -->
+			<p class="forumdesc">{ $forumrow:FORUM_DESC }</p>
+				<!-- IF { $forumrow:MODERATORS } -->
+					<p class="forumdesc"><strong>{ $forumrow:L_MODERATOR_STR  }:</strong> { $forumrow:MODERATORS }</p>
+				<!-- ENDIF -->
+				<!-- IF { $forumrow:SUBFORUMS } -->
+					<p class="forumdesc"><strong>{ $forumrow:L_SUBFORUM_STR }</strong> { $forumrow:SUBFORUMS }</p>
+				<!-- ENDIF -->
 		</td>
 		<td class="row2" align="center"><span class="gensmall">{ $forumrow:TOPICS }</span></td>
 		<td class="row2" align="center"><span class="gensmall">{ $forumrow:POSTS }</span></td>
 		<td class="row2" align="center" nowrap="nowrap">
 			<span class="gensmall">
-				<!-- IF { $forumrow:LAST_POST_TIME } -->{ $forumrow:LAST_POST_TIME }<br />
-				<!-- IF { $forumrow:U_LAST_POSTER } --><a href="{ $forumrow:U_LAST_POSTER }">{ $forumrow:LAST_POSTER }</a><!-- ELSE -->{ $forumrow:LAST_POSTER }<!-- ENDIF -->
-				<a href="{ $forumrow:U_LAST_POST }">{ $forumrow:LAST_POST_IMG }</a><!-- ELSE -->{ $L_NO_POSTS }<!-- ENDIF -->
-				</span>
+				<!-- IF { $forumrow:LAST_POST_TIME } -->
+				<p class="topicdetails">{ $forumrow:LAST_POST_TIME }</p>
+				<p class="topicdetails">
+				<!-- IF { $forumrow:U_LAST_POSTER } -->
+					<a href="{forumrow.U_LAST_POSTER }">{ $forumrow:LAST_POSTER }</a>
+				<!-- ELSE -->
+					{ $forumrow:LAST_POSTER }
+				<!-- ENDIF -->
+				<a href="{ $forumrow:U_LAST_POST}">{ $LAST_POST_IMG }</a>
+				</p>
+			<!-- ELSE -->
+				<p class="topicdetails">{ $L_NO_POSTS }</p>
+			<!-- ENDIF -->
 		</td>
 	</tr>
 	<!-- ENDIF -->

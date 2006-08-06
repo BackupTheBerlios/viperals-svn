@@ -2,9 +2,13 @@
 
 <!-- INCLUDE modules/forums/mcp_header.html -->
 
-<form method="post" name="mcp" action="{ $S_MCP_ACTION }"><table class="tablebg" width="100%" cellspacing="1">
+<!-- IF { $U_VIEW_FORUM_LOGS } --><a href="{ $U_VIEW_FORUM_LOGS }">{ $L_VIEW_FORUM_LOGS }</a><!-- ENDIF -->
+
+<form method="post" name="mcp" action="{ $S_MCP_ACTION }">
+
+<table class="tablebg" width="100%" cellspacing="1">
 	<tr>
-		<td class="cat" colspan="6" align="center"><span class="gensmall">{ $L_DISPLAY_TOPICS }:</span> { $S_SELECT_SORT_DAYS }&nbsp;<span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR }&nbsp;<input class="btnlite" type="submit" name="sort" value="{ $L_GO }" /></span></td>
+		<td class="cat" colspan="6" align="center"><span class="gensmall">{ $L_DISPLAY_TOPICS }:</span> { $S_SELECT_SORT_DAYS }&nbsp;<span class="gensmall">{ $L_SORT_BY }</span> { $S_SELECT_SORT_KEY } { $S_SELECT_SORT_DIR }&nbsp;<input class="button" type="submit" name="sort" value="{ $L_GO }" /></span></td>
 	</tr>
 	<tr>
 		<th width="4%" nowrap="nowrap">&nbsp;</th>
@@ -25,17 +29,17 @@
 			<!-- IF { $topicrow:S_SELECT_TOPIC } -->
 				<span class="genmed">[ <a href="{ $topicrow:U_SELECT_TOPIC }">{ $L_SELECT }</a> ]&nbsp;</span>
 			<!-- ENDIF -->
-			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } -->
-				<a href="{ $topicrow:U_MCP_QUEUE }">{ $UNAPPROVED_IMG }</a>&nbsp;
+			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a>
+			<!-- IF { $topicrow:S_TOPIC_UNAPPROVED } || { $topicrow:S_POSTS_UNAPPROVED } -->
+				<a href="{ $topicrow:U_MCP_QUEUE }">{ $topicrow:UNAPPROVED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
 			<!-- IF { $topicrow:S_TOPIC_REPORTED } -->
 				<a href="{ $topicrow:U_MCP_REPORT }">{ $REPORTED_IMG }</a>&nbsp;
 			<!-- ENDIF -->
-			<p class="topictitle">{ $topicrow:NEWEST_POST_IMG } { $topicrow:ATTACH_ICON_IMG } <a href="{ $topicrow:U_VIEW_TOPIC }">{ $topicrow:TOPIC_TITLE }</a></p>
 		</td>
 		<td class="row1" width="50" align="center"><p class="topicdetails">{ $topicrow:REPLIES }</p></td>
 		<td class="row1" width="120" align="center"><p class="topicdetails">{ $topicrow:LAST_POST_TIME }</p></td>
-		<td class="row2" align="center"><input type="checkbox" name="topic_id_list[]" value="{ $topicrow:TOPIC_ID }" { $topicrow:S_TOPIC_CHECKED }/></td>
+		<td class="row2" align="center"><input type="checkbox" class="radio" name="topic_id_list[]" value="{ $topicrow:TOPIC_ID }" { $topicrow:S_TOPIC_CHECKED }/></td>
 
 	</tr>
 	<!-- LOOPELSE -->
@@ -63,7 +67,14 @@
 		</td>
 	</tr>
 </table>
+
 </form>
+
+<table width="100%" cellspacing="2" cellpadding="2" border="0" align="center">
+	<tr>
+		<td align="right" valign="top" nowrap="nowrap"><b class="gensmall"><a href="javascript:marklist('mcp', 'topic_id_list', true);">{ $L_MARK_ALL }</a> :: <a href="javascript:marklist('mcp', 'topic_id_list', false);">{ $L_UNMARK_ALL }</a></b></td>
+	</tr>
+</table>
 
 <!-- INCLUDE modules/forums/mcp_footer.html -->
 

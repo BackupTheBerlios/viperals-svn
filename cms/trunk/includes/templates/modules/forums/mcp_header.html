@@ -2,19 +2,45 @@
 
 <script language="javascript" type="text/javascript" defer="defer">
 <!--
-function marklist(form_name, status)
+function marklist(id, name, state)
 {
-	for (i = 0; i < document.forms[form_name].length; i++)
+	var parent = document.getElementById(id);
+	if (!parent)
 	{
-		document.forms[form_name].elements[i].checked = status;
+		eval('parent = document.' + id);
+	}
+
+	if (!parent)
+	{
+		return;
+	}
+
+	var rb = parent.getElementsByTagName('input');
+	
+	for (var r = 0; r < rb.length; r++)
+	{
+		if (rb[r].name.substr(0, name.length) == name)
+		{
+			rb[r].checked = state;
+		}
 	}
 }
 //-->
 </script>
 
 <!-- IF isset({ $TOPIC_TITLE }) || isset({ $FORUM_NAME }) -->
-<h2><!-- IF isset({ $TOPIC_TITLE }) --><a class="titles" href="{ $U_VIEWTOPIC }">{ $TOPIC_TITLE }</a><!-- ELSE --><a class="titles" href="{ $U_VIEW_FORUM }" title="{ $FORUM_DESC }">{ $FORUM_NAME }</a><!-- ENDIF --></h2>
-<br clear="all" />
+	<div id="pageheader">
+		<h2><!-- IF isset({ $TOPIC_TITLE }) --><a class="titles" href="{ $U_VIEWTOPIC }">{ $TOPIC_TITLE }</a><!-- ELSE --><a class="titles" href="{ $U_VIEW_FORUM }">{ $FORUM_NAME }</a><!-- ENDIF --></h2>
+
+		<!-- IF isset({ $MODERATORS }) -->
+			<p class="moderators">{ $L_MODERATORS }: { $MODERATORS }</p>
+		<!-- ENDIF -->
+		<!-- IF isset({ $U_MCP }) -->
+			<p class="linkmcp">[ <a href="{ $U_MCP }">{ $L_MCP }</a> ]</p>
+		<!-- ENDIF -->
+	</div>
+
+	<br clear="all" />
 <!-- ENDIF -->
 
 <!-- IF isset({ $MESSAGE }) -->
