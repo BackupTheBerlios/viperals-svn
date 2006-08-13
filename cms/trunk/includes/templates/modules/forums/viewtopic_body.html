@@ -118,7 +118,7 @@
 		<!-- IF { $postrow:S_IGNORE_POST } -->
 			<td class="gensmall" colspan="2" height="25" align="center">{ $postrow:L_IGNORE_POST }</td>
 		<!-- ELSE -->
-			<td align="center" valign="middle"><!-- IF { $postrow:S_FIRST_UNREAD } --><a name="unread"></a><!-- ELSE --><a name="{ $postrow:POST_ID }"></a><!-- ENDIF -->
+			<td align="center" valign="middle"><!-- IF { $postrow:S_FIRST_UNREAD } --><a name="unread"></a><!-- ELSE --><a name="p{ $postrow:POST_ID }"></a><!-- ENDIF -->
 			<!-- IF { $postrow:U_PROFILE } --><a href="{ $postrow:U_PROFILE }"><b class="postauthor">{ $postrow:POSTER_NAME }</b><!-- ELSE --><b class="postauthor">{ $postrow:POSTER_NAME }</b><!-- ENDIF --></td>
 			<td width="100%" height="25"><table width="100%" cellspacing="0">
 				<tr>

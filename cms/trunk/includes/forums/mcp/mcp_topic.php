@@ -63,27 +63,52 @@ $to_topic_id = get_variable('to_topic_id', 'REQUEST', false, 'int');
 $to_forum_id = get_variable('to_forum_id', 'REQUEST', false, 'int');
 $post_id_list = array_unique(get_variable('post_id_list', 'REQUEST', array(), 'array:int'));
 
-// Split Topic?
-if ($action === 'split_all' || $action === 'split_beyond')
+switch ($action)
 {
-	if ($message = split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject))
-	{
-		$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->get_lang($message));
-	}
+	case 'lock_post':
+	case 'unlock_post':
+		$post_ids = get_post_ids($quick_mod);
 
-	$action = 'split';
-}
+		if (empty($post_ids))
+		{
+			trigger_error('NO_POST_SELECTED');
+		}
 
-// Merge Posts?
-if ($action == 'merge_posts')
-{
-	merge_posts($topic_id, $to_topic_id);
-	$action = 'merge';
-}
+		require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php';
 
-if ($action === 'split' && !$subject)
-{
-	$subject = $topic_info['topic_title'];
+		lock_unlock($action, $post_ids);
+	break;
+
+	case 'delete_post':
+		$_CLASS['core_user']->add_lang('posting');
+
+		$post_ids = get_post_ids($quick_mod);
+
+		if (empty($post_ids))
+		{
+			trigger_error('NO_POST_SELECTED');
+		}
+
+		require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php';
+
+		mcp_delete_post($post_ids);
+	break;
+
+	case 'split_all':
+	case 'split_beyond':
+		if ($message = split_topic($action, $post_id_list, $topic_id, $to_forum_id, $subject))
+		{
+			$_CLASS['core_template']->assign('MESSAGE', $_CLASS['core_user']->get_lang($message));
+		}
+	
+		$action = 'split';
+		$subject = ($subject) ? $subject : $topic_info['topic_title'];
+	break;
+
+	case 'merge_posts':
+		merge_posts($topic_id, $to_topic_id);
+		$action = 'merge';
+	break;
 }
 
 $topics_per_page = ($topic_info['forum_topics_per_page']) ? $topic_info['forum_topics_per_page'] : $config['topics_per_page'];
@@ -117,7 +142,7 @@ $bbcode_bitfield = '';
 while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 {
 	$rowset[] = $row;
-	$bbcode_bitfield = $bbcode_bitfield | $row['bbcode_bitfield'];
+	$bbcode_bitfield = $bbcode_bitfield | base64_decode($row['bbcode_bitfield']);
 }
 $_CLASS['core_db']->free_result($result);
 
@@ -223,7 +248,7 @@ $_CLASS['core_template']->assign_array(array(
 	'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'POST_REPORTED', false, true),
 	'UNAPPROVED_IMG'	=> $_CLASS['core_user']->img('icon_unapproved', 'POST_UNAPPROVED', false, true),
 
-	'S_MCP_ACTION'		=> generate_link("$url&amp;mode=$mode&amp;action=$action".(($start) ? '&amp;start='.$start : '')),
+	'S_MCP_ACTION'		=> generate_link("$url&amp;mode=$mode".(($start) ? '&amp;start='.$start : '')),
 	'S_FORUM_SELECT'	=> '<select name="to_forum_id">' . (($to_forum_id) ? make_forum_select($to_forum_id) : make_forum_select($topic_info['forum_id'])) . '</select>',
 	'S_CAN_SPLIT'		=> $_CLASS['forums_auth']->acl_get('m_split', $topic_info['forum_id']),
 	'S_CAN_MERGE'		=> $_CLASS['forums_auth']->acl_get('m_merge', $topic_info['forum_id']),
@@ -250,7 +275,7 @@ make_jumpbox($url . '&amp;mode=forum_view', $topic_info['forum_id'], false, 'm_'
 
 $_CLASS['core_display']->display($_CLASS['core_user']->get_lang('MCP'), 'modules/forums/mcp_topic.html');
 
-function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
+function split_topic($action, $post_id_list, $topic_id, $to_forum_id, $subject)
 {
 	global $_CLASS;
 
@@ -268,6 +293,7 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 	{
 		return 'NO_POST_SELECTED';
 	}
+	$post_info = $post_info[$post_id];
 
 	$subject = trim($subject);
 
@@ -301,7 +327,7 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 		'post_id_list'	=> $post_id_list,
 		'mode'			=> 'topic_view',
 		'start'			=> $start,
-		'action'		=> $mode,
+		'action'		=> $action,
 		't'				=> $topic_id,
 		'redirect'		=> $redirect,
 		'subject'		=> $subject,
@@ -309,18 +335,18 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 		'icon'			=> get_variable('icon', 'REQUEST', false, 'int')
 	));
 
-	$message = ($mode === 'split_all') ? 'SPLIT_TOPIC_ALL' : 'SPLIT_TOPIC_BEYOND';
+	$message = ($action === 'split_all') ? 'SPLIT_TOPIC_ALL' : 'SPLIT_TOPIC_BEYOND';
 
 	if (display_confirmation($_CLASS['core_user']->get_lang($message), $hidden_fields))
 	{
-		if ($mode === 'split_beyond')
+		if ($action === 'split_beyond')
 		{
-			mcp_sorting('viewtopic', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $forum_id, $topic_id);
+			mcp_sorting('viewtopic', $sort_days, $sort_key, $sort_dir, $sort_by_sql, $sort_order_sql, $total, $post_info['forum_id'], $topic_id);
 			$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . ($_CLASS['core_user']->time - ($sort_days * 86400)) : '';
 
 			if ($sort_order_sql{0} == 'u')
 			{
-				$sql = 'SELECT p.post_id, p.poster_id, p.post_username, p.post_time
+				$sql = 'SELECT p.post_id
 					FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
 					WHERE p.topic_id = $topic_id
 						AND p.poster_id = u.user_id
@@ -329,7 +355,7 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 			}
 			else
 			{
-				$sql = 'SELECT p.post_id, p.poster_id, p.post_username, p.post_time
+				$sql = 'SELECT p.post_id
 					FROM ' . FORUMS_POSTS_TABLE . " p
 					WHERE p.topic_id = $topic_id
 						$limit_time_sql
@@ -344,11 +370,8 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				// Start to store post_ids as soon as we see the first post that was selected
-				if ($row['post_id'] == $post_id)
+				if ($row['post_id'] === $post_id)
 				{
-					$topic_time = $row['post_time'];
-					$topic_poster = $row['poster_id'];
-					$topic_poster_name = $row['post_username'];
 					$store = true;
 				}
 
@@ -365,7 +388,7 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 			trigger_error('NO_POST_SELECTED');
 		}
 
-		$icon_id =  get_variable('icon', 'REQUEST', false, 'int');
+		$icon_id = get_variable('icon', 'REQUEST', 0, 'int');
 
 		$_CLASS['core_db']->transaction();
 
@@ -374,9 +397,9 @@ function split_topic($mode, $post_id_list, $topic_id, $to_forum_id, $subject)
 			'topic_title'				=> $subject,
 			'icon_id'					=> $icon_id,
 			'topic_approved'			=> 1,
-			'topic_poster' 				=> $topic_poster,
-			'topic_first_poster_name'	=> $topic_poster_name,
-			'topic_time'				=> $_CLASS['core_user']->time,
+			'topic_poster' 				=> $post_info['poster_id'],
+			'topic_first_poster_name'	=> $post_info['post_username'],
+			'topic_time'				=> $_CLASS['core_user']->time,//$post_info['post_time']
 			'topic_status'				=> ITEM_UNLOCKED,
 			'topic_type'				=> POST_NORMAL,
 			'topic_attachment'			=> 0,

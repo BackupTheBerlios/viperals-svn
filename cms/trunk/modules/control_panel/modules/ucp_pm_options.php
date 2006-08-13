@@ -15,7 +15,7 @@ function message_options($id, $mode, $global_privmsgs_rules, $global_rule_condit
 {
 	global $_CLASS, $config;
 
-	$redirect_url = generate_link('Control_Panel&i=pm&mode=options');
+	$redirect_url = generate_link('control_panel&i=pm&mode=options');
 	
 	$_CLASS['core_template']->assign_array(array(
 		'ERROR_MESSAGE'				=> false,
@@ -254,7 +254,7 @@ function message_options($id, $mode, $global_privmsgs_rules, $global_rule_condit
 				$_CLASS['core_user']->data['user_full_folder'] = PRIVMSGS_INBOX;
 			}
 
-			$meta_info = generate_link('Control_Panel&amp;i=pm&amp;mode='.$mode);
+			$meta_info = generate_link('control_panel&amp;i=pm&amp;mode='.$mode);
 			$message = $_CLASS['core_user']->lang['FOLDER_REMOVED'];
 
 			$_CLASS['core_display']->meta_refresh(3, $meta_info);
@@ -326,7 +326,7 @@ function message_options($id, $mode, $global_privmsgs_rules, $global_rule_condit
 
 		if (!$delete_id)
 		{
-			redirect(generate_link('Control_Panel&amp;i=pm&amp;mode='.$mode));
+			redirect(generate_link('control_panel&amp;i=pm&amp;mode='.$mode));
 		}
 
 		$s_hidden_fields = '<input type="hidden" name="delete_rule[' . $delete_id . ']" value="1" />';
@@ -339,7 +339,7 @@ function message_options($id, $mode, $global_privmsgs_rules, $global_rule_condit
 					AND rule_id = $delete_id";
 			$_CLASS['core_db']->query($sql);
 
-			$meta_info = generate_link("Control_Panel$SID&amp;i=pm&amp;mode=$mode");
+			$meta_info = generate_link("control_panel$SID&amp;i=pm&amp;mode=$mode");
 			$message = $_CLASS['core_user']->lang['RULE_DELETED'];
 
 			$_CLASS['core_display']->meta_refresh(3, $meta_info);

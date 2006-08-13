@@ -358,6 +358,37 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 	return array($active_forum_ary, array());
 }
 
+/**
+* Display reasons
+*/
+function display_reasons($reason_id = 0)
+{
+	global $_CLASS;
+return;
+	$sql = 'SELECT * 
+		FROM ' . REPORTS_REASONS_TABLE . ' 
+		ORDER BY reason_order ASC';
+	$result = $_CLASS['core_db']->query($sql);
+
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		// If the reason is defined within the language file, we will use the localized version, else just use the database entry...
+		if (isset($_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_title'])]) && isset($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_title'])]))
+		{
+			$row['reson_description'] = $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_title'])];
+			$row['reason_title'] = $_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_title'])];
+		}
+
+		$_CLASS['core_template']->assign_vars_array('reason', array(
+			'ID'			=> $row['reason_id'],
+			'TITLE'			=> $row['reason_title'],
+			'DESCRIPTION'	=> $row['reason_description'],
+			'S_SELECTED'	=> ($row['reason_id'] == $reason_id) ? true : false)
+		);
+	}
+	$_CLASS['core_db']->free_result($result);
+}
+
 function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img, &$folder_alt, &$topic_type)
 {
 	global $_CLASS, $config;

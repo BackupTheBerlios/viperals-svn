@@ -74,7 +74,7 @@
 			<td style="text-align: center;">{ $usernotes:REPORT_AT }</td>
 			<td class="gen">
 				{ $usernotes:ACTION }
-				<!-- IF { $usernotes:DATA } --><br />&#187; <span class="gensmall">[ { $usernotes:DATA } ]</span><!-- ENDIF -->
+				<!-- IF isset({ $usernotes:DATA }) --><br />&#187; <span class="gensmall">[ { $usernotes:DATA } ]</span><!-- ENDIF -->
 			</td>
 			<td style="text-align: center;"><!-- IF { $S_CLEAR_ALLOWED } --><input type="checkbox" class="radio" name="marknote[]" value="{ $usernotes:ID }" /><!-- ENDIF --></td>
 		</tr>

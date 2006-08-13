@@ -66,7 +66,7 @@ $post_id_list = array_unique(get_variable('post_id_list', 'REQUEST',  array(), '
 $topic_id = get_variable('t', 'REQUEST', false, 'int');;
 
 // Resync Topics
-if ($action == 'resync')
+if ($action === 'resync')
 {
 	if (empty($topic_id_list))
 	{
@@ -227,7 +227,7 @@ foreach ($topic_rows as $row)
 	$_CLASS['core_template']->assign_vars_array('topicrow', array(
 		'U_VIEW_TOPIC'		=> generate_link("Forums&amp;file=mcp&amp;t={$row['topic_id']}&amp;mode=topic_view"),
 
-		'S_SELECT_TOPIC'	=> ($action == 'merge_select' && $row['topic_id'] != $topic_id) ? true : false,
+		'S_SELECT_TOPIC'	=> ($action === 'merge_select' && $row['topic_id'] != $topic_id) ? true : false,
 		'U_SELECT_TOPIC'	=> generate_link($url . '&amp;mode=topic_view&amp;action=merge&amp;to_topic_id=' . $row['topic_id'] . $selected_ids),
 		'U_MCP_QUEUE'		=> $u_mcp_queue,
 		'U_MCP_REPORT'		=> generate_link("forums&amp;file=mcp&amp;i=main&amp;mode=topic_view&amp;t={$row['topic_id']}&amp;action=reports"),

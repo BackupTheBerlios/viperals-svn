@@ -34,7 +34,7 @@ function add_menu_item($module_name, $mode)
 {
 	global $_CLASS;
 
-	if ($module_name != 'queue')
+	if ($module_name !== 'queue')
 	{
 		return '';
 	}
@@ -52,7 +52,6 @@ function add_menu_item($module_name, $mode)
 	switch ($mode)
 	{
 		case 'unapproved_topics':
-
 			$sql = 'SELECT COUNT(*) AS total
 				FROM ' . FORUMS_TOPICS_TABLE . '
 				WHERE forum_id IN (' . implode(', ', $forum_list) . ')
@@ -97,7 +96,6 @@ if (!$_CLASS['core_user']->is_user)
 
 $i	= get_variable('i', 'REQUEST');
 $mode	= $i ? $i : get_variable('mode', 'REQUEST', 'front');
-$action = get_variable('action', 'REQUEST');
 $quick_mod = isset($_REQUEST['quickmod']);
 
 $post_id = get_variable('p', 'REQUEST', 0);
@@ -105,6 +103,13 @@ $topic_id = get_variable('t', 'REQUEST', 0);
 $forum_id = get_variable('f', 'REQUEST', 0);
 $user_id = get_variable('u', 'REQUEST', 0);
 $username = get_variable('username', 'REQUEST', '');
+
+$action = (isset($_REQUEST['action']) && is_array($_REQUEST['action'])) ? get_variable('action', 'REQUEST', false, 'array') : get_variable('action', 'REQUEST');
+
+if (is_array($action))
+{
+	list($action, ) = each($action);
+}
 
 if ($mode == 'topic_logs')
 {
@@ -114,20 +119,8 @@ if ($mode == 'topic_logs')
 
 if ($mode === 'approve' || $mode === 'disapprove')
 {
-	$module = 'queue';
+	$mode = 'queue';
 }
-
-if ($action == 'merge_select')
-{
-	$mode = 'forum_view';
-}
-
-/*
-if (!$_CLASS['forums_auth']->acl_get('m_'))
-{
-	trigger_error('YOUR_NO_MODERATOR');
-}
-*/
 
 if (in_array($mode, array('split', 'split_all', 'split_beyond', 'merge', 'merge_posts')))
 {
@@ -249,11 +242,16 @@ if (!$quick_mod)
 			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_notes.php';
 			script_close(false);
 		break;
+		
+		case 'queue':
+			require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_queue.php';
+			script_close(false);
+		break;
 	}
-
 	//script_close(false);
 }
 
+$mode = ($mode !== 'front') ? $mode : $action;
 require_once SITE_FILE_ROOT.'includes/forums/mcp/mcp_main.php';
 
 switch ($mode)
@@ -665,13 +663,6 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false)
 	$_CLASS['core_db']->free_result($result);
 
 	return empty($ids) ? false : array_unique($forum_ids);
-}
-
-// REMOVE
-
-function build_hidden_fields($array)
-{
-	return generate_hidden_fields($array);
 }
 
 ?>

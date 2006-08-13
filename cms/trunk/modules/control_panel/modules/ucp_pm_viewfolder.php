@@ -11,7 +11,6 @@
 // 
 // -------------------------------------------------------------
 
-// * Called from ucp_pm with mode == 'view_messages' && action == 'view_folder'
 $_CLASS['core_template']->assign_array(array(
 	'S_SHOW_RECIPIENTS'	=> false,
 	'messagerow'		=> false,
@@ -24,15 +23,18 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 	
 	$limit = 10;
 	$icons = obtain_icons();
+	$submit_export = (isset($_POST['submit_export'])) ? true : false;
 
-	$color_rows = array('marked', 'replied', 'message_reported', 'friend', 'foe');
+	$folder_info = get_pm_from($folder_id, $folder, $_CLASS['core_user']->data['user_id'], $parent_class->link_parent, $type);
+
+	$color_rows = array('marked', 'replied', 'friend', 'foe');//, 'message_reported'
 	
 	foreach ($color_rows as $var)
 	{
 		$_CLASS['core_template']->assign_vars_array('pm_colour_info', array(
 			'IMG'	=> $_CLASS['core_user']->img("pm_{$var}", ''),
 			'CLASS' => "pm_{$var}_colour",
-			'LANG'	=> $_CLASS['core_user']->lang[strtoupper($var) . '_MESSAGE'])
+			'LANG'	=> $_CLASS['core_user']->get_lang(strtoupper($var) . '_MESSAGE'))
 		);
 	}
 
@@ -42,6 +44,20 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 	foreach ($mark_options as $mark_option)
 	{
 		$s_mark_options .= '<option value="' . $mark_option . '">' . $_CLASS['core_user']->get_lang(strtoupper($mark_option)) . '</option>';
+	}
+
+	// We do the folder moving options here too, for template authors to use...
+	$s_folder_move_options = '';
+	foreach ($folder as $f_id => $folder_ary)
+	{
+		if ($f_id == PRIVMSGS_OUTBOX || $f_id == PRIVMSGS_SENTBOX || $f_id == $folder_id)
+		{
+			continue;
+		}
+	
+		$s_folder_move_options .= '<option' . (($f_id != PRIVMSGS_INBOX) ? ' class="blue"' : '') . ' value="' . $f_id . '">';
+		$s_folder_move_options .= sprintf($_CLASS['core_user']->get_lang('MOVE_MARKED_TO_FOLDER'), $folder_ary['folder_name']);
+		$s_folder_move_options .= (($folder_ary['unread_messages']) ? ' [' . $folder_ary['unread_messages'] . '] ' : '') . '</option>';
 	}
 
 	$friend = $foe = array();
@@ -60,11 +76,9 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 	$_CLASS['core_db']->free_result($result);
 
 	$_CLASS['core_template']->assign_array(array(
-		'S_UNREAD'		=> ($type == 'unread'),
+		'S_UNREAD'		=> ($type === 'unread'),
 		'S_MARK_OPTIONS'=> $s_mark_options)
 	);
-
-	$folder_info = get_pm_from($folder_id, $folder, $_CLASS['core_user']->data['user_id'], $parent_class->link_parent, $type);
 
 	// Okay, lets dump out the page ...
 	if (!empty($folder_info['pm_list']))
@@ -77,7 +91,9 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 			foreach ($folder_info['rowset'] as $message_id => $row)
 			{
 				$address[$message_id] = rebuild_header(array('to' => $row['to_address'], 'bcc' => $row['bcc_address']));
-				foreach (array('u', 'g') as $save)
+
+				$_save = array('u', 'g');
+				foreach ($_save as $save)
 				{
 					if (isset($address[$message_id][$save]) && sizeof($address[$message_id][$save]))
 					{
@@ -89,12 +105,13 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 				}
 			}
 		
-			foreach (array('u', 'g') as $ug_type)
+			$_types = array('u', 'g');
+			foreach ($_types as $ug_type)
 			{
-				if (isset($recipient_list[$ug_type]) && sizeof($recipient_list[$ug_type]))
+				if (!empty($recipient_list[$ug_type]))
 				{
 					$sql = ($ug_type === 'u') ? 'SELECT user_id as id, username as name, user_colour as colour FROM ' . CORE_USERS_TABLE . ' WHERE user_id' : 'SELECT group_id as id, group_name as name, group_colour as colour FROM ' . CORE_GROUPS_TABLE . ' WHERE group_id';
-					$sql .= ' IN (' . implode(', ', array_keys($recipient_list[$ug_type])) . ')';
+					$sql .= ' IN (' . implode(', ', array_map('intval', array_keys($recipient_list[$ug_type]))) . ')';
 	
 					$result = $_CLASS['core_db']->query($sql);
 
@@ -112,11 +129,10 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 				{
 					foreach ($id_ary as $ug_id => $_id)
 					{
-						$address_list[$message_id][] = (($type == 'u') ? '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u='.$ug_id).'">' : '<a href="'.generate_link('Members_List&amp;mode=group&amp;g='.$ug_id).'">') . (($recipient_list[$type][$ug_id]['colour']) ? '<span style="color:#' . $recipient_list[$type][$ug_id]['colour'] . '">' : '<span>') . $recipient_list[$type][$ug_id]['name'] . '</span></a>';
+						$address_list[$message_id][] = (($type === 'u') ? '<a href="'.generate_link('members_list&amp;mode=viewprofile&amp;u='.$ug_id).'">' : '<a href="'.generate_link('members_list&amp;mode=group&amp;g='.$ug_id).'">') . (($recipient_list[$type][$ug_id]['colour']) ? '<span style="color:#' . $recipient_list[$type][$ug_id]['colour'] . '">' : '<span>') . $recipient_list[$type][$ug_id]['name'] . '</span></a>';
 					}
 				}
 			}
-			
 			unset($recipient_list, $address);
 		}
 
@@ -124,19 +140,19 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 		{
 			$row =& $folder_info['rowset'][$message_id];
 
-			$folder_img = ($row['unread']) ? 'folder_new' : 'folder';
-			$folder_alt = ($row['unread']) ? 'NEW_MESSAGES' : 'NO_NEW_MESSAGES';
+			$folder_img = ($row['pm_unread']) ? 'folder_new' : 'folder';
+			$folder_alt = ($row['pm_unread']) ? 'NEW_MESSAGES' : 'NO_NEW_MESSAGES';
 
 			// Generate all URIs ...
-			$message_author = '<a href="'.generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['author_id']) . '">' . $row['username'] . '</a>';
+			$message_author = '<a href="'.generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['author_id']) . '">' . $row['username'] . '</a>';
 			$view_message_url = generate_link($parent_class->link_parent."&amp;f=$folder_id&amp;p=$message_id");
 			$remove_message_url = generate_link($parent_class->link_parent.'&amp;mode=compose&amp;action=delete&amp;p='.$message_id);
 			
 			$row_indicator = '';
 			foreach ($color_rows as $var)
 			{
-				if (($var != 'friend' && $var != 'foe' && $row[$var]) || 
-					(($var == 'friend' || $var == 'foe') && isset(${$var}[$row['author_id']])))
+				if (($var !== 'friend' && $var !== 'foe' && $row['pm_' . $var]) || 
+					(($var == 'friend' || $var == 'foe') && isset(${$var}[$row['author_id']]) && ${$var}[$row['author_id']]))
 				{
 					$row_indicator = $var;
 					break;
@@ -160,23 +176,22 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 				'ATTACH_ICON_IMG'	=> ($row['message_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 				//'S_PM_REPORTED'		=> (!empty($row['message_reported'])) ? true : false,
 				'S_PM_REPORTED'		=> '',
-				'S_PM_DELETED'		=> ($row['deleted']) ? true : false,
+				'S_PM_DELETED'		=> ($row['pm_deleted']),
 				
-				'U_VIEW_PM'			=> ($row['deleted']) ? '' : $view_message_url,
-				'U_REMOVE_PM'		=> ($row['deleted']) ? $remove_message_url : '',
+				'U_VIEW_PM'			=> ($row['pm_deleted']) ? '' : $view_message_url,
+				'U_REMOVE_PM'		=> ($row['pm_deleted']) ? $remove_message_url : '',
 				
 				'RECIPIENTS'		=> ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX) ? implode(', ', $address_list[$message_id]) : '',
 				'U_MCP_REPORT'		=> generate_link('forums&amp;file=mcp&amp;mode=reports&amp;pm='.$message_id))
 //				'U_MCP_QUEUE'		=> "mcp.$phpEx?sid={$_CLASS['core_user']->session_id}&amp;mode=mod_queue&amp;t=$topic_id")
 			);
 		}
-		
 		unset($folder_info['rowset']);
 		
 		$_CLASS['core_template']->assign_array(array(
-			'S_SHOW_RECIPIENTS'	=> ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX) ? true : false,
-			'S_SHOW_COLOUR_LEGEND'	=> true)
-		);
+			'S_SHOW_RECIPIENTS'		=> ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX) ? true : false,
+			'S_SHOW_COLOUR_LEGEND'	=> true
+		));
 	}
 }
 
@@ -188,10 +203,6 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 
 	$limit = 10;
 	$start = get_variable('start', 'REQUEST', 0, 'int');
-
-	//$sort_days = request_var('st', ((!empty($_CLASS['core_user']->data['user_post_show_days'])) ? $_CLASS['core_user']->data['user_post_show_days'] : 0));
-	//$sort_key	= request_var('sk', ((!empty($_CLASS['core_user']->data['user_post_sortby_type'])) ? $_CLASS['core_user']->data['user_post_sortby_type'] : 't'));
-	//$sort_dir	= request_var('sd', ((!empty($_CLASS['core_user']->data['user_post_sortby_dir'])) ? $_CLASS['core_user']->data['user_post_sortby_dir'] : 'd'));
 
 	$sort_days	= get_variable('st', 'REQUEST', 0, 'int');
 	$sort_key	= get_variable('sk', 'REQUEST', 't');
@@ -209,7 +220,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 
 	if ($type !== 'folder')
 	{
-		$folder_sql = ($type === 'unread') ? 't.unread = 1' : 't.msg_new = 1';
+		$folder_sql = ($type === 'unread') ? 't.pm_unread = 1' : 't.pm_new = 1';
 		$folder_id = PRIVMSGS_INBOX;
 	}
 	else
@@ -222,6 +233,11 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 	{
 		$min_post_time = $_CLASS['core_user']->time - ($sort_days * 86400);
 
+		if (isset($_POST['sort']))
+		{
+			$start = 0;
+		}
+
 		$sql = 'SELECT COUNT(t.msg_id) AS pm_count
 			FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . " p
 			WHERE $folder_sql
@@ -229,12 +245,6 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 				AND t.msg_id = p.msg_id
 				AND p.message_time >= $min_post_time";
 		$result = $_CLASS['core_db']->query_limit($sql, 1);
-
-		if (isset($_POST['sort']))
-		{
-			$start = 0;
-		}
-
 		$pm_count = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['pm_count'] : 0;
 		$_CLASS['core_db']->free_result($result);
 
@@ -271,17 +281,20 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 		$sql_limit_time = '';
 	}
 
+	$pagination	= generate_pagination("$url&amp;mode=view&amp;action=view_folder&amp;f=$folder_id&amp;$u_sort_param", $pm_count, $limit, $start);
+
 	$_CLASS['core_template']->assign_array(array(
-		'PAGINATION'		=> generate_pagination("$url&amp;mode=view_messages&amp;action=view_folder&amp;f=$folder_id&amp;$u_sort_param", $pm_count, $limit, $start),
+		'PAGINATION'		=> $pagination['formated'],
+		'PAGINATION_ARRAY'	=> $pagination['array'],
+
 		'PAGE_NUMBER'		=> on_page($pm_count, $limit, $start),
 		'TOTAL_MESSAGES'	=> (($pm_count == 1) ? $_CLASS['core_user']->lang['VIEW_PM_MESSAGE'] : sprintf($_CLASS['core_user']->lang['VIEW_PM_MESSAGES'], $pm_count)),
 
-		//'POST_IMG'			=> (!$_CLASS['auth']->acl_get('u_sendpm')) ? $_CLASS['core_user']->img('btn_locked', 'PM_LOCKED') : $_CLASS['core_user']->img('btn_post_pm', 'POST_PM'),
+		//'POST_IMG'		=> (!$auth->acl_get('u_sendpm')) ? $user->img('button_topic_locked', 'PM_LOCKED') : $user->img('button_pm_new', 'POST_PM'),
 		'POST_IMG'			=> $_CLASS['core_user']->img('btn_post_pm', 'POST_PM'),
-
 		'REPORTED_IMG'		=> $_CLASS['core_user']->img('icon_reported', 'MESSAGE_REPORTED'),
 
-		//'L_NO_MESSAGES'		=> (!$_CLASS['auth']->acl_get('u_sendpm')) ? $_CLASS['core_user']->lang['POST_PM_LOCKED'] : $_CLASS['core_user']->lang['NO_MESSAGES'],
+		//'L_NO_MESSAGES'	=> (!$auth->acl_get('u_sendpm')) ? $user->lang['POST_PM_LOCKED'] : $user->lang['NO_MESSAGES'],
 		'L_NO_MESSAGES'		=> $_CLASS['core_user']->lang['NO_MESSAGES'],
 
 		'S_SELECT_SORT_DIR'		=> $s_sort_dir,
@@ -291,8 +304,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 
 		//'U_POST_NEW_TOPIC'	=> ($_CLASS['auth']->acl_get('u_sendpm')) ? generate_link($url.'&amp;mode=compose&amp;action=post') : '', 
 		'U_POST_NEW_TOPIC'	=> generate_link($url.'&amp;mode=compose&amp;action=post'), 
-
-		'S_PM_ACTION'		=> generate_link("$url&amp;mode=view_messages&amp;action=view_folder&amp;f=$folder_id"))
+		'S_PM_ACTION'		=> generate_link("$url&amp;mode=view&amp;action=view_folder&amp;f=$folder_id"))
 	);
 
 	// Grab all pm data
@@ -333,7 +345,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 
 	$result = $_CLASS['core_db']->query_limit($sql, $sql_limit, $sql_start);
 
-	while($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$rowset[$row['msg_id']] = $row;
 		$pm_list[] = $row['msg_id'];

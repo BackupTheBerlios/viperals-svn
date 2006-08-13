@@ -247,6 +247,11 @@ function display_confirmation($message = '', $hidden = '', $template = false, $i
 
 	$confirmation_code = generate_string(6);
 
+	if (is_array($hidden))
+	{
+		$hidden = generate_hidden_fields($hidden);
+	}
+
 	if ($image)
 	{
 		$confirm_image = '<img src="'.generate_link('system&amp;mode=confirmation_image').'" alt="" title="" />';
@@ -371,7 +376,7 @@ function get_variable($var_name, $type, $default = false, $var_type = 'string')
 		break;
 	}
 
-	if (is_null($variable))
+	if (is_null($variable) || $variable === $default)
 	{
 		return $default;
 	}
@@ -1045,7 +1050,14 @@ function smiley_text($text, $force_option = false)
 {
 	global $config, $_CLASS;
 
-	return ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->user_data_get('viewsmilies')) ? preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text) : str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
+	if ($force_option || !$config['allow_smilies'] || !$_CLASS['core_user']->user_data_get('viewsmilies'))
+	{
+		return preg_replace('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#', '\1', $text);
+	}
+	else
+	{
+		return str_replace('<img src="{SMILIES_PATH}', '<img src="' . $config['smilies_path'], $text);
+	}
 }
 
 if (!function_exists('stripos'))

@@ -264,10 +264,25 @@ $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang('viewtopic');
 $_CLASS['core_user']->add_img();
 
-
+// This is for determining where we are (page)
 // What is start equal to?
 if ($post_id)
 {
+	/**
+	* @todo adjust for using post_time? Generally adjust query... it is not called very often though
+	*/
+	$sql = 'SELECT COUNT(post_id) AS prev_posts
+		FROM ' . FORUMS_POSTS_TABLE . "
+		WHERE topic_id = {$topic_data['topic_id']}
+			" . ((!$_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? 'AND post_approved = 1' : '') . "
+			AND " . (($sort_dir === 'd') ?  "post_id >= $post_id" : "post_id <= $post_id");
+	$result = $_CLASS['core_db']->query($sql);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
+	$_CLASS['core_db']->free_result($result);
+
+	$topic_data['prev_posts'] = $row['prev_posts'];
+	unset($row);
+
 	$start = floor(($topic_data['prev_posts'] - 1) / $config['posts_per_page']) * $config['posts_per_page'];
 }
 
@@ -499,20 +514,24 @@ if (!empty($topic_data['poll_start']))
 
 	for ($i = 0; $i < $count; $i++)
 	{
+		$poll_info[$i]['poll_option_text'] = censor_text($poll_info[$i]['poll_option_text']);
+
 		if ($poll_bbcode !== false)
 		{
 			$poll_bbcode->bbcode_second_pass($poll_info[$i]['poll_option_text'], $poll_info[$i]['bbcode_uid'], $poll_option['bbcode_bitfield']);
 		}
 		$poll_info[$i]['poll_option_text'] = smiley_text($poll_info[$i]['poll_option_text']);
-		$poll_info[$i]['poll_option_text'] = str_replace("\n", '<br />', censor_text($poll_info[$i]['poll_option_text']));
+		$poll_info[$i]['poll_option_text'] = str_replace("\n", '<br />', $poll_info[$i]['poll_option_text']);
 	}
+
+	$topic_data['poll_title'] = censor_text($topic_data['poll_title']);
 
 	if ($poll_bbcode !== false)
 	{
 		$poll_bbcode->bbcode_second_pass($topic_data['poll_title'], $poll_info[0]['bbcode_uid'], $poll_info[0]['bbcode_bitfield']);
 	}
 	$topic_data['poll_title'] = smiley_text($topic_data['poll_title']);
-	$topic_data['poll_title'] = str_replace("\n", '<br />', censor_text($topic_data['poll_title']));
+	$topic_data['poll_title'] = str_replace("\n", '<br />', $topic_data['poll_title']);
 
 	unset($poll_bbcode);
 	
@@ -683,12 +702,12 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	);
 
 	// Define the global bbcode bitfield, will be used to load bbcodes
-	$bbcode_bitfield = $bbcode_bitfield | $row['bbcode_bitfield'];
+	$bbcode_bitfield = $bbcode_bitfield | base64_decode($row['bbcode_bitfield']);
 
 	// Is a signature attached? Are we going to display it?
 	if ($row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->user_data_get('viewsigs'))
 	{
-		$bbcode_bitfield = $bbcode_bitfield | $row['user_sig_bbcode_bitfield'];
+		$bbcode_bitfield = $bbcode_bitfield | base64_decode($row['user_sig_bbcode_bitfield']);
 	}
 
 	// Cache various user specific data ... so we don't have to recompute
@@ -844,7 +863,18 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 
 				if ($bday_year)
 				{
-					$user_cache[$poster_id]['age'] = (int) ($today['year'] - $bday_year - (($today['month'] - $bday_month < 0) ? 1 : (($today['day'] - $bday_day < 0) ? 1 : 0)));
+					$diff = $today['month'] - $bday_month;
+					
+					if ($diff == 0)
+					{
+						$diff = ($today['day'] - $bday_day < 0) ? 1 : 0;
+					}
+					else
+					{
+						$diff = ($diff < 0) ? 1 : 0;
+					}
+					
+					$user_cache[$poster_id]['age'] = (int) ($today['year'] - $bday_year - $diff);
 				}
 			}
 		}
@@ -945,10 +975,10 @@ if (!empty($attach_list))
 }
 
 // Instantiate BBCode if need be
-if ($bbcode_bitfield)
+if ($bbcode_bitfield !== '')
 {
 	require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
-	$bbcode = new bbcode($bbcode_bitfield);
+	$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 }
 
 $i_total = count($rowset) - 1;
@@ -979,13 +1009,15 @@ for ($i = 0; $i < $count; ++$i)
 	// End signature parsing, only if needed
 	if ($user_cache[$poster_id]['sig'] && empty($user_cache[$poster_id]['sig_parsed']))
 	{
+		$user_cache[$poster_id]['sig'] = censor_text($user_cache[$poster_id]['sig']);
+
 		if ($user_cache[$poster_id]['sig_bbcode_bitfield'])
 		{
 			$bbcode->bbcode_second_pass($user_cache[$poster_id]['sig'], $user_cache[$poster_id]['sig_bbcode_uid'], $user_cache[$poster_id]['sig_bbcode_bitfield']);
 		}
 
 		$user_cache[$poster_id]['sig'] = smiley_text($user_cache[$poster_id]['sig']);
-		$user_cache[$poster_id]['sig'] = str_replace("\n", '<br />', censor_text($user_cache[$poster_id]['sig']));
+		$user_cache[$poster_id]['sig'] = str_replace("\n", '<br />', $user_cache[$poster_id]['sig']);
 		$user_cache[$poster_id]['sig_parsed'] = true;
 	}
 
@@ -994,6 +1026,8 @@ for ($i = 0; $i < $count; ++$i)
 	{
 		$row['post_text'] = preg_replace('#(<!\-\- h \-\-><)([\/]?.*?)(><!\-\- h \-\->)#is', "&lt;\\2&gt;", $row['post_text']);
 	}
+
+	$row['post_text'] = censor_text($row['post_text']);
 
 	// Second parse bbcode here
 	if ($row['bbcode_bitfield'])
@@ -1029,7 +1063,7 @@ for ($i = 0; $i < $count; ++$i)
 
 	// Replace naughty words such as farty pants
 	$row['post_subject'] = censor_text($row['post_subject']);
-	$row['post_text'] = str_replace("\n", '<br />', censor_text($row['post_text']));
+	$row['post_text'] = str_replace("\n", '<br />', $row['post_text']);
 
 	// Editing information
 	if (($row['post_edit_count'] && $config['display_last_edited']) || $row['post_edit_reason'])
@@ -1151,7 +1185,7 @@ for ($i = 0; $i < $count; ++$i)
 
 		'U_REPORT'			=> generate_link('forums&amp;file=report&amp;p=' . $row['post_id']),
 		'U_MCP_REPORT'		=> ($_CLASS['forums_auth']->acl_gets(array('m_', 'a_', 'f_report'), $forum_id)) ? generate_link('forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
-		'U_MCP_APPROVE'		=> ($_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? generate_link('forums&amp;file=mcp&amp;i=queue&amp;mode=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
+		'U_MCP_APPROVE'		=> ($_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? generate_link('forums&amp;file=mcp&amp;i=queue&amp;action=approve&amp;post_id_list[]=' . $row['post_id'], false, false) : '',
 		'U_MCP_DETAILS'		=> ($_CLASS['forums_auth']->acl_get('m_', $forum_id)) ? generate_link('forums&amp;file=mcp&amp;mode=post_details&amp;p=' . $row['post_id']) : '',
 		'U_MINI_POST'		=> generate_link('forums&amp;file=viewtopic&amp;p=' . $row['post_id']) . '#' . $row['post_id'],
 		'U_NEXT_POST_ID'	=> ($i < $i_total && isset($rowset[$i + 1])) ? $rowset[$i + 1]['post_id'] : '', 
@@ -1398,7 +1432,7 @@ function topic_last_read($topic_id, $forum_id)
 
 	if ($_CLASS['core_user']->is_bot)
 	{
-		return gmtime();
+		return $_CLASS['core_user']->time;
 	}
 
 	if ($_CLASS['core_user']->is_user && $config['load_db_lastread'])

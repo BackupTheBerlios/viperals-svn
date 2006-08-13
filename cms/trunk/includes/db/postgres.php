@@ -244,6 +244,9 @@ class db_postgres
 			return false;
 		}
 
+		$this->num_queries++;
+		$this->last_query = '';
+
 		SWitch (strtoupper($query_type))
 		{
 			case 'MULTI_INSERT':
@@ -254,13 +257,17 @@ class db_postgres
 			break;
 
 			case 'INSERT':
-				return pg_insert($this->link_identifier, $table, $array);
-				//return $this->query('INSERT INTO ' . $table . ' '. $values');
+				//	return pg_insert($this->link_identifier, $table, $array);
+				// We can't use pg_insert if we need needed to get the insert_id
+				$this->last_query = 'INSERT INTO ' . $table . ' '. $this->sql_build_array('INSERT', $array);
+				$this->last_result = $this->query($this->last_query);
+	
+				return $this->last_result;
 			break;
 
 			case 'UPDATE':
 				return pg_update($this->link_identifier, $table, $array);
-				//return $this->query('UPDATE ' . $table . ' SET ' . $values);
+				//return $this->query('UPDATE ' . $table . ' SET ' . $array);
 			break;
 		}
 	}

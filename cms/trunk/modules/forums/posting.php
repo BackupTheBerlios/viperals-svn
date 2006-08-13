@@ -191,14 +191,14 @@ switch ($mode)
 	break;
 
 	case 'edit':
-		if ($_CLASS['core_user']->is_user && $_CLASS['forums_auth']->acl_gets('f_edit', 'm_edit', $forum_id))
+		if ($_CLASS['core_user']->is_user && $_CLASS['forums_auth']->acl_gets(array('f_edit', 'm_edit'), $forum_id))
 		{
 			$is_authed = true;
 		}
 	break;
 
 	case 'delete':
-		if ($_CLASS['core_user']->is_user && $_CLASS['forums_auth']->acl_gets('f_delete', 'm_delete', $forum_id))
+		if ($_CLASS['core_user']->is_user && $_CLASS['forums_auth']->acl_gets(array('f_delete', 'm_delete'), $forum_id))
 		{
 			$is_authed = true;
 		}
@@ -615,7 +615,7 @@ if ($submit || $preview || $refresh)
 
 	// If subject is all-uppercase then we make all lowercase (we do not want to be yelled at too :P)
 	// Admins/Mods might want to create all-uppercase topics, therefore we do not apply this check to them (they should know better ;))
-	if ($post_data['post_subject'] && !$_CLASS['forums_auth']->acl_gets('a_', 'm_', $forum_id))// && strcmp($post_data['post_subject'], strtoupper($post_data['post_subject'])) == 0)
+	if ($post_data['post_subject'] && !$_CLASS['forums_auth']->acl_gets(array('a_', 'm_'), $forum_id))// && strcmp($post_data['post_subject'], strtoupper($post_data['post_subject'])) == 0)
 	{
 		//$subject = mb_strtolower(htmlentities(get_variable('subject', 'POST', ''), ENT_QUOTES, 'UTF-8'));
 		$post_data['post_subject'] = mb_strtolower(htmlentities($post_data['post_subject'], ENT_QUOTES, 'UTF-8'));
@@ -714,7 +714,7 @@ if ($submit || $preview || $refresh)
 	// notify and show user the post made between his request and the final submit
 	if (($mode == 'reply' || $mode == 'quote') && $post_data['topic_cur_post_id'] && $post_data['topic_cur_post_id'] != $post_data['topic_last_post_id'])
 	{
-		if (topic_review($topic_id, $forum_id, 'post_review', $topic_cur_post_id))
+		if (topic_review($topic_id, $forum_id, 'post_review', $post_data['topic_cur_post_id']))
 		{
 			$_CLASS['core_template']->assign('S_POST_REVIEW',  true);
 		}
@@ -982,7 +982,7 @@ if ($submit || $preview || $refresh)
 				'notify_set'			=> $post_data['notify_set'],
 				'poster_ip'				=> (isset($post_data['poster_ip'])) ? $post_data['poster_ip'] : $_CLASS['core_user']->ip,
 				'post_edit_locked'		=> (int) $post_data['post_edit_locked'],
-				'bbcode_bitfield'		=> (int) $message_parser->bbcode_bitfield,
+				'bbcode_bitfield'		=> $message_parser->bbcode_bitfield,
 				'bbcode_uid'			=> $message_parser->bbcode_uid,
 				'message'				=> $message_parser->message,
 				'attachment_data'		=> $message_parser->attachment_data,

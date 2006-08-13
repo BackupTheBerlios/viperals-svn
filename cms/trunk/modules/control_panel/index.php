@@ -51,7 +51,7 @@ class module_control_panel
 	function process_module($type = 'page')
 	{
 		global $_CLASS;
-		
+
 		if ($this->module)
 		{
 			$sql = 'SELECT * FROM ' . CORE_CONTROL_PANEL_MODULES_TABLE. "
@@ -129,7 +129,7 @@ class module_control_panel
 		$_CLASS['core_db']->free_result($result);
 	
 		// Output listing of friends online
-		$online_time = $_CLASS['core_user']->time = $_CORE_CONFIG['server']['session_length'];
+		$online_time = ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']);
 		
 		$sql = 'SELECT DISTINCT u.user_id, u.username, s.session_time, s.session_hidden
 			FROM ' . CORE_USERS_TABLE . ' u, ' . ZEBRA_TABLE . ' z 

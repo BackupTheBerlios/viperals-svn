@@ -580,7 +580,7 @@ if (!empty($topic_list))
 			'S_TOPIC_UNAPPROVED'	=> (!$row['topic_approved'] && $_CLASS['forums_auth']->acl_get('m_approve', $forum_id)),
 
 			'U_NEWEST_POST'			=> generate_link($view_topic_url . '&amp;view=unread#unread'),
-			'U_LAST_POST'			=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#' . $row['topic_last_post_id']),	
+			'U_LAST_POST'			=> generate_link($view_topic_url . '&amp;p=' . $row['topic_last_post_id'] . '#p' . $row['topic_last_post_id']),	
 			'U_LAST_POST_AUTHOR'	=> ($row['topic_last_poster_id']&& $row['topic_last_poster_id'] != ANONYMOUS) ? generate_link('members_list&amp;mode=viewprofile&amp;u='.$row['topic_last_poster_id']) : '',
 			'U_VIEW_TOPIC'			=> generate_link($view_topic_url),
 

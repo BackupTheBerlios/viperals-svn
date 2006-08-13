@@ -259,12 +259,15 @@ function user_disable($user_id, $update_stats = true)
 	$_CLASS['core_db']->query($sql);
 
 	// Now we disable the user in his active groups
-	//	( note disable is not uses for group removal, the entry is just deleted )
-// should also remove all pending groups
 	$sql = 'UPDATE ' . CORE_USER_GROUP_TABLE . '
 		SET member_status = ' . STATUS_DISABLED . '
 			WHERE user_id IN (' . implode(', ', $user_id) . ')
 			AND member_status = ' . STATUS_ACTIVE;
+	$_CLASS['core_db']->query($sql);
+
+	$sql = 'DELETE FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' 
+		WHERE user_id IN (' . implode(', ', $user_id) . ")
+		AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
 	$_CLASS['core_db']->query($sql);
 
 	if ($update_stats)
@@ -282,13 +285,13 @@ function user_disable($user_id, $update_stats = true)
 			set_core_config('user', 'newest_user_id', $row['user_id'], false);
 			set_core_config('user', 'newest_username', $row['username'], false);
 		}
-	
+
 		$total_users = $_CORE_CONFIG['user']['total_users'] - count($user_id);
 		set_core_config('user', 'total_users', $total_users, false);
-		
+
 		$_CLASS['core_cache']->destroy('core_config');
 	}
-	
+
 	$_CLASS['core_db']->transaction('commit');
 }
 
@@ -308,7 +311,12 @@ function user_delete($user_id, $quick = false)
 		$sql = 'DELETE FROM ' . CORE_USERS_TABLE . '
 			WHERE user_id IN (' . implode(', ', $user_id) . ')';
 		$_CLASS['core_db']->query($sql);
-		
+
+		$sql = 'DELETE FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' 
+			WHERE user_id IN (' . implode(', ', $user_id) . ")
+			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
+		$_CLASS['core_db']->query($sql);
+
 		return;
 	}
 
@@ -323,7 +331,7 @@ function user_delete($user_id, $quick = false)
 	$_CLASS['core_db']->transaction();
 
 	$optimize_array = array();
-	$tables = array(CORE_USERS_TABLE => 'user_id', CORE_USER_GROUP_TABLE => 'user_id');
+	$tables = array(CORE_USERS_TABLE => 'user_id', CORE_SESSIONS_AUTOLOGIN_TABLE => 'user_id', CORE_USER_GROUP_TABLE => 'user_id');
 // hook here
 
 // Move this to hooks on seperation
@@ -380,19 +388,19 @@ function user_get_id($username, &$difference)
 
 	$difference = array();
 
-	$username = is_array($username) ? $username : array($username);
+	$username = is_array($username) ? array_map('strtolower', $username) : array(strtolower($username));
 
 	$data = array('user_id' => array(), 'username' => array());
 
 	$sql = 'SELECT user_id, username
 				FROM ' . CORE_USERS_TABLE . " 
-				WHERE username IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array($username)) . "')";
+				WHERE LOWER(username) IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array($username)) . "')";
 	$result = $_CLASS['core_db']->query($sql);
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$data['user_id'][] = $row['user_id'];
-		$data['username'][] = $row['username'];
+		$data['user_id'][strtolower($row['username'])] = $row['user_id'];
+		$data['username'][] = strtolower($row['username']);
 	}
 	$_CLASS['core_db']->free_result($result);
 
@@ -424,7 +432,7 @@ function user_get_name($user_id, &$difference)
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
 		$data['user_id'][] = $row['user_id'];
-		$data['username'][] = $row['username'];
+		$data['username'][$row['user_id']] = $row['username'];
 	}
 	$_CLASS['core_db']->free_result($result);
 

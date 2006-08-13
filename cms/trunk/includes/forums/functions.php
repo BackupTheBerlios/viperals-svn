@@ -543,7 +543,7 @@ function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status
 					'notify_type' => 0
 				);
 
-				$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_WATCH_TABLE . ' '.$_CLASS['core_db']->sql_build_array('INSERT', $sql_array));
+				$_CLASS['core_db']->sql_query_build('INSERT', $sql_array, FORUMS_WATCH_TABLE);
 			}
 
 			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
@@ -660,17 +660,20 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 
 				if ($sql_insert = array_diff($forum_id, $update_array))
 				{
+					$sql_array = array();
+
 					foreach ($sql_insert as $forum_id)
 					{
-						$sql_ary = array(
+						$sql_array[] = array(
 							'user_id'		=> $_CLASS['core_user']->data['user_id'],
 							'topic_id'		=> 0,
 							'forum_id'		=> $forum_id,
 							'mark_time'		=> $time
 						);
-
-						$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
 					}
+	
+					$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $sql_array, FORUMS_TRACK_TABLE);
+					unset($sql_array);
 				}
 			}
 			else
@@ -708,14 +711,15 @@ function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
 
 				if (!$_CLASS['core_db']->query($sql) || !$_CLASS['core_db']->affected_rows())
 				{
-					$sql_ary = array(
+					$sql_array = array(
 						'user_id'		=> $_CLASS['core_user']->data['user_id'],
 						'topic_id'		=> $topic_id,
 						'forum_id'		=> $forum_id,
 						'mark_time'		=> $time
 					);
 
-					$_CLASS['core_db']->query('INSERT INTO ' . FORUMS_TRACK_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
+					$_CLASS['core_db']->sql_query_build('INSERT', $sql_array, FORUMS_TRACK_TABLE);
+					unset($sql_array);
 				}
 			}
 			else
@@ -1325,6 +1329,219 @@ function page_header()
 		'U_ACP'				=> ($_CLASS['core_user']->is_admin && $_CLASS['forums_auth']->acl_get('a_')) ? generate_link('Forums', array('admin' => true)) : '',
 		'L_ACP'				=> $_CLASS['core_user']->lang['ACP']
 	));
+}
+
+// Logging functions
+function add_log()
+{
+	global $_CLASS;
+
+	$args = func_get_args();
+
+	$mode			= array_shift($args);
+	$reportee_id	= ($mode === 'user') ? (int) array_shift($args) : '';
+	$forum_id		= ($mode === 'mod') ? (int) array_shift($args) : '';
+	$topic_id		= ($mode === 'mod') ? (int) array_shift($args) : '';
+	$action			= array_shift($args);
+	$data			= empty($args) ? '' : serialize($args);
+
+	$sql_array = array(
+		'user_id'		=> empty($_CLASS['core_user']->data['user_id']) ? ANONYMOUS : $_CLASS['core_user']->data['user_id'],
+		'log_ip'		=> $_CLASS['core_user']->ip,
+		'log_time'		=> $_CLASS['core_user']->time,
+		'log_operation'	=> $action,
+		'log_data'		=> $data,
+	);
+
+	switch ($mode)
+	{
+		case 'admin':
+			$sql_array['log_type'] = LOG_ADMIN;
+		break;
+		
+		case 'mod':
+			$sql_array += array(
+				'log_type'	=> LOG_MOD,
+				'forum_id'	=> $forum_id,
+				'topic_id'	=> $topic_id
+			);
+		break;
+
+		case 'user':
+			$sql_array += array(
+				'log_type'		=> LOG_USERS,
+				'reportee_id'	=> $reportee_id
+			);
+		break;
+
+		case 'critical':
+			$sql_array['log_type'] = LOG_CRITICAL;
+		break;
+		
+		default:
+			return false;
+		break;
+	}
+
+	$_CLASS['core_db']->sql_query_build('INSERT', $sql_array, FORUMS_LOG_TABLE);
+
+	return $_CLASS['core_db']->insert_id(FORUMS_LOG_TABLE, 'log_id');
+}
+
+/**
+*/
+class bitfield
+{
+	var $data;
+
+	function bitfield($bitfield = '')
+	{
+		$this->data = base64_decode($bitfield);
+	}
+
+	/**
+	*/
+	function get($n)
+	{
+		// Get the ($n / 8)th char
+		$byte = $n >> 3;
+
+		if (!isset($this->data[$byte]))
+		{
+			// Of course, if it doesn't exist then the result if FALSE
+			return false;
+		}
+
+		$c = $this->data[$byte];
+
+		// Lookup the ($n % 8)th bit of the byte
+		$bit = 7 - ($n & 7);
+		return (bool) (ord($c) & (1 << $bit));
+	}
+
+	function set($n)
+	{
+		$byte = $n >> 3;
+		$bit = 7 - ($n & 7);
+
+		if (isset($this->data[$byte]))
+		{
+			$this->data[$byte] = $this->data[$byte] | chr(1 << $bit);
+		}
+		else
+		{
+			if ($byte - strlen($this->data) > 0)
+			{
+				$this->data .= str_repeat("\0", $byte - strlen($this->data));
+			}
+			$this->data .= chr(1 << $bit);
+		}
+	}
+
+	function clear($n)
+	{
+		$byte = $n >> 3;
+
+		if (!isset($this->data[$byte]))
+		{
+			return;
+		}
+
+		$bit = 7 - ($n & 7);
+		$this->data[$byte] = $this->data[$byte] &~ chr(1 << $bit);
+	}
+
+	function get_blob()
+	{
+		return $this->data;
+	}
+
+	function get_base64()
+	{
+		return base64_encode($this->data);
+	}
+
+	function get_bin()
+	{
+		$bin = '';
+		$len = strlen($this->data);
+
+		for ($i = 0; $i < $len; ++$i)
+		{
+			$bin .= str_pad(decbin(ord($this->data[$i])), 8, '0', STR_PAD_LEFT);
+		}
+
+		return $bin;
+	}
+
+	function get_all_set()
+	{
+		return array_keys(array_filter(str_split($this->get_bin())));
+	}
+
+	function merge($bitfield)
+	{
+		$this->data = $this->data | $bitfield->get_blob();
+	}
+}
+
+/**
+* This function returns a regular expression pattern for commonly used expressions
+* Use with / as delimiter
+* mode can be: email|
+*/
+function get_preg_expression($mode)
+{
+	switch ($mode)
+	{
+		case 'email':
+			return '[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*?[a-z]+';
+		break;
+	}
+
+	return '';
+}
+
+/**
+* make_clickable function
+*
+* Replace magic urls of form http://xxx.xxx., www.xxx. and xxx@xxx.xxx.
+* Cuts down displayed size of link if over 50 chars, turns absolute links
+* into relative versions when the server/script path matches the link
+*/
+function make_clickable($text, $server_url = false)
+{
+	if ($server_url === false)
+	{
+		$server_url = generate_board_url();
+	}
+
+	static $magic_url_match;
+	static $magic_url_replace;
+
+	if (!is_array($magic_url_match))
+	{
+		$magic_url_match = $magic_url_replace = array();
+		// Be sure to not let the matches cross over. ;)
+
+		// relative urls for this board
+		$magic_url_match[] = '#(^|[\n ]|\()(' . preg_quote($server_url, '#') . ')/(([^[ \t\n\r<"\'\)&]+|&(?!lt;|quot;))*)#ie';
+		$magic_url_replace[] = "'\$1<!-- l --><a href=\"\$2/' . preg_replace('/(&amp;|\?)sid=[0-9a-f]{32}/', '\\1', '\$3') . '\">' . preg_replace('/(&amp;|\?)sid=[0-9a-f]{32}/', '\\1', '\$3') . '</a><!-- l -->'";
+
+		// matches a xxxx://aaaaa.bbb.cccc. ...
+		$magic_url_match[] = '#(^|[\n ]|\()([\w]+:/{2}.*?([^[ \t\n\r<"\'\)&]+|&(?!lt;|quot;))*)#ie';
+		$magic_url_replace[] = "'\$1<!-- m --><a href=\"\$2\" target=\"_blank\">' . ((strlen('\$2') > 55) ? substr(str_replace('&amp;', '&', '\$2'), 0, 39) . ' ... ' . substr(str_replace('&amp;', '&', '\$2'), -10) : '\$2') . '</a><!-- m -->'";
+
+		// matches a "www.xxxx.yyyy[/zzzz]" kinda lazy URL thing
+		$magic_url_match[] = '#(^|[\n ]|\()(w{3}\.[\w\-]+\.[\w\-.\~]+(?:[^[ \t\n\r<"\'\)&]+|&(?!lt;|quot;))*)#ie';
+		$magic_url_replace[] = "'\$1<!-- w --><a href=\"http://\$2\" target=\"_blank\">' . ((strlen('\$2') > 55) ? substr(str_replace('&amp;', '&', '\$2'), 0, 39) . ' ... ' . substr(str_replace('&amp;', '&', '\$2'), -10) : '\$2') . '</a><!-- w -->'";
+
+		// matches an email@domain type address at the start of a line, or after a space or after what might be a BBCode.
+		$magic_url_match[] = '/(^|[\n ]|\()(' . get_preg_expression('email') . ')/ie';
+		$magic_url_replace[] = "'\$1<!-- e --><a href=\"mailto:\$2\">' . ((strlen('\$2') > 55) ? substr('\$2', 0, 39) . ' ... ' . substr('\$2', -10) : '\$2') . '</a><!-- e -->'";
+	}
+
+	return preg_replace($magic_url_match, $magic_url_replace, $text);
 }
 
 ?>

@@ -20,19 +20,28 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 	global $_CLASS, $_CORE_CONFIG, $config;
 
 	$_CLASS['core_user']->add_lang('viewtopic');
+
 	$msg_id		= (int) $msg_id;
 	$folder_id	= (int) $folder_id;
 	$author_id	= (int) $message_row['author_id'];
 	
 	// Not able to view message, it was deleted by the sender
-	if ($message_row['deleted'])
+	if ($message_row['pm_deleted'])
 	{
 		trigger_error('NO_AUTH_READ_REMOVED_MESSAGE');
 	}
 	
+	// Do not allow hold messages to be seen
+	if ($folder_id == PRIVMSGS_HOLD_BOX)
+	{
+		trigger_error('NO_AUTH_READ_HOLD_MESSAGE');
+	}
+
 	// Grab icons
 	$icons = array();
 	obtain_icons($icons);
+
+	$bbcode = false;
 
 	// Instantiate BBCode if need be
 	if ($message_row['bbcode_bitfield'])
@@ -47,7 +56,10 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 	$user_info = get_user_informations($author_id, $message_row);
 
 	// Parse the message and subject
-	$message = $message_row['message_text'];
+
+	// Replace naughty words such as farty pants
+	$message_row['message_subject'] = censor_text($message_row['message_subject']);
+	$message_row['message_text'] = censor_text($message_row['message_text']);
 
 	// If the board has HTML off but the message has HTML on then we process it, else leave it alone
 	if ($message_row['enable_html'] && !$config['auth_html_pm'])
@@ -58,15 +70,11 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 	// Second parse bbcode here
 	if ($message_row['bbcode_bitfield'])
 	{
-		$bbcode->bbcode_second_pass($message, $message_row['bbcode_uid'], $message_row['bbcode_bitfield']);
+		$bbcode->bbcode_second_pass($message_row['message_text'], $message_row['bbcode_uid'], $message_row['bbcode_bitfield']);
 	}
 
 	// Always process smilies after parsing bbcodes
-	$message = smiley_text($message);
-
-	// Replace naughty words such as farty pants
-	$message_row['message_subject'] = censor_text($message_row['message_subject']);
-	$message = str_replace("\n", '<br />', censor_text($message));
+	$message_row['message_text'] = str_replace("\n", '<br />', smiley_text($message_row['message_text']));
 
 	// Editing information
 	if ($message_row['message_edit_count'] && $config['display_last_edited'])
@@ -119,7 +127,7 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 
 	if (!empty($attachments))
 	{
-		require_once(SITE_FILE_ROOT.'includes/forums/functions_display.php');
+		require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
 		$null = array();
 
 		$unset_attachments = parse_inline_attachments($message, $attachments, $update_count, 0);
@@ -131,6 +139,15 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 		}
 		unset($unset_attachments);
 			
+		// Update the attachment download counts
+		if (!empty($update_count))
+		{
+			$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
+				SET download_count = download_count + 1 
+				WHERE attach_id IN (' . implode(', ', array_unique($update_count)) . ')';
+			$_CLASS['core_db']->query($sql);
+		}
+
 		if (!empty($attachments))
 		{
 			$_CLASS['core_template']->assign('S_HAS_ATTACHMENTS', true);
@@ -140,15 +157,7 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 		unset($attachment_data, $null);
 	}
 
-	if (!mb_strpos($_CLASS['core_user']->data['session_url'], '&amp;t='.$msg_id) && !empty($update_count))
-	{
-		// Update the attachment download counts
-		$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
-			SET download_count = download_count + 1 
-			WHERE attach_id IN (' . implode(', ', array_unique($update_count)) . ')';
-		$_CLASS['core_db']->query($sql);
-	}
-
+	$user_info['sig'] = '';
 	$signature = ($message_row['enable_sig'] && $config['allow_sig'] && $_CLASS['core_user']->user_data_get('viewsigs')) ? $user_info['user_sig'] : '';
 	
 	// End signature parsing, only if needed
@@ -156,9 +165,9 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 	{
 		if ($user_info['user_sig_bbcode_bitfield'])
 		{
-			if (!isset($bbcode) || !$bbcode)
+			if ($bbcode === false)
 			{
-				require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
+				require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
 				$bbcode = new bbcode($user_info['user_sig_bbcode_bitfield']);
 			}
 
@@ -175,12 +184,13 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 		'AUTHOR_NAME'		=> ($user_info['user_colour']) ? '<span style="color:#' . $user_info['user_colour'] . '">' . $user_info['username'] . '</span>' : $user_info['username'],
 		'AUTHOR_RANK' 		=> $user_info['rank_title'],
 		'RANK_IMAGE' 		=> $user_info['rank_image'],
-		'AUTHOR_AVATAR'		=> (isset($user_info['avatar'])) ? $user_info['avatar'] : '',
+		'AUTHOR_AVATAR'		=> isset($user_info['avatar']) ? $user_info['avatar'] : '',
 		'AUTHOR_JOINED'		=> $_CLASS['core_user']->format_date($user_info['user_reg_date']),
 		'AUTHOR_POSTS' 		=> (!empty($user_info['user_posts'])) ? $user_info['user_posts'] : '',
 		'AUTHOR_FROM' 		=> (!empty($user_info['user_from'])) ? $user_info['user_from'] : '',
 
 		'ONLINE_IMG'		=> (!$config['load_onlinetrack']) ? '' : ((isset($user_info['online']) && $user_info['online']) ? $_CLASS['core_user']->img('btn_online', $_CLASS['core_user']->lang['ONLINE']) : $_CLASS['core_user']->img('btn_offline', $_CLASS['core_user']->lang['OFFLINE'])),
+		'S_ONLINE'			=> (!$config['load_onlinetrack']) ? false : ((isset($user_info['online']) && $user_info['online']) ? true : false),
 		'DELETE_IMG' 		=> $_CLASS['core_user']->img('btn_delete', $_CLASS['core_user']->lang['DELETE_MESSAGE']),
 		'INFO_IMG' 			=> $_CLASS['core_user']->img('btn_info', $_CLASS['core_user']->lang['VIEW_PM_INFO']),
 		'REPORT_IMG'		=> $_CLASS['core_user']->img('btn_report', $_CLASS['core_user']->lang['REPORT_PM']),
@@ -194,15 +204,15 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 
 		'SENT_DATE' 		=> $_CLASS['core_user']->format_date($message_row['message_time']),
 		'SUBJECT'			=> $message_row['message_subject'],
-		'MESSAGE' 			=> $message,
+		'MESSAGE' 			=> $message_row['message_text'],
 		'SIGNATURE' 		=> ($message_row['enable_sig']) ? $signature : '',
 		'EDITED_MESSAGE'	=> $l_edited_by,
 
 		'U_MCP_REPORT'		=> generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']),
 		'U_REPORT'			=> (false) ? generate_link('Forums&amp;file=report&amp;pm=' . $message_row['msg_id']) : '',
-		'U_INFO'			=> ($_CLASS['forums_auth']->acl_get('m_') && ($message_row['message_reported'] || $message_row['forwarded'])) ? generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']) : '',
+		'U_INFO'			=> ($_CLASS['forums_auth']->acl_get('m_') && ($message_row['message_reported'] || $message_row['pm_forwarded'])) ? generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']) : '',
 		'U_DELETE' 			=> generate_link("$url&amp;mode=compose&amp;action=delete&amp;f=$folder_id&amp;p=" . $message_row['msg_id']),
-		'U_AUTHOR_PROFILE' 	=> generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $author_id),
+		'U_AUTHOR_PROFILE' 	=> generate_link('members_list&amp;mode=viewprofile&amp;u=' . $author_id),
 		'U_EMAIL' 			=> $user_info['email'],
 		'U_QUOTE'			=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
 		'U_EDIT' 			=> (($message_row['message_time'] > time() - $config['pm_edit_time'] || !$config['pm_edit_time']) && $folder_id == PRIVMSGS_OUTBOX) ? generate_link("$url&amp;mode=compose&amp;action=edit&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '', 
@@ -218,7 +228,7 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 		'U_FORWARD_PM'		=> generate_link("$url&amp;mode=compose&amp;action=forward&amp;f=$folder_id&amp;p=" . $message_row['msg_id'])
 	));
 
-	if (!isset($_REQUEST['view']) || $_REQUEST['view'] != 'print')
+	if (!isset($_REQUEST['view']) || $_REQUEST['view'] !== 'print')
 	{
 		// Message History
 		if (message_history($msg_id, $_CLASS['core_user']->data['user_id'], $message_row, $folder))
@@ -238,7 +248,7 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 		FROM ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . CORE_USERS_TABLE . ' u
 		WHERE t.msg_id = p.msg_id 
 			AND p.author_id = u.user_id
-			AND t.folder_id <> ' . PRIVMSGS_NO_BOX . "
+			AND t.folder_id NOT IN (' . PRIVMSGS_NO_BOX . ', ' . PRIVMSGS_HOLD_BOX . ")
 			AND t.user_id = $user_id";
 
 	if (!$message_row['root_level'])
@@ -252,12 +262,14 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 
 	$sql .= ' ORDER BY p.message_time ';
 	$sort_dir = (!empty($_CLASS['core_user']->data['user_sortby_dir'])) ? $_CLASS['core_user']->data['user_sortby_dir'] : 'd';
-	$sql .= ($sort_dir == 'd') ? 'ASC' : 'DESC';
+	$sql .= ($sort_dir === 'd') ? 'ASC' : 'DESC';
 
 	$result = $_CLASS['core_db']->query($sql);
+	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 
-	if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
+	if (!$row)
 	{
+		$_CLASS['core_db']->free_result($result);
 		return false;
 	}
 
@@ -279,7 +291,7 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 		else
 		{
 			$rowset[$row['msg_id']] = $row;
-			$bbcode_bitfield |= $row['bbcode_bitfield'];
+			$bbcode_bitfield = $bbcode_bitfield | base64_decode($row['bbcode_bitfield']);
 		}
 	}
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
@@ -293,12 +305,9 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 	}
 	
 	// Instantiate BBCode class
-	if (!isset($bbcode) && $bbcode_bitfield)
+	if ((empty($bbcode) || $bbcode === false) && $bbcode_bitfield)
 	{
-		if (!class_exists('bbcode'))
-		{
-			require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
-		}
+		require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
 		$bbcode = new bbcode($bbcode_bitfield);
 	}
 
@@ -344,7 +353,7 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 
 			'U_MSG_ID'			=> $row['msg_id'],
 			'U_VIEW_MESSAGE'	=> generate_link("$url&amp;f=$folder_id&amp;p=" . $row['msg_id']),
-			'U_AUTHOR_PROFILE' 	=> generate_link('Members_List&amp;mode=viewprofile&amp;u='.$author_id),
+			'U_AUTHOR_PROFILE' 	=> generate_link('members_list&amp;mode=viewprofile&amp;u='.$author_id),
 			'U_QUOTE'			=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=" . $folder_id . "&amp;p=" . $row['msg_id']) : '',
 			'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $row['msg_id']) : '')
 		);
@@ -363,19 +372,26 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 	return true;
 }
 
-// Get User Informations (only for message display)
+/**
+* Get User Informations (only for message display)
+*/
 function get_user_informations($user_id, $user_row)
 {
 	global $config, $_CORE_CONFIG, $_CLASS;
 
 	if (!$user_id)
 	{
-		return;
+		return array();
 	}
 
 	if (empty($user_row))
 	{
-		$user_row = get_userdata((int) $user_id);
+		$sql = 'SELECT *
+			FROM ' . CORE_USERS_TABLE . '
+			WHERE user_id = ' . (int) $user_id;
+		$result = $_CLASS['core_db']->query($sql);
+		$user_row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	// Grab ranks
@@ -410,11 +426,11 @@ function get_user_informations($user_id, $user_row)
 		switch ($user_row['user_avatar_type'])
 		{
 			case AVATAR_UPLOAD:
-				$avatar_img = $config['avatar_path'] . '/';
+				$avatar_img = $_CORE_CONFIG['global']['path_avatar_upload'] . '/';
 			break;
 
 			case AVATAR_GALLERY:
-				$avatar_img = $config['avatar_gallery_path'] . '/';
+				$avatar_img = $_CORE_CONFIG['global']['path_avatar_gallery'] . '/';
 			break;
 		}
 		$avatar_img .= $user_row['user_avatar'];
@@ -448,7 +464,7 @@ function get_user_informations($user_id, $user_row)
 
 	if (!empty($user_row['user_allow_viewemail']))
 	{
-		$user_row['email'] = ($config['board_email_form'] && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Members_List&amp;mode=email&amp;u='.$user_id) : (($config['board_hide_emails']) ? '' : 'mailto:' . $user_row['user_email']);
+		$user_row['email'] = ($config['board_email_form'] && $_CORE_CONFIG['email']['email_enable']) ? generate_link('members_list&amp;mode=email&amp;u='.$user_id) : (($config['board_hide_emails']) ? '' : 'mailto:' . $user_row['user_email']);
 	}
 	else
 	{

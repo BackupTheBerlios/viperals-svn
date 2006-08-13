@@ -61,7 +61,7 @@ function lock_unlock($mode, $ids)
 	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);//generate_link('Forums')
 	$message = $_CLASS['core_user']->get_lang(strtoupper($mode) . '_' . $l_prefix . ((count($ids) === 1) ? '' : 'S'));
 
-	$hidden_fields = build_hidden_fields(array(
+	$hidden_fields = generate_hidden_fields(array(
 		$sql_id . '_list'	=> $ids,
 		'mode'				=> $mode,
 		'redirect'			=> $redirect
@@ -138,7 +138,7 @@ function change_topic_type($mode, $topic_ids, $forum_id)
 
 	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 
-	$hidden_fields = build_hidden_fields(array(
+	$hidden_fields = generate_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
 		'mode'			=> $mode,
 		'redirect'		=> $redirect
@@ -252,7 +252,7 @@ function mcp_move_topic($topic_ids)
 		unset($_POST['confirm']);
 	}
 	
-	$hidden_fields = build_hidden_fields(array(
+	$hidden_fields = generate_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
 		'mode'			=> 'move',
 		'redirect'		=> $redirect
@@ -366,7 +366,7 @@ function mcp_delete_topic($topic_ids)
 
 	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 
-	$hidden_fields = build_hidden_fields(array(
+	$hidden_fields = generate_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
 		'mode'			=> 'delete_topic',
 		'redirect'		=> $redirect
@@ -414,7 +414,7 @@ function mcp_delete_post($post_ids)
 
 	$redirect = get_variable('redirect', 'POST', $_CLASS['core_user']->data['session_url']);
 
-	$hidden_fields = build_hidden_fields(array(
+	$hidden_fields = generate_hidden_fields(array(
 		'post_id_list'	=> $post_ids,
 		'mode'			=> 'delete_post',
 		'redirect'		=> $redirect
@@ -557,7 +557,7 @@ function mcp_fork_topic($topic_ids)
 		unset($_POST['confirm']);
 	}
 
-	$hidden_fields = build_hidden_fields(array(
+	$hidden_fields = generate_hidden_fields(array(
 		'topic_id_list'	=> $topic_ids,
 		'mode'			=> 'fork',
 		'redirect'		=> $redirect

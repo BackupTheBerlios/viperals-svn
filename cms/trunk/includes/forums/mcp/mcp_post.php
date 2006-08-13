@@ -27,7 +27,12 @@
 $_CLASS['core_user']->add_lang('posting');
 
 $post_id = get_variable('p', 'REQUEST', false, 'int');
-$action = get_variable('action', 'REQUEST');
+$action = (isset($_REQUEST['action']) && is_array($_REQUEST['action'])) ? get_variable('action', 'REQUEST', false, 'array') : get_variable('action', 'REQUEST');
+
+if (is_array($action))
+{
+	list($action, ) = each($action);
+}
 
 if (!$post_id && $action !== 'whois')
 {
@@ -45,7 +50,7 @@ if ($action !== 'whois')
 	}
 	$post_info = $post_info[$post_id];
 	
-	$url = 'forums&amp;file=mcp';
+	$url = 'forums&amp;file=mcp&amp;p='.$post_info['post_id'];
 	$start	= get_variable('start', 'REQUEST', 0, 'int');
 }
 
@@ -122,7 +127,7 @@ $message = smiley_text($message);
 $message = str_replace("\n", '<br />', $message);
 
 $_CLASS['core_template']->assign_array(array(
-	'U_MCP_ACTION'			=> generate_link($url.'&amp;i=main&amp;quickmod=1'), // Use this for mode paramaters
+	'U_MCP_ACTION'			=> generate_link($url.'&amp;quickmod=1'), // Use this for mode paramaters
 	'U_POST_ACTION'			=> generate_link("$url&amp;mode=post_details"), // Use this for action parameters
 	'U_APPROVE_ACTION'		=> generate_link('forums&amp;file=mcp&amp;i=queue&amp;p='.$post_info['post_id']),
 
@@ -231,7 +236,7 @@ if ($_CLASS['forums_auth']->acl_get('m_info', $post_info['forum_id']))
 	$rdns_ip_num = get_variable('rdns', 'REQUEST');
 	$users_ary = array();
 
-	$_CLASS['core_template']->assign('U_LOOKUP_ALL', ($rdns_ip_num === 'all') ? false : generate_link($url.'&amp;i=main&amp;mode=post_details&amp;rdns=all&amp;p='.$post_info['post_id']));
+	$_CLASS['core_template']->assign('U_LOOKUP_ALL', ($rdns_ip_num === 'all') ? false : generate_link($url.'&amp;mode=post_details&amp;rdns=all&amp;p='.$post_info['post_id']));
 
 	// Get other users who've posted under this IP
 	$sql = 'SELECT u.user_id, u.username, COUNT(*) as postings

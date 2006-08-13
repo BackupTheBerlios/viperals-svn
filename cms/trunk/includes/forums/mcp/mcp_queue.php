@@ -28,9 +28,13 @@ global $_CLASS, $site_file_root, $config;
 
 $forum_id = request_var('f', 0);
 $start = request_var('start', 0);
-$action = get_variable('action', 'REQUEST');
+$action = (isset($_REQUEST['action']) && is_array($_REQUEST['action'])) ? get_variable('action', 'REQUEST', false, 'array') : get_variable('action', 'REQUEST');
 $mode = get_variable('mode', 'REQUEST');
 
+if (is_array($action))
+{
+	list($action, ) = each($action);
+}
 
 switch ($action)
 {
@@ -45,7 +49,7 @@ switch ($action)
 			trigger_error('NO_POST_SELECTED');
 		}
 
-		($mode === 'approve') ? approve_post($post_id_list, $mode) : disapprove_post($post_id_list, $mode);
+		($action === 'approve') ? approve_post($post_id_list, $mode) : disapprove_post($post_id_list, $mode);
 	break;
 }
 
@@ -64,7 +68,7 @@ switch ($mode)
 			$post_id = isset($topic_info[$topic_id]['topic_first_post_id']) ? (int) $topic_info[$topic_id]['topic_first_post_id'] : false;
 		}
 
-		$post_info = ($post_id/) ? get_post_data(array($post_id), 'm_approve') : false;
+		$post_info = ($post_id) ? get_post_data(array($post_id), 'm_approve') : false;
 
 		if (!$post_id || empty($post_info[$post_id]))
 		{
@@ -90,15 +94,16 @@ switch ($mode)
 		$poster = ($post_info['user_colour']) ? '<span style="color:#' . $post_info['user_colour'] . '">' . $post_info['username'] . '</span>' : $post_info['username'];
 
 		// Process message, leave it uncensored
-		$message = $post_info['post_text'];
+		$post_info['post_text'] = $post_info['post_text'];
+
 		if ($post_info['bbcode_bitfield'])
 		{
 			require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
 
 			$bbcode = new bbcode($post_info['bbcode_bitfield']);
-			$bbcode->bbcode_second_pass($message, $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
+			$bbcode->bbcode_second_pass($post_info['post_text'], $post_info['bbcode_uid'], $post_info['bbcode_bitfield']);
 		}
-		$message = smiley_text($message);
+		$post_info['post_text'] = smiley_text($post_info['post_text']);
 
 		$_CLASS['core_template']->assign_array(array(
 			'S_MCP_QUEUE'			=> true,
@@ -118,13 +123,13 @@ switch ($mode)
 			'U_VIEW_PROFILE'		=> generate_link('members_list&amp;mode=viewprofile&amp;u=' . $post_info['user_id']),
 			'U_VIEW_TOPIC'			=> generate_link('forums&amp;file=viewtopic&amp;t=' . $post_info['topic_id']),
 
-			'RETURN_QUEUE'			=> sprintf($_CLASS['core_user']->lang['RETURN_QUEUE'], '<a href="' . generate_link('forums&amp;file=mcp&amp;i=queue' . (($topic_id) ? '&amp;mode=unapproved_topics' : '&amp;mode=unapproved_posts')) . "&amp;start=$start\">", '</a>'),
+			'RETURN_QUEUE'			=> sprintf($_CLASS['core_user']->get_lang('RETURN_QUEUE'), '<a href="' . generate_link('forums&amp;file=mcp&amp;i=queue' . (($topic_id) ? '&amp;mode=unapproved_topics' : '&amp;mode=unapproved_posts')) . "&amp;start=$start\">", '</a>'),
 			'REPORTED_IMG'			=> $_CLASS['core_user']->img('icon_reported', $_CLASS['core_user']->lang['POST_REPORTED']),
 			'UNAPPROVED_IMG'		=> $_CLASS['core_user']->img('icon_unapproved', $_CLASS['core_user']->lang['POST_UNAPPROVED']),
 			'EDIT_IMG'				=> $_CLASS['core_user']->img('btn_edit', $_CLASS['core_user']->lang['EDIT_POST']),
 
 			'POSTER_NAME'			=> $poster,
-			'POST_PREVIEW'			=> $message,
+			'POST_PREVIEW'			=> $post_info['post_text'],
 			'POST_SUBJECT'			=> $post_info['post_subject'],
 			'POST_DATE'				=> $_CLASS['core_user']->format_date($post_info['post_time']),
 			'POST_IP'				=> $post_info['poster_ip'],
@@ -201,7 +206,7 @@ switch ($mode)
 		$forum_topics = ($total == -1) ? $forum_info['forum_topics'] : $total;
 		$limit_time_sql = ($sort_days) ? 'AND t.topic_last_post_time >= ' . ($_CLASS['core_user']->time - ($sort_days * 86400)) : '';
 
-		if ($mode == 'unapproved_posts')
+		if ($mode === 'unapproved_posts')
 		{
 			$sql = 'SELECT DISTINCT p.post_id
 				FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_TOPICS_TABLE . ' t' . (($sort_order_sql{0} == 'u') ? ', ' . CORE_USERS_TABLE . ' u' : '') . "
@@ -308,17 +313,17 @@ switch ($mode)
 		}
 		unset($rowset);
 
-		$pagination = generate_pagination('forums&amp;file=mcp&amp;f='.$forum_id, $total, $config['topics_per_page'], $start)
+		$pagination = generate_pagination('forums&amp;file=mcp&amp;f='.$forum_id, $total, $config['topics_per_page'], $start);
 
 		// Now display the page
 		$_CLASS['core_template']->assign_array(array(
-			'L_DISPLAY_ITEMS'		=> ($mode === 'unapproved_posts') ? $_CLASS['core_user']->lang['DISPLAY_POSTS'] : $_CLASS['core_user']->lang['DISPLAY_TOPICS'],
-			'L_EXPLAIN'				=> ($mode === 'unapproved_posts') ? $_CLASS['core_user']->lang['MCP_QUEUE_UNAPPROVED_POSTS_EXPLAIN'] : $_CLASS['core_user']->lang['MCP_QUEUE_UNAPPROVED_TOPICS_EXPLAIN'],
-			'L_TITLE'				=> ($mode === 'unapproved_posts') ? $_CLASS['core_user']->lang['MCP_QUEUE_UNAPPROVED_POSTS'] : $_CLASS['core_user']->lang['MCP_QUEUE_UNAPPROVED_TOPICS'],
+			'L_DISPLAY_ITEMS'		=> ($mode === 'unapproved_posts') ? $_CLASS['core_user']->get_lang('DISPLAY_POSTS') : $_CLASS['core_user']->get_lang('DISPLAY_TOPICS'),
+			'L_EXPLAIN'				=> ($mode === 'unapproved_posts') ? $_CLASS['core_user']->get_lang('MCP_QUEUE_UNAPPROVED_POSTS_EXPLAIN') : $_CLASS['core_user']->get_lang('MCP_QUEUE_UNAPPROVED_TOPICS_EXPLAIN'),
+			'L_TITLE'				=> ($mode === 'unapproved_posts') ? $_CLASS['core_user']->get_lang('MCP_QUEUE_UNAPPROVED_POSTS') : $_CLASS['core_user']->get_lang('MCP_QUEUE_UNAPPROVED_TOPICS'),
 			'L_ONLY_TOPIC'			=> ($topic_id) ? sprintf($_CLASS['core_user']->lang['ONLY_TOPIC'], $topic_info['topic_title']) : '',
 
 			'S_FORUM_OPTIONS'		=> $forum_options,
-			'S_MCP_ACTION'			=> build_url(array('t', 'f', 'sd', 'st', 'sk')),
+			'S_MCP_ACTION'			=> generate_link("forums&amp;file=mcp&amp;i=queue&amp;t=$topic_id&amp;f=$forum_id"),//build_url(array('t', 'f', 'sd', 'st', 'sk')),
 			'S_TOPICS'				=> ($mode === 'unapproved_posts') ? false : true,
 
 			'PAGINATION'			=> $pagination['formated'],
@@ -340,7 +345,9 @@ function approve_post($post_id_list, $mode)
 {
 	global $_CLASS, $_CORE_CONFIG, $config;
 
-	if (!check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_approve'))
+	$forum_id = request_var('f', 0);
+
+	if (!check_ids($post_id_list, FORUMS_POSTS_TABLE, 'post_id', 'm_approve'))
 	{
 		trigger_error('NOT_AUTHORIZED');
 	}
@@ -350,14 +357,19 @@ function approve_post($post_id_list, $mode)
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'i'				=> 'queue',
+		'f'				=> $forum_id,
 		'mode'			=> $mode,
 		'post_id_list'	=> $post_id_list,
-		'f'				=> $forum_id,
 		'action'		=> 'approve',
 		'redirect'		=> $redirect
 	));
 
-	if (confirm_box(true))
+	$_CLASS['core_template']->assign_array(array(
+		'S_NOTIFY_POSTER'	=> true,
+		'S_APPROVE'			=> true
+	));
+
+	if (display_confirmation($_CLASS['core_user']->get_lang('APPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S')), $s_hidden_fields, 'modules/forums/mcp_approve.html'))
 	{
 		$notify_poster = (isset($_REQUEST['notify_poster'])) ? true : false;
 	
@@ -459,48 +471,55 @@ function approve_post($post_id_list, $mode)
 		update_post_information('forum', $forum_id);
 		unset($topic_id_list);
 		
-/*		$messenger = new messenger();
-
 		// Notify Poster?
 		if ($notify_poster)
 		{
-			$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
-		
+			require_once SITE_FILE_ROOT.'includes/mailer.php';
+
+			$mailer = new core_mailer();
+
 			foreach ($post_info as $post_id => $post_data)
 			{
 				if ($post_data['poster_id'] == ANONYMOUS)
 				{
 					continue;
 				}
-				
-				$email_template = ($post_data['post_id'] == $post_data['topic_first_post_id'] && $post_data['post_id'] == $post_data['topic_last_post_id']) ? 'topic_approved' : 'post_approved';
 
-				$messenger->template($email_template, $post_data['user_lang']);
+				$post_data['post_subject'] = censor_text($post_data['post_subject'], true);
+				$post_data['topic_title'] = censor_text($post_data['topic_title'], true);
 
-				$messenger->replyto($config['board_email']);
-				$messenger->to($post_data['user_email'], $post_data['username']);
-				$messenger->im($post_data['user_jabber'], $post_data['username']);
+				if ($post_data['post_id'] == $post_data['topic_first_post_id'] && $post_data['post_id'] == $post_data['topic_last_post_id'])
+				{
+					$email_template = 'topic_approved.txt';
+					$subject = 'Topic Approved - '.$post_data['topic_title'];
+				}
+				else
+				{
+					$email_template = 'post_approved.txt';
+					$subject = 'Post Approved - '.$post_data['post_subject'];
+				}
 
-				$messenger->assign_vars(array(
-					'EMAIL_SIG'		=> $email_sig,
-					'SITENAME'		=> $_CORE_CONFIG['global']['sitename'],
+				$mailer->to($post_data['user_email'], $post_data['username']);
+				//$mailer->reply_to($_CORE_CONFIG['email']['site_email']);
+				$mailer->subject($subject);
+				//$messenger->im($post_data['user_jabber'], $post_data['username']);
+
+				$_CLASS['core_template']->assign_array(array(
+					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 					'USERNAME'		=> $post_data['username'],
-					'POST_SUBJECT'	=> censor_text($post_data['post_subject']),
-					'TOPIC_TITLE'	=> censor_text($post_data['topic_title']),
+					'POST_SUBJECT'	=> $post_data['post_subject'],
+					'TOPIC_TITLE'	=> $post_data['topic_title'],
 
-					'U_VIEW_TOPIC'	=> generate_link("forums&amp;file=viewtopic&amp;f=$forum_id&t={$post_data['topic_id']}&e=0"),
-					'U_VIEW_POST'	=> generate_link("forums&amp;file=viewtopic7amp;f=$forum_id&t={$post_data['topic_id']}&p=$post_id&e=$post_id"))
-				);
+					'U_VIEW_TOPIC'	=> generate_link("forums&amp;file=viewtopic&amp;t={$post_data['topic_id']}&amp;e=0"),
+					'U_VIEW_POST'	=> generate_link("forums&amp;file=viewtopic&amp;p=$post_id&amp;e=$post_id")
+				));
 
-				$messenger->send($post_data['user_notify_type']);
-				$messenger->reset();
+				$mailer->message = trim($_CLASS['core_template']->display('email/forums/'.$email_template, true));
+				$mailer->send();
 			}
-			$messenger->save_queue();
 		}
-*/
+
 		// Send out normal user notifications
-		$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
-		
 		foreach ($post_info as $post_id => $post_data)
 		{
 			if ($post_id == $post_data['topic_first_post_id'] && $post_id == $post_data['topic_last_post_id'])
@@ -525,15 +544,6 @@ function approve_post($post_id_list, $mode)
 			$success_msg = (sizeof($post_id_list) == 1) ? 'POST_APPROVED_SUCCESS' : 'POSTS_APPROVED_SUCCESS';
 		}
 	}
-	else
-	{
-		$_CLASS['core_template']->assign_array(array(
-			'S_NOTIFY_POSTER'	=> true,
-			'S_APPROVE'			=> true)
-		);
-
-		confirm_box(false, 'APPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S'), $s_hidden_fields, 'modules/forums/mcp_approve.html');
-	}
 
 	$redirect = request_var('redirect', generate_link('forums'));
 
@@ -551,11 +561,13 @@ function approve_post($post_id_list, $mode)
 /**
 * Disapprove Post/Topic
 */
-function disapprove_post($post_id_list)
+function disapprove_post($post_id_list, $mode)
 {
 	global $_CLASS, $_CORE_CONFIG, $config;
 
-	if (!check_ids($post_id_list, POSTS_TABLE, 'post_id', 'm_approve'))
+	$forum_id = request_var('f', 0);
+
+	if (!check_ids($post_id_list, FORUMS_POSTS_TABLE, 'post_id', 'm_approve'))
 	{
 		trigger_error('NOT_AUTHORIZED');
 	}
@@ -567,9 +579,9 @@ function disapprove_post($post_id_list)
 
 	$s_hidden_fields = build_hidden_fields(array(
 		'i'				=> 'queue',
+		'f'				=> $forum_id,
 		'mode'			=> $mode,
 		'post_id_list'	=> $post_id_list,
-		'f'				=> $forum_id,
 		'mode'			=> 'disapprove',
 		'redirect'		=> $redirect
 	));
@@ -599,7 +611,18 @@ function disapprove_post($post_id_list)
 		}
 	}
 
-	if (confirm_box(true))
+	require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
+
+	$reason = display_reasons($reason_id);
+
+	$_CLASS['core_template']->assign_array(array(
+		'S_NOTIFY_POSTER'	=> true,
+		'S_APPROVE'			=> false,
+		'REASON'			=> $reason,
+		'ADDITIONAL_MSG'	=> $additional_msg
+	));
+
+	if (display_confirmation($_CLASS['core_user']->get_lang('DISAPPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S')), $s_hidden_fields, 'modules/forums/mcp_approve.html'))
 	{
 		$post_info = get_post_data($post_id_list, 'm_approve');
 		
@@ -671,42 +694,51 @@ function disapprove_post($post_id_list)
 		update_post_information('forum', $forum_id);
 		unset($topic_id_list);
 		
-		/*$messenger = new messenger();
-
 		// Notify Poster?
 		if ($notify_poster)
 		{
-			$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
-		
+			require_once SITE_FILE_ROOT.'includes/mailer.php';
+
+			$mailer = new core_mailer();
+
 			foreach ($post_info as $post_id => $post_data)
 			{
 				if ($post_data['poster_id'] == ANONYMOUS)
 				{
 					continue;
 				}
-				
-				$email_template = ($post_data['post_id'] == $post_data['topic_first_post_id'] && $post_data['post_id'] == $post_data['topic_last_post_id']) ? 'topic_disapproved' : 'post_disapproved';
 
-				$messenger->template($email_template, $post_data['user_lang']);
+				$post_data['post_subject'] = censor_text($post_data['post_subject'], true);
+				$post_data['topic_title'] = censor_text($post_data['topic_title'], true);
 
-				$messenger->replyto($config['board_email']);
-				$messenger->to($post_data['user_email'], $post_data['username']);
-				$messenger->im($post_data['user_jabber'], $post_data['username']);
+				if ($post_data['post_id'] == $post_data['topic_first_post_id'] && $post_data['post_id'] == $post_data['topic_last_post_id'])
+				{
+					$email_template = 'topic_disapproved.txt';
+					$subject = 'Topic Disapproved - '.$post_data['topic_title'];
+				}
+				else
+				{
+					$email_template = 'post_disapproved.txt';
+					$subject = 'Post Disapproved - '.$post_data['post_subject'];
+				}
 
-				$messenger->assign_vars(array(
-					'EMAIL_SIG'		=> $email_sig,
-					'SITENAME'		=> $_CORE_CONFIG['global']['sitename'],
+				$mailer->to($post_data['user_email'], $post_data['username']);
+				//$mailer->reply_to($_CORE_CONFIG['email']['site_email']);
+				$mailer->subject($subject);
+				//$messenger->im($post_data['user_jabber'], $post_data['username']);
+
+				$_CLASS['core_template']->assign_array(array(
+					'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 					'USERNAME'		=> $post_data['username'],
 					'REASON'		=> stripslashes($disapprove_reason),
-					'POST_SUBJECT'	=> censor_text($post_data['post_subject']),
-					'TOPIC_TITLE'	=> censor_text($post_data['topic_title']))
-				);
+					'POST_SUBJECT'	=> $post_data['post_subject'],
+					'TOPIC_TITLE'	=> $post_data['topic_title'],
+				));
 
-				$messenger->send($post_data['user_notify_type']);
-				$messenger->reset();
+				$mailer->message = trim($_CLASS['core_template']->display('email/forums/'.$email_template, true));
+				$mailer->send();
 			}
-			$messenger->save_queue();
-		}*/
+		}
 		unset($post_info, $disapprove_reason);
 
 		if ($forum_topics_real)
@@ -717,21 +749,6 @@ function disapprove_post($post_id_list)
 		{
 			$success_msg = (sizeof($post_id_list) == 1) ? 'POST_DISAPPROVED_SUCCESS' : 'POSTS_DISAPPROVED_SUCCESS';
 		}
-	}
-	else
-	{
-		require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
-
-		display_reasons($reason_id);
-
-		$_CLASS['core_template']->assign_array(array(
-			'S_NOTIFY_POSTER'	=> true,
-			'S_APPROVE'			=> false,
-			'REASON'			=> $reason,
-			'ADDITIONAL_MSG'	=> $additional_msg
-		));
-
-		confirm_box(false, 'DISAPPROVE_POST' . ((sizeof($post_id_list) == 1) ? '' : 'S'), $s_hidden_fields, 'mcp_approve.html');
 	}
 
 	$redirect = request_var('redirect', generate_link('forums'));

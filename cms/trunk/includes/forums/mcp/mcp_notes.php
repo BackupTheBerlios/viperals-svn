@@ -12,9 +12,13 @@
 
 global $_CLASS;
 
-$action = get_variable('action', 'REQUEST');
 $mode = get_variable('mode', 'REQUEST');
+$action = (isset($_REQUEST['action']) && is_array($_REQUEST['action'])) ? get_variable('action', 'REQUEST', false, 'array') : get_variable('action', 'REQUEST');
 
+if (is_array($action))
+{
+	list($action, ) = each($action);
+}
 //$this->page_title = 'MCP_NOTES';
 
 switch ($mode)
@@ -94,7 +98,7 @@ function mcp_notes_user_view($action)
 		if ($where_sql || $deleteall)
 		{
 			$sql = 'DELETE FROM ' . FORUMS_LOG_TABLE . '
-				WHERE log_type = ' . FORUMS_LOG_USERS . " 
+				WHERE log_type = ' . LOG_USERS . " 
 					AND reportee_id = $user_id
 					$where_sql";
 			$_CLASS['core_db']->query($sql);
@@ -169,8 +173,8 @@ function mcp_notes_user_view($action)
 				'REPORT_AT'		=> $_CLASS['core_user']->format_date($row['time']),
 				'ACTION'		=> $row['action'],
 				'IP'			=> $row['ip'],
-				'ID'			=> $row['id'])
-			);
+				'ID'			=> $row['id']
+			));
 		}
 	}
 
