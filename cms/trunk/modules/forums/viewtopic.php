@@ -260,6 +260,8 @@ if (($topic_data['topic_type'] == POST_STICKY || $topic_data['topic_type'] == PO
 	$topic_data['topic_time_limit'] = 0;
 }
 
+require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
+
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang('viewtopic');
 $_CLASS['core_user']->add_img();
@@ -420,7 +422,7 @@ if (!empty($topic_data['poll_start']))
 		
 	if ($update && $s_can_vote)
 	{
-		if (empty($voted_id) || !empty($voted_id) > $poll_max_options)
+		if (empty($voted_id) || !empty($voted_id) > $topic_data['poll_max_options'])
 		{
 			$_CLASS['core_display']->meta_refresh(5, generate_link("forums&amp;file=viewtopic&amp;t=$topic_id"));
 
@@ -429,6 +431,8 @@ if (!empty($topic_data['poll_start']))
 			trigger_error($message);
 		}
 
+		$sql_ary = array();
+
 		foreach ($voted_id as $option)
 		{
 			if (in_array($option, $cur_voted_id))
@@ -436,7 +440,7 @@ if (!empty($topic_data['poll_start']))
 				continue;
 			}
 
-			$sql = 'UPDATE ' . POLL_OPTIONS_TABLE . '
+			$sql = 'UPDATE ' . FORUMS_POLL_OPTIONS_TABLE . '
 				SET poll_option_total = poll_option_total + 1
 				WHERE poll_option_id = ' . (int) $option . '
 					AND topic_id = ' . (int) $topic_id;
@@ -444,16 +448,21 @@ if (!empty($topic_data['poll_start']))
 
 			if ($_CLASS['core_user']->is_user)
 			{
-				$sql_ary = array(
+				$sql_ary[] = array(
 					'topic_id'			=> (int) $topic_id,
 					'poll_option_id'	=> (int) $option,
 					'vote_user_id'		=> (int) $_CLASS['core_user']->data['user_id'],
 					'vote_user_ip'		=> (string) $_CLASS['core_user']->ip,
 				);
 
-				$sql = 'INSERT INTO  ' . POLL_VOTES_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_ary);
 				$_CLASS['core_db']->query($sql);
 			}
+		}
+
+		if (!empty($sql_ary))
+		{
+			$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $sql_ary, FORUMS_POLL_VOTES_TABLE);
+			unset($sql_ary);
 		}
 
 		foreach ($cur_voted_id as $option)

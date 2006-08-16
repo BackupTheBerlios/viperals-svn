@@ -1,0 +1,100 @@
+<!-- INCLUDE modules/forums/admin/overall_header.html -->
+
+<a name="maincontent"></a><h1>{ $L_WELCOME_PHPBB }</h1>
+
+<p>{ $L_ADMIN_INTRO }</p>
+
+<form id="stats" method="post" action="{ $U_ACTION }">
+
+<table class="tablebg" width="100%" cellspacing="1">
+	<caption>{ $L_FORUM_STATS }</caption>
+<thead>
+	<tr>
+		<th>{ $L_STATISTIC }</th>
+		<th>{ $L_VALUE }</th>
+		<th>{ $L_STATISTIC }</th>
+		<th>{ $L_VALUE }</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td class="row1">{ $L_NUMBER_POSTS }: </td>
+		<td class="row2"><b>{ $TOTAL_POSTS }</b></td>
+		<td class="row1">{ $L_POSTS_PER_DAY }: </td>
+		<td class="row2"><b>{ $POSTS_PER_DAY }</b></td>
+	</tr>
+	<tr>
+		<td class="row1">{ $L_NUMBER_TOPICS }: </td>
+		<td class="row2"><b>{ $TOTAL_TOPICS }</b></td>
+		<td class="row1">{ $L_TOPICS_PER_DAY }: </td>
+		<td class="row2"><b>{ $TOPICS_PER_DAY }</b></td>
+	</tr>
+	<tr>
+		<td class="row1">{ $L_NUMBER_USERS }: </td>
+		<td class="row2"><b>{ $TOTAL_USERS }</b></td>
+		<td class="row1">{ $L_USERS_PER_DAY }: </td>
+		<td class="row2"><b>{ $USERS_PER_DAY }</b></td>
+	</tr>
+	<tr>
+		<td class="row1">{ $L_NUMBER_FILES }: </td>
+		<td class="row2"><b>{ $TOTAL_FILES }</b></td>
+		<td class="row1">{ $L_FILES_PER_DAY }: </td>
+		<td class="row2"><b>{ $FILES_PER_DAY }</b></td>
+	</tr>
+	<tr>
+		<td class="row1">{ $L_BOARD_STARTED }: </td>
+		<td class="row2"><b>{ $START_DATE }</b></td>
+		<td class="row1">{ $L_AVATAR_DIR_SIZE }: </td>
+		<td class="row2"><b>{ $AVATAR_DIR_SIZE }</b></td>
+	</tr>
+	<tr>
+		<td class="row1">{ $L_UPLOAD_DIR_SIZE }: </td>
+		<td class="row2"><b>{ $UPLOAD_DIR_SIZE }</b></td>
+	</tr>
+<!-- IF { $S_ACTION_OPTIONS } -->
+	<tr>
+		<td class="cat" colspan="4" align="right">
+	
+		<select name="action">{ $S_ACTION_OPTIONS }</select>
+		<input class="button" type="submit" name="submit" value="{ $L_SUBMIT }" />
+	</tr>
+<!-- ENDIF -->
+</tbody>
+</table>
+
+</form>
+
+
+<!-- IF !empty({ $log }) -->
+	<h2>{ $L_ADMIN_LOG }</h2>
+
+	<p>{ $L_ADMIN_LOG_INDEX_EXPLAIN }</p>
+
+	<table class="tablebg" width="100%" cellspacing="1">
+	<thead>
+	<tr>
+		<th>{ $L_USERNAME }</th>
+		<th>{ $L_IP }</th>
+		<th>{ $L_TIME }</th>
+		<th>{ $L_ACTION }</th>
+	</tr>
+	</thead>
+	<tbody>
+	<!-- LOOP $log -->
+		<!-- IF { $log:#LOOP_INDEX } % 2 --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+
+			<td class="row1">{ $log:USERNAME }</td>
+			<td style="text-align: center;">{ $log:IP }</td>
+			<td style="text-align: center;">{ $log:DATE }</td>
+			<td class="row1">{ $log:ACTION }</td>
+		</tr>
+	<!-- ENDLOOP $log -->
+	</tbody>
+	</table>
+
+	<br />
+	<div style="text-align: right;"><a href="{ $U_ADMIN_LOG}">&raquo; { $L_VIEW_ADMIN_LOG }</a></div>
+
+<!-- ENDIF -->
+
+<!-- INCLUDE modules/forums/admin/overall_footer.html -->

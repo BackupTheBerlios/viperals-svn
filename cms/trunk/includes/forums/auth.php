@@ -333,10 +333,10 @@ class forums_auth
 		{
 			$userdata['user_permissions'] = $hold_str;
 
-			$sql = 'UPDATE ' . USERS_TABLE . "
-				SET user_permissions = '" . $_CLASS['core_db']->escape($userdata['user_permissions']) . "',
-					user_perm_from = 0
-				WHERE user_id = " . $userdata['user_id'];
+			$sql = 'UPDATE ' . CORE_USERS_TABLE . "
+				SET user_permissions = '" . $_CLASS['core_db']->escape($userdata['user_permissions']) . "'
+				WHERE user_id = " . $userdata['user_id'];//, user_perm_from = 0
+
 			$_CLASS['core_db']->query($sql);
 		}
 	}
@@ -495,17 +495,19 @@ class forums_auth
 		}
 
 		// Sort by group_id since we want user setting to over right grp..  specific > broad
-		$sql = 'SELECT ao.auth_option, a.user_id, a.group_id, a.forum_id, a.auth_setting
-					FROM ' . FORUMS_ACL_TABLE . ' a, ' . FORUMS_ACL_OPTIONS_TABLE . " ao
-					WHERE a.auth_option_id = ao.auth_option_id 
+		$sql = 'SELECT ao.auth_option, a.auth_role_id, r.auth_setting as role_auth_setting, a.user_id, a.group_id, a.forum_id, a.auth_setting
+					FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_TABLE . ' a
+					LEFT JOIN '.FORUMS_ACL_ROLES_DATA_TABLE." r ON a.auth_role_id = r.role_id
+					WHERE (ao.auth_option_id = a.auth_option_id OR ao.auth_option_id = r.auth_option_id)
 						$sql_user $sql_forum $sql_opts
-						ORDER BY a.group_id";
+						ORDER BY a.group_id, ao.auth_option";
 
 		$result = $_CLASS['core_db']->query($sql);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			if ($row['auth_setting'] != ACL_YES)
+			$auth_setting = ($row['auth_role_id']) ? $row['role_auth_setting'] : $row['auth_setting'];
+			if ($auth_setting != ACL_YES)
 			{
 				continue;
 			}
@@ -517,7 +519,23 @@ class forums_auth
 				continue;
 			}
 
-			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $auth_setting;
+
+			/*	// Check for existence of ACL_YES if an option got set to ACL_NEVER
+				if ($setting == ACL_NEVER)
+				{
+					$flag = substr($row['auth_option'], 0, strpos($row['auth_option'], '_') + 1);
+
+					if (isset($hold_ary[$row['user_id']][$row['forum_id']][$flag]) && $hold_ary[$row['user_id']][$row['forum_id']][$flag] == ACL_YES)
+					{
+						unset($hold_ary[$row['user_id']][$row['forum_id']][$flag]);
+
+						if (in_array(ACL_YES, $hold_ary[$row['user_id']][$row['forum_id']]))
+						{
+							$hold_ary[$row['user_id']][$row['forum_id']][$flag] = ACL_YES;
+						}
+					}
+				}*/
 		}
 		$_CLASS['core_db']->free_result($result);
 
@@ -525,7 +543,9 @@ class forums_auth
 		{
 			if (empty($group_members))
 			{
-				$sql = 'SELECT user_group, user_id FROM ' . CORE_USERS_TABLE .' WHERE user_group IN ('.implode(', ', array_keys($group_id_array)).') AND user_status = '.STATUS_ACTIVE;
+				$sql = 'SELECT user_group, user_id FROM ' . CORE_USERS_TABLE .' 
+					WHERE user_group IN ('.implode(', ', array_keys($group_id_array)).')
+					AND user_status = '.STATUS_ACTIVE." $sql_user ";
 				$result = $_CLASS['core_db']->query($sql);
 	
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
@@ -546,7 +566,26 @@ class forums_auth
 				{
 					foreach($rows as $row)
 					{
-						$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+						if (!isset($hold_ary[$user_id][$row['forum_id']][$row['auth_option']]) || (isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) && $hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] != ACL_NEVER))
+						{
+							$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = ($row['auth_role_id']) ? $row['role_auth_setting'] : $row['auth_setting'];
+						}
+						/*	
+						// Check for existence of ACL_YES if an option got set to ACL_NEVER
+						if ($setting == ACL_NEVER)
+						{
+							$flag = substr($row['auth_option'], 0, strpos($row['auth_option'], '_') + 1);
+		
+							if (isset($hold_ary[$row['user_id']][$row['forum_id']][$flag]) && $hold_ary[$row['user_id']][$row['forum_id']][$flag] == ACL_YES)
+							{
+								unset($hold_ary[$row['user_id']][$row['forum_id']][$flag]);
+		
+								if (in_array(ACL_YES, $hold_ary[$row['user_id']][$row['forum_id']]))
+								{
+									$hold_ary[$row['user_id']][$row['forum_id']][$flag] = ACL_YES;
+								}
+							}
+						}*/	
 					}
 				}
 			}

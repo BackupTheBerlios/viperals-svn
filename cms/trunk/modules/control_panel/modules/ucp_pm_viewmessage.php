@@ -305,10 +305,10 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 	}
 	
 	// Instantiate BBCode class
-	if ((empty($bbcode) || $bbcode === false) && $bbcode_bitfield)
+	if ((empty($bbcode) || $bbcode === false) && $bbcode_bitfield !== '')
 	{
 		require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
-		$bbcode = new bbcode($bbcode_bitfield);
+		$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 	}
 
 	$title = censor_text($title);

@@ -334,7 +334,7 @@ function get_pm_from($folder_id, $folder, $user_id, $url, $type = 'folder')
 		$sql_start = $start;
 	}
 
-	$sql = 'SELECT t.*, p.author_id, p.root_level, p.message_time, p.message_subject, p.icon_id, p.message_reported, p.to_address, p.message_attachment, p.bcc_address, u.username 
+	$sql = 'SELECT t.*, p.author_id, p.root_level, p.message_time, p.message_subject, p.icon_id, p.to_address, p.message_attachment, p.bcc_address, u.username 
 		FROM ' . FORUMS_PRIVMSGS_TO_TABLE . ' t, ' . FORUMS_PRIVMSGS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
 		WHERE t.user_id = $user_id
 			AND p.author_id = u.user_id

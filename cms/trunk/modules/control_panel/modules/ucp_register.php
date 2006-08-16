@@ -34,7 +34,7 @@ if ($_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_DISABLE
 	trigger_error('UCP_REGISTER_DISABLE');
 }
 
-$_CLASS['core_template']->assign('S_UCP_ACTION', generate_link('Control_Panel&amp;mode=register'));
+$_CLASS['core_template']->assign('S_UCP_ACTION', generate_link('control_panel&amp;mode=register'));
 
 $error = $data = array();
 $hidden_fields = '';
@@ -51,12 +51,12 @@ if (!isset($_POST['agreed']))
 			'L_COPPA_NO'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_BEFORE'], $coppa_birthday),
 			'L_COPPA_YES'		=> sprintf($_CLASS['core_user']->lang['UCP_COPPA_ON_AFTER'], $coppa_birthday),
 
-			'U_COPPA_NO'		=> generate_link('Control_Panel&amp;mode=register&amp;coppa=0'), 
-			'U_COPPA_YES'		=> generate_link('Control_Panel&amp;mode=register&amp;coppa=1'), 
+			'U_COPPA_NO'		=> generate_link('control_panel&amp;mode=register&amp;coppa=0'), 
+			'U_COPPA_YES'		=> generate_link('control_panel&amp;mode=register&amp;coppa=1'), 
 
 			'S_SHOW_COPPA'		=> true, 
 			'S_HIDDEN_FIELDS'	=> $hidden_fields,
-			'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register'))
+			'S_REGISTER_ACTION'	=> generate_link('control_panel&amp;mode=register'))
 		);
 	}
 	else
@@ -66,11 +66,11 @@ if (!isset($_POST['agreed']))
 		$_CLASS['core_template']->assign_array(array(
 			'S_SHOW_COPPA'		=> false,
 			'S_HIDDEN_FIELDS'	=> $hidden_fields,
-			'S_REGISTER_ACTION'	=> generate_link('Control_Panel&amp;mode=register')
+			'S_REGISTER_ACTION'	=> generate_link('control_panel&amp;mode=register')
 		));
 	}
 
-	$_CLASS['core_display']->display($_CLASS['core_user']->lang['REGISTER'], 'modules/Control_Panel/ucp_agreement.html');
+	$_CLASS['core_display']->display($_CLASS['core_user']->lang['REGISTER'], 'modules/control_panel/ucp_agreement.html');
 }
 
 if ($submit)
@@ -298,9 +298,9 @@ $_CLASS['core_template']->assign_array(array(
 
 	'S_COPPA'			=> $coppa, 
 	'S_HIDDEN_FIELDS'	=> $hidden_fields,
-	'S_UCP_ACTION'		=> generate_link("Control_Panel&amp;mode=register"))
+	'S_UCP_ACTION'		=> generate_link("control_panel&amp;mode=register"))
 );
 
-$_CLASS['core_display']->display($_CLASS['core_user']->lang['REGISTER'], 'modules/Control_Panel/ucp_register.html');
+$_CLASS['core_display']->display($_CLASS['core_user']->lang['REGISTER'], 'modules/control_panel/ucp_register.html');
 
 ?>

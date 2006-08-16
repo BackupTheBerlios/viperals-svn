@@ -28,7 +28,7 @@ if (VIPERAL !== 'Admin')
 
 if (isset($_REQUEST['user_mode']) && $_CLASS['core_auth']->admin_power('users') && display_confirmation())
 {
-	require_once($site_file_root.'includes/functions_user.php');
+	require_once SITE_FILE_ROOT.'includes/functions_user.php';
 	$user_id = get_variable('id', 'REQUEST', false, 'integer');
 
 	if ($user_id)
@@ -50,7 +50,7 @@ if (is_null($cms_news = $_CLASS['core_cache']->get('cms_news')))
 {
 	$cms_news = array();
 	
-	load_class($site_file_root.'includes/core_rss.php', 'core_rss');
+	load_class(SITE_FILE_ROOT.'includes/core_rss.php', 'core_rss');
 	
 	if ($_CLASS['core_rss']->get_rss('http://www.php.net/news.rss', 3))
 	{

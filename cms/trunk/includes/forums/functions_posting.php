@@ -188,7 +188,7 @@ function upload_attachment($form_name, $forum_id, $local = false, $local_storage
 	$filedata = array();
 	$filedata['error'] = array();
 
-	include_once(SITE_FILE_ROOT. 'includes/forums/functions_upload.php');
+	require_once SITE_FILE_ROOT. 'includes/forums/functions_upload.php';
 	$upload = new fileupload();
 	
 	if (!$local)
@@ -776,6 +776,9 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 {
 	global $_CLASS, $bbcode, $config;
 
+	$rowset = array();
+	$bbcode_bitfield = '';
+
 	// Go ahead and pull all data for this topic
 	$sql = 'SELECT u.username, u.user_id, p.post_id, p.post_username, p.post_subject, p.post_text, p.enable_smilies, p.bbcode_uid, p.bbcode_bitfield, p.post_time
 		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . CORE_USERS_TABLE . " u
@@ -786,26 +789,23 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 		ORDER BY p.post_time DESC';
 	$result = $_CLASS['core_db']->query_limit($sql, $config['posts_per_page']);
 
-	if (!$row = $_CLASS['core_db']->fetch_row_assoc($result))
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		$_CLASS['core_db']->free_result($result);
+		$rowset[] = $row;
+		$bbcode_bitfield = $bbcode_bitfield | base64_decode($row['bbcode_bitfield']);
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	if (empty($rowset))
+	{
 		return false;
 	}
 
-	$bbcode_bitfield = '';
-	do
-	{
-		$rowset[] = $row;
-		 $bbcode_bitfield = $bbcode_bitfield | base64_decode($row['bbcode_bitfield']);
-	}
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-	$_CLASS['core_db']->free_result($result);
-
 	// Instantiate BBCode class
-	if (!isset($bbcode) && $bbcode_bitfield)
+	if (!isset($bbcode) && $bbcode_bitfield !== '')
 	{
 		require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
-		$bbcode = new bbcode($bbcode_bitfield);
+		$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 	}
 
 	foreach ($rowset as $i => $row)
@@ -985,7 +985,7 @@ function user_notification($mode, $subject, $topic_title, $forum_name, $forum_id
 
 	$email_sig = str_replace('<br />', "\n", "-- \n" . $config['board_email_sig']);
 
-	require_once(SITE_FILE_ROOT.'includes/mailer.php');
+	require_once SITE_FILE_ROOT.'includes/mailer.php';
 
 	foreach ($processed as $template => $user_list)
 	{
@@ -1375,8 +1375,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					'poll_start'		=> ($poll['poll_start']) ? $poll['poll_start'] : $current_time,
 					'poll_max_options'	=> $poll['poll_max_options'],
 					'poll_length'		=> ($poll['poll_length'] * 86400),
-					'poll_vote_change'	=> $poll['poll_vote_change'])
-				);
+					'poll_vote_change'	=> $poll['poll_vote_change']
+				));
 			}
 
 			$sql_data[CORE_USERS_TABLE]['stat'][] = "user_last_post_time = $current_time" . (($_CLASS['forums_auth']->acl_get('f_postcount', $data['forum_id'])) ? ', user_posts = user_posts + 1' : '');
@@ -1561,7 +1561,8 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 					$sql_insert_ary[] = array(
 						'poll_option_id'	=> (int) $i,
 						'topic_id'			=> (int) $data['topic_id'],
-						'poll_option_text'	=> (string) $poll['poll_options'][$i]
+						'poll_option_text'	=> (string) $poll['poll_options'][$i],
+						'poll_option_total' => 0
 					);
 				}
 				else if ($poll['poll_options'][$i] != $cur_poll_options[$i])
@@ -1602,7 +1603,7 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			{
 				// update entry in db if attachment already stored in db and filespace
 				$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . "
-					SET attach_comment = '" . $_CLASS['core_db']->escape($attach_row['attach_comment']) . "'
+					SET comment = '" . $_CLASS['core_db']->escape($attach_row['comment']) . "'
 					WHERE attach_id = " . (int) $attach_row['attach_id'];
 				$_CLASS['core_db']->query($sql);
 				
@@ -1617,14 +1618,14 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 				}
 
 				$attach_sql_array[] = array(
-					'post_msg_id'		=> $data['post_id'],
-					'topic_id'			=> $data['topic_id'],
+					'post_msg_id'		=> (int) $data['post_id'],
+					'topic_id'			=> (int) $data['topic_id'],
 					'in_message'		=> 0,
-					'poster_id'			=> $poster_id,
+					'poster_id'			=> (int) $poster_id,
 					'physical_filename'	=> basename($attach_row['physical_filename']),
 					'real_filename'		=> basename($attach_row['real_filename']),
 					'download_count'	=> 0,
-					'attach_comment'	=> $attach_row['attach_comment'],
+					'comment'			=> $attach_row['comment'],
 					'extension'			=> $attach_row['extension'],
 					'mimetype'			=> $attach_row['mimetype'],
 					'filesize'			=> $attach_row['filesize'],
@@ -1637,12 +1638,12 @@ function submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $u
 			}
 		}
 
-		if (count($attach_sql_array))
+		if (!empty($attach_sql_array))
 		{
-			$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $attach_sql_array, FORUMS_TOPICS_TABLE);
+			$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $attach_sql_array, FORUMS_ATTACHMENTS_TABLE);
 			unset($attach_sql_array);
 		}
-	
+
 		if ($files_updated || $files_added)
 		{
 			$sql = 'UPDATE ' . FORUMS_POSTS_TABLE . '

@@ -143,7 +143,7 @@ class db_sqlite_pdo
 			return false; 
 		}
 
-		global $_CLASS, $site_file_root;
+		global $_CLASS;
 			
 		$this->num_queries++;
 		$this->last_query = $query;
@@ -154,7 +154,7 @@ class db_sqlite_pdo
 			$backtrace = array();
 			// remove the root directorys
 			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
-			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
+			$backtrace['file'] = str_replace(SITE_FILE_ROOT, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
 
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
@@ -184,8 +184,6 @@ class db_sqlite_pdo
 			return $this->query($query);
 		}
 
-		global $site_file_root;
-
 		$query .= ' LIMIT ' . (($offset) ? $offset . ', ' : '') . $total;
 
 		if (!$backtrace)
@@ -194,7 +192,7 @@ class db_sqlite_pdo
 			$backtrace = array();
 			// remove the root directorys
 			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
-			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
+			$backtrace['file'] = str_replace(SITE_FILE_ROOT, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
 
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
@@ -398,8 +396,6 @@ class db_sqlite_pdo
 			break;
 
 			case 'stop':
-				global $site_file_root;
-
 				$end_time = explode(' ', microtime());
 				$end_time = $end_time[0] + $end_time[1];
 				$this->queries_time += $end_time - $start_time;

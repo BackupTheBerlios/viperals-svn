@@ -45,7 +45,7 @@ function check_email($email)
 {
 	//Code Copyright 2004 phpBB Group - http://www.phpbb.com/
 	return preg_match('#^[a-z0-9\.\-_\+]+?@(.*?\.)*?[a-z0-9\-_]+?\.[a-z]{2,4}$#i', $email);
-	//preg_match('#^.*?@(.*?\.)?[a-z0-9\-]+\.[a-z]{2,4}$#i', $email)
+	//preg_match('[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*[a-z]+', $email)
 }
 
 function check_bot_status($browser, $ip)
@@ -655,8 +655,8 @@ function load_class($file, $name, $class = false)
 		}
 
 /* I think reference is required below PHP 4.4 */
-		$_CLASS[$name] =& new $class;
-		//$_CLASS[$name] = new $class;
+		//$_CLASS[$name] =& new $class;
+		$_CLASS[$name] = new $class;
 	}
 }
 

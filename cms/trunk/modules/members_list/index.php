@@ -96,7 +96,7 @@ switch ($mode)
 		$sql = 'SELECT u.user_id, u.username, u.user_colour, u.user_rank, u.user_posts, g.group_id, g.group_name, g.group_colour, g.group_type, ug.user_id as ug_user_id
 			FROM ' . CORE_USERS_TABLE . ' u, ' . CORE_GROUPS_TABLE . ' g
 			LEFT JOIN ' . CORE_GROUPS_MEMBERS_TABLE . ' ug ON (ug.group_id = g.group_id AND ug.user_id = ' . $_CLASS['core_user']->data['user_id'] . ')
-			WHERE u.user_id IN (' . implode(', ', $modorators) . ')
+			WHERE u.user_id IN (' . implode(', ', array_unique($modorators)) . ')
 				AND u.user_group = g.group_id
 			ORDER BY g.group_name ASC, u.username ASC';
 
@@ -132,7 +132,7 @@ switch ($mode)
 			}
 
 			$rank_title = $rank_img = '';
-			get_user_rank($row['user_rank'], $row['user_posts'], $rank_title, $rank_img);
+			get_user_rank($row['user_rank'], $row['user_posts'], $rank_title, $rank_img, $rank_img_src);
 
 			$_CLASS['core_template']->assign_vars_array('moderators', array(
 				'USER_ID'		=> $row['user_id'],
@@ -144,6 +144,7 @@ switch ($mode)
 				'GROUP_COLOR'	=> $row['group_colour'],
 
 				'RANK_IMG'		=> $rank_img,
+				'RANK_IMG_SRC'	=> $rank_img_src,
 
 				'U_GROUP'		=> $u_group,
 				'U_VIEWPROFILE'	=> generate_link('members_list&amp;mode=viewprofile&amp;u='.$row['user_id']),
@@ -173,19 +174,12 @@ switch ($mode)
 		$presence_img = '';
 		switch ($action)
 		{
-			case 'icq':
-				$lang = 'ICQ';
-				$sql_field = 'user_icq';
-				$s_select = 'S_SEND_ICQ';
-				$s_action = 'http://wwp.icq.com/scripts/WWPMsg.dll';
-				break;
-
 			case 'aim':
 				$lang = 'AIM';
 				$sql_field = 'user_aim';
 				$s_select = 'S_SEND_AIM';
 				$s_action = '';
-				break;
+			break;
 
 			case 'msnm':
 				$lang = 'MSNM';
@@ -199,35 +193,37 @@ switch ($mode)
 				$sql_field = 'user_jabber';
 				$s_select = (@extension_loaded('xml')) ? 'S_SEND_JABBER' : 'S_NO_SEND_JABBER';
 				$s_action = generate_link("members_list&amp;mode=contact&amp;action=$action&amp;u=$user_id");
-				break;
+			break;
 
 			default:
 				trigger_error('NO_USER_DATA');
 				die;
-				break;
+			break;
 		}
 
 		// Grab relevant data
 		$sql = "SELECT user_id, username, user_email, user_lang, $sql_field
-			FROM " . USERS_TABLE . "
+			FROM " . CORE_USERS_TABLE . "
 			WHERE user_id = $user_id
 				AND user_type = " . USER_NORMAL .' AND user_status = ' . STATUS_ACTIVE;
 		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
-		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
+		if (!$row)
 		{
 			trigger_error('NO_USER_DATA');
 		}
-		$_CLASS['core_db']->free_result($result);
+		
 
 		// Post data grab actions
 		switch ($action)
 		{
 			case 'icq':
 				$presence_img = '<img src="http://web.icq.com/whitepages/online?icq=' . $row[$sql_field] . '&amp;img=5" width="18" height="18" border="0" alt="" />';
-				break;
+			break;
 
-			case 'jabber':
+		/*	case 'jabber':
 				if ($submit && @extension_loaded('xml'))
 				{
 					// Add class loader
@@ -257,7 +253,7 @@ switch ($mode)
 
 					$s_select = 'S_SENT_JABBER';
 				}
-				break;
+				break;*/
 		}
 
 		$_CLASS['core_template']->assign_array(array(
@@ -280,21 +276,29 @@ switch ($mode)
 	case 'viewprofile':
 	
 		$user_id = get_variable('u', 'REQUEST', ANONYMOUS, 'int');
+		$username = get_variable('username', 'REQUEST');
 
 		// Display a profile
-		if ($user_id === ANONYMOUS)
+		if ($user_id === ANONYMOUS && !$username)
 		{
 			trigger_error('NO_USER');
 		}
 
-		// We left join on the session table to see if the user is currently online
-		$sql = 'SELECT username, user_id, user_type, user_status, user_group, user_colour, user_permissions, user_sig,
-			user_sig_bbcode_uid, user_sig_bbcode_bitfield, user_allow_viewemail, user_posts, user_reg_date, user_rank,
-			user_from, user_occ, user_interests, user_website, user_email, user_icq, user_aim, user_yim, user_msnm,
-			user_jabber, user_avatar, user_avatar_width, user_avatar_height, user_avatar_type, user_last_visit
-			FROM ' . CORE_USERS_TABLE . "
-			WHERE user_id = $user_id
-				AND user_type = " . USER_NORMAL;
+		// Get user...
+		if ($username)
+		{
+			$sql = 'SELECT *
+				FROM ' . CORE_USERS_TABLE . "
+				WHERE LOWER(username) = '" . $_CLASS['core_db']->escape(strtolower($username)) . "'
+					AND user_type IN (" . USER_NORMAL . ')';
+		}
+		else
+		{
+			$sql = 'SELECT *
+				FROM ' . CORE_USERS_TABLE . "
+				WHERE user_id = $user_id
+					AND user_type IN (" . USER_NORMAL . ')';
+		}
 
 		$result = $_CLASS['core_db']->query($sql);
 		$member = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -302,8 +306,6 @@ switch ($mode)
 
 		if (!$member || (!$_CLASS['core_auth']->admin_power('users') && $member['user_status'] != STATUS_ACTIVE))
 		{
-			$_CLASS['core_db']->free_result($result);
-
 			trigger_error(($member) ? 'USER_INACTIVE' : 'NO_USER');
 		}
 		

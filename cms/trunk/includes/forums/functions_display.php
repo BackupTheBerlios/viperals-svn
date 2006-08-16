@@ -87,8 +87,6 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 			continue;
 		}
 
-
-
 		if ($row['forum_type'] == FORUM_CAT && ($row['left_id'] + 1 == $row['right_id']))
 		{
 			// Non-postable forum with no subforums: don't display
@@ -554,7 +552,7 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 			}
 			
 			$data['lang_size'] = ($attachment['filesize'] >= 1048576) ? round((round($attachment['filesize'] / 1048576 * 100) / 100), 2) .$_CLASS['core_user']->lang['MB'] : (($attachment['filesize'] >= 1024) ? round((round($attachment['filesize'] / 1024 * 100) / 100), 2)  . $_CLASS['core_user']->lang['KB']: $attachment['filesize'] . $_CLASS['core_user']->lang['BYTES']);
-			$data['lang_views'] = (!$attachment['download_count']) ? $_CLASS['core_user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
+			$data['lang_views'] = (empty($attachment['download_count']) || !$attachment['download_count']) ? $_CLASS['core_user']->lang['DOWNLOAD_NONE'] : (($attachment['download_count'] == 1) ? sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNT'], $attachment['download_count']) : sprintf($_CLASS['core_user']->lang['DOWNLOAD_COUNTS'], $attachment['download_count']));
 	
 			$data['icon'] = (isset($extensions[$attachment['extension']]['upload_icon']) && $extensions[$attachment['extension']]['upload_icon']) ? $config['upload_icons_path'] . '/' . trim($extensions[$attachment['extension']]['upload_icon']) : false;
 			$data['name'] = basename($attachment['real_filename']);

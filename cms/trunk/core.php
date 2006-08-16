@@ -39,6 +39,13 @@ error_reporting(E_STRICT);
 set_magic_quotes_runtime(0);
 error_reporting(E_ALL);
 
+if (function_exists('date_default_timezone_set'))
+{
+	error_reporting(E_ALL | E_STRICT);
+
+	@date_default_timezone_set('America/New_York');
+}
+
 /* Error reporting tyoes */
 define('ERROR_NONE', 0);
 define('ERROR_ONPAGE', 1);
@@ -98,7 +105,6 @@ load_class(false, 'core_handler');
 
 /* We're going ot use our own error handler */
 $_CLASS['core_handler']->start();
-
 /*
 	$_CLASS['core_handler']->stop();
 */

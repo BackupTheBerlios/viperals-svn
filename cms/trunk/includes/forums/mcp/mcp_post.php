@@ -147,7 +147,7 @@ $_CLASS['core_template']->assign_array(array(
 	'U_MCP_APPROVE'			=> generate_link('forums&amp;file=mcp&amp;i=queue&amp;mode=approve_details&amp;p=' . $post_info['post_id']),
 	'U_MCP_REPORT'			=> generate_link('forums&amp;file=mcp&amp;i=reports&amp;mode=report_details&amp;p=' . $post_info['post_id']),
 	'U_MCP_USER_NOTES'		=> generate_link('forums&amp;file=mcp&amp;i=notes&amp;mode=user_notes&amp;u=' . $post_info['user_id']),
-	'U_MCP_WARN_USER'		=> $_CLASS['forums_auth']->acl_get('m_warn') ? append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=warn&amp;mode=warn_user&amp;u=' . $post_info['user_id']) : '',
+	'U_MCP_WARN_USER'		=> $_CLASS['forums_auth']->acl_get('m_warn') ? generate_link('forums&amp;file=mcp&amp;i=warn&amp;mode=warn_user&amp;u=' . $post_info['user_id']) : '',
 	'U_VIEW_POST'			=> generate_link('forums&amp;file=viewtopic&amp;p=' . $post_info['post_id'] . '#p' . $post_info['post_id']),
 	'U_VIEW_PROFILE'		=> generate_link('members_list&amp;mode=viewprofile&amp;u=' . $post_info['user_id']),
 	'U_VIEW_TOPIC'			=> generate_link('forums&amp;file=viewtopic&amp;t=' . $post_info['topic_id']),

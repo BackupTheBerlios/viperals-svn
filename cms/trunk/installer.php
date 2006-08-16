@@ -172,6 +172,7 @@ if ($stage === 5)
 		require_once SITE_FILE_ROOT.'includes/cache/cache_' . $acm_type . '.php';
 
 		load_class(false, 'core_cache', 'cache_'.$acm_type);
+		$_CLASS['core_cache']->destroy_all();
 
 		set_core_config('global', 'site_name', $site_name, false);
 		set_core_config('server', 'site_domain', $site_domain, false);

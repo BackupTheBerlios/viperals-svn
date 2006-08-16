@@ -84,15 +84,9 @@ function mcp_notes_user_view($action)
 	if (($deletemark || $deleteall) && $_CLASS['forums_auth']->acl_get('a_clearlogs'))
 	{
 		$where_sql = '';
-		if ($deletemark && $marked)
+		if ($deletemark && !empty($marked))
 		{
-			/*$sql_in = array();
-			foreach ($marked as $mark)
-			{
-				$sql_in[] = $mark;
-			}*/
 			$where_sql = ' AND log_id IN (' . implode(', ', $marked) . ')';
-			/*unset($sql_in);*/
 		}
 
 		if ($where_sql || $deleteall)

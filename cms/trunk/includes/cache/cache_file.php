@@ -114,6 +114,19 @@ class cache_file extends cache
 			$this->remove($name);
 		}
 	}
+
+	function destroy_all()
+	{
+		$handle = opendir($this->cache_dir);
+
+		while ($file = readdir($handle))
+		{
+			if (substr($file, 0, 6) == 'cache_')
+			{
+				unlink($this->cache_dir . $file);
+			} 
+		}
+	}
 }
 
 ?>

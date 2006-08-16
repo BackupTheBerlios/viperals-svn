@@ -146,10 +146,10 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 }
 $_CLASS['core_db']->free_result($result);
 
-if ($bbcode_bitfield)
+if ($bbcode_bitfield !== '')
 {
 	require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
-	$bbcode = new bbcode($bbcode_bitfield);
+	$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 }
 
 foreach ($rowset as $i => $row)

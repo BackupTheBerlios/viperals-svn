@@ -151,7 +151,7 @@ if (!$_CLASS['forums_auth']->acl_get('f_read', $forum_id))
 		trigger_error('USER_CANNOT_READ');
 	}
 
-	login_box('', $_CLASS['core_user']->get_lang('LOGIN_EXPLAIN_POST'));
+	login_box(array('explain' => $_CLASS['core_user']->get_lang('LOGIN_EXPLAIN_POST')));
 }
 
 if ($post_data['forum_password'])
@@ -161,7 +161,6 @@ if ($post_data['forum_password'])
 		'forum_password'=> $post_data['forum_password']
 	));
 }
-
 
 // Permission to do the action asked?
 $is_authed = false;
@@ -212,7 +211,7 @@ if (!$is_authed)
 		trigger_error('USER_CANNOT_' . strtoupper(($mode == 'quote') ? 'reply' : $mode));
 	}
 
-	login_box('', $_CLASS['core_user']->get_lang('LOGIN_EXPLAIN_' . strtoupper($mode)));
+	login_box(array('explain' => $_CLASS['core_user']->get_lang('LOGIN_EXPLAIN_' . strtoupper($mode))));
 }
 unset($is_authed);
 
@@ -356,7 +355,7 @@ $message_parser->get_submitted_attachment_data($post_data['poster_id']);
 
 if ($post_data['post_attachment'] && !$submit && !$refresh && !$preview && $mode == 'edit')
 {
-	$sql = 'SELECT attach_id, physical_filename, attach_comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
+	$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
 		FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 		WHERE post_msg_id = $post_id
 			AND in_message = 0
@@ -647,7 +646,7 @@ if ($submit || $preview || $refresh)
 	$topic_lock			= isset($_POST['lock_topic']);
 	$post_lock			= isset($_POST['lock_post']);
 	$poll_delete		= isset($_POST['poll_delete']);
-	
+
 	// Faster than crc32
 	if ($submit)
 	{
@@ -660,7 +659,7 @@ if ($submit || $preview || $refresh)
 	}
 
 	// Delete Poll
-	if ($poll_delete && $mode == 'edit' && count($post_data['poll_options']) && 
+	if ($poll_delete && $mode === 'edit' && count($post_data['poll_options']) && 
 		((!$post_data['poll_last_vote'] && $post_data['poster_id'] == $_CLASS['core_user']->data['user_id'] && $_CLASS['forums_auth']->acl_get('f_delete', $forum_id)) || $_CLASS['forums_auth']->acl_get('m_delete', $forum_id)))
 	{
 		switch ($_CLASS['core_db']->db_layer)
@@ -712,7 +711,7 @@ if ($submit || $preview || $refresh)
 	// If replying/quoting and last post id has changed
 	// give user option to continue submit or return to post
 	// notify and show user the post made between his request and the final submit
-	if (($mode == 'reply' || $mode == 'quote') && $post_data['topic_cur_post_id'] && $post_data['topic_cur_post_id'] != $post_data['topic_last_post_id'])
+	if (($mode === 'reply' || $mode === 'quote') && $post_data['topic_cur_post_id'] && $post_data['topic_cur_post_id'] != $post_data['topic_last_post_id'])
 	{
 		if (topic_review($topic_id, $forum_id, 'post_review', $post_data['topic_cur_post_id']))
 		{
@@ -741,7 +740,7 @@ if ($submit || $preview || $refresh)
 		$message_parser->bbcode_bitfield = $post_data['bbcode_bitfield'];
 	}
 
-	if ($mode != 'edit' && !$preview && !$refresh && $config['flood_interval'] && !$_CLASS['forums_auth']->acl_get('f_ignoreflood', $forum_id))
+	if ($mode !== 'edit' && !$preview && !$refresh && $config['flood_interval'] && !$_CLASS['forums_auth']->acl_get('f_ignoreflood', $forum_id))
 	{
 		// Flood check
 		$last_post_time = 0;
@@ -771,7 +770,7 @@ if ($submit || $preview || $refresh)
 	}
 
 	// Validate username
-	if (($post_data['username'] && !$_CLASS['core_user']->is_user) || ($mode == 'edit' && $post_data['post_username']))
+	if (($post_data['username'] && !$_CLASS['core_user']->is_user) || ($mode === 'edit' && $post_data['post_username']))
 	{
 		require_once SITE_FILE_ROOT.'includes/functions_user.php';
 		$result = validate_username($post_data['username']);
@@ -781,7 +780,7 @@ if ($submit || $preview || $refresh)
 			$error[] = $_CLASS['core_user']->get_lang($result);
 		}
 	}
-	
+
 /*
  ADD
 	if ($config['enable_post_confirm'] && !$_CLASS['core_user']->is_user && in_array($mode, array('quote', 'post', 'reply')))
@@ -806,15 +805,15 @@ if ($submit || $preview || $refresh)
 */
 
 	// Parse subject
-	if (!$post_data['post_subject'] && ($mode == 'post' || ($mode == 'edit' && $post_data['topic_first_post_id'] == $post_id)))
+	if (!$post_data['post_subject'] && ($mode === 'post' || ($mode === 'edit' && $post_data['topic_first_post_id'] == $post_id)))
 	{
 		$error[] = $_CLASS['core_user']->get_lang('EMPTY_SUBJECT');
 	}
 
-	$post_data['poll_last_vote'] = (isset($post_data['poll_last_vote'])) ? $post_data['poll_last_vote'] : 0;
+	$post_data['poll_last_vote'] = isset($post_data['poll_last_vote']) ? $post_data['poll_last_vote'] : 0;
 
 	if ($post_data['poll_option_text'] && 
-		($mode == 'post' || ($mode == 'edit' && $post_id == $post_data['topic_first_post_id'] && (!$post_data['poll_last_vote'] || $_CLASS['forums_auth']->acl_get('m_edit', $forum_id))))
+		($mode === 'post' || ($mode === 'edit' && $post_id == $post_data['topic_first_post_id'] && (!$post_data['poll_last_vote'] || $_CLASS['forums_auth']->acl_get('m_edit', $forum_id))))
 			&& $_CLASS['forums_auth']->acl_get('f_poll', $forum_id))
 	{
 		$poll = array(

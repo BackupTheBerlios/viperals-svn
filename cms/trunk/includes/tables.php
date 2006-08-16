@@ -76,9 +76,9 @@ define('BLOCKTYPE_MESSAGE_GLOBAL', 5);
 define('PAGE_MODULE', 0);
 define('PAGE_TEMPLATE', 1);
 
-define('ACL_NO', 0);
+define('ACL_NEVER', 0);
 define('ACL_YES', 1);
-define('ACL_UNSET', -1);
+define('ACL_NO', -1);
 
 define('GROUP_HIDDEN', 0);
 define('GROUP_SYSTEM', 1);
@@ -161,6 +161,8 @@ define('FIELD_DATE', 6);
 define('FORUMS_ACL_TABLE', $table_prefix.'forums_auth');
 define('FORUMS_ACL_OPTIONS_TABLE', $table_prefix.'forums_auth_options');
 define('FORUMS_ACL_PRESETS_TABLE', $table_prefix.'forums_auth_presets');
+define('FORUMS_ACL_ROLES_TABLE', $table_prefix.'forums_acl_roles');
+define('FORUMS_ACL_ROLES_DATA_TABLE', $table_prefix.'forums_acl_roles_data');
 
 define('FORUMS_ATTACHMENTS_TABLE', $table_prefix.'forums_attachments');
 define('FORUMS_BOOKMARKS_TABLE', $table_prefix.'forums_bookmarks');

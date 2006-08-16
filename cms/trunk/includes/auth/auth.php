@@ -216,11 +216,11 @@ class core_auth
 			'USERNAME'				=>	$user_name,
 			'PASSWORD'				=>	$user_password,
 
-			'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=sendpassword') : '',
-			'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('Control_Panel&amp;mode=resend_act') : '',
-			'U_TERMS_USE'			=> generate_link('Control_Panel&amp;mode=terms'), 
-			'U_PRIVACY'				=> generate_link('Control_Panel&amp;mode=privacy'),
-			'U_REGISTER'			=> generate_link('Control_Panel&amp;mode=register'),
+			'U_SEND_PASSWORD'	 	=> ($_CORE_CONFIG['email']['email_enable']) ? generate_link('control_panel&amp;mode=sendpassword') : '',
+			'U_RESEND_ACTIVATION'   => ($_CORE_CONFIG['user']['activation'] != USER_ACTIVATION_NONE && $_CORE_CONFIG['email']['email_enable']) ? generate_link('control_panel&amp;mode=resend_act') : '',
+			'U_TERMS_USE'			=> generate_link('control_panel&amp;mode=terms'), 
+			'U_PRIVACY'				=> generate_link('control_panel&amp;mode=privacy'),
+			'U_REGISTER'			=> generate_link('control_panel&amp;mode=register'),
 			'U_CONFIRM_IMAGE'		=> $confirm_image,
 
 			'S_DISPLAY_FULL_LOGIN'  => ($login_array['full_login']),

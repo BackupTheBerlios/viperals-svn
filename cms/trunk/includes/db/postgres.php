@@ -174,7 +174,7 @@ class db_postgres
 			return false; 
 		}
 
-		global $_CLASS, $site_file_root;
+		global $_CLASS;
 			
 		$this->num_queries++;
 		$this->last_query = $query;
@@ -185,7 +185,7 @@ class db_postgres
 			$backtrace = array();
 			// remove the root directorys
 			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
-			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
+			$backtrace['file'] = str_replace(SITE_FILE_ROOT, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
 
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
@@ -219,8 +219,6 @@ class db_postgres
 			return $this->query($query);
 		}
 
-		global $site_file_root;
-
 		$query .= ' LIMIT '. $total . (($offset) ? ' OFFSET '.$offset : '');
 
 		if (!$backtrace)
@@ -229,7 +227,7 @@ class db_postgres
 			$backtrace = array();
 			// remove the root directorys
 			$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
-			$backtrace['file'] = str_replace($site_file_root, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
+			$backtrace['file'] = str_replace(SITE_FILE_ROOT, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
 
 			$backtrace['line'] = $debug_backtrace[0]['line'];
 		}
@@ -244,6 +242,14 @@ class db_postgres
 			return false;
 		}
 
+		$debug_backtrace = debug_backtrace();
+		$backtrace = array();
+		// remove the root directorys
+		$backtrace['file'] = str_replace('\\','/', $debug_backtrace[0]['file']);
+		$backtrace['file'] = str_replace(SITE_FILE_ROOT, '', str_replace($_SERVER['DOCUMENT_ROOT'],'', $backtrace['file']));
+
+		$backtrace['line'] = $debug_backtrace[0]['line'];
+
 		$this->num_queries++;
 		$this->last_query = '';
 
@@ -252,7 +258,8 @@ class db_postgres
 			case 'MULTI_INSERT':
 				foreach ($array as $array2)
 				{
-					pg_insert($this->link_identifier, $table, $array2);
+					//pg_insert($this->link_identifier, $table, $array2);
+					$this->query('INSERT INTO ' . $table . ' '. $this->sql_build_array('INSERT', $array2), $backtrace);
 				}
 			break;
 
@@ -260,7 +267,7 @@ class db_postgres
 				//	return pg_insert($this->link_identifier, $table, $array);
 				// We can't use pg_insert if we need needed to get the insert_id
 				$this->last_query = 'INSERT INTO ' . $table . ' '. $this->sql_build_array('INSERT', $array);
-				$this->last_result = $this->query($this->last_query);
+				$this->last_result = $this->query($this->last_query, $backtrace);
 	
 				return $this->last_result;
 			break;
@@ -600,8 +607,6 @@ class db_postgres
 			break;
 
 			case 'stop':
-				global $site_file_root;
-
 				$end_time = explode(' ', microtime());
 				$end_time = $end_time[0] + $end_time[1];
 				$this->queries_time += $end_time - $start_time;
