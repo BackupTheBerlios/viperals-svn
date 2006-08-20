@@ -173,7 +173,10 @@ define('FORUMS_FORUMS_TABLE', $table_prefix.'forums_forums');
 define('FORUMS_ACCESS_TABLE', $table_prefix.'forums_access');
 define('FORUMS_ICONS_TABLE', $table_prefix.'forums_icons');
 define('FORUMS_LOG_TABLE', $table_prefix.'forums_log');
+
 define('FORUMS_MODERATOR_TABLE', $table_prefix.'forums_moderator_cache');
+define('FORUMS_MODERATOR_CACHE_TABLE', $table_prefix.'forums_moderator_cache');
+
 define('FORUMS_MODULES_TABLE', $table_prefix . 'forums_modules');
 define('FORUMS_POSTS_TABLE', $table_prefix.'forums_posts');
 define('FORUMS_PRIVMSGS_TABLE', $table_prefix.'forums_privmsgs');
@@ -185,7 +188,7 @@ define('FORUMS_REASONS_TABLE', $table_prefix.'forums_reports_reasons');
 define('FORUMS_SITELIST_TABLE', $table_prefix.'forums_sitelist');
 define('FORUMS_SEARCH_TABLE', $table_prefix.'forums_search_results');
 define('FORUMS_SEARCH_WORD_TABLE', $table_prefix.'forums_search_wordlist');
-define('FORUMS_SEARCH_MATCH_TABLE', $table_prefix.'forums_search_wordmatch');
+define('FORUMS_SEARCH_WORDMATCH_TABLE', $table_prefix.'forums_search_wordmatch');
 define('FORUMS_TOPICS_TABLE', $table_prefix.'forums_topics');
 define('FORUMS_POLL_OPTIONS_TABLE', $table_prefix.'forums_poll_results');
 define('FORUMS_POLL_VOTES_TABLE', $table_prefix.'forums_poll_voters');

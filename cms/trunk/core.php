@@ -104,8 +104,9 @@ load_class(false, 'core_template');
 load_class(false, 'core_handler');
 
 /* We're going ot use our own error handler */
+/*$_CLASS['core_handler']->start();
+
 $_CLASS['core_handler']->start();
-/*
 	$_CLASS['core_handler']->stop();
 */
 

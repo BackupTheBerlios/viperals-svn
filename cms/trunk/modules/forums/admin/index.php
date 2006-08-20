@@ -63,6 +63,27 @@ $_CLASS['auth']->acl($_CLASS['core_user']->data);
 
 $file = get_variable('file', 'REQUEST', 'main');
 
+$_CLASS['core_template']->assign_array(array(
+	'USERNAME'				=> $_CLASS['core_user']->data['username'],
+
+	//'U_ADM_INDEX'			=> append_sid("{$phpbb_admin_path}index.$phpEx"),
+	//'U_INDEX'				=> append_sid("index.$phpEx"),
+
+	'T_IMAGES_PATH'			=> "images/",
+	'T_SMILIES_PATH'		=> "{$config['smilies_path']}/",
+	'T_AVATAR_PATH'			=> "{$config['avatar_path']}/",
+	'T_AVATAR_GALLERY_PATH'	=> "{$config['avatar_gallery_path']}/",
+	'T_ICONS_PATH'			=> "{$config['icons_path']}/",
+	'T_RANKS_PATH'			=> "{$config['ranks_path']}/",
+	'T_UPLOAD_PATH'			=> "{$config['upload_path']}/",
+
+	'ICON_MOVE_UP'		=> '<img src="modules/forums/images/admin/icon_up.gif" alt="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" title="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" />',
+	'ICON_MOVE_DOWN'	=> '<img src="modules/forums/images/admin/icon_down.gif" alt="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" title="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" />',
+	'ICON_EDIT'			=> '<img src="modules/forums/images/admin/icon_edit.gif" alt="' . $_CLASS['core_user']->lang['EDIT'] . '" title="' . $_CLASS['core_user']->lang['EDIT'] . '" />',
+	'ICON_DELETE'		=> '<img src="modules/forums/images/admin/icon_delete.gif" alt="' . $_CLASS['core_user']->lang['DELETE'] . '" title="' . $_CLASS['core_user']->lang['DELETE'] . '" />',
+	'ICON_SYNC'			=> '<img src="modules/forums/images/admin/icon_sync.gif" alt="' . $_CLASS['core_user']->lang['RESYNC'] . '" title="' . $_CLASS['core_user']->lang['RESYNC'] . '" />',
+));
+	
 if (file_exists(SITE_FILE_ROOT.'includes/forums/admin/'.$file.'.php'))
 {
 	require(SITE_FILE_ROOT.'includes/forums/admin/'.$file.'.php');
@@ -72,47 +93,13 @@ else
 	require(SITE_FILE_ROOT.'includes/forums/admin/main.php');
 }
 
-
-// -----------------------------
-// Functions
-function adm_page_header($page_title)
-{
-	global $config, $_CLASS;
-
-	$_CLASS['core_template']->assign_array(array(
-		'PAGE_TITLE'			=> $page_title,
-		'USERNAME'				=> $_CLASS['core_user']->data['username'],
-
-		//'U_ADM_INDEX'			=> append_sid("{$phpbb_admin_path}index.$phpEx"),
-		//'U_INDEX'				=> append_sid("index.$phpEx"),
-
-		'T_IMAGES_PATH'			=> "images/",
-		'T_SMILIES_PATH'		=> "{$config['smilies_path']}/",
-		'T_AVATAR_PATH'			=> "{$config['avatar_path']}/",
-		'T_AVATAR_GALLERY_PATH'	=> "{$config['avatar_gallery_path']}/",
-		'T_ICONS_PATH'			=> "{$config['icons_path']}/",
-		'T_RANKS_PATH'			=> "{$config['ranks_path']}/",
-		'T_UPLOAD_PATH'			=> "{$config['upload_path']}/",
-
-		'ICON_MOVE_UP'		=> '<img src="images/icon_up.gif" alt="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" title="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" />',
-		'ICON_MOVE_DOWN'	=> '<img src="images/icon_down.gif" alt="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" title="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" />',
-		'ICON_EDIT'			=> '<img src="images/icon_edit.gif" alt="' . $_CLASS['core_user']->lang['EDIT'] . '" title="' . $_CLASS['core_user']->lang['EDIT'] . '" />',
-		'ICON_DELETE'		=> '<img src="images/icon_delete.gif" alt="' . $_CLASS['core_user']->lang['DELETE'] . '" title="' . $_CLASS['core_user']->lang['DELETE'] . '" />',
-		'ICON_SYNC'			=> '<img src="images/icon_sync.gif" alt="' . $_CLASS['core_user']->lang['RESYNC'] . '" title="' . $_CLASS['core_user']->lang['RESYNC'] . '" />',
-	));
-}
-
-function adm_page_footer($copyright_html = true)
-{
-	garbage_collection();
-}
-
 /**
 * Generate back link for acp pages
 */
 function adm_back_link($u_action)
 {
-	global $user;
+	global $_CLASS;
+
 	return '<br /><br /><a href="' . $u_action . '">&laquo; ' . $_CLASS['core_user']->lang['BACK_TO_PREV'] . '</a>';
 }
 

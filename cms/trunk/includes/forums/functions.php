@@ -183,174 +183,6 @@ function get_userdata($user)
 	return ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row : false;
 }
 
-// Create forum rules for given forum 
-function generate_forum_rules(&$forum_data)
-{
-	global $_CLASS;
-	
-	if (!$forum_data['forum_rules'] && !$forum_data['forum_rules_link'])
-	{
-		$_CLASS['core_template']->assign('S_FORUM_RULES', false);
-		return;
-	}
-
-	if ($forum_data['forum_rules'])
-	{
-		require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
-		$bbcode = new bbcode($forum_data['forum_rules_bbcode_bitfield']);
-		$bbcode->bbcode_second_pass($forum_data['forum_rules'], $forum_data['forum_rules_bbcode_uid']);
-
-		$forum_data['forum_rules'] = smiley_text($forum_data['forum_rules'], !($forum_data['forum_rules_flags'] & 2));
-		$forum_data['forum_rules'] = str_replace("\n", '<br />', censor_text($forum_data['forum_rules']));
-		unset($bbcode);
-	}
-
-	$_CLASS['core_template']->assign_array(array(
-		'S_FORUM_RULES'	=> true,
-		'U_FORUM_RULES'	=> $forum_data['forum_rules_link'],
-		'FORUM_RULES'   => $forum_data['forum_rules'])
-	);
-}
-
-// Create forum navigation links for given forum, create parent
-// list if currently null, assign basic forum info to template
-function generate_forum_nav(&$forum_data)
-{
-	global $_CLASS;
-
-	// Get forum parents
-	$forum_parents = get_forum_parents($forum_data);
-
-	// Build navigation links
-	foreach ($forum_parents as $parent_forum_id => $parent_data)
-	{
-		list($parent_name, $parent_type) = array_values($parent_data);
-
-		$_CLASS['core_template']->assign_vars_array('navlinks', array(
-			'S_IS_CAT'		=>	($parent_type == FORUM_CAT) ? true : false,
-			'S_IS_LINK'		=>	($parent_type == FORUM_LINK) ? true : false,
-			'S_IS_POST'		=>	($parent_type == FORUM_POST) ? true : false,
-			'FORUM_NAME'	=>	$parent_name,
-			'FORUM_ID'		=>	$parent_forum_id,
-			'U_VIEW_FORUM'	=>	generate_link('Forums&amp;file=viewforum&amp;f='.$parent_forum_id)
-			)
-		);
-	}
-
-	$_CLASS['core_template']->assign_vars_array('navlinks', array(
-		'S_IS_CAT'		=>	($forum_data['forum_type'] == FORUM_CAT) ? true : false,
-		'S_IS_LINK'		=>	($forum_data['forum_type'] == FORUM_LINK) ? true : false,
-		'S_IS_POST'		=>	($forum_data['forum_type'] == FORUM_POST) ? true : false,
-		'FORUM_NAME'	=>	$forum_data['forum_name'],
-		'FORUM_ID'		=>  $forum_data['forum_id'],
-		'U_VIEW_FORUM'	=>	generate_link('Forums&amp;file=viewforum&amp;f=' . $forum_data['forum_id'])
-		)
-	);
-
-	$_CLASS['core_template']->assign_array(array(
-		'FORUM_ID' 		=> $forum_data['forum_id'],
-		'FORUM_NAME'	=> $forum_data['forum_name'],
-		'FORUM_DESC'	=> strip_tags($forum_data['forum_desc']))
-	);
-
-	return;
-}
-
-// Returns forum parents as an array. Get them from forum_data if available, or update the database otherwise
-function get_forum_parents(&$forum_data)
-{
-	global $_CLASS;
-
-	$forum_parents = array();
-	
-	if ($forum_data['parent_id'])
-	{
-		if (!$forum_data['forum_parents'])
-		{
-			$sql = 'SELECT forum_id, forum_name, forum_type
-				FROM ' . FORUMS_FORUMS_TABLE . '
-				WHERE left_id < ' . $forum_data['left_id'] . '
-					AND right_id > ' . $forum_data['right_id'] . '
-				ORDER BY left_id ASC';
-			$result = $_CLASS['core_db']->query($sql);
-
-			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-			{
-				$forum_parents[$row['forum_id']] = array($row['forum_name'], (int) $row['forum_type']);
-			}
-			$_CLASS['core_db']->free_result($result);
-
-			$forum_data['forum_parents'] = serialize($forum_parents);
-
-			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
-				SET forum_parents = '" . $_CLASS['core_db']->escape($forum_data['forum_parents']) . "'
-				WHERE parent_id = " . $forum_data['parent_id'];
-			$_CLASS['core_db']->query($sql);
-		}
-		else
-		{
-			$forum_parents = unserialize($forum_data['forum_parents']);
-		}
-	}
-
-	return $forum_parents;
-}
-
-// Obtain list of moderators of each forum
-function get_moderators($forum_id = false)
-{
-	global $config, $_CLASS;
-
-	if (!$config['load_moderators'])
-	{
-		return array();
-	}
-
-	$forum_sql = '';
-
-	if ($forum_id)
-	{
-		$forum_sql = is_array($forum_id) ? 'AND forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND forum_id = ' . $forum_id;
-	}
-
-	$sql = 'SELECT *
-		FROM ' . FORUMS_MODERATOR_TABLE . "
-		WHERE display_on_index = 1
-			$forum_sql";
-	$result = $_CLASS['core_db']->query($sql);
-
-	$forum_moderators = array();
-
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		$forum_moderators[$row['forum_id']][] = empty($row['user_id']) ? '<a href="' . generate_link('Members_List&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>' : '<a href="' . generate_link('Members_List&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	return $forum_moderators;
-}
-
-// User authorisation levels output
-function gen_forum_auth_level($mode, $forum_id)
-{
-	global $_CLASS, $config;
-
-	$rules = array(
-		($_CLASS['forums_auth']->acl_get('f_post', $forum_id)) ? $_CLASS['core_user']->lang['RULES_POST_CAN'] : $_CLASS['core_user']->lang['RULES_POST_CANNOT'],
-		($_CLASS['forums_auth']->acl_get('f_reply', $forum_id)) ? $_CLASS['core_user']->lang['RULES_REPLY_CAN'] : $_CLASS['core_user']->lang['RULES_REPLY_CANNOT'],
-		($_CLASS['forums_auth']->acl_gets(array('f_edit', 'm_edit'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
-		($_CLASS['forums_auth']->acl_gets(array('f_delete', 'm_delete'), $forum_id)) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
-		($config['allow_attachments'] && $_CLASS['forums_auth']->acl_get('f_attach', $forum_id) && $_CLASS['forums_auth']->acl_get('u_attach', $forum_id)) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT']
-	);
-
-	foreach ($rules as $rule)
-	{
-		$_CLASS['core_template']->assign_vars_array('rules', array('RULE' => $rule));
-	}
-
-	return;
-}
-
 function gen_sort_selects(&$limit_days, &$sort_by_text, &$sort_days, &$sort_key, &$sort_dir, &$s_limit_days, &$s_sort_key, &$s_sort_dir, &$u_sort_param)
 {
 	global $_CLASS;
@@ -384,6 +216,135 @@ function gen_sort_selects(&$limit_days, &$sort_by_text, &$sort_days, &$sort_key,
 	$u_sort_param = "st=$sort_days&amp;sk=$sort_key&amp;sd=$sort_dir";
 
 	return;
+}
+
+/**
+* Decode text whereby text is coming from the db and expected to be pre-parsed content
+* We are placing this outside of the message parser because we are often in need of it...
+*/
+function decode_message(&$message, $bbcode_uid = '')
+{
+	if ($bbcode_uid)
+	{
+		$match = array('<br />', "[/*:m:$bbcode_uid]", ":u:$bbcode_uid", ":o:$bbcode_uid", ":$bbcode_uid");
+		$replace = array("\n", '', '', '', '');
+	}
+	else
+	{
+		$match = array('<br />');
+		$replace = array("\n");
+	}
+
+	$message = str_replace($match, $replace, $message);
+
+	$match = array(
+		'#<!\-\- e \-\-><a href="mailto:(.*?)">.*?</a><!\-\- e \-\->#',
+		'#<!\-\- m \-\-><a href="(.*?)" target="_blank">.*?</a><!\-\- m \-\->#',
+		'#<!\-\- w \-\-><a href="http:\/\/(.*?)" target="_blank">.*?</a><!\-\- w \-\->#',
+		'#<!\-\- l \-\-><a href="(.*?)">.*?</a><!\-\- l \-\->#',
+		'#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#',
+		'#<!\-\- .*? \-\->#s',
+		'#<.*?>#s'
+	);
+	
+	$replace = array('\1', '\1', '\1', '\1', '\1', '', '');
+	
+	$message = preg_replace($match, $replace, $message);
+
+	return;
+}
+
+/**
+* For display of custom parsed text on user-facing pages
+* Expects $text to be the value directly from the database (stored value)
+*/
+function generate_text_for_display($text, $uid, $bitfield, $flags)
+{
+	static $bbcode;
+
+	if (!$text)
+	{
+		return '';
+	}
+
+	// Parse bbcode if bbcode uid stored and bbcode enabled
+	if ($uid && ($flags & 1))
+	{
+		if (!class_exists('bbcode'))
+		{
+			require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
+		}
+
+		if (empty($bbcode))
+		{
+			$bbcode = new bbcode($bitfield);
+		}
+		else
+		{
+			$bbcode->bbcode($bitfield);
+		}
+		
+		$bbcode->bbcode_second_pass($text, $uid);
+	}
+
+	$text = smiley_text($text, !($flags & 2));
+	$text = str_replace("\n", '<br />', censor_text($text));
+
+	return $text;
+}
+
+/**
+* For parsing custom parsed text to be stored within the database.
+* This function additionally returns the uid and bitfield that needs to be stored.
+* Expects $text to be the value directly from request_var() and in it's non-parsed form
+*/
+function generate_text_for_storage(&$text, &$uid, &$bitfield, &$flags, $allow_bbcode = false, $allow_urls = false, $allow_smilies = false)
+{
+	$uid = '';
+	$bitfield = '';
+
+	if (!$text)
+	{
+		return;
+	}
+
+	if (!class_exists('parse_message'))
+	{
+		require_once SITE_FILE_ROOT.'includes/forums/message_parser.php';
+	}
+
+	$message_parser = new parse_message($text);
+	$message_parser->parse(false, $allow_bbcode, $allow_urls, $allow_smilies);
+
+	$text = $message_parser->message;
+	$uid = $message_parser->bbcode_uid;
+
+	// If the bbcode_bitfield is empty, there is no need for the uid to be stored.
+	if (!$message_parser->bbcode_bitfield)
+	{
+		$uid = '';
+	}
+
+	$flags = (($allow_bbcode) ? 1 : 0) + (($allow_smilies) ? 2 : 0) + (($allow_urls) ? 4 : 0);
+	$bitfield = $message_parser->bbcode_bitfield;
+
+	return;
+}
+
+/**
+* For decoding custom parsed text for edits as well as extracting the flags
+* Expects $text to be the value directly from the database (pre-parsed content)
+*/
+function generate_text_for_edit($text, $uid, $flags)
+{
+	decode_message($text, $uid);
+
+	return array(
+		'allow_bbcode'	=> ($flags & 1) ? 1 : 0,
+		'allow_smilies'	=> ($flags & 2) ? 1 : 0,
+		'allow_urls'	=> ($flags & 4) ? 1 : 0,
+		'text'			=> $text
+	);
 }
 
 function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list = false)
@@ -480,124 +441,6 @@ function make_jumpbox($action, $forum_id = false, $select_all = false, $acl_list
 	return;
 }
 
-// Topic and forum watching common code
-//do we need user_id ?
-function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status = 'unset', $start = 0)
-{
-	global $_CLASS, $config, $_CORE_CONFIG;
-
-	if (!$_CLASS['core_user']->is_user || !$_CORE_CONFIG['email']['email_enable'] || !$config['allow_topic_notify'])
-	{
-		return array('link' => '', 'title' => '', 'watching' => false);
-	}
-
-	if ($mode == 'forum')
-	{
-		$where = "user_id = $user_id AND forum_id = $forum_id AND topic_id = 0";
-		$url = 'f='.$forum_id;
-	}
-	else
-	{
-		$where = "user_id = $user_id AND forum_id = $forum_id AND topic_id IN ($topic_id, 0)";
-		$url = 't='.$topic_id;
-	}
-
-	$is_watching = false;
-
-	if ($notify_status == 'unset')
-	{
-		// Is user watching this thread?
-		$sql = 'SELECT notify_status
-			FROM '.FORUMS_WATCH_TABLE."
-			 WHERE $where";
-
-		$result = $_CLASS['core_db']->query($sql);
-
-		$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : null;
-		$_CLASS['core_db']->free_result($result);
-	}
-
-	if (is_null($notify_status))
-	{
-		if (isset($_GET['watch']))
-		{
-			if ($_GET['watch'] == $mode)
-			{
-				$is_watching = true;
-
-				// Remove all topics that are being watched, we watching the whole forum dude
-				if ($mode == 'forum')
-				{
-					$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
-						WHERE forum_id = $forum_id
-							AND user_id = $user_id";
-				
-					$_CLASS['core_db']->query($sql);
-				}
-
-				$sql_array = array(
-					'user_id' => (int) $user_id,
-					'forum_id' => $forum_id,
-					'topic_id' => $topic_id,
-					'notify_status' => 0,
-					'notify_type' => 0
-				);
-
-				$_CLASS['core_db']->sql_query_build('INSERT', $sql_array, FORUMS_WATCH_TABLE);
-			}
-
-			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
-			$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
-			trigger_error($message);
-		}
-	}
-	else
-	{
-		if (isset($_GET['unwatch']))
-		{
-			if ($_GET['unwatch'] == $mode)
-			{
-				$is_watching = false;
-
-				if ($mode == 'forum')
-				{
-					$where_delete = "forum_id = $forum_id AND topic_id = 0";
-				}
-				else
-				{
-					$where_delete = "forum_id = $forum_id AND topic_id = $topic_id";
-				}
-
-				$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
-							WHERE user_id = $user_id AND $where_delete";
-
-				$_CLASS['core_db']->query($sql);
-			}
-
-			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
-			$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
-			trigger_error($message);
-		}
-		else
-		{
-			$is_watching = true;
-
-			if ($notify_status)
-			{
-				$sql = 'UPDATE ' . FORUMS_WATCH_TABLE . "
-					SET notify_status = 0
-					WHERE $where";
-				$_CLASS['core_db']->query($sql);
-			}
-		}
-	}
-
-	return array(
-			'watching' => true,
-			'link' => generate_link("Forums&amp;file=view$mode&amp;$url&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start"),
-			'title' => $_CLASS['core_user']->lang[(($is_watching) ? 'STOP' : 'START') . '_WATCHING_' . strtoupper($mode)],
-	);
-}
 
 // Marks a topic or forum as read
 function markread($mode, $forum_id = 0, $topic_id = 0, $marktime = false)
@@ -1181,6 +1024,7 @@ function page_header()
 				continue;	
 			}
 		}
+		$_CLASS['core_db']->free_result($result);
 		
 		if (!$online_userlist)
 		{

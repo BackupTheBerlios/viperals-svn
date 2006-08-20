@@ -294,8 +294,8 @@ class core_user extends sessions
 			$module = ($module) ? $module : $_CLASS['core_display']->page['page_name'];
 			$lang = ($lang) ? $lang : $this->lang_name;
 
-			$img_file = ($img_file) ? $img_file.'_'.$lang.'.php' : 'index_'.$lang.'.php';
 			$img_file2 = ($img_file) ? "$img_file.php" : 'index.php';
+			$img_file = ($img_file) ? $img_file.'_'.$lang.'.php' : 'index_'.$lang.'.php';
 
 			if (file_exists($_CLASS['core_display']->theme_path."/images/modules/$module/$img_file"))
 			{

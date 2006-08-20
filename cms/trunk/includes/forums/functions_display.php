@@ -219,7 +219,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 				'FORUM_ID'			=>	$row['forum_id'],
 				'FORUM_NAME'		=>	$row['forum_name'],
 				'FORUM_DESC'		=>	$row['forum_desc'],
-				//'FORUM_FOLDER_IMG'		=> ($row['forum_image']) ? '<img src="' . $phpbb_root_path . $row['forum_image'] . '" alt="' . $user->lang['FORUM_CAT'] . '" />' : '',
+				//'FORUM_FOLDER_IMG'		=> ($row['forum_image']) ? '<img src="' . $phpbb_root_path . $row['forum_image'] . '" alt="' . $_CLASS['core_user']->lang['FORUM_CAT'] . '" />' : '',
 				//'FORUM_FOLDER_IMG_SRC'	=> ($row['forum_image']) ? $phpbb_root_path . $row['forum_image'] : '',
 				'U_VIEWFORUM'		=>	generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']))
 			);
@@ -287,7 +287,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 			$last_post_time = $_CLASS['core_user']->format_date($row['forum_last_post_time']);
 
 			$last_poster = ($row['forum_last_poster_name'] != '') ? $row['forum_last_poster_name'] : $_CLASS['core_user']->lang['GUEST'];
-			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : generate_link('Members_List&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
+			$last_poster_url = ($row['forum_last_poster_id'] == ANONYMOUS) ? '' : generate_link('members_list&amp;mode=viewprofile&amp;u='  . $row['forum_last_poster_id']);
 			
 			$last_post_url = generate_link('forums&amp;file=viewtopic&amp;f='.$row['forum_id_last_post'].'&amp;p='.$row['forum_last_post_id'].'#'.$row['forum_last_post_id'], false, false, false);
 		}
@@ -357,99 +357,268 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 }
 
 /**
-* Display reasons
+* Create forum rules for given forum
 */
-function display_reasons($reason_id = 0)
+function generate_forum_rules(&$forum_data)
+{
+	if (!$forum_data['forum_rules'] && !$forum_data['forum_rules_link'])
+	{
+		return;
+	}
+
+	global $_CLASS;
+
+	if ($forum_data['forum_rules'])
+	{
+		$forum_data['forum_rules'] = generate_text_for_display($forum_data['forum_rules'], $forum_data['forum_rules_uid'], $forum_data['forum_rules_bitfield'], $forum_data['forum_rules_options']);
+	}
+
+	$_CLASS['core_template']->assign_array(array(
+		'S_FORUM_RULES'	=> true,
+		'U_FORUM_RULES'	=> $forum_data['forum_rules_link'],
+		'FORUM_RULES'	=> $forum_data['forum_rules']
+	));
+}
+
+/**
+* Create forum navigation links for given forum, create parent
+* list if currently null, assign basic forum info to template
+*/
+function generate_forum_nav(&$forum_data)
 {
 	global $_CLASS;
-return;
-	$sql = 'SELECT * 
-		FROM ' . REPORTS_REASONS_TABLE . ' 
-		ORDER BY reason_order ASC';
+
+	if (!$_CLASS['forums_auth']->acl_get('f_list', $forum_data['forum_id']))
+	{
+		return;
+	}
+
+	// Get forum parents
+	$forum_parents = get_forum_parents($forum_data);
+
+	// Build navigation links
+	foreach ($forum_parents as $parent_forum_id => $parent_data)
+	{
+		list($parent_name, $parent_type) = array_values($parent_data);
+
+		// Skip this parent if the user does not have the permission to view it
+		if (!$_CLASS['forums_auth']->acl_get('f_list', $parent_forum_id))
+		{
+			continue;
+		}
+
+		$_CLASS['core_template']->assign_vars_array('navlinks', array(
+			'S_IS_CAT'		=> ($parent_type == FORUM_CAT) ? true : false,
+			'S_IS_LINK'		=> ($parent_type == FORUM_LINK) ? true : false,
+			'S_IS_POST'		=> ($parent_type == FORUM_POST) ? true : false,
+			'FORUM_NAME'	=> $parent_name,
+			'FORUM_ID'		=> $parent_forum_id,
+			'U_VIEW_FORUM'	=> generate_link('forums&amp;file=viewforum&amp;f='.$parent_forum_id)
+		));
+	}
+
+	$_CLASS['core_template']->assign_vars_array('navlinks', array(
+		'S_IS_CAT'		=> ($forum_data['forum_type'] == FORUM_CAT) ? true : false,
+		'S_IS_LINK'		=> ($forum_data['forum_type'] == FORUM_LINK) ? true : false,
+		'S_IS_POST'		=> ($forum_data['forum_type'] == FORUM_POST) ? true : false,
+		'FORUM_NAME'	=> $forum_data['forum_name'],
+		'FORUM_ID'		=> $forum_data['forum_id'],
+		'U_VIEW_FORUM'	=> generate_link('forums&amp;file=viewforum&amp;f=' . $forum_data['forum_id'])
+	));
+
+	$_CLASS['core_template']->assign_array(array(
+		'FORUM_ID' 		=> $forum_data['forum_id'],
+		'FORUM_NAME'	=> $forum_data['forum_name'],
+		'FORUM_DESC'	=> generate_text_for_display($forum_data['forum_desc'], $forum_data['forum_desc_uid'], $forum_data['forum_desc_bitfield'], $forum_data['forum_desc_options']))
+	);
+
+	return;
+}
+
+/**
+* Returns forum parents as an array. Get them from forum_data if available, or update the database otherwise
+*/
+function get_forum_parents(&$forum_data)
+{
+	global $_CLASS;
+
+	$forum_parents = array();
+
+	if ($forum_data['parent_id'] > 0)
+	{
+		if ($forum_data['forum_parents'] == '')
+		{
+			$sql = 'SELECT forum_id, forum_name, forum_type
+				FROM ' . FORUMS_FORUMS_TABLE . '
+				WHERE left_id < ' . $forum_data['left_id'] . '
+					AND right_id > ' . $forum_data['right_id'] . '
+				ORDER BY left_id ASC';
+			$result = $_CLASS['core_db']->query($sql);
+
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			{
+				$forum_parents[$row['forum_id']] = array($row['forum_name'], (int) $row['forum_type']);
+			}
+			$_CLASS['core_db']->free_result($result);
+
+			$forum_data['forum_parents'] = serialize($forum_parents);
+
+			$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
+				SET forum_parents = '" . $_CLASS['core_db']->escape($forum_data['forum_parents']) . "'
+				WHERE parent_id = " . $forum_data['parent_id'];
+			$_CLASS['core_db']->query($sql);
+		}
+		else
+		{
+			$forum_parents = unserialize($forum_data['forum_parents']);
+		}
+	}
+
+	return $forum_parents;
+}
+
+/**
+* Obtain list of moderators of each forum
+*/
+function get_moderators($forum_id = false)
+{
+	global $config, $_CLASS;
+
+	// Have we disabled the display of moderators? If so, then return
+	// from whence we came ...
+	if (!$config['load_moderators'])
+	{
+		return array();
+	}
+
+	$forum_sql = '';
+
+	if ($forum_id !== false)
+	{
+		// If we don't have a forum then we can't have a moderator
+		if (is_array($forum_id) && !sizeof($forum_id))
+		{
+			return;
+		}
+
+		$forum_sql = is_array($forum_id) ? 'AND forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND forum_id = ' . $forum_id;
+	}
+
+	$sql = 'SELECT *
+		FROM ' . FORUMS_MODERATOR_TABLE . "
+		WHERE display_on_index = 1
+			$forum_sql";
 	$result = $_CLASS['core_db']->query($sql);
+	
+	$forum_moderators = array();
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		// If the reason is defined within the language file, we will use the localized version, else just use the database entry...
-		if (isset($_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_title'])]) && isset($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_title'])]))
-		{
-			$row['reson_description'] = $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_title'])];
-			$row['reason_title'] = $_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_title'])];
-		}
-
-		$_CLASS['core_template']->assign_vars_array('reason', array(
-			'ID'			=> $row['reason_id'],
-			'TITLE'			=> $row['reason_title'],
-			'DESCRIPTION'	=> $row['reason_description'],
-			'S_SELECTED'	=> ($row['reason_id'] == $reason_id) ? true : false)
-		);
+		$forum_moderators[$row['forum_id']][] = empty($row['user_id']) ? '<a href="' . generate_link('members_list&amp;mode=group&amp;g=' . $row['group_id']) . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</a>' : '<a href="' . generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['user_id']) . '">' . $row['username'] . '</a>';
 	}
 	$_CLASS['core_db']->free_result($result);
+
+	return $forum_moderators;
 }
 
-function topic_status(&$topic_row, $replies, $mark_time, &$unread, &$folder_img, &$folder_alt, &$topic_type)
+/**
+* User authorisation levels output
+*/
+function gen_forum_auth_level($mode, $forum_id, $forum_status)
 {
 	global $_CLASS, $config;
 
-	$folder = '';
-	$unread = ($mark_time < $topic_row['topic_last_post_time']);
+	$locked = ($forum_status == ITEM_LOCKED && !$_CLASS['forums_auth']->acl_get('m_edit', $forum_id)) ? true : false;
+
+	$rules = array(
+		($_CLASS['forums_auth']->acl_get('f_post', $forum_id) && !$locked) ? $_CLASS['core_user']->lang['RULES_POST_CAN'] : $_CLASS['core_user']->lang['RULES_POST_CANNOT'],
+		($_CLASS['forums_auth']->acl_get('f_reply', $forum_id) && !$locked) ? $_CLASS['core_user']->lang['RULES_REPLY_CAN'] : $_CLASS['core_user']->lang['RULES_REPLY_CANNOT'],
+		($_CLASS['forums_auth']->acl_gets('f_edit', 'm_edit', $forum_id) && !$locked) ? $_CLASS['core_user']->lang['RULES_EDIT_CAN'] : $_CLASS['core_user']->lang['RULES_EDIT_CANNOT'],
+		($_CLASS['forums_auth']->acl_gets('f_delete', 'm_delete', $forum_id) && !$locked) ? $_CLASS['core_user']->lang['RULES_DELETE_CAN'] : $_CLASS['core_user']->lang['RULES_DELETE_CANNOT'],
+	);
+
+	if ($config['allow_attachments'])
+	{
+		$rules[] = ($_CLASS['forums_auth']->acl_get('f_attach', $forum_id) && $_CLASS['forums_auth']->acl_get('u_attach') && !$locked) ? $_CLASS['core_user']->lang['RULES_ATTACH_CAN'] : $_CLASS['core_user']->lang['RULES_ATTACH_CANNOT'];
+	}
+
+	foreach ($rules as $rule)
+	{
+		$_CLASS['core_template']->assign_vars_array('rules', array('RULE' => $rule));
+	}
+
+	return;
+}
+
+function topic_status(&$topic_row, $replies, $unread_topic, &$folder_img, &$folder_alt, &$topic_type)
+{
+	global $_CLASS, $config;
+
+	$folder = $folder_new = '';
 
 	if ($topic_row['topic_status'] == ITEM_MOVED)
 	{
 		$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_MOVED'];
-		$folder_img = 'folder_moved';
+		$folder_img = 'topic_moved';
 		$folder_alt = 'VIEW_TOPIC_MOVED';
-		//$status = 9;
 	}
 	else
 	{
+		switch ($topic_row['topic_type'])
+		{
+			case POST_GLOBAL:
+				$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_GLOBAL'];
+				$folder = 'global_read';
+				$folder_new = 'global_unread';
+			break;
+
+			case POST_ANNOUNCE:
+				$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
+				$folder = 'announce_read';
+				$folder_new = 'announce_unread';
+			break;
+
+			case POST_STICKY:
+				$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_STICKY'];
+				$folder = 'sticky_read';
+				$folder_new = 'sticky_unread';
+			break;
+
+			default:
+				$topic_type = '';
+				$folder = 'topic_read';
+				$folder_new = 'topic_unread';
+
+				if ($config['hot_threshold'] && $replies >= $config['hot_threshold'])
+				{
+					$folder .= '_hot';
+					$folder_new .= '_hot';
+				}
+			break;
+		}
+
 		if ($topic_row['topic_status'] == ITEM_LOCKED)
 		{
 			$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_LOCKED'];
-			$folder_img = ($unread) ? 'folder_locked_new' :'folder_locked';
-			//$status = ($unread) ? 11 : 10;
-		}
-		else
-		{
-			switch ($topic_row['topic_type'])
-			{
-				case POST_GLOBAL:
-				case POST_ANNOUNCE:
-					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_ANNOUNCEMENT'];
-					$folder_img = ($unread) ? 'folder_announce_new' : 'folder_announce';
-					//$status = ($unread) ? 8 : 7;
-				break;
-	
-				case POST_STICKY:
-					$topic_type = $_CLASS['core_user']->lang['VIEW_TOPIC_STICKY'];
-					$folder_img = ($unread) ? 'folder_sticky_new' : 'folder_sticky';
-					//$status = ($unread) ? 6 : 5;
-				break;
-	
-				default:
-					if ($config['hot_threshold'] && $replies >= $config['hot_threshold'])
-					{
-						$folder_img = ($unread) ? 'folder_hot_new': 'folder_hot';
-						//$status = ($unread) ? 4 : 3;
-					}
-					else
-					{
-						$folder_img = ($unread) ? 'folder_new' : 'folder';
-						//$status = ($unread) ? 2 : 1;
-					}
-				break;
-			}
+			$folder .= '_locked';
+			$folder_new .= '_locked';
 		}
 
-		$folder_alt = ($unread) ? 'NEW_POSTS' : (($topic_row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
+
+		$folder_img = ($unread_topic) ? $folder_new : $folder;
+		$folder_alt = ($unread_topic) ? 'NEW_POSTS' : (($topic_row['topic_status'] == ITEM_LOCKED) ? 'TOPIC_LOCKED' : 'NO_NEW_POSTS');
+
+		// Posted image?
+		if (!empty($topic_row['topic_posted']) && $topic_row['topic_posted'])
+		{
+			$folder_img .= '_mine';
+		}
 	}
 
 	if ($topic_row['poll_start'])
 	{
 		$topic_type .= $_CLASS['core_user']->lang['VIEW_TOPIC_POLL'];
 	}
-
-	//return $status;
 }
 
 // Display Attachments
@@ -573,4 +742,346 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 	return $datas;
 }
 
+/**
+* Assign/Build custom bbcodes for display in screens supporting using of bbcodes
+* The custom bbcodes buttons will be placed within the template block 'custom_codes'
+*/
+function display_custom_bbcodes()
+{
+	global $_CLASS;
+
+	// Start counting from 22 for the bbcode ids (every bbcode takes two ids - opening/closing)
+	$num_predefined_bbcodes = 22;
+
+	/*
+	* @todo while adjusting custom bbcodes, think about caching this query as well as correct ordering
+	*/
+	$sql = 'SELECT bbcode_id, bbcode_tag, bbcode_helpline
+		FROM ' . FORUMS_BBCODES_TABLE . '
+		WHERE display_on_posting = 1';
+	$result = $_CLASS['core_db']->query($sql);
+
+	$i = 0;
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$_CLASS['core_template']->assign_vars_array('custom_tags', array(
+			'BBCODE_NAME'		=> "'[{$row['bbcode_tag']}]', '[/" . str_replace('=', '', $row['bbcode_tag']) . "]'",
+			'BBCODE_ID'			=> $num_predefined_bbcodes + ($i * 2),
+			'BBCODE_TAG'		=> $row['bbcode_tag'],
+			'BBCODE_HELPLINE'	=> $row['bbcode_helpline']
+		));
+
+		$i++;
+	}
+	$_CLASS['core_db']->free_result($result);
+}
+
+/**
+* Display reasons
+*/
+function display_reasons($reason_id = 0)
+{
+	global $_CLASS;
+return;
+	$sql = 'SELECT * 
+		FROM ' . REPORTS_REASONS_TABLE . ' 
+		ORDER BY reason_order ASC';
+	$result = $_CLASS['core_db']->query($sql);
+
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		// If the reason is defined within the language file, we will use the localized version, else just use the database entry...
+		if (isset($_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_title'])]) && isset($_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_title'])]))
+		{
+			$row['reson_description'] = $_CLASS['core_user']->lang['report_reasons']['DESCRIPTION'][strtoupper($row['reason_title'])];
+			$row['reason_title'] = $_CLASS['core_user']->lang['report_reasons']['TITLE'][strtoupper($row['reason_title'])];
+		}
+
+		$_CLASS['core_template']->assign_vars_array('reason', array(
+			'ID'			=> $row['reason_id'],
+			'TITLE'			=> $row['reason_title'],
+			'DESCRIPTION'	=> $row['reason_description'],
+			'S_SELECTED'	=> ($row['reason_id'] == $reason_id) ? true : false)
+		);
+	}
+	$_CLASS['core_db']->free_result($result);
+}
+
+/**
+* Display user activity (action forum/topic)
+*/
+function display_user_activity(&$userdata)
+{
+	global $auth, $template, $db, $user;
+	global $phpbb_root_path, $phpEx;
+
+	// Init new auth class if user is different
+	if ($user->data['user_id'] != $userdata['user_id'])
+	{
+		$auth2 = new auth();
+		$auth2->acl($userdata);
+
+		$post_count_ary = $auth2->acl_getf('!f_postcount');
+	}
+	else
+	{
+		$post_count_ary = $auth->acl_getf('!f_postcount');
+	}
+
+	$forum_read_ary = $auth->acl_getf('!f_read');
+
+	$forum_ary = array();
+
+	// Do not include those forums the user is not having read access to...
+	foreach ($forum_read_ary as $forum_id => $not_allowed)
+	{
+		if ($not_allowed['f_read'])
+		{
+			$forum_ary[] = (int) $forum_id;
+		}
+	}
+
+	// Now do not include those forums where the posts do not count...
+	foreach ($post_count_ary as $forum_id => $not_counted)
+	{
+		if ($not_counted['f_postcount'])
+		{
+			$forum_ary[] = (int) $forum_id;
+		}
+	}
+
+	$forum_ary = array_unique($forum_ary);
+	$post_count_sql = (sizeof($forum_ary)) ? 'AND ' . $db->sql_in_set('f.forum_id', $forum_ary, true) : '';
+
+	// Firebird does not support ORDER BY on aliased columns
+	// MySQL does not support ORDER BY on functions
+	switch (SQL_LAYER)
+	{
+		case 'firebird':
+			$sql = 'SELECT f.forum_id, COUNT(p.post_id) AS num_posts
+				FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . ' f 
+				WHERE p.poster_id = ' . $userdata['user_id'] . " 
+					AND f.forum_id = p.forum_id 
+					$post_count_sql
+				GROUP BY f.forum_id
+				ORDER BY COUNT(p.post_id) DESC";
+		break;
+
+		default:
+			$sql = 'SELECT f.forum_id, COUNT(p.post_id) AS num_posts
+				FROM ' . POSTS_TABLE . ' p, ' . FORUMS_TABLE . ' f 
+				WHERE p.poster_id = ' . $userdata['user_id'] . " 
+					AND f.forum_id = p.forum_id 
+					$post_count_sql
+				GROUP BY f.forum_id
+				ORDER BY num_posts DESC";
+		break;
+	}
+
+	$result = $db->sql_query_limit($sql, 1);
+	$active_f_row = $db->sql_fetchrow($result);
+	$db->sql_freeresult($result);
+
+	if (!empty($active_f_row))
+	{
+		$sql = 'SELECT forum_name
+			FROM ' . FORUMS_TABLE . '
+			WHERE forum_id = ' . $active_f_row['forum_id'];
+		$result = $db->sql_query($sql, 3600);
+		$active_f_row['forum_name'] = (string) $db->sql_fetchfield('forum_name');
+		$db->sql_freeresult($result);
+	}
+
+	// Firebird does not support ORDER BY on aliased columns
+	// MySQL does not support ORDER BY on functions
+	switch (SQL_LAYER)
+	{
+		case 'firebird':
+			$sql = 'SELECT t.topic_id, COUNT(p.post_id) AS num_posts   
+				FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f  
+				WHERE p.poster_id = ' . $userdata['user_id'] . " 
+					AND t.topic_id = p.topic_id  
+					AND f.forum_id = t.forum_id 
+					$post_count_sql
+				GROUP BY t.topic_id
+				ORDER BY COUNT(p.post_id) DESC";
+		break;
+
+		default:
+			$sql = 'SELECT t.topic_id, COUNT(p.post_id) AS num_posts   
+				FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f  
+				WHERE p.poster_id = ' . $userdata['user_id'] . " 
+					AND t.topic_id = p.topic_id  
+					AND f.forum_id = t.forum_id 
+					$post_count_sql
+				GROUP BY t.topic_id
+				ORDER BY num_posts DESC";
+		break;
+	}
+
+	$result = $db->sql_query_limit($sql, 1);
+	$active_t_row = $db->sql_fetchrow($result);
+	$db->sql_freeresult($result);
+
+	if (!empty($active_t_row))
+	{
+		$sql = 'SELECT topic_title
+			FROM ' . TOPICS_TABLE . '
+			WHERE topic_id = ' . $active_t_row['topic_id'];
+		$result = $db->sql_query($sql);
+		$active_t_row['topic_title'] = (string) $db->sql_fetchfield('topic_title');
+		$db->sql_freeresult($result);
+	}
+
+	$userdata['active_t_row'] = $active_t_row;
+	$userdata['active_f_row'] = $active_f_row;
+
+	$active_f_name = $active_f_id = $active_f_count = $active_f_pct = '';
+	if (!empty($active_f_row['num_posts']))
+	{
+		$active_f_name = $active_f_row['forum_name'];
+		$active_f_id = $active_f_row['forum_id'];
+		$active_f_count = $active_f_row['num_posts'];
+		$active_f_pct = ($userdata['user_posts']) ? ($active_f_count / $userdata['user_posts']) * 100 : 0;
+	}
+
+	$active_t_name = $active_t_id = $active_t_count = $active_t_pct = '';
+	if (!empty($active_t_row['num_posts']))
+	{
+		$active_t_name = $active_t_row['topic_title'];
+		$active_t_id = $active_t_row['topic_id'];
+		$active_t_count = $active_t_row['num_posts'];
+		$active_t_pct = ($userdata['user_posts']) ? ($active_t_count / $userdata['user_posts']) * 100 : 0;
+	}
+
+	$template->assign_vars(array(
+		'ACTIVE_FORUM'			=> $active_f_name,
+		'ACTIVE_FORUM_POSTS'	=> ($active_f_count == 1) ? sprintf($user->lang['USER_POST'], 1) : sprintf($user->lang['USER_POSTS'], $active_f_count),
+		'ACTIVE_FORUM_PCT'		=> sprintf($user->lang['POST_PCT_ACTIVE'], $active_f_pct),
+		'ACTIVE_TOPIC'			=> censor_text($active_t_name),
+		'ACTIVE_TOPIC_POSTS'	=> ($active_t_count == 1) ? sprintf($user->lang['USER_POST'], 1) : sprintf($user->lang['USER_POSTS'], $active_t_count),
+		'ACTIVE_TOPIC_PCT'		=> sprintf($user->lang['POST_PCT_ACTIVE'], $active_t_pct),
+		'U_ACTIVE_FORUM'		=> append_sid("{$phpbb_root_path}viewforum.$phpEx", 'f=' . $active_f_id),
+		'U_ACTIVE_TOPIC'		=> append_sid("{$phpbb_root_path}viewtopic.$phpEx", 't=' . $active_t_id))
+	);
+}
+
+// Topic and forum watching common code
+//do we need user_id ?
+function watch_topic_forum($mode, $user_id, $forum_id, $topic_id, $notify_status = 'unset', $start = 0)
+{
+	global $_CLASS, $config, $_CORE_CONFIG;
+
+	if (!$_CLASS['core_user']->is_user || !$_CORE_CONFIG['email']['email_enable'] || !$config['allow_topic_notify'])
+	{
+		return array('link' => '', 'title' => '', 'watching' => false);
+	}
+
+	if ($mode == 'forum')
+	{
+		$where = "user_id = $user_id AND forum_id = $forum_id AND topic_id = 0";
+		$url = 'f='.$forum_id;
+	}
+	else
+	{
+		$where = "user_id = $user_id AND forum_id = $forum_id AND topic_id IN ($topic_id, 0)";
+		$url = 't='.$topic_id;
+	}
+
+	$is_watching = false;
+
+	if ($notify_status == 'unset')
+	{
+		// Is user watching this thread?
+		$sql = 'SELECT notify_status
+			FROM '.FORUMS_WATCH_TABLE."
+			 WHERE $where";
+
+		$result = $_CLASS['core_db']->query($sql);
+
+		$notify_status = ($row = $_CLASS['core_db']->fetch_row_assoc($result)) ? $row['notify_status'] : null;
+		$_CLASS['core_db']->free_result($result);
+	}
+
+	if (is_null($notify_status))
+	{
+		if (isset($_GET['watch']))
+		{
+			if ($_GET['watch'] == $mode)
+			{
+				$is_watching = true;
+
+				// Remove all topics that are being watched, we watching the whole forum dude
+				if ($mode == 'forum')
+				{
+					$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
+						WHERE forum_id = $forum_id
+							AND user_id = $user_id";
+				
+					$_CLASS['core_db']->query($sql);
+				}
+
+				$sql_array = array(
+					'user_id' => (int) $user_id,
+					'forum_id' => $forum_id,
+					'topic_id' => $topic_id,
+					'notify_status' => 0,
+					'notify_type' => 0
+				);
+
+				$_CLASS['core_db']->sql_query_build('INSERT', $sql_array, FORUMS_WATCH_TABLE);
+			}
+
+			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
+			$message = $_CLASS['core_user']->lang['ARE_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
+			trigger_error($message);
+		}
+	}
+	else
+	{
+		if (isset($_GET['unwatch']))
+		{
+			if ($_GET['unwatch'] == $mode)
+			{
+				$is_watching = false;
+
+				if ($mode == 'forum')
+				{
+					$where_delete = "forum_id = $forum_id AND topic_id = 0";
+				}
+				else
+				{
+					$where_delete = "forum_id = $forum_id AND topic_id = $topic_id";
+				}
+
+				$sql = 'DELETE FROM ' . FORUMS_WATCH_TABLE . "
+							WHERE user_id = $user_id AND $where_delete";
+
+				$_CLASS['core_db']->query($sql);
+			}
+
+			$_CLASS['core_display']->meta_refresh(3, generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start"));
+			$message = $_CLASS['core_user']->lang['NOT_WATCHING_' . strtoupper($mode)] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_' . strtoupper($mode)], '<a href="' . generate_link("Forums&amp;file=view$mode&amp;$url&amp;start=$start") . '">', '</a>');
+			trigger_error($message);
+		}
+		else
+		{
+			$is_watching = true;
+
+			if ($notify_status)
+			{
+				$sql = 'UPDATE ' . FORUMS_WATCH_TABLE . "
+					SET notify_status = 0
+					WHERE $where";
+				$_CLASS['core_db']->query($sql);
+			}
+		}
+	}
+
+	return array(
+			'watching' => true,
+			'link' => generate_link("forums&amp;file=view$mode&amp;$url&amp;" . (($is_watching) ? 'unwatch' : 'watch') . "=$mode&amp;start=$start"),
+			'title' => $_CLASS['core_user']->lang[(($is_watching) ? 'STOP' : 'START') . '_WATCHING_' . strtoupper($mode)],
+	);
+}
 ?>

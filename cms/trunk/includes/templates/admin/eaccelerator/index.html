@@ -1,0 +1,318 @@
+<!-- DISPLAY_HEADER -->
+
+{ $THEME_TABLE_OPEN }
+
+<!-- IF { $eaccelerator_info } -->
+
+<table border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+			<td width="50%" valign="top">
+				<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+					<tbody>
+						<tr>
+							<th width="25%" colspan="2" align="center"><b>eAccelerator Info</b></td>
+						</tr>
+						<tr class="row1">
+							<td>
+								eAccelerator Version
+							</td>
+							<td>
+								{ $version }
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Caching enabled
+							</td>
+							<td>
+								<!-- IF { $cache } -->
+									<img src="images/led_green.png" alt="Enabled" title="Enabled" border="0">
+								<!-- ELSE -->
+									<img src="images/led_red.png" alt="Disabled" title="Disabled" border="0">
+								<!-- ENDIF -->
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Optimizer enabled
+							</td>
+							<td>
+								<!-- IF { $optimizer } -->
+									<img src="images/led_green.png" alt="Enabled" title="Enabled" border="0">
+								<!-- ELSE -->
+									<img src="images/led_red.png" alt="Disabled" title="Disabled" border="0">
+								<!-- ENDIF -->
+							</td>
+						</tr>
+						<tr class="row2">
+							<td colspan="2">
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Memory Usage
+							</td>
+							<td>
+								{ $memory_usage }%
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Memory Total
+							</td>
+							<td>
+								{ $memory_size }
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Memory Used
+							</td>
+							<td>
+								{ $memory_allocated }
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								 Memory Free
+							</td>
+							<td>
+								{ $memory_available }
+							</td>
+						</tr>
+						<tr class="row2">
+							<td colspan="2">
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Cached scripts
+							</td>
+							<td>
+								{ $cached_scripts }
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Removed scripts
+							</td>
+							<td>
+								{ $removed_scripts }
+							</td>
+						</tr>
+						<tr class="row1">
+							<td>
+								Cached keys
+							</td>
+							<td>
+								{ $cached_keys }
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			<td width="50%" valign="top">
+				<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+					<tbody>
+						<tr>
+							<th width="25%" colspan="2" align="center"><b>eAccelerator</b></td>
+						</tr>
+						<tr>
+							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $caching_link }'; return false;">
+								<a href="{ $caching_link }">{ $caching_link_title }</a>
+							</td>
+							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $optimizer_link }'; return false;">
+								<a href="{ $optimizer_link }">{ $optimizer_link_title }</a>
+							</td>
+						</tr>
+						<tr>
+							<td class="row2" colspan="2" style="padding: 4px;"></th>
+						</tr>
+						<tr>
+							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $purge_cache_link }'; return false;">
+								<a href="{ $purge_cache_link }">{ $purge_cache_link_title }</a>
+							</td>
+							<td align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $clean_cache_link }'; return false;">
+								<a href="{ $clean_cache_link }">{ $clean_cache_link_title }</a>
+							</td>
+						</tr>
+						<tr>
+							<td  colspan="2" align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'" onclick="location.href='{ $clear_cache_link }'; return false;">
+								<a href="{ $clear_cache_link }">{ $clear_cache_link_title }</a>
+							</td>
+						</tr>
+						<tr>
+							<td class="row2" colspan="2" style="padding: 4px;"></th>
+						</tr>
+						<tr>
+							<td  colspan="2" align="center" class="row1" onmouseover="this.className='row2'" onmouseout="this.className='row1'">
+<strong>Purge the cache</strong>
+<br/>
+Removed all scripts that are marked for deletetion. This will happen automaticly when shared memory is needed.
+<br/><br/>
+<strong>Clean the cache</strong><br/>
+Remove all expired scripts and data from shared memory and disk cache.
+<br/><br/>
+<strong>Clear the cache</strong>
+<br/>
+Remove all unused scripts and data from shared memory and disk cache, this means all data that isn't used in the current requests.
+<br/><br/>
+optimizer which may speed up code execution
+
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+		</tr>
+    </tbody>
+</table>
+<!-- ENDIF -->
+
+<!-- IF !empty({ $scripts_array }) -->
+
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+			<th colspan="5" align="center"><b>Last 5 Current Cached Files</b></td>
+		</tr>
+		<tr>
+			<td colspan="5" class="row2" style="padding: 4px;"></th>
+		</tr>
+		<tr>
+			<th align="center"><b>Filename</b></td>
+			<th align="center"><b>Time</b></td>
+			<th align="center"><b>File Size</b></td>
+			<th align="center"><b>Reloads</b></td>
+			<th align="center"><b>Hits</b></td>
+		</tr>
+		<!-- LOOP $scripts_array -->
+		<tr>
+			<td class="row1">
+				{ $scripts_array:file }
+			</td>
+			<td align="center" class="row1">
+				{ $scripts_array:time }
+			</td>
+			<td align="center" class="row1">
+				{ $scripts_array:size }
+			</td>
+			<td align="center" class="row1">
+				{ $scripts_array:reloads }
+			</td>
+			<td align="center" class="row1">
+				{ $scripts_array:hits }
+			</td>
+		</tr>
+		<!-- ENDLOOP $scripts_array-->
+		<tr>
+			<td colspan="5" class="row2" align="center" style="padding: 4px;">
+			<!-- IF { $scripts_more } && isset({ $link_scripts }) -->
+				<a href="{ $link_scripts }">View More</a>
+			<!-- ELSE -->
+				{ $scripts_pagination }
+			<!-- ENDIF -->
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!-- ENDIF -->
+
+<br />
+<!-- IF !empty({ $removed_scripts_array }) -->
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+			<th colspan="5" align="center"><b>Last 5 Removed Cached Files</b></td>
+		</tr>
+		<tr>
+			<td colspan="5" class="row2" style="padding: 4px;"></th>
+		</tr>
+		<tr>
+			<th align="center"><b>Filename</b></td>
+			<th align="center"><b>Time</b></td>
+			<th align="center"><b>File Size</b></td>
+			<th align="center"><b>Reloads</b></td>
+			<th align="center"><b>Hits</b></td>
+		</tr>
+		<!-- LOOP $removed_scripts_array -->
+		<tr>
+			<td class="row1">
+				{ $removed_scripts_array:file }
+			</td>
+			<td align="center" class="row1">
+				{ $removed_scripts_array:time }
+			</td>
+			<td align="center" class="row1">
+				{ $removed_scripts_array:size }
+			</td>
+			<td align="center" class="row1">
+				{ $removed_scripts_array:reloads }
+			</td>
+			<td align="center" class="row1">
+				{ $removed_scripts_array:hits }
+			</td>
+		</tr>
+		<!-- ENDLOOP $removed_scripts_array -->
+		<tr>
+			<td colspan="5" class="row2" align="center" style="padding: 4px;">
+			<!-- IF { $removed_scripts_more } && isset({ $link_removed_scripts })  -->
+				<a href="{ $link_removed_scripts }">View More</a>
+			<!-- ELSE -->
+				{ $removed_scripts_pagination }
+			<!-- ENDIF -->
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!-- ENDIF -->
+
+<br />
+
+<!-- IF !empty({ $keys_array }) -->
+<table class="tablebg" border="0" cellpadding="4" cellspacing="1" width="100%">
+	<tbody>
+		<tr>
+			<th colspan="5" align="center"><b>Last 5 Current Keys</b></td>
+		</tr>
+		<tr>
+			<td colspan="5" class="row2" style="padding: 4px;"></th>
+		</tr>
+		<tr>
+			<th align="center"><b>Name</b></td>
+			<th align="center"><b>Created</b></td>
+			<th align="center"><b>Size</b></td>
+			<th align="center"><b>Expires</b></td>
+		</tr>
+		<!-- LOOP $keys_array -->
+		<tr>
+			<td class="row1">
+				{ $keys_array:name }
+			</td>
+			<td align="center" class="row1">
+				{ $keys_array:created }
+			</td>
+			<td align="center" class="row1">
+				{ $keys_array:size }
+			</td>
+			<td align="center" class="row1">
+				{ $keys_array:expire_time }
+			</td>
+		</tr>
+		<!-- ENDLOOP $keys_array -->
+		<tr>
+			<td colspan="5" class="row2" align="center" style="padding: 4px;">
+				<!-- IF { $keys_more } && isset({ $link_keys })  -->
+					<a href="{ $link_keys }">View More</a>
+			<!-- ELSE -->
+				{ $link_pagination }
+			<!-- ENDIF -->
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!-- ENDIF -->
+
+{ $THEME_TABLE_CLOSE }
+
+<!-- DISPLAY_FOOTER -->

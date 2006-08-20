@@ -533,6 +533,32 @@ function generate_link($link = false, $link_options = false)
     return ($options['full']) ? generate_base_url().$link : $link;
 }
 
+function generate_size($value, $array = false)
+{
+	global $_CLASS;
+
+	if ($value >= 1048576)
+	{
+		$return = array('size' => round((round($value / 1048576 * 100) / 100), 2), 'size_name' => $_CLASS['core_user']->lang['MB']);
+	}
+	elseif ($value >= 1024)
+	{
+		$return = array('size' => round((round($value / 1024 * 100) / 100), 2), 'size_name' => $_CLASS['core_user']->lang['KB']);
+	}
+	else
+	{
+		$return = array('size' => round($value, 2), 'size_name' => $_CLASS['core_user']->lang['BYTES']);
+	}
+	
+	if (!$array)
+	{
+		$return['size'] = number_format($return['size'], 2);
+		return implode(' ', $return);
+	}
+
+	return $return;
+}
+
 function generate_hidden_fields($fields)
 {
 	$hidden_fields = '';

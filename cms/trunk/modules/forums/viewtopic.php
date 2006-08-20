@@ -194,6 +194,8 @@ if ($topic_data['forum_password'])
 	login_forum_box($topic_data);
 }
 
+require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
+
 // Are we watching this topic?
 if (!isset($topic_data['notify_status']))
 {
@@ -259,8 +261,6 @@ if (($topic_data['topic_type'] == POST_STICKY || $topic_data['topic_type'] == PO
 	$topic_data['topic_type'] = POST_NORMAL;
 	$topic_data['topic_time_limit'] = 0;
 }
-
-require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
 
 $_CLASS['core_user']->user_setup();
 $_CLASS['core_user']->add_lang('viewtopic');
@@ -511,7 +511,7 @@ if (!empty($topic_data['poll_start']))
 
 	if ($poll_info[0]['bbcode_bitfield'])
 	{
-		require_once(SITE_FILE_ROOT.'includes/forums/bbcode.php');
+		require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
 		$poll_bbcode = new bbcode();
 	}
 	else

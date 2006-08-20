@@ -29,6 +29,8 @@ class cache_eaccelerator extends cache
 		{
 			// Error here
 		}
+
+		eaccelerator_gc();
 	}
 
 	function load($name)
@@ -46,12 +48,15 @@ class cache_eaccelerator extends cache
 	function put($name, $data, $ttl = 604800)
 	{
 		$ttl = ((int) $ttl) ? (int) $ttl : 604800;
+		$expires = gmtime() + $ttl;
 
-		if (eaccelerator_lock($this->key.$name))
+		eaccelerator_put($this->key.$name, serialize($data), $expires);
+		
+		/*if (eaccelerator_lock($this->key.$name))
 		{
-			eaccelerator_put($this->key.$name, serialize($data), $ttl);
+			eaccelerator_put($this->key.$name, serialize($data), $expires);
 			eaccelerator_unlock($this->key.$name);
-		}
+		}*/
 
 		$this->vars[$name] = $data;
 	}
@@ -65,6 +70,27 @@ class cache_eaccelerator extends cache
 	{
 		eaccelerator_rm($this->key.$name);
 		$this->remove($name);
+	}
+
+	function destroy_all()
+	{
+		if (!function_exists('eaccelerator_list_keys'))
+		{
+			return;
+		}
+
+		$key_list = eaccelerator_list_keys();
+
+		foreach ($key_list as $key)
+		{
+			if (strpos($key['name'], $this->key) === 0)
+			{
+				$name = substr($key['name'], strlen($this->key));
+
+				eaccelerator_rm($key['name']);
+				$this->remove($name);
+			}
+		}
 	}
 }
 

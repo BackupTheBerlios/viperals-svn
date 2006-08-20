@@ -531,6 +531,14 @@ class core_template
 
 				Switch ($vars[$loop])
 				{
+					case 'LOOP_START':
+						$output = "(\$this->_loop['$loop_name']['index'] === 0)";
+					break;
+
+					case 'LOOP_END':
+						$output = "(\$this->_loop['$loop_name']['index'] === \$this->_loop['$loop_name']['count'])";
+					break;
+
 					case 'LOOP_INDEX':
 						$output = "\$this->_loop['$loop_name']['index']";
 					break;

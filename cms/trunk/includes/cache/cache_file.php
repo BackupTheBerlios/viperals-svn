@@ -121,7 +121,7 @@ class cache_file extends cache
 
 		while ($file = readdir($handle))
 		{
-			if (substr($file, 0, 6) == 'cache_')
+			if (strpos($file, 'cache_') === 0)
 			{
 				unlink($this->cache_dir . $file);
 			} 

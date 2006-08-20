@@ -229,7 +229,7 @@ else
 	$s_watching_forum['link'] = $s_watching_forum['title'] = '';
 }
 
-gen_forum_auth_level('forum', $forum_id);
+gen_forum_auth_level('forum', $forum_id, $forum_data['forum_status']);
 
 // Topic ordering options
 $limit_days = array(0 => $_CLASS['core_user']->lang['ALL_TOPICS'], 1 => $_CLASS['core_user']->lang['1_DAY'], 7 => $_CLASS['core_user']->lang['7_DAYS'], 14 => $_CLASS['core_user']->lang['2_WEEKS'], 30 => $_CLASS['core_user']->lang['1_MONTH'], 90 => $_CLASS['core_user']->lang['3_MONTHS'], 180 => $_CLASS['core_user']->lang['6_MONTHS'], 364 => $_CLASS['core_user']->lang['1_YEAR']);
@@ -521,7 +521,10 @@ if (!empty($topic_list))
 
 		// Get folder img, topic status/type related informations
 		$folder_img = $folder_alt = $topic_type = '';
-		topic_status($row, $replies, $mark_time, $unread_topic, $folder_img, $folder_alt, $topic_type);
+	
+		$unread_topic = ($mark_time < $row['topic_last_post_time']);
+
+		topic_status($row, $replies, $unread_topic, $folder_img, $folder_alt, $topic_type);
 
 		$topic_unapproved = (!$row['topic_approved'] && $_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? true : false;
 		$posts_unapproved = ($row['topic_approved'] && $row['topic_replies'] < $row['topic_replies_real'] && $_CLASS['forums_auth']->acl_get('m_approve', $forum_id)) ? true : false;

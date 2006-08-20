@@ -107,7 +107,7 @@ switch ($mode)
 	break;
 
 	case 'smilies':
-		require_once(SITE_FILE_ROOT.'includes/forums/functions_posting.php');
+		require_once SITE_FILE_ROOT.'includes/forums/functions_posting.php';
 
 		generate_smilies('window', $forum_id);
 
@@ -132,6 +132,7 @@ if (!$post_data)
 require_once SITE_FILE_ROOT.'includes/forums/message_parser.php';
 require_once SITE_FILE_ROOT.'includes/forums/functions_admin.php';
 require_once SITE_FILE_ROOT.'includes/forums/functions_posting.php';
+require_once SITE_FILE_ROOT.'includes/forums/functions_display.php';
 
 // Use post_row values in favor of submitted ones...
 $forum_id	= (!empty($post_data['forum_id'])) ? (int) $post_data['forum_id'] : (int) $forum_id;

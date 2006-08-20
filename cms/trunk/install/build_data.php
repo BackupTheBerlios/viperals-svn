@@ -130,6 +130,7 @@ $_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_MODULES_TABLE  ." (module_n
 $_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_MODULES_TABLE  ." (module_name, module_status, module_type) VALUES ('users', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_MODULES_TABLE  ." (module_name, module_status, module_type) VALUES ('groups', 2, 0)");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_MODULES_TABLE  ." (module_name, module_status, module_type) VALUES ('forums', 2, 0)");
+$_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_MODULES_TABLE  ." (module_name, module_status, module_type) VALUES ('eaccelerator', 2, 0)");
 
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONTROL_PANEL_MODULES_TABLE  ." (module_name, module_status, module_subs) VALUES ('main', 2, 'front\r\nsubscribed\r\nbookmarks\r\ndrafts')");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONTROL_PANEL_MODULES_TABLE  ." (module_name, module_status, module_subs) VALUES ('pm', 2, 'view_messages\r\ncompose\r\nunread\r\ndrafts\r\noptions')");
