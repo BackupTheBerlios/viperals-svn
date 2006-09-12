@@ -918,8 +918,8 @@ if ($submit || $preview || $refresh)
 		{
 			// Lock/Unlock Topic
 			$change_topic_status = $post_data['topic_status'];
-			$perm_lock_unlock = ($_CLASS['forums_auth']->acl_get('m_lock', $forum_id) || ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_poster));
-
+			$perm_lock_unlock = ($_CLASS['forums_auth']->acl_get('m_lock', $forum_id) || ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && !empty($post_data['topic_poster']) && $_CLASS['core_user']->data['user_id'] == $post_data['topic_poster'] && $post_data['topic_status'] == ITEM_UNLOCKED)) ? true : false;
+		
 			if ($post_data['topic_status'] == ITEM_LOCKED && !$topic_lock && $perm_lock_unlock)
 			{
 				$change_topic_status = ITEM_UNLOCKED;
@@ -939,7 +939,7 @@ if ($submit || $preview || $refresh)
 						AND topic_moved_id = 0";
 				$_CLASS['core_db']->query($sql);
 			
-				$user_lock = ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_poster) ? 'USER_' : '';
+				$user_lock = ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && !empty($post_data['topic_poster']) && $_CLASS['core_user']->data['user_id'] == $post_data['topic_poster']) ? 'USER_' : '';
 
 				//add_log('mod', $forum_id, $topic_id, 'LOG_' . $user_lock . (($change_topic_status == ITEM_LOCKED) ? 'LOCK' : 'UNLOCK'), $post_data['topic_title']);
 			}
@@ -1237,7 +1237,7 @@ $s_hidden_fields = ($mode == 'reply' || $mode == 'quote') ? '<input type="hidden
 $s_hidden_fields .= '<input type="hidden" name="lastclick" value="' . $current_time . '" />';
 $s_hidden_fields .= ($draft_id || isset($_REQUEST['draft_loaded'])) ? '<input type="hidden" name="draft_loaded" value="' . request_var('draft_loaded', $draft_id) . '" />' : '';
 
-$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_attachments'] || !$_CLASS['forums_auth']->acl_gets(array('f_attach', 'u_attach'), $forum_id)) ? '' : ' enctype="multipart/form-data"';
+$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || @ini_get('file_uploads') == '0' || !$config['allow_attachments'] || !$_CLASS['forums_auth']->acl_get('u_attach') || !$_CLASS['forums_auth']->acl_get('f_attach', $forum_id)) ? '' : ' enctype="multipart/form-data"';
 
 // Start assigning vars for main posting page ...
 $_CLASS['core_template']->assign_array(array(
@@ -1281,7 +1281,7 @@ $_CLASS['core_template']->assign_array(array(
 	'S_SIGNATURE_CHECKED' 	=> ($sig_checked) ? ' checked="checked"' : '',
 	'S_NOTIFY_ALLOWED'		=> ($_CLASS['core_user']->is_user),
 	'S_NOTIFY_CHECKED' 		=> ($notify_checked) ? ' checked="checked"' : '',
-	'S_LOCK_TOPIC_ALLOWED'	=> (($mode == 'edit' || $mode == 'reply' || $mode == 'quote') && ($_CLASS['forums_auth']->acl_get('m_lock', $forum_id) || ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_poster))),
+	'S_LOCK_TOPIC_ALLOWED'	=> (($mode == 'edit' || $mode == 'reply' || $mode == 'quote') && ($_CLASS['forums_auth']->acl_get('m_lock', $forum_id) || ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && !empty($post_data['topic_poster']) && $_CLASS['core_user']->data['user_id'] == $post_data['topic_poster'] && $post_data['topic_status'] == ITEM_UNLOCKED))) ? true : false,
 	'S_LOCK_TOPIC_CHECKED'	=> ($lock_topic_checked) ? ' checked="checked"' : '',
 	'S_LOCK_POST_ALLOWED'	=> ($mode == 'edit' && $_CLASS['forums_auth']->acl_get('m_edit', $forum_id)),
 	'S_LOCK_POST_CHECKED'	=> ($lock_post_checked) ? ' checked="checked"' : '',

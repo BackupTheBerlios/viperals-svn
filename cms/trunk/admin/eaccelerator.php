@@ -4,7 +4,7 @@
 ||  Viperal CMS © :												||
 ||**************************************************************||
 ||																||
-||	Copyright (C) 2004, 2005, 2006								||
+||	Copyright (C) 2004, 2005									||
 ||  By Ryan Marshall ( Viperal )								||
 ||																||
 ||  Email: viperal1@gmail.com									||

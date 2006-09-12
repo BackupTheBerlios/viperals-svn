@@ -63,11 +63,11 @@ $legend = implode(', ', $legend);
 $birthday_list = '';
 if ($config['load_birthdays'])
 {
-	$now = explode(':', gmdate('d:m'));
+	$now = getdate(gmtime());
 
 	$sql = 'SELECT user_id, username, user_colour, user_birthday 
 		FROM ' . CORE_USERS_TABLE . " 
-		WHERE user_birthday LIKE '" . $_CLASS['core_db']->escape("{$now[0]}-{$now[1]}-") . "%'
+		WHERE user_birthday LIKE '" . $_CLASS['core_db']->escape(sprintf('%2d-%2d-', $now['mday'], $now['mon'])) . "%'
 			AND user_type = ".USER_NORMAL;
 	$result = $_CLASS['core_db']->query($sql);
 

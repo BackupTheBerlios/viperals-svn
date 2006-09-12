@@ -59,7 +59,7 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 
 	// Replace naughty words such as farty pants
 	$message_row['message_subject'] = censor_text($message_row['message_subject']);
-	$message_row['message_text'] = censor_text($message_row['message_text']);
+	$message_row['message_text'] = str_replace("\n", '<br />', censor_text($message_row['message_text']));
 
 	// If the board has HTML off but the message has HTML on then we process it, else leave it alone
 	if ($message_row['enable_html'] && !$config['auth_html_pm'])
@@ -74,7 +74,7 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 	}
 
 	// Always process smilies after parsing bbcodes
-	$message_row['message_text'] = str_replace("\n", '<br />', smiley_text($message_row['message_text']));
+	$message_row['message_text'] = smiley_text($message_row['message_text']);
 
 	// Editing information
 	if ($message_row['message_edit_count'] && $config['display_last_edited'])
@@ -163,6 +163,9 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 	// End signature parsing, only if needed
 	if ($signature)
 	{
+		$signature = censor_text($signature);
+		$signature = str_replace("\n", '<br />', censor_text($signature));
+
 		if ($user_info['user_sig_bbcode_bitfield'])
 		{
 			if ($bbcode === false)
@@ -175,7 +178,6 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 		}
 
 		$signature = smiley_text($signature);
-		$signature = str_replace("\n", '<br />', censor_text($signature));
 	}
 
 	$url = 'Control_Panel&amp;i=pm';
@@ -212,16 +214,17 @@ function view_message($parent_class, $folder_id, $msg_id, $folder, &$message_row
 		'U_REPORT'			=> (false) ? generate_link('Forums&amp;file=report&amp;pm=' . $message_row['msg_id']) : '',
 		'U_INFO'			=> ($_CLASS['forums_auth']->acl_get('m_') && ($message_row['message_reported'] || $message_row['pm_forwarded'])) ? generate_link('Forums&amp;file=mcp&amp;mode=pm_details&amp;p=' . $message_row['msg_id']) : '',
 		'U_DELETE' 			=> generate_link("$url&amp;mode=compose&amp;action=delete&amp;f=$folder_id&amp;p=" . $message_row['msg_id']),
-		'U_AUTHOR_PROFILE' 	=> generate_link('members_list&amp;mode=viewprofile&amp;u=' . $author_id),
+		'U_AUTHOR_PROFILE' 	=> ($author_id != ANONYMOUS) ? generate_link('members_list&amp;mode=viewprofile&amp;u=' . $author_id) : '',
 		'U_EMAIL' 			=> $user_info['email'],
 		'U_QUOTE'			=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
-		'U_EDIT' 			=> (($message_row['message_time'] > time() - $config['pm_edit_time'] || !$config['pm_edit_time']) && $folder_id == PRIVMSGS_OUTBOX) ? generate_link("$url&amp;mode=compose&amp;action=edit&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '', 
-		'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
+		'U_EDIT' 			=> (($message_row['message_time'] > $_CLASS['core_user']->time - $config['pm_edit_time'] || !$config['pm_edit_time']) && $folder_id == PRIVMSGS_OUTBOX) ? generate_link("$url&amp;mode=compose&amp;action=edit&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '', 
+		'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id'] && $author_id != ANONYMOUS) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $message_row['msg_id']) : '',
 		'U_PREVIOUS_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=previous"),
 		'U_NEXT_PM'			=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=next"),
 
 		'S_MESSAGE_REPORTED'=> ($message_row['message_reported'] && $_CLASS['forums_auth']->acl_get('m_')) ? true : false,
 		'S_DISPLAY_NOTICE'	=> $display_notice && $message_row['message_attachment'],
+		'S_AUTHOR_DELETED'	=> ($author_id == ANONYMOUS) ? true : false,
 
 		'U_PRINT_PM'		=> generate_link("$url&amp;f=$folder_id&amp;p=" . $message_row['msg_id'] . "&amp;view=print"),
 		'U_EMAIL_PM'		=> ($_CORE_CONFIG['email']['email_enable']) ? 'Email' : '',
@@ -325,15 +328,17 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 		$subject	= $row['message_subject'];
 		$message	= $row['message_text'];
 
+		$subject = censor_text($subject);
+		$message = censor_text($message);
+
+		$message = str_replace("\n", '<br />', $message);
+
 		if ($row['bbcode_bitfield'])
 		{
 			$bbcode->bbcode_second_pass($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
 		}
 
 		$message = smiley_text($message, !$row['enable_smilies']);
-
-		$subject = censor_text($subject);
-		$message = censor_text($message);
 
 		if ($id == $msg_id)
 		{
@@ -346,16 +351,16 @@ function message_history($msg_id, $user_id, &$message_row, $folder)
 			'AUTHOR_NAME' 		=> $author,
 			'SUBJECT'	 		=> $subject,
 			'SENT_DATE' 		=> $_CLASS['core_user']->format_date($row['message_time']),
-			'MESSAGE' 			=> str_replace("\n", '<br />', $message), 
+			'MESSAGE' 			=> $message, 
 			'FOLDER'			=> implode(', ', $row['folder']),
 
 			'S_CURRENT_MSG'		=> ($row['msg_id'] == $msg_id),
 
 			'U_MSG_ID'			=> $row['msg_id'],
 			'U_VIEW_MESSAGE'	=> generate_link("$url&amp;f=$folder_id&amp;p=" . $row['msg_id']),
-			'U_AUTHOR_PROFILE' 	=> generate_link('members_list&amp;mode=viewprofile&amp;u='.$author_id),
+			'U_AUTHOR_PROFILE' 	=> ($author_id != ANONYMOUS) ? generate_link('members_list&amp;mode=viewprofile&amp;u='.$author_id) : '',
 			'U_QUOTE'			=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=quote&amp;f=" . $folder_id . "&amp;p=" . $row['msg_id']) : '',
-			'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id']) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $row['msg_id']) : '')
+			'U_POST_REPLY_PM' 	=> ($author_id != $_CLASS['core_user']->data['user_id'] && $author_id != ANONYMOUS) ? generate_link("$url&amp;mode=compose&amp;action=reply&amp;f=$folder_id&amp;p=" . $row['msg_id']) : '')
 		);
 		unset($rowset[$id]);
 		$prev_id = $id;

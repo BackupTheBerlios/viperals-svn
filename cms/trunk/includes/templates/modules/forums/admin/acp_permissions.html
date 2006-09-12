@@ -1,0 +1,500 @@
+<!-- INCLUDE modules/forums/admin/overall_header.html -->
+
+<a name="maincontent"></a>
+
+<!-- IF { $S_INTRO } -->
+	
+	<h1>{ $L_ACP_PERMISSIONS }</h1>
+
+	{ $L_ACP_PERMISSIONS_EXPLAIN }
+
+<!-- ENDIF -->
+
+<!-- IF { $S_SELECT_VICTIM } -->
+
+	<h1>{ $L_TITLE }</h1>
+
+	<p>{ $L_EXPLAIN }</p>
+	
+	<!-- IF { $S_FORUM_NAMES } -->
+		<p><b>{ $L_FORUMS }:</b> { $FORUM_NAMES }</p>
+	<!-- ENDIF -->
+
+	<!-- IF { $S_SELECT_FORUM } -->
+
+		<form id="select_victim" method="post" action="{ $U_ACTION }">
+
+		<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+			<tr>
+				<th colspan="2">
+					{ $L_LOOK_UP_FORUM }
+				</th>
+			</tr>
+			<!-- IF { $S_FORUM_MULTIPLE } -->
+			<tr>
+				<td  class="row1" colspan="2">
+					{ $L_LOOK_UP_FORUMS_EXPLAIN }
+				</td>
+			</tr>
+			<!-- ENDIF -->
+			<tr>
+				<td width="40%" class="row1">
+					{ $L_LOOK_UP_FORUM }:
+				</td>
+				<td class="row2">
+					<select id="forum" name="forum_id[]"<!-- IF { $S_FORUM_MULTIPLE } --> multiple="multiple"<!-- ENDIF --> size="10">{ $S_FORUM_OPTIONS }</select>
+					<!-- IF { $S_FORUM_ALL } -->
+						<br/><input type="checkbox" class="radio" name="all_forums" value="1" />&nbsp; { $L_ALL_FORUMS }
+					<!-- ENDIF -->
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="row1">
+					{ $S_HIDDEN_FIELDS }
+					<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+				</td>
+			</tr>
+		</table>
+
+		</form>
+
+		<!-- IF { $S_FORUM_MULTIPLE } -->
+
+			<form id="select_subforum" method="post" action="{ $U_ACTION }">
+	
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_LOOK_UP_FORUM }
+					</th>
+				</tr>
+				<tr>
+					<td class="row1" colspan="2">
+						{ $L_SELECT_FORUM_SUBFORUM_EXPLAIN }
+					</td>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						{ $L_LOOK_UP_FORUM }:
+					</td>
+					<td class="row2">
+						<select id="sforum" name="subforum_id">{ $S_SUBFORUM_OPTIONS }</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+					</td>
+				</tr>
+			</table>
+	
+			</form>
+				
+			<form id="select_single_forum" method="post" action="{ $U_ACTION }">
+	
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_LOOK_UP_FORUM }
+					</th>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						{ $L_LOOK_UP_FORUM }:
+					</td>
+					<td class="row2">
+						<select id="forum" name="forum_id[]">{ $S_FORUM_OPTIONS }</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+					</td>
+				</tr>
+			</table>
+	
+			</form>
+
+		<!-- ENDIF -->
+
+	<!-- ELSEIF { $S_SELECT_USER } && { $S_CAN_SELECT_USER } -->
+
+		<form id="select_victim" method="post" action="{ $U_ACTION }">
+
+		<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+			<tr>
+				<th colspan="2">
+					{ $L_LOOK_UP_USER }
+				</th>
+			</tr>
+			<tr>
+				<td width="40%" class="row1">
+					{ $L_FIND_USERNAME }:
+				</td>
+				<td class="row2">
+					<input class="medium" type="text" id="username" name="username[]" />
+					[ <a href="#" onclick="window.open('{ $U_FIND_USERNAME }', '_phpbbsearch', 'height=500, resizable=yes, scrollbars=yes, width=740'); return false;">{ $L_FIND_USERNAME }</a> ]
+					<br/><input type="checkbox" class="radio" id="anonymous" name="user_id[]" value="{ $ANONYMOUS_USER_ID }" /> &nbsp;{ $L_SELECT_ANONYMOUS }
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="row1">
+					{ $S_HIDDEN_FIELDS }
+					<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+				</td>
+			</tr>
+		</table>
+
+		</form>
+
+	<!-- ELSEIF { $S_SELECT_GROUP } && { $S_CAN_SELECT_GROUP } -->
+
+		<form id="select_victim" method="post" action="{ $U_ACTION }">
+
+		<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+			<tr>
+				<th colspan="2">
+					{ $L_LOOK_UP_GROUP }
+				</th>
+			</tr>
+			<tr>
+				<td width="40%" class="row1">
+					{ $L_LOOK_UP_GROUP}:
+				</td>
+				<td class="row2">
+					<select name="group_id[]" id="group">{ $S_GROUP_OPTIONS }</select>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="row1">
+					{ $S_HIDDEN_FIELDS }
+					<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+				</td>
+			</tr>
+		</table>
+
+		</form>
+
+	<!-- ELSEIF { $S_SELECT_USERGROUP } -->
+
+		<div style="float: left; width: 48%;">
+		
+		<!-- IF { $S_CAN_SELECT_USER } -->
+
+			<h1>{ $L_USERS }</h1>
+
+			<form id="users" method="post" action="{ $U_ACTION }">
+
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_MANAGE_USERS }
+					</th>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						<select style="width: 100%;" name="user_id[]" multiple="multiple" size="5">{ $S_DEFINED_USER_OPTIONS }</select>
+						<br/><input type="checkbox" class="radio" name="all_users" value="1" />&nbsp; { $L_ALL_USERS }
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" class="button" name="action[delete]" value="{ $L_REMOVE_PERMISSIONS }" style="width: 46% !important;" /> &nbsp; <input class="button" type="submit" name="submit_edit_options" value="{ $L_EDIT_PERMISSIONS }" style="width: 46% !important;" />
+					</td>
+				</tr>
+			</table>
+
+			</form>
+
+			<form id="add_user" method="post" action="{ $U_ACTION }">
+			
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_ADD_USERS }
+					</th>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $L_USERNAMES_EXPLAIN }
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						<textarea id="username" name="usernames" rows="5" cols="5" style="width: 98%; height: 60px;"></textarea>
+						<div style="float: right;">[ <a href="#" onclick="window.open('{ $U_FIND_USERNAME }', '_phpbbsearch', 'height=500, resizable=yes, scrollbars=yes, width=740'); return false;">{ $L_FIND_USERNAME }</a> ]</div><input type="checkbox" class="radio" id="anonymous" name="user_id[]" value="{ $ANONYMOUS_USER_ID }" /> &nbsp;{ $L_SELECT_ANONYMOUS }
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input class="button" type="submit" name="submit_add_options" value="{ $L_ADD_PERMISSIONS }" />
+					</td>
+				</tr>
+			</table>
+			
+			</form>
+
+		<!-- ENDIF -->
+
+		</div>
+
+		<div style="float: right; width: 48%">
+			
+		<!-- IF { $S_CAN_SELECT_GROUP } -->
+
+			<h1>{ $L_USERGROUPS }</h1>
+
+			<form id="groups" method="post" action="{ $U_ACTION }">
+
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th>
+						{ $L_MANAGE_GROUPS }
+					</th>
+				</tr>
+				<tr>
+					<td class="row1">
+						<select style="width: 100%;" name="group_id[]" multiple="multiple" size="5">{ $S_DEFINED_GROUP_OPTIONS }</select>
+						<input type="checkbox" class="radio" name="all_groups" value="1" />&nbsp; { $L_ALL_GROUPS }
+					</td>
+				</tr>
+				<tr>
+					<td class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input class="button" type="submit" name="action[delete]" value="{ $L_REMOVE_PERMISSIONS }" style="width: 46% !important;" /> &nbsp; <input class="button" type="submit" name="submit_edit_options" value="{ $L_EDIT_PERMISSIONS }" style="width: 46% !important;" />
+					</td>
+				</tr>
+			</table>
+			
+			</form>
+
+			<form id="add_groups" method="post" action="{ $U_ACTION }">
+			
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th>
+						{ $L_ADD_GROUPS }
+					</th>
+				</tr>
+				<tr>
+					<td class="row2">
+						<select name="group_id[]" style="width: 100%; height: 107px;" multiple="multiple">{ $S_ADD_GROUP_OPTIONS }</select>
+					</td>
+				</tr>
+				<tr>
+					<td class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" class="button" name="submit_add_options" value="{ $L_ADD_PERMISSIONS }" />
+					</td>
+				</tr>
+			</table>
+
+			</form>
+
+		<!-- ENDIF -->
+
+		</div>
+
+	<!-- ELSEIF { $S_SELECT_USERGROUP_VIEW } -->
+
+		<div style="float: left; width: 48%;">
+
+			<h1>{ $L_USERS }</h1>
+
+			<form id="users" method="post" action="{ $U_ACTION }">
+
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_MANAGE_USERS }
+					</th>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						<select style="width: 100%;" name="user_id[]" multiple="multiple" size="5">{ $S_DEFINED_USER_OPTIONS }</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+					</td>
+				</tr>
+			</table>
+
+			</form>
+
+			<form id="add_user" method="post" action="{ $U_ACTION }">
+
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_LOOK_UP_USER }
+					</th>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						{ $L_FIND_USERNAME }:
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						<input type="text" id="username" name="username[]"/>
+						[ <a href="#" onclick="window.open('{ $U_FIND_USERNAME }', '_phpbbsearch', 'height=500, resizable=yes, scrollbars=yes, width=740'); return false;">{ $L_FIND_USERNAME }</a> ]
+						<input type="checkbox" class="radio" id="anonymous" name="user_id[]" value="{ $ANONYMOUS_USER_ID }" /> &nbsp;{ $L_SELECT_ANONYMOUS }
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+					</td>
+				</tr>
+			</table>
+
+			</form>
+
+		</div>
+
+		<div style="float: right; width: 48%">
+			
+			<h1>{ $L_USERGROUPS }</h1>
+
+			<form id="groups" method="post" action="{ $U_ACTION }">
+
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_MANAGE_GROUPS }
+					</th>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						<select style="width: 100%;" name="group_id[]" multiple="multiple" size="5">{ $S_DEFINED_GROUP_OPTIONS }</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+					</td>
+				</tr>
+			</table>
+
+			</form>
+
+			<form id="group" method="post" action="{ $U_ACTION }">
+
+			<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+				<tr>
+					<th colspan="2">
+						{ $L_LOOK_UP_GROUP }
+					</th>
+				</tr>
+				<tr>
+					<td width="40%" class="row1">
+						{ $L_LOOK_UP_GROUP }:
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						<select name="group_id[]" id="group">{ $S_ADD_GROUP_OPTIONS }</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="row1">
+						{ $S_HIDDEN_FIELDS }
+						<input type="submit" name="submit" value="{ $L_SUBMIT }" class="button" />
+					</td>
+				</tr>
+			</table>
+
+			</form>
+
+		</div>
+
+	<!-- ENDIF -->
+
+<!-- ENDIF -->
+
+<!-- IF { $S_VIEWING_PERMISSIONS } -->
+
+	<h1>{ $L_ACL_VIEW }</h1>
+
+	<p>{ $L_ACL_VIEW_EXPLAIN }</p>
+
+	<fieldset class="quick">
+		<b>&raquo; { $L_PERMISSION_TYPE }</b>
+	</fieldset>
+
+	<!-- INCLUDE modules/forums/admin/permission_mask.html -->
+
+<!-- ENDIF -->
+
+<!-- IF { $S_SETTING_PERMISSIONS } -->
+
+	<h1>{ $L_ACL_SET }</h1>
+
+	<p>{ $L_ACL_SET_EXPLAIN }</p>
+
+	<br />
+
+	<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+		<tr>
+			<td class="row1">
+		<b>&raquo; { $L_PERMISSION_TYPE }</b>
+		</td>
+	</tr>
+</table>
+	<!-- IF { $S_PERMISSION_DROPDOWN } -->
+		<form id="pselect" method="post" action="{ $U_ACTION }">
+	
+		<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+			<tr>
+				<td class="row1">
+2		
+		</form>
+	<!-- ENDIF -->
+
+	<br /><br />
+
+	<!-- include tooltip file -->
+	<script type="text/javascript" src="javascript/forums/tooltip.js"></script>
+	<script type="text/javascript">
+	<!--
+		window.onload = function(){enable_tooltips_select('set_permissions', '{ $LA_ROLE_DESCRIPTION }', 'role')};
+	//-->
+	</script>
+
+	<form id="set_permissions" method="post" action="{ $U_ACTION }">
+
+	{ $S_HIDDEN_FIELDS }
+
+	<!-- INCLUDE modules/forums/admin/permission_mask.html -->
+
+	<br /><br />
+<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
+	<tr>
+		<td class="row1">
+		{ $L_PERMISSION_APPLIED_TO_ALL }<br />
+		<a href="javascript:marklist('set_permissions', 'inherit', true);">{ $L_MARK_ALL }</a> &bull; <a href="javascript:marklist('set_permissions', 'inherit', false);">{ $L_UNMARK_ALL }</a>
+		</td>
+	</tr>
+	<tr>
+		<td class="row1">
+			<input class="button" type="submit" name="action[apply_all_permissions]" value="{ $L_APPLY_ALL_PERMISSIONS }" />
+			<input class="button" type="reset" name="cancel" value="{ $L_RESET }" />
+		</td>
+	</tr>
+</table>
+	<br /><br />
+
+	</form>
+
+<!-- ENDIF -->
+
+<!-- INCLUDE modules/forums/admin/overall_footer.html -->

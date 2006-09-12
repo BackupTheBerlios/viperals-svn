@@ -34,7 +34,7 @@ $mode = get_variable('mode', 'GET', false);
 
 function check_type(&$type, $redirect = true)
 {
-	$appoved_type = array(0);
+	$appoved_type = array(PAGE_MODULE);
 	$type = (int) $type;
 	
 	if (!in_array($type, $appoved_type, true))
@@ -51,7 +51,8 @@ function check_type(&$type, $redirect = true)
 		
 if (isset($_REQUEST['mode']))
 {
-	if ($_REQUEST['mode'] === 'search') {
+	if ($_REQUEST['mode'] === 'search')
+	{
 		if (isset($_REQUEST['option']) && isset($_REQUEST['name']) && display_confirmation())
 		{
 			$name = urldecode($_REQUEST['name']);
@@ -62,12 +63,14 @@ if (isset($_REQUEST['mode']))
 					{
 						break;
 					}
-					$sql = 'INSERT INTO '.CORE_PAGES_TABLE.' ' . $_CLASS['core_db']->sql_build_array('INSERT', array(
+
+					$insert_array = array(
 						'page_name'		=> (string) $name,
 						'page_type'		=> PAGE_MODULE,
 						'page_status'	=> STATUS_PENDING,
-					));
-					$_CLASS['core_db']->query($sql);
+					);
+					$_CLASS['core_db']->sql_query_build('INSERT', $insert_array, CORE_PAGES_TABLE);
+					unset($insert_array, $name);
 				break;
 			}
 		}
@@ -113,6 +116,64 @@ if (isset($_REQUEST['mode']))
 				page_change($id);
 			break;
 
+			case 'edit':
+				$result = $_CLASS['core_db']->query('SELECT * FROM '. CORE_PAGES_TABLE ." WHERE page_id = $id AND page_type = ". PAGE_MODULE);
+				$module = $_CLASS['core_db']->fetch_row_assoc($result);
+				$_CLASS['core_db']->free_result($result);
+
+				if (!$module)
+				{
+					trigger_error('MODULE_NOT_FOUND');
+				}
+				
+				check_type($module['page_type']);
+				settype($module['page_status'], 'int');
+
+				$page_blocks_array = array(
+					array(
+						'value' => BLOCK_RIGHT,
+						'name' => $_CLASS['core_user']->get_lang('BLOCK_RIGHT'),
+						'checked' => ($module['page_blocks'] & (1 << BLOCK_RIGHT))
+					),
+					array(
+						'value' => BLOCK_TOP,
+						'name' => $_CLASS['core_user']->get_lang('BLOCK_TOP'),
+						'checked' => ($module['page_blocks'] & (1 << BLOCK_TOP))
+					),
+					array(
+						'value' => BLOCK_BOTTOM,
+						'name' => $_CLASS['core_user']->get_lang('BLOCK_BOTTOM'),
+						'checked' => ($module['page_blocks'] & (1 << BLOCK_BOTTOM))
+					),
+					array(
+						'value' => BLOCK_LEFT,
+						'name' => $_CLASS['core_user']->get_lang('BLOCK_LEFT'),
+						'checked' => ($module['page_blocks'] & (1 << BLOCK_LEFT))
+					),
+					array(
+						'value' => BLOCK_MESSAGE_TOP,
+						'name' => $_CLASS['core_user']->get_lang('BLOCK_MESSAGE_TOP'),
+						'checked' => ($module['page_blocks'] & (1 << BLOCK_MESSAGE_TOP))
+					),
+					array(
+						'value' => BLOCK_MESSAGE_BOTTOM,
+						'name' => $_CLASS['core_user']->get_lang('BLOCK_MESSAGE_BOTTOM'),
+						'checked' => ($module['page_blocks'] & (1 << BLOCK_MESSAGE_BOTTOM))
+					)
+				);
+				
+				$_CLASS['core_template']->assign_array(array(
+					'ADMIN_PAGE_ACTION'			=> generate_link('modules&amp;mode=edit', array('admin' => true)),
+					'ADMIN_PAGE_TITLE'			=> $module['page_title'],
+					'ADMIN_PAGE_NAME'			=> mb_convert_case(preg_replace('/_/', ' ', $module['page_name']), MB_CASE_TITLE),
+					'ADMIN_PAGE_BLOCKS_ARRAY'	=> $page_blocks_array,
+					'ADMIN_PAGE_STATUS'			=> $module['page_status'],
+					'ADMIN_PAGE_ERROR'			=> '',
+				));
+			
+				$_CLASS['core_display']->display(false, 'admin/modules/edit.html');
+			break;
+
 			case 'install':
 				$result = $_CLASS['core_db']->query('SELECT page_status, page_name, page_type FROM '.CORE_PAGES_TABLE." WHERE page_id = $id AND page_type = ". PAGE_MODULE);
 				$module = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -122,6 +183,8 @@ if (isset($_REQUEST['mode']))
 				{
 					trigger_error($module ? 'MODULE_ALREADY_INSTALLED' : 'MODULE_NOT_FOUND');
 				}
+
+				check_type($module['page_type']);
 
 				if (display_confirmation())
 				{
@@ -259,7 +322,7 @@ while ($module = $_CLASS['core_db']->fetch_row_assoc($result))
 
 	$_CLASS['core_template']->assign_vars_array('normal_modules', array(
 			'ACTIVE'		=> ($active),
-			'CHANGE'		=> ($active) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+			'CHANGE'		=> ($active) ? $_CLASS['core_user']->get_lang('DEACTIVATE') : $_CLASS['core_user']->get_lang('ACTIVATE'),
 			'ERROR'			=> '',
 			'INSTALLED'		=> $installed,
 			'TITLE'			=> ($module['page_title']) ? $module['page_title'] : mb_convert_case(preg_replace('/_/', ' ', $module['page_name']), MB_CASE_TITLE),

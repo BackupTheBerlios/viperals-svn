@@ -16,10 +16,41 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 }
 
 // Do we have any admin permissions at all?
-if (!$_CLASS['auth']->acl_get('a_'))
+if (!$_CLASS['forums_auth']->acl_get('a_'))
 {
 	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 }
+
+/*
+// Show restore permissions notice
+if ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm'))
+{
+	$this->tpl_name = 'acp_main';
+	$this->page_title = 'ACP_MAIN';
+
+	$sql = 'SELECT user_id, username, user_colour
+		FROM ' . USERS_TABLE . '
+		WHERE user_id = ' . $user->data['user_perm_from'];
+	$result = $db->sql_query($sql);
+	$user_row = $db->sql_fetchrow($result);
+	$db->sql_freeresult($result);
+
+	$perm_from = '<strong' . (($user_row['user_colour']) ? ' style="color: #' . $user_row['user_colour'] . '">' : '>');
+	$perm_from .= ($user_row['user_id'] != ANONYMOUS) ? '<a href="' . append_sid("{$phpbb_root_path}memberlist.$phpEx", 'mode=viewprofile&amp;u=' . $user_row['user_id']) . '">' : '';
+	$perm_from .= $user_row['username'];
+	$perm_from .= ($user_row['user_id'] != ANONYMOUS) ? '</a>' : '';
+	$perm_from .= '</strong>';
+
+	$template->assign_vars(array(
+		'S_RESTORE_PERMISSIONS'		=> true,
+		'U_RESTORE_PERMISSIONS'		=> append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm'),
+		'PERM_FROM'					=> $perm_from,
+		'L_PERMISSIONS_TRANSFERED_EXPLAIN'	=> sprintf($user->lang['PERMISSIONS_TRANSFERED_EXPLAIN'], $perm_from, append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm')),
+	));
+
+	return;
+}
+*/
 
 // Define some vars
 $action = request_var('action', '');
@@ -27,7 +58,7 @@ $action = request_var('action', '');
 switch ($action)
 {
 	case 'stats':
-		if (!$_CLASS['auth']->acl_get('a_board'))
+		if (!$_CLASS['forums_auth']->acl_get('a_board'))
 		{
 			trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 		}
@@ -70,7 +101,7 @@ switch ($action)
 	break;
 		
 	case 'user':
-		if (!$_CLASS['auth']->acl_get('a_defaults'))
+		if (!$_CLASS['forums_auth']->acl_get('a_defaults'))
 		{
 			trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
 		}

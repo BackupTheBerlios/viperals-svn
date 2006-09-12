@@ -24,11 +24,12 @@
 // -------------------------------------------------------------
 // Fix links "defined('IN_ADMIN')"
 // Simple version of jumpbox, just lists authed forums
-function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true, $return_array = false)
+
+function make_forum_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true, $only_acl_post = false, $return_array = false)
 {
 	global $_CLASS;
 
-	$acl = ($ignore_acl) ? '' : array('f_list', 'a_forum', 'a_forumadd', 'a_forumdel');
+	$acl = ($ignore_acl) ? '' : (($only_acl_post) ? 'f_post' : array('f_list', 'a_forum', 'a_forumadd', 'a_forumdel'));
 
 	// This query is identical to the jumpbox one
 	$sql = 'SELECT forum_id, parent_id, forum_name, forum_type, forum_status, left_id, right_id
@@ -1334,7 +1335,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = false,
 				{
 					if ($row['forum_' . $fieldname] != $row[$fieldname])
 					{
-						if (preg_match('#name$#', $fieldname))
+						if (preg_match('#(name|colour)$#', $fieldname))
 						{
 							$sql['forum_' . $fieldname] = (string) $row[$fieldname];
 						}
@@ -1542,7 +1543,7 @@ function sync($mode, $where_type = '', $where_ids = '', $resync_parents = false,
 
 				foreach ($fieldnames as $fieldname)
 				{
-					if ($row['topic_' . $fieldname] != $row[$fieldname])
+					if (isset($row[$fieldname]) && isset($row['topic_' . $fieldname]) && $row['topic_' . $fieldname] != $row[$fieldname])
 					{
 						$sql['topic_' . $fieldname] = $row[$fieldname];
 					}
@@ -2332,7 +2333,7 @@ function get_remote_file($host, $directory, $filename, &$errstr, &$errno, $port 
 				}
 				else if (strpos($line, '404 Not Found') !== false)
 				{
-					$errstr = $_CLASS['core_user']->lang['FILE_NOT_FOUND'];
+					$errstr = $_CLASS['core_user']->lang['FILE_NOT_FOUND'] . ': ' . $filename;
 					return false;
 				}
 			}

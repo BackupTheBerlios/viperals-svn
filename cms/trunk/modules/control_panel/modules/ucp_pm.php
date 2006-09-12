@@ -233,6 +233,17 @@ switch ($mode)
 		{
 			place_pm_into_folder($global_privmsgs_rules, get_variable('release', 'POST', 0));
 			$num_not_moved = $_CLASS['core_user']->data['user_new_privmsg'];
+
+			// Make sure num_not_moved is valid.
+			if ($num_not_moved < 0)
+			{
+				$sql = 'UPDATE ' . CORE_USERS_TABLE . '
+					SET user_new_privmsg = 0, user_unread_privmsg = 0
+					WHERE user_id = ' . $_CLASS['core_user']->data['user_id'];
+				$_CLASS['core_db']->query($sql);
+
+				$num_not_moved = $_CLASS['core_user']->data['user_new_privmsg'] = $_CLASS['core_user']->data['user_unread_privmsg'] = 0;
+			}
 		}
 
 		if (!$msg_id && $folder_id == PRIVMSGS_NO_BOX)

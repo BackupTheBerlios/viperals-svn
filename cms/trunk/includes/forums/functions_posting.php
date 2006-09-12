@@ -303,8 +303,10 @@ function upload_attachment($form_name, $forum_id, $local = false, $local_storage
 // Calculate the needed size for Thumbnail
 function get_img_size_format($width, $height)
 {
+	global $config;
+
 	// Maximum Width the Image can take
-	$max_width = 400;
+	$max_width = ($config['img_max_thumb_width']) ? $config['img_max_thumb_width'] : 400;
 
 	if ($width > $height)
 	{
@@ -408,7 +410,7 @@ function create_thumbnail($source, $destination, $mimetype)
 
 	if (file_exists($destination) && function_exists('passthru'))
 	{
-		passthru(escapeshellcmd($config['img_imagick']) . 'convert' . ((defined('PHP_OS') && preg_match('#^win#i', PHP_OS)) ? '.exe' : '') . ' -quality 85 -antialias -sample ' . $new_width . 'x' . $new_height . ' "' . str_replace('\\', '/', $source) . '" +profile "*" "' . str_replace('\\', '/', $destination) . '"');
+		@passthru(escapeshellcmd($config['img_imagick']) . 'convert' . ((defined('PHP_OS') && preg_match('#^win#i', PHP_OS)) ? '.exe' : '') . ' -quality 85 -antialias -sample ' . $new_width . 'x' . $new_height . ' "' . str_replace('\\', '/', $source) . '" +profile "*" "' . str_replace('\\', '/', $destination) . '"');
 		if (file_exists($new_file))
 		{
 			$used_imagick = true;
@@ -795,6 +797,9 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 
 		$post_subject = $row['post_subject'];
 		$message = $row['post_text'];
+		$message = censor_text($message);
+		$message = str_replace("\n", '<br />', $message);
+
 		$decoded_message = false;
 
 		if ($show_quote_button && $_CLASS['forums_auth']->acl_get('f_reply', $forum_id))
@@ -802,7 +807,6 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 			$decoded_message = $message;
 			decode_message($decoded_message, $row['bbcode_uid']);
 
-			$decoded_message = censor_text($decoded_message);
 			$decoded_message = str_replace("\n", "<br />", $decoded_message);
 		}
 
@@ -821,7 +825,7 @@ function topic_review($topic_id, $forum_id, $mode = 'topic_review', $cur_post_id
 			'POST_SUBJECT' 	=> $post_subject,
 			'MINI_POST_IMG' => $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
 			'POST_DATE' 	=> $_CLASS['core_user']->format_date($row['post_time']),
-			'MESSAGE' 		=> str_replace("\n", '<br />', $message), 
+			'MESSAGE' 		=> $message, 
 			'DECODED_MESSAGE'	=> $decoded_message,
 
 			'U_POST_ID'		=> $row['post_id'],

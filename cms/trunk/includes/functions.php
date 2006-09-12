@@ -317,8 +317,8 @@ function get_bots()
 		{
 			$bots[] = $row;
 		}
-
 		$_CLASS['core_db']->free_result($result);
+
 		$_CLASS['core_cache']->put('bots', $bots);
 	}
 
@@ -342,7 +342,6 @@ function get_word_censors()
 			$censors['word_match'][] = '#\b(' . str_replace('\*', '\w*?', preg_quote($row['word_match'], '#')) . ')\b#i';
 			$censors['word_replace'][] = $row['word_replacement'];
 		}
-
 		$_CLASS['core_db']->free_result($result);
 
 		$_CLASS['core_cache']->put('word_censors', $censors);
@@ -690,7 +689,7 @@ function login_box($login_options = false, $template = false)
 {
 	global $_CLASS;
 
-	$_CLASS['core_auth']->do_login($login_options, $template);
+	$_CLASS['core_auth']->auth_login($login_options, $template);
 }
 
 function set_core_config($section, $name, $value, $clear_cache = true, $auto_add = false, $type = 'string', $cache = true)
@@ -1068,6 +1067,30 @@ if (!function_exists('var_export'))
 	}
 }
 
+function group_select_options($group_id, $exclude_ids = false)
+{
+	global $_CLASS, $CORE_CONFIG;
+
+	$exclude_sql = ($exclude_ids !== false && sizeof($exclude_ids)) ? 'WHERE group_id NOT IN ('. implode(', ', array_map('intval', $exclude_ids)) .')' : '';
+	$sql_and = (!$CORE_CONFIG['user']['coppa_enable']) ? (($exclude_sql) ? ' AND ' : ' WHERE ') . "group_name NOT IN ('INACTIVE_COPPA', 'REGISTERED_COPPA')" : '';
+
+	$sql = 'SELECT group_id, group_name, group_type 
+		FROM ' . CORE_GROUPS_TABLE . "
+		$exclude_sql
+		$sql_and
+		ORDER BY group_type DESC, group_name ASC";
+	$result = $_CLASS['core_db']->query($sql);
+
+	$s_group_options = '';
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$selected = ($row['group_id'] == $group_id) ? ' selected="selected"' : '';
+		$s_group_options .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="sep"' : '') . ' value="' . $row['group_id'] . '"' . $selected . '>' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	return $s_group_options;
+}
 
 // FROM PHPBB
 

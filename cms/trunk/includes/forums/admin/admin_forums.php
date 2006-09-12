@@ -15,6 +15,11 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	die; 
 }
 
+if (!$_CLASS['forums_auth']->acl_get('a_forum'))
+{
+	trigger_error('NO_ADMIN');
+}
+
 // Get general vars
 $update		= isset($_POST['update']);
 $mode		= request_var('mode', '');
@@ -25,10 +30,7 @@ $parent_id	= request_var('parent_id', 0);
 $l_title	= '';
 $forum_data = $errors = array();
 
-if (!$_CLASS['forums_auth']->acl_get('a_forum'))
-{
-	trigger_error('NO_ADMIN');
-}
+$_CLASS['core_user']->add_lang('admin_forums', 'forums');
 
 switch ($action)
 {
@@ -850,7 +852,7 @@ function update_forum_data(&$forum_data)
 				return array($_CLASS['core_user']->lang['NO_FORUM_ACTION']);
 			}
 
-			$forum_data_sql['forum_posts'] = $forum_data_sql['forum_topics'] = $forum_data_sql['forum_topics_real'] = 0;
+			$forum_data_sql['forum_posts'] = $forum_data_sql['forum_topics'] = $forum_data_sql['forum_topics_real'] = $forum_data_sql['forum_last_post_id'] = $forum_data_sql['forum_last_poster_id'] = $forum_data_sql['forum_last_post_time'] = 0;
 		}
 
 		if (sizeof($errors))
@@ -983,8 +985,8 @@ function move_forum_content($from_id, $to_id, $sync = true)
 {
 	global $_CLASS;
 
-	$table_ary = array(ACL_GROUPS_TABLE, ACL_USERS_TABLE, LOG_TABLE, POSTS_TABLE, TOPICS_TABLE, DRAFTS_TABLE, TOPICS_TRACK_TABLE);
-
+	$table_ary = array(FORUMS_LOG_TABLE, FORUMS_POSTS_TABLE, FORUMS_TOPICS_TABLE, FORUMS_DRAFTS_TABLE, FORUMS_TRACK_TABLE);
+	
 	foreach ($table_ary as $table)
 	{
 		$sql = "UPDATE $table
@@ -994,7 +996,7 @@ function move_forum_content($from_id, $to_id, $sync = true)
 	}
 	unset($table_ary);
 
-	$table_ary = array(FORUMS_ACCESS_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, MODERATOR_CACHE_TABLE);
+	$table_ary = array(FORUMS_ACCESS_TABLE, FORUMS_WATCH_TABLE, FORUMS_MODERATOR_CACHE_TABLE);
 
 	foreach ($table_ary as $table)
 	{
@@ -1065,7 +1067,7 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 		return $errors;
 	}
 
-	if ($action_subforums == 'delete')
+	if ($action_subforums === 'delete')
 	{
 		$log_action_forums = 'FORUMS';
 		$rows = get_forum_branch($forum_id, 'children', 'descending', false);
@@ -1086,8 +1088,12 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 		$sql = 'DELETE FROM ' . FORUMS_FORUMS_TABLE . '
 			WHERE forum_id IN (' . implode(', ', $forum_ids) . ')';
 		$_CLASS['core_db']->query($sql);
+		
+		$sql = 'DELETE FROM ' . FORUMS_ACL_TABLE . '
+			WHERE  forum_id IN (' . implode(', ', $forum_ids) . ')';
+		$_CLASS['core_db']->query($sql);
 	}
-	else if ($action_subforums == 'move')
+	else if ($action_subforums === 'move')
 	{
 		if (!$subforums_to_id)
 		{
@@ -1132,6 +1138,10 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 				$sql = 'DELETE FROM ' . FORUMS_FORUMS_TABLE . "
 					WHERE forum_id = $forum_id";
 				$_CLASS['core_db']->query($sql);
+				
+				$sql = 'DELETE FROM ' . FORUMS_ACL_TABLE . '
+					WHERE forum_id = '.$forum_id;
+				$_CLASS['core_db']->query($sql);
 			}
 		}
 
@@ -1145,6 +1155,10 @@ function delete_forum($forum_id, $action_posts = 'delete', $action_subforums = '
 		$diff = 2;
 		$sql = 'DELETE FROM ' . FORUMS_FORUMS_TABLE . "
 			WHERE forum_id = $forum_id";
+		$_CLASS['core_db']->query($sql);
+
+		$sql = 'DELETE FROM ' . FORUMS_ACL_TABLE . '
+			WHERE forum_id = '.$forum_id;
 		$_CLASS['core_db']->query($sql);
 	}
 
@@ -1255,6 +1269,20 @@ function delete_forum_content($forum_id)
 
 	delete_attachments('topic', $topic_ids, false);
 
+	// Before we remove anything we make sure we are able to adjust the post counts later. ;)
+	$sql = 'SELECT poster_id
+		FROM ' . FORUMS_POSTS_TABLE . '
+		WHERE forum_id = ' . $forum_id . '
+			AND post_postcount = 1';
+	$result = $_CLASS['core_db']->query($sql);
+
+	$post_counts = array();
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$post_counts[$row['poster_id']] = (!empty($post_counts[$row['poster_id']])) ? $post_counts[$row['poster_id']] + 1 : 1;
+	}
+	$_CLASS['core_db']->free_result($result);
+
 	switch ($_CLASS['core_db']->db_layer)
 	{
 		case 'mysql4':
@@ -1330,22 +1358,34 @@ function delete_forum_content($forum_id)
 
 						foreach ($tables as $table)
 						{
-							$_CLASS['core_db']->query("DELETE FROM $table WHERE $field IN (" . implode(', ', $id_list) . ')');
+							$_CLASS['core_db']->query("DELETE FROM $table WHERE $field IN (" . implode(', ', $ids) . ')');
 						}
 					}
 				}
 				while ($row);
 			}
-			unset($ids, $id_list);
+			unset($ids);
 
 		break;
 	}
 
-	$table_ary = array(FORUMS_ACL_TABLE, FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, FORUMS_LOG_TABLE, FORUMS_MODERATOR_CACHE_TABLE, FORUMS_POSTS_TABLE, FORUMS_TOPICS_TABLE);//, TOPICS_TRACK_TABLE
+	$table_ary = array(FORUMS_TRACK_TABLE, FORUMS_WATCH_TABLE, FORUMS_LOG_TABLE, FORUMS_MODERATOR_CACHE_TABLE, FORUMS_POSTS_TABLE, FORUMS_TOPICS_TABLE);//, TOPICS_TRACK_TABLE
 
 	foreach ($table_ary as $table)
 	{
 		$_CLASS['core_db']->query("DELETE FROM $table WHERE forum_id = $forum_id");
+	}
+
+	// Adjust users post counts
+	if (sizeof($post_counts))
+	{
+		foreach ($post_counts as $poster_id => $substract)
+		{
+			$sql = 'UPDATE ' . CORE_USERS_TABLE . '
+				SET user_posts = user_posts - ' . $substract . '
+				WHERE user_id = ' . $poster_id;
+			$_CLASS['core_db']->query($sql);
+		}
 	}
 
 	// Set forum ids to 0

@@ -39,6 +39,8 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 
 global $_CLASS, $_CORE_CONFIG;
 
+$_CLASS['core_user']->add_lang('admin_common', 'forums');
+
 // Some often used variables
 $safe_mode	= (@ini_get('safe_mode') || @strtolower(ini_get('safe_mode')) == 'on') ? true : false;
 $file_uploads = (@ini_get('file_uploads') || strtolower(@ini_get('file_uploads')) == 'on') ? true : false;
@@ -52,14 +54,11 @@ $data = array(
 $_CLASS['core_blocks']->add_block($data);
 
 load_class(SITE_FILE_ROOT.'includes/forums/auth.php', 'forums_auth');
-$_CLASS['auth'] =& $_CLASS['forums_auth'];
 
 require_once(SITE_FILE_ROOT.'includes/forums/functions.php');
 require_once(SITE_FILE_ROOT.'includes/forums/functions_admin.php');
 
-$_CLASS['core_user']->add_lang('admin', 'forums');
-//$_CLASS['core_user']->add_img(false, 'Forums');
-$_CLASS['auth']->acl($_CLASS['core_user']->data);
+$_CLASS['forums_auth']->acl($_CLASS['core_user']->data);
 
 $file = get_variable('file', 'REQUEST', 'main');
 
@@ -77,11 +76,16 @@ $_CLASS['core_template']->assign_array(array(
 	'T_RANKS_PATH'			=> "{$config['ranks_path']}/",
 	'T_UPLOAD_PATH'			=> "{$config['upload_path']}/",
 
-	'ICON_MOVE_UP'		=> '<img src="modules/forums/images/admin/icon_up.gif" alt="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" title="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" />',
-	'ICON_MOVE_DOWN'	=> '<img src="modules/forums/images/admin/icon_down.gif" alt="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" title="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" />',
-	'ICON_EDIT'			=> '<img src="modules/forums/images/admin/icon_edit.gif" alt="' . $_CLASS['core_user']->lang['EDIT'] . '" title="' . $_CLASS['core_user']->lang['EDIT'] . '" />',
-	'ICON_DELETE'		=> '<img src="modules/forums/images/admin/icon_delete.gif" alt="' . $_CLASS['core_user']->lang['DELETE'] . '" title="' . $_CLASS['core_user']->lang['DELETE'] . '" />',
-	'ICON_SYNC'			=> '<img src="modules/forums/images/admin/icon_sync.gif" alt="' . $_CLASS['core_user']->lang['RESYNC'] . '" title="' . $_CLASS['core_user']->lang['RESYNC'] . '" />',
+	'ICON_MOVE_UP'				=> '<img src="modules/forums/images/admin/icon_up.gif" alt="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" title="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" />',
+	'ICON_MOVE_UP_DISABLED'		=> '<img src="modules/forums/images/admin/icon_up_disabled.gif" alt="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" title="' . $_CLASS['core_user']->lang['MOVE_UP'] . '" />',
+	'ICON_MOVE_DOWN'			=> '<img src="modules/forums/images/admin/icon_down.gif" alt="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" title="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" />',
+	'ICON_MOVE_DOWN_DISABLED'	=> '<img src="modules/forums/images/admin/icon_down_disabled.gif" alt="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" title="' . $_CLASS['core_user']->lang['MOVE_DOWN'] . '" />',
+	'ICON_EDIT'					=> '<img src="modules/forums/images/admin/icon_edit.gif" alt="' . $_CLASS['core_user']->lang['EDIT'] . '" title="' . $_CLASS['core_user']->lang['EDIT'] . '" />',
+	'ICON_EDIT_DISABLED'		=> '<img src="modules/forums/images/admin/icon_edit_disabled.gif" alt="' . $_CLASS['core_user']->lang['EDIT'] . '" title="' . $_CLASS['core_user']->lang['EDIT'] . '" />',
+	'ICON_DELETE'				=> '<img src="modules/forums/images/admin/icon_delete.gif" alt="' . $_CLASS['core_user']->lang['DELETE'] . '" title="' . $_CLASS['core_user']->lang['DELETE'] . '" />',
+	'ICON_DELETE_DISABLED'		=> '<img src="modules/forums/images/admin/icon_delete_disabled.gif" alt="' . $_CLASS['core_user']->lang['DELETE'] . '" title="' . $_CLASS['core_user']->lang['DELETE'] . '" />',
+	'ICON_SYNC'					=> '<img src="modules/forums/images/admin/icon_sync.gif" alt="' . $_CLASS['core_user']->lang['RESYNC'] . '" title="' . $_CLASS['core_user']->lang['RESYNC'] . '" />',
+	'ICON_SYNC_DISABLED'		=> '<img src="modules/forums/images/admin/icon_sync_disabled.gif" alt="' . $_CLASS['core_user']->lang['RESYNC'] . '" title="' . $_CLASS['core_user']->lang['RESYNC'] . '" />',
 ));
 	
 if (file_exists(SITE_FILE_ROOT.'includes/forums/admin/'.$file.'.php'))

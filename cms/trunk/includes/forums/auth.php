@@ -429,8 +429,8 @@ class forums_auth
 
 		$sql_id = ($user_type == 'user') ? 'user_id' : 'group_id';
 
-		$sql_ug = ($ug_id !== false) ? ((!is_array($ug_id)) ? "AND a.$sql_id = $ug_id" : 'AND ' . $db->sql_in_set("a.$sql_id", $ug_id)) : '';
-		$sql_forum = ($forum_id !== false) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND ' . $db->sql_in_set('a.forum_id', $forum_id)) : '';
+		$sql_ug = ($ug_id !== false) ? (!is_array($ug_id) ? "AND a.$sql_id = $ug_id" : "AND a.$sql_id IN (" . implode(', ', $ug_id).')') : '';
+		$sql_forum = ($forum_id !== false) ? (!is_array($forum_id) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN ('. implode(', ', $forum_id).')') : '';
 
 		// Grab assigned roles...
 		$sql = 'SELECT a.auth_role_id, a.' . $sql_id . ', a.forum_id
@@ -619,8 +619,9 @@ class forums_auth
 
 		// Grab group settings ... ACL_NO overrides ACL_YES so act appropriatley
 		$sql = 'SELECT a.group_id, ao.auth_option, a.forum_id, a.auth_setting
-			FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_GROUPS_TABLE . ' a
+			FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_TABLE . ' a
 			WHERE ao.auth_option_id = a.auth_option_id
+				AND a.group_id IS NOT NULL AND a.group_id <> 0
 				' . (($sql_group) ? 'AND a.' . $sql_group : '') . "
 				$sql_forum
 				$sql_opts

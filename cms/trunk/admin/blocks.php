@@ -175,10 +175,8 @@ $_CLASS['core_template']->assign_array(array(
 	'N_BLOCK_HTML'		=> generate_link('blocks&amp;mode=add&amp;type='.BLOCKTYPE_HTML, array('admin' => true))
 ));
 
-$_CLASS['core_template']->display('admin/blocks/index.html');
+$_CLASS['core_display']->display(false, 'admin/blocks/index.html');
 	
-script_close(false);
-
 function blocks_change_position($position, $id)
 {
 	global $_CLASS;

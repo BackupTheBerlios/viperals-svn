@@ -49,12 +49,13 @@ $sql = 'SELECT attach_id, in_message, post_msg_id, extension
 	FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
 $result = $_CLASS['core_db']->query_limit($sql, 1);
+$attachment = $_CLASS['core_db']->fetch_row_assoc($result);
+$_CLASS['core_db']->free_result($result);
 
-if (!($attachment = $_CLASS['core_db']->fetch_row_assoc($result)))
+if (!$attachment)
 {
 	trigger_error('ERROR_NO_ATTACHMENT');
 }
-$_CLASS['core_db']->free_result($result);
 
 if ((!$attachment['in_message'] && !$config['allow_attachments']) || ($attachment['in_message'] && !$config['allow_pm_attach']))
 {
@@ -74,7 +75,7 @@ if (!$attachment['in_message'])
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	$_CLASS['core_db']->free_result($result);
 
-	if ($_CLASS['auth']->acl_gets(array('f_download', 'u_download'), $row['forum_id']))
+	if ($_CLASS['auth']->acl_get('u_download') && $_CLASS['auth']->acl_get('f_download', $row['forum_id']))
 	{
 		if ($row['forum_password'])
 		{
@@ -117,21 +118,22 @@ $sql = 'SELECT attach_id, in_message, post_msg_id, extension, physical_filename,
 	FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
 $result = $_CLASS['core_db']->query_limit($sql, 1);
+$attachment = $_CLASS['core_db']->fetch_row_assoc($result);
+$_CLASS['core_db']->free_result($result);
 
-if (!($attachment = $_CLASS['core_db']->fetch_row_assoc($result)))
+if (!$attachment)
 {
 	trigger_error('ERROR_NO_ATTACHMENT');
 }
-$_CLASS['core_db']->free_result($result);
 
 $attachment['physical_filename'] = basename($attachment['physical_filename']);
-
+$display_cat = $extensions[$attachment['extension']]['display_cat'];
 
 if ($thumbnail)
 {
 	$attachment['physical_filename'] = 'thumb_' . $attachment['physical_filename'];
 }
-else
+elseif ($display_cat == ATTACHMENT_CATEGORY_NONE || $display_cat == ATTACHMENT_CATEGORY_IMAGE)
 {
 	// Update download count
 	$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
@@ -172,64 +174,38 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 		trigger_error($_CLASS['core_user']->lang['ERROR_NO_ATTACHMENT'] . '<br /><br />' . sprintf($_CLASS['core_user']->lang['FILE_NOT_FOUND_404'], $filename));
 	}
 
-	// Determine the Browser the User is using, because of some nasty incompatibilities.
-	// borrowed from phpMyAdmin. :)
-	$user_agent = (!empty($_SERVER['HTTP_USER_AGENT'])) ? $_SERVER['HTTP_USER_AGENT'] : '';
-
-	if (ereg('Opera(/| )([0-9].[0-9]{1,2})', $user_agent, $log_version))
+	// Check if headers already sent or not able to get the file contents.
+	if (headers_sent() || !@is_readable($filename))
 	{
-		$browser_version = $log_version[2];
-		$browser_agent = 'opera';
+		trigger_error('UNABLE_TO_DELIVER_FILE');
 	}
-	else if (ereg('MSIE ([0-9].[0-9]{1,2})', $user_agent, $log_version))
-	{
-		$browser_version = $log_version[1];
-		$browser_agent = 'ie';
-	}
-	else if (ereg('OmniWeb/([0-9].[0-9]{1,2})', $user_agent, $log_version))
-	{
-		$browser_version = $log_version[1];
-		$browser_agent = 'omniweb';
-    }
-	else if (ereg('(Konqueror/)(.*)(;)', $user_agent, $log_version))
-	{
-		$browser_version = $log_version[2];
-		$browser_agent = 'konqueror';
-    }
-	else if (ereg('Mozilla/([0-9].[0-9]{1,2})', $user_agent, $log_version) && ereg('Safari/([0-9]*)', $user_agent, $log_version2))
-	{
-		$browser_version = $log_version[1] . '.' . $log_version2[1];
-		$browser_agent = 'safari';
-    }
-	else if (ereg('Mozilla/([0-9].[0-9]{1,2})', $user_agent, $log_version))
-	{
-		$browser_version = $log_version[1];
-		$browser_agent = 'mozilla';
-    }
-	else
-	{
-		$browser_version = 0;
-		$browser_agent = 'other';
-    }
 
 	/*
 		Correct the mime type - we force application/octetstream for all files, except images
 		Please do not change this, it is a security precaution
 	*/
-
 	if ($category == ATTACHMENT_CATEGORY_NONE && strpos($attachment['mimetype'], 'image') === false)
 	{
-		$attachment['mimetype'] = ($browser_agent === 'ie' || $browser_agent === 'opera') ? 'application/octetstream' : 'application/octet-stream';
+		$attachment['mimetype'] = (strpos(strtolower($user->browser), 'msie') !== false || strpos(strtolower($user->browser), 'opera') !== false) ? 'application/octetstream' : 'application/octet-stream';
 	}
 
 	/* Clean all output buffers */
-	while (@ob_end_clean());
+	if (@ob_get_length())
+	{
+		while (@ob_end_clean());
+	}
+
 	header('Content-Encoding: ');
 
 	/* Send out required headers */
 	header('Pragma: public');
+	
+	// Try X-Sendfile since it is much more server friendly.
+	// lighttpd has core support for it. An apache2 module is available at http://celebnamer.celebworld.ws/stuff/mod_xsendfile/
+	header('X-Sendfile: ' . $filename);
+
 	header('Content-Type: ' . $attachment['mimetype'] . '; name="' . $attachment['real_filename'] . '"');
-	header('Content-Disposition: inline; filename="' . $attachment['real_filename'] . '"');
+	header('Content-Disposition: attachment; filename="' . $attachment['real_filename'] . '"');
 
 	/* Now send the File Contents to the Browser */
 	$size = @filesize($filename);
@@ -258,7 +234,7 @@ function download_allowed()
 		return true;
 	}
 
-	$url = (getenv('HTTP_REFERER')) ? trim(getenv('HTTP_REFERER')) : trim($_SERVER['HTTP_REFERER']);
+	$url = getenv('HTTP_REFERER') ? trim(getenv('HTTP_REFERER')) : trim($_SERVER['HTTP_REFERER']);
 
 	if (!$url)
 	{
@@ -266,25 +242,34 @@ function download_allowed()
 	}
 
 	// Split URL into domain and script part
-	$url = explode('?', str_replace(array('http://', 'https://'), array('', ''), $url));
-	$hostname = trim($url[0]);
+	$url = @parse_url($url);
+	
+	if ($url === false)
+	{
+		return ($config['secure_allow_empty_referer']) ? true : false;
+	}
+
+	$hostname = $url['host'];
 	unset($url);
 
 	$allowed = ($config['secure_allow_deny']) ? false : true;
 	$iplist = array();
 
-	$ip_ary = gethostbynamel($hostname);
-
-	foreach ($ip_ary as $ip)
+	if (($ip_ary = @gethostbynamel($hostname)) !== false)
 	{
-		if ($ip)
+		foreach ($ip_ary as $ip)
 		{
-			$iplist[] = $ip;
+			if ($ip)
+			{
+				$iplist[] = $ip;
+			}
 		}
 	}
 	
 	// Check for own server...
-	if (preg_match('#^.*?' . $config['server_name'] . '.*?$#i', $hostname))
+	$server_name = (!empty($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : getenv('SERVER_NAME');
+
+	if (preg_match('#^.*?' . preg_quote($server_name, '#') . '.*?$#i', $hostname))
 	{
 		$allowed = true;
 	}
@@ -305,7 +290,7 @@ function download_allowed()
 			{
 				foreach ($iplist as $ip)
 				{
-					if (preg_match('#^' . str_replace('*', '.*?', $site_ip) . '$#i', $ip))
+					if (preg_match('#^' . str_replace('*', '.*?', preg_quote($site_ip, '#')) . '$#i', $ip))
 					{
 						if ($row['ip_exclude'])
 						{
@@ -322,7 +307,7 @@ function download_allowed()
 
 			if ($site_hostname)
 			{
-				if (preg_match('#^' . str_replace('*', '.*?', $site_hostname) . '$#i', $hostname))
+				if (preg_match('#^' . str_replace('*', '.*?', preg_quote($site_hostname, '#')) . '$#i', $hostname))
 				{
 					if ($row['ip_exclude'])
 					{

@@ -1,0 +1,93 @@
+<!-- DISPLAY_HEADER -->
+
+{ $THEME_TABLE_OPEN }
+
+<script type="text/javascript">
+<!--
+var jump_page = '{ $L_JUMP_PAGE }:';
+var on_page = '<!-- IF isset({ $ON_PAGE }) -->{ $ON_PAGE }<!-- ENDIF -->';
+var per_page = '<!-- IF isset({ $PER_PAGE }) -->{ $PER_PAGE }<!-- ENDIF -->';
+var base_url = '<!-- IF isset({ $BASE_URL }) -->{ $BASE_URL }<!-- ENDIF -->';
+
+/**
+* Jump to page
+*/
+function jumpto()
+{
+	var page = prompt(jump_page, on_page);
+
+	if (page !== null && !isNaN(page) && page > 0)	
+	{
+		document.location.href = base_url.replace(/&amp;/g, '&') + '&start=' + ((page - 1) * per_page);
+	}
+}
+
+/**
+* Set display of page element
+* s[-1,0,1] = hide,toggle display,show
+*/
+function dE(n, s, type)
+{
+	if (!type)
+	{
+		type = 'block';
+	}
+
+	var e = document.getElementById(n);
+	if (!s)
+	{
+		s = (e.style.display == '') ? -1 : 1;
+	}
+	e.style.display = (s == 1) ? type : 'none';
+}
+
+/**
+* Mark/unmark checkboxes
+* id = ID of parent container, name = name prefix, state = state [true/false]
+*/
+function marklist(id, name, state)
+{
+	var parent = document.getElementById(id);
+	if (!parent)
+	{
+		eval('parent = document.' + id);
+	}
+
+	if (!parent)
+	{
+		return;
+	}
+
+	var rb = parent.getElementsByTagName('input');
+	
+	for (var r = 0; r < rb.length; r++)
+	{
+		if (rb[r].name.substr(0, name.length) == name)
+		{
+			rb[r].checked = state;
+		}
+	}
+}
+
+/**
+* Open trace popup
+*/
+function trace(link)
+{
+	window.open(link, '_trace', 'height=515, resizable=yes, scrollbars=yes, width=680');
+	return false;
+}
+
+<!-- IF isset({ $S_INCLUDE_SWATCH }) && { $S_INCLUDE_SWATCH } -->
+	/**
+	* Color swatch
+	*/
+	function swatch()
+	{
+		window.open('{ $UA_SWATCH }', '_swatch', 'height=150, resizable=yes, scrollbars=no, width=636');
+		return false;
+	}
+<!-- ENDIF -->
+
+//-->
+</script>

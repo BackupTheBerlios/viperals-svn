@@ -297,6 +297,9 @@ function check_rule(&$rules, &$rule_row, &$message_row, $user_id)
 
 		case ACTION_MARK_AS_READ:
 		case ACTION_MARK_AS_IMPORTANT:
+			return array('action' => $rule_row['rule_action'], 'pm_unread' => $message_row['pm_unread'], 'pm_marked' => $message_row['pm_marked']);
+		break;
+
 		case ACTION_DELETE_MESSAGE:
 			return array('action' => $rule_row['rule_action'], 'pm_unread' => $message_row['pm_unread'], 'pm_marked' => $message_row['pm_marked']);
 		break;
@@ -510,8 +513,8 @@ $_CLASS['core_user']->data['user_full_folder'] = FULL_FOLDER_NONE;
 		}
 	}
 
-	$num_new += count(array_unique($delete_ids));
-	$num_unread += count(array_unique($delete_ids));
+//	$num_new += count(array_unique($delete_ids));
+//	$num_unread += count(array_unique($delete_ids));
 	$num_unread += count(array_unique($unread_ids));
 
 	// Do not change the order of processing
@@ -791,8 +794,13 @@ function set_read_status($read, $msg_id, $user_id, $folder_id)
 			SET user_unread_privmsg = user_unread_privmsg '.(($read) ? '+ ' : '- '). " $count
 			WHERE user_id = $user_id";
 		$_CLASS['core_db']->query($sql);
+		
+		if ($_CLASS['core_user']->data['user_id'] == $user_id)
+		{
+			$_CLASS['core_user']->data['user_unread_privmsg'] = $_CLASS['core_user']->data['user_unread_privmsg'] + (($read) ? $count : -$count));
+		}
 	}
-	
+
 	$_CLASS['core_db']->transaction('commit');
 }
 
@@ -995,8 +1003,11 @@ function delete_pm($user_id, $msg_ids, $folder_id)
 			$set_sql .= ($set_sql != '') ? ', ' : '';
 			$set_sql .= 'user_new_privmsg = user_new_privmsg - ' . $num_new;
 		}
-		
+
 		$_CLASS['core_db']->query('UPDATE ' . CORE_USERS_TABLE . " SET $set_sql WHERE user_id = $user_id");
+
+		$_CLASS['core_user']->data['user_new_privmsg'] -= $num_new;
+		$_CLASS['core_user']->data['user_unread_privmsg'] -= $num_unread;
 	}
 	
 	// Now we have to check which messages we can delete completely	
@@ -1170,7 +1181,7 @@ function write_pm_addresses($check_ary, $author_id, $plaintext = false)
 						'IS_USER'	=> ($type === 'user'),
 						'COLOUR'	=> ($row['colour']) ? $row['colour'] : '',
 						'UG_ID'		=> $id,
-						'U_VIEW'	=> ($type === 'user') ? generate_link('members_list&amp;mode=viewprofile&amp;u=' . $id) : generate_link('members_list&amp;mode=group&amp;g=' . $id))
+						'U_VIEW'	=> ($type === 'user') ? (($id != ANONYMOUS) ? generate_link('members_list&amp;mode=viewprofile&amp;u=' . $id) ? '') : generate_link('members_list&amp;mode=group&amp;g=' . $id))
 					);
 				}
 			}
@@ -1251,7 +1262,7 @@ function submit_pm($mode, $subject, &$data, $update_message, $put_in_outbox = tr
 					$id = (int) $id;
 
 					// Do not rely on the address list being "valid"
-					if (!$id)
+					if (!$id || ($ug_type === 'u' && $id == ANONYMOUS))
 					{
 						continue;
 					}

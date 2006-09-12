@@ -159,7 +159,10 @@ if (is_null($_CORE_CONFIG = $_CLASS['core_cache']->get('core_config')))
 	
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		settype($row['config_value'], $row['config_type']);
+		if ($row['config_type'])
+		{
+			settype($row['config_value'], $row['config_type']);
+		}
 
 		if ($row['config_cache'])
 		{
@@ -190,7 +193,10 @@ else
 
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		settype($row['config_value'], $row['config_type']);
+		if ($row['config_type'])
+		{
+			settype($row['config_value'], $row['config_type']);
+		}
 
 		$_CORE_CONFIG[$row['config_section']][$row['config_name']] = $row['config_value'];
 	}

@@ -524,23 +524,23 @@ if (!empty($topic_data['poll_start']))
 	for ($i = 0; $i < $count; $i++)
 	{
 		$poll_info[$i]['poll_option_text'] = censor_text($poll_info[$i]['poll_option_text']);
+		$poll_info[$i]['poll_option_text'] = str_replace("\n", '<br />', $poll_info[$i]['poll_option_text']);
 
 		if ($poll_bbcode !== false)
 		{
 			$poll_bbcode->bbcode_second_pass($poll_info[$i]['poll_option_text'], $poll_info[$i]['bbcode_uid'], $poll_option['bbcode_bitfield']);
 		}
 		$poll_info[$i]['poll_option_text'] = smiley_text($poll_info[$i]['poll_option_text']);
-		$poll_info[$i]['poll_option_text'] = str_replace("\n", '<br />', $poll_info[$i]['poll_option_text']);
 	}
 
 	$topic_data['poll_title'] = censor_text($topic_data['poll_title']);
+	$topic_data['poll_title'] = str_replace("\n", '<br />', $topic_data['poll_title']);
 
 	if ($poll_bbcode !== false)
 	{
 		$poll_bbcode->bbcode_second_pass($topic_data['poll_title'], $poll_info[0]['bbcode_uid'], $poll_info[0]['bbcode_bitfield']);
 	}
 	$topic_data['poll_title'] = smiley_text($topic_data['poll_title']);
-	$topic_data['poll_title'] = str_replace("\n", '<br />', $topic_data['poll_title']);
 
 	unset($poll_bbcode);
 	
@@ -560,6 +560,8 @@ if (!empty($topic_data['poll_start']))
 		);
 	}
 
+	$poll_end = $topic_data['poll_length'] + $topic_data['poll_start'];
+
 	$_CLASS['core_template']->assign_array(array(
 		'POLL_QUESTION'		=> $topic_data['poll_title'],
 		'TOTAL_VOTES' 		=> $poll_total,
@@ -567,7 +569,7 @@ if (!empty($topic_data['poll_start']))
 		'POLL_RIGHT_CAP_IMG'=> $_CLASS['core_user']->img('poll_right'),
 
 		'L_MAX_VOTES'		=> ($topic_data['poll_max_options'] == 1) ? $_CLASS['core_user']->lang['MAX_OPTION_SELECT'] : sprintf($_CLASS['core_user']->lang['MAX_OPTIONS_SELECT'], $topic_data['poll_max_options']), 
-		'L_POLL_LENGTH'		=> ($topic_data['poll_length']) ? sprintf($_CLASS['core_user']->lang['POLL_RUN_TILL'], $_CLASS['core_user']->format_date($topic_data['poll_length'] + $topic_data['poll_start'])) : '', 
+		'L_POLL_LENGTH'		=> ($topic_data['poll_length']) ? sprintf($_CLASS['core_user']->lang[($poll_end > $_CLASS['core_user']->time) ? 'POLL_RUN_TILL' : 'POLL_ENDED_AT'], $_CLASS['core_user']->format_date($poll_end)) : '',
 
 		'S_HAS_POLL'		=> true, 
 		'S_CAN_VOTE'		=> $s_can_vote, 
@@ -578,7 +580,7 @@ if (!empty($topic_data['poll_start']))
 		'U_VIEW_RESULTS'	=> generate_link($viewtopic_url . '&amp;view=viewpoll', false))
 	);
 
-	unset($poll_info, $voted_id);
+	unset($poll_end, $poll_info, $voted_id);
 }
 else
 {
@@ -647,8 +649,7 @@ $sql = 'SELECT u.*, z.friend, z.foe, p.*
 
 $result = $_CLASS['core_db']->query($sql);
 
-$today = explode('-', date('j-n-Y', $_CLASS['core_user']->time));
-$today = array('day' => (int) $today[0], 'month' => (int) $today[1], 'year' => (int) $today[2]);
+$now = getdate($_CLASS['core_user']->time);
 
 // Posts are stored in the $rowset array while $attach_list, $user_cache
 // and the global bbcode_bitfield are built
@@ -872,18 +873,18 @@ while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 
 				if ($bday_year)
 				{
-					$diff = $today['month'] - $bday_month;
+					$diff = $now['mon'] - $bday_month;
 					
 					if ($diff == 0)
 					{
-						$diff = ($today['day'] - $bday_day < 0) ? 1 : 0;
+						$diff = ($now['mday'] - $bday_day < 0) ? 1 : 0;
 					}
 					else
 					{
 						$diff = ($diff < 0) ? 1 : 0;
 					}
 					
-					$user_cache[$poster_id]['age'] = (int) ($today['year'] - $bday_year - $diff);
+					$user_cache[$poster_id]['age'] = (int) ($now['year'] - $bday_year - $diff);
 				}
 			}
 		}
@@ -915,7 +916,7 @@ unset($id_cache);
 // Pull attachment data
 if (!empty($attach_list))
 {
-	if ($_CLASS['forums_auth']->acl_gets(array('f_download', 'u_download'), $forum_id))
+	if ($_CLASS['forums_auth']->acl_get('u_download') && $_CLASS['forums_auth']->acl_get('f_download', $forum_id))
 	{
 		$sql = 'SELECT * 
 			FROM ' . FORUMS_ATTACHMENTS_TABLE . '
@@ -1019,6 +1020,7 @@ for ($i = 0; $i < $count; ++$i)
 	if ($user_cache[$poster_id]['sig'] && empty($user_cache[$poster_id]['sig_parsed']))
 	{
 		$user_cache[$poster_id]['sig'] = censor_text($user_cache[$poster_id]['sig']);
+		$user_cache[$poster_id]['sig'] = str_replace("\n", '<br />', $user_cache[$poster_id]['sig']);
 
 		if ($user_cache[$poster_id]['sig_bbcode_bitfield'])
 		{
@@ -1026,7 +1028,6 @@ for ($i = 0; $i < $count; ++$i)
 		}
 
 		$user_cache[$poster_id]['sig'] = smiley_text($user_cache[$poster_id]['sig']);
-		$user_cache[$poster_id]['sig'] = str_replace("\n", '<br />', $user_cache[$poster_id]['sig']);
 		$user_cache[$poster_id]['sig_parsed'] = true;
 	}
 
@@ -1037,6 +1038,7 @@ for ($i = 0; $i < $count; ++$i)
 	}
 
 	$row['post_text'] = censor_text($row['post_text']);
+	$row['post_text'] = str_replace("\n", '<br />', $row['post_text']);
 
 	// Second parse bbcode here
 	if ($row['bbcode_bitfield'])
@@ -1061,7 +1063,7 @@ for ($i = 0; $i < $count; ++$i)
 	// Highlight active words (primarily for search)
 	if ($highlight_match)
 	{
-		$message = preg_replace('#(?!<.*)(?<!\w)(' . $highlight_match . ')(?!\w|[^<>]*>)#i', '<span class="posthilit">\1</span>', $message);
+		$message = preg_replace('#(?!(?:<(?:s(?:cript|tyle))?)[^<]*)(?<!\w)(' . $highlight_match . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">\1</span>', $message);
 	}
 
 	if ($row['enable_html'] && ($config['allow_html'] && $_CLASS['forums_auth']->acl_get('f_html', $forum_id)))
@@ -1072,7 +1074,6 @@ for ($i = 0; $i < $count; ++$i)
 
 	// Replace naughty words such as farty pants
 	$row['post_subject'] = censor_text($row['post_subject']);
-	$row['post_text'] = str_replace("\n", '<br />', $row['post_text']);
 
 	// Editing information
 	if (($row['post_edit_count'] && $config['display_last_edited']) || $row['post_edit_reason'])
@@ -1092,7 +1093,7 @@ for ($i = 0; $i < $count; ++$i)
 			$result2 = $_CLASS['core_db']->query($sql);
 			while ($user_edit_row = $_CLASS['core_db']->fetch_row_assoc($result2))
 			{
-				$user_edit_row['username'] = ($user_edit_row['user_colour']) ? '<span style="color:#' . $user_edit_row['user_colour'] . '">' . $user_edit_row['username'] . '</span>' : $user_edit_row['username'];
+				$user_edit_row['username'] = ($user_edit_row['user_colour']) ? '<span style="color:#' . $user_edit_row['user_colour'] . '"><strong>' . $user_edit_row['username'] . '</strong></span>' : $user_edit_row['username'];
 				$post_edit_list[$user_edit_row['user_id']] = $user_edit_row;
 			}
 			$_CLASS['core_db']->free_result($result2);
@@ -1256,7 +1257,7 @@ $allow_change_type = ($_CLASS['forums_auth']->acl_get('m_', $forum_id) || ($_CLA
 
 // Quick mod tools
 $topic_mod = '';
-$topic_mod .= ($_CLASS['forums_auth']->acl_get('m_lock', $forum_id) || ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->data['user_id'] != ANONYMOUS && $_CLASS['core_user']->data['user_id'] == $topic_data['topic_poster'])) ? (($topic_data['topic_status'] == ITEM_UNLOCKED) ? '<option value="lock">' . $_CLASS['core_user']->lang['LOCK_TOPIC'] . '</option>' : '<option value="unlock">' . $_CLASS['core_user']->lang['UNLOCK_TOPIC'] . '</option>') : '';
+$topic_mod .= ($_CLASS['forums_auth']->acl_get('m_lock', $forum_id) || ($_CLASS['forums_auth']->acl_get('f_user_lock', $forum_id) && $_CLASS['core_user']->is_user && $_CLASS['core_user']->data['user_id'] == $topic_data['topic_poster'] && $topic_data['topic_status'] == ITEM_UNLOCKED)) ? (($topic_data['topic_status'] == ITEM_UNLOCKED) ? '<option value="lock">' . $_CLASS['core_user']->lang['LOCK_TOPIC'] . '</option>' : '<option value="unlock">' . $_CLASS['core_user']->lang['UNLOCK_TOPIC'] . '</option>') : '';
 $topic_mod .= ($_CLASS['forums_auth']->acl_get('m_delete', $forum_id)) ? '<option value="delete_topic">' . $_CLASS['core_user']->lang['DELETE_TOPIC'] . '</option>' : '';
 $topic_mod .= ($_CLASS['forums_auth']->acl_get('m_move', $forum_id)) ? '<option value="move">' . $_CLASS['core_user']->lang['MOVE_TOPIC'] . '</option>' : '';
 $topic_mod .= ($_CLASS['forums_auth']->acl_get('m_split', $forum_id)) ? '<option value="split">' . $_CLASS['core_user']->lang['SPLIT_TOPIC'] . '</option>' : '';

@@ -487,7 +487,26 @@ if ($stage === 2)
 
 if ($stage === 1)
 {
-	$gd_info = gd_info();
+	$gd_info = false;
+
+	if (!extension_loaded('gd'))
+	{
+		if (function_exists('dl'))
+		{
+			$prefix = (PHP_SHLIB_SUFFIX === 'dll') ? 'php_' : '';
+			dl($prefix . 'gd2.' . PHP_SHLIB_SUFFIX);
+
+			if (extension_loaded('gd'))
+			{
+				$gd_info = gd_info();
+			}
+		}
+	}
+	else
+	{
+		$gd_info = gd_info();
+	}
+
 	$continue = true;
 
 	if (!$compatible = version_compare(PHP_VERSION, '4.2.0', '>='))
@@ -508,8 +527,8 @@ if ($stage === 1)
 		
 		'mbstring'	=> extension_loaded('mbstring'),
 		'zlib'		=> extension_loaded('zlib'),
-		'gd'		=> extension_loaded('gd'),
-		'gd_version'=> $gd_info['GD Version'],
+		'gd'		=> $gd_info,
+		'gd_version'=> ($gd_info) ? $gd_info['GD Version'] : '',
 
 		'continue'	=> $continue,
 	));

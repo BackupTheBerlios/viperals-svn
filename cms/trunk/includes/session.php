@@ -313,8 +313,10 @@ class sessions
 		$sql = 'DELETE FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' 
 			WHERE user_id = '.(INT) $user_id."
 			AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
-				
+
 		$_CLASS['core_db']->query($sql);
+
+		$_CLASS['core_db']->optimize_tables(CORE_SESSIONS_AUTOLOGIN_TABLE);
 	}
 
 	function session_destroy($session_id = false, $logout = true)

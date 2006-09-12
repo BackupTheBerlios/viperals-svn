@@ -365,17 +365,20 @@ switch ($mode)
 		}
 		unset($active_t_row);
 
-		if ($member['user_sig_bbcode_bitfield'] && $member['user_sig'])
-		{
-			require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
-
-			$bbcode = new bbcode();
-			$bbcode->bbcode_second_pass($member['user_sig'], $member['user_sig_bbcode_uid'], $member['user_sig_bbcode_bitfield']);
-		}
-
 		if ($member['user_sig'])
 		{
-			$member['user_sig'] = censor_text(smiley_text($member['user_sig']));
+			$member['user_sig'] = censor_text($member['user_sig']);
+			$member['user_sig'] = str_replace("\n", '<br />', $member['user_sig']);
+			
+			if ($member['user_sig_bbcode_bitfield'])
+			{
+				require_once SITE_FILE_ROOT.'includes/forums/bbcode.php';
+
+				$bbcode = new bbcode();
+				$bbcode->bbcode_second_pass($member['user_sig'], $member['user_sig_bbcode_uid'], $member['user_sig_bbcode_bitfield']);
+			}
+
+			$member['user_sig'] = smiley_text($member['user_sig']);
 		}
 
 		$poster_avatar = '';
@@ -411,8 +414,33 @@ switch ($mode)
 	
 		$last_visit = ($member['session_time']) ? $member['session_time'] : $member['user_last_visit'];
 		$online = ($member['session_time'] >= ($_CLASS['core_user']->time - $_CORE_CONFIG['server']['session_length']));
+
+		$age = '';
 	
+		if ($data['user_birthday'])
+		{
+			list($bday_day, $bday_month, $bday_year) = array_map('intval', explode('-', $data['user_birthday']));
+	
+			if ($bday_year)
+			{
+				$now = getdate(gmtime());
+	
+				$diff = $now['mon'] - $bday_month;
+				if ($diff == 0)
+				{
+					$diff = ($now['mday'] - $bday_day < 0) ? 1 : 0;
+				}
+				else
+				{
+					$diff = ($diff < 0) ? 1 : 0;
+				}
+	
+				$age = (int) ($now['year'] - $bday_year - $diff);
+			}
+		}
+
 		$_CLASS['core_template']->assign_array(array(
+			'AGE'			=> $age,
 			'USERNAME'		=> $member['username'],
 			'USER_COLOR'	=> ($member['user_colour']) ? $member['user_colour'] : '',
 			'RANK_TITLE'	=> $rank_title,
@@ -453,7 +481,7 @@ switch ($mode)
 			'LOCATION'		=> (!empty($member['user_from'])) ? censor_text($member['user_from']) : '',
 			'OCCUPATION'    => (!empty($member['user_occ'])) ? str_replace("\n", '<br />', censor_text($member['user_occ'])) : '',
 			'INTERESTS'		=> (!empty($member['user_interests'])) ? str_replace("\n", '<br />', censor_text($member['user_interests'])) : '',
-			'SIGNATURE'		=> (!empty($member['user_sig'])) ? str_replace("\n", '<br />', $member['user_sig']) : '',
+			'SIGNATURE'		=> $member['user_sig'],
 
 			'AVATAR_IMG'	=> $poster_avatar,
 			'PM_IMG'		=> $_CLASS['core_user']->img('btn_pm', $_CLASS['core_user']->lang['MESSAGE']),

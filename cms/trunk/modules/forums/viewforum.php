@@ -566,6 +566,7 @@ if (!empty($topic_list))
 			'TOPIC_ICON_IMG_WIDTH'  => empty($icons[$row['icon_id']]) ? '' :  $icons[$row['icon_id']]['width'],
 			'TOPIC_ICON_IMG_HEIGHT' => empty($icons[$row['icon_id']]) ? '' :  $icons[$row['icon_id']]['height'],
 			'ATTACH_ICON_IMG'       => ($row['topic_attachment'] && $_CLASS['forums_auth']->acl_gets(array('f_download', 'u_download'), $forum_id)) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+			'ATTACH_ICON_IMG'		=> ($_CLASS['forums_auth']->acl_get('u_download') && $_CLASS['forums_auth']->acl_get('f_download', $forum_id) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_topic_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 			'UNAPPROVED_IMG'		=> ($topic_unapproved || $posts_unapproved) ? $_CLASS['core_user']->img('icon_unapproved', ($topic_unapproved) ? 'TOPIC_UNAPPROVED' : 'POSTS_UNAPPROVED') : '',
 
 			'S_TOPIC_UNAPPROVED'	=> $topic_unapproved,

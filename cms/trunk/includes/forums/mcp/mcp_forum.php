@@ -220,8 +220,8 @@ foreach ($topic_rows as $row)
 
 	$topic_title = censor_text($row['topic_title']);
 
-	$topic_unapproved = (!$row['topic_approved'] && $_CLASS['forums_auth']->acl_gets('m_approve', $row['forum_id']));
-	$posts_unapproved = ($row['topic_approved'] && $row['topic_replies'] < $row['topic_replies_real'] && $_CLASS['forums_auth']->acl_gets('m_approve', $row['forum_id']));
+	$topic_unapproved = (!$row['topic_approved'] && $_CLASS['forums_auth']->acl_get('m_approve', $row['forum_id']));
+	$posts_unapproved = ($row['topic_approved'] && $row['topic_replies'] < $row['topic_replies_real'] && $_CLASS['forums_auth']->acl_get('m_approve', $row['forum_id']));
 	$u_mcp_queue = ($topic_unapproved || $posts_unapproved) ? generate_link($url . '&amp;i=queue&amp;mode='.(($topic_unapproved) ? 'approve_details' : 'unapproved_posts') .'&amp;t=' . $row['topic_id'], false, false) : false;
 
 	$_CLASS['core_template']->assign_vars_array('topicrow', array(
@@ -232,7 +232,7 @@ foreach ($topic_rows as $row)
 		'U_MCP_QUEUE'		=> $u_mcp_queue,
 		'U_MCP_REPORT'		=> generate_link("forums&amp;file=mcp&amp;i=main&amp;mode=topic_view&amp;t={$row['topic_id']}&amp;action=reports"),
 
-		'ATTACH_ICON_IMG'	=> ($_CLASS['forums_auth']->acl_gets('f_download', 'u_download', $row['forum_id']) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
+		'ATTACH_ICON_IMG'	=> ($_CLASS['forums_auth']->acl_get('u_download') && $_CLASS['forums_auth']->acl_get('f_download', $row['forum_id']) && $row['topic_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 		'TOPIC_FOLDER_IMG' 	=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 		//'TOPIC_FOLDER_IMG_SRC'	=> $user->img($folder_img, $folder_alt, false, '', 'src'),
 
@@ -248,7 +248,7 @@ foreach ($topic_rows as $row)
 		'TOPIC_ID'			=> $row['topic_id'],
 		'S_TOPIC_CHECKED'	=> ($topic_id_list && in_array($row['topic_id'], $topic_id_list)) ? 'checked="checked" ' : '',
 
-		'S_TOPIC_REPORTED'	=> (!empty($row['topic_reported']) && $_CLASS['forums_auth']->acl_gets('m_report', $row['forum_id'])),
+		'S_TOPIC_REPORTED'	=> (!empty($row['topic_reported']) && $_CLASS['forums_auth']->acl_get('m_report', $row['forum_id'])),
 		'S_TOPIC_UNAPPROVED'=> $topic_unapproved,
 		'S_POSTS_UNAPPROVED'=> $posts_unapproved,
 		'NEWEST_POST_IMG' => false

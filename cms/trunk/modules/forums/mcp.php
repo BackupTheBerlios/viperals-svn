@@ -170,7 +170,6 @@ if (!$_CLASS['forums_auth']->acl_get('m_'))//acl_getf_global
 	// Except he is using one of the quickmod tools for users
 	$user_quickmod_actions = array(
 		'lock'			=> 'f_user_lock',
-		'unlock'		=> 'f_user_lock',
 		'make_sticky'	=> 'f_sticky',
 		'make_announce'	=> 'f_announce',
 		'make_global'	=> 'f_announce',

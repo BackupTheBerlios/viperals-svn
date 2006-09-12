@@ -190,7 +190,7 @@ class module_control_panel
 						redirect();
 					}
 			
-					login_box();
+					$_CLASS['core_auth']->auth_login();
 				break;
 			
 				case 'logout':

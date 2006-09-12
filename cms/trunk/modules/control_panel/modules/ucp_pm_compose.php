@@ -192,7 +192,7 @@ function compose_pm($id, $mode, $action)
 		$folder_id		= isset($post['folder_id']) ? $post['folder_id'] : 0;
 		$message_text	= isset($post['message_text']) ? $post['message_text'] : '';
 
-		if (!$post['author_id'] && $msg_id)
+		if ((!$post['author_id'] || ($post['author_id'] == ANONYMOUS && $action !== 'delete')) && $msg_id)
 		{
 			trigger_error('NO_AUTHOR');
 		}

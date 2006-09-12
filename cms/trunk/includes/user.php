@@ -105,7 +105,7 @@ class core_user extends sessions
 	function time_convert($time, $conversion = 'user')
 	{
 		// user and gmt
-		if ($conversion == 'gmt')
+		if ($conversion === 'gmt')
 		{
 			return ($time - $this->time_offset);
 		}
@@ -118,6 +118,7 @@ class core_user extends sessions
 		global $_CLASS;
 
 		settype($id, 'int');
+		$admin_login = true;
 
 		if ($bot = check_bot_status($this->browser, $this->ip))
 		{
@@ -358,10 +359,10 @@ class core_user extends sessions
 		return $this->img[$img];
 	}
 		
-	function add_lang($lang_file = false, $module = false)
+	function add_lang($lang_file = false, $module = false, $direct_path = false)
 	{
-//Need a check for if the lang file exsists
-	
+		global $_CLASS;
+
 		//print_r(debug_backtrace());
 		if (is_array($lang_file))
 		{
@@ -369,37 +370,68 @@ class core_user extends sessions
 			{
 				$this->add_lang($lang, $module);
 			}
-			
+
 			unset($lang);
 			return;
 		}
-		
-		if ($lang_file)
-		{
-			if (mb_strpos($lang_file, '/') !== false)
-			{
-				include SITE_FILE_ROOT."language/{$this->lang_name}/$lang_file";
 
-				return;
+		if ($direct_path)
+		{
+			if (file_exists(SITE_FILE_ROOT.$lang_file))
+			{
+				require_once SITE_FILE_ROOT.$lang_file;
+
+				return true;
 			}
 
+			return false;
+		}
+
+		if ($lang_file)
+		{
 			$lang_file = $lang_file.'.php';
 		}
 		else
 		{
 			$lang_file = 'index.php';
 		}
-
-		if (!$module)
-		{
-			global $_CLASS;
-
-			include SITE_FILE_ROOT.'modules/'.$_CLASS['core_display']->page['page_name']."/language/$this->lang_name/$lang_file";
-
-			return;
-		}
 		
-		include SITE_FILE_ROOT."modules/$module/language/$this->lang_name/$lang_file";		
+		if (!$module && !is_null($module) && isset($_CLASS['core_display']->page['page_name']))
+		{
+			$module = $_CLASS['core_display']->page['page_name'];
+		}
+
+		if ($module)
+		{
+			$module .= '/';
+		}
+
+		if (file_exists(SITE_FILE_ROOT."modules/{$module}language/{$this->lang_name}/$lang_file"))
+		{
+			require_once SITE_FILE_ROOT."modules/{$module}language/{$this->lang_name}/$lang_file";
+			
+			return true;
+		}
+		elseif (file_exists(SITE_FILE_ROOT."modules/{$module}language/$lang_file"))
+		{
+			require_once SITE_FILE_ROOT."modules/{$module}language/$lang_file";
+
+			return true;
+		}
+		elseif (file_exists(SITE_FILE_ROOT."language/{$module}{$this->lang_name}/$lang_file"))
+		{
+			require_once SITE_FILE_ROOT."language/{$module}{$this->lang_name}/$lang_file";
+			
+			return true;
+		}
+		elseif (file_exists(SITE_FILE_ROOT."language/{$module}$lang_file"))
+		{
+			require_once SITE_FILE_ROOT."language/{$module}$lang_file";
+			
+			return true;
+		}
+
+		return false;
 	}
 
 	function user_data_get($name, $default = false)

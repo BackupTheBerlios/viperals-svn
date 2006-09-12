@@ -129,7 +129,18 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 				{
 					foreach ($id_ary as $ug_id => $_id)
 					{
-						$address_list[$message_id][] = (($type === 'u') ? '<a href="'.generate_link('members_list&amp;mode=viewprofile&amp;u='.$ug_id).'">' : '<a href="'.generate_link('members_list&amp;mode=group&amp;g='.$ug_id).'">') . (($recipient_list[$type][$ug_id]['colour']) ? '<span style="color:#' . $recipient_list[$type][$ug_id]['colour'] . '">' : '<span>') . $recipient_list[$type][$ug_id]['name'] . '</span></a>';
+						$user_colour = ($recipient_list[$type][$ug_id]['colour']) ? ' style="color:#' . $recipient_list[$type][$ug_id]['colour'] . '"' : '';
+
+						if ($type === 'u')
+						{
+							$link = ($ug_id != ANONYMOUS) ? '<a href="' . generate_link('members_list&amp;mode=viewprofile&amp;u='.$ug_id) . '"' . $user_colour . '>' : '';
+						}
+						else
+						{
+							$link = '<a href="' . generate_link('members_list&amp;mode=group&amp;g='.$ug_id) . '"' . $user_colour . '>';
+						}
+
+						$address_list[$message_id][] = $link . $recipient_list[$type][$ug_id]['name'] . (($link) ? '</a>' : '');
 					}
 				}
 			}
@@ -144,7 +155,7 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 			$folder_alt = ($row['pm_unread']) ? 'NEW_MESSAGES' : 'NO_NEW_MESSAGES';
 
 			// Generate all URIs ...
-			$message_author = '<a href="'.generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['author_id']) . '">' . $row['username'] . '</a>';
+			$message_author = ($row['author_id'] != ANONYMOUS) ? '<a href="' . generate_link('members_list&amp;mode=viewprofile&amp;u=' . $row['author_id']) . '">' . $row['username'] . '</a>' : $row['username'];
 			$view_message_url = generate_link($parent_class->link_parent."&amp;f=$folder_id&amp;p=$message_id");
 			$remove_message_url = generate_link($parent_class->link_parent.'&amp;mode=compose&amp;action=delete&amp;p='.$message_id);
 			
@@ -168,16 +179,16 @@ function view_folder($parent_class, $folder_id, $folder, $type)
 				'MESSAGE_AUTHOR'	=> $message_author,
 				'SENT_TIME'		 	=> $_CLASS['core_user']->format_date($row['message_time']),
 				'SUBJECT'			=> censor_text($row['message_subject']),
-				'FOLDER'			=> (isset($folder[$row['folder_id']])) ? $folder[$row['folder_id']]['folder_name'] : '',
-				'U_FOLDER'			=> (isset($folder[$row['folder_id']])) ? generate_link($parent_class->link_parent.'&amp;folder=' . $row['folder_id']) : '',
+				'FOLDER'			=> isset($folder[$row['folder_id']]) ? $folder[$row['folder_id']]['folder_name'] : '',
+				'U_FOLDER'			=> isset($folder[$row['folder_id']]) ? generate_link($parent_class->link_parent.'&amp;folder=' . $row['folder_id']) : '',
 				'PM_ICON_IMG'		=> (!empty($icons[$row['icon_id']])) ? '<img src="' . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] . '" width="' . $icons[$row['icon_id']]['width'] . '" height="' . $icons[$row['icon_id']]['height'] . '" alt="" title="" />' : '',
 				'FOLDER_IMG'		=> $_CLASS['core_user']->img($folder_img, $folder_alt),
 				'PM_IMG'			=> ($row_indicator) ? $_CLASS['core_user']->img('pm_' . $row_indicator, '') : '',
 				'ATTACH_ICON_IMG'	=> ($row['message_attachment']) ? $_CLASS['core_user']->img('icon_attach', $_CLASS['core_user']->lang['TOTAL_ATTACHMENTS']) : '',
 				//'S_PM_REPORTED'		=> (!empty($row['message_reported'])) ? true : false,
 				'S_PM_REPORTED'		=> '',
-				'S_PM_DELETED'		=> ($row['pm_deleted']),
-				
+				'S_PM_DELETED'		=> ($row['pm_deleted']) ? true : false,
+				'S_AUTHOR_DELETED'	=> ($row['author_id'] == ANONYMOUS) ? true : false,
 				'U_VIEW_PM'			=> ($row['pm_deleted']) ? '' : $view_message_url,
 				'U_REMOVE_PM'		=> ($row['pm_deleted']) ? $remove_message_url : '',
 				

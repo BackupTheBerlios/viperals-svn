@@ -15,1289 +15,1134 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	die; 
 }
 
-// values need checks
+$u_action = '';
+$permission_dropdown = '';
+$mode = request_var('mode', 'view_forum_local');
+
+load_class(SITE_FILE_ROOT.'includes/forums/admin/auth.php', 'forums_auth_admin');
+
+$_CLASS['core_user']->add_lang('admin_permissions', 'forums');
+$_CLASS['core_user']->add_lang('admin_permissions_phpbb', 'forums');
 
 
-// Grab and set some basic parameters
-//
-// 'mode' determines what we're altering; administrators, users, deps, etc.
-// 'submit' is used to determine what we're doing ... special format
-$mode		= (isset($_REQUEST['mode'])) ? htmlspecialchars($_REQUEST['mode']) : '';
+// Trace has other vars
+if ($mode === 'trace')
+{
+	$user_id = request_var('u', 0);
+	$forum_id = request_var('f', 0);
+	$permission = request_var('auth', '');
 
-// What mode are we running? So we can output the correct title, explanation
-// and set the sql_option_mode/acl check
+	if ($user_id && isset($_CLASS['forums_auth_admin']->option_ids[$permission]) && $_CLASS['forums_auth']->acl_get('a_viewauth'))
+	{
+		$page_title = sprintf($_CLASS['core_user']->lang['TRACE_PERMISSION'], $_CLASS['core_user']->lang['acl_' . $permission]['lang']);
+		permission_trace($user_id, $forum_id, $permission);
+
+		$_CLASS['core_display']->display($page_title, 'modules/forums/admin/permission_trace.html');
+	}
+
+	trigger_error('NO_MODE');
+}
+
+// Set some vars
+$action = get_variable('action', 'REQUEST', false, 'array');
+
+if ($action)
+{
+	$action = key($action);
+}
+
+$action = isset($_POST['psubmit']) ? 'apply_permissions' : $action;
+
+$all_forums = request_var('all_forums', 0);
+$subforum_id = request_var('subforum_id', 0);
+$forum_id = request_var('forum_id', array(0));
+
+$username = request_var('username', array(''));
+$usernames = request_var('usernames', '');
+$user_id = request_var('user_id', array(0));
+
+$group_id = request_var('group_id', array(0));
+$select_all_groups = request_var('select_all_groups', 0);
+
+// If select all groups is set, we pre-build the group id array (this option is used for other screens to link to the permission settings screen)
+if ($select_all_groups)
+{
+	// Add default groups to selection
+	$sql_and = (!$config['coppa_enable']) ? " AND group_name NOT IN ('INACTIVE_COPPA', 'REGISTERED_COPPA')" : '';
+
+	$sql = 'SELECT group_id
+		FROM ' . CORE_GROUPS_TABLE . '
+		WHERE group_type = ' . GROUP_SPECIAL . "
+		$sql_and";
+	$result = $_CLASS['core_db']->query($sql);
+
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$group_id[] = $row['group_id'];
+	}
+	$_CLASS['core_db']->free_result($result);
+}
+
+// Map usernames to ids and vice versa
+if ($usernames)
+{
+	$username = explode("\n", $usernames);
+}
+unset($usernames);
+
+if (sizeof($username) && !sizeof($user_id))
+{
+	user_get_id_name($user_id, $username);
+
+	if (!sizeof($user_id))
+	{
+		trigger_error($_CLASS['core_user']->lang['SELECTED_USER_NOT_EXIST'] . adm_back_link($u_action));
+	}
+}
+unset($username);
+
+// Build forum ids (of all forums are checked or subforum listing used)
+if ($all_forums)
+{
+	$sql = 'SELECT forum_id
+		FROM ' . FORUMS_FORUMS_FORUMS_TABLE . '
+		ORDER BY left_id';
+	$result = $_CLASS['core_db']->query($sql);
+
+	$forum_id = array();
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$forum_id[] = $row['forum_id'];
+	}
+	$_CLASS['core_db']->free_result($result);
+}
+else if ($subforum_id)
+{
+	$forum_id = array();
+	foreach (get_forum_branch($subforum_id, 'children') as $row)
+	{
+		$forum_id[] = $row['forum_id'];
+	}
+}
+
+// Define some common variables for every mode
+$error = array();
+
+$permission_scope = (strpos($mode, '_global') !== false) ? 'global' : 'local';
+
+$_CLASS['core_template']->assign_array(array(
+	'S_SELECT_USERGROUP'		=> false,
+	'S_SELECT_USERGROUP_VIEW'	=> false,
+	'S_SETTING_PERMISSIONS'		=> false,
+	'S_VIEWING_PERMISSIONS'		=> false,
+	'S_SELECT_FORUM'			=> false,
+	'S_SELECT_GROUP'			=> false,
+	'S_SELECT_USER'				=> false,
+));
+			
+// Showing introductionary page?
+if ($mode === 'intro')
+{
+	$page_title = 'ACP_PERMISSIONS';
+
+	$_CLASS['core_template']->assign('S_INTRO', true);
+
+	$_CLASS['core_display']->display($page_title, 'modules/forums/admin/acp_permissions.html');
+
+	return;
+}
+else
+{
+	$_CLASS['core_template']->assign('S_INTRO', false);
+}
+
 switch ($mode)
 {
-	case 'forum':
-		$l_title = $_CLASS['core_user']->lang['PERMISSIONS'];
-		$l_title_explain = $_CLASS['core_user']->lang['PERMISSIONS_EXPLAIN'];
-		$which_acl = 'a_auth';
-		$sql_option_mode = 'f';
-		break;
-
-	case 'mod':
-		$l_title = $_CLASS['core_user']->lang['MODERATORS'];
-		$l_title_explain = $_CLASS['core_user']->lang['MODERATORS_EXPLAIN'];
-		$which_acl = 'a_authmods';
-		$sql_option_mode = 'm';
-		break;
-
-	case 'supermod':
-		$l_title = $_CLASS['core_user']->lang['SUPER_MODERATORS'];
-		$l_title_explain = $_CLASS['core_user']->lang['SUPER_MODERATORS_EXPLAIN'];
-		$which_acl = 'a_authmods';
-		$sql_option_mode = 'm';
-		break;
-
-	case 'admin':
-		$l_title = $_CLASS['core_user']->lang['ADMINISTRATORS'];
-		$l_title_explain = $_CLASS['core_user']->lang['ADMINISTRATORS_EXPLAIN'];
-		$which_acl = 'a_authadmins';
-		$sql_option_mode = 'a';
-		break;
-
-	case 'user':
-		$l_title = $_CLASS['core_user']->lang['USER_PERMISSIONS'];
-		$l_title_explain = $_CLASS['core_user']->lang['USER_PERMISSIONS_EXPLAIN'];
-		$which_acl = 'a_authusers';
-		$sql_option_mode = 'u';
-		break;
-
-	case 'group':
-		$l_title = $_CLASS['core_user']->lang['GROUP_PERMISSIONS'];
-		$l_title_explain = $_CLASS['core_user']->lang['GROUP_PERMISSIONS_EXPLAIN'];
-		$which_acl = 'a_authgroups';
-		$sql_option_mode = 'u';
-		break;
-
-	case 'deps':
-		$l_title = $_CLASS['core_user']->lang['DEPENDENCIES'];
-		$l_title_explain = $_CLASS['core_user']->lang['DEPENDENCIES_EXPLAIN'];
-		$which_acl = 'a_authdeps';
-		break;
-}
-
-// Permission check
-if (!$_CLASS['auth']->acl_get($which_acl))
-{
-	trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
-}
-
-$submode	= (isset($_REQUEST['submode'])) ? htmlspecialchars($_REQUEST['submode']) : '';
-$which_mode = (!empty($submode) && $submode != $mode) ? $submode : $mode;
-$submit		= array_values(preg_grep('#^submit_(.*)$#i', array_keys($_REQUEST)));
-$submit		= (count($submit)) ? substr($submit[0], strpos($submit[0], '_') + 1) : '';
-
-// Submitted setting data
-//
-// 'auth_settings' contains the submitted option settings assigned to options, should be an 
-//   associative array with integer values
-$auth_settings = (isset($_POST['settings'])) ? $_POST['settings'] : '';
-
-
-// Forum, User or Group information
-//
-// 'ug_type' is either user or groups used mainly for forum/admin/mod permissions
-// 'ug_data' contains the list of usernames, user_id's or group_ids for the 'ug_type'
-// 'forum_id' contains the list of forums, 0 is used for "All forums", can be array or scalar
-$ug_type = (isset($_REQUEST['ug_type'])) ? htmlspecialchars($_REQUEST['ug_type']) : '';
-$ug_data = (isset($_POST['ug_data'])) ? $_POST['ug_data'] : '';
-
-if (isset($_REQUEST['f']))
-{
-	$forum_id = (is_array($_REQUEST['f'])) ? $_REQUEST['f'] : intval($_REQUEST['f']);
-}
-
-if (!isset($forum_id[$which_mode]))
-{
-	$forum_id[$which_mode][] = 0;
-}
-
-$sql_forum_id = implode(', ', array_map('intval', $forum_id[$which_mode]));
-
-// Generate list of forum id's
-$s_forum_id = '';
-
-foreach ($forum_id as $forum_submode => $forum_submode_ids)
-{
-	foreach ($forum_submode_ids as $submode_forum_id)
-	{
-		$s_forum_id .= '<input type="hidden" name="f[' . $forum_submode . '][]" value="' . $submode_forum_id . '" />';
-	}
-}
-unset($forum_submode_ids);
-unset($forum_submode);
-unset($submode_forum_id);
-
-
-// Instantiate a new auth admin object in readiness
-$auth_admin = new auth_admin();
-
-// Are we setting deps? If we are we need to re-run the mode match above for the
-// relevant 'new' mode
-if (!empty($submode))
-{
-	switch ($submode)
-	{
-		case 'forum':
-			$l_title_explain = $_CLASS['core_user']->lang['PERMISSIONS_EXPLAIN'];
-			$which_acl = 'a_auth';
-			$sql_option_mode = 'f';
-			break;
-
-		case 'mod':
-			$l_title_explain = $_CLASS['core_user']->lang['MODERATORS_EXPLAIN'];
-			$which_acl = 'a_authmods';
-			$sql_option_mode = 'm';
-			break;
-
-		case 'supermod':
-			$l_title_explain = $_CLASS['core_user']->lang['SUPER_MODERATORS_EXPLAIN'];
-			$which_acl = 'a_authmods';
-			$sql_option_mode = 'm';
-			break;
-	}
-
-	// Permission check
-	if (!$_CLASS['auth']->acl_get($which_acl))
-	{
-		trigger_error($_CLASS['core_user']->lang['NO_ADMIN']);
-	}
-}
-
-
-// Does user want to update anything? Check here to find out 
-// and act appropriately
-switch ($submit)
-{
-	case 'update':
-		if (!empty($auth_settings))
-		{
-			// Admin wants subforums to inherit permissions ... so add these
-			// forums to the list ... since inheritance is only available for
-			// forum and moderator primary modes we deal with '$forum_id[$mode]'
-			if (!empty($_POST['inherit']))
-			{
-				$forum_id[$mode] = array_merge($forum_id[$mode], array_map('intval', $_POST['inherit']));
-			}
-
-			// Update the permission set ... we loop through each auth setting array
-			foreach ($auth_settings as $auth_submode => $auth_setting)
-			{
-				// Are any entries * ? If so we need to remove them since they
-				// are options the user wishes to ignore
-
-				if (in_array('*', $auth_setting))
-				{
-					foreach ($auth_setting as $option => $setting)
-					{
-						if ($setting == '*')
-						{
-							unset($auth_setting[$option]);
-						}
-					}
-				}
-
-				if (!empty($auth_setting))
-				{
-					// Loop through all user/group ids
-					foreach ($ug_data as $id)
-					{
-						$auth_admin->acl_set($ug_type, $forum_id[$auth_submode], $id, $auth_setting);
-					}
-				}
-			}
-
-			// Do we need to recache the moderator lists? We do if the mode
-			// was mod or auth_settings['mod'] is a non-zero size array
-			if ($mode == 'mod' || !empty($auth_settings['mod']))
-			{
-				cache_moderators();
-			}
-
-			// Remove users who are now moderators or admins from everyones foes
-			// list
-			if ($mode == 'mod' || !empty($auth_settings['mod']) || $mode == 'admin' || !empty($auth_settings['admin']))
-			{
-				update_foes();
-			}
-
-			// Logging ... first grab user or groupnames ...
-			$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . CORE_GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . CORE_USERS_TABLE . ' WHERE user_id';
-			$sql .=  ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')';
-			$result = $_CLASS['core_db']->query($sql);
-
-			$l_ug_list = '';
-			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-			{
-				$l_ug_list .= (($l_ug_list != '') ? ', ' : '') . (($row['group_type'] == GROUP_SYSTEM) ? '<span class="blue">' . $_CLASS['core_user']->lang['G_' . $row['name']] . '</span>' : $row['name']);
-			}
-			$_CLASS['core_db']->free_result($result);
-
-			$auth_submode = array_keys($auth_settings);
-			foreach ($auth_submode as $sub_mode)
-			{
-				if (!in_array(0, $forum_id[$sub_mode]))
-				{
-					// Grab the forum details if non-zero forum_id
-					$sql = 'SELECT forum_name  
-						FROM ' . FORUMS_FORUMS_TABLE . "
-						WHERE forum_id IN ($sql_forum_id)";
-					$result = $_CLASS['core_db']->query($sql);
-
-					$l_forum_list = '';
-					while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-					{
-						$l_forum_list .= (($l_forum_list != '') ? ', ' : '') . $row['forum_name'];
-					}
-					$_CLASS['core_db']->free_result($result);
-
-					add_log('admin', 'LOG_ACL_' . strtoupper($sub_mode) . '_ADD', $l_forum_list, $l_ug_list);
-				}
-				else
-				{
-					add_log('admin', 'LOG_ACL_' . strtoupper($sub_mode) . '_ADD', $l_ug_list);
-				}
-			}
-			unset($l_ug_list);
-		}
-		unset($auth_submode);
-		unset($auth_setting);
-
-		trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED']);
+	case 'setting_user_global':
+	case 'setting_group_global':
+		$permission_dropdown = array('u_', 'm_', 'a_');
+		$permission_victim = ($mode === 'setting_user_global') ? array('user') : array('group');
+		$page_title = ($mode === 'setting_user_global') ? 'ACP_USERS_PERMISSIONS' : 'ACP_GROUPS_PERMISSIONS';
 	break;
 
-	case 'delete':
-		$sql = "SELECT auth_option_id
-			FROM " . FORUMS_ACL_OPTIONS_TABLE . "
-			WHERE auth_option LIKE '{$sql_option_mode}_%'";
+	case 'setting_user_local':
+	case 'setting_group_local':
+		$permission_dropdown = array('f_', 'm_');
+		$permission_victim = ($mode === 'setting_user_local') ? array('user', 'forums') : array('group', 'forums');
+		$page_title = ($mode === 'setting_user_local') ? 'ACP_USERS_FORUM_PERMISSIONS' : 'ACP_GROUPS_FORUM_PERMISSIONS';
+	break;
+
+	case 'setting_admin_global':
+	case 'setting_mod_global':
+		$permission_dropdown = (strpos($mode, '_admin_') !== false) ? array('a_') : array('m_');
+		$permission_victim = array('usergroup');
+		$page_title = ($mode === 'setting_admin_global') ? 'ACP_ADMINISTRATORS' : 'ACP_GLOBAL_MODERATORS';
+	break;
+
+	case 'setting_mod_local':
+	case 'setting_forum_local':
+		$permission_dropdown = ($mode === 'setting_mod_local') ? array('m_') : array('f_');
+		$permission_victim = array('forums', 'usergroup');
+		$page_title = ($mode === 'setting_mod_local') ? 'ACP_FORUM_MODERATORS' : 'ACP_FORUM_PERMISSIONS';
+	break;
+
+	case 'view_admin_global':
+	case 'view_user_global':
+	case 'view_mod_global':
+		$permission_dropdown = ($mode === 'view_admin_global') ? array('a_') : (($mode === 'view_user_global') ? array('u_') : array('m_'));
+		$permission_victim = array('usergroup_view');
+		$page_title = ($mode === 'view_admin_global') ? 'ACP_VIEW_ADMIN_PERMISSIONS' : (($mode === 'view_user_global') ? 'ACP_VIEW_USER_PERMISSIONS' : 'ACP_VIEW_GLOBAL_MOD_PERMISSIONS');
+	break;
+
+	case 'view_mod_local':
+	case 'view_forum_local':
+		$permission_dropdown = ($mode === 'view_mod_local') ? array('m_') : array('f_');
+		$permission_victim = array('forums', 'usergroup_view');
+		$page_title = ($mode === 'view_mod_local') ? 'ACP_VIEW_FORUM_MOD_PERMISSIONS' : 'ACP_VIEW_FORUM_PERMISSIONS';
+	break;
+
+	default:
+		trigger_error('INVALID_MODE');
+	break;
+}
+
+$_CLASS['core_template']->assign_array(array(
+	'L_TITLE'		=> $_CLASS['core_user']->get_lang($page_title),
+	'L_EXPLAIN'		=> $_CLASS['core_user']->get_lang($page_title . '_EXPLAIN')
+));
+
+// Get permission type
+$permission_type = request_var('type', $permission_dropdown[0]);
+
+if (!in_array($permission_type, $permission_dropdown))
+{
+	trigger_error($_CLASS['core_user']->lang['WRONG_PERMISSION_TYPE'] . adm_back_link($u_action));
+}
+
+
+// Handle actions
+if (strpos($mode, 'setting_') === 0 && $action)
+{
+	switch ($action)
+	{
+		case 'delete':
+			// All users/groups selected?
+			$all_users = (isset($_POST['all_users'])) ? true : false;
+			$all_groups = (isset($_POST['all_groups'])) ? true : false;
+
+			if ($all_users || $all_groups)
+			{
+				$items = retrieve_defined_user_groups($permission_scope, $forum_id, $permission_type);
+
+				if ($all_users && sizeof($items['user_ids']))
+				{
+					$user_id = $items['user_ids'];
+				}
+				else if ($all_groups && sizeof($items['group_ids']))
+				{
+					$group_id = $items['group_ids'];
+				}
+			}
+
+			if (sizeof($user_id) || sizeof($group_id))
+			{
+				remove_permissions($mode, $permission_type, $_CLASS['forums_auth_admin'], $user_id, $group_id, $forum_id);
+			}
+			else
+			{
+				trigger_error($_CLASS['core_user']->lang['NO_USER_GROUP_SELECTED'] . adm_back_link($u_action));
+			}
+		break;
+
+		case 'apply_permissions':
+			if (!isset($_POST['setting']))
+			{
+				trigger_error($_CLASS['core_user']->lang['NO_AUTH_SETTING_FOUND'] . adm_back_link($u_action));
+			}
+
+			set_permissions($mode, $permission_type, $_CLASS['forums_auth_admin'], $user_id, $group_id);
+		break;
+
+		case 'apply_all_permissions':
+			if (!isset($_POST['setting']))
+			{
+				trigger_error($_CLASS['core_user']->lang['NO_AUTH_SETTING_FOUND'] . adm_back_link($u_action));
+			}
+
+			set_all_permissions($mode, $permission_type, $_CLASS['forums_auth_admin'], $user_id, $group_id);
+		break;
+	}
+}
+
+
+// Setting permissions screen
+$s_hidden_fields = generate_hidden_fields(array(
+	'user_id'		=> $user_id,
+	'group_id'		=> $group_id,
+	'forum_id'		=> $forum_id,
+	'type'			=> $permission_type
+));
+
+// Go through the screens/options needed and present them in correct order
+foreach ($permission_victim as $victim)
+{
+	switch ($victim)
+	{
+		case 'forum_dropdown':
+
+			if (sizeof($forum_id))
+			{
+				check_existence('forum', $forum_id);
+				continue 2;
+			}
+
+			$_CLASS['core_template']->assign_array(array(
+				'S_SELECT_FORUM'		=> true,
+				'S_FORUM_OPTIONS'		=> make_forum_select(false, false, true, false, false))
+			);
+
+		break;
+
+		case 'forums':
+
+			if (sizeof($forum_id))
+			{
+				check_existence('forum', $forum_id);
+				continue 2;
+			}
+
+			$forum_list = make_forum_select(false, false, true, false, false, false, true);
+
+			// Build forum options
+			$s_forum_options = '';
+			foreach ($forum_list as $f_id => $f_row)
+			{
+				$s_forum_options .= '<option value="' . $f_id . '"' . $f_row['selected'] . '>' . $f_row['padding'] . $f_row['forum_name'] . '</option>';
+			}
+
+			// Build subforum options
+			$s_subforum_options = build_subforum_options($forum_list);
+
+			$_CLASS['core_template']->assign_array(array(
+				'S_SELECT_FORUM'		=> true,
+				'S_FORUM_OPTIONS'		=> $s_forum_options,
+				'S_SUBFORUM_OPTIONS'	=> $s_subforum_options,
+				'S_FORUM_ALL'			=> true,
+				'S_FORUM_MULTIPLE'		=> true
+			));
+
+		break;
+
+		case 'user':
+
+			if (sizeof($user_id))
+			{
+				check_existence('user', $user_id);
+				continue 2;
+			}
+
+			$_CLASS['core_template']->assign_array(array(
+				'S_SELECT_USER'			=> true,
+				'U_FIND_USERNAME'		=> generate_link('members_list&amp;mode=searchuser&amp;form=select_victim&amp;field=username')
+			));
+
+		break;
+
+		case 'group':
+
+			if (sizeof($group_id))
+			{
+				check_existence('group', $group_id);
+				continue 2;
+			}
+
+			$_CLASS['core_template']->assign_array(array(
+				'S_SELECT_GROUP'		=> true,
+				'S_GROUP_OPTIONS'		=> group_select_options(false)
+			));
+
+		break;
+
+		case 'usergroup':
+		case 'usergroup_view':
+
+			if (sizeof($user_id) || sizeof($group_id))
+			{
+				if (sizeof($user_id))
+				{
+					check_existence('user', $user_id);
+				}
+
+				if (sizeof($group_id))
+				{
+					check_existence('group', $group_id);
+				}
+
+				continue 2;
+			}
+
+			$items = retrieve_defined_user_groups($permission_scope, $forum_id, $permission_type);
+
+			// Now we check the users... because the "all"-selection is different here (all defined users/groups)
+			$all_users = (isset($_POST['all_users'])) ? true : false;
+			$all_groups = (isset($_POST['all_groups'])) ? true : false;
+
+			if ($all_users && sizeof($items['user_ids']))
+			{
+				$user_id = $items['user_ids'];
+				continue 2;
+			}
+
+			if ($all_groups && sizeof($items['group_ids']))
+			{
+				$group_id = $items['group_ids'];
+				continue 2;
+			}
+
+			$_CLASS['core_template']->assign_array(array(
+				'S_SELECT_USERGROUP'		=> ($victim === 'usergroup') ? true : false,
+				'S_SELECT_USERGROUP_VIEW'	=> ($victim == 'usergroup_view') ? true : false,
+				'S_DEFINED_USER_OPTIONS'	=> $items['user_ids_options'],
+				'S_DEFINED_GROUP_OPTIONS'	=> $items['group_ids_options'],
+				'S_ADD_GROUP_OPTIONS'		=> group_select_options(false, $items['group_ids']),
+				'U_FIND_USERNAME'			=> generate_link('members_list&amp;mode=searchuser&amp;form=add_user&amp;field=username')
+			));
+
+		break;
+	}
+
+	$_CLASS['core_template']->assign_array(array(
+		'U_ACTION'				=> $u_action,
+		'ANONYMOUS_USER_ID'		=> ANONYMOUS,
+
+		'S_SELECT_VICTIM'		=> true,
+		'S_CAN_SELECT_USER'		=> ($_CLASS['forums_auth']->acl_get('a_authusers')) ? true : false,
+		'S_CAN_SELECT_GROUP'	=> ($_CLASS['forums_auth']->acl_get('a_authgroups')) ? true : false,
+		'S_HIDDEN_FIELDS'		=> $s_hidden_fields
+	));
+
+	// Let the forum names being displayed
+	if (sizeof($forum_id))
+	{
+		$sql = 'SELECT forum_name
+			FROM ' . FORUMS_FORUMS_TABLE . '
+			WHERE forum_id IN (' . implode(', ', $forum_id) . ')
+			ORDER BY forum_name ASC';
 		$result = $_CLASS['core_db']->query($sql);
 
-		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			$option_id_ary = array();
-			do
-			{
-				$option_id_ary[] = $row['auth_option_id'];
-			}
-			while($row = $_CLASS['core_db']->fetch_row_assoc($result));
-
-			foreach ($ug_data as $id)
-			{
-				$auth_admin->acl_delete($ug_type, $forum_id[$mode], $id, $option_id_ary);
-			}
-			unset($option_id_ary);
-		}
-		$_CLASS['core_db']->free_result($result);
-
-
-		// Do we need to recache the moderator lists? We do if the mode
-		// was mod or auth_settings['mod'] is a non-zero size array
-		if ($mode == 'mod' || (isset($auth_settings['mod']) && !empty($auth_settings['mod'])))
-		{
-			cache_moderators();
-		}
-
-		// Logging ... first grab user or groupnames ...
-		$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . CORE_GROUPS_TABLE . ' WHERE group_id' : 'SELECT username as name FROM ' . CORE_USERS_TABLE . ' WHERE user_id';
-		$sql .=  ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')';
-		$result = $_CLASS['core_db']->query($sql);
-
-		$l_ug_list = '';
+		$forum_names = array();
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$l_ug_list .= (($l_ug_list != '') ? ', ' : '') . ((isset($row['group_type']) && $row['group_type'] == GROUP_SPECIAL) ? '<span class="blue">' . $_CLASS['core_user']->lang['G_' . $row['name']] . '</span>' : $row['name']);
+			$forum_names[] = $row['forum_name'];
 		}
 		$_CLASS['core_db']->free_result($result);
 
+		$_CLASS['core_template']->assign_array(array(
+			'S_FORUM_NAMES'		=> (sizeof($forum_names)) ? true : false,
+			'FORUM_NAMES'		=> implode(', ', $forum_names)
+		));
+	}
 
-		// Grab the forum details if non-zero forum_id
-		if (!in_array(0, $forum_id[$which_mode]))
+	$_CLASS['core_display']->display($page_title, 'modules/forums/admin/acp_permissions.html');
+
+	return;
+}
+
+// Do not allow forum_ids being set and no other setting defined (will bog down the server too much)
+if (sizeof($forum_id) && !sizeof($user_id) && !sizeof($group_id))
+{
+	trigger_error($_CLASS['core_user']->lang['ONLY_FORUM_DEFINED'] . adm_back_link($u_action));
+}
+
+$_CLASS['core_template']->assign_array(array(
+	'S_PERMISSION_DROPDOWN'		=> (sizeof($permission_dropdown) > 1) ? build_permission_dropdown($permission_dropdown, $permission_type) : false,
+	'L_PERMISSION_TYPE'			=> $_CLASS['core_user']->get_lang('ACL_TYPE_' . strtoupper($permission_type)),
+
+	'U_ACTION'					=> $u_action,
+	'S_HIDDEN_FIELDS'			=> $s_hidden_fields
+));
+
+if (strpos($mode, 'setting_') === 0)
+{
+	$_CLASS['core_template']->assign_array(array(
+		'S_SETTING_PERMISSIONS'		=> true
+	));
+
+	$hold_ary = $_CLASS['forums_auth_admin']->get_mask('set', (sizeof($user_id)) ? $user_id : false, (sizeof($group_id)) ? $group_id : false, (sizeof($forum_id)) ? $forum_id : false, $permission_type, $permission_scope, ACL_NO);
+	$_CLASS['forums_auth_admin']->display_mask('set', $permission_type, $hold_ary, ((sizeof($user_id)) ? 'user' : 'group'), (($permission_scope == 'local') ? true : false));
+}
+else
+{
+	$_CLASS['core_template']->assign_array(array(
+		'S_VIEWING_PERMISSIONS'		=> true
+	));
+
+	$hold_ary = $_CLASS['forums_auth_admin']->get_mask('view', (sizeof($user_id)) ? $user_id : false, (sizeof($group_id)) ? $group_id : false, (sizeof($forum_id)) ? $forum_id : false, $permission_type, $permission_scope, ACL_NEVER);
+	$_CLASS['forums_auth_admin']->display_mask('view', $permission_type, $hold_ary, ((sizeof($user_id)) ? 'user' : 'group'), (($permission_scope == 'local') ? true : false));
+}
+
+$_CLASS['core_display']->display($page_title, 'modules/forums/admin/acp_permissions.html');
+
+/**
+* Build +subforum options
+*/
+function build_subforum_options($forum_list)
+{
+	global $_CLASS;
+
+	$s_options = '';
+
+	$forum_list = array_merge($forum_list);
+
+	foreach ($forum_list as $key => $row)
+	{
+		$s_options .= '<option value="' . $row['forum_id'] . '"' . $row['selected'] . '>' . $row['padding'] . $row['forum_name'];
+
+		// We check if a branch is there...
+		$branch_there = false;
+
+		foreach (array_slice($forum_list, $key + 1) as $temp_row)
 		{
-			$sql = 'SELECT forum_name  
-				FROM ' . FORUMS_FORUMS_TABLE . "
-				WHERE forum_id IN ($sql_forum_id)";
-			$result = $_CLASS['core_db']->query($sql);
-
-			$l_forum_list = '';
-			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			if ($temp_row['left_id'] > $row['left_id'] && $temp_row['left_id'] < $row['right_id'])
 			{
-				$l_forum_list .= (($l_forum_list != '') ? ', ' : '') . $row['forum_name'];
-			}
-			$_CLASS['core_db']->free_result($result);
+				$branch_there = true;
 
-			add_log('admin', 'LOG_ACL_' . strtoupper($which_mode) . '_DEL', $l_forum_list, $l_ug_list);
-		}
-		else
-		{
-			add_log('admin', 'LOG_ACL_' . strtoupper($which_mode) . '_DEL', $l_ug_list);
-		}
-
-		trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED']);
-	break;
-
-	case 'presetsave':
-		$holding_ary = array();
-	
-		$auth_setting = $auth_settings[(!empty($submode) ? $submode : $mode)];
-
-		foreach ($auth_setting as $option => $setting)
-		{
-			switch ($setting)
-			{
-				case ACL_YES:
-					$holding_ary['yes'][] = $option;
-				break;
-
-				case ACL_NO:
-					$holding_ary['no'][] = $option;
-				break;
-
-				case ACL_UNSET:
-					$holding_ary['unset'][] = $option;
 				break;
 			}
-		}
-
-		$sql = array(
-			'preset_user_id'=> (int) $_CLASS['core_user']->data['user_id'],
-			'preset_type'	=> $sql_option_mode,
-			'preset_data'	=> serialize($holding_ary)
-		);
-
-		if (!empty($_POST['presetname']))
-		{	
-			$sql['preset_name'] = htmlspecialchars($_POST['presetname'], ENT_QUOTES);
+			continue;
 		}
 		
-		if (!empty($sql['preset_name']) || $_POST['presetoption'] != -1)
+		if ($branch_there)
 		{
-			$sql = ($_POST['presetoption'] == -1) ? 'INSERT INTO ' . FORUMS_ACL_PRESETS_TABLE . ' ' . $_CLASS['core_db']->sql_build_array('INSERT', $sql) : 'UPDATE ' . FORUMS_ACL_PRESETS_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql) . ' WHERE preset_id =' . (int) $_POST['presetoption'];
-			$_CLASS['core_db']->query($sql);
-
-			add_log('admin', 'LOG_ACL_PRESET_ADD', $sql['preset_name']);
+			$s_options .= ' [' . $_CLASS['core_user']->get_lang('PLUS_SUBFORUMS') . ']';
 		}
-		unset($sql, $option, $setting, $auth_setting);
-	break;
 
-	case 'presetdel':
-		if (!empty($_POST['presetoption']))
-		{
-			$sql = "SELECT preset_name 
-				FROM " . FORUMS_ACL_PRESETS_TABLE . " 
-				WHERE preset_id = " . (int) $_POST['presetoption'];
-			$result = $_CLASS['core_db']->query($sql);
+		$s_options .= '</option>';
+	}
 
-			$row = $_CLASS['core_db']->fetch_row_assoc($result);
-			$_CLASS['core_db']->free_result($result);
-
-			if ($row)
-			{
-				$sql = "DELETE FROM " . FORUMS_ACL_PRESETS_TABLE . " 
-					WHERE preset_id = " . (int) $_POST['presetoption'];
-				$_CLASS['core_db']->query($sql);
-	
-				add_log('admin', 'LOG_ACL_PRESET_DEL', $row['preset_name']);
-			}
-			unset($row);
-		}
-	break;
+	return $s_options;
 }
-// End update
 
-
-// Output page header
-adm_page_header($l_title);
-
-
-// First potential form ... this is for selecting forums, users
-// or groups. 
-if (in_array($mode, array('user', 'group', 'forum', 'mod')) && empty($submit))
+/**
+* Build dropdown field for changing permission types
+*/
+function build_permission_dropdown($options, $default_option)
 {
+	global $_CLASS;
+	
+	$s_dropdown_options = '';
+	foreach ($options as $setting)
+	{
+		if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $setting) . 'auth'))
+		{
+			continue;
+		}
+		$selected = ($setting == $default_option) ? ' selected="selected"' : '';
+		$s_dropdown_options .= '<option value="' . $setting . '"' . $selected . '>' . $_CLASS['core_user']->lang['permission_type'][$setting] . '</option>';
+	}
 
-?>
+	return $s_dropdown_options;
+}
 
-<h1><?php echo $l_title; ?></h1>
+/**
+* Check if selected items exist. Remove not found ids and if empty return error.
+*/
+function check_existence($mode, &$ids)
+{
+	global $_CLASS;
 
-<p><?php echo $l_title_explain ?></p>
-
-<form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
-<?php
-
-	// Mode specific markup
 	switch ($mode)
 	{
+		case 'user':
+			$table = CORE_USERS_TABLE;
+			$sql_id = 'user_id';
+		break;
+
+		case 'group':
+			$table = CORE_GROUPS_TABLE;
+			$sql_id = 'group_id';
+		break;
+
 		case 'forum':
-		case 'mod':
-
-?>
-	<tr>
-		<th align="center"><?php echo $_CLASS['core_user']->lang['LOOK_UP_FORUM']; ?></th>
-	</tr>
-	<tr>
-		<td class="row1" align="center" valign="middle">&nbsp;<select style="width:280px" name="f[<?php echo $mode; ?>][]" multiple="true" size="7"><?php 
-	
-			echo make_forum_select(false, false, false);
-			
-?></select>&nbsp;</td>
-	</tr>
-	<tr>
-		<td class="cat" align="center"><input type="submit" name="submit_usergroups" value="<?php echo $_CLASS['core_user']->lang['LOOK_UP_FORUM']; ?>" class="btnmain" />&nbsp; <input type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" class="btnlite" /><input type="hidden" name="ug_type" value="forum" /><input type="hidden" name="action" value="usergroups" /></td>
-	</tr>
-<?php
-		
-			break;
-
-		case 'user':
-
-?>
-	<tr>
-		<th align="center"><?php echo $_CLASS['core_user']->lang['LOOK_UP_USER']; ?></th>
-	</tr>
-	<tr>
-		<td class="row1" align="center">&nbsp;<textarea cols="40" rows="4" name="ug_data[]"></textarea>&nbsp;</td>
-	</tr>
-	<tr>
-		<td class="cat" align="center"><input type="submit" name="submit_add_options" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" class="btnmain" />&nbsp; <input type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" class="btnlite" />&nbsp; <input type="submit" value="<?php echo $_CLASS['core_user']->lang['FIND_USERNAME']; ?>" class="btnlite" onclick="window.open('<?php echo generate_link('Members_List&mode=searchuser&form=2&field=entries'); ?>', '_phpbbsearch', 'HEIGHT=500,resizable=yes,scrollbars=yes,WIDTH=740');return false;" /><input type="hidden" name="ug_type" value="user" /></td>
-	</tr>
-<?php
-
-			break;
-
-		case 'group':
-			// Generate list of groups
-
-?>
-	<tr>
-		<th align="center"><?php echo $_CLASS['core_user']->lang['LOOK_UP_GROUP']; ?></th>
-	</tr>
-	<tr>
-		<td class="row1" align="center" valign="middle">&nbsp;<select style="width:280px" name="ug_data[]" multiple="true" size="7"><?php 
-
-			$sql = "SELECT group_id, group_name, group_type   
-				FROM " . CORE_GROUPS_TABLE . " 
-				ORDER BY group_type DESC";
-			$result = $_CLASS['core_db']->query($sql);
-
-			$group_options = '';
-			if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-			{
-				do
-				{
-					echo '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="blue"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
-				}
-				while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-			}
-			$_CLASS['core_db']->free_result($result);
-			
-?></select>&nbsp;</td>
-	</tr>
-	<tr>
-		<td class="cat" align="center"><input type="submit" name="submit_edit_options" value="<?php echo $_CLASS['core_user']->lang['LOOK_UP_GROUP']; ?>" class="btnmain" />&nbsp; <input type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" class="btnlite" /><input type="hidden" name="ug_type" value="group" /></td>
-	</tr>
-<?php
-
+			$table = FORUMS_FORUMS_TABLE;
+			$sql_id = 'forum_id';
 		break;
-
 	}
 
-?>
-</table></form>
-
-<?php
-
-}
-// End user, group or forum selection
-
-
-// Second possible form, this lists the currently enabled
-// users/groups for the given mode
-if ((in_array($submit, array('usergroups', 'delete', 'cancel'))) || (!strstr($submit, 'options') && empty($submode) && in_array($mode, array('admin', 'supermod'))))
-{
-
-?>
-
-<h1><?php echo $l_title; ?></h1>
-
-<p><?php echo $l_title_explain; ?></p>
-
-<table width="100%" cellspacing="0" cellpadding="0" border="0">
-	<tr>
-		<td><form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th><?php echo $_CLASS['core_user']->lang['MANAGE_USERS']; ?></th>
-			</tr>
-			<tr>
-				<td class="row1" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple" size="5"><?php
-			
-	$sql = "SELECT u.user_id, u.username
-		FROM " . CORE_USERS_TABLE . " u, " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o
-		WHERE o.auth_option LIKE '" . $sql_option_mode . "_%'
-			AND a.auth_option_id = o.auth_option_id
-			AND a.forum_id IN ($sql_forum_id)
-			AND u.user_id = a.user_id
-		ORDER BY u.username, u.user_reg_date ASC";
+	$sql = "SELECT $sql_id
+		FROM $table
+		WHERE $sql_id IN (" . implode(', ', $ids) . ')';
 	$result = $_CLASS['core_db']->query($sql);
 
-	$users = '';
+	$ids = array();
 	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 	{
-		echo '<option value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
+		$ids[] = $row[$sql_id];
 	}
 	$_CLASS['core_db']->free_result($result);
-		
-?></select></td>
-			</tr>
-			<tr>
-				<td class="cat" align="center"><input class="btnlite" type="submit" name="submit_delete" value="<?php echo $_CLASS['core_user']->lang['DELETE']; ?>" /> &nbsp; <input class="btnlite" type="submit" name="submit_edit_options" value="<?php echo $_CLASS['core_user']->lang['SET_OPTIONS']; ?>" /><input type="hidden" name="ug_type" value="user" /><?php echo $s_forum_id; ?></td>
-			</tr>
-		</table></form></td>
 
-		<td align="center"><form method="post" name="admingroups" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
-		<tr>
-			<th><?php echo $_CLASS['core_user']->lang['MANAGE_GROUPS']; ?></th>
-		</tr>
-		<tr>
-			<td class="row1" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple" size="5"><?php 
+	if (!sizeof($ids))
+	{
+		trigger_error($_CLASS['core_user']->lang['SELECTED_' . strtoupper($mode) . '_NOT_EXIST'] . adm_back_link($u_action));
+	}
+}
+
+/** 
+* Apply permissions
+*/
+function set_permissions($mode, $permission_type, &$forums_auth_admin, &$user_id, &$group_id)
+{
+	global $_CLASS;
+
+	$psubmit = request_var('psubmit', array(0));
+
+	// User or group to be set?
+	$ug_type = (sizeof($user_id)) ? 'user' : 'group';
+
+	// Check the permission setting again
+	if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $permission_type) . 'auth') || !$_CLASS['forums_auth']->acl_get('a_auth' . $ug_type . 's'))
+	{
+		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link($u_action));
+	}
 	
-	$sql = "SELECT DISTINCT g.group_id, g.group_name, g.group_type 
-		FROM " . CORE_GROUPS_TABLE . " g, " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o
-		WHERE o.auth_option LIKE '" . $sql_option_mode . "_%'
-			AND a.forum_id IN ($sql_forum_id)
-			AND a.auth_option_id = o.auth_option_id
-			AND g.group_id = a.group_id
-		ORDER BY g.group_type DESC, g.group_name ASC";
-	$result = $_CLASS['core_db']->query($sql);
+	$ug_id = $forum_id = 0;
 
-	$groups = '';
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	// We loop through the auth settings defined in our submit
+	list($ug_id, ) = each($psubmit);
+	list($forum_id, ) = each($psubmit[$ug_id]);
+
+	$auth_settings = array_map('intval', $_POST['setting'][$ug_id][$forum_id]);
+
+	// Do we have a role we want to set?
+	$assigned_role = (isset($_POST['role'][$ug_id][$forum_id])) ? (int) $_POST['role'][$ug_id][$forum_id] : 0;
+
+	// Do the admin want to set these permissions to other items too?
+	$inherit = request_var('inherit', array(0));
+
+	$ug_id = array($ug_id);
+	$forum_id = array($forum_id);
+
+	if (sizeof($inherit))
 	{
-		echo '<option' . (($row['group_type'] == GROUP_SYSTEM) ? ' class="blue"' : '') . ' value="' . $row['group_id'] . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+		foreach ($inherit as $_ug_id => $forum_id_ary)
+		{
+			// Inherit users/groups?
+			if (!in_array($_ug_id, $ug_id))
+			{
+				$ug_id[] = $_ug_id;
+			}
+
+			// Inherit forums?
+			$forum_id = array_merge($forum_id, array_keys($forum_id_ary));
+		}
 	}
-	$_CLASS['core_db']->free_result($result);
 
-?></select></td>
-		</tr>
-		<tr>
-			<td class="cat" align="center"><input class="btnlite" type="submit" name="submit_delete" value="<?php echo $_CLASS['core_user']->lang['DELETE']; ?>" /> &nbsp; <input class="btnlite" type="submit" name="submit_edit_options" value="<?php echo $_CLASS['core_user']->lang['SET_OPTIONS']; ?>" /><input type="hidden" name="ug_type" value="group" /><?php echo $s_forum_id; ?></td>
-		</tr>
-	</table></form></td>
+	$forum_id = array_unique($forum_id);
 
-	</tr>
-	<tr>
-
-		<td><form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th><?php echo $_CLASS['core_user']->lang['ADD_USERS']; ?></th>
-			</tr>
-			<tr>
-				<td class="row1" align="center"><textarea style="height:60px" cols="40" rows="4" name="ug_data[]"></textarea></td>
-			</tr>
-			<tr>
-				<td class="cat" align="center"> <input type="submit" name="submit_add_options" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" class="btnmain" />&nbsp; <input type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" class="btnlite" />&nbsp; <input type="submit" value="<?php echo $_CLASS['core_user']->lang['FIND_USERNAME']; ?>" class="btnlite" onclick="window.open('<?php echo generate_link('Members_List&mode=searchuser&form=2&amp;field=entries'); ?>', '_phpbbsearch', 'HEIGHT=500,resizable=yes,scrollbars=yes,WIDTH=740');return false;" /><input type="hidden" name="ug_type" value="user" /><?php echo $s_forum_id; ?></td>
-			</tr>
-		</table></form></td>
-
-		<td><form method="post" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode, array('admin' => true)); ?>"><table width="100%" class="tablebg" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th><?php echo $_CLASS['core_user']->lang['ADD_GROUPS']; ?></th>
-			</tr>
-			<tr>
-				<td class="row1" style="height: 100%" align="center"><select style="width:280px" name="ug_data[]" multiple="multiple"  size="5"><?php 
-			
-	$sql = "SELECT group_id, group_name, group_type 
-		FROM " . CORE_GROUPS_TABLE . "
-		ORDER BY group_type DESC, group_name";
-	$result = $_CLASS['core_db']->query($sql);
-
-	$group_list = '';
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	// If the auth settings differ from the assigned role, then do not set a role...
+	if ($assigned_role)
 	{
-		echo '<option' . (($row['group_type'] == GROUP_SYSTEM) ? ' style="color: #006699;"' : '') . ' value="' . $row['group_id'] . '">' . (isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+		if (!check_assigned_role($assigned_role, $auth_settings))
+		{
+			$assigned_role = 0;
+		}
 	}
-	$_CLASS['core_db']->free_result($result);
-		
-?></select></td>
-			</tr>
-			<tr>
-				<td class="cat" align="center"> <input type="submit" name="submit_add_options" value="<?php echo $_CLASS['core_user']->lang['SUBMIT']; ?>" class="btnmain" />&nbsp; <input type="reset" value="<?php echo $_CLASS['core_user']->lang['RESET']; ?>" class="btnlite" /><input type="hidden" name="ug_type" value="group" /><?php echo $s_forum_id; ?></td>
-			</tr>
-		</table></form></td>
-	</tr>
-</table>
 
-<?php
+	// Update the permission set...
+	$forums_auth_admin->acl_set($ug_type, $forum_id, $ug_id, $auth_settings, $assigned_role);
 
+	// Do we need to recache the moderator lists?
+	if ($permission_type == 'm_')
+	{
+		cache_moderators();
+	}
+
+	// Remove users who are now moderators or admins from everyones foes list
+	if ($permission_type == 'm_' || $permission_type == 'a_')
+	{
+		update_foes();
+	}
+
+	log_action($mode, 'add', $permission_type, $ug_type, $ug_id, $forum_id);
+
+	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link($u_action));
 }
-// End user and group acl selections
 
-
-
-
-
-
-// Third possible form, this is the major section of this script. It
-// handles the entry of permission options for all situations
-if (in_array($submit, array('add_options', 'edit_options', 'presetsave', 'presetdel', 'update')) || !empty($submode))
+/** 
+* Apply all permissions
+*/
+function set_all_permissions($mode, $permission_type, &$forums_auth_admin, &$user_id, &$group_id)
 {
+	global $_CLASS;
 
-	// Did the user specify any users or groups?
-	if (empty($ug_data))
+	// User or group to be set?
+	$ug_type = (sizeof($user_id)) ? 'user' : 'group';
+
+	// Check the permission setting again
+	if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $permission_type) . 'auth') || !$_CLASS['forums_auth']->acl_get('a_auth' . $ug_type . 's'))
 	{
-		$l_message = ($ug_type == 'user') ? 'NO_USER' : 'NO_GROUP';
-		trigger_error($_CLASS['core_user']->lang[$l_message]);
+		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link($u_action));
 	}
 
+	$auth_settings = (isset($_POST['setting'])) ? $_POST['setting'] : array();
+	$auth_roles = (isset($_POST['role'])) ? $_POST['role'] : array();
+	$ug_ids = $forum_ids = array();
 
-	$forum_list = '';
-	// Grab the forum details if non-zero forum_id
-	if (!in_array(0, $forum_id[$which_mode]))
+	// We need to go through the auth settings
+	foreach ($auth_settings as $ug_id => $forum_auth_row)
 	{
-		$sql = 'SELECT forum_id, forum_name, parent_id  
-			FROM ' . FORUMS_FORUMS_TABLE . "
-			WHERE forum_id IN ($sql_forum_id)";
+		$ug_id = (int) $ug_id;
+		$ug_ids[] = $ug_id;
+
+		foreach ($forum_auth_row as $forum_id => $auth_options)
+		{
+			$forum_id = (int) $forum_id;
+			$forum_ids[] = $forum_id;
+
+			// Check role...
+			$assigned_role = (isset($auth_roles[$ug_id][$forum_id])) ? (int) $auth_roles[$ug_id][$forum_id] : 0;
+
+			// If the auth settings differ from the assigned role, then do not set a role...
+			if ($assigned_role)
+			{
+				if (!check_assigned_role($assigned_role, $auth_options))
+				{
+					$assigned_role = 0;
+				}
+			}
+
+			// Update the permission set...
+			$forums_auth_admin->acl_set($ug_type, $forum_id, $ug_id, $auth_options, $assigned_role, false);
+		}
+	}
+
+	$forums_auth_admin->acl_clear_prefetch();
+
+	// Do we need to recache the moderator lists?
+	if ($permission_type == 'm_')
+	{
+		cache_moderators();
+	}
+
+	// Remove users who are now moderators or admins from everyones foes list
+	if ($permission_type == 'm_' || $permission_type == 'a_')
+	{
+		update_foes();
+	}
+
+	log_action($mode, 'add', $permission_type, $ug_type, $ug_ids, $forum_ids);
+
+	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link($u_action));
+}
+
+/**
+* Compare auth settings with auth settings from role
+* returns false if they differ, true if they are equal
+*/
+function check_assigned_role($role_id, &$auth_settings)
+{
+	global $_CLASS;
+
+	$sql = 'SELECT o.auth_option, r.auth_setting
+		FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' o, ' . FORUMS_ACL_ROLES_DATA_TABLE . ' r
+		WHERE o.auth_option_id = r.auth_option_id
+			AND r.role_id = ' . $role_id;
+	$result = $_CLASS['core_db']->query($sql);
+
+	$test_auth_settings = array();
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$test_auth_settings[$row['auth_option']] = $row['auth_setting'];
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	// We need to add any ACL_NO setting from auth_settings to compare correctly
+	foreach ($auth_settings as $option => $setting)
+	{
+		if ($setting == ACL_NO)
+		{
+			$test_auth_settings[$option] = $setting;
+		}
+	}
+
+	if (sizeof(array_diff_assoc($auth_settings, $test_auth_settings)))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+/**
+* Remove permissions
+*/
+function remove_permissions($mode, $permission_type, &$forums_auth_admin, &$user_id, &$group_id, &$forum_id)
+{
+	global $_CLASS;
+		
+	// User or group to be set?
+	$ug_type = (sizeof($user_id)) ? 'user' : 'group';
+
+	// Check the permission setting again
+	if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $permission_type) . 'auth') || !$_CLASS['forums_auth']->acl_get('a_auth' . $ug_type . 's'))
+	{
+		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link($u_action));
+	}
+
+	$forums_auth_admin->acl_delete($ug_type, (($ug_type == 'user') ? $user_id : $group_id), (sizeof($forum_id) ? $forum_id : false), $permission_type);
+
+	// Do we need to recache the moderator lists?
+	if ($permission_type == 'm_')
+	{
+		cache_moderators();
+	}
+
+	log_action($mode, 'del', $permission_type, $ug_type, (($ug_type == 'user') ? $user_id : $group_id), (sizeof($forum_id) ? $forum_id : array(0 => 0)));
+
+	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link($u_action));
+}
+
+/**
+* Log permission changes
+*/
+function log_action($mode, $action, $permission_type, $ug_type, $ug_id, $forum_id)
+{
+	global $_CLASS;
+
+	if (!is_array($ug_id))
+	{
+		$ug_id = array($ug_id);
+	}
+
+	if (!is_array($forum_id))
+	{
+		$forum_id = array($forum_id);
+	}
+
+	// Logging ... first grab user or groupnames ...
+	$sql = ($ug_type == 'group') ? 'SELECT group_name as name, group_type FROM ' . CORE_GROUPS_TABLE . ' WHERE ' : 'SELECT username as name FROM ' . CORE_USERS_TABLE . ' WHERE ';
+	$sql .=   (($ug_type === 'group') ? 'group_id' : 'user_id').' IN (' . implode(', ', array_map('intval', $ug_id)) . ')';
+	$result = $_CLASS['core_db']->query($sql);
+
+	$l_ug_list = '';
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$l_ug_list .= (($l_ug_list != '') ? ', ' : '') . ((isset($row['group_type']) && $row['group_type'] == GROUP_SPECIAL) ? '<span class="blue">' . $_CLASS['core_user']->lang['G_' . $row['name']] . '</span>' : $row['name']);
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	$mode = str_replace('setting_', '', $mode);
+
+	if ($forum_id[0] == 0)
+	{
+		add_log('admin', 'LOG_ACL_' . strtoupper($action) . '_' . strtoupper($mode) . '_' . strtoupper($permission_type), $l_ug_list);
+	}
+	else
+	{
+		// Grab the forum details if non-zero forum_id
+		$sql = 'SELECT forum_name  
+			FROM ' . FORUMS_FORUMS_TABLE . '
+			WHERE forum_id IN (' . implode(', ', $forum_id) . ')';
 		$result = $_CLASS['core_db']->query($sql);
 
-		if (!($row = $_CLASS['core_db']->fetch_row_assoc($result)))
+		$l_forum_list = '';
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			trigger_error($_CLASS['core_user']->lang['NO_FORUM']);
-		}
-
-		// If we have more than one forum we want a list of all their names
-		// so loop through all results. We don't need all the data though 
-		// since cascading/inheritance is only applicable if a single forum
-		// was selected
-		$forum_data = $row;
-
-		do
-		{
-			$forum_list .= (($forum_list != '') ? ', ' : '') . '<b>' . $row['forum_name'] . '</b>';
-		}
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-		$_CLASS['core_db']->free_result($result);
-	}
-
-
-	// Grab relevant user or group information
-	$ug_ids = $l_ug_list = $ug_hidden = $l_no_error = '';
-// need some work ( array_mapping()) blaa blaa
-	switch ($ug_type)
-	{
-		case 'user':
-			$l_no_error = $_CLASS['core_user']->lang['NO_USER'];
-			$sql = 'SELECT user_id AS id, username AS name 
-				FROM ' . CORE_USERS_TABLE . ' 
-				WHERE ';
-			$sql .= ($submit == 'add_options') ? " username IN ('" . implode("', '", $_CLASS['core_db']->escape_array(array_unique(explode("\n", modify_lines($ug_data[0], "\n"))))) . "')" : ' user_id ' . ((is_array($ug_data)) ? 'IN (' . implode(', ', array_map('intval', $ug_data)) . ')' : '= ' . (int) $ug_data);
-		break;
-
-		case 'group':
-			$l_no_error = $_CLASS['core_user']->lang['NO_GROUP'];
-			$sql = 'SELECT group_id AS id, group_name AS name, group_type  
-				FROM ' . CORE_GROUPS_TABLE . '
-				WHERE group_id';
-			$sql .= (is_array($ug_data)) ? ' IN (' . implode(', ', array_map('intval', $ug_data)) . ')' : ' = ' . (int) $ug_data;
-		break;
-	}
-	$result = $_CLASS['core_db']->query($sql);
-
-	if (!$row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		trigger_error($l_no_error);
-	}
-	unset($l_no_error);
-
-	// Store the user_ids and names for later use
-	do 
-	{
-		$l_ug_list .= (($l_ug_list != '') ? ', ' : '') . ((isset($row['group_type']) && $row['group_type'] == GROUP_SPECIAL) ? '<b class="blue">' . $_CLASS['core_user']->lang['G_' . $row['name']] : '<b>' . $row['name']) . '</b>';
-		$ug_ids .= (($ug_ids != '') ? ', ' : '') . $row['id'];
-		$ug_hidden .= '<input type="hidden" name="ug_data[]" value="' . $row['id'] . '" />';
-	}
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-	$_CLASS['core_db']->free_result($result);
-
-
-	// Grab the list of options ... if we're in deps mode we want all options, 
-	// else we skip the master options
-	$sql_limit_option = ($mode == 'deps') ? '' : "AND auth_option <> '" . $sql_option_mode . "_'";
-	$sql = "SELECT auth_option_id, auth_option
-		FROM " . FORUMS_ACL_OPTIONS_TABLE . "
-		WHERE auth_option LIKE '" . $sql_option_mode . "_%' 
-			$sql_limit_option";
-	$result = $_CLASS['core_db']->query($sql);
-
-	$auth_options = array();
-	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		$auth_presets_compare[] = $row['auth_option'];
-		$auth_options[] = $row;
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	unset($sql_limit_option);
-
-
-	// Now we'll build a list of preset options ...
-	$preset_options = $preset_js = $preset_update_options = '';
-
-	// Do we have a parent forum? If so offer option to inherit from that
-	if ($forum_data['parent_id'] != 0)
-	{
-		$holding['yes'] = $holding['no'] = $holding['unset'] = '';
-
-		 
-		$sql = "SELECT o.auth_option, a.auth_setting
-					FROM " . FORUMS_ACL_TABLE . " a, " . FORUMS_ACL_OPTIONS_TABLE . " o 
-					WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' 
-						AND a.auth_option_id = o.auth_option_id AND a.forum_id = " . $forum_data['parent_id'] . '
-						AND a.'.(($ug_type == 'group') ? 'group_id' : 'user_id')." IN ($ug_ids)";
-
-		$result = $_CLASS['core_db']->query($sql);
-
-		if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-		{
-			do
-			{
-				switch ($row['auth_setting'])
-				{
-					case ACL_YES:
-						$holding['yes'][] = $row['auth_option'];
-					break;
-
-					case ACL_NO:
-						$holding['no'][] = $row['auth_option'];
-					break;
-				}
-			}
-			while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-
-			$holding['unset'] = array_diff($auth_presets_compare, $holding['yes'], $holding['no']);
-
-			$preset_options .= '<option value="preset_0">' . $_CLASS['core_user']->lang['INHERIT_PARENT'] . '</option>';
-			$preset_js .= "\tpresets['preset_0'] = new Array();" . "\n";
-			$preset_js .= "\tpresets['preset_0'] = new preset_obj('" . implode(', ', $holding['yes']) . "', '" . implode(', ', $holding['no']) . "', '" . implode(', ', $holding['unset']) . "');\n";
-
+			$l_forum_list .= (($l_forum_list != '') ? ', ' : '') . $row['forum_name'];
 		}
 		$_CLASS['core_db']->free_result($result);
+
+		add_log('admin', 'LOG_ACL_' . strtoupper($action) . '_' . strtoupper($mode) . '_' . strtoupper($permission_type), $l_forum_list, $l_ug_list);
 	}
-
-	$holding['yes'] = $holding['no'] = $holding['unset'] = '';
-
-	// Look for custom presets
-	$sql = "SELECT preset_id, preset_name, preset_data  
-		FROM " . FORUMS_ACL_PRESETS_TABLE . " 
-		WHERE preset_type = '" . (($mode == 'deps') ? 'f' : $sql_option_mode) . "' 
-		ORDER BY preset_id ASC";
-	$result = $_CLASS['core_db']->query($sql);
-
-	if ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-	{
-		do
-		{
-			$preset_update_options .= '<option value="' . $row['preset_id'] . '">' . $row['preset_name'] . '</option>';
-			$preset_options .= '<option value="preset_' . $row['preset_id'] . '">' . $row['preset_name'] . '</option>';
-
-			$holding = unserialize($row['preset_data']);
-			$holding['unset'] = array_diff($auth_presets_compare, $holding['yes'], $holding['no']);
-
-			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new Array();" . "\n";
-			$preset_js .= "\tpresets['preset_" . $row['preset_id'] . "'] = new preset_obj('" . implode(', ', $holding['yes']) . "', '" . implode(', ', $holding['no']) . "', '" . implode(', ', $holding['unset']) . "');\n";
-		}
-		while ($row = $_CLASS['core_db']->fetch_row_assoc($result));
-	}
-	$_CLASS['core_db']->free_result($result);
-
-	unset($holding, $auth_presets_compare);
-
-
-	// If we aren't looking @ deps then we try and grab existing sessions for
-	// the given forum and user/group
-	if (!is_array($auth_settings) || empty($auth_settings[$which_mode]))
-	{
-		if ($which_mode == $mode)
-		{
-			$sql = 'SELECT o.auth_option, MIN(a.auth_setting) AS min_auth_setting 
-					FROM '. FORUMS_ACL_TABLE .' a, ' . FORUMS_ACL_OPTIONS_TABLE . " o 
-					WHERE o.auth_option LIKE '" . $sql_option_mode . "_%' 
-						AND a.auth_option_id = o.auth_option_id 
-						AND a.forum_id IN ($sql_forum_id) 
-						AND a.".(($ug_type == 'group') ? 'group_id' : 'user_id')." IN ($ug_ids)
-					GROUP BY o.auth_option";
-			$result = $_CLASS['core_db']->query($sql);
-
-			$auth_settings[$which_mode] = array();
-			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-			{
-				$auth_settings[$which_mode][$row['auth_option']] = $row['min_auth_setting'];
-			}
-			$_CLASS['core_db']->free_result($result);
-		}
-		else
-		{
-			// We're looking at a view ... so we'll set all options to unset
-			// We could be a little more clever here but the "safe side" looks
-			// better right now
-			$auth_settings[$which_mode] = array();
-			foreach ($auth_options as $option)
-			{
-				$auth_settings[$which_mode][$option['auth_option']] = '*';
-			}
-			unset($option);
-		}
-	}
-
-	$view_options = '';
-	// Should we display a dropdown for views?
-	if (in_array($mode, array('admin', 'supermod', 'mod')))
-	{
-		$view_options .= '<option value="">' . $_CLASS['core_user']->lang['SELECT_VIEW'] . '</option>';
-		$view_ary = array(
-			'admin'		=> array('admin' => 'a_', 'forum' => 'a_auth', 'supermod' => 'a_authmods', 'mod' => 'a_authmods'),
-			'supermod'	=> array('supermod' => 'a_authmods', 'mod' => 'a_authmods', 'forum' => 'a_auth'), 
-			'mod'		=> array('mod' => 'a_authmods', 'forum' => 'a_auth')
-		);
-
-		foreach ($view_ary[$mode] as $which_submode => $which_acl)
-		{
-			if ($_CLASS['auth']->acl_get($which_acl))
-			{
-				$view_options .= '<option value="' . $which_submode . '"' . (($which_submode == $which_mode) ? ' selected="selected"' : '') . '>' . $_CLASS['core_user']->lang['ACL_VIEW_' . strtoupper($which_submode)] . '</option>';
-			}
-
-		}
-		unset($view_ary);
-	}
-
-	$settings_hidden = '';
-	// Output original settings ... needed when we jump views
-	foreach ($auth_settings as $auth_submode => $auth_submode_settings)
-	{
-		if ($auth_submode != $which_mode)
-		{
-			foreach ($auth_submode_settings as $submode_option => $submode_setting)
-			{
-				$settings_hidden .= ($submode_setting != '*') ? '<input type="hidden" name="settings[' . $auth_submode . '][' . $submode_option . ']" value="' . $submode_setting . '" />' : '';
-			}
-		}
-	}
-	unset($auth_submode, $auth_submode_settings, $auth_submode_option, $auth_submode_setting);
-
-?>
-
-<script language="Javascript" type="text/javascript">
-<!--
-
-	var presets = new Array();
-<?php
-
-	echo $preset_js;
-
-?>
-
-	function preset_obj(yes, no, unset)
-	{
-		this.yes = yes;
-		this.no = no;
-		this.unset = unset;
-	}
-
-	function use_preset(option)
-	{
-		if (option)
-		{
-			document.acl.set.selectedIndex = 0;
-			for (i = 0; i < document.acl.length; i++)
-			{
-				var elem = document.acl.elements[i];
-				if (elem.name.indexOf('settings') == 0)
-				{
-					switch (option)
-					{
-						case 'all_yes':
-							if (elem.value == <?php echo ACL_YES; ?>)
-								elem.checked = true;
-							break;
-
-						case 'all_no':
-							if (elem.value == <?php echo ACL_NO; ?>)
-								elem.checked = true;
-							break;
-
-						case 'all_unset':
-							if (elem.value == <?php echo ACL_UNSET; ?>)
-								elem.checked = true;
-							break;
-
-						case 'all_ignore':
-							if (elem.value == '*')
-								elem.checked = true;
-							break;
-
-						default:
-							option_start = elem.name.search(/\[(\w+?)\]$/);
-							option_name = elem.name.substr(option_start + 1, elem.name.length - option_start - 2);
-
-							if (presets[option].yes.indexOf(option_name + ',') != -1 && elem.value == <?php echo ACL_YES; ?>)
-								elem.checked = true;
-							else if (presets[option].no.indexOf(option_name + ',') != -1 && elem.value == <?php echo ACL_NO; ?>)
-								elem.checked = true;
-							else if (presets[option].unset.indexOf(option_name + ',') != -1 && elem.value == <?php echo ACL_UNSET; ?>)
-								elem.checked = true;
-							break;
-					}
-				}
-			}
-		}
-	}
-
-	function marklist(match, status)
-	{
-		for (i = 0; i < document.acl.length; i++)
-		{
-			if (document.acl.elements[i].name.indexOf(match) == 0)
-				document.acl.elements[i].checked = status;
-		}
-	}
-
-	function open_win(url, width, height)
-	{
-		aclwin = window.open(url, '_phpbbacl', 'HEIGHT=' + height + ',resizable=yes, scrollbars=yes,WIDTH=' + width);
-		if (window.focus)
-			aclwin.focus();
-	}
-//-->
-</script>
-
-<p><?php echo $_CLASS['core_user']->lang['ACL_EXPLAIN']; ?></p>
-
-<h1><?php echo $l_title; ?></h1>
-
-<?php
-
-	// Do we have a list of forums? If so, output them ... but only
-	// if we're looking at the primary view or mode ... submodes
-	// output their own list of forums as and where applicable so this
-	// is unnecessary
-	if ($forum_list != '' && $which_mode == $mode)
-	{
-		$l_selected_forums = (count($forum_id[$which_mode]) === 1) ? 'SELECTED_FORUM' : 'SELECTED_FORUMS';
-
-		echo '<p>' . $_CLASS['core_user']->lang[$l_selected_forums] . ': ' . $forum_list . '</p>';
-
-		unset($forum_list);
-		unset($l_selected_forums);
-	}
-
-	// Now output the list of users or groups ... these will always exist
-	$l_selected_users = ($ug_type == 'user') ? ((count($ug_data) === 1) ? 'SELECTED_USER' : 'SELECTED_USERS') : ((count($ug_data) === 1) ? 'SELECTED_GROUP' : 'SELECTED_GROUPS'); 
-
-	echo '<p>' . $_CLASS['core_user']->lang[$l_selected_users] . ': ' . $l_ug_list . '</p>';
-
-	unset($l_selected_users);
-	unset($ug_data);
-
-?>
-
-<p><?php echo $l_title_explain; ?></p>
-
-<?php
-
-	if ($settings_hidden != '')
-	{
-
-?>
-
-<h2 style="color:red"><?php echo $_CLASS['core_user']->lang['WARNING']; ?></h2>
-
-<p><?php echo $_CLASS['core_user']->lang['WARNING_EXPLAIN']; ?></p>
-
-<?php
-
-	}
-
-?>
-
-<form method="post" name="acl" action="<?php echo generate_link('forums&amp;file=admin_permissions&amp;mode='.$mode.'&amp;submode='.$submode, array('admin' => true)); ?>"><table cellspacing="2" cellpadding="0" border="0" align="center">
-<?php
-
-	// This is the main listing of options
-
-	// We output this for both deps and when update is requested where
-	// deps exist
-	if (($mode == 'admin' || $mode == 'supermod') && in_array($submode, array('forum', 'mod')))
-	{
-
-?>
-	<tr>
-		<td colspan="2" align="right"><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0">
-			<tr>
-				<th colspan="2"><?php echo $_CLASS['core_user']->lang['SELECT_FORUM']; ?></th>
-			</tr>
-			<tr>
-				<td class="row1" colspan="2"><?php echo $_CLASS['core_user']->lang['WILL_SET_OPTIONS']; ?>:</th>
-			</tr>
-			<tr>
-				<td class="row2"><select style="width:100%" name="f[<?php echo $which_mode; ?>][]" multiple="7"><?php 
-		
-		echo make_forum_select($forum_id[$which_mode], false, true); 
-		
-?></select></td>
-			</tr>
-		</table><br /></td>
-	</tr>
-<?php
-
-	}
-	// End deps output
-
-?>
-	<tr>
-		<td align="left"><?php
-	
-	if ($view_options != '')
-	{
-	
-?><select name="submode" onchange="if (this.options[this.selectedIndex].value != '') this.form.submit();"><?php echo $view_options; ?></select><?php
-	
-	}
-	
-?></td>
-		<td align="right"><?php echo $_CLASS['core_user']->lang['PRESETS']; ?>: <select name="set" onchange="use_preset(this.options[this.selectedIndex].value);"><option class="sep"><?php echo $_CLASS['core_user']->lang['SELECT'] . ' -&gt;'; ?></option><option value="all_yes"><?php echo $_CLASS['core_user']->lang['ALL_YES']; ?></option><option value="all_no"><?php echo $_CLASS['core_user']->lang['ALL_NO']; ?></option><option value="all_unset"><?php echo $_CLASS['core_user']->lang['ALL_UNSET']; ?></option><?php 
-
-	$colspan = 4;
-	if ($which_mode != $mode)
-	{
-		$colspan = 5;
-		echo '<option value="all_ignore">' . $_CLASS['core_user']->lang['ALL_IGNORE'] . '</option>';
-	}
-
-	// Output user preset options ... if any
-	echo ($preset_options) ? '<option class="sep">' . $_CLASS['core_user']->lang['USER_PRESETS'] . ' -&gt;' . '</option>' . $preset_options : ''; 
-
-?></select></td>
-	</tr>
-	<tr>
-		<td colspan="2"><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th>&nbsp;<?php echo $_CLASS['core_user']->lang['OPTION']; ?>&nbsp;</th>
-				<th width="50">&nbsp;<?php echo $_CLASS['core_user']->lang['YES']; ?>&nbsp;</th>
-				<th width="50">&nbsp;<?php echo $_CLASS['core_user']->lang['UNSET']; ?>&nbsp;</th>
-				<th width="50">&nbsp;<?php echo $_CLASS['core_user']->lang['NO']; ?>&nbsp;</th>
-<?php
-
-	if ($which_mode != $mode)
-	{
-
-?>
-				<th width="50">&nbsp;<?php echo $_CLASS['core_user']->lang['IGNORE']; ?>&nbsp;</th>
-<?php
-
-	}
-
-?>
-			</tr>
-<?php
-
-	$row_class = 'row2';
-
-	$count = count($auth_options);
-	for ($i = 0; $i < $count; $i++)
-	{
-		$row_class = ($row_class == 'row1') ? 'row2' : 'row1';
-
-		// Try and output correct language strings, else output prettyfied auth_option
-		$l_auth_option = (!empty($_CLASS['core_user']->lang['acl_' . $auth_options[$i]['auth_option']])) ? $_CLASS['core_user']->lang['acl_' . $auth_options[$i]['auth_option']] : ucfirst(preg_replace('#.*?_#', '', $auth_options[$i]['auth_option']));
-		$s_auth_option = '[' . $which_mode . '][' . $auth_options[$i]['auth_option'] . ']';
-		
-		// Which option should we select?
-		$selected_yes = (isset($auth_settings[$which_mode][$auth_options[$i]['auth_option']]) && $auth_settings[$which_mode][$auth_options[$i]['auth_option']] == ACL_YES) ? ' checked="checked"' : '';
-		$selected_no = (isset($auth_settings[$which_mode][$auth_options[$i]['auth_option']]) && $auth_settings[$which_mode][$auth_options[$i]['auth_option']] == ACL_NO) ? ' checked="checked"' : '';
-		$selected_unset = (!isset($auth_settings[$which_mode][$auth_options[$i]['auth_option']]) || $auth_settings[$which_mode][$auth_options[$i]['auth_option']] == ACL_UNSET) ? ' checked="checked"' : '';
-
-?>
-			<tr>
-				<td class="<?php echo $row_class; ?>" nowrap="nowrap"><?php echo $l_auth_option; ?>&nbsp;</td>
-				<td class="<?php echo $row_class; ?>" align="center"><input type="radio" name="settings<?php echo $s_auth_option ;?>" value="<?php echo ACL_YES; ?>"<?php echo $selected_yes; ?> /></td>
-				<td class="<?php echo $row_class; ?>" align="center"><input type="radio" name="settings<?php echo $s_auth_option ;?>" value="<?php echo ACL_UNSET; ?>"<?php echo $selected_unset; ?> /></td>
-				<td class="<?php echo $row_class; ?>" align="center"><input type="radio" name="settings<?php echo $s_auth_option ;?>" value="<?php echo ACL_NO; ?>"<?php echo $selected_no; ?> /></td>
-<?php
-
-		if ($which_mode != $mode)
-		{
-			$selected_ignore = (isset($auth_settings[$which_mode][$auth_options[$i]['auth_option']]) && $auth_settings[$which_mode][$auth_options[$i]['auth_option']] == '*') ? ' checked="checked"' : '';
-
-?>
-				<td class="<?php echo $row_class; ?>" align="center"><input type="radio" name="settings<?php echo $s_auth_option ;?>" value="*"<?php echo $selected_ignore; ?> /></td>
-<?php
-
-		}
-
-?>
-			</tr>
-<?php
-
-	}
-
-
-	// If we're setting forum or moderator options and a single forum has
-	// been selected then look to see if any subforums exist. If they do
-	// give user the option of cascading permissions to them
-	if (($mode == 'forum' || $mode == 'mod') && empty($submode) && count($forum_id[$which_mode]) === 1)
-	{
-		$children = get_forum_branch($forum_id[$which_mode][0], 'children', 'descending', false);
-
-		if (!empty($children))
-		{
-
-?>
-			<tr>
-				<th colspan="<?php echo $colspan; ?>"><?php echo $_CLASS['core_user']->lang['ACL_SUBFORUMS']; ?></th>
-			</tr>
-			<tr>
-				<td class="row1" colspan="<?php echo $colspan; ?>"><table width="100%" cellspacing="1" cellpadding="0" border="0">
-					<tr>
-						<td class="gensmall" colspan="4" height="16" align="center"><?php echo $_CLASS['core_user']->lang['ACL_SUBFORUMS_EXPLAIN']; ?></td>
-					</tr>
-<?php
-
-			foreach ($children as $row)
-			{
-
-?>
-					<tr>
-						<td><input type="checkbox" name="inherit[]" value="<?php echo $row['forum_id']; ?>" /> <?php echo $row['forum_name']; ?></td>
-					</tr>
-<?php
-
-			}
-
-?>
-					<tr>
-						<td height="16" align="center"><a class="gensmall" href="javascript:marklist('inherit', true);"><?php echo $_CLASS['core_user']->lang['MARK_ALL']; ?></a> :: <a href="javascript:marklist('inherit', false);" class="gensmall"><?php echo $_CLASS['core_user']->lang['UNMARK_ALL']; ?></a></td>
-					</tr>
-				</table></td>
-			</tr>
-<?php
-
-		}
-	}
-
-	// Display event/cron radio buttons
-	if ($_CLASS['auth']->acl_gets('a_events', 'a_cron') && $mode != 'deps' && $submit != 'update')
-	{
-		$row_class = ($row_class == 'row1') ? 'row2' : 'row1';
-
-?>
-			<!-- tr>
-				<th colspan="<?php echo $colspan; ?>"><?php echo $_CLASS['core_user']->lang['RUN_HOW']; ?></th>
-			</tr>
-			<tr>
-				<td class="<?php echo $row_class; ?>" colspan="4" align="center"><input type="radio" name="runas" value="now" checked="checked" /> <?php echo $_CLASS['core_user']->lang['RUN_AS_NOW']; ?><?php 
-	
-			if ($_CLASS['auth']->acl_get('a_events'))
-			{ 
-
-?> &nbsp;<input type="radio" name="runas" value="evt" /> <?php 
-	
-				echo $_CLASS['core_user']->lang['RUN_AS_EVT'];  
-			}
-			
-			if ($_CLASS['auth']->acl_get('a_cron'))
-			{
-
-?> &nbsp;<input type="radio" name="runas" value="crn" /> <?php 
-	
-				echo $_CLASS['core_user']->lang['RUN_AS_CRN']; 
-				
-			}
-
-?></td>
-			</tr -->
-<?php
-
-	}
-
-?>
-			<tr>
-				<td class="cat" colspan="<?php echo $colspan; ?>" align="center"><input class="btnmain" type="submit" name="submit_update" value="<?php echo $_CLASS['core_user']->lang['UPDATE']; ?>" />&nbsp;&nbsp;<input class="btnlite" type="submit" name="submit_cancel" value="<?php echo $_CLASS['core_user']->lang['CANCEL']; ?>" /><input type="hidden" name="ug_type" value="<?php echo $ug_type; ?>" /><?php echo $ug_hidden; ?><?php 
-
-	// Output forum id data
-	echo $s_forum_id;
-
-	// Output settings generated from other views
-	echo $settings_hidden;
-	unset($settings_hidden);
-	
-?></td>
-			</tr>
-		</table>
-
-		<br clear="all" />
-
-		<table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th colspan="4"><?php echo $_CLASS['core_user']->lang['PRESETS']; ?></th>
-			</tr>
-			<tr>
-				<td class="row1" colspan="4"><table width="100%" cellspacing="1" cellpadding="0" border="0">
-					<tr>
-						<td colspan="2" height="16"><span class="gensmall"><?php echo $_CLASS['core_user']->lang['PRESETS_EXPLAIN']; ?></span></td>
-					</tr>
-					<tr>
-						<td nowrap="nowrap"><?php echo $_CLASS['core_user']->lang['SELECT_PRESET']; ?>: </td>
-						<td><select name="presetoption"><option class="sep" value="-1"><?php echo $_CLASS['core_user']->lang['SELECT'] . ' -&gt;'; ?></option><?php 
-
-	echo $preset_update_options;
-			
-		?></select></td>
-					</tr>
-					<tr>
-						<td nowrap="nowrap"><?php echo $_CLASS['core_user']->lang['PRESET_NAME']; ?>: </td>
-						<td><input type="text" name="presetname" maxlength="25" /> </td>
-					</tr>
-				</table></td>
-			</tr>
-			<tr>
-				<td class="cat" colspan="4" align="center"><input class="btnlite" type="submit" name="submit_presetsave" value="<?php echo $_CLASS['core_user']->lang['SAVE']; ?>" /> &nbsp;<input class="btnlite" type="submit" name="submit_presetdel" value="<?php echo $_CLASS['core_user']->lang['DELETE']; ?>" /></td>
-			</tr>
-		</table></td>
-	</tr>
-</table></form>
-
-<?php
-
 }
 
-// Output page footer
-adm_page_footer();
-
-// ---------
-// FUNCTIONS
-//
+/**
+* Update foes - remove moderators and administrators from foe lists...
+*/
 function update_foes()
 {
 	global $_CLASS;
 
 	$perms = array();
-	foreach ($_CLASS['auth']->acl_get_list(false, array('a_', 'm_'), false) as $forum_id => $forum_ary)
+	foreach ($_CLASS['forums_auth']->acl_get_list(false, array('a_', 'm_'), false) as $forum_id => $forum_ary)
 	{
 		foreach ($forum_ary as $auth_option => $user_ary)
 		{
-			$perms += $user_ary;
+			$perms = array_merge($perms, $user_ary);
 		}
 	}
 
-	if (!empty($perms))
+	if (sizeof($perms))
 	{
 		$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
-			WHERE zebra_id IN (' . implode(', ', $perms) . ')';
+			WHERE zebra_id IN (' . implode(', ', array_unique($perms)) . ')
+				AND foe = 1';
 		$_CLASS['core_db']->query($sql);
 	}
 	unset($perms);
 }
-//
-// FUNCTIONS
-// ---------
+
+/**
+* Display a complete trace tree for the selected permission to determine where settings are set/unset
+*/
+function permission_trace($user_id, $forum_id, $permission)
+{
+	global $_CLASS;
+
+	if ($user_id != $_CLASS['core_user']->data['user_id'])
+	{
+		$sql = 'SELECT user_id, username, user_permissions, user_type
+			FROM ' . CORE_USERS_TABLE . '
+			WHERE user_id = ' . $user_id;
+		$result = $_CLASS['core_db']->query($sql);
+		$userdata = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+	}
+	else
+	{
+		$userdata = $_CLASS['core_user']->data;
+	}
+
+	if (!$userdata)
+	{
+		trigger_error('NO_USERS');
+	}
+
+	$forum_name = false;
+
+	if ($forum_id)
+	{
+		$sql = 'SELECT forum_name
+			FROM ' . FORUMS_FORUMS_TABLE . "
+			WHERE forum_id = $forum_id";
+		$result = $_CLASS['core_db']->query($sql, 3600);
+		$forum_name = $db->sql_fetchfield('forum_name');
+		$_CLASS['core_db']->free_result($result);
+	}
+
+	$back = request_var('back', 0);
+
+	$_CLASS['core_template']->assign_array(array(
+		'PERMISSION'			=> $_CLASS['core_user']->lang['acl_' . $permission]['lang'],
+		'PERMISSION_USERNAME'	=> $userdata['username'],
+		'FORUM_NAME'			=> $forum_name,
+		'U_BACK'				=> ($back) ? build_url(array('f', 'back')) . "&amp;f=$back" : '')
+	);
+
+	$template->assign_block_vars('trace', array(
+		'WHO'			=> $_CLASS['core_user']->lang['DEFAULT'],
+		'INFORMATION'	=> $_CLASS['core_user']->lang['TRACE_DEFAULT'],
+
+		'S_SETTING_NO'		=> true,
+		'S_TOTAL_NO'		=> true
+	));
+
+	$sql = 'SELECT DISTINCT g.group_name, g.group_id, g.group_type
+		FROM ' . CORE_GROUPS_TABLE . ' g
+			LEFT JOIN ' . USER_GROUP_TABLE . ' ug ON (ug.group_id = g.group_id)
+		WHERE ug.user_id = ' . $user_id . '
+			AND ug.user_pending = 0
+		ORDER BY g.group_type DESC, g.group_id DESC';
+	$result = $_CLASS['core_db']->query($sql);
+
+	$groups = array();
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$groups[$row['group_id']] = array(
+			'auth_setting'		=> ACL_NO,
+			'group_name'		=> ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']
+		);
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	$total = ACL_NO;
+	if (sizeof($groups))
+	{
+		// Get group auth settings
+		$hold_ary = $_CLASS['forums_auth']->acl_group_raw_data(array_keys($groups), $permission, $forum_id);
+
+		foreach ($hold_ary as $group_id => $forum_ary)
+		{
+			$groups[$group_id]['auth_setting'] = $hold_ary[$group_id][$forum_id][$permission];
+		}
+		unset($hold_ary);
+
+		foreach ($groups as $id => $row)
+		{
+			switch ($row['auth_setting'])
+			{
+				case ACL_NO:
+					$information = $_CLASS['core_user']->lang['TRACE_GROUP_NO'];
+				break;
+
+				case ACL_YES:
+					$information = ($total == ACL_YES) ? $_CLASS['core_user']->lang['TRACE_GROUP_YES_TOTAL_YES'] : (($total == ACL_NEVER) ? $_CLASS['core_user']->lang['TRACE_GROUP_YES_TOTAL_NEVER'] : $_CLASS['core_user']->lang['TRACE_GROUP_YES_TOTAL_NO']);
+					$total = ($total == ACL_NO) ? ACL_YES : $total;
+				break;
+
+				case ACL_NEVER:
+					$information = ($total == ACL_YES) ? $_CLASS['core_user']->lang['TRACE_GROUP_NEVER_TOTAL_YES'] : (($total == ACL_NEVER) ? $_CLASS['core_user']->lang['TRACE_GROUP_NEVER_TOTAL_NEVER'] : $_CLASS['core_user']->lang['TRACE_GROUP_NEVER_TOTAL_NO']);
+					$total = ACL_NEVER;
+				break;
+			}
+
+			$template->assign_block_vars('trace', array(
+				'WHO'			=> $row['group_name'],
+				'INFORMATION'	=> $information,
+
+				'S_SETTING_NO'		=> ($row['auth_setting'] == ACL_NO) ? true : false,
+				'S_SETTING_YES'		=> ($row['auth_setting'] == ACL_YES) ? true : false,
+				'S_SETTING_NEVER'	=> ($row['auth_setting'] == ACL_NEVER) ? true : false,
+				'S_TOTAL_NO'		=> ($total == ACL_NO) ? true : false,
+				'S_TOTAL_YES'		=> ($total == ACL_YES) ? true : false,
+				'S_TOTAL_NEVER'		=> ($total == ACL_NEVER) ? true : false)
+			);
+		}
+	}
+
+	// Get user specific permission...
+	$hold_ary = $_CLASS['forums_auth']->acl_user_raw_data($user_id, $permission, $forum_id);
+	$auth_setting = (!sizeof($hold_ary)) ? ACL_NO : $hold_ary[$user_id][$forum_id][$permission];
+
+	switch ($auth_setting)
+	{
+		case ACL_NO:
+			$information = ($total == ACL_NO) ? $_CLASS['core_user']->lang['TRACE_USER_NO_TOTAL_NO'] : $_CLASS['core_user']->lang['TRACE_USER_KEPT'];
+			$total = ($total == ACL_NO) ? ACL_NEVER : $total;
+		break;
+
+		case ACL_YES:
+			$information = ($total == ACL_YES) ? $_CLASS['core_user']->lang['TRACE_USER_YES_TOTAL_YES'] : (($total == ACL_NEVER) ? $_CLASS['core_user']->lang['TRACE_USER_YES_TOTAL_NEVER'] : $_CLASS['core_user']->lang['TRACE_USER_YES_TOTAL_NO']);
+			$total = ($total == ACL_NO) ? ACL_YES : $total;
+		break;
+
+		case ACL_NEVER:
+			$information = ($total == ACL_YES) ? $_CLASS['core_user']->lang['TRACE_USER_NEVER_TOTAL_YES'] : (($total == ACL_NEVER) ? $_CLASS['core_user']->lang['TRACE_USER_NEVER_TOTAL_NEVER'] : $_CLASS['core_user']->lang['TRACE_USER_NEVER_TOTAL_NO']);
+			$total = ACL_NEVER;
+		break;
+	}
+
+	$template->assign_block_vars('trace', array(
+		'WHO'			=> $userdata['username'],
+		'INFORMATION'	=> $information,
+
+		'S_SETTING_NO'		=> ($auth_setting == ACL_NO) ? true : false,
+		'S_SETTING_YES'		=> ($auth_setting == ACL_YES) ? true : false,
+		'S_SETTING_NEVER'	=> ($auth_setting == ACL_NEVER) ? true : false,
+		'S_TOTAL_NO'		=> false,
+		'S_TOTAL_YES'		=> ($total == ACL_YES) ? true : false,
+		'S_TOTAL_NEVER'		=> ($total == ACL_NEVER) ? true : false)
+	);
+
+	// global permission might overwrite local permission
+	if (($forum_id != 0) && isset($_CLASS['forums_auth']->acl_options['global'][$permission]))
+	{
+		if ($user_id != $_CLASS['core_user']->data['user_id'])
+		{
+			$auth2 = new auth();
+			$auth2->acl($userdata);
+			$auth_setting = $auth2->acl_get($permission);
+		}
+		else
+		{
+			$auth_setting = $_CLASS['forums_auth']->acl_get($permission);
+		}
+
+		if ($auth_setting)
+		{
+			$information = ($total == ACL_YES) ? $_CLASS['core_user']->lang['TRACE_USER_GLOBAL_YES_TOTAL_YES'] : $_CLASS['core_user']->lang['TRACE_USER_GLOBAL_YES_TOTAL_NEVER'];
+			$total = ACL_YES;
+		}
+		else
+		{
+			$information = $_CLASS['core_user']->lang['TRACE_USER_GLOBAL_NEVER_TOTAL_KEPT'];
+		}
+
+		$template->assign_block_vars('trace', array(
+			'WHO'			=> sprintf($_CLASS['core_user']->lang['TRACE_GLOBAL_SETTING'], $userdata['username']),
+			'INFORMATION'	=> sprintf($information, '<a href="' . $u_action . "&amp;u=$user_id&amp;f=0&amp;auth=$permission&amp;back=$forum_id\">", '</a>'),
+
+			'S_SETTING_NO'		=> false,
+			'S_SETTING_YES'		=> $auth_setting,
+			'S_SETTING_NEVER'	=> !$auth_setting,
+			'S_TOTAL_NO'		=> false,
+			'S_TOTAL_YES'		=> ($total == ACL_YES) ? true : false,
+			'S_TOTAL_NEVER'		=> ($total == ACL_NEVER) ? true : false)
+		);
+	}
+
+	// Take founder status into account, overwriting the default values
+	if ($userdata['user_type'] == USER_FOUNDER && strpos($permission, 'a_') === 0)
+	{
+		$template->assign_block_vars('trace', array(
+			'WHO'			=> $userdata['username'],
+			'INFORMATION'	=> $_CLASS['core_user']->lang['TRACE_USER_FOUNDER'],
+
+			'S_SETTING_NO'		=> ($auth_setting == ACL_NO) ? true : false,
+			'S_SETTING_YES'		=> ($auth_setting == ACL_YES) ? true : false,
+			'S_SETTING_NEVER'	=> ($auth_setting == ACL_NEVER) ? true : false,
+			'S_TOTAL_NO'		=> false,
+			'S_TOTAL_YES'		=> true,
+			'S_TOTAL_NEVER'		=> false)
+		);
+	}
+}
+
+/**
+* Get already assigned users/groups
+*/
+function retrieve_defined_user_groups($permission_scope, $forum_id, $permission_type)
+{
+	global $_CLASS;
+
+	$sql_forum_id = ($permission_scope === 'global') ? 'AND a.forum_id = 0' : ((sizeof($forum_id)) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id <> 0');
+	$sql_permission_option = "AND o.auth_option LIKE '" . $_CLASS['core_db']->escape($permission_type) . "%'";
+
+	$sql = 'SELECT DISTINCT u.username, u.user_reg_date, u.user_id
+		FROM '. CORE_USERS_TABLE.' u, '. FORUMS_ACL_OPTIONS_TABLE .' o, '. FORUMS_ACL_TABLE .' a
+		LEFT JOIN '. FORUMS_ACL_ROLES_DATA_TABLE." r ON (a.auth_role_id = r.role_id)
+		WHERE (a.auth_option_id = o.auth_option_id OR r.auth_option_id = o.auth_option_id)
+		$sql_permission_option
+		$sql_forum_id
+		AND u.user_id = a.user_id
+		ORDER BY u.username, u.user_reg_date ASC";
+	$result = $_CLASS['core_db']->query($sql);
+
+	$s_defined_user_options = '';
+	$defined_user_ids = array();
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$s_defined_user_options .= '<option value="' . $row['user_id'] . '">' . $row['username'] . '</option>';
+		$defined_user_ids[] = $row['user_id'];
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	$sql = 'SELECT DISTINCT g.group_type, g.group_name, g.group_id
+			FROM '.CORE_GROUPS_TABLE.' g, '. FORUMS_ACL_OPTIONS_TABLE .' o,
+			'. FORUMS_ACL_TABLE .' a
+			LEFT JOIN '. FORUMS_ACL_ROLES_DATA_TABLE ." r ON (a.auth_role_id = r.role_id)
+			WHERE (a.auth_option_id = o.auth_option_id OR r.auth_option_id = o.auth_option_id)
+			$sql_permission_option
+			$sql_forum_id
+			AND g.group_id = a.group_id
+			ORDER BY g.group_type DESC, g.group_name ASC";
+	$result = $_CLASS['core_db']->query($sql);
+
+	$s_defined_group_options = '';
+	$defined_group_ids = array();
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$s_defined_group_options .= '<option' . (($row['group_type'] == GROUP_SPECIAL) ? ' class="sep"' : '') . ' value="' . $row['group_id'] . '">' . (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name']) . '</option>';
+		$defined_group_ids[] = $row['group_id'];
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	return array(
+		'group_ids'			=> $defined_group_ids,
+		'group_ids_options'	=> $s_defined_group_options,
+		'user_ids'			=> $defined_user_ids,
+		'user_ids_options'	=> $s_defined_user_options
+	);
+}
 
 ?>

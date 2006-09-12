@@ -49,14 +49,15 @@
 			<!-- ENDIF -->
 			<p class="topictitle">
 				{ $messagerow:ATTACH_ICON_IMG } 
-				
 				<!-- IF { $messagerow:S_PM_DELETED } -->
 					{ $L_MESSAGE_REMOVED_FROM_OUTBOX }<br />
 					<a href="{ $messagerow:U_REMOVE_PM}" style="float:right;">{ $L_DELETE_MESSAGE }</a>
 				<!-- ELSE -->
 					<a href="{ $messagerow:U_VIEW_PM }">{ $messagerow:SUBJECT }</a>
 				<!-- ENDIF -->
-				
+				<!-- IF messagerow.S_AUTHOR_DELETED -->
+					<br /><em class="gensmall">{ $L_PM_FROM_REMOVED_AUTHOR }</em>
+				<!-- ENDIF -->
 			</p></td>
 		<td class="row1" width="100" align="center"><p class="topicauthor"><!-- IF { $S_SHOW_RECIPIENTS } -->{ $messagerow:RECIPIENTS }<!-- ELSE -->{$messagerow:MESSAGE_AUTHOR}<!-- ENDIF --></p></td>
 		<!-- IF { $S_UNREAD } -->

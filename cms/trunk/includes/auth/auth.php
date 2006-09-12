@@ -130,7 +130,7 @@ class core_auth
 		return $this->_admin_permission[$section]['core']['status'];
 	}
 
-	function do_login($login_options, $template)
+	function auth_login($login_options = array(), $template = false)
 	{
 		global $_CLASS, $_CORE_CONFIG;
 

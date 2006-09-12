@@ -113,7 +113,7 @@ foreach ($messages as $row)
 
 	$_CLASS['core_template']->assign_vars_array($block_position[$row['block_position']].'_admin_messages', array(
 		'ACTIVE'		=> $active,
-		'CHANGE'		=> ($active) ? $_CLASS['core_user']->lang['DEACTIVATE'] : $_CLASS['core_user']->lang['ACTIVATE'],
+		'CHANGE'		=> ($active) ? $_CLASS['core_user']->get_lang('DEACTIVATE') : $_CLASS['core_user']->get_lang('ACTIVATE'),
 
 		'AUTH_LINK'		=> generate_link('messages&amp;mode=auth&amp;id='.$row['block_id'], array('admin' => true)),
 		'ACTIVE_LINK'	=> generate_link('messages&amp;mode=change&amp;id='.$row['block_id'], array('admin' => true)),
