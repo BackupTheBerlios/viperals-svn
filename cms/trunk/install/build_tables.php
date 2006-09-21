@@ -34,13 +34,14 @@ function field_unix_time($name, $null = false)
 
 $_CLASS['core_db']->table_create('start', CORE_ADMIN_AUTH_TABLE);
 
+$_CLASS['core_db']->add_table_field_int('admin_access_id', array('max' => 16000000, 'auto_increment' => true));
 $_CLASS['core_db']->add_table_field_char('admin_section', 100);
-
-$_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000, 'null' => true));
-$_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'null' => true));
 $_CLASS['core_db']->add_table_field_int('admin_status', array('max' => 10));
 $_CLASS['core_db']->add_table_field_text('admin_options', 60000, true);
+$_CLASS['core_db']->add_table_field_int('user_id', array('max' => 16000000, 'null' => true));
+$_CLASS['core_db']->add_table_field_int('group_id', array('max' => 16000000, 'null' => true));
 
+$_CLASS['core_db']->add_table_index('admin_access_id', 'primary');
 $_CLASS['core_db']->add_table_index('user_id');
 $_CLASS['core_db']->add_table_index('group_id');
 $_CLASS['core_db']->add_table_index('admin_status');
@@ -365,6 +366,7 @@ $_CLASS['core_db']->add_table_field_int('topic_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('poster_id', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('download_count', array('max' => 16000000));
 $_CLASS['core_db']->add_table_field_int('in_message', array('max' => 1));
+$_CLASS['core_db']->add_table_field_int('is_orphan', array('max' => 1));
 
 $_CLASS['core_db']->add_table_field_text('comment', 200);
 $_CLASS['core_db']->add_table_field_char('physical_filename', 255);

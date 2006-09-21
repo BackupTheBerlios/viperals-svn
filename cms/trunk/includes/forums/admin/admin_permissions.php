@@ -15,9 +15,10 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	die; 
 }
 
-$u_action = '';
 $permission_dropdown = '';
 $mode = request_var('mode', 'view_forum_local');
+
+$u_action = 'forums&file=admin_permissions&mode='.$mode;
 
 load_class(SITE_FILE_ROOT.'includes/forums/admin/auth.php', 'forums_auth_admin');
 
@@ -90,17 +91,19 @@ if ($usernames)
 }
 unset($usernames);
 
-if (sizeof($username) && !sizeof($user_id))
+if (count($username) && !count($user_id))
 {
-	user_get_id_name($user_id, $username);
+	require_once SITE_FILE_ROOT.'includes/functions_user.php';
 
-	if (!sizeof($user_id))
+	$user_id = user_get_id($username, $difference);
+
+	if (count($username) === count($difference))
 	{
-		trigger_error($_CLASS['core_user']->lang['SELECTED_USER_NOT_EXIST'] . adm_back_link($u_action));
+		trigger_error($_CLASS['core_user']->lang['SELECTED_USER_NOT_EXIST'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 	}
 }
 unset($username);
-
+	
 // Build forum ids (of all forums are checked or subforum listing used)
 if ($all_forums)
 {
@@ -216,7 +219,7 @@ $permission_type = request_var('type', $permission_dropdown[0]);
 
 if (!in_array($permission_type, $permission_dropdown))
 {
-	trigger_error($_CLASS['core_user']->lang['WRONG_PERMISSION_TYPE'] . adm_back_link($u_action));
+	trigger_error($_CLASS['core_user']->lang['WRONG_PERMISSION_TYPE'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 }
 
 
@@ -250,14 +253,14 @@ if (strpos($mode, 'setting_') === 0 && $action)
 			}
 			else
 			{
-				trigger_error($_CLASS['core_user']->lang['NO_USER_GROUP_SELECTED'] . adm_back_link($u_action));
+				trigger_error($_CLASS['core_user']->lang['NO_USER_GROUP_SELECTED'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 			}
 		break;
 
 		case 'apply_permissions':
 			if (!isset($_POST['setting']))
 			{
-				trigger_error($_CLASS['core_user']->lang['NO_AUTH_SETTING_FOUND'] . adm_back_link($u_action));
+				trigger_error($_CLASS['core_user']->lang['NO_AUTH_SETTING_FOUND'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 			}
 
 			set_permissions($mode, $permission_type, $_CLASS['forums_auth_admin'], $user_id, $group_id);
@@ -266,7 +269,7 @@ if (strpos($mode, 'setting_') === 0 && $action)
 		case 'apply_all_permissions':
 			if (!isset($_POST['setting']))
 			{
-				trigger_error($_CLASS['core_user']->lang['NO_AUTH_SETTING_FOUND'] . adm_back_link($u_action));
+				trigger_error($_CLASS['core_user']->lang['NO_AUTH_SETTING_FOUND'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 			}
 
 			set_all_permissions($mode, $permission_type, $_CLASS['forums_auth_admin'], $user_id, $group_id);
@@ -344,6 +347,7 @@ foreach ($permission_victim as $victim)
 			$_CLASS['core_template']->assign_array(array(
 				'S_SELECT_USER'			=> true,
 				'U_FIND_USERNAME'		=> generate_link('members_list&amp;mode=searchuser&amp;form=select_victim&amp;field=username')
+				'UA_FIND_USERNAME'		=> generate_link('members_list&amp;mode=searchuser&form=select_victim&field=username')
 			));
 
 		break;
@@ -406,16 +410,22 @@ foreach ($permission_victim as $victim)
 				'S_DEFINED_GROUP_OPTIONS'	=> $items['group_ids_options'],
 				'S_ADD_GROUP_OPTIONS'		=> group_select_options(false, $items['group_ids']),
 				'U_FIND_USERNAME'			=> generate_link('members_list&amp;mode=searchuser&amp;form=add_user&amp;field=username')
+				'UA_FIND_USERNAME'			=> generate_link('members_list&amp;mode=searchuser&form=add_user&field=username')
 			));
 
 		break;
 	}
+	
+	// The S_ALLOW_SELECT parameter below is a measure to lower memory usage.
+	// If there are more than 5 forums selected the admin is not able to select all users/groups too.
+	// We need to see if the number of forums can be increased or need to be decreased.
 
 	$_CLASS['core_template']->assign_array(array(
-		'U_ACTION'				=> $u_action,
+		'U_ACTION'				=> generate_link($u_action, array('admin' => true)),
 		'ANONYMOUS_USER_ID'		=> ANONYMOUS,
 
 		'S_SELECT_VICTIM'		=> true,
+		'S_ALLOW_ALL_SELECT'	=> (sizeof($forum_id) > 5) ? false : true,
 		'S_CAN_SELECT_USER'		=> ($_CLASS['forums_auth']->acl_get('a_authusers')) ? true : false,
 		'S_CAN_SELECT_GROUP'	=> ($_CLASS['forums_auth']->acl_get('a_authgroups')) ? true : false,
 		'S_HIDDEN_FIELDS'		=> $s_hidden_fields
@@ -451,14 +461,14 @@ foreach ($permission_victim as $victim)
 // Do not allow forum_ids being set and no other setting defined (will bog down the server too much)
 if (sizeof($forum_id) && !sizeof($user_id) && !sizeof($group_id))
 {
-	trigger_error($_CLASS['core_user']->lang['ONLY_FORUM_DEFINED'] . adm_back_link($u_action));
+	trigger_error($_CLASS['core_user']->lang['ONLY_FORUM_DEFINED'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 }
 
 $_CLASS['core_template']->assign_array(array(
 	'S_PERMISSION_DROPDOWN'		=> (sizeof($permission_dropdown) > 1) ? build_permission_dropdown($permission_dropdown, $permission_type) : false,
 	'L_PERMISSION_TYPE'			=> $_CLASS['core_user']->get_lang('ACL_TYPE_' . strtoupper($permission_type)),
 
-	'U_ACTION'					=> $u_action,
+	'U_ACTION'					=> generate_link($u_action, array('admin' => true)),
 	'S_HIDDEN_FIELDS'			=> $s_hidden_fields
 ));
 
@@ -583,7 +593,7 @@ function check_existence($mode, &$ids)
 
 	if (!sizeof($ids))
 	{
-		trigger_error($_CLASS['core_user']->lang['SELECTED_' . strtoupper($mode) . '_NOT_EXIST'] . adm_back_link($u_action));
+		trigger_error($_CLASS['core_user']->lang['SELECTED_' . strtoupper($mode) . '_NOT_EXIST'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 	}
 }
 
@@ -602,7 +612,7 @@ function set_permissions($mode, $permission_type, &$forums_auth_admin, &$user_id
 	// Check the permission setting again
 	if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $permission_type) . 'auth') || !$_CLASS['forums_auth']->acl_get('a_auth' . $ug_type . 's'))
 	{
-		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link($u_action));
+		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 	}
 	
 	$ug_id = $forum_id = 0;
@@ -665,7 +675,7 @@ function set_permissions($mode, $permission_type, &$forums_auth_admin, &$user_id
 
 	log_action($mode, 'add', $permission_type, $ug_type, $ug_id, $forum_id);
 
-	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link($u_action));
+	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 }
 
 /** 
@@ -681,7 +691,7 @@ function set_all_permissions($mode, $permission_type, &$forums_auth_admin, &$use
 	// Check the permission setting again
 	if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $permission_type) . 'auth') || !$_CLASS['forums_auth']->acl_get('a_auth' . $ug_type . 's'))
 	{
-		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link($u_action));
+		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 	}
 
 	$auth_settings = (isset($_POST['setting'])) ? $_POST['setting'] : array();
@@ -732,7 +742,7 @@ function set_all_permissions($mode, $permission_type, &$forums_auth_admin, &$use
 
 	log_action($mode, 'add', $permission_type, $ug_type, $ug_ids, $forum_ids);
 
-	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link($u_action));
+	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 }
 
 /**
@@ -786,7 +796,7 @@ function remove_permissions($mode, $permission_type, &$forums_auth_admin, &$user
 	// Check the permission setting again
 	if (!$_CLASS['forums_auth']->acl_get('a_' . str_replace('_', '', $permission_type) . 'auth') || !$_CLASS['forums_auth']->acl_get('a_auth' . $ug_type . 's'))
 	{
-		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link($u_action));
+		trigger_error($_CLASS['core_user']->lang['NO_ADMIN'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 	}
 
 	$forums_auth_admin->acl_delete($ug_type, (($ug_type == 'user') ? $user_id : $group_id), (sizeof($forum_id) ? $forum_id : false), $permission_type);
@@ -799,7 +809,7 @@ function remove_permissions($mode, $permission_type, &$forums_auth_admin, &$user
 
 	log_action($mode, 'del', $permission_type, $ug_type, (($ug_type == 'user') ? $user_id : $group_id), (sizeof($forum_id) ? $forum_id : array(0 => 0)));
 
-	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link($u_action));
+	trigger_error($_CLASS['core_user']->lang['AUTH_UPDATED'] . adm_back_link(generate_link($u_action, array('admin' => true))));
 }
 
 /**
@@ -857,32 +867,6 @@ function log_action($mode, $action, $permission_type, $ug_type, $ug_id, $forum_i
 }
 
 /**
-* Update foes - remove moderators and administrators from foe lists...
-*/
-function update_foes()
-{
-	global $_CLASS;
-
-	$perms = array();
-	foreach ($_CLASS['forums_auth']->acl_get_list(false, array('a_', 'm_'), false) as $forum_id => $forum_ary)
-	{
-		foreach ($forum_ary as $auth_option => $user_ary)
-		{
-			$perms = array_merge($perms, $user_ary);
-		}
-	}
-
-	if (sizeof($perms))
-	{
-		$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
-			WHERE zebra_id IN (' . implode(', ', array_unique($perms)) . ')
-				AND foe = 1';
-		$_CLASS['core_db']->query($sql);
-	}
-	unset($perms);
-}
-
-/**
 * Display a complete trace tree for the selected permission to determine where settings are set/unset
 */
 function permission_trace($user_id, $forum_id, $permission)
@@ -929,7 +913,7 @@ function permission_trace($user_id, $forum_id, $permission)
 		'U_BACK'				=> ($back) ? build_url(array('f', 'back')) . "&amp;f=$back" : '')
 	);
 
-	$template->assign_block_vars('trace', array(
+	$_CLASS['core_template']->assign_vars_array('trace', array(
 		'WHO'			=> $_CLASS['core_user']->lang['DEFAULT'],
 		'INFORMATION'	=> $_CLASS['core_user']->lang['TRACE_DEFAULT'],
 
@@ -986,7 +970,7 @@ function permission_trace($user_id, $forum_id, $permission)
 				break;
 			}
 
-			$template->assign_block_vars('trace', array(
+			$_CLASS['core_template']->assign_vars_array('trace', array(
 				'WHO'			=> $row['group_name'],
 				'INFORMATION'	=> $information,
 
@@ -1022,7 +1006,7 @@ function permission_trace($user_id, $forum_id, $permission)
 		break;
 	}
 
-	$template->assign_block_vars('trace', array(
+	$_CLASS['core_template']->assign_vars_array('trace', array(
 		'WHO'			=> $userdata['username'],
 		'INFORMATION'	=> $information,
 
@@ -1058,9 +1042,9 @@ function permission_trace($user_id, $forum_id, $permission)
 			$information = $_CLASS['core_user']->lang['TRACE_USER_GLOBAL_NEVER_TOTAL_KEPT'];
 		}
 
-		$template->assign_block_vars('trace', array(
+		$_CLASS['core_template']->assign_vars_array('trace', array(
 			'WHO'			=> sprintf($_CLASS['core_user']->lang['TRACE_GLOBAL_SETTING'], $userdata['username']),
-			'INFORMATION'	=> sprintf($information, '<a href="' . $u_action . "&amp;u=$user_id&amp;f=0&amp;auth=$permission&amp;back=$forum_id\">", '</a>'),
+			'INFORMATION'	=> sprintf($information, '<a href="' . generate_link("$u_action&amp;u=$user_id&amp;f=0&amp;auth=$permission&amp;back=$forum_id", array('admin' => true)) . '">', '</a>'),
 
 			'S_SETTING_NO'		=> false,
 			'S_SETTING_YES'		=> $auth_setting,
@@ -1074,7 +1058,7 @@ function permission_trace($user_id, $forum_id, $permission)
 	// Take founder status into account, overwriting the default values
 	if ($userdata['user_type'] == USER_FOUNDER && strpos($permission, 'a_') === 0)
 	{
-		$template->assign_block_vars('trace', array(
+		$_CLASS['core_template']->assign_vars_array('trace', array(
 			'WHO'			=> $userdata['username'],
 			'INFORMATION'	=> $_CLASS['core_user']->lang['TRACE_USER_FOUNDER'],
 

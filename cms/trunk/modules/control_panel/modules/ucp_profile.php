@@ -110,7 +110,7 @@ switch ($this->mode)
 				$message_parser = new parse_message($signature);
 
 				// Allowing Quote BBCode
-				$message_parser->parse($enable_html, $enable_bbcode, $enable_urls, $enable_smilies, $config['allow_sig_img'], $config['allow_sig_flash'], true, true, 'sig');
+				$message_parser->parse(false, $enable_bbcode, ($config['allow_sig_links']) ? $enable_urls : false, $enable_smilies, $config['allow_sig_img'], $config['allow_sig_flash'], true, $config['allow_sig_links'], true, 'sig');
 				
 				if (!empty($message_parser->warn_msg))
 				{
@@ -176,6 +176,7 @@ switch ($this->mode)
 			'SMILIES_STATUS'		=> (true) ? $_CLASS['core_user']->get_lang('SMILIES_ARE_ON') : $_CLASS['core_user']->get_lang('SMILIES_ARE_OFF'),
 			'IMG_STATUS'			=> (true) ? $_CLASS['core_user']->get_lang('IMAGES_ARE_ON') : $_CLASS['core_user']->get_lang('IMAGES_ARE_OFF'),
 			'FLASH_STATUS'			=> (true) ? $_CLASS['core_user']->get_lang('FLASH_IS_ON') : $_CLASS['core_user']->get_lang('FLASH_IS_OFF'),
+			'URL_STATUS'			=> ($config['allow_sig_links']) ? $_CLASS['core_user']->lang['URL_IS_ON'] : $_CLASS['core_user']->lang['URL_IS_OFF'],
 
 			'L_SIGNATURE_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['SIGNATURE_EXPLAIN'], $config['max_sig_chars']),
 

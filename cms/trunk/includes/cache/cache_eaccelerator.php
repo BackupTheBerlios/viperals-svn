@@ -80,17 +80,18 @@ class cache_eaccelerator extends cache
 		}
 
 		$key_list = eaccelerator_list_keys();
+		$key_length = strlen($this->key);
 
 		foreach ($key_list as $key)
 		{
 			if (strpos($key['name'], $this->key) === 0)
 			{
-				$name = substr($key['name'], strlen($this->key));
-
 				eaccelerator_rm($key['name']);
-				$this->remove($name);
+				$this->remove(substr($key['name'], $key_length));
 			}
 		}
+
+		$this->reset();
 	}
 }
 

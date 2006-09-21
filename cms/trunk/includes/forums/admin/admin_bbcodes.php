@@ -15,314 +15,253 @@ if (!defined('VIPERAL') || VIPERAL != 'Admin')
 	die; 
 }
 
+global $_CLASS;
+
 // Do we have general permissions?
-if (!$_CLASS['auth']->acl_get('a_bbcode'))
+if (!$_CLASS['forums_auth']->acl_get('a_bbcode'))
 {
 	trigger_error('NO_ADMIN');
 }
 
+
+
+$_CLASS['core_user']->add_lang('admin_posting', 'forums');
+
 // Set up general vars
-$mode = request_var('mode', '');
+$action	= request_var('action', '');
 $bbcode_id = request_var('bbcode', 0);
+$u_action = '';
+
+$tpl_name = 'acp_bbcodes';
+$page_title = 'ACP_BBCODES';
 
 // Set up mode-specific vars
-switch ($mode)
+switch ($action)
 {
 	case 'add':
-		$bbcode_match = $bbcode_tpl = '';
+		$bbcode_match = $bbcode_tpl = $bbcode_helpline = '';
+		$display_on_posting = 0;
 	break;
 
 	case 'edit':
-		$sql = 'SELECT bbcode_match, bbcode_tpl
-			FROM ' . BBCODES_TABLE . '
+		$sql = 'SELECT bbcode_match, bbcode_tpl, display_on_posting, bbcode_helpline
+			FROM ' . FORUMS_BBCODES_TABLE . '
 			WHERE bbcode_id = ' . $bbcode_id;
-		$result = $_CLASS['core_db']->sql_query($sql);
-		if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+
+		if (!$row)
 		{
-			trigger_error('BBCODE_NOT_EXIST');
+			trigger_error('BBCODE_NOT_EXIST', E_USER_WARNING);
 		}
-		$_CLASS['core_db']->sql_freeresult($result);
 
 		$bbcode_match = $row['bbcode_match'];
 		$bbcode_tpl = htmlspecialchars($row['bbcode_tpl']);
+		$display_on_posting = $row['display_on_posting'];
+		$bbcode_helpline = html_entity_decode($row['bbcode_helpline']);
 	break;
 
 	case 'modify':
-		$sql = 'SELECT bbcode_id
-			FROM ' . BBCODES_TABLE . '
+		$sql = 'SELECT bbcode_id, bbcode_tag
+			FROM ' . FORUMS_BBCODES_TABLE . '
 			WHERE bbcode_id = ' . $bbcode_id;
-		$result = $_CLASS['core_db']->sql_query($sql);
-		if (!$row = $_CLASS['core_db']->sql_fetchrow($result))
-		{
-			trigger_error('BBCODE_NOT_EXIST');
-		}
-		$_CLASS['core_db']->sql_freeresult($result);
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
 
-		// No break here
+		if (!$row)
+		{
+			trigger_error('BBCODE_NOT_EXIST', E_USER_WARNING);
+		}
+
+	// No break here
 
 	case 'create':
-		$bbcode_match = htmlspecialchars(strip_slashes($_POST['bbcode_match']));
-		$bbcode_tpl = strip_slashes($_POST['bbcode_tpl']);
+		$display_on_posting = request_var('display_on_posting', 0);
+
+		$bbcode_match = request_var('bbcode_match', '');
+		$bbcode_tpl = html_entity_decode(request_var('bbcode_tpl', ''));
+		$bbcode_helpline = htmlspecialchars(request_var('bbcode_helpline', ''));
 	break;
 }
 
 // Do major work
-switch ($mode)
+switch ($action)
 {
 	case 'edit':
 	case 'add':
-		adm_page_header($_CLASS['core_user']->lang['BBCODES']);
 
-?>
+		$_CLASS['core_template']->assign_array(array(
+			'S_EDIT_BBCODE'		=> true,
+			'U_BACK'			=> $u_action,
+			'U_ACTION'			=> $u_action . '&amp;action=' . (($action == 'add') ? 'create' : 'modify') . (($bbcode_id) ? "&amp;bbcode=$bbcode_id" : ''),
 
-<h1><?php echo $_CLASS['core_user']->lang['BBCODES'] ?></h1>
-
-<p><?php echo $_CLASS['core_user']->lang['BBCODES_EXPLAIN'] ?></p>
-
-<form method="post" action="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=' . (($mode == 'add') ? 'create' : 'modify') . (($bbcode_id) ? "&amp;bbcode=$bbcode_id" : ''), array('admin' => true)); ?>">
-<table cellspacing="1" cellpadding="0" border="0" align="center" width="90%">
-	<tr>
-		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th colspan="2"><?php echo $_CLASS['core_user']->lang['BBCODE_USAGE'] ?></th>
-			</tr>
-			<tr>
-				<td class="row3" colspan="2"><?php echo $_CLASS['core_user']->lang['BBCODE_USAGE_EXPLAIN'] ?></td>
-			</tr>
-			<tr valign="top">
-				<td class="row1" width="40%"><b><?php echo $_CLASS['core_user']->lang['EXAMPLES'] ?></b><br /><br /><?php echo $_CLASS['core_user']->lang['BBCODE_USAGE_EXAMPLE'] ?></td>
-				<td class="row2"><textarea name="bbcode_match" cols="60" rows="5"><?php echo $bbcode_match ?></textarea></td>
-			</tr>
-		</table></td>
-	</tr>
-</table>
-
-<br clear="all" />
-
-<table cellspacing="1" cellpadding="0" border="0" align="center" width="90%">
-	<tr>
-		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th colspan="2"><?php echo $_CLASS['core_user']->lang['HTML_REPLACEMENT'] ?></th>
-			</tr>
-			<tr>
-				<td class="row3" colspan="2"><?php echo $_CLASS['core_user']->lang['HTML_REPLACEMENT_EXPLAIN'] ?></td>
-			</tr>
-			<tr valign="top">
-				<td class="row1" width="40%"><b><?php echo $_CLASS['core_user']->lang['EXAMPLES'] ?></b><br /><br /><?php echo $_CLASS['core_user']->lang['HTML_REPLACEMENT_EXAMPLE'] ?></td>
-				<td class="row2"><textarea name="bbcode_tpl" cols="60" rows="8"><?php echo $bbcode_tpl ?></textarea></td>
-			</tr>
-			<tr>
-				<td class="cat" colspan="2" align="center"><input type="submit" value="<?php echo $_CLASS['core_user']->lang['SUBMIT'] ?>" class="btnmain" /></td>
-			</tr>
-		</table></td>
-	</tr>
-</table>
-
-<br clear="all" />
-
-<table cellspacing="1" cellpadding="0" border="0" align="center" width="90%">
-	<tr>
-		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th colspan="2"><?php echo $_CLASS['core_user']->lang['TOKENS'] ?></th>
-			</tr>
-			<tr>
-				<td class="row3" colspan="2"><?php echo $_CLASS['core_user']->lang['TOKENS_EXPLAIN'] ?></td>
-			</tr>
-			<tr>
-				<th><?php echo $_CLASS['core_user']->lang['TOKEN'] ?></th>
-				<th><?php echo $_CLASS['core_user']->lang['TOKEN_DEFINITION'] ?></th>
-			</tr>
-<?php
+			'L_BBCODE_USAGE_EXPLAIN'=> sprintf($_CLASS['core_user']->lang['BBCODE_USAGE_EXPLAIN'], '<a href="#down">', '</a>'),
+			'BBCODE_MATCH'			=> $bbcode_match,
+			'BBCODE_TPL'			=> $bbcode_tpl,
+			'BBCODE_HELPLINE'		=> $bbcode_helpline,
+			'DISPLAY_ON_POSTING'	=> $display_on_posting)
+		);
 
 		foreach ($_CLASS['core_user']->lang['tokens'] as $token => $token_explain)
 		{
-			?><tr valign="top">
-				<td class="row1">{<?php echo $token ?>}</td>
-				<td class="row2"><?php echo $token_explain ?></td>
-			</tr><?php
+			$_CLASS['core_template']->assign_vars_array('token', array(
+				'TOKEN'		=> '{' . $token . '}',
+				'EXPLAIN'	=> $token_explain)
+			);
 		}
 
-?>
-		</table></td>
-	</tr>
-</table>
-</form>
+		return;
 
-<?php
-
-		adm_page_footer();
 	break;
 
 	case 'modify':
 	case 'create':
-		adm_page_header($_CLASS['core_user']->lang['BBCODES']);
 
 		$data = build_regexp($bbcode_match, $bbcode_tpl);
 
+		// Make sure the user didn't pick a "bad" name for the BBCode tag.
+		$hard_coded = array('code', 'quote', 'quote=', 'attachment', 'attachment=', 'b', 'i', 'url', 'url=', 'img', 'size', 'size=', 'color', 'color=', 'u', 'list', 'list=', 'email', 'email=', 'flash', 'flash=');
+
+		if (($action == 'modify' && $data['bbcode_tag'] !== $row['bbcode_tag']) || ($action == 'create'))
+		{
+			$sql = 'SELECT 1 as test
+				FROM ' . FORUMS_BBCODES_TABLE . "
+				WHERE LOWER(bbcode_tag) = '" . $db->sql_escape(strtolower($data['bbcode_tag'])) . "'";
+			$result = $_CLASS['core_db']->query($sql);
+			$info = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+
+			if ($info['test'] === '1' || in_array(strtolower($data['bbcode_tag']), $hard_coded))
+			{
+				trigger_error('BBCODE_INVALID_TAG_NAME', E_USER_WARNING);
+			}
+		}
+
 		$sql_ary = array(
-			'bbcode_tag'					=>	$data['bbcode_tag'],
-			'bbcode_match'				=>	$bbcode_match,
-			'bbcode_tpl'					=>	$bbcode_tpl,
-			'first_pass_match'			=>	$data['first_pass_match'],
-			'first_pass_replace'		=>	$data['first_pass_replace'],
-			'second_pass_match'	=>	$data['second_pass_match'],
-			'second_pass_replace'	=>	$data['second_pass_replace']
+			'bbcode_tag'				=> $data['bbcode_tag'],
+			'bbcode_match'				=> $bbcode_match,
+			'bbcode_tpl'				=> $bbcode_tpl,
+			'display_on_posting'		=> $display_on_posting,
+			'bbcode_helpline'			=> $bbcode_helpline,
+			'first_pass_match'			=> $data['first_pass_match'],
+			'first_pass_replace'		=> $data['first_pass_replace'],
+			'second_pass_match'			=> $data['second_pass_match'],
+			'second_pass_replace'		=> $data['second_pass_replace']
 		);
 
-		if ($mode == 'create')
+		if ($action == 'create')
 		{
-			/* TODO: look for SQL incompatibilities
-			// NOTE: I'm sure there was another simpler (and obvious) way of finding a suitable bbcode_id
-			$sql = 'SELECT b1.bbcode_id
-				FROM ' . BBCODES_TABLE . ' b1, ' . BBCODES_TABLE . ' b2
-				WHERE b2.bbcode_id > b1.bbcode_id
-				GROUP BY b1.bbcode_id
-				HAVING MIN(b2.bbcode_id) > b1.bbcode_id + 1
-				ORDER BY b1.bbcode_id ASC';
-			$result = $_CLASS['core_db']->sql_query_limit($sql, 1);
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
-			*/
-			
-			$sql = 'SELECT MAX(bbcode_id) as bbcode_id
-				FROM ' . BBCODES_TABLE;
-			$result = $_CLASS['core_db']->sql_query($sql);
-			$row = $_CLASS['core_db']->sql_fetchrow($result);
-			$_CLASS['core_db']->sql_freeresult($result);
-			
+			$sql = 'SELECT MAX(bbcode_id) as max_bbcode_id
+				FROM ' . FORUMS_BBCODES_TABLE;
+			$result = $_CLASS['core_db']->query($sql);
+			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			$_CLASS['core_db']->free_result($result);
+
 			if ($row)
 			{
-				 $bbcode_id = $row['bbcode_id'] + 1;
-			}
-			else
-			{
-				$sql = 'SELECT MIN(bbcode_id) AS min_id, MAX(bbcode_id) AS max_id
-					FROM ' . BBCODES_TABLE;
-				$result = $_CLASS['core_db']->sql_query($sql);
-				$row = $_CLASS['core_db']->sql_fetchrow($result);
-				$_CLASS['core_db']->sql_freeresult($result);
+				$bbcode_id = $row['max_bbcode_id'] + 1;
 
-				if (empty($row['min_id']) || $row['min_id'] >= NUM_CORE_BBCODES)
+				// Make sure it is greater than the core bbcode ids...
+				if ($bbcode_id <= NUM_CORE_BBCODES)
 				{
 					$bbcode_id = NUM_CORE_BBCODES + 1;
 				}
-				else
-				{
-					$bbcode_id = $row['max_id'] + 1;
-				}
+			}
+			else
+			{
+				$bbcode_id = NUM_CORE_BBCODES + 1;
 			}
 
-			if ($bbcode_id > 31)
+			if ($bbcode_id > 1511)
 			{
-				trigger_error('TOO_MANY_BBCODES');
+				trigger_error('TOO_MANY_BBCODES', E_USER_WARNING);
 			}
 
 			$sql_ary['bbcode_id'] = (int) $bbcode_id;
 
-			$_CLASS['core_db']->sql_query('INSERT INTO ' . BBCODES_TABLE . $_CLASS['core_db']->sql_build_array('INSERT', $sql_ary));
+			$_CLASS['core_db']->query('INSERT INTO ' . BBCODES_TABLE . $db->sql_build_array('INSERT', $sql_ary));
+
 			$lang = 'BBCODE_ADDED';
 			$log_action = 'LOG_BBCODE_ADD';
 		}
 		else
 		{
-			$_CLASS['core_db']->sql_query('UPDATE ' . BBCODES_TABLE . ' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $sql_ary) . ' WHERE bbcode_id = ' . $bbcode_id);
+			$sql = 'UPDATE ' . FORUMS_BBCODES_TABLE . '
+				SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+				WHERE bbcode_id = ' . $bbcode_id;
+			$_CLASS['core_db']->query($sql);
+
 			$lang = 'BBCODE_EDITED';
 			$log_action = 'LOG_BBCODE_EDIT';
 		}
 
 		add_log('admin', $log_action, $data['bbcode_tag']);
 
-		trigger_error($lang);
+		trigger_error($_CLASS['core_user']->lang[$lang] . adm_back_link($u_action));
+
 	break;
 
 	case 'delete':
+
 		$sql = 'SELECT bbcode_tag
-			FROM ' . BBCODES_TABLE . "
+			FROM ' . FORUMS_BBCODES_TABLE . "
 			WHERE bbcode_id = $bbcode_id";
-		$result = $_CLASS['core_db']->sql_query($sql);
-		$row = $_CLASS['core_db']->sql_fetchrow($result);
-		$_CLASS['core_db']->sql_freeresult($result);
-		
+		$result = $_CLASS['core_db']->query($sql);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+
 		if ($row)
 		{
-			$_CLASS['core_db']->sql_query('DELETE FROM ' . BBCODES_TABLE . " WHERE bbcode_id = $bbcode_id");
+			$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_BBCODES_TABLE . " WHERE bbcode_id = $bbcode_id");
 			add_log('admin', 'LOG_BBCODE_DELETE', $row['bbcode_tag']);
 		}
-		
 
-		// No break here
-
-	default:
-
-		adm_page_header($_CLASS['core_user']->lang['BBCODES']);
-
-?>
-
-<h1><?php echo $_CLASS['core_user']->lang['BBCODES'] ?></h1>
-
-<p><?php echo $_CLASS['core_user']->lang['BBCODES_EXPLAIN'] ?></p>
-
-
-<form method="post" action="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=add', array('admin' => true)); ?>"><table cellspacing="1" cellpadding="0" border="0" align="center">
-	<tr>
-		<td><table class="tablebg" width="100%" cellspacing="1" cellpadding="4" border="0" align="center">
-			<tr>
-				<th><?php echo $_CLASS['core_user']->lang['BBCODE_TAG'] ?></th>
-				<th><?php echo $_CLASS['core_user']->lang['ACTION'] ?></th>
-			</tr><?php
-
-		$sql = 'SELECT *
-			FROM ' . BBCODES_TABLE . '
-			ORDER BY bbcode_id';
-		$result = $_CLASS['core_db']->sql_query($sql);
-
-		$row_class = '';
-		while ($row = $_CLASS['core_db']->sql_fetchrow($result))
-		{
-			$row_class = ($row_class == 'row1') ? 'row2' : 'row1';
-?>
-			<tr>
-				<td class="<?php echo $row_class ?>" align="center"><?php echo $row['bbcode_tag'] ?></td>
-				<td class="<?php echo $row_class ?>" align="center"><a href="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=edit&amp;bbcode='.$row['bbcode_id'], array('admin' => true)); ?>"><?php echo $_CLASS['core_user']->lang['EDIT'] ?></a> | <a href="<?php echo generate_link('forums&amp;file=admin_bbcodes&amp;mode=delete&amp;bbcode='.$row['bbcode_id'], array('admin' => true)) ?>"><?php echo $_CLASS['core_user']->lang['DELETE'] ?></a></td>
-			</tr>
-<?php
-		}
-		$_CLASS['core_db']->sql_freeresult($result);
-?>
-
-			<tr>
-				<td class="cat" colspan="2" align="center"><input type="submit" value="<?php echo $_CLASS['core_user']->lang['ADD_BBCODE'] ?>" class="btnmain" /></td>
-			</tr>
-		</table></td>
-	</tr>
-</table></form>
-
-<?php
-
-	adm_page_footer();
+	break;
 }
 
-// -----------------------------
-// Functions
-function build_regexp($msg_bbcode, $msg_html)
-{
-	$msg_bbcode = trim($msg_bbcode);
-	$msg_html = trim($msg_html);
+$_CLASS['core_template']->assign_array(array(
+	'U_ACTION'		=> $u_action . '&amp;action=add')
+);
 
-	$fp_match = preg_quote($msg_bbcode, '!');
-	$fp_replace = preg_replace('#^\[(.*?)\]#', '[$1:$uid]', $msg_bbcode);
+$sql = 'SELECT *
+	FROM ' . FORUMS_BBCODES_TABLE . '
+	ORDER BY bbcode_id';
+$result = $_CLASS['core_db']->query($sql);
+
+while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+{
+	$_CLASS['core_template']->assign_vars_array('bbcodes', array(
+		'BBCODE_TAG'		=> $row['bbcode_tag'],
+		'U_EDIT'			=> generate_link($u_action . '&amp;action=edit&amp;bbcode=' . $row['bbcode_id'], array('admin' => true)),
+		'U_DELETE'			=> generate_link($u_action . '&amp;action=delete&amp;bbcode=' . $row['bbcode_id'], array('admin' => true))
+	));
+}
+$_CLASS['core_db']->free_result($result);
+
+
+/*
+* Build regular expression for custom bbcode
+*/
+function build_regexp(&$bbcode_match, &$bbcode_tpl)
+{
+	$bbcode_match = trim($bbcode_match);
+	$bbcode_tpl = trim($bbcode_tpl);
+
+	$fp_match = preg_quote($bbcode_match, '!');
+	$fp_replace = preg_replace('#^\[(.*?)\]#', '[$1:$uid]', $bbcode_match);
 	$fp_replace = preg_replace('#\[/(.*?)\]$#', '[/$1:$uid]', $fp_replace);
 
-	$sp_match = preg_quote($msg_bbcode, '!');
+	$sp_match = preg_quote($bbcode_match, '!');
 	$sp_match = preg_replace('#^\\\\\[(.*?)\\\\\]#', '\[$1:$uid\]', $sp_match);
 	$sp_match = preg_replace('#\\\\\[/(.*?)\\\\\]$#', '\[/$1:$uid\]', $sp_match);
-	$sp_replace = $msg_html;
+	$sp_replace = $bbcode_tpl;
 
+	// @todo Make sure to change this too if something changed in message parsing
 	$tokens = array(
 		'URL'	 => array(
-			'!([a-z0-9]+://)?([^?].*?[^ \t\n\r<"]*)!ie'		=>	"(('\$1') ? '\$1\$2' : 'http://\$2')"
+			'!([a-z0-9]+://)?([^?].*?[^ \t\n\r<"]*)!ie'	=>	"(('\$1') ? '\$1\$2' : 'http://\$2')"
 		),
 		'LOCAL_URL'	 => array(
 			'!([^:]+/[^ \t\n\r<"]*)!'	=>	'$1'
@@ -331,32 +270,32 @@ function build_regexp($msg_bbcode, $msg_html)
 			'!([a-z0-9]+[a-z0-9\-\._]*@(?:(?:[0-9]{1,3}\.){3,5}[0-9]{1,3}|[a-z0-9]+[a-z0-9\-\._]*\.[a-z]+))!i'	=>	'$1'
 		),
 		'TEXT' => array(
-			'!(.*?)!es'	 =>	"str_replace('\\\"', '&quot;', str_replace('\\'', '&#39;', '\$1'))"
+			'!(.*?)!es'	 =>	"str_replace(\"\\r\\n\",\"\\n\", str_replace('\\\"', '\"', str_replace('\\'', '&#39;', trim('\$1'))))"
 		),
 		'COLOR' => array(
-			'!([a-z]+|#[0-9abcdef]+!i'	=>	'$1'
+			'!([a-z]+|#[0-9abcdef]+)!i'	=>	'$1'
 		),
 		'NUMBER' => array(
 			'!([0-9]+)!'	=>	'$1'
 		)
 	);
 
-	if (preg_match_all('/\{(' . implode('|', array_keys($tokens)) . ')[0-9]*\}/i', $msg_bbcode, $m))
-	{
-		$pad = 0;
-		$modifiers = 'i';
+	$pad = 0;
+	$modifiers = 'i';
 
+	if (preg_match_all('/\{(' . implode('|', array_keys($tokens)) . ')[0-9]*\}/i', $bbcode_match, $m))
+	{
 		foreach ($m[0] as $n => $token)
 		{
 			$token_type = $m[1][$n];
 
-			reset($tokens[$token_type]);
-			list($match, $replace) = each($tokens[$token_type]);
+			reset($tokens[strtoupper($token_type)]);
+			list($match, $replace) = each($tokens[strtoupper($token_type)]);
 
 			// Pad backreference numbers from tokens
 			if (preg_match_all('/(?<!\\\\)\$([0-9]+)/', $replace, $repad))
 			{
-				$repad = $pad + count(array_unique($repad[0]));
+				$repad = $pad + sizeof(array_unique($repad[0]));
 				$replace = preg_replace('/(?<!\\\\)\$([0-9]+)/e', "'\$' . (\$1 + \$pad)", $replace);
 				$pad = $repad;
 			}
@@ -365,9 +304,9 @@ function build_regexp($msg_bbcode, $msg_html)
 			$regex = preg_replace('/!(.*)!([a-z]*)/', '$1', $match);
 			$regex_modifiers = preg_replace('/!(.*)!([a-z]*)/', '$2', $match);
 
-			for ($i = 0; $i < strlen($regex_modifiers); ++$i)
+			for ($i = 0, $size = strlen($regex_modifiers); $i < $size; ++$i)
 			{
-				if (strpos($modifiers, $regex_modifiers[$i]) === FALSE)
+				if (strpos($modifiers, $regex_modifiers[$i]) === false)
 				{
 					$modifiers .= $regex_modifiers[$i];
 
@@ -393,7 +332,7 @@ function build_regexp($msg_bbcode, $msg_html)
 		$fp_match = '!' . $fp_match . '!' . $modifiers;
 		$sp_match = '!' . $sp_match . '!s';
 
-		if (strpos($fp_match, 'e') !== FALSE)
+		if (strpos($fp_match, 'e') !== false)
 		{
 			$fp_replace = str_replace("'.'", '', $fp_replace);
 			$fp_replace = str_replace(".''.", '.', $fp_replace);
@@ -409,20 +348,19 @@ function build_regexp($msg_bbcode, $msg_html)
 	}
 
 	// Lowercase tags
-	$bbcode_tag = preg_replace('/.*?\[([a-z]+).*/i', '$1', $msg_bbcode);
+	$bbcode_tag = preg_replace('/.*?\[([a-z0-9_-]+=?).*/i', '$1', $bbcode_match);
 	$fp_match = preg_replace('#\[/?' . $bbcode_tag . '#ie', "strtolower('\$0')", $fp_match);
 	$fp_replace = preg_replace('#\[/?' . $bbcode_tag . '#ie', "strtolower('\$0')", $fp_replace);
 	$sp_match = preg_replace('#\[/?' . $bbcode_tag . '#ie', "strtolower('\$0')", $sp_match);
 	$sp_replace = preg_replace('#\[/?' . $bbcode_tag . '#ie', "strtolower('\$0')", $sp_replace);
 
 	return array(
-		'bbcode_tag'					=>	$bbcode_tag,
-		'first_pass_match'			=>	$fp_match,
-		'first_pass_replace'		=>	$fp_replace,
-		'second_pass_match'	=>	$sp_match,
-		'second_pass_replace'	=>	$sp_replace
+		'bbcode_tag'				=> $bbcode_tag,
+		'first_pass_match'			=> $fp_match,
+		'first_pass_replace'		=> $fp_replace,
+		'second_pass_match'			=> $sp_match,
+		'second_pass_replace'		=> $sp_replace
 	);
 }
-// End Functions
-// -----------------------------
+
 ?>

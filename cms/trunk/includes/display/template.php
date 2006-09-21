@@ -270,7 +270,7 @@ class core_template
 
 			if (!$compile)
 			{
-				if (strtoupper(trim($tag_blocks[1][$loop])) == 'ENDIGNORE')
+				if (strtoupper(trim($tag_blocks[1][$loop])) === 'ENDIGNORE')
 				{
 					$compile = true;
 				}

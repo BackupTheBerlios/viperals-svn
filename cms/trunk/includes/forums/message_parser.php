@@ -367,17 +367,11 @@ class bbcode_firstpass extends bbcode
 		// We remove the hardcoded elements from the code block here because it is not used in code blocks
 		// Having it here saves us one preg_replace per message containing [code] blocks
 		// Additionally, magic url parsing should go after parsing bbcodes, but for safety those are stripped out too...
-		$htm_match = array(
-			'#<!\-\- e \-\-><a href="mailto:(.*?)">.*?</a><!\-\- e \-\->#',
-			'#<!\-\- m \-\-><a href="(.*?)" target="_blank">.*?</a><!\-\- m \-\->#',
-			'#<!\-\- w \-\-><a href="http:\/\/(.*?)" target="_blank">.*?</a><!\-\- w \-\->#',
-			'#<!\-\- l \-\-><a href="(.*?)">.*?</a><!\-\- l \-\->#',
-			'#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#',
-			'#<!\-\- h \-\-><(.*?)><!\-\- h \-\->#',
-			'#&\#([0-9]+);#',
-		);
-		$htm_replace = array('\1', '\1', '\1', '\1', '\1', '&lt;\1&gt;', '&amp;#\1;');
+		$htm_match = get_preg_expression('bbcode_htm');
+		$htm_match[3] = '#&\#([0-9]+);#';
+		Unset($htm_match[4]);
 
+		$htm_replace = array('\1', '\2', '\1', '&amp;#\1;');
 		$out = '';
 
 		do
@@ -513,7 +507,8 @@ class bbcode_firstpass extends bbcode
 		do
 		{
 			$pos = strlen($in);
-			for ($i = 0; $i < strlen($tok); ++$i)
+			$tok_len = strlen($tok);
+			for ($i = 0; $i < $tok_len; ++$i)
 			{
 				$tmp_pos = strpos($in, $tok{$i});
 
@@ -531,7 +526,7 @@ class bbcode_firstpass extends bbcode
 			if ($tok == ']')
 			{
 				// if $tok is ']' the buffer holds a tag
-				if ($buffer == '/list' && sizeof($list_end_tags))
+				if (strtolower($buffer) == '/list' && sizeof($list_end_tags))
 				{
 					$out .= array_pop($list_end_tags) . ']';
 					$tok = '[';
@@ -547,6 +542,12 @@ class bbcode_firstpass extends bbcode
 					{
 						array_push($list_end_tags, '/list:o:' . $this->bbcode_uid);
 					}
+
+					if (strtolower(substr($buffer, 0, 4)) == 'list')
+					{
+						$buffer = 'list' . substr($buffer, 4, $pos);
+					}
+					
 					$out .= $buffer . ':' . $this->bbcode_uid . ']';
 					$tok = '[';
 				}
@@ -862,6 +863,7 @@ class parse_message extends bbcode_firstpass
 	var $allow_img_bbcode = true;
 	var $allow_flash_bbcode = true;
 	var $allow_quote_bbcode = true;
+	var $allow_url_bbcode = true;
 
 	var $mode;
 
@@ -882,7 +884,7 @@ class parse_message extends bbcode_firstpass
 	/**
 	* Parse Message
 	*/
-	function parse($allow_html, $allow_bbcode, $allow_magic_url, $allow_smilies, $allow_img_bbcode = true, $allow_flash_bbcode = true, $allow_quote_bbcode = true, $update_this_message = true, $mode = 'post')
+	function parse($allow_html, $allow_bbcode, $allow_magic_url, $allow_smilies, $allow_img_bbcode = true, $allow_flash_bbcode = true, $allow_quote_bbcode = true, $allow_url_bbcode = true, $update_this_message = true, $mode = 'post')
 	{
 		global $config, $_CLASS;
 		
@@ -893,6 +895,7 @@ class parse_message extends bbcode_firstpass
 		$this->allow_img_bbcode = $allow_img_bbcode;
 		$this->allow_flash_bbcode = $allow_flash_bbcode;
 		$this->allow_quote_bbcode = $allow_quote_bbcode;
+		$this->allow_url_bbcode = $allow_url_bbcode;
 
 		// If false, then $this->message won't be altered, the text will be returned instead.
 		if (!$update_this_message)
@@ -935,7 +938,7 @@ class parse_message extends bbcode_firstpass
 		if ($allow_bbcode && strpos($this->message, '[') !== false)
 		{
 			$this->bbcode_init();
-			$disallow = array('img', 'flash', 'quote');
+			$disallow = array('img', 'flash', 'quote', 'url');
 			foreach ($disallow as $bool)
 			{
 				if (!${'allow_' . $bool . '_bbcode'})
@@ -1007,7 +1010,7 @@ class parse_message extends bbcode_firstpass
 		if ($this->message_status === 'plain')
 		{
 			// Force updating message - of course.
-			$this->parse($allow_html, $allow_bbcode, $allow_magic_url, $allow_smilies, $this->allow_img_bbcode, $this->allow_flash_bbcode, $this->allow_quote_bbcode, true);
+			$this->parse($allow_html, $allow_bbcode, $allow_magic_url, $allow_smilies, $this->allow_img_bbcode, $this->allow_flash_bbcode, $this->allow_quote_bbcode, $this->allow_url_bbcode, true);
 		}
 
 		// Parse BBcode
@@ -1102,7 +1105,7 @@ class parse_message extends bbcode_firstpass
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
 				$smiley['match'][] = '#(?<=^|[\n ]|\.)' . preg_quote($row['smiley_code'], '#') . '#';
-				$smiley['replace'][] = '<!-- s' . $row['smiley_code'] . ' --><img src="{SMILIES_PATH}/' . $row['smiley_src'] . '" border="0" alt="' . $row['smiley_description'] . '" title="' . $row['smiley_description'] . '" /><!-- s' . $row['smiley_code'] . ' -->';
+				$smiley['replace'][] = '<!-- s' . $row['smiley_code'] . ' --><img src="{SMILIES_PATH}/' . $row['smiley_src'] . '" alt="' . $row['smiley_description'] . '" title="' . $row['smiley_description'] . '" /><!-- s' . $row['smiley_code'] . ' -->';
 			}
 			$_CLASS['core_db']->free_result($result);
 
@@ -1157,16 +1160,28 @@ class parse_message extends bbcode_firstpass
 
 				if ($filedata['post_attach'] && empty($error))
 				{
-					$new_entry = array(
+					$sql_insert_ary = array(
 						'physical_filename'	=> $filedata['physical_filename'],
-						'comment'			=> $this->filename_data['filecomment'],
+						'attach_comment'	=> $this->filename_data['filecomment'],
 						'real_filename'		=> $filedata['real_filename'],
 						'extension'			=> $filedata['extension'],
 						'mimetype'			=> $filedata['mimetype'],
 						'filesize'			=> $filedata['filesize'],
 						'filetime'			=> $filedata['filetime'],
-						'attach_id'			=> 0,
-						'thumbnail'			=> $filedata['thumbnail']
+						'thumbnail'			=> $filedata['thumbnail'],
+						'is_orphan'			=> 1,
+						'in_message'		=> ($is_message) ? 1 : 0,
+						'poster_id'			=> $user->data['user_id'],
+					);
+
+					$_CLASS['core_db']->sql_query_build('INSERT', $sql_insert_ary, FORUMS_ATTACHMENTS_TABLE);
+					unset($sql_insert_ary);
+
+					$new_entry = array(
+						'attach_id'		=> $_CLASS['core_db']->insert_id(FORUMS_ATTACHMENTS_TABLE, 'attach_id'),
+						'is_orphan'		=> 1,
+						'real_filename'	=> $filedata['real_filename'],
+						'attach_comment'=> $this->filename_data['filecomment'],
 					);
 
 					$this->attachment_data = array_merge(array(0 => $new_entry), $this->attachment_data);
@@ -1198,26 +1213,43 @@ class parse_message extends bbcode_firstpass
 			{
 				$index = (int) key($_POST['delete_file']);
 
-				// delete selected attachment
-				if (!$this->attachment_data[$index]['attach_id'])
+				if (!empty($this->attachment_data[$index]))
 				{
-					phpbb_unlink($this->attachment_data[$index]['physical_filename'], 'file');
-
-					if ($this->attachment_data[$index]['thumbnail'])
+					// delete selected attachment
+					if ($this->attachment_data[$index]['is_orphan'])
 					{
-						phpbb_unlink($this->attachment_data[$index]['physical_filename'], 'thumbnail');
-					}
-				}
-				else
-				{
-					delete_attachments('attach', array(intval($this->attachment_data[$index]['attach_id'])));
-				}
-				
-				unset($this->attachment_data[$index]);
-				$this->message = preg_replace('#\[attachment=([0-9]+)\](.*?)\[\/attachment\]#e', "(\\1 == \$index) ? '' : ((\\1 > \$index) ? '[attachment=' . (\\1 - 1) . ']\\2[/attachment]' : '\\0')", $this->message);
+						$sql = 'SELECT attach_id, physical_filename, thumbnail
+							FROM ' . FORUMS_ATTACHMENTS_TABLE . '
+							WHERE attach_id = ' . (int) $this->attachment_data[$index]['attach_id'] . '
+								AND is_orphan = 1
+								AND poster_id = ' . $user->data['user_id'];
+						$result = $_CLASS['core_db']->query($sql);
+						$row = $_CLASS['core_db']->fetch_row_assoc($result);
+						$_CLASS['core_db']->free_result($result);
 
-				// Reindex Array
-				$this->attachment_data = array_values($this->attachment_data);
+						if ($row)
+						{
+							phpbb_unlink($row['physical_filename'], 'file');
+
+							if ($row['thumbnail'])
+							{
+								phpbb_unlink($row['physical_filename'], 'thumbnail');
+							}
+
+							$_CLASS['core_db']->query('DELETE FROM ' . FORUMS_ATTACHMENTS_TABLE . ' WHERE attach_id = ' . (int) $this->attachment_data[$index]['attach_id']);
+						}
+					}
+					else
+					{
+						delete_attachments('attach', array(intval($this->attachment_data[$index]['attach_id'])));
+					}
+					
+					unset($this->attachment_data[$index]);
+					$this->message = preg_replace('#\[attachment=([0-9]+)\](.*?)\[\/attachment\]#e', "(\\1 == \$index) ? '' : ((\\1 > \$index) ? '[attachment=' . (\\1 - 1) . ']\\2[/attachment]' : '\\0')", $this->message);
+	
+					// Reindex Array
+					$this->attachment_data = array_values($this->attachment_data);
+				}
 			}
 			else if ($edit_comment || $add_file || $preview)
 			{
@@ -1240,16 +1272,28 @@ class parse_message extends bbcode_firstpass
 
 						if (!sizeof($error))
 						{
-							$new_entry = array(
+							$sql_ary = array(
 								'physical_filename'	=> $filedata['physical_filename'],
-								'comment'			=> $this->filename_data['filecomment'],
+								'attach_comment'	=> $this->filename_data['filecomment'],
 								'real_filename'		=> $filedata['real_filename'],
 								'extension'			=> $filedata['extension'],
 								'mimetype'			=> $filedata['mimetype'],
 								'filesize'			=> $filedata['filesize'],
 								'filetime'			=> $filedata['filetime'],
-								'attach_id'			=> 0,
-								'thumbnail'			=> $filedata['thumbnail']
+								'thumbnail'			=> $filedata['thumbnail'],
+								'is_orphan'			=> 1,
+								'in_message'		=> ($is_message) ? 1 : 0,
+								'poster_id'			=> $user->data['user_id'],
+							);
+
+							$_CLASS['core_db']->sql_query_build('INSERT', $sql_insert_ary, FORUMS_ATTACHMENTS_TABLE);
+							unset($sql_insert_ary);
+
+							$new_entry = array(
+								'attach_id'		=> $_CLASS['core_db']->insert_id(FORUMS_ATTACHMENTS_TABLE, 'attach_id'),
+								'is_orphan'		=> 1,
+								'real_filename'	=> $filedata['real_filename'],
+								'attach_comment'=> $this->filename_data['filecomment'],
 							);
 
 							$this->attachment_data = array_merge(array(0 => $new_entry), $this->attachment_data);
@@ -1279,101 +1323,85 @@ class parse_message extends bbcode_firstpass
 		global $_CLASS, $config;
 
 		$this->filename_data['filecomment'] = request_var('filecomment', '', true);
-		$this->attachment_data = isset($_POST['attachment_data']) ? $_POST['attachment_data'] : array();
+		$attachment_data = (isset($_POST['attachment_data'])) ? $_POST['attachment_data'] : array();
+
+		if (empty($attachment_data))
+		{
+			return;
+		}
 
 		$check_user_id = ($check_user_id === false) ? $_CLASS['core_user']->data['user_id'] : $check_user_id;
+		$not_orphan = $orphan = array();
 
-		// Regenerate data array...
-		$attach_ids = $filenames = array();
-
-		foreach ($this->attachment_data as $pos => $var_ary)
+		foreach ($attachment_data as $pos => $var_ary)
 		{
-			if ($var_ary['attach_id'])
+			if ($var_ary['is_orphan'])
 			{
-				$attach_ids[$this->attachment_data[$pos]['attach_id']] = $pos;
+				$orphan[(int) $var_ary['attach_id']] = $pos;
 			}
 			else
 			{
-				$filenames[$pos] = '';
-				set_var($filenames[$pos], $this->attachment_data[$pos]['physical_filename'], 'string');
-				$filenames[$pos] = basename($filenames[$pos]);
+				$not_orphan[(int) $var_ary['attach_id']] = $pos;
 			}
 		}
 
 		$this->attachment_data = array();
 
 		// Regenerate already posted attachments...
-		if (!empty($attach_ids))
+		if (!empty($not_orphan))
 		{
 			// Get the data from the attachments
-			$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
+			$sql = 'SELECT attach_id, is_orphan, real_filename, attach_comment
 				FROM ' . FORUMS_ATTACHMENTS_TABLE . '
-				WHERE attach_id IN (' . implode(', ', array_unique(array_map('intval', array_keys($attach_ids)))) . ')
+				WHERE attach_id IN (' . implode(', ', array_keys($not_orphan)) . ')
 					AND poster_id = ' . $check_user_id;
 			$result = $_CLASS['core_db']->query($sql);
 
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				if (isset($attach_ids[$row['attach_id']]))
-				{
-					$pos = $attach_ids[$row['attach_id']];
-					$this->attachment_data[$pos] = $row;
-					set_var($this->attachment_data[$pos]['comment'], $_POST['attachment_data'][$pos]['comment'], 'string', true);
+				$pos = $not_orphan[$row['attach_id']];
+				$this->attachment_data[$pos] = $row;
+				set_var($this->attachment_data[$pos]['attach_comment'], $_POST['attachment_data'][$pos]['attach_comment'], 'string', true);
 
-					unset($attach_ids[$row['attach_id']]);
-				}
+				unset($not_orphan[$row['attach_id']]);
 			}
 			$_CLASS['core_db']->free_result($result);
+		}
 
-			if (!empty($attach_ids))
-			{
-				trigger_error('NO_ACCESS_ATTACHMENT', E_USER_ERROR);
-			}
+		if (!empty($not_orphan))
+		{
+			trigger_error('NO_ACCESS_ATTACHMENT', E_USER_ERROR);
 		}
 
 		// Regenerate newly uploaded attachments
-		if (sizeof($filenames))
+		if (!empty($orphan))
 		{
-			require_once SITE_FILE_ROOT.'includes/forums/functions_upload.php';
+			$sql = 'SELECT attach_id, is_orphan, real_filename, attach_comment
+				FROM ' . ATTACHMENTS_TABLE . '
+				WHERE attach_id IN (' . implode(', ', array_keys($orphan)) . ')
+					AND poster_id = ' . $user->data['user_id'] . '
+					AND is_orphan = 1';
+			$result = $_CLASS['core_db']->query($sql);
 
-			$sql = 'SELECT attach_id
-				FROM ' . FORUMS_ATTACHMENTS_TABLE . "
-				WHERE LOWER(physical_filename) IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array(array_map('strtolower', $filenames))) . "')";
-			$result = $_CLASS['core_db']->query_limit($sql, 1);
-			$row = $_CLASS['core_db']->fetch_row_assoc($result);
+			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+			{
+				$pos = $orphan[$row['attach_id']];
+				$this->attachment_data[$pos] = $row;
+				set_var($this->attachment_data[$pos]['attach_comment'], $_POST['attachment_data'][$pos]['attach_comment'], 'string', true);
+
+				unset($orphan[$row['attach_id']]);
+			}
 			$_CLASS['core_db']->free_result($result);
-
-			if ($row)
-			{
-				trigger_error('NO_ACCESS_ATTACHMENT', E_USER_ERROR);
-			}
-
-			foreach ($filenames as $pos => $physical_filename)
-			{
-				$this->attachment_data[$pos] = array(
-					'physical_filename'	=> $physical_filename,
-					'extension'			=> strtolower(filespec::get_extension(SITE_FILE_ROOT . $config['upload_path'] . '/' . $physical_filename)),
-					'filesize'			=> filespec::get_filesize(SITE_FILE_ROOT . $config['upload_path'] . '/' . $physical_filename),
-					'attach_id'			=> 0,
-					'thumbnail'			=> (file_exists(SITE_FILE_ROOT . $config['upload_path'] . '/thumb_' . $physical_filename)) ? 1 : 0,
-				);
-
-				set_var($this->attachment_data[$pos]['comment'], $_POST['attachment_data'][$pos]['comment'], 'string', true);
-				set_var($this->attachment_data[$pos]['real_filename'], $_POST['attachment_data'][$pos]['real_filename'], 'string', true);
-				set_var($this->attachment_data[$pos]['filetime'], $_POST['attachment_data'][$pos]['filetime'], 'int');
-
-				if (strpos($_POST['attachment_data'][$pos]['mimetype'], 'image/') !== false)
-				{
-					set_var($this->attachment_data[$pos]['mimetype'], $_POST['attachment_data'][$pos]['mimetype'], 'string');
-				}
-				else
-				{
-					$this->attachment_data[$pos]['mimetype'] = filespec::get_mimetype(SITE_FILE_ROOT . $config['upload_path'] . '/' . $physical_filename);
-				}
-			}
 		}
+
+		if (!empty($orphan))
+		{
+			trigger_error('NO_ACCESS_ATTACHMENT', E_USER_ERROR);
+		}
+
+		ksort($this->attachment_data);
 	}
-	
+
 	/**
 	* Parse Poll
 	*/
@@ -1388,8 +1416,7 @@ class parse_message extends bbcode_firstpass
 		$this->message = $poll['poll_option_text'];
 
 
-		$poll['poll_option_text'] = $this->parse(false, $poll['enable_bbcode'], $poll['enable_urls'], $poll['enable_smilies'], $poll['img_status'], false, false, false);
-
+		$poll['poll_option_text'] = $this->parse(false, $poll['enable_bbcode'], ($config['allow_post_links']) ? $poll['enable_urls'] : false, $poll['enable_smilies'], $poll['img_status'], false, false, $config['allow_post_links'], false);
 
 		$this->message = $tmp_message;
 
@@ -1398,7 +1425,7 @@ class parse_message extends bbcode_firstpass
 		$this->message = $poll['poll_title'];
 
 
-		$poll['poll_title'] = $this->parse(false, $poll['enable_bbcode'], $poll['enable_urls'], $poll['enable_smilies'], $poll['img_status'], false, false, false);
+		$poll['poll_title'] = $this->parse(false, $poll['enable_bbcode'], ($config['allow_post_links']) ? $poll['enable_urls'] : false, $poll['enable_smilies'], $poll['img_status'], false, false, $config['allow_post_links'], false);
 
 		$this->message = $tmp_message;
 

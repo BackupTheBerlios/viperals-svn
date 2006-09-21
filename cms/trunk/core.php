@@ -62,9 +62,11 @@ if (ini_get('register_globals'))
 	}
 }
 
+define('SITE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))));
+
 if (!defined('SITE_FILE_ROOT'))
 {
-	define('SITE_FILE_ROOT', str_replace('\\','/', dirname(getenv('SCRIPT_FILENAME'))).'/');
+	define('SITE_FILE_ROOT', SITE_ROOT.'/');
 }
 
 if (!extension_loaded('mbstring'))

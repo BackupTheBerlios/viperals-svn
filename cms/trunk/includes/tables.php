@@ -97,6 +97,19 @@ define('ITEM_LOCKED', 1);
 define('ITEM_MOVED', 2);
 define('ITEM_DELETING', 3);
 
+// Forum Flags
+define('FORUM_FLAG_LINK_TRACK', 1);
+define('FORUM_FLAG_PRUNE_POLL', 2);
+define('FORUM_FLAG_PRUNE_ANNOUNCE', 4);
+define('FORUM_FLAG_PRUNE_STICKY', 8);
+define('FORUM_FLAG_ACTIVE_TOPICS', 16);
+define('FORUM_FLAG_POST_REVIEW', 32);
+
+// Optional text flags
+define('OPTION_FLAG_BBCODE', 1);
+define('OPTION_FLAG_SMILIES', 2);
+define('OPTION_FLAG_LINKS', 4);
+
 // Topic types
 define('POST_NORMAL', 0);
 define('POST_STICKY', 1);

@@ -161,7 +161,7 @@ function build_cfg_template($tpl_type, $key, &$new, $config_key, $vars)
 			$size = (int) $tpl_type[1];
 			$maxlength = (int) $tpl_type[2];
 
-			$tpl = '<input id="' . $key . '" type="' . $tpl_type[0] . '"' . (($size) ? ' size="' . $size . '"' : '') . ' maxlength="' . (($maxlength) ? $maxlength : 255) . '" name="' . $name . '" value="' . $new[$config_key] . '" />';
+			$tpl = '<input id="' . $key . '" type="' . $tpl_type[0] . '"' . (($size) ? ' size="' . $size . '"' : '') . ' maxlength="' . (($maxlength) ? $maxlength : 255) . '" name="' . $name . '" value="' . @$new[$config_key] . '" />';
 		break;
 
 		case 'dimension':
@@ -198,7 +198,7 @@ function build_cfg_template($tpl_type, $key, &$new, $config_key, $vars)
 
 			if (isset($vars['method']))
 			{
-				$call = array($module->module, $vars['method']);
+				$call = $vars['method'];
 			}
 			else if (isset($vars['function']))
 			{
@@ -256,6 +256,84 @@ function build_cfg_template($tpl_type, $key, &$new, $config_key, $vars)
 	}
 
 	return $tpl;
+}
+
+/**
+* Going through a config array and validate values, writing errors to $error.
+*/
+function validate_config_vars($config_vars, &$cfg_array, &$error)
+{
+	global $_CLASS;
+
+	foreach ($config_vars as $config_name => $config_definition)
+	{
+		if (!isset($cfg_array[$config_name]) || strpos($config_name, 'legend') !== false)
+		{
+			continue;
+		}
+
+		if (!isset($config_definition['validate']))
+		{
+			continue;
+		}
+
+		// Validate a bit. ;) String is already checked through request_var(), therefore we do not check this again
+		switch ($config_definition['validate'])
+		{
+			case 'bool':
+				$cfg_array[$config_name] = ($cfg_array[$config_name]) ? 1 : 0;
+			break;
+
+			case 'int':
+				$cfg_array[$config_name] = (int) $cfg_array[$config_name];
+			break;
+
+			case 'rpath':
+				if (!$cfg_array[$config_name])
+				{
+					break;
+				}
+
+				$destination = $cfg_array[$config_name];
+
+				// Adjust destination path (no trailing slash)
+				if ($destination{(sizeof($destination)-1)} == '/' || $destination{(sizeof($destination)-1)} == '\\')
+				{
+					$destination = substr($destination, 0, sizeof($destination)-2);
+				}
+
+				$destination = str_replace(array('../', '..\\', './', '.\\'), '', $destination);
+				if ($destination && ($destination{0} == '/' || $destination{0} == "\\"))
+				{
+					$destination = '';
+				}
+
+				$cfg_array[$config_name] = $destination;
+
+			case 'path':
+
+				if (!$cfg_array[$config_name])
+				{
+					break;
+				}
+
+				$cfg_array[$config_name] = trim($cfg_array[$config_name]);
+
+				if (!file_exists($cfg_array[$config_name]))
+				{
+					$error[] = sprintf($_CLASS['core_user']->lang['DIRECTORY_DOES_NOT_EXIST'], $cfg_array[$config_name]);
+				}
+
+				if (file_exists($cfg_array[$config_name]) && !is_dir($cfg_array[$config_name]))
+				{
+					$error[] = sprintf($_CLASS['core_user']->lang['DIRECTORY_NOT_DIR'], $cfg_array[$config_name]);
+				}
+
+			break;
+		}
+	}
+
+	return;
 }
 
 ?>

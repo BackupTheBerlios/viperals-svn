@@ -318,19 +318,23 @@ function compose_pm($id, $mode, $action)
 		$error[] = $_CLASS['core_user']->lang['TOO_MANY_RECIPIENTS'];
 	}
 
+	// Always check if the submitted attachment data is valid and belongs to the user.
+	// Further down (especially in submit_post()) we do not check this again.
 	$message_parser->get_submitted_attachment_data();
 
 	if ($message_attachment && !$submit && !$refresh && !$preview && $action == 'edit')
 	{
-		$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
+		// Do not change to SELECT *
+		$sql = 'SELECT attach_id, is_orphan, attach_comment, real_filename
 			FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 			WHERE post_msg_id = $msg_id
 				AND in_message = 1
+				AND is_orphan = 0
 				ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
 		$result = $_CLASS['core_db']->query($sql);
 
 		$message_parser->attachment_data = array_merge($message_parser->attachment_data, $_CLASS['core_db']->fetch_row_assocset($result));
-		
+
 		$_CLASS['core_db']->free_result($result);
 	}
 
@@ -375,11 +379,12 @@ $config['auth_bbcode_pm'] = true;
 	$img_status		= ($config['auth_img_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_img'));
 	$flash_status	= ($config['auth_flash_pm'] && $_CLASS['forums_auth']->acl_get('u_pm_flash'));
 */
-	$html_status	= ($config['allow_html'] && $config['auth_html_pm']);
-	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm']);
-	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm']);
-	$img_status		= ($config['auth_img_pm']);
-	$flash_status	= ($config['auth_flash_pm']);
+	$html_status	= ($config['allow_html'] && $config['auth_html_pm']) ? true : false;
+	$bbcode_status	= ($config['allow_bbcode'] && $config['auth_bbcode_pm']) ? true : false;
+	$smilies_status	= ($config['allow_smilies'] && $config['auth_smilies_pm']) ? true : false;
+	$img_status		= ($config['auth_img_pm']) ? true : false;
+	$flash_status	= ($config['auth_flash_pm']) ? true : false;
+	$url_status		= ($config['allow_post_links']) ? true : false;
 
 	// Save Draft
 	if ($save && $_CLASS['forums_auth']->acl_get('u_savedrafts'))
@@ -483,7 +488,7 @@ $config['auth_bbcode_pm'] = true;
 		$message_parser->parse_attachments('fileupload', $action, 0, $submit, $preview, $refresh, true);
 
 		// Parse message
-		$message_parser->parse($enable_html, $enable_bbcode, $enable_urls, $enable_smilies, $img_status, $flash_status, true);
+		$message_parser->parse(false, $enable_bbcode, ($config['allow_post_links']) ? $enable_urls : false, $enable_smilies, $img_status, $flash_status, true, $config['allow_sig_links']);
 
 		if ($action != 'edit' && !$preview && !$refresh && $config['flood_interval'] && !$_CLASS['forums_auth']->acl_get('u_ignoreflood'))
 		{
@@ -630,7 +635,15 @@ $config['auth_bbcode_pm'] = true;
 		if ($action === 'quotepost')
 		{
 			$post_id = request_var('p', 0);
-			$message_link = "[url=" . generate_link("forums&amp;file=viewtopic&amp;p={$post_id}#p{$post_id}")."]{$message_subject}[/url]\n";
+
+			if ($config['allow_post_links'])
+			{
+				$message_link = "[url=" . generate_link("forums&amp;file=viewtopic&amp;p={$post_id}#p{$post_id}")."]{$message_subject}[/url]\n\n";
+			}
+			else
+			{
+				$message_link = $_CLASS['core_user']->lang['SUBJECT'] . ': ' . $message_subject . " (" . generate_link("forums&amp;file=viewtopic&amp;p={$post_id}#p{$post_id}").")\n\n";
+			}
 		}
 		else 
 		{
@@ -648,14 +661,23 @@ $config['auth_bbcode_pm'] = true;
 	{
 		$fwd_to_field = write_pm_addresses(array('to' => $post['to_address']), 0, true);
 
+		if ($config['allow_post_links'])
+		{
+			$quote_username_text = '[url=' . generate_link("members_list&amp;mode=viewprofile&amp;u={$post['author_id']}")."]{$quote_username}[/url]";
+		}
+		else
+		{
+			$quote_username_text = $quote_username . ' (' . generate_link("members_list&amp;mode=viewprofile&u={$post['author_id']}").")";
+		}
+
 		$forward_text = array();
 		$forward_text[] = $_CLASS['core_user']->lang['FWD_ORIGINAL_MESSAGE'];
 		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_SUBJECT'], censor_text($message_subject));
 		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_DATE'], $_CLASS['core_user']->format_date($message_time));
-		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_FROM'], $quote_username);
+		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_FROM'], $quote_username_text);
 		$forward_text[] = sprintf($_CLASS['core_user']->lang['FWD_TO'], implode(', ', $fwd_to_field['to']));
 
-		$message_parser->message = implode("\n", $forward_text) . "\n\n[quote=\"[url=" . generate_link("members_list&mode=viewprofile&u={$post['author_id']}")."{$quote_username}[/url]\"]\n" . censor_text(trim($message_parser->message)) . "\n[/quote]";
+		$message_parser->message = implode("\n", $forward_text) . "\n\n[quote=\"{$quote_username}\"]\n" . censor_text(trim($message_parser->message)) . "\n[/quote]";
 		$message_subject = ((!preg_match('/^Fwd:/', $message_subject)) ? 'Fwd: ' : '') . censor_text($message_subject);
 	}
 
@@ -811,6 +833,7 @@ $config['auth_bbcode_pm'] = true;
 		'IMG_STATUS'			=> ($img_status) ? $_CLASS['core_user']->lang['IMAGES_ARE_ON'] : $_CLASS['core_user']->lang['IMAGES_ARE_OFF'],
 		'FLASH_STATUS'			=> ($flash_status) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
 		'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
+		'URL_STATUS'			=> ($url_status) ? $_CLASS['core_user']->lang['URL_IS_ON'] : $_CLASS['core_user']->lang['URL_IS_OFF'],
 		'MINI_POST_IMG'			=> $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['PM']),
 		'ERROR'					=> empty($error) ? '' : implode('<br />', $error), 
 
@@ -826,15 +849,21 @@ $config['auth_bbcode_pm'] = true;
 		'S_SMILIES_CHECKED' 	=> ($smilies_checked) ? ' checked="checked"' : '',
 		'S_SIG_ALLOWED'			=> ($config['allow_sig'] && $_CLASS['forums_auth']->acl_get('u_sig')),
 		'S_SIGNATURE_CHECKED' 	=> ($sig_checked) ? ' checked="checked"' : '',
+		'S_LINKS_ALLOWED'               => $url_status,
 		'S_MAGIC_URL_CHECKED' 	=> ($urls_checked) ? ' checked="checked"' : '',
 		'S_SAVE_ALLOWED'		=> $_CLASS['forums_auth']->acl_get('u_savedrafts'),
 		'S_HAS_DRAFTS'			=> ($_CLASS['forums_auth']->acl_get('u_savedrafts') && $drafts),
 		'S_FORM_ENCTYPE'		=> $form_enctype,
 		
+		'S_BBCODE_IMG'			=> $img_status,
+		'S_BBCODE_FLASH'		=> $flash_status,
+		'S_BBCODE_QUOTE'		=> true,
+		'S_BBCODE_URL'			=> $url_status,
+		
 		'S_POST_ACTION' 		=> generate_link($s_action),
 		'S_HIDDEN_ADDRESS_FIELD'=> $s_hidden_address_field,
-		'S_HIDDEN_FIELDS'		=> $s_hidden_fields)
-	);
+		'S_HIDDEN_FIELDS'		=> $s_hidden_fields
+	));
 
 	// Attachment entry
 	if ($_CLASS['forums_auth']->acl_get('u_pm_attach') && $config['allow_pm_attach'] && $form_enctype)

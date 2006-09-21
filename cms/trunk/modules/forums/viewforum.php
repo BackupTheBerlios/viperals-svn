@@ -129,10 +129,10 @@ if ($forum_data['forum_password'])
 }
 
 // Are we a forum link, then redirect
-if ($forum_data['forum_link'])
+if ($forum_data['forum_type'] == FORUM_LINK && $forum_data['forum_link'])
 {
 	// Does it have click tracking enabled?
-	if ($forum_data['forum_flags'] & 1)
+	if ($forum_data['forum_flags'] & FORUM_FLAG_LINK_TRACK)
 	{
 		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . '
 			SET forum_posts = forum_posts + 1 
@@ -167,6 +167,7 @@ else
 
 // Not postable forum or showing active topics?
 if (!($forum_data['forum_type'] == FORUM_POST || (($forum_data['forum_flags'] & 16) && $forum_data['forum_type'] == FORUM_CAT)))
+if (!($forum_data['forum_type'] == FORUM_POST || (($forum_data['forum_flags'] & FORUM_FLAG_ACTIVE_TOPICS) && $forum_data['forum_type'] == FORUM_CAT)))
 {
 	$_CLASS['core_template']->assign_array(array(
 		'S_IS_POSTABLE'			=> false,
@@ -282,7 +283,7 @@ else
 $post_alt = ($forum_data['forum_status'] == ITEM_LOCKED) ? $_CLASS['core_user']->lang['FORUM_LOCKED'] : $_CLASS['core_user']->lang['POST_NEW_TOPIC'];
 $pagination = generate_pagination("forums&amp;file=viewforum&amp;f=$forum_id&amp;$u_sort_param", $topics_count, $config['topics_per_page'], $start);
 
-$s_display_active = ($forum_data['forum_type'] == FORUM_CAT && ($forum_data['forum_flags'] & 16)) ? true : false;
+$s_display_active = ($forum_data['forum_type'] == FORUM_CAT && ($forum_data['forum_flags'] & FORUM_FLAG_ACTIVE_TOPICS)) ? true : false;
 
 $_CLASS['core_template']->assign_array(array(
 	'PAGINATION'		=> $pagination['formated'],

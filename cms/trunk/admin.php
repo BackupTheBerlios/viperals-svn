@@ -13,14 +13,13 @@
 //																//
 //**************************************************************//
 define('VIPERAL', 'Admin');
-//define('NEED_SID', true);
 
 require_once 'core.php';
 
 $_CLASS['core_user']->user_setup(null);
 $_CLASS['core_display']->load_theme('viperal_admin', SITE_FILE_ROOT.'themes_admin/viperal_admin');
 
-$_CLASS['core_user']->add_lang('admin/common.php');
+$_CLASS['core_user']->add_lang('admin/common', null);
 $_CLASS['core_blocks']->blocks_loaded = true;
 
 if (!$_CLASS['core_user']->is_user)

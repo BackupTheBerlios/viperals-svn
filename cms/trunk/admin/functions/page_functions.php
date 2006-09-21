@@ -121,9 +121,9 @@ function page_remove($id)
 
 	if (display_confirmation())
 	{
-		if ($page['page_type'] === PAGE_TEMPLATE)
+		if ($page['page_type'] == PAGE_TEMPLATE)
 		{
-		// remove template
+			@unlink(SITE_FILE_ROOT.'includes/templates/'.$page['page_location']);
 		}
 
 		$_CLASS['core_db']->query('DELETE from ' . CORE_PAGES_TABLE . ' WHERE page_id = '.$id);

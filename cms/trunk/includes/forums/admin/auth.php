@@ -95,14 +95,14 @@ class forums_auth_admin extends forums_auth
 		global $_CLASS;
 
 		$hold_ary = array();
-		$view_user_mask = ($mode == 'view' && $group_id === false) ? true : false;
+		$view_user_mask = ($mode === 'view' && $group_id === false) ? true : false;
 
 		if ($auth_option === false || $scope === false)
 		{
 			return array();
 		}
 
-		$acl_user_function = ($mode == 'set') ? 'acl_user_raw_data' : 'acl_raw_data';
+		$acl_user_function = ($mode === 'set') ? 'acl_user_raw_data' : 'acl_raw_data';
 
 		if (!$view_user_mask)
 		{
@@ -112,7 +112,7 @@ class forums_auth_admin extends forums_auth
 			}
 			else
 			{
-				$hold_ary = ($group_id !== false) ? $this->acl_group_raw_data($group_id, $auth_option . '%', ($scope == 'global') ? 0 : false) : $this->$acl_user_function($user_id, $auth_option . '%', ($scope == 'global') ? 0 : false);
+				$hold_ary = ($group_id !== false) ? $this->acl_group_raw_data($group_id, $auth_option . '%', ($scope === 'global') ? 0 : false) : $this->$acl_user_function($user_id, $auth_option . '%', ($scope === 'global') ? 0 : false);
 			}
 		}
 
@@ -308,7 +308,7 @@ class forums_auth_admin extends forums_auth
 		$ug_names_ary = array();
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$ug_names_ary[$row['ug_id']] = ($user_mode == 'user') ? $row['ug_name'] : (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['ug_name']] : $row['ug_name']);
+			$ug_names_ary[$row['ug_id']] = ($user_mode === 'user') ? $row['ug_name'] : (($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['ug_name']] : $row['ug_name']);
 		}
 		$_CLASS['core_db']->free_result($result);
 
@@ -384,38 +384,31 @@ class forums_auth_admin extends forums_auth
 
 		// Now obtain memberships
 		$user_groups_default = $user_groups_custom = array();
-		if ($user_mode == 'user' && $group_display)
+		if ($user_mode === 'user' && $group_display)
 		{
-			$sql = 'SELECT group_id, group_name, group_type
-				FROM ' . CORE_GROUPS_TABLE . '
-				ORDER BY group_type DESC, group_name ASC';
-			$result = $_CLASS['core_db']->query($sql);
+			require_once SITE_FILE_ROOT.'includes/functions_user.php';
 
-			$groups = array();
-			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
-			{
-				$groups[$row['group_id']] = $row;
-			}
-			$_CLASS['core_db']->free_result($result);
-
-			$memberships = group_memberships(false, array_keys($hold_ary), false);
+			$memberships = group_membership(array_keys($hold_ary));
 
 			// User is not a member of any group? Bad admin, bad bad admin...
 			if ($memberships)
 			{
-				foreach ($memberships as $row)
+				foreach ($memberships as $user_id => $group_array)
 				{
-					if ($groups[$row['group_id']]['group_type'] == GROUP_SPECIAL)
+					foreach ($group_array as $row)
 					{
-						$user_groups_default[$row['user_id']][] = $_CLASS['core_user']->lang['G_' . $groups[$row['group_id']]['group_name']];
-					}
-					else
-					{
-						$user_groups_custom[$row['user_id']][] = $groups[$row['group_id']]['group_name'];
+						if ($row['group_type'] == GROUP_SYSTEM)
+						{
+							$user_groups_default[$row['user_id']][] = $_CLASS['core_user']->get_lang('G_' . $row['group_name']);
+						}
+						else
+						{
+							$user_groups_custom[$row['user_id']][] = $_CLASS['core_user']->get_lang('G_' . $row['group_name']);
+						}
 					}
 				}
 			}
-			unset($memberships, $groups);
+			unset($memberships);
 		}
 
 		// If we only have one forum id to display or being in local mode and more than one user/group to display, 
@@ -615,12 +608,15 @@ class forums_auth_admin extends forums_auth
 		}
 		$_CLASS['core_db']->free_result($result);
 
+		$count = 0;
+
 		foreach ($hold_ary as $forum_id => $auth_ary)
 		{
-			$_CLASS['core_template']->assign_vars_array('role_mask', array(
+			$role_mask[$count] = array(
 				'NAME'				=> ($forum_id == 0) ? $_CLASS['core_user']->lang['GLOBAL_MASK'] : $forum_names[$forum_id],
-				'FORUM_ID'			=> $forum_id)
+				'FORUM_ID'			=> $forum_id
 			);
+
 
 			if (isset($auth_ary['users']) && sizeof($auth_ary['users']))
 			{
@@ -632,10 +628,10 @@ class forums_auth_admin extends forums_auth
 
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					$_CLASS['core_template']->assign_vars_array('role_mask.users', array(
+					$role_mask[$count]['users'][] = array(
 						'USER_ID'		=> $row['user_id'],
 						'USERNAME'		=> $row['username'],
-						'U_PROFILE'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u={$row['user_id']}"))
+						'U_PROFILE'		=> generate_link("members_list&amp;mode=viewprofile&amp;u={$row['user_id']}")
 					);
 				}
 				$_CLASS['core_db']->free_result($result);
@@ -651,15 +647,17 @@ class forums_auth_admin extends forums_auth
 
 				while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 				{
-					$_CLASS['core_template']->assign_vars_array('role_mask.groups', array(
+					$role_mask[$count]['groups'][] = array(
 						'GROUP_ID'		=> $row['group_id'],
-						'GROUP_NAME'	=> ($row['group_type'] == GROUP_SPECIAL) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
-						'U_PROFILE'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=group&amp;g={$row['group_id']}"))
+						'GROUP_NAME'	=> isset($_CLASS['core_user']->lang['G_' . $row['group_name']]) ? $_CLASS['core_user']->lang['G_' . $row['group_name']] : $row['group_name'],
+						'U_PROFILE'		=> generate_link("members_list&amp;mode=group&amp;g={$row['group_id']}")
 					);
 				}
 				$_CLASS['core_db']->free_result($result);
 			}
+			$count++;
 		}
+		$_CLASS['core_template']->assign('role_mask', $role_mask);
 	}
 
 	/**

@@ -106,6 +106,23 @@ if ($submit)
 		$error[] = $_CLASS['core_user']->get_lang('PASSWORD_ERROR');
 	}
 
+	if ($password)
+	{
+		if (!preg_match('#' . str_replace('\\\\', '\\', $_CORE_CONFIG['user']['pass_complex']) . '#i', $password))
+		{
+			$error[] = $_CLASS['core_user']->get_lang('PASSWORD_INVALID_CHARS');
+		}
+
+		if ($_CORE_CONFIG['user']['min_pass_chars'] && mb_strlen($password) < $_CORE_CONFIG['user']['min_pass_chars'])
+		{
+			$error[] = $_CLASS['core_user']->get_lang('PASSWORD_TOO_SHORT');
+		}
+		elseif ($_CORE_CONFIG['user']['max_pass_chars'] && mb_strlen($password) > $_CORE_CONFIG['user']['max_pass_chars'])
+		{
+			$error[] = $_CLASS['core_user']->get_lang('PASSWORD_TOO_LONG');
+		}
+	}
+
 	if (!$email || $email !== $email_confirm)
 	{
 		$error[] = $_CLASS['core_user']->get_lang('EMAIL_ERROR');
@@ -177,7 +194,7 @@ if ($submit)
 		$data = array(
 			'username'		=> (string) $username,
 			'user_email'	=> (string) $email,
-// add an option so admin can set with group they added to
+// add an option so admin can set with group they added to ( default registration group )
 			'user_group'	=> ($coppa) ? 3 : 2,
 			'user_reg_date'	=> (int) $_CLASS['core_user']->time,
 			'user_timezone'	=> (string) $tz,
@@ -206,14 +223,13 @@ if ($submit)
 		$mailer = new core_mailer();
 
 		$mailer->to($email, $username);
-		$mailer->subject('Welcome to ');
+		$mailer->subject('Welcome');
 
 		$_CLASS['core_template']->assign_array(array(
 			'SITENAME'		=> $_CORE_CONFIG['global']['site_name'],
 			'WELCOME_MSG'   => sprintf($_CLASS['core_user']->lang['WELCOME_SUBJECT'], $_CORE_CONFIG['global']['site_name']),
 			'USERNAME'		=> $username,
 			'PASSWORD'		=> $password,
-			'EMAIL_SIG'		=> '', //I like this
 			'U_ACTIVATE'	=> generate_link('system&mode=activate&user_id='.$data['user_id'].'&key='.$user_act_key, array('sid' => false, 'full' => true))
 		));
 
@@ -228,8 +244,12 @@ if ($submit)
 		}
 
 		$mailer->message = trim($_CLASS['core_template']->display('email/core/'.$email_template, true));
-
 		$mailer->send();
+
+		if $_CORE_CONFIG['user']['activation'] == USER_ACTIVATION_ADMIN)
+		{
+			sele
+		}
 
 		$message = $message . '<br /><br />' . sprintf($_CLASS['core_user']->lang['RETURN_INDEX'],  '<a href="'. generate_link() .'">', '</a>');
 		trigger_error($message);
@@ -280,6 +300,7 @@ switch ($_CORE_CONFIG['user']['activation'])
 }
 
 $user_char_ary = array('.*' => 'USERNAME_CHARS_ANY', '[\w]+' => 'USERNAME_ALPHA_ONLY', '[\w_\+\. \-\[\]]+' => 'USERNAME_ALPHA_SPACERS');
+$pass_char_ary = array('.*' => 'PASS_TYPE_ANY', '[a-zA-Z]' => 'PASS_TYPE_CASE', '[a-zA-Z0-9]' => 'PASS_TYPE_ALPHA', '[a-zA-Z\W]' => 'PASS_TYPE_SYMBOL');
 
 $_CLASS['core_template']->assign_array(array(
 	'ERROR'			=> empty($error) ? false : implode('<br />', $error), 
@@ -293,8 +314,8 @@ $_CLASS['core_template']->assign_array(array(
 	'L_CONFIRM_EXPLAIN'			=> sprintf($_CLASS['core_user']->lang['CONFIRM_EXPLAIN'], '<a href="mailto:' . htmlentities('') . '">', '</a>'), 
 	'L_ITEMS_REQUIRED'			=> $l_reg_cond, 
 	'L_USERNAME_EXPLAIN'		=> sprintf($_CLASS['core_user']->lang[$user_char_ary[$_CORE_CONFIG['user']['allow_name_chars']] . '_EXPLAIN'], $_CORE_CONFIG['user']['min_name_chars'], $_CORE_CONFIG['user']['max_name_chars']),
-	'L_NEW_PASSWORD_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['NEW_PASSWORD_EXPLAIN'], $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
-
+	//'L_NEW_PASSWORD_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang['NEW_PASSWORD_EXPLAIN'], $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']), 
+	'L_NEW_PASSWORD_EXPLAIN'	=> sprintf($_CLASS['core_user']->lang[$pass_char_ary[str_replace('\\\\', '\\', $_CORE_CONFIG['user']['pass_complex'])] . '_EXPLAIN'], $_CORE_CONFIG['user']['min_pass_chars'], $_CORE_CONFIG['user']['max_pass_chars']),
 
 	'S_COPPA'			=> $coppa, 
 	'S_HIDDEN_FIELDS'	=> $hidden_fields,

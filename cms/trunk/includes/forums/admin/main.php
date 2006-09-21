@@ -82,7 +82,8 @@ switch ($action)
 		set_config('num_topics', (int) $row['stat'], true);
 
 		$sql = 'SELECT COUNT(attach_id) as stat
-			FROM ' . FORUMS_ATTACHMENTS_TABLE;
+			FROM ' . FORUMS_ATTACHMENTS_TABLE.'
+			WHERE is_orphan = 0';
 		$result = $_CLASS['core_db']->query($sql);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 	
@@ -90,7 +91,8 @@ switch ($action)
 		$_CLASS['core_db']->free_result($result);
 
 		$sql = 'SELECT SUM(filesize) as stat
-			FROM ' . FORUMS_ATTACHMENTS_TABLE;
+			FROM ' . FORUMS_ATTACHMENTS_TABLE.'
+			WHERE is_orphan = 0';
 		$result = $_CLASS['core_db']->query($sql);
 		$row = $_CLASS['core_db']->fetch_row_assoc($result);
 
@@ -183,6 +185,14 @@ if ($files_per_day > $total_files)
 	$files_per_day = $total_files;
 }
 
+$sql = 'SELECT COUNT(attach_id) AS total_orphan
+			FROM ' . FORUMS_ATTACHMENTS_TABLE . '
+			WHERE is_orphan = 1';
+$result = $_CLASS['core_db']->query($sql);
+$total_orphan = $_CLASS['core_db']->fetch_row_assoc($result))
+$total_orphan = (int) $total_orphan['total_orphan'];
+$_CLASS['core_db']->free_result($result);
+
 // Remove
 $dbsize = $_CLASS['core_user']->lang['NOT_AVAILABLE'];
 $s_action_options = build_select(array('online' => 'RESET_ONLINE', 'date' => 'RESET_DATE', 'stats' => 'RESYNC_STATS', 'user' => 'RESYNC_POSTCOUNTS'));
@@ -195,6 +205,7 @@ $_CLASS['core_template']->assign_array(array(
 	'TOTAL_USERS'		=> $total_users,
 	'USERS_PER_DAY'		=> $users_per_day,
 	'TOTAL_FILES'		=> $total_files,
+	'TOTAL_ORPHAN'		=> $total_orphan,
 	'FILES_PER_DAY'		=> $files_per_day,
 	'START_DATE'		=> $start_date,
 	'AVATAR_DIR_SIZE'	=> $avatar_dir_size,

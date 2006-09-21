@@ -57,6 +57,20 @@ class core_handler
 		set_error_handler(array(&$this, 'error_handler'));
 	}
 	
+	function add_log($type, $operation, $data = false)
+	{
+		$sql_array = array(
+			'user_id'		=> empty($_CLASS['core_user']->data['user_id']) ? ANONYMOUS : $_CLASS['core_user']->data['user_id'],
+			'log_type'		=> $type,
+			'log_ip'		=> $_CLASS['core_user']->ip,
+			'log_time'		=> $_CLASS['core_user']->time,
+			'log_operation'	=> $operation,
+			'log_data'		=> ($data) ? serialize($data) : '',
+		);
+
+		$_CLASS['core_db']->sql_query_build('INSERT', $sql_array, CORE_LOG_TABLE);
+	}
+
 	function stop($level = false)
 	{
 		if (!$this->active)

@@ -28,7 +28,7 @@ if (VIPERAL !== 'Admin')
 
 global $_CLASS, $_CORE_MODULE;
 
-$_CLASS['core_user']->add_lang('admin/system.php');
+$_CLASS['core_user']->add_lang('admin/system', null);
 
 $mode =	get_variable('mode', 'GET', false);
 

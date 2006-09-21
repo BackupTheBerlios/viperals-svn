@@ -97,18 +97,24 @@ class core_auth
 			{
 				$this->_admin_permission[$row['admin_section']]['core']['status'] = $row['admin_status'];
 
-				if (trim($row['admin_options']) && is_array($row['admin_options'] = @unserialize($row['admin_options'])))
+				$row['admin_options'] = trim($row['admin_options']);
+
+				if ($row['admin_options'] === '_all_')
 				{
-					$this->_admin_permission[$row['admin_section']] += $row['options'];
+					$this->_admin_permission[$row['admin_section']]['_all_'] = true;
+				}
+				elseif ($row['admin_options'] && is_array($row['admin_options'] = @unserialize($row['admin_options'])))
+				{
+					$this->_admin_permission[$row['admin_section']] += $row['admin_options'];
 				}
 			}
 		}
+		$_CLASS['core_db']->free_result($result);
 
 		$this->_got_data = true;
-		$_CLASS['core_db']->free_result($result);
 	}
 
-	function admin_power($section, $option = false)
+	function admin_power($section, $option = false, $setting = true)
 	{
 		global $_CLASS;
 
@@ -124,10 +130,60 @@ class core_auth
 
 		if ($option)
 		{
+			if (isset($this->_admin_permission[$section]['_all_']))
+			{
+				return true;
+			}
+
 			return isset($this->_admin_permission[$section][$option]) ? false : $this->_admin_permission[$section][$option];
 		}
 
 		return $this->_admin_permission[$section]['core']['status'];
+	}
+
+	function list_admin_power($section, $option = false, $setting = true)
+	{
+		global $_CLASS;
+
+		$return = array();
+
+		$sql = 'SELECT * FROM ' . CORE_ADMIN_AUTH_TABLE ." 
+			WHERE admin_section IN ('_all_', '".$_CLASS['core_db']->escape($section)."')
+			admin_status = ".STATUS_ACTIVE;
+
+		if ($option)
+		{
+			$sql .= " AND (admin_options = '_all_' OR admin_options LIKE '%".$_CLASS['core_db']->escape($option)."%')";
+		}
+		$result = $_CLASS['core_db']->query($sql);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			$value = $row['admin_status'];
+
+			if ($option)
+			{
+				$row['admin_options'] = trim($row['admin_options']);
+
+				if ($row['admin_options'] === '_all_')
+				{
+					$value = true;
+				}
+				elseif(is_array($row['admin_options'] = @unserialize($row['admin_options'])))
+				{
+					$value = $row['admin_options'][$option];
+				}
+			}
+
+			if ($row['group_id'])
+			{
+				$holding[$row['group_id']] = $value;
+				continue;
+			}
+
+			$return[$row['user_id']] = $value;
+		}
+		$_CLASS['core_db']->free_result($result);
 	}
 
 	function auth_login($login_options = array(), $template = false)

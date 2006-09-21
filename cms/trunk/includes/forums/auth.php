@@ -458,51 +458,42 @@ class forums_auth
 	{
 		global $_CLASS;
 
-		$sql_user = ($user_id) ? (is_array($user_id) ? 'user_id IN (' . implode(', ', $user_id) . ')' : 'user_id = '.$user_id) : '';
-		$sql_forum = ($forum_id) ? (is_array($forum_id) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id = '.$forum_id) : '';
+		$sql_user = ($user_id !== false) ? (is_array($user_id) ? 'a.user_id IN (' . implode(', ', $user_id) . ')' : 'user_id = '.$user_id) : '';
+		$sql_forum = ($forum_id !== false) ? (is_array($forum_id) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id = '.$forum_id) : '';
 
-		$sql_opts = '';
+		$sql_opts = $sql_escape = '';
 
 		if ($opts !== false)
 		{
-			if (!is_array($opts))
-			{
-				$sql_opts = (strpos($opts, '%') !== false) ? "AND ao.auth_option LIKE '" . $_CLASS['core_db']->escape($opts) . "'" : "AND ao.auth_option = '" . $_CLASS['core_db']->escape($opts) . "'";
-			}
-			else
-			{
-				$sql_opts = "AND ao.auth_option IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array($opts)) . "')";
-			}
+			$this->build_auth_option_statement('ao.auth_option', $opts, $sql_opts, $sql_escape);
 		}
 
 		$groups = $group_id_array = $group_members = $hold_ary = array();
 
 		if ($sql_user)
 		{
-			$sql = 'SELECT group_id, user_id FROM ' . CORE_USER_GROUP_TABLE ." WHERE $sql_user AND member_status <> ".STATUS_PENDING;
+			$sql = 'SELECT group_id, user_id FROM ' . CORE_USER_GROUP_TABLE ." WHERE $sql_user AND member_status IN (".STATUS_ACTIVE.', '.STATUS_LEADER.')';
 
 			$result = $_CLASS['core_db']->query($sql);
 	
 			while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 			{
-				$groups[$row['group_id']] = true;
+				$groups[] = $row['group_id'];
 				$group_members[$row['group_id']][] = $row['user_id'];
 			}
 			$_CLASS['core_db']->free_result($result);
 
-			$sql_user = empty($groups) ? ' AND a.' . $sql_user :  'AND (a.'.$sql_user.' OR a.group_id IN ('.implode(', ', array_keys($groups)).'))';
+			$sql_user = empty($groups) ? ' AND '.$sql_user :  'AND ('.$sql_user.' OR a.group_id IN ('.implode(', ', $groups).'))';
 			unset($groups);
 		}
 
-		// Sort by group_id since we want user setting to over right grp..  specific > broad
 		$sql = 'SELECT ao.auth_option, a.auth_role_id, r.auth_setting as role_auth_setting, a.user_id, a.group_id, a.forum_id, a.auth_setting
 					FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_TABLE . ' a
-					LEFT JOIN '.FORUMS_ACL_ROLES_DATA_TABLE." r ON a.auth_role_id = r.role_id
+					LEFT JOIN '.FORUMS_ACL_ROLES_DATA_TABLE." r ON (a.auth_role_id = r.role_id)
 					WHERE (ao.auth_option_id = a.auth_option_id OR ao.auth_option_id = r.auth_option_id)
-						$sql_user $sql_forum $sql_opts
-						ORDER BY a.group_id, ao.auth_option";
+						$sql_user $sql_forum $sql_opts";
 
-		$result = $_CLASS['core_db']->query($sql);
+		$result = $_CLASS['core_db']->query($sql . $sql_escape);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
@@ -514,34 +505,18 @@ class forums_auth
 
 			if ($row['group_id'])
 			{
+
 				$group_id_array[$row['group_id']][] = $row;
 
 				continue;
 			}
-
 			$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $auth_setting;
-
-			/*	// Check for existence of ACL_YES if an option got set to ACL_NEVER
-				if ($setting == ACL_NEVER)
-				{
-					$flag = substr($row['auth_option'], 0, strpos($row['auth_option'], '_') + 1);
-
-					if (isset($hold_ary[$row['user_id']][$row['forum_id']][$flag]) && $hold_ary[$row['user_id']][$row['forum_id']][$flag] == ACL_YES)
-					{
-						unset($hold_ary[$row['user_id']][$row['forum_id']][$flag]);
-
-						if (in_array(ACL_YES, $hold_ary[$row['user_id']][$row['forum_id']]))
-						{
-							$hold_ary[$row['user_id']][$row['forum_id']][$flag] = ACL_YES;
-						}
-					}
-				}*/
 		}
 		$_CLASS['core_db']->free_result($result);
 
 		if (!empty($group_id_array))
 		{
-			if (empty($group_members))
+			if (!$sql_user)
 			{
 				$sql = 'SELECT user_group, user_id FROM ' . CORE_USERS_TABLE .' 
 					WHERE user_group IN ('.implode(', ', array_keys($group_id_array)).')
@@ -568,28 +543,57 @@ class forums_auth
 					{
 						if (!isset($hold_ary[$user_id][$row['forum_id']][$row['auth_option']]) || (isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) && $hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] != ACL_NEVER))
 						{
+							$auth_setting = ($row['auth_role_id']) ? $row['role_auth_setting'] : $row['auth_setting'];
+
 							$hold_ary[$user_id][$row['forum_id']][$row['auth_option']] = ($row['auth_role_id']) ? $row['role_auth_setting'] : $row['auth_setting'];
 						}
-						/*	
-						// Check for existence of ACL_YES if an option got set to ACL_NEVER
-						if ($setting == ACL_NEVER)
-						{
-							$flag = substr($row['auth_option'], 0, strpos($row['auth_option'], '_') + 1);
-		
-							if (isset($hold_ary[$row['user_id']][$row['forum_id']][$flag]) && $hold_ary[$row['user_id']][$row['forum_id']][$flag] == ACL_YES)
-							{
-								unset($hold_ary[$row['user_id']][$row['forum_id']][$flag]);
-		
-								if (in_array(ACL_YES, $hold_ary[$row['user_id']][$row['forum_id']]))
-								{
-									$hold_ary[$row['user_id']][$row['forum_id']][$flag] = ACL_YES;
-								}
-							}
-						}*/	
 					}
 				}
 			}
+			unset($group_members);
 		}
+
+		return $hold_ary;
+	}
+
+	/**
+	* Get raw user based permission settings
+	*/
+	function acl_user_raw_data($user_id = false, $opts = false, $forum_id = false)
+	{
+		global $_CLASS;
+
+		$sql_user = ($user_id !== false) ? (is_array($user_id) ? 'AND a.user_id IN (' . implode(', ', $user_id) . ')' : 'user_id = '.$user_id) : '';
+		$sql_forum = ($forum_id !== false) ? (is_array($forum_id) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id = '.$forum_id) : '';
+
+		$sql_opts = $sql_escape = '';
+
+		if ($opts !== false)
+		{
+			$this->build_auth_option_statement('ao.auth_option', $opts, $sql_opts, $sql_escape);
+		}
+
+		$hold_ary = array();
+
+		// Grab user settings...
+		$sql = 'SELECT ao.auth_option, a.auth_role_id, r.auth_setting as role_auth_setting, a.user_id, a.forum_id, a.auth_setting
+			FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_TABLE . ' a
+			LEFT JOIN '.FORUMS_ACL_ROLES_DATA_TABLE." r ON (a.auth_role_id = r.role_id)
+			WHERE (ao.auth_option_id = a.auth_option_id OR ao.auth_option_id = r.auth_option_id)
+				$sql_user $sql_forum $sql_opts
+			ORDER BY a.forum_id, ao.auth_option";
+
+		$result = $_CLASS['core_db']->query($sql . $sql_escape);
+
+		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+		{
+			if (!isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) || (isset($hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']]) && $hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] != ACL_NEVER))
+			{
+				$setting = ($row['auth_role_id']) ? $row['role_auth_setting'] : $row['auth_setting'];
+				$hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] = $setting;
+			}
+		}
+		$_CLASS['core_db']->free_result($result);
 
 		return $hold_ary;
 	}
@@ -598,43 +602,111 @@ class forums_auth
 	{
 		global $_CLASS;
 
-		$sql_group = ($group_id) ? ((!is_array($group_id)) ? "group_id = $group_id" : 'group_id IN (' . implode(', ', $group_id) . ')') : '';
-		$sql_forum = ($forum_id) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')') : '';
+		$sql_group = ($group_id !== false) ? (is_array($group_id) ? 'AND a.group_id IN (' . implode(', ', $group_id) . ')' : 'group_id = '.$group_id) : '';
+		$sql_forum = ($forum_id !== false) ? (is_array($forum_id) ? 'AND a.forum_id IN (' . implode(', ', $forum_id) . ')' : 'AND a.forum_id = '.$forum_id) : '';
 
-		$sql_opts = '';
+		$sql_opts = $sql_escape = '';
 
 		if ($opts !== false)
 		{
-			if (!is_array($opts))
-			{
-				$sql_opts = (strpos($opts, '%') !== false) ? "AND ao.auth_option LIKE '" . $_CLASS['core_db']->escape($opts) . "'" : "AND ao.auth_option = '" . $_CLASS['core_db']->escape($opts) . "'";
-			}
-			else
-			{
-				$sql_opts = "AND ao.auth_option IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array($opts)) . "')";
-			}
+			$this->build_auth_option_statement('ao.auth_option', $opts, $sql_opts, $sql_escape);
 		}
 
 		$hold_ary = array();
 
 		// Grab group settings ... ACL_NO overrides ACL_YES so act appropriatley
-		$sql = 'SELECT a.group_id, ao.auth_option, a.forum_id, a.auth_setting
+		$sql = 'SELECT ao.auth_option, a.auth_role_id, r.auth_setting as role_auth_setting, a.group_id, a.forum_id, a.auth_setting
 			FROM ' . FORUMS_ACL_OPTIONS_TABLE . ' ao, ' . FORUMS_ACL_TABLE . ' a
-			WHERE ao.auth_option_id = a.auth_option_id
-				AND a.group_id IS NOT NULL AND a.group_id <> 0
-				' . (($sql_group) ? 'AND a.' . $sql_group : '') . "
-				$sql_forum
-				$sql_opts
+			LEFT JOIN '.FORUMS_ACL_ROLES_DATA_TABLE." r ON (a.auth_role_id = r.role_id)
+			WHERE (ao.auth_option_id = a.auth_option_id OR ao.auth_option_id = r.auth_option_id)
+				$sql_group $sql_forum $sql_opts
 			ORDER BY a.forum_id, ao.auth_option";
-		$result = $_CLASS['core_db']->query($sql);
+		$result = $_CLASS['core_db']->query($sql. $sql_escape);
 
 		while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
 		{
-			$hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']] = $row['auth_setting'];
+			if (!isset($hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']]) || (isset($hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']]) && $hold_ary[$row['user_id']][$row['forum_id']][$row['auth_option']] != ACL_NEVER))
+			{
+				$setting = ($row['auth_role_id']) ? $row['role_auth_setting'] : $row['auth_setting'];
+				$hold_ary[$row['group_id']][$row['forum_id']][$row['auth_option']] = $setting;
+			}
 		}
 		$_CLASS['core_db']->free_result($result);
 
 		return $hold_ary;
+	}
+
+	/**
+	* Fill auth_option statement for later querying based on the supplied options
+	*/
+	function build_auth_option_statement($key, $auth_options, &$sql_opts, &$sql_escape)
+	{
+		global $_CLASS;
+
+		if (!is_array($auth_options))
+		{
+			if (strpos($auth_options, '%') !== false)
+			{
+				if (strpos($auth_options, '_') !== false)
+				{
+					$sql_opts = "AND $key LIKE '" . $_CLASS['core_db']->escape(str_replace('_', "\_", $auth_options)) . "'";
+					$sql_escape = ($_CLASS['core_db']->db_layer == 'mssql' || $_CLASS['core_db']->db_layer == 'mssql_odbc') ? " ESCAPE '\\'" : '';
+				}
+				else
+				{
+					$sql_opts = "AND $key LIKE '" . $_CLASS['core_db']->escape($auth_options) . "'";
+				}
+			}
+			else
+			{
+				$sql_opts = "AND $key = '" . $_CLASS['core_db']->escape($auth_options) . "'";
+			}
+		}
+		else
+		{
+			$is_like_expression = $is_underline = false;
+
+			foreach ($auth_options as $option)
+			{
+				if (strpos($option, '%') !== false)
+				{
+					$is_like_expression = true;
+				}
+
+				if (strpos($option, '_') !== false)
+				{
+					$is_underline = true;
+				}
+			}
+
+			if (!$is_like_expression)
+			{
+				$sql_opts = "AND $key IN ('" . implode("' ,'", $_CLASS['core_db']->escape_array($auth_options)) . "')";
+			}
+			else
+			{
+				$sql = array();
+
+				foreach ($auth_options as $option)
+				{
+					if (strpos($option, '%') !== false)
+					{
+						$sql[] = $key . " LIKE '" . $_CLASS['core_db']->escape(str_replace('_', "\_", $option)) . "'";
+					}
+					else
+					{
+						$sql[] = $key . " = '" . $_CLASS['core_db']->escape(str_replace('_', "\_", $option)) . "'";
+					}
+				}
+
+				$sql_opts = 'AND (' . implode(' OR ', $sql) . ')';
+
+				if ($is_underline)
+				{
+					$sql_escape = ($_CLASS['core_db']->db_layer == 'mssql' || $_CLASS['core_db']->db_layer == 'mssql_odbc') ? " ESCAPE '\\'" : '';
+				}
+			}
+		}
 	}
 }
 

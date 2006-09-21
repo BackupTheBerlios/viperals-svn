@@ -29,7 +29,7 @@ if (VIPERAL !== 'Admin')
 global $_CLASS;
 
 require_once SITE_FILE_ROOT.'admin/functions/block_functions.php';
-$_CLASS['core_user']->add_lang('admin/blocks.php');
+$_CLASS['core_user']->add_lang('admin/blocks', null);
 
 function check_position($position, $redirect = true)
 {

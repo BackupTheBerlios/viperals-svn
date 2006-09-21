@@ -22,8 +22,7 @@
 class cache
 {
 	var $vars = array();
-	var $var_expires = array();
-	var $sql_rowset = array();
+	var $expires = array();
 	
 	/*
 		Get a cached value
@@ -48,6 +47,17 @@ class cache
 		{
 			unset($this->vars[$name]);
 		}
+	
+		if (!empty($this->expires[$name]))
+		{
+			unset($this->expires[$name]);
+		}
+	}
+
+	function reset() 
+	{
+		$this->vars = array();
+		$this->expires = array();
 	}
 
 	function save() 

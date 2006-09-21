@@ -75,6 +75,11 @@ function block_change($id)
 		trigger_error('BLOCK_NOT_FOUND');
 	}
 
+	if ($block['page_status'] != STATUS_ACTIVE && $block['page_status'] != STATUS_DISABLED)
+	{
+		trigger_error('INVALID_STATUS');
+	}
+
 	check_position($block['block_position']);
 	$status = ($block['block_status'] == STATUS_ACTIVE) ? STATUS_DISABLED : STATUS_ACTIVE;
 

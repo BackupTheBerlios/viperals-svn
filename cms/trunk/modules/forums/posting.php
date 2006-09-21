@@ -356,10 +356,12 @@ $message_parser->get_submitted_attachment_data($post_data['poster_id']);
 
 if ($post_data['post_attachment'] && !$submit && !$refresh && !$preview && $mode == 'edit')
 {
-	$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
+	//$sql = 'SELECT attach_id, physical_filename, comment, real_filename, extension, mimetype, filesize, filetime, thumbnail
+	$sql = 'SELECT attach_id, is_orphan, attach_comment, real_filename
 		FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 		WHERE post_msg_id = $post_id
 			AND in_message = 0
+			AND is_orphan = 0
 		ORDER BY filetime " . ((!$config['display_order']) ? 'DESC' : 'ASC');
 	$result = $_CLASS['core_db']->query($sql);
 
@@ -516,6 +518,7 @@ $html_status	= ($config['allow_html'] && $_CLASS['forums_auth']->acl_get('f_html
 $bbcode_status	= ($config['allow_bbcode'] && $_CLASS['forums_auth']->acl_get('f_bbcode', $forum_id));
 $smilies_status	= ($config['allow_smilies'] && $_CLASS['forums_auth']->acl_get('f_smilies', $forum_id));
 $img_status		= ($_CLASS['forums_auth']->acl_get('f_img', $forum_id));
+$url_status		= ($config['allow_post_links']) ? true : false;
 $flash_status	= ($_CLASS['forums_auth']->acl_get('f_flash', $forum_id));
 $quote_status	= ($_CLASS['forums_auth']->acl_get('f_reply', $forum_id));
 
@@ -714,12 +717,16 @@ if ($submit || $preview || $refresh)
 	// notify and show user the post made between his request and the final submit
 	if (($mode === 'reply' || $mode === 'quote') && $post_data['topic_cur_post_id'] && $post_data['topic_cur_post_id'] != $post_data['topic_last_post_id'])
 	{
-		if (topic_review($topic_id, $forum_id, 'post_review', $post_data['topic_cur_post_id']))
+		// Only do so if it is allowed forum-wide
+		if ($post_data['forum_flags'] & FORUM_FLAG_POST_REVIEW)
 		{
-			$_CLASS['core_template']->assign('S_POST_REVIEW',  true);
+			if (topic_review($topic_id, $forum_id, 'post_review', $post_data['topic_cur_post_id']))
+			{
+				$_CLASS['core_template']->assign('S_POST_REVIEW',  true);
+			}
+			$submit = false;
+			$refresh = true;
 		}
-		$submit = false;
-		$refresh = true;
 	}
 
 	// Parse Attachments - before checksum is calculated
@@ -734,7 +741,7 @@ if ($submit || $preview || $refresh)
 	// Parse message
 	if ($update_message)
 	{
-		$message_parser->parse($post_data['enable_bbcode'], $post_data['enable_urls'], $post_data['enable_smilies'], $img_status, $flash_status, $quote_status);
+		$message_parser->parse(false, $post_data['enable_bbcode'], ($config['allow_post_links']) ? $post_data['enable_urls'] : false, $post_data['enable_smilies'], $img_status, $flash_status, $quote_status, $config['allow_post_links']);
 	}
 	else
 	{
@@ -872,7 +879,7 @@ if ($submit || $preview || $refresh)
 		}
 	}
 
-	if (!empty($message_parser->warn_msg))
+	if (!empty($message_parser->warn_msg) && !$refresh)
 	{
 		$error[] = implode('<br />', $message_parser->warn_msg);
 	}
@@ -1257,6 +1264,7 @@ $_CLASS['core_template']->assign_array(array(
 	'IMG_STATUS'			=> ($img_status) ? $_CLASS['core_user']->lang['IMAGES_ARE_ON'] : $_CLASS['core_user']->lang['IMAGES_ARE_OFF'],
 	'FLASH_STATUS'			=> ($flash_status) ? $_CLASS['core_user']->lang['FLASH_IS_ON'] : $_CLASS['core_user']->lang['FLASH_IS_OFF'],
 	'SMILIES_STATUS'		=> ($smilies_status) ? $_CLASS['core_user']->lang['SMILIES_ARE_ON'] : $_CLASS['core_user']->lang['SMILIES_ARE_OFF'],
+	'URL_STATUS'			=> ($url_status) ? $_CLASS['core_user']->lang['URL_IS_ON'] : $_CLASS['core_user']->lang['URL_IS_OFF'],
 	'MINI_POST_IMG'			=> $_CLASS['core_user']->img('icon_post', $_CLASS['core_user']->lang['POST']),
 	'POST_DATE'				=> ($post_data['post_time']) ? $_CLASS['core_user']->format_date($post_data['post_time']) : '',
 	'ERROR'					=> empty($error) ? '' : implode('<br />', $error), 
@@ -1285,6 +1293,7 @@ $_CLASS['core_template']->assign_array(array(
 	'S_LOCK_TOPIC_CHECKED'	=> ($lock_topic_checked) ? ' checked="checked"' : '',
 	'S_LOCK_POST_ALLOWED'	=> ($mode == 'edit' && $_CLASS['forums_auth']->acl_get('m_edit', $forum_id)),
 	'S_LOCK_POST_CHECKED'	=> ($lock_post_checked) ? ' checked="checked"' : '',
+	'S_LINKS_ALLOWED'		=> $url_status,
 	'S_MAGIC_URL_CHECKED' 	=> ($urls_checked) ? ' checked="checked"' : '',
 	'S_TYPE_TOGGLE'			=> $topic_type_toggle,
 	'S_SAVE_ALLOWED'		=> ($_CLASS['forums_auth']->acl_get('u_savedrafts') && $_CLASS['core_user']->is_user),
@@ -1292,6 +1301,7 @@ $_CLASS['core_template']->assign_array(array(
 	'S_FORM_ENCTYPE'		=> $form_enctype,
 
 	'S_BBCODE_IMG'			=> $img_status,
+	'S_BBCODE_URL'			=> $url_status,
 	'S_BBCODE_FLASH'		=> $flash_status,
 	'S_BBCODE_QUOTE'		=> $quote_status,
 

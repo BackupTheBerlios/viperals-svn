@@ -45,7 +45,7 @@ if (!$config['allow_attachments'] && !$config['allow_pm_attach'])
 	trigger_error('ATTACHMENT_FUNCTIONALITY_DISABLED');
 }
 
-$sql = 'SELECT attach_id, in_message, post_msg_id, extension
+$sql = 'SELECT attach_id, in_message, post_msg_id, extension, is_orphan, poster_id
 	FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
 $result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -64,46 +64,61 @@ if ((!$attachment['in_message'] && !$config['allow_attachments']) || ($attachmen
 
 $row = array();
 
-if (!$attachment['in_message'])
+if ($attachment['is_orphan'])
 {
-	$sql = 'SELECT p.forum_id, f.forum_password, f.parent_id
-		FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f
-		WHERE p.post_id = ' . $attachment['post_msg_id'] . '
-			AND p.forum_id = f.forum_id';
+	// We allow admins having attachment permissions to see orphan attachments...
+	$own_attachment = ($_CLASS['auth']->acl_get('a_attach') || $attachment['poster_id'] == $_CLASS['core_user']->data['user_id']) ? true : false;
 
-	$result = $_CLASS['core_db']->query_limit($sql, 1);
-	$row = $_CLASS['core_db']->fetch_row_assoc($result);
-	$_CLASS['core_db']->free_result($result);
-
-	if ($_CLASS['auth']->acl_get('u_download') && $_CLASS['auth']->acl_get('f_download', $row['forum_id']))
+	if (!$own_attachment || ($attachment['in_message'] && !$_CLASS['auth']->acl_get('u_pm_download')) || (!$attachment['in_message'] && !$_CLASS['auth']->acl_get('u_download')))
 	{
-		if ($row['forum_password'])
+		trigger_error('ERROR_NO_ATTACHMENT');
+	}
+
+	$extensions = obtain_attach_extensions();
+}
+else
+{
+	if (!$attachment['in_message'])
+	{
+		$sql = 'SELECT p.forum_id, f.forum_password, f.parent_id
+			FROM ' . FORUMS_POSTS_TABLE . ' p, ' . FORUMS_FORUMS_TABLE . ' f
+			WHERE p.post_id = ' . $attachment['post_msg_id'] . '
+				AND p.forum_id = f.forum_id';
+	
+		$result = $_CLASS['core_db']->query_limit($sql, 1);
+		$row = $_CLASS['core_db']->fetch_row_assoc($result);
+		$_CLASS['core_db']->free_result($result);
+	
+		if ($_CLASS['auth']->acl_get('u_download') && $_CLASS['auth']->acl_get('f_download', $row['forum_id']))
 		{
-			// Do something else ... ?
-			login_forum_box($row);
+			if ($row['forum_password'])
+			{
+				// Do something else ... ?
+				login_forum_box($row);
+			}
+		}
+		else
+		{
+			trigger_error('SORRY_AUTH_VIEW_ATTACH');
 		}
 	}
 	else
 	{
-		trigger_error('SORRY_AUTH_VIEW_ATTACH');
+		$row['forum_id'] = 0;
+	
+		if (!$_CLASS['auth']->acl_get('u_pm_download') || !$config['auth_download_pm'])
+		{
+			trigger_error('SORRY_AUTH_VIEW_ATTACH');
+		}
 	}
-}
-else
-{
-	$row['forum_id'] = 0;
-
-	if (!$_CLASS['auth']->acl_get('u_pm_download') || !$config['auth_download_pm'])
+	
+	// disallowed ?
+	$extensions = obtain_attach_extensions();
+	
+	if (!extension_allowed($row['forum_id'], $attachment['extension'], $extensions))
 	{
-		trigger_error('SORRY_AUTH_VIEW_ATTACH');
+		trigger_error(sprintf($_CLASS['core_user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
 	}
-}
-
-// disallowed ?
-$extensions = obtain_attach_extensions();
-
-if (!extension_allowed($row['forum_id'], $attachment['extension'], $extensions))
-{
-	trigger_error(sprintf($_CLASS['core_user']->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));
 }
 
 if (!download_allowed())
@@ -114,7 +129,7 @@ if (!download_allowed())
 $download_mode = (int) $extensions[$attachment['extension']]['download_mode'];
 
 // Fetching filename here to prevent sniffing of filename
-$sql = 'SELECT attach_id, in_message, post_msg_id, extension, physical_filename, real_filename, mimetype
+$sql = 'SELECT attach_id, is_orphan, in_message, post_msg_id, extension, physical_filename, real_filename, mimetype
 	FROM ' . FORUMS_ATTACHMENTS_TABLE . "
 	WHERE attach_id = $download_id";
 $result = $_CLASS['core_db']->query_limit($sql, 1);
@@ -133,7 +148,7 @@ if ($thumbnail)
 {
 	$attachment['physical_filename'] = 'thumb_' . $attachment['physical_filename'];
 }
-elseif ($display_cat == ATTACHMENT_CATEGORY_NONE || $display_cat == ATTACHMENT_CATEGORY_IMAGE)
+elseif (($display_cat == ATTACHMENT_CATEGORY_NONE || $display_cat == ATTACHMENT_CATEGORY_IMAGE) && !$attachment['is_orphan'])
 {
 	// Update download count
 	$sql = 'UPDATE ' . FORUMS_ATTACHMENTS_TABLE . ' 
@@ -184,9 +199,9 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 		Correct the mime type - we force application/octetstream for all files, except images
 		Please do not change this, it is a security precaution
 	*/
-	if ($category == ATTACHMENT_CATEGORY_NONE && strpos($attachment['mimetype'], 'image') === false)
+	if (strpos($attachment['mimetype'], 'image') !== 0)
 	{
-		$attachment['mimetype'] = (strpos(strtolower($user->browser), 'msie') !== false || strpos(strtolower($user->browser), 'opera') !== false) ? 'application/octetstream' : 'application/octet-stream';
+		$attachment['mimetype'] = (strpos(strtolower($_CLASS['core_user']->browser), 'msie') !== false || strpos(strtolower($_CLASS['core_user']->browser), 'opera') !== false) ? 'application/octetstream' : 'application/octet-stream';
 	}
 
 	/* Clean all output buffers */
@@ -200,12 +215,15 @@ function send_file_to_browser($attachment, $upload_dir, $category)
 	/* Send out required headers */
 	header('Pragma: public');
 	
-	// Try X-Sendfile since it is much more server friendly.
+	// Try X-Sendfile since it is much more server friendly - only works if the path is *not* outside of the root path...
 	// lighttpd has core support for it. An apache2 module is available at http://celebnamer.celebworld.ws/stuff/mod_xsendfile/
-	header('X-Sendfile: ' . $filename);
+	if (strpos($upload_dir, '/') !== 0 && strpos($upload_dir, '../') === false && (!SITE_ROOT || (strpos($upload_dir, SITE_ROOT) || @file_exists(SITE_ROOT.$filename))))
+	{
+		header('X-Sendfile: ' . $filename);
+	}
 
 	header('Content-Type: ' . $attachment['mimetype'] . '; name="' . $attachment['real_filename'] . '"');
-	header('Content-Disposition: attachment; filename="' . $attachment['real_filename'] . '"');
+	header('Content-Disposition: ' . ((strpos($attachment['mimetype'], 'image') === 0) ? 'inline' : 'attachment') . '; filename="' . $attachment['real_filename'] . '"');
 
 	/* Now send the File Contents to the Browser */
 	$size = @filesize($filename);

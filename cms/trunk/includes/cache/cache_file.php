@@ -124,8 +124,11 @@ class cache_file extends cache
 			if (strpos($file, 'cache_') === 0)
 			{
 				unlink($this->cache_dir . $file);
+				$this->remove(substr($file, 6));
 			} 
 		}
+
+		$this->reset();
 	}
 }
 

@@ -28,7 +28,7 @@ if (VIPERAL != 'Admin')
 
 global $_CLASS;
 
-$_CLASS['core_user']->add_lang('admin/blocks.php');
+$_CLASS['core_user']->add_lang('admin/blocks', null);
 
 $mode = get_variable('mode', 'GET', false);
 
@@ -117,7 +117,7 @@ if (isset($_REQUEST['mode']))
 			break;
 
 			case 'edit':
-				$result = $_CLASS['core_db']->query('SELECT * FROM '. CORE_PAGES_TABLE ." WHERE page_id = $id AND page_type = ". PAGE_MODULE);
+				$result = $_CLASS['core_db']->query('SELECT * FROM '. CORE_PAGES_TABLE .' WHERE page_id = '.$id);
 				$module = $_CLASS['core_db']->fetch_row_assoc($result);
 				$_CLASS['core_db']->free_result($result);
 
@@ -125,9 +125,39 @@ if (isset($_REQUEST['mode']))
 				{
 					trigger_error('MODULE_NOT_FOUND');
 				}
-				
+
+				if ($module['page_status'] != STATUS_ACTIVE && $module['page_status'] != STATUS_DISABLED)
+				{
+					trigger_error('MODULE_NOT_INSTALLED');
+				}
+	
 				check_type($module['page_type']);
+
+				if (isset($_POST['submit']))
+				{
+					$blocks_array = get_variable('blocks_array', 'POST', array(), 'array:int');
+					$active = get_variable('active', 'POST', 0, 'int');
+
+					$data = array();
+					$data['page_title'] = get_variable('title', 'POST', null);
+					$data['page_status'] = ($active) ? STATUS_ACTIVE : STATUS_DISABLED;
+
+					$data['page_blocks'] = 0;
+
+					foreach ($blocks_array as $value)
+					{
+						$data['page_blocks'] |= (1 << $value);
+					}
+
+					$_CLASS['core_db']->query('UPDATE '.CORE_PAGES_TABLE.' SET ' . $_CLASS['core_db']->sql_build_array('UPDATE', $data) .'  WHERE page_id = '.$id);
+
+					unset($data, $blocks_array, $active);
+
+					break;
+				}
+
 				settype($module['page_status'], 'int');
+				settype($module['page_blocks'], 'int');
 
 				$page_blocks_array = array(
 					array(
@@ -163,11 +193,11 @@ if (isset($_REQUEST['mode']))
 				);
 				
 				$_CLASS['core_template']->assign_array(array(
-					'ADMIN_PAGE_ACTION'			=> generate_link('modules&amp;mode=edit', array('admin' => true)),
+					'ADMIN_PAGE_ACTION'			=> generate_link('modules&amp;mode=edit&id='.$id, array('admin' => true)),
 					'ADMIN_PAGE_TITLE'			=> $module['page_title'],
 					'ADMIN_PAGE_NAME'			=> mb_convert_case(preg_replace('/_/', ' ', $module['page_name']), MB_CASE_TITLE),
 					'ADMIN_PAGE_BLOCKS_ARRAY'	=> $page_blocks_array,
-					'ADMIN_PAGE_STATUS'			=> $module['page_status'],
+					'ADMIN_PAGE_ACTIVE'			=> ($module['page_status'] == STATUS_ACTIVE) ? true : false,
 					'ADMIN_PAGE_ERROR'			=> '',
 				));
 			
@@ -175,7 +205,7 @@ if (isset($_REQUEST['mode']))
 			break;
 
 			case 'install':
-				$result = $_CLASS['core_db']->query('SELECT page_status, page_name, page_type FROM '.CORE_PAGES_TABLE." WHERE page_id = $id AND page_type = ". PAGE_MODULE);
+				$result = $_CLASS['core_db']->query('SELECT page_status, page_name, page_type FROM '.CORE_PAGES_TABLE.' WHERE page_id = '.$id);
 				$module = $_CLASS['core_db']->fetch_row_assoc($result);
 				$_CLASS['core_db']->free_result($result);
 

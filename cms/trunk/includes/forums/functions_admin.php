@@ -1579,15 +1579,25 @@ function prune($forum_id, $prune_mode, $prune_date, $prune_flags = 0, $auto_sync
 {
 	global $_CLASS;
 
+	if (!is_array($forum_id))
+	{
+		$forum_id = array($forum_id);
+	}
+
+	if (!sizeof($forum_id))
+	{
+		return;
+	}
+	
 	$sql_forum = (is_array($forum_id)) ? ' IN (' . implode(', ', array_map('intval', $forum_id)) . ')' : ' = '. (int) $forum_id;
 
 	$sql_and = '';
-	if (!($prune_flags & 4))
+	if (!($prune_flags & FORUM_FLAG_PRUNE_ANNOUNCE))
 	{
 		$sql_and .= ' AND topic_type <> ' . POST_ANNOUNCE;
 	}
 
-	if (!($prune_flags & 8))
+	if (!($prune_flags & FORUM_FLAG_PRUNE_STICKY))
 	{
 		$sql_and .= ' AND topic_type <> ' . POST_STICKY;
 	}
@@ -1603,7 +1613,7 @@ function prune($forum_id, $prune_mode, $prune_date, $prune_flags = 0, $auto_sync
 	}
 
 	$sql = 'SELECT topic_id
-		FROM ' . TOPICS_TABLE . "
+		FROM ' . FORUMS_TOPICS_TABLE . "
 		WHERE forum_id $sql_forum
 			AND poll_start = 0 
 			$sql_and";
@@ -1616,10 +1626,10 @@ function prune($forum_id, $prune_mode, $prune_date, $prune_flags = 0, $auto_sync
 	}
 	$_CLASS['core_db']->free_result($result);
 
-	if ($prune_flags & 2)
+	if ($prune_flags & FORUM_FLAG_PRUNE_POLL)
 	{
 		$sql = 'SELECT topic_id
-			FROM ' . TOPICS_TABLE . "
+			FROM ' . FORUMS_TOPICS_TABLE . "
 			WHERE forum_id $sql_forum 
 				AND poll_start > 0 
 				AND poll_last_vote < $prune_date 
@@ -1646,7 +1656,7 @@ function auto_prune($forum_id, $prune_mode, $prune_flags, $prune_days, $prune_fr
 	global $_CLASS;
 
 	$sql = 'SELECT forum_name
-		FROM ' . FORUMS_TABLE . "
+		FROM ' . FORUMS_FORUMS_TABLE . "
 		WHERE forum_id = $forum_id";
 	$result = $_CLASS['core_db']->query($sql);
 	$row = $_CLASS['core_db']->fetch_row_assoc($result);
@@ -1659,7 +1669,7 @@ function auto_prune($forum_id, $prune_mode, $prune_flags, $prune_days, $prune_fr
 
 		prune($forum_id, $prune_mode, $prune_date, $prune_flags, true);
 
-		$sql = 'UPDATE ' . FORUMS_TABLE . "
+		$sql = 'UPDATE ' . FORUMS_FORUMS_TABLE . "
 			SET prune_next = $next_prune
 			WHERE forum_id = $forum_id";
 		$_CLASS['core_db']->query($sql);
@@ -1992,6 +2002,32 @@ function view_log($mode, &$log, &$log_count, $limit = 0, $offset = 0, $forum_id 
 	$log_count = (int) $row['total_entries'];
 
 	return;
+}
+
+/**
+* Update foes - remove moderators and administrators from foe lists...
+*/
+function update_foes()
+{
+	global $_CLASS;
+
+	$perms = array();
+	foreach ($_CLASS['forums_auth']->acl_get_list(false, array('a_', 'm_'), false) as $forum_id => $forum_ary)
+	{
+		foreach ($forum_ary as $auth_option => $user_ary)
+		{
+			$perms = array_merge($perms, $user_ary);
+		}
+	}
+
+	if (sizeof($perms))
+	{
+		$sql = 'DELETE FROM ' . ZEBRA_TABLE . ' 
+			WHERE zebra_id IN (' . implode(', ', array_unique($perms)) . ')
+				AND foe = 1';
+		$_CLASS['core_db']->query($sql);
+	}
+	unset($perms);
 }
 
 // Extension of auth class for changing permissions

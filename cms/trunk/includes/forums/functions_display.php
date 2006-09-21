@@ -52,7 +52,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 	}
 
 	// Display list of active topics for this category?
-	$show_active = (isset($root_data['forum_flags']) && $root_data['forum_flags'] & 16) ? true : false;
+	$show_active = (isset($root_data['forum_flags']) && ($root_data['forum_flags'] & FORUM_FLAG_ACTIVE_TOPICS)) ? true : false;
 
 	if ($_CLASS['core_user']->is_user &&  $config['load_db_lastread'])
 	{
@@ -110,7 +110,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		}
 
 		// Display active topics from this forum?
-		if ($show_active && $row['forum_type'] == FORUM_POST && $_CLASS['auth']->acl_get('f_read', $row['forum_id']) && ($row['forum_flags'] & 16))
+		if ($show_active && $row['forum_type'] == FORUM_POST && $_CLASS['auth']->acl_get('f_read', $row['forum_id']) && ($row['forum_flags'] & FORUM_FLAG_ACTIVE_TOPICS))
 		{
 			if (!isset($active_forum_ary['forum_topics']))
 			{
@@ -306,7 +306,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 		}
 
 		$l_post_click_count = ($row['forum_type'] == FORUM_LINK) ? 'CLICKS' : 'POSTS';
-		$post_click_count = ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? $row['forum_posts'] : '';
+		$post_click_count = ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & FORUM_FLAG_LINK_TRACK) ? $row['forum_posts'] : '';
 
 		$_CLASS['core_template']->assign_vars_array('forumrow', array(
 			'S_IS_CAT'			=> false, 
@@ -335,7 +335,7 @@ function display_forums($root_data = '', $display_moderators = true, $return_mod
 			
 			'U_LAST_POSTER'		=> $last_poster_url, 
 			'U_LAST_POST'		=> $last_post_url, 
-			'U_VIEWFORUM'		=> ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & 1) ? generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : $row['forum_link'])
+			'U_VIEWFORUM'		=> ($row['forum_type'] != FORUM_LINK || $row['forum_flags'] & FORUM_FLAG_LINK_TRACK) ? generate_link('forums&amp;file=viewforum&amp;f=' . $row['forum_id']) : $row['forum_link'])
 		);
 	}
 
@@ -589,7 +589,7 @@ function topic_status(&$topic_row, $replies, $unread_topic, &$folder_img, &$fold
 				$folder = 'topic_read';
 				$folder_new = 'topic_unread';
 
-				if ($config['hot_threshold'] && $replies >= $config['hot_threshold'])
+				if ($config['hot_threshold'] && $replies >= $config['hot_threshold'] && $topic_row['topic_status'] != ITEM_LOCKED)
 				{
 					$folder .= '_hot';
 					$folder_new .= '_hot';
@@ -633,9 +633,49 @@ function display_attachments($forum_id, $attachment_data, &$update_count, $force
 	{
 		$update_count = array();
 	}
+	// Look for missing attachment informations...
+	$attach_ids = array();
+	foreach ($attachment_data as $pos => $attachment)
+	{
+		// If is_orphan is set, we need to retrieve the attachments again...
+		if (!isset($attachment['extension']) && !isset($attachment['physical_filename']))
+		{
+			$attach_ids[(int) $attachment['attach_id']] = $pos;
+		}
+	}
+
+	if (sizeof($attach_ids))
+	{
+		global $db;
+
+		$attachment_data = array();
+
+		$sql = 'SELECT *
+			FROM ' . FORUMS_ATTACHMENTS_TABLE . '
+			WHERE attach_id IN (' . implode(', ', array_keys($attach_ids)) . ')';
+		$result = $_CLASS['core_db']->query($sql);
+
+		while ($row = $db->sql_fetchrow($result))
+		{
+			if (!isset($attach_ids[$row['attach_id']]))
+			{
+				continue;
+			}
+
+			$attachment_data[$attach_ids[$row['attach_id']]] = $row;
+		}
+		$_CLASS['core_db']->free_result($result);
+
+		ksort($attachment_data);
+	}
 
 	foreach ($attachment_data as $attachment)
 	{
+		if (!sizeof($attachment))
+		{
+			continue;
+		}
+
 		$attachment['extension'] = strtolower(trim($attachment['extension']));
 
 		if (!extension_allowed($forum_id, $attachment['extension'], $extensions))

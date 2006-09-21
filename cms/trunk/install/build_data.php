@@ -23,7 +23,7 @@ $Id$
 
 $time = gmtime();
 
-$_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_AUTH_TABLE ." (admin_section, user_id, admin_status) VALUES ('_all_', 2, 2)");
+$_CLASS['core_db']->query('INSERT INTO '. CORE_ADMIN_AUTH_TABLE ." (admin_section, user_id, admin_status, admin_options) VALUES ('_all_', 2, 2, '_all_')");
 
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'path_avatar_upload', 'images/avatars/upload', 'string', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('global', 'path_avatar_gallery', 'images/avatars/gallery', 'string', 1)");
@@ -73,6 +73,7 @@ $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section,
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'activation', '0', 'int', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'total_users', '1', 'int', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'password_encoding', 'md5', 'string', 1)");
+$_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('user', 'pass_complex', '.*', 'string', 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'path', '/', 'string', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. CORE_CONFIG_TABLE  ." (config_section, config_name, config_value, config_type, config_cache) VALUES ('server', 'cookie_domain', '', 'string', 1)");
@@ -252,12 +253,6 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_opt
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_hideonline', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_viewonline', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_viewprofile', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_chgavatar', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_chggrp', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_chgemail', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_chgname', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_chgpasswd', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_chgcensors', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_search', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_savedrafts', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_download', 1)");
@@ -270,11 +265,9 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_opt
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_attach', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_authgroups', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_authusers', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_backup', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_bbcode', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_board', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_clearlogs', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_email', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_fauth', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_forum', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_forumadd', 1)");
@@ -282,8 +275,6 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_opt
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_icons', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_mauth', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_modules', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_names', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_profile', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_prune', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_ranks', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_reasons', 1)");
@@ -295,19 +286,6 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_opt
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_user', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_viewauth', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_viewlogs', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('a_words', 1)");
-
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_attach', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_bbcode', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_smilies', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_download', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_edit', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_printpm', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_emailpm', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_forward', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_delete', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_img', 1)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_OPTIONS_TABLE  ." (auth_option, is_global) VALUES ('u_pm_flash', 1)");
 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_ROLES_TABLE . " (role_name, role_description, role_type, role_order) VALUES ('Standard Admin', 'ROLE_DESCRIPTION_ADMIN_STANDARD', 'a_', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_ROLES_TABLE . " (role_name, role_description, role_type, role_order) VALUES ('Forum Admin', 'ROLE_DESCRIPTION_ADMIN_FORUM', 'a_', 3)");
@@ -339,14 +317,9 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_sig', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_topic_notify', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_forum_notify', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_avatar_local', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_avatar_remote', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_avatar_upload', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_nocensors', '0', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_bookmarks', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_disable_msg', '', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_email_form', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_login_attempts', '3', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('min_ratings', '10', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('posts_per_page', '10', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('topics_per_page', '25', 0)");
@@ -358,80 +331,64 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('upload_icons_path', 'images/upload_icons', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('ranks_path', 'images/ranks', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('email_enable', '1', 0)");// maybe keep
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_privmsg', '1', 0)");
 
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_online_time', '5', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_online', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('limit_search_load', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_anon_lastread', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_db_lastread', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_birthdays', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_moderators', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_jumpbox', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_search', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_search_upd', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_search_phr', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_db_lastread', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_onlinetrack', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_user_activity', '1', 0)");
 
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_block_size', '250', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_gc', '7200', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('queue_interval', '3', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_indexing_state', '', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_interval', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_anonymous_interval', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_type', 'fulltext_native', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_store_results', '1800', 0)");
+
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('version', '2.1.2', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_chars', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_smilies', '', 0)");
+
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_attachments', '3', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_filesize', '262144', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_poll_options', '10', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_chars', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_font_size', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_img_height', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_img_width', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_smilies', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_urls', '0', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_quote_depth', '3', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_sig_chars', '255', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_poll_options', '10', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('min_search_chars', '3', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_search_chars', '10', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('edit_time', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('display_last_edited', '1', 0)");
-
-//$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_email_sig', 'Thanks, The Management', 0)");
-//$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_email', '', 0)");
-//$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_contact', '', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('min_search_author_chars', '3', 0)");
 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_start_date', $time, 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('flood_interval', '15', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('bump_interval', '10h', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_interval', '', 0)");
-
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('avatar_filesize', '6144', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('avatar_min_width', '20', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('avatar_min_height', '20', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('avatar_max_width', '90', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('avatar_max_height', '90', 0)");
-
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('lastread', '432000', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('bump_interval', '10', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('bump_type', 'd', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('display_order', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_filesize', '262144', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_filesize_pm', '262144', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('attachment_quota', '52428800', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_attachments', '3', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_attachments_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_pm_attach', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('display_last_edited', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('edit_time', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('flood_interval', '15', 0)");
+
+
+
+//$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('lastread', '432000', 0)");
+
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('upload_path', 'files', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_display_inlined', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('secure_downloads', '0', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('secure_allow_deny', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('secure_allow_empty_referer', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_max_width', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_max_height', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_link_width', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_link_height', '', 0)");
+
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_create_thumbnail', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_min_thumb_filesize', '12000', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_display_inlined', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_imagick', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('pm_max_boxes', '4', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('pm_max_msgs', '50', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_html_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_bbsmiley_code_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_smilies_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_download_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_report_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('load_online_guests', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_img_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('auth_flash_pm', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('enable_pm_icons', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('pm_edit_time', '', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_mass_pm', '1', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_max_height', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_max_width', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_link_height', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_link_width', '0', 0)");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('img_min_thumb_filesize', '12000', 0)");
 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('record_online_users', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('record_online_date', '0', 1)");
@@ -444,15 +401,8 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('search_last_gc', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('last_queue_run', '0', 1)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('full_folder_action', '2', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('bump_type', 'm', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_img', '1', 0)");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('board_hide_emails', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_sig_bbsmiley_code', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_sig_flash', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_sig_html', '0', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_sig_img', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('allow_sig_smilies', '1', 0)");
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_CONFIG_TABLE  ." (config_name, config_value, is_dynamic) VALUES ('max_post_urls', '0', 0)");
 
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_EXTENSION_GROUPS_TABLE  ." (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Images', 1, 1, 1, '', 0, '')");
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_EXTENSION_GROUPS_TABLE  ." (group_name, cat_id, allow_group, download_mode, upload_icon, max_filesize, allowed_forums) VALUES ('Archives', 0, 1, 1, '', 0, '')");
@@ -504,7 +454,7 @@ $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ICONS_TABLE  ." (icons_url, ico
 # -- Roles data
 
 # Standard Admin (a_)
-$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_ROLES_DATA_TABLE  ." (role_id, auth_option_id, auth_setting) SELECT 1, auth_option_id, 1 FROM  ". FORUMS_ACL_OPTIONS_TABLE  ."  WHERE auth_option LIKE 'a_%' AND auth_option NOT IN ('a_switchperm', 'a_jabber', 'a_phpinfo', 'a_server', 'a_backup', 'a_styles', 'a_clearlogs', 'a_modules', 'a_language', 'a_email', 'a_bots', 'a_search', 'a_aauth', 'a_roles')");
+$_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_ROLES_DATA_TABLE  ." (role_id, auth_option_id, auth_setting) SELECT 1, auth_option_id, 1 FROM  ". FORUMS_ACL_OPTIONS_TABLE  ."  WHERE auth_option LIKE 'a_%' AND auth_option NOT IN ('a_switchperm', 'a_jabber', 'a_phpinfo', 'a_server', 'a_styles', 'a_clearlogs', 'a_modules', 'a_language', 'a_bots', 'a_search', 'a_aauth', 'a_roles')");
 
 # Forum admin (a_)
 $_CLASS['core_db']->query('INSERT INTO '. FORUMS_ACL_ROLES_DATA_TABLE  ." (role_id, auth_option_id, auth_setting) SELECT 2, auth_option_id, 1 FROM  ". FORUMS_ACL_OPTIONS_TABLE  ."  WHERE auth_option LIKE 'a_%' AND auth_option IN ('a_', 'a_authgroups', 'a_authusers', 'a_fauth', 'a_forum', 'a_forumadd', 'a_forumdel', 'a_mauth', 'a_prune', 'a_uauth', 'a_viewauth', 'a_viewlogs')");

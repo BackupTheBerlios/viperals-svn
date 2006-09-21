@@ -237,21 +237,28 @@ function decode_message(&$message, $bbcode_uid = '')
 
 	$message = str_replace($match, $replace, $message);
 
-	$match = array(
-		'#<!\-\- e \-\-><a href="mailto:(.*?)">.*?</a><!\-\- e \-\->#',
-		'#<!\-\- m \-\-><a href="(.*?)" target="_blank">.*?</a><!\-\- m \-\->#',
-		'#<!\-\- w \-\-><a href="http:\/\/(.*?)" target="_blank">.*?</a><!\-\- w \-\->#',
-		'#<!\-\- l \-\-><a href="(.*?)">.*?</a><!\-\- l \-\->#',
-		'#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#',
-		'#<!\-\- .*? \-\->#s',
-		'#<.*?>#s'
-	);
-	
-	$replace = array('\1', '\1', '\1', '\1', '\1', '', '');
+	$match = get_preg_expression('bbcode_htm');
+	$replace = array('\1', '\2', '\1', '', '');
 	
 	$message = preg_replace($match, $replace, $message);
+}
 
-	return;
+/**
+* Strips all bbcode from a text and returns the plain content
+*/
+function strip_bbcode(&$text, $uid = '')
+{
+	if (!$uid)
+	{
+		$uid = '[0-9a-z]{5,}';
+	}
+
+	$text = preg_replace("#\[\/?[a-z0-9\*\+\-]+(?:=.*?)?(?::[a-z])?(\:?$uid)\]#", ' ', $text);
+
+	$match = get_preg_expression('bbcode_htm');
+	$replace = array('\1', '\2', '\1', '', '');
+	
+	$text = preg_replace($match, $replace, $text);
 }
 
 /**
@@ -268,7 +275,7 @@ function generate_text_for_display($text, $uid, $bitfield, $flags)
 	}
 
 	// Parse bbcode if bbcode uid stored and bbcode enabled
-	if ($uid && ($flags & 1))
+	if ($uid && ($flags & OPTION_FLAG_BBCODE))
 	{
 		if (!class_exists('bbcode'))
 		{
@@ -287,7 +294,7 @@ function generate_text_for_display($text, $uid, $bitfield, $flags)
 		$bbcode->bbcode_second_pass($text, $uid);
 	}
 
-	$text = smiley_text($text, !($flags & 2));
+	$text = smiley_text($text, !($flags & OPTION_FLAG_SMILIES));
 	$text = str_replace("\n", '<br />', censor_text($text));
 
 	return $text;
@@ -340,9 +347,9 @@ function generate_text_for_edit($text, $uid, $flags)
 	decode_message($text, $uid);
 
 	return array(
-		'allow_bbcode'	=> ($flags & 1) ? 1 : 0,
-		'allow_smilies'	=> ($flags & 2) ? 1 : 0,
-		'allow_urls'	=> ($flags & 4) ? 1 : 0,
+		'allow_bbcode'  => ($flags & OPTION_FLAG_BBCODE) ? 1 : 0,
+		'allow_smilies' => ($flags & OPTION_FLAG_SMILIES) ? 1 : 0,
+		'allow_urls'    => ($flags & OPTION_FLAG_LINKS) ? 1 : 0,
 		'text'			=> $text
 	);
 }
@@ -889,8 +896,6 @@ function parse_inline_attachments(&$text, $attachments, &$update_count, $forum_i
 				$inline_attachments[$key] = false;
 			}
 		}
-//print_r($inline_attachments);
-		//$inline_attachments = display_attachments($forum_id, $inline_attachments, $update_count, $preview, true);
 
 		$replace = array();
 		foreach ($matches[1] as $key => $index)
@@ -1341,6 +1346,16 @@ function get_preg_expression($mode)
 		case 'email':
 			return '[a-z0-9&\'\.\-_\+]+@[a-z0-9\-]+\.([a-z0-9\-]+\.)*[a-z]+';
 		break;
+
+		case 'bbcode_htm':
+			return array(
+				'#<!\-\- e \-\-><a href="mailto:(.*?)">.*?</a><!\-\- e \-\->#',
+				'#<!\-\- (l|m|w) \-\-><a href="(.*?)">.*?</a><!\-\- \1 \-\->#',
+				'#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/.*? \/><!\-\- s\1 \-\->#',
+				'#<!\-\- .*? \-\->#s',
+				'#<.*?>#s',
+			);
+		break;
 	}
 
 	return '';
@@ -1374,11 +1389,11 @@ function make_clickable($text, $server_url = false)
 
 		// matches a xxxx://aaaaa.bbb.cccc. ...
 		$magic_url_match[] = '#(^|[\n ]|\()([\w]+:/{2}.*?([^[ \t\n\r<"\'\)&]+|&(?!lt;|quot;))*)#ie';
-		$magic_url_replace[] = "'\$1<!-- m --><a href=\"\$2\" target=\"_blank\">' . ((strlen('\$2') > 55) ? substr(str_replace('&amp;', '&', '\$2'), 0, 39) . ' ... ' . substr(str_replace('&amp;', '&', '\$2'), -10) : '\$2') . '</a><!-- m -->'";
+		$magic_url_replace[] = "'\$1<!-- m --><a href=\"\$2\">' . ((strlen('\$2') > 55) ? substr(str_replace('&amp;', '&', '\$2'), 0, 39) . ' ... ' . substr(str_replace('&amp;', '&', '\$2'), -10) : '\$2') . '</a><!-- m -->'";
 
 		// matches a "www.xxxx.yyyy[/zzzz]" kinda lazy URL thing
 		$magic_url_match[] = '#(^|[\n ]|\()(w{3}\.[\w\-]+\.[\w\-.\~]+(?:[^[ \t\n\r<"\'\)&]+|&(?!lt;|quot;))*)#ie';
-		$magic_url_replace[] = "'\$1<!-- w --><a href=\"http://\$2\" target=\"_blank\">' . ((strlen('\$2') > 55) ? substr(str_replace('&amp;', '&', '\$2'), 0, 39) . ' ... ' . substr(str_replace('&amp;', '&', '\$2'), -10) : '\$2') . '</a><!-- w -->'";
+		$magic_url_replace[] = "'\$1<!-- w --><a href=\"http://\$2\">' . ((strlen('\$2') > 55) ? substr(str_replace('&amp;', '&', '\$2'), 0, 39) . ' ... ' . substr(str_replace('&amp;', '&', '\$2'), -10) : '\$2') . '</a><!-- w -->'";
 
 		// matches an email@domain type address at the start of a line, or after a space or after what might be a BBCode.
 		$magic_url_match[] = '/(^|[\n ]|\()(' . get_preg_expression('email') . ')/ie';
@@ -1386,6 +1401,27 @@ function make_clickable($text, $server_url = false)
 	}
 
 	return preg_replace($magic_url_match, $magic_url_replace, $text);
+}
+
+/**
+* Generate size select options
+*/
+function size_select_options($size_compare)
+{
+	global $_CLASS;
+
+	$size_types_text = array($_CLASS['core_user']->lang['BYTES'], $_CLASS['core_user']->lang['KB'], $_CLASS['core_user']->lang['MB']);
+	$size_types = array('b', 'kb', 'mb');
+
+	$s_size_options = '';
+
+	for ($i = 0, $size = sizeof($size_types_text); $i < $size; $i++)
+	{
+		$selected = ($size_compare == $size_types[$i]) ? ' selected="selected"' : '';
+		$s_size_options .= '<option value="' . $size_types[$i] . '"' . $selected . '>' . $size_types_text[$i] . '</option>';
+	}
+
+	return $s_size_options;
 }
 
 ?>

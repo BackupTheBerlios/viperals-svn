@@ -43,7 +43,6 @@ class core_user extends sessions
 	var $user_setup = false;
 
 	var $lang_name;
-	var $lang_path;
 
 	function core_user()
 	{
@@ -271,7 +270,6 @@ class core_user extends sessions
 		}
 
 		$this->lang_name = $_CORE_CONFIG['global']['default_lang'];
-		$this->lang_path = SITE_FILE_ROOT.'language/' . $this->lang_name . '/';
 
 		$this->time_format = ($this->data['user_time_format']) ? $this->data['user_time_format'] : $_CORE_CONFIG['global']['default_dateformat'];
 		$this->time_offset = ($this->data['user_timezone']) ? $this->data['user_timezone'] : $_CORE_CONFIG['global']['default_timezone'];
@@ -281,7 +279,7 @@ class core_user extends sessions
 			$this->time_offset += 3600;
 		}
 
-		require($this->lang_path . 'common.php');
+		$this->add_lang('common', null);
 	}
 
 	function add_img($img_file = false, $module = false, $lang = false)

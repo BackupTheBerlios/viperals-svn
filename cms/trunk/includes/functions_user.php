@@ -104,19 +104,10 @@ function avatar_gallery(&$current_folder, &$folders, &$error)
 function check_user_id(&$user_id, $bypass = false)
 {
 	// should we just return false, if this array map is different from the one sent
-
-	$user_id = array_map('intval', $user_id);
+	$user_id = array_map('intval', array_filter($user_id, 'array_filter_int'));
 	$user_id = array_unique($user_id);
 
-	// array map should make 0 values for notint values
-	$key = array_search(0, $user_id);
-
-	if ($key !== false && !is_null($key))
-	{
-		unset($user_id[$key]);
-	}
-
-// make bypass an array maybe, along with protected id. would be better if you want to extend this
+	// make bypass an array maybe, along with protected id. would be better if you want to extend this
 	if ($bypass)
 	{
 		// You shouldn'y do anything to guest
@@ -124,8 +115,8 @@ function check_user_id(&$user_id, $bypass = false)
 		{
 			unset($user_id[$key]);
 		}
-	
-		// First admin is always specail
+
+		// First admin is always special
 		if (($key = array_search(2, $user_id)) === false)
 		{
 			unset($user_id[$key]);
@@ -157,18 +148,17 @@ function user_add(&$data, $group_add = true)
 	);
 
 	$default_data['user_data'] = serialize(array(
-		'viewimg' => 1,
-		'viewflash' => 1,
-		'viewsmilies' => 1,
-		'viewsigs'	=> 1,
-		'viewavatars' => 1,
-		'viewcensors' => 1,
+		'viewimg'		=> 1,
+		'viewflash'		=> 1,
+		'viewsmilies'	=> 1,
+		'viewsigs'		=> 1,
+		'viewavatars'	=> 1,
+		'viewcensors'	=> 1,
 
-		'bbcode' => 1,
-		'html'	=> 1,
-		'smilies' => 1,
+		'bbcode'	=> 1,
+		'html'		=> 1,
+		'smilies' 	=> 1,
 		'attachsig' => 1,
-		'html'	=> 1,
 	));
 
 	$data = array_merge($default_data, $data);
@@ -188,7 +178,7 @@ function user_add(&$data, $group_add = true)
 			'member_status'	=> $data['user_status']
 		);
 
-		$_CLASS['core_db']->sql_query_build('INSERT', $data2, CORE_USER_GROUP_TABLE);
+		$_CLASS['core_db']->sql_query_build('INSERT', $data2, CORE_GROUPS_MEMBERS_TABLE);
 	}
 
 	$_CLASS['core_db']->transaction('commit');
@@ -200,7 +190,7 @@ function user_activate($user_id, $update_stats = true)
 
 	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
-	if (check_user_id($user_id) == false)
+	if (check_user_id($user_id) === false)
 	{
 		return;
 	}
@@ -215,7 +205,7 @@ function user_activate($user_id, $update_stats = true)
 
 	$_CLASS['core_db']->query($sql);
 
-	$sql = 'UPDATE ' . CORE_USER_GROUP_TABLE . '
+	$sql = 'UPDATE ' . CORE_GROUPS_MEMBERS_TABLE . '
 		SET member_status = ' . STATUS_ACTIVE . '
 			WHERE user_id  IN (' . implode(', ', $user_id) . ') 
 			AND member_status = ' . STATUS_DISABLED;
@@ -243,7 +233,7 @@ function user_disable($user_id, $update_stats = true)
 
 	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
-	if (check_user_id($user_id) == false)
+	if (check_user_id($user_id) === false)
 	{
 		return;
 	}
@@ -259,15 +249,14 @@ function user_disable($user_id, $update_stats = true)
 	$_CLASS['core_db']->query($sql);
 
 	// Now we disable the user in his active groups
-	$sql = 'UPDATE ' . CORE_USER_GROUP_TABLE . '
+	$sql = 'UPDATE ' . CORE_GROUPS_MEMBERS_TABLE . '
 		SET member_status = ' . STATUS_DISABLED . '
 			WHERE user_id IN (' . implode(', ', $user_id) . ')
 			AND member_status = ' . STATUS_ACTIVE;
 	$_CLASS['core_db']->query($sql);
 
 	$sql = 'DELETE FROM ' . CORE_SESSIONS_AUTOLOGIN_TABLE . ' 
-		WHERE user_id IN (' . implode(', ', $user_id) . ")
-		AND auto_login_code = '" . $_CLASS['core_db']->escape($code) . "'";
+		WHERE user_id IN (' . implode(', ', $user_id) . ")";
 	$_CLASS['core_db']->query($sql);
 
 	if ($update_stats)
@@ -301,7 +290,7 @@ function user_delete($user_id, $quick = false)
 
 	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
-	if (check_user_id($user_id) == false)
+	if (check_user_id($user_id) === false)
 	{
 		return;
 	}
@@ -331,7 +320,7 @@ function user_delete($user_id, $quick = false)
 	$_CLASS['core_db']->transaction();
 
 	$optimize_array = array();
-	$tables = array(CORE_USERS_TABLE => 'user_id', CORE_SESSIONS_AUTOLOGIN_TABLE => 'user_id', CORE_USER_GROUP_TABLE => 'user_id');
+	$tables = array(CORE_USERS_TABLE => 'user_id', CORE_SESSIONS_AUTOLOGIN_TABLE => 'user_id', CORE_GROUPS_MEMBERS_TABLE => 'user_id');
 // hook here
 
 // Move this to hooks on seperation
@@ -441,21 +430,21 @@ function user_get_name($user_id, &$difference)
 	return $data['username'];
 }
 
-function groups_user_remove($group_id, $user_id)
+function group_user_remove($group_id, $user_id)
 {
 	global $_CLASS;
 
 	$group_id = is_array($group_id) ? $group_id : array($group_id);
 	$user_id = is_array($user_id) ? $user_id : array($user_id);
 
-	$group_id = array_map('intval', $group_id);
+	$group_id = array_unique(array_map('intval', array_filter($group_id, 'array_filter_int')));
 
-	if (check_user_id($user_id) == false)
+	if (empty($group_id))
 	{
 		return;
 	}
 
-	if (empty($group_id))
+	if (check_user_id($user_id) === false)
 	{
 		return;
 	}
@@ -489,14 +478,13 @@ function groups_user_remove($group_id, $user_id)
 		$result = $_CLASS['core_db']->query($sql);
 	}
 
-	$sql = 'DELETE FROM ' . CORE_USER_GROUP_TABLE . '
+	$sql = 'DELETE FROM ' . CORE_GROUPS_MEMBERS_TABLE . '
 		WHERE group_id IN ('. implode(', ', $group_id) . ')
 		AND user_id IN ('. implode(', ', $user_id) .')';
-
-	$result = $_CLASS['core_db']->query($sql);
+	$_CLASS['core_db']->query($sql);
 }
 
-function groups_user_add($group_id, $user_id, $status)
+function group_user_add($group_id, $user_id, $status)
 {
 	global $_CLASS;
 
@@ -530,10 +518,37 @@ function groups_user_add($group_id, $user_id, $status)
 
 	if (!empty($data)) 
 	{
-		$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $data, USER_GROUP_TABLE);
+		$_CLASS['core_db']->sql_query_build('MULTI_INSERT', $data, CORE_GROUPS_MEMBERS_TABLE);
 	}
 
 	$_CLASS['core_db']->transaction('commit');
+}
+
+function group_membership($user_id, $group_id = false)
+{
+	global $_CLASS;
+
+	$user_id = is_array($user_id) ? $user_id : array($user_id);
+
+	if ($group_id)
+	{
+		$group_id = is_array($group_id) ? $group_id : array($group_id);
+		$group_id = array_map('intval', array_filter($group_id, 'array_filter_int'));
+	}
+
+	$sql = 'SELECT *
+		FROM ' . CORE_GROUPS_MEMBERS_TABLE . ' ug, '. CORE_GROUPS_TABLE .' g
+		WHERE ug.user_id IN (' . implode(', ', $user_id) . ')
+		AND g.group_id = ug.group_id ORDER by g.group_name';
+	$result = $_CLASS['core_db']->query($sql);
+
+	while ($row = $_CLASS['core_db']->fetch_row_assoc($result))
+	{
+		$return[$row['user_id']][$row['group_id']] = $row;
+	}
+	$_CLASS['core_db']->free_result($result);
+
+	return $return;
 }
 
 function validate_username($username)

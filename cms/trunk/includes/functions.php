@@ -21,6 +21,45 @@
 $Id$
 */
 
+function array_filter_int($var)
+{
+	return validate_integer($var, true);
+}
+
+function validate_integer($value, $bool = false)
+{
+	if (is_null($value) || $value === '')
+	{
+		return false;
+	}
+
+	$value = (string) trim($value);
+	$value = str_replace(array(',', '$'), '', $value);
+
+	if ($value{0} === '+')
+	{
+		$value = substr($value, 1);
+	}
+
+	$check = (string) intval($value);
+
+	/*$position = 0;
+	while (substr($value, $position, 1) === '0')
+	{
+		$position++;
+		$check = '0'.$check;
+	}*/
+
+
+	if ($check === $value)
+	{
+		$return = $bool ? true : (int) $value;
+		return $return;
+	}
+
+	return false;
+}
+
 function censor_text($text, $force = false)
 {
 	global $_CLASS;

@@ -287,12 +287,12 @@ switch ($action)
 		if ($update)
 		{
 			$forum_data['forum_flags'] = 0;
-			$forum_data['forum_flags'] += (request_var('forum_link_track', false)) ? 1 : 0;
-			$forum_data['forum_flags'] += (request_var('prune_old_polls', false)) ? 2 : 0;
-			$forum_data['forum_flags'] += (request_var('prune_announce', false)) ? 4 : 0;
-			$forum_data['forum_flags'] += (request_var('prune_sticky', false)) ? 8 : 0;
-			$forum_data['forum_flags'] += ($forum_data['show_active']) ? 16 : 0;
-			$forum_data['forum_flags'] += (request_var('enable_post_review', true)) ? 32 : 0;
+			$forum_data['forum_flags'] += (request_var('forum_link_track', false)) ? FORUM_FLAG_LINK_TRACK : 0;
+			$forum_data['forum_flags'] += (request_var('prune_old_polls', false)) ? FORUM_FLAG_PRUNE_POLL : 0;
+			$forum_data['forum_flags'] += (request_var('prune_announce', false)) ? FORUM_FLAG_PRUNE_ANNOUNCE : 0;
+			$forum_data['forum_flags'] += (request_var('prune_sticky', false)) ? FORUM_FLAG_PRUNE_STICKY : 0;
+			$forum_data['forum_flags'] += ($forum_data['show_active']) ? FORUM_FLAG_ACTIVE_TOPICS : 0;
+			$forum_data['forum_flags'] += (request_var('enable_post_review', true)) ? FORUM_FLAG_POST_REVIEW : 0;
 		}
 
 		// Show form to create/modify a forum
@@ -345,7 +345,6 @@ switch ($action)
 					'forum_rules'			=> '',
 					'forum_rules_link'		=> '',
 					'forum_image'			=> '',
-					'forum_style'			=> 0,
 					'display_on_index'		=> false,
 					'forum_topics_per_page'	=> 0, 
 					'enable_indexing'		=> true, 
@@ -354,7 +353,7 @@ switch ($action)
 					'prune_days'			=> 7,
 					'prune_viewed'			=> 7,
 					'prune_freq'			=> 1,
-					'forum_flags'			=> 0,
+					'forum_flags'			=> FORUM_FLAG_POST_REVIEW,
 					'forum_password'		=> '',
 					'forum_password_confirm'=> '',
 				);
@@ -504,12 +503,12 @@ switch ($action)
 			'S_TOPIC_ICONS'				=> ($forum_data['enable_icons']) ? true : false,
 			'S_DISPLAY_ON_INDEX'		=> ($forum_data['display_on_index']) ? true : false,
 			'S_PRUNE_ENABLE'			=> ($forum_data['enable_prune']) ? true : false,
-			'S_FORUM_LINK_TRACK'		=> ($forum_data['forum_flags'] & 1) ? true : false,
-			'S_PRUNE_OLD_POLLS'			=> ($forum_data['forum_flags'] & 2) ? true : false,
-			'S_PRUNE_ANNOUNCE'			=> ($forum_data['forum_flags'] & 4) ? true : false,
-			'S_PRUNE_STICKY'			=> ($forum_data['forum_flags'] & 8) ? true : false,
-			'S_DISPLAY_ACTIVE_TOPICS'	=> ($forum_data['forum_flags'] & 16) ? true : false,
-			'S_ENABLE_POST_REVIEW'		=> ($forum_data['forum_flags'] & 32) ? true : false,
+			'S_FORUM_LINK_TRACK'		=> ($forum_data['forum_flags'] & FORUM_FLAG_LINK_TRACK) ? true : false,
+			'S_PRUNE_OLD_POLLS'			=> ($forum_data['forum_flags'] & FORUM_FLAG_PRUNE_POLL) ? true : false,
+			'S_PRUNE_ANNOUNCE'			=> ($forum_data['forum_flags'] & FORUM_FLAG_PRUNE_ANNOUNCE) ? true : false,
+			'S_PRUNE_STICKY'			=> ($forum_data['forum_flags'] & FORUM_FLAG_PRUNE_STICKY) ? true : false,
+			'S_DISPLAY_ACTIVE_TOPICS'	=> ($forum_data['forum_flags'] & FORUM_FLAG_ACTIVE_TOPICS) ? true : false,
+			'S_ENABLE_POST_REVIEW'		=> ($forum_data['forum_flags'] & FORUM_FLAG_POST_REVIEW) ? true : false,
 			)
 		);
 
@@ -748,12 +747,12 @@ function update_forum_data(&$forum_data)
 	// 16 = show active topics
 	// 32 = enable post review
 	$forum_data['forum_flags'] = 0;
-	$forum_data['forum_flags'] += ($forum_data['forum_link_track']) ? 1 : 0;
-	$forum_data['forum_flags'] += ($forum_data['prune_old_polls']) ? 2 : 0;
-	$forum_data['forum_flags'] += ($forum_data['prune_announce']) ? 4 : 0;
-	$forum_data['forum_flags'] += ($forum_data['prune_sticky']) ? 8 : 0;
-	$forum_data['forum_flags'] += ($forum_data['show_active']) ? 16 : 0;
-	$forum_data['forum_flags'] += ($forum_data['enable_post_review']) ? 32 : 0;
+	$forum_data['forum_flags'] += ($forum_data['forum_link_track']) ? FORUM_FLAG_LINK_TRACK : 0;
+	$forum_data['forum_flags'] += ($forum_data['prune_old_polls']) ? FORUM_FLAG_PRUNE_POLL : 0;
+	$forum_data['forum_flags'] += ($forum_data['prune_announce']) ? FORUM_FLAG_PRUNE_ANNOUNCE : 0;
+	$forum_data['forum_flags'] += ($forum_data['prune_sticky']) ? FORUM_FLAG_PRUNE_STICKY : 0;
+	$forum_data['forum_flags'] += ($forum_data['show_active']) ? FORUM_FLAG_ACTIVE_TOPICS : 0;
+	$forum_data['forum_flags'] += ($forum_data['enable_post_review']) ? FORUM_FLAG_POST_REVIEW : 0;
 
 	// Unset data that are not database fields
 	$forum_data_sql = $forum_data;

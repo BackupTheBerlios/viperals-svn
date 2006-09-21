@@ -233,11 +233,26 @@ class filespec
 			$destination = '';
 		}
 
+		// We need to trust the admin in specifying valid upload directories and an attacker not being able to overwrite it...
 		$this->destination_path = SITE_FILE_ROOT.$destination;
+
+		// Check if the destination path exist...
+		if (!file_exists($this->destination_path))
+		{
+			@unlink($this->filename);
+			return false;
+		}
 
 		$upload_mode = (@ini_get('open_basedir') || @ini_get('safe_mode')) ? 'move' : 'copy';
 		$upload_mode = ($this->local) ? 'local' : $upload_mode;
 		$this->destination_file = $this->destination_path . '/' . basename($this->realname);
+
+		// Check if the file already exist, else there is something wrong...
+		if (file_exists($this->destination_file))
+		{
+			@unlink($this->filename);
+			return false;
+		}
 
 		switch ($upload_mode)
 		{
